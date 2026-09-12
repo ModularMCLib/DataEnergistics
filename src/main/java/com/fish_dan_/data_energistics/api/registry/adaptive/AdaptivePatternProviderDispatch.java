@@ -8,6 +8,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -27,6 +28,11 @@ import java.util.List;
  */
 @FunctionalInterface
 public interface AdaptivePatternProviderDispatch {
+
+    /** Returns this provider registration's connector routes in stable priority order. */
+    default ObjectList<AdaptiveProviderConnectorRoute> connectorRoutes() {
+        return ObjectList.of();
+    }
 
     /**
      * Identifies this route's legacy root-tag payload, or {@code null} when it has none.

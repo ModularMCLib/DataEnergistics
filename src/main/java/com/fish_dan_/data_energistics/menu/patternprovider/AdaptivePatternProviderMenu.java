@@ -6,6 +6,9 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
@@ -54,6 +57,8 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     private static final String ACTION_SET_FILTERED_IMPORT = "set_filtered_import";
     private static final String ACTION_SET_RESONATING_PULL = "set_resonating_pull";
     private static final String ACTION_SET_REDSTONE_TUNING_MODE = "set_redstone_tuning_mode";
+    private static final String ACTION_SET_CONNECTOR_MODE = "set_connector_mode";
+    private static final String ACTION_SET_CONNECTOR_POLICY = "set_connector_policy";
     private static final int SLOTS_PER_PAGE = 36;
     private static final int DEFAULT_RETURN_SLOTS = 9;
     private static final int EXPANDED_RETURN_SLOTS = 18;
@@ -105,6 +110,12 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     public boolean hasRedstoneTuningCard;
     @GuiSync(793)
     public int redstoneTuningMode = RedstoneTuningMode.EMIT_ON_DISPATCH.ordinal();
+    @GuiSync(794)
+    public int connectorMode = AdaptiveProviderConnectorMode.INPUT.ordinal();
+    @GuiSync(795)
+    public int connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal();
+    @GuiSync(796)
+    public boolean connectorBound;
 
     public AdaptivePatternProviderMenu(int id, Inventory playerInventory, AdaptivePatternProviderHost host) {
         super(DEMenus.ADAPTIVE_PATTERN_PROVIDER.get(), id, playerInventory, host);
@@ -116,6 +127,8 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         registerClientAction(ACTION_SET_FILTERED_IMPORT, Boolean.class, this::setAdvancedAeFilteredImport);
         registerClientAction(ACTION_SET_RESONATING_PULL, Boolean.class, this::setResonatingPullEnabled);
         registerClientAction(ACTION_SET_REDSTONE_TUNING_MODE, Integer.class, this::applyRedstoneTuningMode);
+        registerClientAction(ACTION_SET_CONNECTOR_MODE, Integer.class, this::setConnectorMode);
+        registerClientAction(ACTION_SET_CONNECTOR_POLICY, Integer.class, this::setConnectorPolicy);
 
         addUpgradeSlots();
         addPatternPageSlots();
@@ -356,6 +369,60 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
             this.unlockStack = this.logic.getUnlockStack();
         }
         syncRedstoneTuningFromHost();
+        syncConnectorState();
+    }
+
+    public void sendSetConnectorMode(AdaptiveProviderConnectorMode mode) {
+        this.connectorMode = mode.ordinal();
+        sendClientAction(ACTION_SET_CONNECTOR_MODE, this.connectorMode);
+    }
+
+    @Override
+    public int getConnectorMode() {
+        return this.connectorMode;
+    }
+
+    @Override
+    public int getConnectorPolicy() {
+        return this.connectorPolicy;
+    }
+
+    @Override
+    public boolean isConnectorBound() {
+        return this.connectorBound;
+    }
+
+    public void sendSetConnectorPolicy(AdaptiveProviderConnectorPolicy policy) {
+        this.connectorPolicy = policy.ordinal();
+        sendClientAction(ACTION_SET_CONNECTOR_POLICY, this.connectorPolicy);
+    }
+
+    private void setConnectorMode(int ordinal) {
+        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic)
+                || ordinal < 0 || ordinal >= AdaptiveProviderConnectorMode.values().length) {
+            return;
+        }
+        adaptiveLogic.setConnectorMode(AdaptiveProviderConnectorMode.values()[ordinal]);
+        syncConnectorState();
+        broadcastChanges();
+    }
+
+    private void setConnectorPolicy(int ordinal) {
+        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic)
+                || ordinal < 0 || ordinal >= AdaptiveProviderConnectorPolicy.values().length) {
+            return;
+        }
+        adaptiveLogic.setConnectorPolicy(AdaptiveProviderConnectorPolicy.values()[ordinal]);
+        syncConnectorState();
+        broadcastChanges();
+    }
+
+    private void syncConnectorState() {
+        if (this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) {
+            this.connectorMode = adaptiveLogic.connectorMode().ordinal();
+            this.connectorPolicy = adaptiveLogic.connectorPolicy().ordinal();
+            this.connectorBound = adaptiveLogic.hasConnectorBindings();
+        }
     }
 
     private void setPage(int pageIndex) {

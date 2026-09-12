@@ -22,6 +22,9 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -41,9 +44,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Identity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Operation;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
+import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 
+import appeng.api.AECapabilities;
+import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.PowerMultiplier;
@@ -61,9 +67,14 @@ import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
+
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
@@ -101,6 +112,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -110,13 +122,23 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                           implements PatternProviderLogicAccessor, TargetedCountedCraftingProvider, BoundPatternInputProvider, ReusableCraftingProviderAdapter {
 
     private static final int EXPANDED_RETURN_SLOTS = 18;
+    private static final int CONNECTOR_PULL_KEYS_PER_TICK = 32;
+    private static final long CONNECTOR_PULL_AMOUNT_PER_KEY = 4096L;
     private static final String NBT_PATTERN_SLOT_OVERFLOW = "adaptive_pattern_slot_overflow";
     private static final String NBT_RECONCILED_PATTERN_SLOT_COUNT = "adaptive_reconciled_pattern_slot_count";
+    private static final String NBT_CONNECTOR_MODE = "adaptive_connector_mode";
+    private static final String NBT_CONNECTOR_POLICY = "adaptive_connector_policy";
+    private static final String NBT_CONNECTOR_CURSOR = "adaptive_connector_cursor";
+    private static final String NBT_CONNECTOR_TARGETS = "adaptive_connector_targets";
 
     private final PatternProviderLogicHost host;
     private final IManagedGridNode mainNode;
     private final IActionSource actionSource;
     private int localRoundRobinIndex;
+    private AdaptiveProviderConnectorMode connectorMode = AdaptiveProviderConnectorMode.INPUT;
+    private AdaptiveProviderConnectorPolicy connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN;
+    private int connectorCursor;
+    private final ObjectArrayList<ConnectorTarget> connectorTargets = new ObjectArrayList<>();
     private final ObjectArrayList<ItemStack> patternSlotOverflow = new ObjectArrayList<>();
     private final ObjectSet<AEKey> trackedCrafts = new ObjectOpenHashSet<>();
     private final ObjectSet<AEKey> outputCache = new ObjectOpenHashSet<>();
@@ -179,6 +201,17 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         super.writeToNBT(tag, registries);
         writePatternSlotOverflowToNBT(tag, registries);
         tag.put(AdaptiveReusableCraftingState.NBT_KEY, this.reusableCrafting.writeToTag(registries));
+        tag.putString(NBT_CONNECTOR_MODE, this.connectorMode.name());
+        tag.putString(NBT_CONNECTOR_POLICY, this.connectorPolicy.name());
+        tag.putInt(NBT_CONNECTOR_CURSOR, this.connectorCursor);
+        ListTag connectorTargetTags = new ListTag();
+        for (ConnectorTarget target : this.connectorTargets) {
+            CompoundTag targetTag = new CompoundTag();
+            targetTag.putLong("pos", target.position().asLong());
+            targetTag.putByte("side", (byte) target.side().get3DDataValue());
+            connectorTargetTags.add(targetTag);
+        }
+        tag.put(NBT_CONNECTOR_TARGETS, connectorTargetTags);
         activeDispatchTarget();
         CompoundTag states = this.unloadedDispatchStates.copy();
         for (var target : this.dispatchTargets.values()) {
@@ -207,6 +240,20 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         super.readFromNBT(tag, registries);
 
+        this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, AdaptiveProviderConnectorMode.INPUT);
+        this.connectorPolicy = readConnectorPolicy(tag, NBT_CONNECTOR_POLICY, AdaptiveProviderConnectorPolicy.ROUND_ROBIN);
+        this.connectorCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_CURSOR));
+        this.connectorTargets.clear();
+        ListTag connectorTargetTags = tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
+        for (int index = 0; index < connectorTargetTags.size(); index++) {
+            CompoundTag targetTag = connectorTargetTags.getCompound(index);
+            int side = targetTag.getByte("side");
+            if (side >= 0 && side < 6) {
+                this.connectorTargets.add(new ConnectorTarget(
+                        BlockPos.of(targetTag.getLong("pos")), Direction.from3DDataValue(side)));
+            }
+        }
+
         readPatternSlotOverflowFromNBT(tag, registries);
         this.reusableCrafting = restoredReusable;
         this.reusableItemHandoff = null;
@@ -221,6 +268,95 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (registration != selected) {
                 restoreDispatchState(registration, tag, registries, legacyKeys);
             }
+        }
+    }
+
+    public AdaptiveProviderConnectorMode connectorMode() {
+        return this.connectorMode;
+    }
+
+    public AdaptiveProviderConnectorPolicy connectorPolicy() {
+        return this.connectorPolicy;
+    }
+
+    public int connectorCursor() {
+        return this.connectorCursor;
+    }
+
+    public void setConnectorMode(AdaptiveProviderConnectorMode mode) {
+        this.connectorMode = Objects.requireNonNull(mode, "Connector mode");
+        this.host.saveChanges();
+    }
+
+    public void setConnectorPolicy(AdaptiveProviderConnectorPolicy policy) {
+        this.connectorPolicy = Objects.requireNonNull(policy, "Connector policy");
+        this.host.saveChanges();
+    }
+
+    public void advanceConnectorCursor(int routeCount) {
+        if (routeCount > 0) {
+            this.connectorCursor = Math.floorMod(this.connectorCursor + 1, routeCount);
+        }
+    }
+
+    public List<ConnectorTarget> connectorTargets() {
+        return List.copyOf(this.connectorTargets);
+    }
+
+    public boolean hasConnectorBindings() {
+        return !this.connectorTargets.isEmpty();
+    }
+
+    public boolean bindConnectorTarget(BlockPos position, Direction side) {
+        if (position.distManhattan(this.host.getBlockEntity().getBlockPos()) != 1) {
+            return false;
+        }
+        ConnectorTarget candidate = new ConnectorTarget(position, side);
+        if (this.connectorTargets.contains(candidate)) {
+            return false;
+        }
+        this.connectorTargets.add(candidate);
+        this.host.saveChanges();
+        return true;
+    }
+
+    public boolean unbindConnectorTarget(BlockPos position, Direction side) {
+        boolean removed = this.connectorTargets.remove(new ConnectorTarget(position, side));
+        if (removed) {
+            this.host.saveChanges();
+        }
+        return removed;
+    }
+
+    private static AdaptiveProviderConnectorMode readConnectorMode(
+                                                                   CompoundTag tag, String key, AdaptiveProviderConnectorMode fallback) {
+        if (!tag.contains(key)) {
+            return fallback;
+        }
+        try {
+            return AdaptiveProviderConnectorMode.valueOf(tag.getString(key));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid adaptive connector mode", exception);
+        }
+    }
+
+    private static AdaptiveProviderConnectorPolicy readConnectorPolicy(
+                                                                       CompoundTag tag, String key, AdaptiveProviderConnectorPolicy fallback) {
+        if (!tag.contains(key)) {
+            return fallback;
+        }
+        try {
+            return AdaptiveProviderConnectorPolicy.valueOf(tag.getString(key));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid adaptive connector policy", exception);
+        }
+    }
+
+    public record ConnectorTarget(BlockPos position, Direction side) {
+
+        public ConnectorTarget {
+            Objects.requireNonNull(position, "Connector target position");
+            Objects.requireNonNull(side, "Connector target side");
         }
     }
 
@@ -860,6 +996,12 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     @Override
     public boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        if (this.connectorMode == AdaptiveProviderConnectorMode.PULL && !this.connectorTargets.isEmpty()) {
+            return false;
+        }
+        if (this.connectorMode == AdaptiveProviderConnectorMode.INPUT && !this.connectorTargets.isEmpty() && !hasConnectorCapacity(patternDetails, inputHolder)) {
+            return false;
+        }
         AdaptivePatternProviderRegistration registration = resolvedRegistration();
         if (registration != null) {
             AdaptivePatternProviderDispatchContext context = createDispatchContext(registration, patternDetails, inputHolder);
@@ -877,6 +1019,27 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             dataEnergistics$afterPushPattern();
         }
         return pushed;
+    }
+
+    private boolean hasConnectorCapacity(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        if (!(this.host.getBlockEntity().getLevel() instanceof ServerLevel level)) {
+            return false;
+        }
+        boolean hasRegisteredCapacity = false;
+        for (ConnectorTarget binding : this.connectorTargets) {
+            CraftingMachineCapacityAdapters.Observation observation = CraftingMachineCapacityAdapters.capture(
+                    level,
+                    binding.position(),
+                    binding.side(),
+                    patternDetails,
+                    inputHolder,
+                    1L);
+            if (observation != null && observation.remainingLogicalCrafts() > 0L) {
+                return true;
+            }
+            hasRegisteredCapacity |= observation != null;
+        }
+        return !hasRegisteredCapacity;
     }
 
     private @Nullable AdaptivePatternProviderRegistration resolvedRegistration() {
@@ -928,6 +1091,110 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             }
         }
         return false;
+    }
+
+    /** Pulls a bounded batch from linked generic inventories into the provider return inventory. */
+    private boolean tickConnectorPull() {
+        if (this.connectorMode != AdaptiveProviderConnectorMode.PULL || this.connectorTargets.isEmpty()) {
+            return false;
+        }
+        Level currentLevel = this.host.getBlockEntity().getLevel();
+        if (currentLevel == null || currentLevel.isClientSide()) {
+            return false;
+        }
+        int scanned = 0;
+        boolean changed = false;
+        for (ConnectorTarget binding : this.connectorTargets) {
+            if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {
+                break;
+            }
+            BlockPos position = binding.position();
+            GenericInternalInventory source = currentLevel.getCapability(
+                    AECapabilities.GENERIC_INTERNAL_INV,
+                    position,
+                    currentLevel.getBlockState(position),
+                    currentLevel.getBlockEntity(position),
+                    binding.side());
+            if (source != null && source.canExtract()) {
+                changed |= pullGenericInventory(source, scanned);
+                scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + source.size());
+                continue;
+            }
+            IItemHandler itemHandler = currentLevel.getCapability(
+                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                    position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
+            if (itemHandler != null) {
+                changed |= pullItemHandler(itemHandler, scanned);
+                scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + itemHandler.getSlots());
+                continue;
+            }
+            IFluidHandler fluidHandler = currentLevel.getCapability(
+                    net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                    position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
+            if (fluidHandler != null) {
+                changed |= pullFluidHandler(fluidHandler, scanned);
+                scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + fluidHandler.getTanks());
+            }
+            continue;
+        }
+        if (changed) {
+            this.host.saveChanges();
+        }
+        return changed;
+    }
+
+    private boolean pullGenericInventory(GenericInternalInventory source, int scanned) {
+        boolean changed = false;
+        for (int slot = 0; slot < source.size() && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; slot++) {
+            AEKey key = source.getKey(slot);
+            long available = source.getAmount(slot);
+            if (key == null || available <= 0L) continue;
+            long requested = Math.min(available, CONNECTOR_PULL_AMOUNT_PER_KEY);
+            long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
+            if (accepted <= 0L) continue;
+            long extracted = source.extract(slot, key, accepted, Actionable.MODULATE);
+            if (extracted <= 0L) continue;
+            long inserted = this.returnInv.insert(key, extracted, Actionable.MODULATE, this.actionSource);
+            if (inserted < extracted) source.insert(slot, key, extracted - inserted, Actionable.MODULATE);
+            changed |= inserted > 0L;
+        }
+        return changed;
+    }
+
+    private boolean pullItemHandler(IItemHandler source, int scanned) {
+        boolean changed = false;
+        for (int slot = 0; slot < source.getSlots() && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; slot++) {
+            ItemStack available = source.getStackInSlot(slot);
+            AEItemKey key = AEItemKey.of(available);
+            if (key == null || available.isEmpty()) continue;
+            int requested = (int) Math.min(available.getCount(), CONNECTOR_PULL_AMOUNT_PER_KEY);
+            long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
+            if (accepted <= 0L) continue;
+            ItemStack extracted = source.extractItem(slot, (int) accepted, false);
+            if (extracted.isEmpty()) continue;
+            long inserted = this.returnInv.insert(key, extracted.getCount(), Actionable.MODULATE, this.actionSource);
+            if (inserted < extracted.getCount()) source.insertItem(slot, extracted.copyWithCount((int) (extracted.getCount() - inserted)), false);
+            changed |= inserted > 0L;
+        }
+        return changed;
+    }
+
+    private boolean pullFluidHandler(IFluidHandler source, int scanned) {
+        boolean changed = false;
+        for (int tank = 0; tank < source.getTanks() && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; tank++) {
+            FluidStack available = source.getFluidInTank(tank);
+            AEFluidKey key = AEFluidKey.of(available);
+            if (key == null || available.isEmpty()) continue;
+            int requested = (int) Math.min(available.getAmount(), CONNECTOR_PULL_AMOUNT_PER_KEY);
+            long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
+            if (accepted <= 0L) continue;
+            FluidStack extracted = source.drain(available.copyWithAmount((int) accepted), IFluidHandler.FluidAction.EXECUTE);
+            if (extracted.isEmpty()) continue;
+            long inserted = this.returnInv.insert(key, extracted.getAmount(), Actionable.MODULATE, this.actionSource);
+            if (inserted < extracted.getAmount()) source.fill(extracted.copyWithAmount((int) (extracted.getAmount() - inserted)), IFluidHandler.FluidAction.EXECUTE);
+            changed |= inserted > 0L;
+        }
+        return changed;
     }
 
     private boolean activeDispatchSupportsReusable() {
@@ -1017,6 +1284,21 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     List<Direction> adaptiveTargetSides() {
+        if (!this.connectorTargets.isEmpty()) {
+            ObjectArrayList<Direction> linkedSides = new ObjectArrayList<>();
+            BlockPos providerPosition = this.host.getBlockEntity().getBlockPos();
+            for (ConnectorTarget target : this.connectorTargets) {
+                if (target.position().distManhattan(providerPosition) == 1) {
+                    linkedSides.add(Direction.getNearest(
+                            target.position().getX() - providerPosition.getX(),
+                            target.position().getY() - providerPosition.getY(),
+                            target.position().getZ() - providerPosition.getZ()));
+                }
+            }
+            if (!linkedSides.isEmpty()) {
+                return linkedSides;
+            }
+        }
         return new ObjectArrayList<>(getActiveSidesFiltered());
     }
 
@@ -1074,11 +1356,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     int adaptiveRoundRobinIndex() {
-        return this.localRoundRobinIndex;
+        return this.connectorTargets.isEmpty() || this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY ? this.localRoundRobinIndex : this.connectorCursor;
     }
 
     void adaptiveAdvanceRoundRobin(int amount) {
         this.localRoundRobinIndex += Math.max(0, amount);
+        if (!this.connectorTargets.isEmpty() && this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN) {
+            this.connectorCursor = Math.floorMod(this.connectorCursor + Math.max(0, amount), this.connectorTargets.size());
+        }
     }
 
     void adaptiveSaveChanges() {
@@ -1109,6 +1394,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             }
         }
         return false;
+    }
+
+    List<AdaptiveProviderConnectorBinding> adaptiveConnectorBindings() {
+        ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(this.connectorTargets.size());
+        for (ConnectorTarget target : this.connectorTargets) {
+            result.add(new AdaptiveProviderConnectorBinding(target.position(), target.side()));
+        }
+        return ObjectLists.unmodifiable(result);
     }
 
     int adaptiveReusableWorkCount() {
@@ -1466,6 +1759,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
             dataEnergistics$updatePulseUnlockState();
             boolean couldDoWork = invokeBaseDoWork();
+            couldDoWork = tickConnectorPull() || couldDoWork;
             activeDispatchTarget();
             for (var target : dispatchTargets.values()) {
                 couldDoWork = target.dispatch().tick(target, ticksSinceLastCall) || couldDoWork;

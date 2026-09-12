@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.ae2.patternprovider.adaptive;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.energy.IEnergyService;
@@ -221,6 +222,11 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     @Override
     public int installedSpeedCardCount() {
         return this.logic.adaptiveInstalledSpeedCardCount();
+    }
+
+    @Override
+    public List<AdaptiveProviderConnectorBinding> connectorBindings() {
+        return this.logic.adaptiveConnectorBindings();
     }
 
     @Override

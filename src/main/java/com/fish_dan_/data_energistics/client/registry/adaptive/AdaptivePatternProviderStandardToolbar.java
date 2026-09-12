@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClientPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClientRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarContext;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
@@ -52,6 +54,30 @@ public final class AdaptivePatternProviderStandardToolbar implements DataEnergis
             var button = new PatternProviderRedstoneTuningButton(menu::hasRedstoneTuningCard,
                     menu::getRedstoneTuningMode, menu::setRedstoneTuningMode);
             return new AdaptivePatternProviderToolbarButton(button, button::syncFromMenu);
+        });
+        toolbar.register(AdaptivePatternProviderToolbarActions.CONNECTOR_MODE, 900, context -> {
+            var menu = context.menu();
+            var button = new ToggleButton(Icon.POWER_UNIT_AE, Icon.POWER_UNIT_RF,
+                    Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_mode"),
+                    Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_mode"),
+                    ignored -> menu.sendSetConnectorMode(menu.getConnectorMode() == AdaptiveProviderConnectorMode.INPUT.ordinal()
+                            ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT));
+            return new AdaptivePatternProviderToolbarButton(button, () -> {
+                button.visible = menu.isConnectorBound();
+                button.setState(menu.getConnectorMode() == AdaptiveProviderConnectorMode.PULL.ordinal());
+            });
+        });
+        toolbar.register(AdaptivePatternProviderToolbarActions.CONNECTOR_POLICY, 910, context -> {
+            var menu = context.menu();
+            var button = new ToggleButton(Icon.ARROW_RIGHT, Icon.ARROW_RIGHT,
+                    Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_policy"),
+                    Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_policy"),
+                    ignored -> menu.sendSetConnectorPolicy(menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal()
+                            ? AdaptiveProviderConnectorPolicy.PRIORITY : AdaptiveProviderConnectorPolicy.ROUND_ROBIN));
+            return new AdaptivePatternProviderToolbarButton(button, () -> {
+                button.visible = menu.isConnectorBound();
+                button.setState(menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.PRIORITY.ordinal());
+            });
         });
     }
 

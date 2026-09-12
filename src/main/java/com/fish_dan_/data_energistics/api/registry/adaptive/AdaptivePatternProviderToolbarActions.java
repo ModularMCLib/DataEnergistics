@@ -20,6 +20,8 @@ public final class AdaptivePatternProviderToolbarActions {
     public static final ResourceLocation REDSTONE_TUNING = Data_Energistics.id("adaptive_pattern_provider/redstone_tuning");
     public static final ResourceLocation FILTERED_IMPORT = Data_Energistics.id("adaptive_pattern_provider/filtered_import");
     public static final ResourceLocation RESONATING_PULL = Data_Energistics.id("adaptive_pattern_provider/resonating_pull");
+    public static final ResourceLocation CONNECTOR_MODE = Data_Energistics.id("adaptive_pattern_provider/connector_mode");
+    public static final ResourceLocation CONNECTOR_POLICY = Data_Energistics.id("adaptive_pattern_provider/connector_policy");
 
     private static final ObjectList<AdaptivePatternProviderToolbarAction> STANDARD = ObjectList.of(
             new AdaptivePatternProviderToolbarAction(BLOCKING_MODE),
@@ -27,7 +29,9 @@ public final class AdaptivePatternProviderToolbarActions {
             new AdaptivePatternProviderToolbarAction(PATTERN_ACCESS_TERMINAL),
             new AdaptivePatternProviderToolbarAction(PREVIOUS_PAGE),
             new AdaptivePatternProviderToolbarAction(NEXT_PAGE),
-            new AdaptivePatternProviderToolbarAction(REDSTONE_TUNING));
+            new AdaptivePatternProviderToolbarAction(REDSTONE_TUNING),
+            new AdaptivePatternProviderToolbarAction(CONNECTOR_MODE),
+            new AdaptivePatternProviderToolbarAction(CONNECTOR_POLICY));
 
     /** Common controls remain available when the provider slot is empty; conditional buttons hide themselves. */
     public static ObjectList<AdaptivePatternProviderToolbarAction> standard() {

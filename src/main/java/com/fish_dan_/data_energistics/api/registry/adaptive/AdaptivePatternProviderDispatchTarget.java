@@ -143,6 +143,9 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Returns the installed speed-card count used by a registered reusable route. */
     int installedSpeedCardCount();
 
+    /** Returns the provider-owned connector links in stable configured order. */
+    List<AdaptiveProviderConnectorBinding> connectorBindings();
+
     /**
      * Returns or creates state owned by the current registration.
      *

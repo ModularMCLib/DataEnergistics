@@ -74,4 +74,19 @@ public interface AdaptivePatternProviderToolbarMenu {
      * Requests a redstone mode; the server validates the ordinal before applying it to the provider.
      */
     void setRedstoneTuningMode(int ordinal);
+
+    /** Current connector transfer mode ordinal. */
+    int getConnectorMode();
+
+    /** Current connector target policy ordinal. */
+    int getConnectorPolicy();
+
+    /** Requests a connector transfer mode change. */
+    void sendSetConnectorMode(AdaptiveProviderConnectorMode mode);
+
+    /** Requests a connector target policy change. */
+    void sendSetConnectorPolicy(AdaptiveProviderConnectorPolicy policy);
+
+    /** Whether this provider currently has at least one connector target. */
+    boolean isConnectorBound();
 }

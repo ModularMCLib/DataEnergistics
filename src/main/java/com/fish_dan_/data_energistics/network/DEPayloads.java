@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.network.action.ChromaticGlowPayload;
 import com.fish_dan_.data_energistics.network.action.DataTeleportAnchorKnifeTeleportPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
+import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
 import com.fish_dan_.data_energistics.network.action.MeVacuumLaunchPayload;
 import com.fish_dan_.data_energistics.network.action.RailChainPayload;
@@ -109,6 +110,10 @@ public final class DEPayloads {
                 DigitalStorageDepotScrollPayload.TYPE,
                 DigitalStorageDepotScrollPayload.STREAM_CODEC,
                 DigitalStorageDepotScrollPayload::handle);
+        registrar.playToServer(
+                DataDistributionConnectorScrollPayload.TYPE,
+                DataDistributionConnectorScrollPayload.STREAM_CODEC,
+                DataDistributionConnectorScrollPayload::handle);
         registrar.playToServer(
                 DigitalStorageDepotBucketModePayload.TYPE,
                 DigitalStorageDepotBucketModePayload.STREAM_CODEC,

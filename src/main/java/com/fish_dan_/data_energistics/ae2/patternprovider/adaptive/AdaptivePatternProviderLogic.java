@@ -328,6 +328,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return removed;
     }
 
+    public boolean hasConnectorTarget(BlockPos position, Direction side) {
+        return this.connectorTargets.contains(new ConnectorTarget(position, side));
+    }
+
     private static AdaptiveProviderConnectorMode readConnectorMode(
                                                                    CompoundTag tag, String key, AdaptiveProviderConnectorMode fallback) {
         if (!tag.contains(key)) {

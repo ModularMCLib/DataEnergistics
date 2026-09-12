@@ -277,7 +277,17 @@ public class DataDistributionConnectorItem extends Item {
             return InteractionResult.FAIL;
         }
         AdaptivePatternProviderLogic logic = adaptiveLogic(blockEntity, data.providerSide());
-        if (logic == null || !logic.bindConnectorTarget(clickedPos, clickedFace.getOpposite())) {
+        Direction targetSide = clickedFace.getOpposite();
+        if (logic == null) {
+            if (showFailureMessages) {
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
+            }
+            return InteractionResult.FAIL;
+        }
+        boolean changed = logic.hasConnectorTarget(clickedPos, targetSide)
+                ? logic.unbindConnectorTarget(clickedPos, targetSide)
+                : logic.bindConnectorTarget(clickedPos, targetSide);
+        if (!changed) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
             }
@@ -332,8 +342,26 @@ public class DataDistributionConnectorItem extends Item {
         return null;
     }
 
-    private static DataDistributionConnectorItemData getConnectorData(ItemStack stack) {
+    public static boolean isConnectorStack(ItemStack stack) {
+        return stack.getItem() instanceof DataDistributionConnectorItem;
+    }
+
+    public static DataDistributionConnectorItemData readData(ItemStack stack) {
         DataDistributionConnectorItemData data = stack.get(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get());
         return data != null ? data : DataDistributionConnectorItemData.EMPTY;
+    }
+
+    public static AdaptivePatternProviderLogic resolveProviderLogic(
+            Level level, DataDistributionConnectorItemData data) {
+        if (!data.isAdaptiveProvider() || !data.hasSelection()
+                || !level.dimension().location().toString().equals(data.providerDimensionId())
+                || !level.isLoaded(data.getProviderPos())) {
+            return null;
+        }
+        return adaptiveLogic(level.getBlockEntity(data.getProviderPos()), data.providerSide());
+    }
+
+    private static DataDistributionConnectorItemData getConnectorData(ItemStack stack) {
+        return readData(stack);
     }
 }

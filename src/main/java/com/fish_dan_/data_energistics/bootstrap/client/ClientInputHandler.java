@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
+import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
+import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
 import com.fish_dan_.data_energistics.network.action.MeVacuumLaunchPayload;
 import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
@@ -133,6 +135,17 @@ final class ClientInputHandler {
 
         ItemStack mainHand = minecraft.player.getMainHandItem();
         ItemStack offHand = minecraft.player.getOffhandItem();
+        boolean useConnectorMain = DataDistributionConnectorItem.isConnectorStack(mainHand);
+        boolean useConnectorOff = !useConnectorMain && DataDistributionConnectorItem.isConnectorStack(offHand);
+        if (useConnectorMain || useConnectorOff) {
+            double delta = event.getScrollDeltaY();
+            if (delta != 0 && (controlDown || Screen.hasShiftDown())) {
+                PacketDistributor.sendToServer(new DataDistributionConnectorScrollPayload(
+                        delta < 0, useConnectorOff, controlDown, Screen.hasShiftDown()));
+                event.setCanceled(true);
+            }
+            return;
+        }
         boolean useMainHand = DigitalStorageDepotBlockItem.isDepotStack(mainHand);
         boolean useOffHand = !useMainHand && DigitalStorageDepotBlockItem.isDepotStack(offHand);
         if (!useMainHand && !useOffHand) {

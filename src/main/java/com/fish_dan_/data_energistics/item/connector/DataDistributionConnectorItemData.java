@@ -15,10 +15,11 @@ public record DataDistributionConnectorItemData(
                                                 DataDistributionConnectorTargetType targetType,
                                                 String providerDimensionId,
                                                 long providerPos,
-                                                int providerSide) {
+                                                int providerSide,
+                                                int selectedBindingIndex) {
 
     public static final DataDistributionConnectorItemData EMPTY = new DataDistributionConnectorItemData(
-            "", 0L, false, DataDistributionConnectorTargetType.TOWER, "", 0L, -1);
+            "", 0L, false, DataDistributionConnectorTargetType.TOWER, "", 0L, -1, 0);
 
     public static final Codec<DataDistributionConnectorItemData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.optionalFieldOf("dimension_id", "").forGetter(DataDistributionConnectorItemData::dimensionId),
@@ -30,7 +31,8 @@ public record DataDistributionConnectorItemData(
             Codec.STRING.optionalFieldOf("provider_dimension_id", "")
                     .forGetter(DataDistributionConnectorItemData::providerDimensionId),
             Codec.LONG.optionalFieldOf("provider_pos", 0L).forGetter(DataDistributionConnectorItemData::providerPos),
-            Codec.INT.optionalFieldOf("provider_side", -1).forGetter(DataDistributionConnectorItemData::providerSide))
+            Codec.INT.optionalFieldOf("provider_side", -1).forGetter(DataDistributionConnectorItemData::providerSide),
+            Codec.INT.optionalFieldOf("selected_binding_index", 0).forGetter(DataDistributionConnectorItemData::selectedBindingIndex))
             .apply(instance, DataDistributionConnectorItemData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DataDistributionConnectorItemData> STREAM_CODEC = StreamCodec.of(
@@ -45,6 +47,7 @@ public record DataDistributionConnectorItemData(
         ByteBufCodecs.STRING_UTF8.encode(buffer, data.providerDimensionId());
         ByteBufCodecs.VAR_LONG.encode(buffer, data.providerPos());
         ByteBufCodecs.VAR_INT.encode(buffer, data.providerSide());
+        ByteBufCodecs.VAR_INT.encode(buffer, data.selectedBindingIndex());
     }
 
     private static DataDistributionConnectorItemData decode(RegistryFriendlyByteBuf buffer) {
@@ -55,6 +58,7 @@ public record DataDistributionConnectorItemData(
                 DataDistributionConnectorTargetType.valueOf(ByteBufCodecs.STRING_UTF8.decode(buffer)),
                 ByteBufCodecs.STRING_UTF8.decode(buffer),
                 ByteBufCodecs.VAR_LONG.decode(buffer),
+                ByteBufCodecs.VAR_INT.decode(buffer),
                 ByteBufCodecs.VAR_INT.decode(buffer));
     }
 
@@ -64,6 +68,9 @@ public record DataDistributionConnectorItemData(
         providerDimensionId = providerDimensionId == null ? "" : providerDimensionId;
         if (providerSide < -1 || providerSide > 5) {
             throw new IllegalArgumentException("Invalid adaptive provider binding side: " + providerSide);
+        }
+        if (selectedBindingIndex < 0) {
+            throw new IllegalArgumentException("Connector binding index must not be negative");
         }
     }
 
@@ -77,7 +84,7 @@ public record DataDistributionConnectorItemData(
 
     public DataDistributionConnectorItemData withTower(String dimensionId, BlockPos towerPos) {
         return new DataDistributionConnectorItemData(
-                dimensionId, towerPos.asLong(), true, DataDistributionConnectorTargetType.TOWER, "", 0L, -1);
+                dimensionId, towerPos.asLong(), true, DataDistributionConnectorTargetType.TOWER, "", 0L, -1, 0);
     }
 
     public DataDistributionConnectorItemData withAdaptiveProvider(
@@ -89,7 +96,8 @@ public record DataDistributionConnectorItemData(
                 DataDistributionConnectorTargetType.ADAPTIVE_PROVIDER,
                 dimensionId,
                 providerPos.asLong(),
-                providerSide);
+                providerSide,
+                0);
     }
 
     public DataDistributionConnectorItemData clear() {
@@ -102,5 +110,11 @@ public record DataDistributionConnectorItemData(
 
     public boolean isAdaptiveProvider() {
         return this.targetType == DataDistributionConnectorTargetType.ADAPTIVE_PROVIDER;
+    }
+
+    public DataDistributionConnectorItemData withSelectedBindingIndex(int index) {
+        return new DataDistributionConnectorItemData(
+                this.dimensionId, this.towerPos, this.selected, this.targetType,
+                this.providerDimensionId, this.providerPos, this.providerSide, index);
     }
 }

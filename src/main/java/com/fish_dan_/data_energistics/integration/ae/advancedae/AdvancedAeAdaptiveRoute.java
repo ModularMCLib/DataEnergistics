@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.integration.ae.advancedae;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorRoutes;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -76,9 +78,9 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         }
 
         ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
-        for (Direction side : target.targetSides()) {
-            BlockPos adjacentPos = target.providerPos().relative(side);
-            Direction adjacentFace = side.getOpposite();
+        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(target)) {
+            BlockPos adjacentPos = binding.position();
+            Direction adjacentFace = binding.side();
             ICraftingMachine craftingMachine = ICraftingMachine.of(level, adjacentPos, adjacentFace);
             if (craftingMachine != null && craftingMachine.acceptsPlans()) {
                 if (craftingMachine.pushPattern(patternDetails, inputHolder, adjacentFace)) {
@@ -89,7 +91,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
             }
             PatternProviderTarget adapter = target.externalTarget(level, adjacentPos, adjacentFace);
             if (adapter != null && !target.isBlocked(adapter)) {
-                candidates.add(new FallbackTarget(side, adapter));
+                candidates.add(new FallbackTarget(adjacentPos, adjacentFace, adapter));
             }
         }
 
@@ -100,7 +102,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         rotateCandidates(candidates, target.roundRobinIndex());
         for (int index = 0; index < candidates.size(); index++) {
             FallbackTarget candidate = candidates.get(index);
-            if (pushDirectionalInputs(target, candidate.direction(), inputHolder, patternDetails)) {
+            if (pushDirectionalInputs(target, candidate.position(), candidate.side(), inputHolder, patternDetails)) {
                 target.advanceRoundRobin(index + 1);
                 return true;
             }
@@ -224,6 +226,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
 
     private static boolean pushDirectionalInputs(
                                                  AdaptivePatternProviderDispatchTarget target,
+                                                 BlockPos adjacentPos,
                                                  Direction primaryDirection,
                                                  KeyCounter[] inputHolder,
                                                  IPatternDetails patternDetails) {
@@ -231,7 +234,6 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         if (level == null) {
             return false;
         }
-        BlockPos adjacentPos = target.providerPos().relative(primaryDirection);
         Direction defaultSide = primaryDirection.getOpposite();
         Object2ObjectOpenHashMap<AEKey, PatternProviderTarget> targetsByKey = new Object2ObjectOpenHashMap<>();
         Object2ObjectOpenHashMap<AEKey, Direction> inputDirections = new Object2ObjectOpenHashMap<>();
@@ -371,7 +373,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         candidates.addAll(head);
     }
 
-    private record FallbackTarget(Direction direction, PatternProviderTarget target) {}
+    private record FallbackTarget(BlockPos position, Direction side, PatternProviderTarget target) {}
 
     private static final class State {
 

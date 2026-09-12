@@ -66,6 +66,6 @@ Provider 专属按钮通过 registration 的 `toolbarActions` 声明，并通过
 - `writeState` 接收以 registration ID 隔离的子标签。核心将这些标签保存在 `adaptive_dispatch_states` 中，切换供应器不会丢弃旧路由数据；暂时没有注册实现的子标签会原样保留。
 - 迁移旧根标签时实现 `legacyStateKey()`，返回能够标识旧状态的键。共享旧状态的多个变体应返回相同键；核心优先交给当前选中的注册项，每份旧状态只恢复一次。`readState` 负责校验旧数据与新数据。
 
-回调在宿主的 level 线程执行，不能从异步任务访问运行时 target，也不能在宿主移除后继续使用它。能力暴露使用第三方集成自己的 NeoForge capability 注册回调；供应器 Part 和 BlockEntity 不需要持有化学处理器工厂或引用具体兼容类。
+回调在宿主的 level 线程执行，不能从异步任务访问运行时 target，也不能在宿主移除后继续使用它。供应器方块与 Part 通过 `AECapabilities.GENERIC_INTERNAL_INV` 暴露返回库存；AppMek 会自动将它适配为化学品 capability，与 EAE、AAE 使用相同路径。不需要另外注册 `Capabilities.CHEMICAL`，也不需要专用化学处理器或工厂。方向限制在通用库存入口检查，返回过滤由库存本身执行。
 
 这次调整替换了尚在开发中的 `DispatchTarget` 专属方法（例如 `pushMeteorite`、`pushAdvancedDirectional`）。使用这些旧方法的集成需要把具体行为移到自己的路由类，并重新编译；旧世界中的已知路由缓存通过上述迁移入口读取。

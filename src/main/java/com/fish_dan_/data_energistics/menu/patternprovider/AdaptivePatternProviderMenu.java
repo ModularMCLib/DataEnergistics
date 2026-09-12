@@ -7,6 +7,8 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.LockCraftingMode;
@@ -39,11 +41,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.shorts.ShortSet;
 import lombok.Getter;
 
-public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderMenuAccessor {
+public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderMenuAccessor, AdaptivePatternProviderToolbarMenu {
 
     private static final String ACTION_SET_PAGE = "set_page";
     private static final String ACTION_SET_FILTERED_IMPORT = "set_filtered_import";
@@ -58,6 +63,8 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     public static final SlotSemantic STORAGE_ROW_2 = SlotSemantics.register("ADAPTIVE_PATTERN_PROVIDER_STORAGE_ROW_2", false);
 
     private final AdaptivePatternProviderHost host;
+    private ItemStack toolbarProviderStack = ItemStack.EMPTY;
+    private ObjectList<AdaptivePatternProviderToolbarAction> toolbarActions = AdaptivePatternProviderToolbarActions.standard();
     @Getter
     private final PatternProviderLogic logic;
     @Getter
@@ -81,8 +88,10 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     @GuiSync(780)
     public int visiblePatternSlots;
     @GuiSync(781)
+    @Getter
     public int pageIndex;
     @GuiSync(782)
+    @Getter
     public int totalPages = 1;
     @GuiSync(783)
     public boolean advancedAeFilteredImport;
@@ -229,11 +238,17 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     }
 
     public void sendSetAdvancedAeFilteredImport(boolean enabled) {
+        if (!hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT)) {
+            return;
+        }
         this.advancedAeFilteredImport = enabled;
         sendClientAction(ACTION_SET_FILTERED_IMPORT, enabled);
     }
 
     public void sendSetResonatingPullEnabled(boolean enabled) {
+        if (!hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.RESONATING_PULL)) {
+            return;
+        }
         this.resonatingPullEnabled = enabled;
         sendClientAction(ACTION_SET_RESONATING_PULL, enabled);
     }
@@ -259,11 +274,32 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
      * Returns the toolbar actions declared by the installed provider registration.
      */
     public ObjectList<AdaptivePatternProviderToolbarAction> getRegisteredToolbarActions() {
-        return AdaptivePatternProviderResolver.getResolvedToolbarActions(getProviderStack());
+        ItemStack providerStack = getProviderStack();
+        if (!ItemStack.matches(toolbarProviderStack, providerStack)) {
+            ObjectArrayList<AdaptivePatternProviderToolbarAction> actions = new ObjectArrayList<>(
+                    AdaptivePatternProviderToolbarActions.standard());
+            ObjectOpenHashSet<ResourceLocation> actionIds = new ObjectOpenHashSet<>();
+            for (var action : actions) {
+                actionIds.add(action.actionId());
+            }
+            for (var action : AdaptivePatternProviderResolver.getResolvedToolbarActions(providerStack)) {
+                if (actionIds.add(action.actionId())) {
+                    actions.add(action);
+                }
+            }
+            toolbarProviderStack = providerStack.copy();
+            toolbarActions = ObjectLists.unmodifiable(actions);
+        }
+        return toolbarActions;
     }
 
     public boolean hasRegisteredToolbarAction(ResourceLocation actionId) {
-        return getRegisteredToolbarActions().stream().anyMatch(action -> action.actionId().equals(actionId));
+        for (var action : getRegisteredToolbarActions()) {
+            if (action.actionId().equals(actionId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isAdvancedAeFilteredImportEnabled() {
@@ -273,6 +309,21 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     @Override
     public boolean dataEnergistics$hasRedstoneTuningCard() {
         return this.hasRedstoneTuningCard;
+    }
+
+    @Override
+    public boolean hasRedstoneTuningCard() {
+        return this.hasRedstoneTuningCard;
+    }
+
+    @Override
+    public int getRedstoneTuningMode() {
+        return this.redstoneTuningMode;
+    }
+
+    @Override
+    public void setRedstoneTuningMode(int ordinal) {
+        dataEnergistics$setRedstoneTuningMode(ordinal);
     }
 
     @Override
@@ -307,18 +358,14 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         syncRedstoneTuningFromHost();
     }
 
-    private void setPage(Integer pageIndex) {
-        if (pageIndex == null) {
-            return;
-        }
-
+    private void setPage(int pageIndex) {
         this.pageIndex = Math.max(0, Math.min(pageIndex, Math.max(0, this.totalPages - 1)));
         updatePatternSlotVisibility();
         broadcastChanges();
     }
 
-    private void setAdvancedAeFilteredImport(Boolean enabled) {
-        if (enabled == null || this.host == null || !this.host.supportsFilteredImportToggle()) {
+    private void setAdvancedAeFilteredImport(boolean enabled) {
+        if (this.host == null || !this.host.supportsFilteredImportToggle() || !hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT)) {
             return;
         }
 
@@ -327,8 +374,8 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         broadcastChanges();
     }
 
-    private void setResonatingPullEnabled(Boolean enabled) {
-        if (enabled == null || this.host == null || !this.host.isResonatingProviderSelected()) {
+    private void setResonatingPullEnabled(boolean enabled) {
+        if (this.host == null || !this.host.isResonatingProviderSelected() || !hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.RESONATING_PULL)) {
             return;
         }
 
@@ -337,7 +384,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         broadcastChanges();
     }
 
-    private void applyRedstoneTuningMode(Integer ordinal) {
+    private void applyRedstoneTuningMode(int ordinal) {
         RedstoneTuningAwareHost tuningHost = getRedstoneTuningHost();
         if (tuningHost == null) {
             return;
@@ -390,10 +437,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         return this.host instanceof RedstoneTuningAwareHost tuningHost ? tuningHost : null;
     }
 
-    private static RedstoneTuningMode redstoneTuningModeFromOrdinal(Integer ordinal) {
-        if (ordinal == null) {
-            throw new IllegalArgumentException("Redstone tuning mode ordinal is required");
-        }
+    private static RedstoneTuningMode redstoneTuningModeFromOrdinal(int ordinal) {
         RedstoneTuningMode[] values = RedstoneTuningMode.values();
         if (ordinal < 0 || ordinal >= values.length) {
             throw new IllegalArgumentException("Invalid redstone tuning mode ordinal: " + ordinal);

@@ -10,8 +10,11 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.Setter;
+
 import java.util.List;
-import java.util.function.Consumer;
 
 public class AecsPullModeButton extends Button implements ITooltip {
 
@@ -22,23 +25,20 @@ public class AecsPullModeButton extends Button implements ITooltip {
     private final String titleKey;
     private final String enabledKey;
     private final String disabledKey;
-    private final Consumer<Boolean> onChange;
+    private final BooleanConsumer onChange;
+    @Setter
     private boolean state;
 
     public AecsPullModeButton(
                               String titleKey,
                               String enabledKey,
                               String disabledKey,
-                              Consumer<Boolean> onChange) {
+                              BooleanConsumer onChange) {
         super(0, 0, ICON_SIZE, ICON_SIZE, Component.empty(), btn -> {}, DEFAULT_NARRATION);
         this.titleKey = titleKey;
         this.enabledKey = enabledKey;
         this.disabledKey = disabledKey;
         this.onChange = onChange;
-    }
-
-    public void setState(boolean state) {
-        this.state = state;
     }
 
     public void setVisibility(boolean visible) {
@@ -75,7 +75,7 @@ public class AecsPullModeButton extends Button implements ITooltip {
 
     @Override
     public List<Component> getTooltipMessage() {
-        return List.of(
+        return ObjectList.of(
                 Component.translatable(this.titleKey),
                 Component.translatable(this.state ? this.enabledKey : this.disabledKey));
     }

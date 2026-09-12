@@ -7,10 +7,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks one public Data Energistics plugin entrypoint discovered during common setup.
+ * Marks one public Data Energistics plugin entrypoint for common or client setup.
  *
  * <p>
- * The annotation carries only class-loading prerequisites. A single plugin can register any number of typed
+ * The annotation carries class-loading prerequisites and the registration phase. A single plugin can register any
+ * number of typed
  * extensions through {@link DataEnergisticsPlugin#register(DataEnergisticsRegistry)} after every required mod is
  * known to be loaded.
  * </p>
@@ -19,6 +20,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface DataEnergisticsEntrypoint {
+
+    /**
+     * Selects the client registration phase. The scanner skips these classes before class loading during
+     * common setup. Client entries implement DataEnergisticsClientPlugin and run during queued client setup.
+     */
+    boolean clientOnly() default false;
 
     /**
      * Mod IDs that must be loaded before the annotated class may be resolved.

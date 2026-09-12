@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
 /** Registers Advanced AE pattern provider variants. */
@@ -20,7 +21,8 @@ public final class AdaptivePatternProviderAdvancedAeRegistration implements Data
                 9,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
                         AdaptivePatternProviderCapabilities.ADVANCED_PATTERN,
-                        AdaptivePatternProviderCapabilities.FILTERED_IMPORT)));
+                        AdaptivePatternProviderCapabilities.FILTERED_IMPORT),
+                AdaptivePatternProviderToolbarActions.FILTERED_IMPORT));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "advanced_ae/extended",
                 AdaptivePatternProviderRegistrationFactory.itemIds(
@@ -28,6 +30,7 @@ public final class AdaptivePatternProviderAdvancedAeRegistration implements Data
                 36,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
                         AdaptivePatternProviderCapabilities.ADVANCED_PATTERN,
-                        AdaptivePatternProviderCapabilities.FILTERED_IMPORT)));
+                        AdaptivePatternProviderCapabilities.FILTERED_IMPORT),
+                AdaptivePatternProviderToolbarActions.FILTERED_IMPORT));
     }
 }

@@ -7,7 +7,6 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -38,10 +37,11 @@ public final class AdaptivePatternProviderRegistrationFactory {
      * Creates a registry-ID matched provider declaration.
      */
     public static AdaptivePatternProviderRegistration fixed(
-                                                             String path,
-                                                             Predicate<ItemStack> matcher,
-                                                             int slotsPerProvider,
-                                                             ObjectSet<ResourceLocation> capabilities) {
+                                                            String path,
+                                                            Predicate<ItemStack> matcher,
+                                                            int slotsPerProvider,
+                                                            ObjectSet<ResourceLocation> capabilities,
+                                                            ResourceLocation... toolbarActionIds) {
         return new AdaptivePatternProviderRegistration(
                 Data_Energistics.id("adaptive_pattern_provider/" + path),
                 providerStack -> {
@@ -61,7 +61,7 @@ public final class AdaptivePatternProviderRegistrationFactory {
                             capabilities);
                 },
                 dispatch(capabilities),
-                toolbarActions(capabilities));
+                toolbarActions(toolbarActionIds));
     }
 
     /**
@@ -84,6 +84,7 @@ public final class AdaptivePatternProviderRegistrationFactory {
 
     private static AdaptivePatternProviderDispatch dispatch(ObjectSet<ResourceLocation> capabilities) {
         return new AdaptivePatternProviderDispatch() {
+
             @Override
             public boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
                 return !capabilities.isEmpty();
@@ -91,30 +92,21 @@ public final class AdaptivePatternProviderRegistrationFactory {
 
             @Override
             public boolean handles(AdaptivePatternProviderDispatchContext context) {
-                return (capabilities.contains(AdaptivePatternProviderCapabilities.ADVANCED_PATTERN)
-                        && context.target().supportsAdvancedDirectional(context.patternDetails()))
-                        || capabilities.contains(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING)
-                        || (capabilities.contains(AdaptivePatternProviderCapabilities.METEORITE)
-                        && context.target().supportsMeteorite(context.patternDetails()))
-                        || (capabilities.contains(AdaptivePatternProviderCapabilities.RESONATING)
-                        && context.target().supportsResonating(context.patternDetails()));
+                return (capabilities.contains(AdaptivePatternProviderCapabilities.ADVANCED_PATTERN) && context.target().supportsAdvancedDirectional(context.patternDetails())) || capabilities.contains(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING) || (capabilities.contains(AdaptivePatternProviderCapabilities.METEORITE) && context.target().supportsMeteorite(context.patternDetails())) || (capabilities.contains(AdaptivePatternProviderCapabilities.RESONATING) && context.target().supportsResonating(context.patternDetails()));
             }
 
             @Override
             public boolean dispatch(AdaptivePatternProviderDispatchContext context) {
-                if (capabilities.contains(AdaptivePatternProviderCapabilities.ADVANCED_PATTERN)
-                        && context.target().supportsAdvancedDirectional(context.patternDetails())) {
+                if (capabilities.contains(AdaptivePatternProviderCapabilities.ADVANCED_PATTERN) && context.target().supportsAdvancedDirectional(context.patternDetails())) {
                     return context.target().pushAdvancedDirectional(context.patternDetails(), context.inputHolder());
                 }
                 if (capabilities.contains(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING)) {
                     return context.target().pushMechanical(context.patternDetails(), context.inputHolder());
                 }
-                if (capabilities.contains(AdaptivePatternProviderCapabilities.METEORITE)
-                        && context.target().supportsMeteorite(context.patternDetails())) {
+                if (capabilities.contains(AdaptivePatternProviderCapabilities.METEORITE) && context.target().supportsMeteorite(context.patternDetails())) {
                     return context.target().pushMeteorite(context.patternDetails(), context.inputHolder());
                 }
-                if (capabilities.contains(AdaptivePatternProviderCapabilities.RESONATING)
-                        && context.target().supportsResonating(context.patternDetails())) {
+                if (capabilities.contains(AdaptivePatternProviderCapabilities.RESONATING) && context.target().supportsResonating(context.patternDetails())) {
                     return context.target().pushResonating(context.patternDetails(), context.inputHolder());
                 }
                 throw new IllegalStateException("Adaptive provider dispatch was called for an unhandled pattern");
@@ -122,15 +114,10 @@ public final class AdaptivePatternProviderRegistrationFactory {
         };
     }
 
-    private static ObjectList<AdaptivePatternProviderToolbarAction> toolbarActions(
-                                                                                   ObjectSet<ResourceLocation> capabilities) {
+    private static ObjectList<AdaptivePatternProviderToolbarAction> toolbarActions(ResourceLocation[] actionIds) {
         ObjectArrayList<AdaptivePatternProviderToolbarAction> actions = new ObjectArrayList<>();
-        actions.add(new AdaptivePatternProviderToolbarAction(AdaptivePatternProviderToolbarActions.REDSTONE_TUNING));
-        if (capabilities.contains(AdaptivePatternProviderCapabilities.FILTERED_IMPORT)) {
-            actions.add(new AdaptivePatternProviderToolbarAction(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT));
-        }
-        if (capabilities.contains(AdaptivePatternProviderCapabilities.RESONATING)) {
-            actions.add(new AdaptivePatternProviderToolbarAction(AdaptivePatternProviderToolbarActions.RESONATING_PULL));
+        for (ResourceLocation actionId : actionIds) {
+            actions.add(new AdaptivePatternProviderToolbarAction(actionId));
         }
         return ObjectLists.unmodifiable(actions);
     }

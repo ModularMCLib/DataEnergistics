@@ -1,17 +1,15 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
+import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
+import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarContext;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
-import com.fish_dan_.data_energistics.client.widget.AecsPullModeButton;
-import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
-import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
+import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.LockCraftingMode;
-import appeng.api.config.Settings;
-import appeng.api.config.YesNo;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
 import appeng.api.upgrades.Upgrades;
@@ -21,14 +19,10 @@ import appeng.client.gui.ICompositeWidget;
 import appeng.client.gui.Icon;
 import appeng.client.gui.Tooltip;
 import appeng.client.gui.style.ScreenStyle;
-import appeng.client.gui.widgets.ServerSettingToggleButton;
-import appeng.client.gui.widgets.ToggleButton;
 import appeng.client.gui.widgets.ToolboxPanel;
 import appeng.client.gui.widgets.UpgradesPanel;
 import appeng.core.localization.GuiText;
 import appeng.core.localization.InGameTooltip;
-import appeng.core.network.ServerboundPacket;
-import appeng.core.network.serverbound.ConfigButtonPacket;
 import appeng.menu.SlotSemantics;
 import appeng.menu.slot.AppEngSlot;
 
@@ -38,49 +32,37 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import net.neoforged.neoforge.network.PacketDistributor;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import lombok.Getter;
+import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternProviderMenu> {
 
     private static final int HIDDEN_SLOT_COORD = -9999;
 
-    private final ToggleButton previousPageButton;
-    private final ToggleButton nextPageButton;
-    private final ToggleButton showInPatternAccessTerminalButton;
-    private final ServerSettingToggleButton<YesNo> blockingModeButton;
-    private final ServerSettingToggleButton<LockCraftingMode> lockCraftingModeButton;
-    private final DataExtractorToggleButton filteredImportButton;
-    private final AecsPullModeButton resonatingPullButton;
-    private final PatternProviderRedstoneTuningButton redstoneTuningButton;
+    private final Object2ObjectLinkedOpenHashMap<ResourceLocation, AdaptivePatternProviderToolbarButton> toolbarButtons = new Object2ObjectLinkedOpenHashMap<>();
+    private ObjectList<AdaptivePatternProviderToolbarAction> toolbarActions = ObjectList.of();
+    private final ObjectOpenHashSet<ResourceLocation> declaredToolbarActions = new ObjectOpenHashSet<>();
     private final AdaptivePatternProviderLockReason lockReason;
-    private final List<Slot> duplicateUpgradeSlots;
-    private final List<Slot> duplicateToolboxSlots;
+    private final ObjectList<Slot> duplicateUpgradeSlots;
+    private final ObjectList<Slot> duplicateToolboxSlots;
 
     public AdaptivePatternProviderScreen(AdaptivePatternProviderMenu menu, Inventory playerInventory, Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
 
-        this.blockingModeButton = new ServerSettingToggleButton<>(Settings.BLOCKING_MODE, YesNo.NO);
-        this.addToLeftToolbar(this.blockingModeButton);
-        this.lockCraftingModeButton = new ServerSettingToggleButton<>(Settings.LOCK_CRAFTING_MODE, LockCraftingMode.NONE);
-        this.addToLeftToolbar(this.lockCraftingModeButton);
         this.widgets.addOpenPriorityButton();
-        this.showInPatternAccessTerminalButton = new ToggleButton(
-                Icon.PATTERN_ACCESS_SHOW,
-                Icon.PATTERN_ACCESS_HIDE,
-                GuiText.PatternAccessTerminal.text(),
-                GuiText.PatternAccessTerminalHint.text(),
-                btn -> this.selectNextPatternProviderMode());
-        this.addToLeftToolbar(this.showInPatternAccessTerminalButton);
         this.lockReason = new AdaptivePatternProviderLockReason(this);
         this.widgets.add("lockReason", this.lockReason);
 
@@ -94,45 +76,13 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
             this.widgets.add("toolbox", new ToolboxPanel(style, menu.getToolbox().getName()));
         }
 
-        this.previousPageButton = new ToggleButton(
-                Icon.BACK,
-                Icon.BACK,
-                Component.translatable("screen.data_energistics.page.previous"),
-                Component.translatable("screen.data_energistics.page.previous"),
-                this::goPreviousPage);
-        this.nextPageButton = new ToggleButton(
-                Icon.ARROW_RIGHT,
-                Icon.ARROW_RIGHT,
-                Component.translatable("screen.data_energistics.page.next"),
-                Component.translatable("screen.data_energistics.page.next"),
-                this::goNextPage);
-        this.addToLeftToolbar(this.previousPageButton);
-        this.addToLeftToolbar(this.nextPageButton);
-
-        this.filteredImportButton = new DataExtractorToggleButton(
-                Icon.FILTER_ON_EXTRACT_ENABLED,
-                Icon.FILTER_ON_EXTRACT_DISABLED,
-                "button.data_energistics.adaptive_pattern_provider.filtered_import",
-                "button.data_energistics.adaptive_pattern_provider.filtered_import.enabled",
-                "button.data_energistics.adaptive_pattern_provider.filtered_import.disabled",
-                this::setFilteredImport);
-        if (menu.hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT)) {
-            this.addToLeftToolbar(this.filteredImportButton);
+        var context = new AdaptivePatternProviderToolbarContext(menu, this::isHandlingRightClick);
+        for (var entry : AdaptivePatternProviderToolbarFactories.entries()) {
+            var binding = entry.factory().apply(context);
+            this.toolbarButtons.put(entry.actionId(), binding);
+            this.addToLeftToolbar(binding.button());
         }
-
-        this.resonatingPullButton = new AecsPullModeButton(
-                "button.data_energistics.adaptive_pattern_provider.resonating_pull",
-                "button.data_energistics.adaptive_pattern_provider.resonating_pull.enabled",
-                "button.data_energistics.adaptive_pattern_provider.resonating_pull.disabled",
-                this::setResonatingPull);
-        if (menu.hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.RESONATING_PULL)) {
-            this.addToLeftToolbar(this.resonatingPullButton);
-        }
-
-        this.redstoneTuningButton = new PatternProviderRedstoneTuningButton(menu);
-        if (menu.hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.REDSTONE_TUNING)) {
-            this.addToLeftToolbar(this.redstoneTuningButton);
-        }
+        synchronizeToolbar();
     }
 
     @Override
@@ -143,27 +93,10 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
 
     @Override
     protected void updateBeforeRender() {
+        synchronizeToolbar();
         super.updateBeforeRender();
 
         this.lockReason.setVisible(this.menu.getLockCraftingMode() != LockCraftingMode.NONE);
-        this.blockingModeButton.set(this.menu.getBlockingMode());
-        this.lockCraftingModeButton.set(this.menu.getLockCraftingMode());
-        this.showInPatternAccessTerminalButton.setState(this.menu.getShowInAccessTerminal() == YesNo.YES);
-
-        boolean multiplePages = this.menu.totalPages > 1;
-        this.previousPageButton.visible = multiplePages;
-        this.nextPageButton.visible = multiplePages;
-        this.previousPageButton.active = multiplePages && this.menu.pageIndex > 0;
-        this.nextPageButton.active = multiplePages && this.menu.pageIndex + 1 < this.menu.totalPages;
-
-        boolean showFilteredImport = this.menu.isAdvancedAeProviderSelected();
-        this.filteredImportButton.visible = showFilteredImport;
-        this.filteredImportButton.active = showFilteredImport;
-        this.filteredImportButton.setState(this.menu.isAdvancedAeFilteredImportEnabled());
-
-        boolean showResonatingPull = this.menu.isResonatingProviderSelected();
-        this.resonatingPullButton.setVisibility(showResonatingPull);
-        this.resonatingPullButton.setState(this.menu.isResonatingPullEnabled());
 
         this.setTextContent("dialog_title",
                 Component.translatable("block.data_energistics.adaptive_pattern_provider"));
@@ -171,7 +104,23 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
                 "screen.data_energistics.page",
                 this.menu.totalPages <= 0 ? 1 : this.menu.pageIndex + 1,
                 Math.max(1, this.menu.totalPages)));
-        this.redstoneTuningButton.syncFromMenu();
+    }
+
+    private void synchronizeToolbar() {
+        var actions = this.menu.getRegisteredToolbarActions();
+        if (actions != this.toolbarActions) {
+            this.declaredToolbarActions.clear();
+            for (var action : actions) {
+                if (!this.toolbarButtons.containsKey(action.actionId())) {
+                    throw new IllegalStateException("No client factory registered for adaptive toolbar action " + action.actionId());
+                }
+                this.declaredToolbarActions.add(action.actionId());
+            }
+            this.toolbarActions = actions;
+        }
+        for (var entry : this.toolbarButtons.object2ObjectEntrySet()) {
+            entry.getValue().synchronize(this.declaredToolbarActions.contains(entry.getKey()));
+        }
     }
 
     @Override
@@ -189,32 +138,8 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
         super.renderSlot(guiGraphics, slot);
     }
 
-    private void goPreviousPage(boolean ignored) {
-        this.menu.sendSetPage(this.menu.pageIndex - 1);
-    }
-
-    private void goNextPage(boolean ignored) {
-        this.menu.sendSetPage(this.menu.pageIndex + 1);
-    }
-
-    private void setFilteredImport(boolean enabled) {
-        this.filteredImportButton.setState(enabled);
-        this.menu.sendSetAdvancedAeFilteredImport(enabled);
-    }
-
-    private void setResonatingPull(boolean enabled) {
-        this.resonatingPullButton.setState(enabled);
-        this.menu.sendSetResonatingPullEnabled(enabled);
-    }
-
-    private void selectNextPatternProviderMode() {
-        boolean backwards = this.isHandlingRightClick();
-        ServerboundPacket message = new ConfigButtonPacket(Settings.PATTERN_ACCESS_TERMINAL, backwards);
-        PacketDistributor.sendToServer(message);
-    }
-
     private List<Component> getCompatibleUpgrades() {
-        ArrayList<Component> list = new ArrayList<>();
+        ObjectArrayList<Component> list = new ObjectArrayList<>();
         list.add(GuiText.CompatibleUpgrades.text());
         list.addAll(Upgrades.getTooltipLinesForMachine(this.menu.getUpgrades().getUpgradableItem()));
         return list;
@@ -248,15 +173,16 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
     }
 
     private static SlotBuckets splitUniqueSlots(List<Slot> slots) {
-        Map<String, Slot> uniqueByBackingSlot = new LinkedHashMap<>();
-        List<Slot> duplicates = new ArrayList<>();
+        Object2ObjectLinkedOpenHashMap<String, Slot> uniqueByBackingSlot = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectArrayList<Slot> duplicates = new ObjectArrayList<>();
         for (var slot : slots) {
             String key = System.identityHashCode(slot.container) + ":" + slot.getContainerSlot();
             if (uniqueByBackingSlot.putIfAbsent(key, slot) != null) {
                 duplicates.add(slot);
             }
         }
-        return new SlotBuckets(List.copyOf(uniqueByBackingSlot.values()), List.copyOf(duplicates));
+        return new SlotBuckets(ObjectLists.unmodifiable(new ObjectArrayList<>(uniqueByBackingSlot.values())),
+                ObjectLists.unmodifiable(duplicates));
     }
 
     private static void setSlotPosition(Slot slot, int x, int y) {
@@ -264,11 +190,14 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
         slot.y = y;
     }
 
-    private record SlotBuckets(List<Slot> unique, List<Slot> duplicates) {}
+    private record SlotBuckets(ObjectList<Slot> unique, ObjectList<Slot> duplicates) {
+    }
 
     private static final class AdaptivePatternProviderLockReason implements ICompositeWidget {
 
         private final AdaptivePatternProviderScreen screen;
+        @Setter
+        @Getter
         private boolean visible;
         private int x;
         private int y;
@@ -282,18 +211,11 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
             this.y = position.getY();
         }
 
-        public void setSize(int width, int height) {}
+        public void setSize(int width, int height) {
+        }
 
         public Rect2i getBounds() {
             return new Rect2i(this.x, this.y, 126, 16);
-        }
-
-        public boolean isVisible() {
-            return this.visible;
-        }
-
-        public void setVisible(boolean visible) {
-            this.visible = visible;
         }
 
         public void drawForegroundLayer(GuiGraphics guiGraphics, Rect2i bounds, Point mouse) {

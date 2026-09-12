@@ -70,3 +70,11 @@ public final class ExampleDataEnergisticsPlugin implements DataEnergisticsPlugin
 `DataEnergisticsRegistry` 和各 facet 仅在 `register` 回调中有效。不要把它们保存到静态字段、实例字段、lambda 延迟任务或服务器启动后的缓存中。注册结束后，Data Energistics 发布的是复制并冻结后的运行时值，而不是一个可继续修改的 registrar。
 
 可选依赖的入口写法见[可选模组加载](optional-mod-loading.md)。
+
+## 客户端注册阶段
+
+客户端扩展使用同一个 `@DataEnergisticsEntrypoint`，设置 `clientOnly = true`，并实现 `DataEnergisticsClientPlugin`。回调接收 `DataEnergisticsClientRegistry`，目前提供 `adaptivePatternProviderToolbar()`。
+
+公共扫描器在加载类之前根据 annotation metadata 跳过客户端入口；客户端排队初始化阶段才构造这些入口。`requiredMods`、public 无参构造器、确定性发现顺序和插件事务隔离仍然适用。原有入口默认 `clientOnly = false`，继续实现 `DataEnergisticsPlugin`。
+
+不要在 common 入口中引用客户端 widget 或按钮工厂。common 入口只声明按钮动作 ID，client 入口负责工厂及显示同步。完整示例见[Adaptive 工具栏注册](../adaptive-pattern-provider/toolbar-registration.md)。

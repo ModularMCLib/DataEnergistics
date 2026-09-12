@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
 /** Registers AE2CS pattern provider variants. */
@@ -24,7 +25,8 @@ public final class AdaptivePatternProviderAe2CsRegistration implements DataEnerg
                         "ae2cs:resonating_pattern_provider", "ae2cs:resonating_pattern_provider_part"),
                 9,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
-                        AdaptivePatternProviderCapabilities.RESONATING)));
+                        AdaptivePatternProviderCapabilities.RESONATING),
+                AdaptivePatternProviderToolbarActions.RESONATING_PULL));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "ae2cs/extended_resonating",
                 AdaptivePatternProviderRegistrationFactory.itemIds(
@@ -34,7 +36,8 @@ public final class AdaptivePatternProviderAe2CsRegistration implements DataEnerg
                         "ae2cs:ex_resonating_pattern_provider_part"),
                 36,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
-                        AdaptivePatternProviderCapabilities.RESONATING)));
+                        AdaptivePatternProviderCapabilities.RESONATING),
+                AdaptivePatternProviderToolbarActions.RESONATING_PULL));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "ae2cs/meteorite",
                 AdaptivePatternProviderRegistrationFactory.itemIds(

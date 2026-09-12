@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import appeng.api.stacks.AEItemKey;
 
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 AdaptivePatternProviderRegistration registration = new AdaptivePatternProviderRegistration(
         ResourceLocation.fromNamespaceAndPath("example_mod", "adaptive_provider"),
@@ -29,7 +29,7 @@ AdaptivePatternProviderRegistration registration = new AdaptivePatternProviderRe
                     icon,
                     terminalIcon,
                     icon.getHoverName(),
-                    Set.of());
+                    new ObjectOpenHashSet<>());
         });
 
 registry.adaptivePatternProviders().register(registration);
@@ -52,3 +52,5 @@ registration ID 必须稳定且全局唯一，建议使用集成模组自己的 
 definition 抛出的运行时异常会被记录并隔离，resolver 会继续检查其他 definitions。普通未匹配必须返回 `null`，不要用异常表达。
 
 profile 字段和 capability 约定见[Profile 与 Capability](profiles-and-capabilities.md)。
+
+Provider 专属按钮通过 registration 的 `toolbarActions` 声明，并通过客户端入口注册对应工厂；见[左侧工具栏注册](toolbar-registration.md)。

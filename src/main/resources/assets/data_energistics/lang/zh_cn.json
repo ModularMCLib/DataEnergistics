@@ -734,7 +734,7 @@
 	"item.data_energistics.data_distribution_connector.tower_missing": "已绑定的均分塔不存在、未加载或不在当前维度",
 	"item.data_energistics.data_distribution_connector.provider_missing": "已绑定的自适应样板供应器不存在、未加载或不在当前维度",
 	"item.data_energistics.data_distribution_connector.provider_invalid": "绑定目标不是已注册的自适应样板供应器",
-	"item.data_energistics.data_distribution_connector.unbound": "请先潜行右键一个处于点对点模式的均分塔",
+	"item.data_energistics.data_distribution_connector.unbound": "请先潜行右键一个处于点对点模式的均分塔",`n`t"item.data_energistics.data_distribution_connector.bound_target": "已绑定目标：%s 面：%s",`n`t"item.data_energistics.data_distribution_connector.mode_changed": "连接器模式：%s",`n`t"item.data_energistics.data_distribution_connector.selection_changed": "当前绑定目标：%s",
 	"item.data_energistics.data_dust": "数据晶粉",
 	"item.data_energistics.data_energy_cell": "数据能量元件",
 	"item.data_energistics.data_flow_component_housing": "数据流元件外壳",

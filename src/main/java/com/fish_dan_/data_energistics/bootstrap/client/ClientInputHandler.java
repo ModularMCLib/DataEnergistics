@@ -129,10 +129,6 @@ final class ClientInputHandler {
 
         boolean controlDown = Screen.hasControlDown();
         boolean altDown = Screen.hasAltDown();
-        if (controlDown == altDown) {
-            return;
-        }
-
         ItemStack mainHand = minecraft.player.getMainHandItem();
         ItemStack offHand = minecraft.player.getOffhandItem();
         boolean useConnectorMain = DataDistributionConnectorItem.isConnectorStack(mainHand);
@@ -144,6 +140,9 @@ final class ClientInputHandler {
                         delta < 0, useConnectorOff, controlDown, Screen.hasShiftDown()));
                 event.setCanceled(true);
             }
+            return;
+        }
+        if (controlDown == altDown) {
             return;
         }
         boolean useMainHand = DigitalStorageDepotBlockItem.isDepotStack(mainHand);

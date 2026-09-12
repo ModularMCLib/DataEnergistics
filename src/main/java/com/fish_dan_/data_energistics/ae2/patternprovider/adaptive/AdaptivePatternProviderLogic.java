@@ -303,6 +303,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return List.copyOf(this.connectorTargets);
     }
 
+    public BlockPos hostPosition() {
+        return this.host.getBlockEntity().getBlockPos();
+    }
+
     public boolean hasConnectorBindings() {
         return !this.connectorTargets.isEmpty();
     }

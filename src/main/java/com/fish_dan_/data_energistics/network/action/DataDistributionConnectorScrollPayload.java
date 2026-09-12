@@ -50,13 +50,15 @@ public record DataDistributionConnectorScrollPayload(boolean reverse, boolean of
                 AdaptiveProviderConnectorMode mode = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT
                         ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
                 logic.setConnectorMode(mode);
-                player.displayClientMessage(Component.literal("连接器模式: " + mode.name()), true);
+                player.displayClientMessage(Component.translatable(
+                        "item.data_energistics.data_distribution_connector.mode_changed", mode.name()), true);
             } else if (payload.shift() && logic != null) {
                 int count = logic.connectorTargets().size();
                 if (count > 0) {
                     int index = Math.floorMod(data.selectedBindingIndex() + (payload.reverse() ? -1 : 1), count);
                     stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), data.withSelectedBindingIndex(index));
-                    player.displayClientMessage(Component.literal("连接器目标: " + (index + 1) + "/" + count), true);
+                    player.displayClientMessage(Component.translatable(
+                            "item.data_energistics.data_distribution_connector.selection_changed", (index + 1) + "/" + count), true);
                 }
             }
         });

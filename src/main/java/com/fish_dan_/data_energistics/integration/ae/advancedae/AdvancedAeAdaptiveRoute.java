@@ -45,6 +45,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
 
     private static final String NBT_SEND_LIST = "adaptive_advanced_send_list";
     private static final String NBT_SEND_DIRECTION = "adaptive_advanced_send_direction";
+    private static final String NBT_SEND_POSITION = "adaptive_advanced_send_position";
     private static final String NBT_DIRECTION_MAP = "adaptive_advanced_direction_map";
 
     @Override
@@ -148,6 +149,8 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         } else {
             tag.remove(NBT_SEND_DIRECTION);
         }
+        if (state.sendPosition != null) tag.putLong(NBT_SEND_POSITION, state.sendPosition.asLong());
+        else tag.remove(NBT_SEND_POSITION);
 
         ListTag directionMap = new ListTag();
         for (var entry : state.directionMap.entrySet()) {
@@ -183,6 +186,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         if (tag.contains(NBT_SEND_DIRECTION)) {
             state.sendDirection = Direction.from3DDataValue(tag.getByte(NBT_SEND_DIRECTION));
         }
+        state.sendPosition = tag.contains(NBT_SEND_POSITION) ? BlockPos.of(tag.getLong(NBT_SEND_POSITION)) : null;
         ListTag directionMap = tag.getList(NBT_DIRECTION_MAP, Tag.TAG_COMPOUND);
         for (int index = 0; index < directionMap.size(); index++) {
             CompoundTag value = directionMap.getCompound(index);
@@ -257,7 +261,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
             PatternProviderTarget adapter = targetsByKey.get(what);
             long inserted = adapter == null ? 0 : adapter.insert(what, amount, Actionable.MODULATE);
             if (inserted < amount) {
-                queueRemainder(target, what, amount - inserted, primaryDirection, inputDirections.get(what));
+            queueRemainder(target, what, amount - inserted, adjacentPos, primaryDirection, inputDirections.get(what));
             }
         });
 
@@ -292,6 +296,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
                                        AdaptivePatternProviderDispatchTarget target,
                                        AEKey key,
                                        long amount,
+                                       BlockPos position,
                                        Direction primaryDirection,
                                        @Nullable Direction inputSide) {
         if (key == null || amount <= 0) {
@@ -301,6 +306,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         if (state.sendDirection == null) {
             state.sendDirection = primaryDirection;
         }
+        state.sendPosition = position;
         state.sendList.addTo(key, amount);
         state.directionMap.put(key, inputSide);
         target.alertDevice();
@@ -310,6 +316,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         State state = target.routeState(State.class, State::new);
         if (state.sendList.isEmpty()) {
             state.sendDirection = null;
+            state.sendPosition = null;
             state.directionMap.clear();
             return false;
         }
@@ -320,7 +327,8 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         if (level == null) {
             return false;
         }
-        BlockPos adjacentPos = target.providerPos().relative(state.sendDirection);
+        BlockPos adjacentPos = state.sendPosition != null
+                ? state.sendPosition : target.providerPos().relative(state.sendDirection);
         Direction defaultSide = state.sendDirection.getOpposite();
         boolean changed = false;
         var iterator = state.sendList.object2LongEntrySet().iterator();
@@ -352,6 +360,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         }
         if (state.sendList.isEmpty()) {
             state.sendDirection = null;
+            state.sendPosition = null;
             state.directionMap.clear();
         }
         if (changed) {
@@ -380,5 +389,6 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         private final Object2LongOpenHashMap<AEKey> sendList = new Object2LongOpenHashMap<>();
         private final Object2ObjectOpenHashMap<AEKey, Direction> directionMap = new Object2ObjectOpenHashMap<>();
         private @Nullable Direction sendDirection;
+        private @Nullable BlockPos sendPosition;
     }
 }

@@ -23,6 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -105,13 +106,13 @@ public final class AdaptiveReusableCraftingState {
     }
 
     public List<Slot> slots() {
-        return List.copyOf(slots.values());
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(slots.values()));
     }
 
     /** Native state remains queryable after pattern or provider mode changes, but not after its source handoff. */
     public ReusableCraftingCustodyCensus reusableCustody(String cpuOwner, boolean sourceVisible) {
         if (!sourceVisible || this.handoffPrepared) {
-            return this.custodyCoverage.census(cpuOwner, false, List.of());
+            return this.custodyCoverage.census(cpuOwner, false, ObjectArrayList.of());
         }
         List<ReusableCraftingCustodyCensus> sources = new ObjectArrayList<>(this.slots.size());
         for (Slot slot : this.slots.values()) {
@@ -243,7 +244,7 @@ public final class AdaptiveReusableCraftingState {
             reserved = Math.addExact(reserved, view.accepted() - view.completed() - view.cancelled());
             held = view.heldTools();
         }
-        List<SlotStack> result = new ObjectArrayList<>();
+        ObjectArrayList<SlotStack> result = new ObjectArrayList<>();
         for (var input : request.inputs()) {
             if (input.tool().isEmpty()) {
                 continue;
@@ -296,7 +297,7 @@ public final class AdaptiveReusableCraftingState {
                 }
             }
         }
-        return List.copyOf(result);
+        return ObjectLists.unmodifiable(result);
     }
 
     private static long subtractCapacity(long needed, long units, long uses) {

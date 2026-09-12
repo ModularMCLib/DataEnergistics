@@ -121,7 +121,7 @@ public final class DataEnergisticsRegistrySnapshot {
     /**
      * @return adaptive provider declarations in deterministic plugin and declaration order
      */
-    public List<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations() {
+    public ObjectList<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations() {
         return this.adaptivePatternProviderRegistrations;
     }
 

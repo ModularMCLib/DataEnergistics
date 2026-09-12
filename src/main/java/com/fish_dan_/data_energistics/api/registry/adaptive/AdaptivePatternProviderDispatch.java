@@ -2,15 +2,14 @@ package com.fish_dan_.data_energistics.api.registry.adaptive;
 
 import appeng.api.crafting.IPatternDetails;
 
-import org.jspecify.annotations.Nullable;
-
 /**
  * Dispatch extension for one adaptive pattern-provider registration.
  *
- * <p>The callback is evaluated before the normal AE2 provider route. Returning
- * {@code null} leaves the pattern to the next route; returning a boolean claims
- * the pattern and supplies its result. This keeps provider-specific dispatch
- * out of the adaptive provider's central type checks.</p>
+ * <p>
+ * The callback is evaluated before the normal AE2 provider route. The
+ * separate applicability check keeps the result primitive while still
+ * distinguishing an unclaimed pattern from a failed dispatch.
+ * </p>
  */
 @FunctionalInterface
 public interface AdaptivePatternProviderDispatch {
@@ -27,11 +26,14 @@ public interface AdaptivePatternProviderDispatch {
     }
 
     /**
-     * Attempts to dispatch one pattern.
-     *
-     * @param context immutable request and registered target operations
-     * @return {@code null} when this route does not claim the pattern
+     * Checks whether this route claims one pattern.
      */
-    @Nullable
-    Boolean dispatch(AdaptivePatternProviderDispatchContext context);
+    default boolean handles(AdaptivePatternProviderDispatchContext context) {
+        return false;
+    }
+
+    /**
+     * Attempts to dispatch one claimed pattern.
+     */
+    boolean dispatch(AdaptivePatternProviderDispatchContext context);
 }

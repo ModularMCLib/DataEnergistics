@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.integration.ae2cs.capacity;
+package com.fish_dan_.data_energistics.integration.ae.ae2cs.capacity;
 
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;

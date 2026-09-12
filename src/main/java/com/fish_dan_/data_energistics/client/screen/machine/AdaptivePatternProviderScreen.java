@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.widget.AecsPullModeButton;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
 import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.LockCraftingMode;

@@ -19,9 +19,9 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.AppendReceipt;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
@@ -108,7 +108,11 @@ import net.minecraft.world.level.block.state.properties.Property;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
@@ -116,10 +120,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -162,10 +163,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private int localRoundRobinIndex;
     private final Object2LongOpenHashMap<AEKey> craftedContents = new Object2LongOpenHashMap<>();
     private final Object2LongOpenHashMap<AEKey> advancedDirectionalSendList = new Object2LongOpenHashMap<>();
-    private final HashMap<AEKey, Direction> advancedDirectionalMap = new HashMap<>();
-    private final List<ItemStack> patternSlotOverflow = new ArrayList<>();
-    private final Set<AEKey> trackedCrafts = new HashSet<>();
-    private final HashSet<AEKey> outputCache = new HashSet<>();
+    private final Object2ObjectOpenHashMap<AEKey, Direction> advancedDirectionalMap = new Object2ObjectOpenHashMap<>();
+    private final ObjectArrayList<ItemStack> patternSlotOverflow = new ObjectArrayList<>();
+    private final ObjectSet<AEKey> trackedCrafts = new ObjectOpenHashSet<>();
+    private final ObjectSet<AEKey> outputCache = new ObjectOpenHashSet<>();
     private @Nullable IStackWatcher craftingWatcher;
     private @Nullable Direction advancedSendDirection;
     private int worksInRound;
@@ -445,7 +446,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private List<ItemStack> copyPatternInventory() {
-        List<ItemStack> copiedInventory = new ArrayList<>(this.patternInventory.size());
+        ObjectArrayList<ItemStack> copiedInventory = new ObjectArrayList<>(this.patternInventory.size());
         for (int slot = 0; slot < this.patternInventory.size(); slot++) {
             copiedInventory.add(this.patternInventory.getStackInSlot(slot).copy());
         }
@@ -453,7 +454,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private static List<ItemStack> copyPatternStacks(List<ItemStack> stacks) {
-        List<ItemStack> copiedStacks = new ArrayList<>(stacks.size());
+        ObjectArrayList<ItemStack> copiedStacks = new ObjectArrayList<>(stacks.size());
         for (ItemStack stack : stacks) {
             copiedStacks.add(stack.copy());
         }
@@ -474,7 +475,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private static void moveHiddenPatternSlotsToVisibleOrOverflow(List<ItemStack> plannedInventory, List<ItemStack> plannedOverflow, int configuredSlotCount) {
-        List<ItemStack> hiddenPatterns = new ArrayList<>();
+        ObjectArrayList<ItemStack> hiddenPatterns = new ObjectArrayList<>();
         for (int slot = configuredSlotCount; slot < plannedInventory.size(); slot++) {
             ItemStack stack = plannedInventory.get(slot);
             if (!stack.isEmpty()) {
@@ -695,14 +696,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         if (!reusableNativeAvailable() || this.host.getBlockEntity().getLevel() != level || !(pattern instanceof IMolecularAssemblerSupportedPattern)) {
             return List.of();
         }
-        List<Target> targets = new ObjectArrayList<>();
+        ObjectArrayList<Target> targets = new ObjectArrayList<>();
         for (var entry : this.nativePatternSlots.int2ObjectEntrySet()) {
             if (entry.getValue().pattern().getDefinition().equals(pattern.getDefinition())) {
                 String identity = this.reusableCrafting.targetIdentity(entry.getIntKey());
                 targets.add(new Target(identity, CountedCraftingTarget.route(identity), Optional.of(AdaptiveReusableCraftingState.MODE)));
             }
         }
-        return List.copyOf(targets);
+        return ObjectLists.unmodifiable(targets);
     }
 
     @Override
@@ -948,9 +949,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     @Override
     public boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
-        if (resolvedRegistration() != null) {
-            Boolean dispatched = dispatchRegisteredPattern(patternDetails, inputHolder);
-            if (dispatched != null) {
+        AdaptivePatternProviderRegistration registration = resolvedRegistration();
+        if (registration != null) {
+            AdaptivePatternProviderDispatchContext context = createDispatchContext(registration, patternDetails, inputHolder);
+            if (registration.dispatch().handles(context)) {
+                boolean dispatched = registration.dispatch().dispatch(context);
                 if (dispatched) {
                     dataEnergistics$afterPushPattern();
                 }
@@ -1008,7 +1011,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
 
         KeyCounter[] remaining = copyKeyCounters(inputHolder);
-        ArrayList<MarkedInput> markedInputs = new ArrayList<>();
+        ObjectArrayList<MarkedInput> markedInputs = new ObjectArrayList<>();
         List<GenericStack> sparseInputs = getSparseInputs(patternDetails);
 
         for (int sparseIndex = 0; sparseIndex < sparseInputs.size(); sparseIndex++) {
@@ -1049,7 +1052,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 return false;
             }
 
-            ArrayList<FallbackTarget> candidates = new ArrayList<>();
+            ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
             for (Direction side : getActiveSidesFiltered()) {
                 BlockPos adjacentPos = blockEntity.getBlockPos().relative(side);
                 PatternProviderTarget target = getExternalTarget(level, adjacentPos, side.getOpposite());
@@ -1124,7 +1127,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
 
         KeyCounter[] remaining = copyKeyCounters(inputHolder);
-        ArrayList<MarkedInput> markedInputs = new ArrayList<>();
+        ObjectArrayList<MarkedInput> markedInputs = new ObjectArrayList<>();
         List<GenericStack> sparseInputs = getSparseInputs(patternDetails);
         for (int sparseIndex = 0; sparseIndex < sparseInputs.size(); sparseIndex++) {
             GenericStack sparseInput = sparseInputs.get(sparseIndex);
@@ -1157,7 +1160,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (!patternDetails.supportsPushInputsToExternalInventory()) {
                 return false;
             }
-            ArrayList<FallbackTarget> candidates = new ArrayList<>();
+            ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
             for (Direction side : getActiveSidesFiltered()) {
                 BlockPos adjacentPos = blockEntity.getBlockPos().relative(side);
                 PatternProviderTarget target = getExternalTarget(level, adjacentPos, side.getOpposite());
@@ -1218,60 +1221,67 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return profile != null && profile.supports(capability);
     }
 
-    private @Nullable Boolean dispatchRegisteredPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
-        AdaptivePatternProviderRegistration registration = resolvedRegistration();
-        if (registration == null) {
-            return null;
-        }
+    private AdaptivePatternProviderDispatchContext createDispatchContext(
+                                                                         AdaptivePatternProviderRegistration registration,
+                                                                         IPatternDetails patternDetails,
+                                                                         KeyCounter[] inputHolder) {
         AdaptivePatternProviderProfile profile = registration.definition().resolve(
                 ((AdaptivePatternProviderHost) this.host).getProviderStack());
         if (profile == null) {
-            return null;
+            throw new IllegalStateException(
+                    "Adaptive pattern provider registration stopped resolving its installed stack: " + registration.registrationId());
         }
         AdaptivePatternProviderDispatchTarget target = new AdaptivePatternProviderDispatchTarget() {
+
             @Override
-            public Boolean pushDefault(IPatternDetails details, KeyCounter[] inputs) {
+            public boolean pushDefault(IPatternDetails details, KeyCounter[] inputs) {
                 return pushDefaultPattern(details, inputs);
             }
 
             @Override
-            public Boolean pushAdvancedDirectional(IPatternDetails details, KeyCounter[] inputs) {
-                if (!isAdvancedAeDirectionalPattern(details)) {
-                    return null;
-                }
+            public boolean supportsAdvancedDirectional(IPatternDetails details) {
+                return isAdvancedAeDirectionalPattern(details);
+            }
+
+            @Override
+            public boolean pushAdvancedDirectional(IPatternDetails details, KeyCounter[] inputs) {
                 return pushAdvancedAeDirectionalPattern(details, inputs, false);
             }
 
             @Override
-            public Boolean pushMechanical(IPatternDetails details, KeyCounter[] inputs) {
+            public boolean pushMechanical(IPatternDetails details, KeyCounter[] inputs) {
                 if (!ModFlags.isAppliedCreateMechanicalProviderSupportLoaded()) {
-                    return null;
+                    return false;
                 }
                 return pushAppliedCreateMechanicalPattern(details, inputs);
             }
 
             @Override
-            public Boolean pushMeteorite(IPatternDetails details, KeyCounter[] inputs) {
-                if (!(details instanceof IMolecularAssemblerSupportedPattern molecular)) {
-                    return null;
-                }
-                return pushMeteoritePattern(molecular, inputs);
+            public boolean supportsMeteorite(IPatternDetails details) {
+                return details instanceof IMolecularAssemblerSupportedPattern;
             }
 
             @Override
-            public Boolean pushResonating(IPatternDetails details, KeyCounter[] inputs) {
-                if (!isResonatingPatternDetails(details)) {
-                    return null;
-                }
+            public boolean pushMeteorite(IPatternDetails details, KeyCounter[] inputs) {
+                return pushMeteoritePattern((IMolecularAssemblerSupportedPattern) details, inputs);
+            }
+
+            @Override
+            public boolean supportsResonating(IPatternDetails details) {
+                return isResonatingPatternDetails(details);
+            }
+
+            @Override
+            public boolean pushResonating(IPatternDetails details, KeyCounter[] inputs) {
                 return pushResonatingPattern(details, inputs);
             }
         };
-        return registration.dispatch().dispatch(new AdaptivePatternProviderDispatchContext(
+        return new AdaptivePatternProviderDispatchContext(
                 ((AdaptivePatternProviderHost) this.host).getProviderStack(),
                 profile,
                 patternDetails,
                 inputHolder,
-                target));
+                target);
     }
 
     private boolean pushDefaultPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
@@ -1332,7 +1342,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return false;
         }
 
-        ArrayList<FallbackTarget> candidates = new ArrayList<>();
+        ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
         for (Direction side : getActiveSidesFiltered()) {
             BlockPos adjacentPos = blockEntity.getBlockPos().relative(side);
             Direction adjacentFace = side.getOpposite();
@@ -1431,7 +1441,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.trackedCrafts;
     }
 
-    public HashSet<AEKey> getOutputCache() {
+    public ObjectSet<AEKey> getOutputCache() {
         return this.outputCache;
     }
 
@@ -1497,8 +1507,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private boolean isAppliedCreateMechanicalProviderSelected() {
-        return ModFlags.isAppliedCreateMechanicalProviderSupportLoaded()
-                && hasRegisteredCapability(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING);
+        return ModFlags.isAppliedCreateMechanicalProviderSupportLoaded() && hasRegisteredCapability(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING);
     }
 
     private boolean isMeteoritePatternProvider() {
@@ -1553,7 +1562,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private List<AppliedCreateCrafterCandidate> collectAppliedCreateCrafterCandidates(Level level, BlockPos providerPos) {
-        ArrayList<AppliedCreateCrafterCandidate> candidates = new ArrayList<>();
+        ObjectArrayList<AppliedCreateCrafterCandidate> candidates = new ObjectArrayList<>();
         for (Direction side : this.host.getTargets()) {
             BlockEntity adjacentBlockEntity = level.getBlockEntity(providerPos.relative(side));
             if (!isMechanicalCrafterBlockEntity(adjacentBlockEntity)) {
@@ -1669,7 +1678,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private static AppliedCreateRecipeIndex buildAppliedCreateRecipeIndex(Level level, long reloadEpoch) {
-        Map<AEItemKey, List<AppliedCreateRecipeInfo>> recipesByOutput = new HashMap<>();
+        Map<AEItemKey, List<AppliedCreateRecipeInfo>> recipesByOutput = new Object2ObjectOpenHashMap<>();
         HolderLookup.Provider registries = level.registryAccess();
 
         var mechanicalRecipeType = BuiltInRegistries.RECIPE_TYPE.getOptional(
@@ -1729,11 +1738,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                                Map<AEItemKey, List<AppliedCreateRecipeInfo>> recipesByOutput,
                                                AEItemKey output,
                                                AppliedCreateRecipeInfo recipe) {
-        recipesByOutput.computeIfAbsent(output, ignored -> new ArrayList<>()).add(recipe);
+        recipesByOutput.computeIfAbsent(output, ignored -> new ObjectArrayList<>()).add(recipe);
     }
 
     private List<ItemStack> flattenAppliedCreateInputs(KeyCounter[] inputHolder) {
-        ArrayList<ItemStack> stacks = new ArrayList<>();
+        ObjectArrayList<ItemStack> stacks = new ObjectArrayList<>();
         for (KeyCounter input : inputHolder) {
             for (var entry : input) {
                 if (!(entry.getKey() instanceof AEItemKey itemKey)) {
@@ -1754,8 +1763,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return null;
         }
 
-        Set<Object> crafterSet = new HashSet<>(crafters);
-        Map<Object, Object> parentByCrafter = new HashMap<>();
+        ObjectSet<Object> crafterSet = new ObjectOpenHashSet<>(crafters);
+        Map<Object, Object> parentByCrafter = new Object2ObjectOpenHashMap<>();
         for (Object crafter : crafters) {
             Object target = getTargetingCrafter(crafter);
             parentByCrafter.put(crafter, target != null && crafterSet.contains(target) ? target : null);
@@ -1772,9 +1781,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return null;
         }
 
-        Map<Object, GridCoord> rawPositions = new HashMap<>();
-        ArrayList<Object> queue = new ArrayList<>();
-        Set<Object> visited = new HashSet<>();
+        Map<Object, GridCoord> rawPositions = new Object2ObjectOpenHashMap<>();
+        ObjectArrayList<Object> queue = new ObjectArrayList<>();
+        ObjectSet<Object> visited = new ObjectOpenHashSet<>();
         rawPositions.put(root, new GridCoord(0, 0));
         queue.add(root);
         visited.add(root);
@@ -1820,7 +1829,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             minY = Math.min(minY, coord.y());
         }
 
-        Map<GridCoord, Object> normalized = new HashMap<>();
+        Map<GridCoord, Object> normalized = new Object2ObjectOpenHashMap<>();
         for (Map.Entry<Object, GridCoord> entry : rawPositions.entrySet()) {
             GridCoord coord = entry.getValue();
             normalized.put(new GridCoord(coord.x() - minX, coord.y() - minY), entry.getKey());
@@ -1848,8 +1857,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
             for (int offsetX = 0; offsetX <= gridWidth - width; offsetX++) {
                 for (int offsetY = 0; offsetY <= gridHeight - height; offsetY++) {
-                    ArrayList<AppliedCreateSlotAssignment> assignments = new ArrayList<>();
-                    ArrayList<ItemStack> remainingInputs = new ArrayList<>(flattenedInputs);
+                    ObjectArrayList<AppliedCreateSlotAssignment> assignments = new ObjectArrayList<>();
+                    ObjectArrayList<ItemStack> remainingInputs = new ObjectArrayList<>(flattenedInputs);
                     boolean matched = true;
 
                     for (int row = 0; row < height && matched; row++) {
@@ -2024,8 +2033,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
         BlockPos adjacentPos = blockEntity.getBlockPos().relative(primaryDirection);
         Direction defaultSide = primaryDirection.getOpposite();
-        HashMap<AEKey, PatternProviderTarget> targetsByKey = new HashMap<>();
-        HashMap<AEKey, Direction> directionMap = new HashMap<>();
+        Object2ObjectOpenHashMap<AEKey, PatternProviderTarget> targetsByKey = new Object2ObjectOpenHashMap<>();
+        Object2ObjectOpenHashMap<AEKey, Direction> directionMap = new Object2ObjectOpenHashMap<>();
 
         for (KeyCounter input : inputHolder) {
             AEKey firstKey = input.getFirstKey();
@@ -2192,7 +2201,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return false;
         }
         try {
-            return Boolean.TRUE.equals(access.get().directionalInputsSet().invoke(patternDetails));
+            Object result = access.get().directionalInputsSet().invoke(patternDetails);
+            return result instanceof Boolean booleanResult && booleanResult;
         } catch (Throwable ignored) {
             return false;
         }
@@ -2519,7 +2529,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
         int width = maxX - minX + 1;
         int height = maxY - minY + 1;
-        List<ItemStack> compressedItems = new ArrayList<>(width * height);
+        ObjectArrayList<ItemStack> compressedItems = new ObjectArrayList<>(width * height);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int srcSlot = (minX + x) + (minY + y) * 3;
@@ -2534,7 +2544,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
 
         NonNullList<ItemStack> remainders = pattern.getRemainingItems(input);
-        List<GenericStack> finalOutput = new ArrayList<>();
+        ObjectArrayList<GenericStack> finalOutput = new ObjectArrayList<>();
         GenericStack outputStack = GenericStack.fromItemStack(output);
         if (outputStack != null) {
             finalOutput.add(outputStack);
@@ -2893,7 +2903,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         if (idx == 0) {
             return;
         }
-        var head = new ArrayList<>(list.subList(0, idx));
+        var head = new ObjectArrayList<>(list.subList(0, idx));
         list.subList(0, idx).clear();
         list.addAll(head);
     }
@@ -2911,7 +2921,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private record AppliedCreateRecipeInfo(int width, int height, List<Ingredient> ingredients) {
 
         private AppliedCreateRecipeInfo {
-            ingredients = List.copyOf(ingredients);
+            ingredients = ObjectLists.unmodifiable(new ObjectArrayList<>(ingredients));
         }
     }
 
@@ -2919,8 +2929,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                             Map<AEItemKey, List<AppliedCreateRecipeInfo>> recipesByOutput) {
 
         private AppliedCreateRecipeIndex {
-            Map<AEItemKey, List<AppliedCreateRecipeInfo>> immutableRecipes = new HashMap<>();
-            recipesByOutput.forEach((output, recipes) -> immutableRecipes.put(output, List.copyOf(recipes)));
+            Map<AEItemKey, List<AppliedCreateRecipeInfo>> immutableRecipes = new Object2ObjectOpenHashMap<>();
+            recipesByOutput.forEach((output, recipes) -> immutableRecipes.put(
+                    output,
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(recipes))));
             recipesByOutput = Map.copyOf(immutableRecipes);
         }
 

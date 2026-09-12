@@ -8,9 +8,11 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Context passed to an adaptive provider dispatch registration.
  *
- * <p>The target exposes the supported provider operations as a narrow API.
+ * <p>
+ * The target exposes the supported provider operations as a narrow API.
  * Implementations can therefore register a route without reaching into the
- * adaptive logic or injecting a Mixin.</p>
+ * adaptive logic or injecting a Mixin.
+ * </p>
  */
 public record AdaptivePatternProviderDispatchContext(
                                                      ItemStack providerStack,

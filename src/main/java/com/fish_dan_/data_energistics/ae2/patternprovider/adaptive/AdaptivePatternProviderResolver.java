@@ -20,13 +20,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Resolves installed provider stacks through the immutable adaptive-provider registration snapshot.
@@ -38,7 +39,7 @@ import java.util.Set;
  */
 public final class AdaptivePatternProviderResolver {
 
-    private static volatile List<AdaptivePatternProviderRegistration> registrations = List.of();
+    private static volatile ObjectList<AdaptivePatternProviderRegistration> registrations = ObjectList.of();
     private static volatile boolean installed;
 
     private AdaptivePatternProviderResolver() {}
@@ -49,12 +50,12 @@ public final class AdaptivePatternProviderResolver {
      * @param registrations frozen plugin and built-in registrations
      */
     public static synchronized void install(
-                                            List<AdaptivePatternProviderRegistration> registrations) {
+                                            ObjectList<AdaptivePatternProviderRegistration> registrations) {
         if (installed) {
             throw new IllegalStateException("Adaptive pattern provider definitions are already installed");
         }
-        Set<ResourceLocation> registrationIds = new HashSet<>();
-        ArrayList<AdaptivePatternProviderRegistration> sorted = new ArrayList<>(registrations);
+        ObjectSet<ResourceLocation> registrationIds = new ObjectOpenHashSet<>();
+        ObjectArrayList<AdaptivePatternProviderRegistration> sorted = new ObjectArrayList<>(registrations);
         sorted.sort(Comparator.comparing(registration -> registration.registrationId().toString()));
         for (AdaptivePatternProviderRegistration registration : sorted) {
             if (!registrationIds.add(registration.registrationId())) {
@@ -62,7 +63,7 @@ public final class AdaptivePatternProviderResolver {
                         "Duplicate adaptive pattern provider registration ID: " + registration.registrationId());
             }
         }
-        AdaptivePatternProviderResolver.registrations = List.copyOf(sorted);
+        AdaptivePatternProviderResolver.registrations = ObjectLists.unmodifiable(sorted);
         installed = true;
     }
 
@@ -100,9 +101,9 @@ public final class AdaptivePatternProviderResolver {
     /**
      * Returns the client action declarations owned by the matched registration.
      */
-    public static List<AdaptivePatternProviderToolbarAction> getResolvedToolbarActions(ItemStack stack) {
+    public static ObjectList<AdaptivePatternProviderToolbarAction> getResolvedToolbarActions(ItemStack stack) {
         AdaptivePatternProviderRegistration registration = resolveProviderRegistration(stack);
-        return registration == null ? List.of() : registration.toolbarActions();
+        return registration == null ? ObjectList.of() : registration.toolbarActions();
     }
 
     /**
@@ -192,9 +193,11 @@ public final class AdaptivePatternProviderResolver {
     /**
      * Resolves the complete registration that owns a provider stack.
      *
-     * <p>Runtime behavior must use the same registration as profile metadata;
+     * <p>
+     * Runtime behavior must use the same registration as profile metadata;
      * resolving the profile and behavior independently would allow the two
-     * surfaces to drift.</p>
+     * surfaces to drift.
+     * </p>
      *
      * @param stack installed provider stack
      * @return matched registration, or {@code null} when unsupported

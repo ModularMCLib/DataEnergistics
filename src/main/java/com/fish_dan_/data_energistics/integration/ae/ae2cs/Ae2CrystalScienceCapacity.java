@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.integration.ae2cs;
+package com.fish_dan_.data_energistics.integration.ae.ae2cs;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacity;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityContext;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
-import com.fish_dan_.data_energistics.integration.ae2cs.capacity.AecsInputCapacity;
+import com.fish_dan_.data_energistics.integration.ae.ae2cs.capacity.AecsInputCapacity;
 
 import appeng.api.inventories.InternalInventory;
 

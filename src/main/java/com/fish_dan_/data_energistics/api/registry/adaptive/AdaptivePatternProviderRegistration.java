@@ -2,7 +2,9 @@ package com.fish_dan_.data_energistics.api.registry.adaptive;
 
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /**
  * One atomic adaptive pattern-provider declaration.
@@ -16,10 +18,10 @@ public record AdaptivePatternProviderRegistration(
                                                   ResourceLocation registrationId,
                                                   AdaptivePatternProviderDefinition definition,
                                                   AdaptivePatternProviderDispatch dispatch,
-                                                  List<AdaptivePatternProviderToolbarAction> toolbarActions) {
+                                                  ObjectList<AdaptivePatternProviderToolbarAction> toolbarActions) {
 
     public AdaptivePatternProviderRegistration {
-        toolbarActions = List.copyOf(toolbarActions);
+        toolbarActions = ObjectLists.unmodifiable(new ObjectArrayList<>(toolbarActions));
     }
 
     /**
@@ -28,7 +30,7 @@ public record AdaptivePatternProviderRegistration(
     public AdaptivePatternProviderRegistration(
                                                ResourceLocation registrationId,
                                                AdaptivePatternProviderDefinition definition) {
-        this(registrationId, definition, context -> null, List.of());
+        this(registrationId, definition, context -> false, ObjectList.of());
     }
 
     /**
@@ -38,6 +40,6 @@ public record AdaptivePatternProviderRegistration(
                                                ResourceLocation registrationId,
                                                AdaptivePatternProviderDefinition definition,
                                                AdaptivePatternProviderDispatch dispatch) {
-        this(registrationId, definition, dispatch, List.of());
+        this(registrationId, definition, dispatch, ObjectList.of());
     }
 }

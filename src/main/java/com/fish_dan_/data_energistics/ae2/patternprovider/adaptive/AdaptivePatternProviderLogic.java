@@ -312,9 +312,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     public boolean bindConnectorTarget(BlockPos position, Direction side) {
-        if (position.distManhattan(this.host.getBlockEntity().getBlockPos()) != 1) {
-            return false;
-        }
         ConnectorTarget candidate = new ConnectorTarget(position, side);
         if (this.connectorTargets.contains(candidate)) {
             return false;
@@ -1294,18 +1291,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     List<Direction> adaptiveTargetSides() {
         if (!this.connectorTargets.isEmpty()) {
             ObjectArrayList<Direction> linkedSides = new ObjectArrayList<>();
-            BlockPos providerPosition = this.host.getBlockEntity().getBlockPos();
             for (ConnectorTarget target : this.connectorTargets) {
-                if (target.position().distManhattan(providerPosition) == 1) {
-                    linkedSides.add(Direction.getNearest(
-                            target.position().getX() - providerPosition.getX(),
-                            target.position().getY() - providerPosition.getY(),
-                            target.position().getZ() - providerPosition.getZ()));
-                }
+                linkedSides.add(target.side());
             }
-            if (!linkedSides.isEmpty()) {
-                return linkedSides;
-            }
+            return linkedSides;
         }
         return new ObjectArrayList<>(getActiveSidesFiltered());
     }

@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.integration.ae.appliedcreate;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorRoutes;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 
 import appeng.api.crafting.IPatternDetails;
@@ -111,8 +113,8 @@ public final class AppliedCreateAdaptiveRoute implements AdaptivePatternProvider
                                                                    AdaptivePatternProviderDispatchTarget context,
                                                                    Level level) {
         ObjectArrayList<CrafterCandidate> candidates = new ObjectArrayList<>();
-        for (Direction side : context.targetSides()) {
-            BlockPos position = context.providerPos().relative(side);
+        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(context)) {
+            BlockPos position = binding.position();
             BlockEntity blockEntity = level.getBlockEntity(position);
             if (!(blockEntity instanceof MechanicalCrafterBlockEntity crafter)) {
                 continue;

@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.integration.ae.ae2cs;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorRoutes;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -98,9 +100,10 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
                 return false;
             }
             ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
-            for (Direction side : context.targetSides()) {
+            for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(context)) {
+                Direction side = binding.side().getOpposite();
                 PatternProviderTarget target = context.externalTarget(
-                        level, context.providerPos().relative(side), side.getOpposite());
+                        level, binding.position(), binding.side());
                 if (target != null && !context.isBlocked(target)) {
                     candidates.add(new FallbackTarget(side, target));
                 }
@@ -150,16 +153,11 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
 
         MEStorage networkStorage = context.networkStorage();
         var returnInventory = context.returnInventory();
-        List<Direction> sides = context.targetSides();
-        if (sides.isEmpty()) {
-            return false;
-        }
-
         final int maxKeysPerTick = 32;
         int scanned = 0;
-        for (Direction side : sides) {
-            BlockPos adjacentPos = context.providerPos().relative(side);
-            Direction adjacentFace = side.getOpposite();
+        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(context)) {
+            BlockPos adjacentPos = binding.position();
+            Direction adjacentFace = binding.side();
             if (!level.hasChunkAt(adjacentPos) || context.isPatternProviderAttachment(level, adjacentPos, adjacentFace)) {
                 continue;
             }

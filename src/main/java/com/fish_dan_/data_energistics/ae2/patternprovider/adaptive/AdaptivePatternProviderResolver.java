@@ -44,6 +44,11 @@ public final class AdaptivePatternProviderResolver {
 
     private AdaptivePatternProviderResolver() {}
 
+    /** Returns the frozen definitions for runtime state restoration, including inactive routes. */
+    static ObjectList<AdaptivePatternProviderRegistration> registrations() {
+        return registrations;
+    }
+
     /**
      * Installs the complete common-setup snapshot exactly once.
      *

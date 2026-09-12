@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderDisplayHelper;
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderExternalHandlers;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
@@ -75,7 +74,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     private final IUpgradeInventory upgrades;
     private final IItemHandler externalReturnItemHandler = new AdaptivePatternProviderReturnItemHandler(this::getAdaptiveLogic);
     private final IFluidHandler externalReturnFluidHandler = new AdaptivePatternProviderReturnFluidHandler(this::getAdaptiveLogic);
-    private final Object externalReturnChemicalHandler = AdaptivePatternProviderExternalHandlers.createChemicalHandler(this::getAdaptiveLogic);
     private int syncedPatternSlotCount = 0;
     private RedstoneTuningMode redstoneTuningMode = RedstoneTuningMode.EMIT_ON_DISPATCH;
     private int redstonePulseTicks;
@@ -120,14 +118,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
             return null;
         }
         return this.externalReturnFluidHandler;
-    }
-
-    @Nullable
-    public Object getExternalReturnChemicalHandler(@Nullable Direction side) {
-        if (side != null && !this.getTargets().contains(side)) {
-            return null;
-        }
-        return this.externalReturnChemicalHandler;
     }
 
     @Override
@@ -208,9 +198,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
 
     @Override
     public boolean isAppliedCreateMechanicalProviderSelected() {
-        if (!AdaptivePatternProviderExternalHandlers.supportsMechanicalProviders()) {
-            return false;
-        }
         return hasProviderCapability(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING);
     }
 

@@ -17,12 +17,14 @@ public final class AdaptivePatternProviderAppliedCreateRegistration implements D
                 AdaptivePatternProviderRegistrationFactory.itemIds("appliedcreate:andesite_pattern_provider"),
                 9,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
-                        AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING)));
+                        AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING),
+                new AppliedCreateAdaptiveRoute()));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "appliedcreate/brass",
                 AdaptivePatternProviderRegistrationFactory.itemIds("appliedcreate:brass_pattern_provider"),
                 36,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
-                        AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING)));
+                        AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING),
+                new AppliedCreateAdaptiveRoute()));
     }
 }

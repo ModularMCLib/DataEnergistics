@@ -22,6 +22,7 @@ public final class AdaptivePatternProviderAdvancedAeRegistration implements Data
                 AdaptivePatternProviderRegistrationFactory.capabilities(
                         AdaptivePatternProviderCapabilities.ADVANCED_PATTERN,
                         AdaptivePatternProviderCapabilities.FILTERED_IMPORT),
+                new AdvancedAeAdaptiveRoute(),
                 AdaptivePatternProviderToolbarActions.FILTERED_IMPORT));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "advanced_ae/extended",
@@ -31,6 +32,7 @@ public final class AdaptivePatternProviderAdvancedAeRegistration implements Data
                 AdaptivePatternProviderRegistrationFactory.capabilities(
                         AdaptivePatternProviderCapabilities.ADVANCED_PATTERN,
                         AdaptivePatternProviderCapabilities.FILTERED_IMPORT),
+                new AdvancedAeAdaptiveRoute(),
                 AdaptivePatternProviderToolbarActions.FILTERED_IMPORT));
     }
 }

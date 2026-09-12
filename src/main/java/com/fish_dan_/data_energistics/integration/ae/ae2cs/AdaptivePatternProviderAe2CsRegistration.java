@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
-/** Registers AE2CS pattern provider variants. */
+/** Registers AE2 Crystal Science pattern-provider variants and routes. */
 @DataEnergisticsEntrypoint(requiredMods = "ae2cs")
 public final class AdaptivePatternProviderAe2CsRegistration implements DataEnergisticsPlugin {
 
@@ -26,6 +26,7 @@ public final class AdaptivePatternProviderAe2CsRegistration implements DataEnerg
                 9,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
                         AdaptivePatternProviderCapabilities.RESONATING),
+                new Ae2CrystalScienceAdaptiveRoute(),
                 AdaptivePatternProviderToolbarActions.RESONATING_PULL));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "ae2cs/extended_resonating",
@@ -37,6 +38,7 @@ public final class AdaptivePatternProviderAe2CsRegistration implements DataEnerg
                 36,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
                         AdaptivePatternProviderCapabilities.RESONATING),
+                new Ae2CrystalScienceAdaptiveRoute(),
                 AdaptivePatternProviderToolbarActions.RESONATING_PULL));
         registry.adaptivePatternProviders().register(AdaptivePatternProviderRegistrationFactory.fixed(
                 "ae2cs/meteorite",
@@ -44,6 +46,7 @@ public final class AdaptivePatternProviderAe2CsRegistration implements DataEnerg
                         "ae2cs:meteorite_pattern_provider", "ae2cs:meteorite_pattern_provider_part"),
                 63,
                 AdaptivePatternProviderRegistrationFactory.capabilities(
-                        AdaptivePatternProviderCapabilities.METEORITE)));
+                        AdaptivePatternProviderCapabilities.METEORITE),
+                new Ae2CrystalScienceMeteoriteRoute()));
     }
 }

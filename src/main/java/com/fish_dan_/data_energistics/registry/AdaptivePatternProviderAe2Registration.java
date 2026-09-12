@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.registry;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEParts;

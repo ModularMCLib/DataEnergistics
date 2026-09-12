@@ -190,8 +190,7 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
         slot.y = y;
     }
 
-    private record SlotBuckets(ObjectList<Slot> unique, ObjectList<Slot> duplicates) {
-    }
+    private record SlotBuckets(ObjectList<Slot> unique, ObjectList<Slot> duplicates) {}
 
     private static final class AdaptivePatternProviderLockReason implements ICompositeWidget {
 
@@ -211,8 +210,7 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
             this.y = position.getY();
         }
 
-        public void setSize(int width, int height) {
-        }
+        public void setSize(int width, int height) {}
 
         public Rect2i getBounds() {
             return new Rect2i(this.x, this.y, 126, 16);

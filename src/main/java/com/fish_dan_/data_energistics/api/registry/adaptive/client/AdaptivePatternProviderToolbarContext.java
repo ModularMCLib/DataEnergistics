@@ -10,6 +10,5 @@ import java.util.function.BooleanSupplier;
  * Neither member is nullable. Factories must create fresh widgets for each context.
  */
 public record AdaptivePatternProviderToolbarContext(
-        AdaptivePatternProviderToolbarMenu menu,
-        BooleanSupplier handlingRightClick) {
-}
+                                                    AdaptivePatternProviderToolbarMenu menu,
+                                                    BooleanSupplier handlingRightClick) {}

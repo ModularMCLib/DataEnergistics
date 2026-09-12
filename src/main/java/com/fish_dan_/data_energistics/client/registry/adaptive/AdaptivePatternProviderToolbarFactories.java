@@ -26,8 +26,7 @@ public final class AdaptivePatternProviderToolbarFactories {
     private static ObjectList<Entry> entries = ObjectList.of();
     private static boolean initialized;
 
-    private AdaptivePatternProviderToolbarFactories() {
-    }
+    private AdaptivePatternProviderToolbarFactories() {}
 
     public static void initialize() {
         if (initialized) {
@@ -70,8 +69,7 @@ public final class AdaptivePatternProviderToolbarFactories {
      * Screen factory descriptor, captured only after all successful entrypoint transactions have completed.
      */
     public record Entry(ResourceLocation actionId, int order,
-                        Function<AdaptivePatternProviderToolbarContext, AdaptivePatternProviderToolbarButton> factory) {
-    }
+                        Function<AdaptivePatternProviderToolbarContext, AdaptivePatternProviderToolbarButton> factory) {}
 
     private static final class Staging implements DataEnergisticsClientRegistry, AdaptivePatternProviderToolbarRegistry {
 

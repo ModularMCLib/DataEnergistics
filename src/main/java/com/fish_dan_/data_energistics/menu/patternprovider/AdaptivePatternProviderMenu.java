@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.LockCraftingMode;
@@ -36,9 +37,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.shorts.ShortSet;
 import lombok.Getter;
+
+import java.util.List;
 
 public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderMenuAccessor {
 
@@ -250,6 +254,17 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
 
     public boolean isAdvancedAeProviderSelected() {
         return this.host != null && this.host.supportsFilteredImportToggle();
+    }
+
+    /**
+     * Returns the toolbar actions declared by the installed provider registration.
+     */
+    public List<AdaptivePatternProviderToolbarAction> getRegisteredToolbarActions() {
+        return AdaptivePatternProviderResolver.getResolvedToolbarActions(getProviderStack());
+    }
+
+    public boolean hasRegisteredToolbarAction(ResourceLocation actionId) {
+        return getRegisteredToolbarActions().stream().anyMatch(action -> action.actionId().equals(actionId));
     }
 
     public boolean isAdvancedAeFilteredImportEnabled() {

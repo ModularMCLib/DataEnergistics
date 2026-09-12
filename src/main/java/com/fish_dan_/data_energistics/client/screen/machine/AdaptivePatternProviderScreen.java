@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.widget.AecsPullModeButton;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
 import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.LockCraftingMode;
@@ -115,17 +116,23 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
                 "button.data_energistics.adaptive_pattern_provider.filtered_import.enabled",
                 "button.data_energistics.adaptive_pattern_provider.filtered_import.disabled",
                 this::setFilteredImport);
-        this.addToLeftToolbar(this.filteredImportButton);
+        if (menu.hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT)) {
+            this.addToLeftToolbar(this.filteredImportButton);
+        }
 
         this.resonatingPullButton = new AecsPullModeButton(
                 "button.data_energistics.adaptive_pattern_provider.resonating_pull",
                 "button.data_energistics.adaptive_pattern_provider.resonating_pull.enabled",
                 "button.data_energistics.adaptive_pattern_provider.resonating_pull.disabled",
                 this::setResonatingPull);
-        this.addToLeftToolbar(this.resonatingPullButton);
+        if (menu.hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.RESONATING_PULL)) {
+            this.addToLeftToolbar(this.resonatingPullButton);
+        }
 
         this.redstoneTuningButton = new PatternProviderRedstoneTuningButton(menu);
-        this.addToLeftToolbar(this.redstoneTuningButton);
+        if (menu.hasRegisteredToolbarAction(AdaptivePatternProviderToolbarActions.REDSTONE_TUNING)) {
+            this.addToLeftToolbar(this.redstoneTuningButton);
+        }
     }
 
     @Override

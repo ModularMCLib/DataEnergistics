@@ -5,9 +5,14 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEParts;
@@ -17,6 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -149,7 +155,65 @@ public final class AdaptivePatternProviderBuiltIns implements DataEnergisticsPlu
                             terminalIcon,
                             icon.getHoverName(),
                             capabilities);
-                });
+                },
+                dispatch(capabilities),
+                toolbarActions(capabilities));
+    }
+
+    /**
+     * Composes the routes declared by one provider profile. The adaptive logic
+     * supplies only the registered operations; it no longer decides provider
+     * kinds from its host booleans.
+     */
+    private static AdaptivePatternProviderDispatch dispatch(Set<ResourceLocation> capabilities) {
+        Set<ResourceLocation> declared = Set.copyOf(capabilities);
+        return new AdaptivePatternProviderDispatch() {
+            @Override
+            public boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
+                return !declared.isEmpty();
+            }
+
+            @Override
+            public Boolean dispatch(AdaptivePatternProviderDispatchContext context) {
+                if (declared.contains(AdaptivePatternProviderCapabilities.ADVANCED_PATTERN)) {
+                    Boolean result = context.target().pushAdvancedDirectional(context.patternDetails(), context.inputHolder());
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                if (declared.contains(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING)) {
+                    Boolean result = context.target().pushMechanical(context.patternDetails(), context.inputHolder());
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                if (declared.contains(AdaptivePatternProviderCapabilities.METEORITE)) {
+                    Boolean result = context.target().pushMeteorite(context.patternDetails(), context.inputHolder());
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                if (declared.contains(AdaptivePatternProviderCapabilities.RESONATING)) {
+                    Boolean result = context.target().pushResonating(context.patternDetails(), context.inputHolder());
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                return null;
+            }
+        };
+    }
+
+    private static List<AdaptivePatternProviderToolbarAction> toolbarActions(Set<ResourceLocation> capabilities) {
+        ArrayList<AdaptivePatternProviderToolbarAction> actions = new ArrayList<>();
+        actions.add(new AdaptivePatternProviderToolbarAction(AdaptivePatternProviderToolbarActions.REDSTONE_TUNING));
+        if (capabilities.contains(AdaptivePatternProviderCapabilities.FILTERED_IMPORT)) {
+            actions.add(new AdaptivePatternProviderToolbarAction(AdaptivePatternProviderToolbarActions.FILTERED_IMPORT));
+        }
+        if (capabilities.contains(AdaptivePatternProviderCapabilities.RESONATING)) {
+            actions.add(new AdaptivePatternProviderToolbarAction(AdaptivePatternProviderToolbarActions.RESONATING_PULL));
+        }
+        return List.copyOf(actions);
     }
 
     /**

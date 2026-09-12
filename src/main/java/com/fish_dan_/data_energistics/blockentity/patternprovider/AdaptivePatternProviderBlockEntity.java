@@ -192,6 +192,11 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     }
 
     @Override
+    public ItemStack getProviderStack() {
+        return getAdaptiveState().getProviderStack();
+    }
+
+    @Override
     public boolean isMeteoriteProviderSelected() {
         return hasProviderCapability(AdaptivePatternProviderCapabilities.METEORITE);
     }

@@ -652,7 +652,8 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         return AdaptivePatternProviderDisplayHelper.resolveAdjacentMachineGroup(level, adjacentPos, side.getOpposite());
     }
 
-    private ItemStack getProviderStack() {
+    @Override
+    public ItemStack getProviderStack() {
         return getAdaptiveState().getProviderStack();
     }
 

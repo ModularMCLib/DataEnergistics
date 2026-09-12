@@ -12,6 +12,11 @@ import org.jspecify.annotations.Nullable;
 
 public interface AdaptivePatternProviderHost extends PatternProviderLogicHost, IUpgradeableObject {
 
+    /**
+     * Returns the installed provider stack used to resolve its registration.
+     */
+    ItemStack getProviderStack();
+
     AppEngInternalInventory getProviderInventory();
 
     int getProviderSlotLimit();

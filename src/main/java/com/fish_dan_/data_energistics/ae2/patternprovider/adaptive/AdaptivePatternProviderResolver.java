@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.ae2.patternprovider.adaptive;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
@@ -97,6 +98,14 @@ public final class AdaptivePatternProviderResolver {
     }
 
     /**
+     * Returns the client action declarations owned by the matched registration.
+     */
+    public static List<AdaptivePatternProviderToolbarAction> getResolvedToolbarActions(ItemStack stack) {
+        AdaptivePatternProviderRegistration registration = resolveProviderRegistration(stack);
+        return registration == null ? List.of() : registration.toolbarActions();
+    }
+
+    /**
      * Returns an independently owned display component, or {@code null} for an unsupported stack.
      */
     public static @Nullable Component getResolvedProviderDisplayName(ItemStack stack) {
@@ -176,6 +185,21 @@ public final class AdaptivePatternProviderResolver {
      * @return matched profile, or {@code null} when no definition recognizes the stack
      */
     public static @Nullable AdaptivePatternProviderProfile resolveProviderProfile(ItemStack stack) {
+        AdaptivePatternProviderRegistration registration = resolveProviderRegistration(stack);
+        return registration == null ? null : registration.definition().resolve(stack);
+    }
+
+    /**
+     * Resolves the complete registration that owns a provider stack.
+     *
+     * <p>Runtime behavior must use the same registration as profile metadata;
+     * resolving the profile and behavior independently would allow the two
+     * surfaces to drift.</p>
+     *
+     * @param stack installed provider stack
+     * @return matched registration, or {@code null} when unsupported
+     */
+    public static @Nullable AdaptivePatternProviderRegistration resolveProviderRegistration(ItemStack stack) {
         if (!installed) {
             throw new IllegalStateException("Adaptive pattern provider definitions are not installed");
         }
@@ -184,7 +208,6 @@ public final class AdaptivePatternProviderResolver {
         }
 
         AdaptivePatternProviderRegistration matchedRegistration = null;
-        AdaptivePatternProviderProfile matchedProfile = null;
         for (AdaptivePatternProviderRegistration registration : registrations) {
             AdaptivePatternProviderProfile profile;
             try {
@@ -205,8 +228,7 @@ public final class AdaptivePatternProviderResolver {
                         "Ambiguous adaptive pattern provider definitions " + matchedRegistration.registrationId() + " and " + registration.registrationId() + " for " + stack);
             }
             matchedRegistration = registration;
-            matchedProfile = profile;
         }
-        return matchedProfile;
+        return matchedRegistration;
     }
 }

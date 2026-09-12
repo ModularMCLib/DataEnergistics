@@ -19,6 +19,11 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.AppendReceipt;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -681,10 +686,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
-        if (!(this.host instanceof AdaptivePatternProviderHost adaptiveHost)) {
-            return true;
-        }
-        return adaptiveHost.isAdvancedAeProviderSelected() || adaptiveHost.isAppliedCreateMechanicalProviderSelected() || adaptiveHost.isMeteoriteProviderSelected() || adaptiveHost.isResonatingProviderSelected() || isResonatingPatternDetails(patternDetails);
+        AdaptivePatternProviderRegistration registration = resolvedRegistration();
+        return registration == null || registration.dispatch().usesSpecialBatchRoute(patternDetails);
     }
 
     @Override
@@ -945,6 +948,21 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     @Override
     public boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        if (resolvedRegistration() != null) {
+            Boolean dispatched = dispatchRegisteredPattern(patternDetails, inputHolder);
+            if (dispatched != null) {
+                if (dispatched) {
+                    dataEnergistics$afterPushPattern();
+                }
+                return dispatched;
+            }
+            boolean pushed = super.pushPattern(patternDetails, inputHolder);
+            if (pushed) {
+                dataEnergistics$afterPushPattern();
+            }
+            return pushed;
+        }
+
         boolean pushed;
 
         if (isAdvancedAeDirectionalPattern(patternDetails)) {
@@ -1088,6 +1106,176 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     @Override
     public boolean isBusy() {
         return super.isBusy();
+    }
+
+    private boolean pushResonatingPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        if (!isResonatingPatternDetails(patternDetails)) {
+            return false;
+        }
+        if (super.isBusy() || !this.mainNode.isActive() || !getAvailablePatterns().contains(patternDetails)) {
+            return false;
+        }
+        if (getCraftingLockedReason() != LockCraftingMode.NONE) {
+            return false;
+        }
+        var blockEntity = this.host.getBlockEntity();
+        if (!(blockEntity.getLevel() instanceof ServerLevel level)) {
+            return false;
+        }
+
+        KeyCounter[] remaining = copyKeyCounters(inputHolder);
+        ArrayList<MarkedInput> markedInputs = new ArrayList<>();
+        List<GenericStack> sparseInputs = getSparseInputs(patternDetails);
+        for (int sparseIndex = 0; sparseIndex < sparseInputs.size(); sparseIndex++) {
+            GenericStack sparseInput = sparseInputs.get(sparseIndex);
+            if (sparseInput == null) {
+                continue;
+            }
+            Optional<ResolvedTarget> optionalTarget = getResolvedTarget(patternDetails, sparseIndex);
+            if (optionalTarget.isEmpty()) {
+                continue;
+            }
+            if (!removeFromRemaining(remaining, sparseInput.what(), sparseInput.amount())) {
+                return false;
+            }
+            markedInputs.add(new MarkedInput(sparseInput.what(), sparseInput.amount(), optionalTarget.get()));
+        }
+
+        for (MarkedInput markedInput : markedInputs) {
+            PatternProviderTarget target = findTarget(markedInput.target(), level);
+            if (target == null || isBlockedByMode(target)) {
+                return false;
+            }
+            long simulated = target.insert(markedInput.key(), markedInput.amount(), Actionable.SIMULATE);
+            if (simulated < markedInput.amount()) {
+                return false;
+            }
+        }
+
+        PatternProviderTarget fallbackTarget = null;
+        if (!isEmpty(remaining)) {
+            if (!patternDetails.supportsPushInputsToExternalInventory()) {
+                return false;
+            }
+            ArrayList<FallbackTarget> candidates = new ArrayList<>();
+            for (Direction side : getActiveSidesFiltered()) {
+                BlockPos adjacentPos = blockEntity.getBlockPos().relative(side);
+                PatternProviderTarget target = getExternalTarget(level, adjacentPos, side.getOpposite());
+                if (target != null && !isBlockedByMode(target)) {
+                    candidates.add(new FallbackTarget(side, target));
+                }
+            }
+            rearrangeRoundRobin(candidates);
+            for (int i = 0; i < candidates.size(); i++) {
+                FallbackTarget candidate = candidates.get(i);
+                if (adapterAcceptsAll(candidate.target(), remaining)) {
+                    fallbackTarget = candidate.target();
+                    this.localRoundRobinIndex += i + 1;
+                    break;
+                }
+            }
+            if (fallbackTarget == null) {
+                return false;
+            }
+        }
+
+        for (MarkedInput markedInput : markedInputs) {
+            PatternProviderTarget target = findTarget(markedInput.target(), level);
+            if (target == null) {
+                return false;
+            }
+            long inserted = target.insert(markedInput.key(), markedInput.amount(), Actionable.MODULATE);
+            if (inserted < markedInput.amount()) {
+                return false;
+            }
+        }
+        if (fallbackTarget != null) {
+            final PatternProviderTarget target = fallbackTarget;
+            patternDetails.pushInputsToExternalInventory(remaining, (what, amount) -> {
+                long inserted = target.insert(what, amount, Actionable.MODULATE);
+                if (inserted < amount) {
+                    throw new IllegalStateException("Fallback target refused resonating pattern input.");
+                }
+            });
+        }
+        invokePatternSuccess(patternDetails);
+        return true;
+    }
+
+    private @Nullable AdaptivePatternProviderRegistration resolvedRegistration() {
+        if (!(this.host instanceof AdaptivePatternProviderHost adaptiveHost)) {
+            return null;
+        }
+        return AdaptivePatternProviderResolver.resolveProviderRegistration(adaptiveHost.getProviderStack());
+    }
+
+    private boolean hasRegisteredCapability(ResourceLocation capability) {
+        AdaptivePatternProviderRegistration registration = resolvedRegistration();
+        if (!(this.host instanceof AdaptivePatternProviderHost adaptiveHost) || registration == null) {
+            return false;
+        }
+        AdaptivePatternProviderProfile profile = registration.definition().resolve(adaptiveHost.getProviderStack());
+        return profile != null && profile.supports(capability);
+    }
+
+    private @Nullable Boolean dispatchRegisteredPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        AdaptivePatternProviderRegistration registration = resolvedRegistration();
+        if (registration == null) {
+            return null;
+        }
+        AdaptivePatternProviderProfile profile = registration.definition().resolve(
+                ((AdaptivePatternProviderHost) this.host).getProviderStack());
+        if (profile == null) {
+            return null;
+        }
+        AdaptivePatternProviderDispatchTarget target = new AdaptivePatternProviderDispatchTarget() {
+            @Override
+            public Boolean pushDefault(IPatternDetails details, KeyCounter[] inputs) {
+                return pushDefaultPattern(details, inputs);
+            }
+
+            @Override
+            public Boolean pushAdvancedDirectional(IPatternDetails details, KeyCounter[] inputs) {
+                if (!isAdvancedAeDirectionalPattern(details)) {
+                    return null;
+                }
+                return pushAdvancedAeDirectionalPattern(details, inputs, false);
+            }
+
+            @Override
+            public Boolean pushMechanical(IPatternDetails details, KeyCounter[] inputs) {
+                if (!ModFlags.isAppliedCreateMechanicalProviderSupportLoaded()) {
+                    return null;
+                }
+                return pushAppliedCreateMechanicalPattern(details, inputs);
+            }
+
+            @Override
+            public Boolean pushMeteorite(IPatternDetails details, KeyCounter[] inputs) {
+                if (!(details instanceof IMolecularAssemblerSupportedPattern molecular)) {
+                    return null;
+                }
+                return pushMeteoritePattern(molecular, inputs);
+            }
+
+            @Override
+            public Boolean pushResonating(IPatternDetails details, KeyCounter[] inputs) {
+                if (!isResonatingPatternDetails(details)) {
+                    return null;
+                }
+                return pushResonatingPattern(details, inputs);
+            }
+        };
+        return registration.dispatch().dispatch(new AdaptivePatternProviderDispatchContext(
+                ((AdaptivePatternProviderHost) this.host).getProviderStack(),
+                profile,
+                patternDetails,
+                inputHolder,
+                target));
+    }
+
+    private boolean pushDefaultPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        return super.pushPattern(patternDetails, inputHolder);
     }
 
     @Override
@@ -1305,15 +1493,16 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private boolean isAdvancedAeProviderSelected() {
-        return this.host instanceof AdaptivePatternProviderHost adaptivePatternProviderHost && adaptivePatternProviderHost.isAdvancedAeProviderSelected();
+        return hasRegisteredCapability(AdaptivePatternProviderCapabilities.ADVANCED_PATTERN);
     }
 
     private boolean isAppliedCreateMechanicalProviderSelected() {
-        return ModFlags.isAppliedCreateMechanicalProviderSupportLoaded() && this.host instanceof AdaptivePatternProviderHost adaptivePatternProviderHost && adaptivePatternProviderHost.isAppliedCreateMechanicalProviderSelected();
+        return ModFlags.isAppliedCreateMechanicalProviderSupportLoaded()
+                && hasRegisteredCapability(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING);
     }
 
     private boolean isMeteoritePatternProvider() {
-        return this.host instanceof AdaptivePatternProviderHost adaptivePatternProviderHost && adaptivePatternProviderHost.isMeteoriteProviderSelected();
+        return hasRegisteredCapability(AdaptivePatternProviderCapabilities.METEORITE);
     }
 
     private boolean pushAppliedCreateMechanicalPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {

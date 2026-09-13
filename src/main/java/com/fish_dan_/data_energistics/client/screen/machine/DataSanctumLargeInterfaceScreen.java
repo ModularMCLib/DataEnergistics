@@ -16,10 +16,12 @@ import appeng.client.gui.widgets.ToggleButton;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,6 +137,22 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         for (int i = 0; i < this.amountButtons.size(); i++) {
             this.amountButtons.get(i).visible = i < configSlots.size() && !configSlots.get(i).getItem().isEmpty();
         }
+    }
+
+    @Override
+    public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
+        int configIndex = this.menu.getConfigSlots().indexOf(slot);
+        boolean unlimited = configIndex >= 0 && this.menu.isUnlimitedConfigSlot(configIndex);
+        if (unlimited && !slot.getItem().isEmpty()) {
+            var item = slot.getItem();
+            int count = item.getCount();
+            item.setCount(1);
+            super.renderSlot(guiGraphics, slot);
+            item.setCount(count);
+            guiGraphics.drawString(this.font, "∞", slot.x + 9, slot.y + 8, 0xFFFFFFFF, true);
+            return;
+        }
+        super.renderSlot(guiGraphics, slot);
     }
 
     private static class SetAmountButton extends IconButton {

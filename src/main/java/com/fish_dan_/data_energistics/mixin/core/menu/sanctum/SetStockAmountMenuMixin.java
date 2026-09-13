@@ -35,6 +35,8 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
     @Unique
     private boolean dataEnergistics$unlimited;
     @Unique
+    private boolean dataEnergistics$stateInitialized;
+    @Unique
     private int dataEnergistics$policy = ConnectorPolicy.ROUND_ROBIN.ordinal();
     @Unique
     private long dataEnergistics$initialAmount;
@@ -55,7 +57,8 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
         if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
             dataEnergistics$unlimited = config.isUnlimitedSlot(slot);
             dataEnergistics$policy = config.getSlotPolicy(slot).ordinal();
-            dataEnergistics$initialAmount = dataEnergistics$unlimited ? Long.MAX_VALUE : config.getAmount(slot);
+            dataEnergistics$initialAmount = config.getFiniteAmount(slot);
+            dataEnergistics$stateInitialized = true;
         }
     }
 
@@ -70,10 +73,18 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
 
     @Override
     public boolean dataEnergistics$isUnlimited() {
-        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
-            return config.isUnlimitedSlot(slot);
-        }
+        dataEnergistics$initializeStateFromConfig();
         return dataEnergistics$unlimited;
+    }
+
+    @Unique
+    private void dataEnergistics$initializeStateFromConfig() {
+        if (!dataEnergistics$stateInitialized && host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
+            dataEnergistics$unlimited = config.isUnlimitedSlot(slot);
+            dataEnergistics$policy = config.getSlotPolicy(slot).ordinal();
+            dataEnergistics$initialAmount = config.getFiniteAmount(slot);
+            dataEnergistics$stateInitialized = true;
+        }
     }
 
     @Override
@@ -88,18 +99,16 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
             dataEnergistics$unlimited = enabled;
             return;
         }
-        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
-            config.setUnlimitedSlot(slot, enabled);
+        if (host instanceof DataSanctumLargeInterfaceHost) {
             dataEnergistics$unlimited = enabled;
+            dataEnergistics$stateInitialized = true;
             broadcastChanges();
         }
     }
 
     @Override
     public int dataEnergistics$getPolicy() {
-        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
-            return config.getSlotPolicy(slot).ordinal();
-        }
+        dataEnergistics$initializeStateFromConfig();
         return dataEnergistics$policy;
     }
 
@@ -122,9 +131,7 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
 
     @Override
     public long dataEnergistics$getInitialAmount() {
-        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
-            return config.isUnlimitedSlot(slot) ? Long.MAX_VALUE : config.getAmount(slot);
-        }
+        dataEnergistics$initializeStateFromConfig();
         return dataEnergistics$initialAmount;
     }
 
@@ -143,12 +150,13 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
             return;
         }
         if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config && config.getKey(slot) != null) {
-            config.setUnlimitedSlot(slot, false);
-            if (amount == Long.MAX_VALUE) {
+            if (dataEnergistics$unlimited) {
                 config.setUnlimitedSlot(slot, true);
             } else if (amount > 0) {
+                config.setUnlimitedSlot(slot, false);
                 config.setStack(slot, new GenericStack(config.getKey(slot), amount));
             } else {
+                config.setUnlimitedSlot(slot, false);
                 config.setStack(slot, null);
             }
             host.returnToMainMenu(getPlayer(), (SetStockAmountMenu) (Object) this);

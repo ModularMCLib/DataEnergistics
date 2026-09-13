@@ -53,7 +53,9 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
                 Icon.FILTER_ON_EXTRACT_DISABLED,
                 enabled -> {
                     access.dataEnergistics$setUnlimited(enabled);
-                    amount.setLongValue(enabled ? Long.MAX_VALUE : access.dataEnergistics$getFiniteAmount());
+                    if (!enabled) {
+                        amount.setLongValue(0);
+                    }
                 });
         dataEnergistics$unlimitedButton.setTooltipOn(List.of(Component.translatable(
                 "gui.data_energistics.data_sanctum_interface.unlimited_pull.enabled")));

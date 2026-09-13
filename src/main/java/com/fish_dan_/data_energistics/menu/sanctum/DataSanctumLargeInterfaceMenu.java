@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.menu.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceConstants;
+import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
@@ -169,6 +170,14 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
     public List<Slot> getConfigSlots() {
         return this.configSlots != null ? this.configSlots : List.of();
+    }
+
+    public boolean isUnlimitedConfigSlot(int slotOnPage) {
+        if (slotOnPage < 0 || slotOnPage >= CONFIG_SLOT_COUNT || this.getHost() == null) {
+            return false;
+        }
+        int slot = DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage);
+        return this.getHost().getConfig() instanceof DataSanctumInterfaceInventory config && config.isUnlimitedSlot(slot);
     }
 
     public void sendSetPage(int page) {

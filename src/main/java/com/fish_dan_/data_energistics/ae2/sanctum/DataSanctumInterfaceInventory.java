@@ -173,6 +173,10 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         return getMode() == Mode.CONFIG_STACKS && unlimitedSlots[slot];
     }
 
+    public long getFiniteAmount(int slot) {
+        return Math.max(1L, finiteAmounts[slot]);
+    }
+
     public void setUnlimitedSlot(int slot, boolean enabled) {
         if (getMode() != Mode.CONFIG_STACKS || slot < 0 || slot >= size()) {
             return;

@@ -10,4 +10,10 @@ public interface SetStockAmountMenuAccess {
     int dataEnergistics$getPolicy();
 
     void dataEnergistics$setPolicy(int ordinal);
+
+    long dataEnergistics$getInitialAmount();
+
+    long dataEnergistics$getFiniteAmount();
+
+    void dataEnergistics$confirmLong(long amount);
 }

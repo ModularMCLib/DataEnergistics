@@ -18,6 +18,7 @@
 		"appliedcreate.AppliedCreatePatternProviderLogicMixin",
 		"core.accessor.ae2.AEBaseBlockEntityNameAccessor",
 		"core.accessor.ae2.AEBaseMenuActionAccessor",
+		"core.InterfaceLogicLongStockAmountMixin",
 		"core.accessor.ae2.AEBasePartNameAccessor",
 		"core.accessor.ae2.InterfaceLogicTickAccessor",
 		"core.accessor.ae2.InterfaceLogicUpgradesAccessor",

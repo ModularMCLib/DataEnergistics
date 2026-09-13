@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.menu.sanctum.SetStockAmountMenuAccess;
 
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
 import appeng.helpers.InterfaceLogicHost;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.implementations.SetStockAmountMenu;
@@ -35,6 +36,8 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
     private boolean dataEnergistics$unlimited;
     @Unique
     private int dataEnergistics$policy = ConnectorPolicy.ROUND_ROBIN.ordinal();
+    @Unique
+    private long dataEnergistics$initialAmount;
 
     protected SetStockAmountMenuMixin(MenuType<?> menuType, int id, Inventory inventory, Object host) {
         super(menuType, id, inventory, host);
@@ -44,6 +47,7 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
     private void dataEnergistics$registerUnlimitedAction(int id, Inventory inventory, InterfaceLogicHost host, CallbackInfo ci) {
         this.registerClientAction("data_energistics_set_unlimited", Boolean.class, this::dataEnergistics$setUnlimited);
         this.registerClientAction("data_energistics_set_policy", Integer.class, this::dataEnergistics$setPolicy);
+        this.registerClientAction("data_energistics_confirm_long", Long.class, this::dataEnergistics$confirmLong);
     }
 
     @Inject(method = "setWhatToStock", at = @At("RETURN"))
@@ -51,6 +55,7 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
         if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
             dataEnergistics$unlimited = config.isUnlimitedSlot(slot);
             dataEnergistics$policy = config.getSlotPolicy(slot).ordinal();
+            dataEnergistics$initialAmount = dataEnergistics$unlimited ? Long.MAX_VALUE : config.getAmount(slot);
         }
     }
 
@@ -101,6 +106,38 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
             config.setSlotPolicy(slot, ConnectorPolicy.values()[ordinal]);
             dataEnergistics$policy = ordinal;
             broadcastChanges();
+        }
+    }
+
+    @Override
+    public long dataEnergistics$getInitialAmount() {
+        return dataEnergistics$initialAmount;
+    }
+
+    @Override
+    public long dataEnergistics$getFiniteAmount() {
+        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
+            return config.getFiniteAmount(slot);
+        }
+        return 1L;
+    }
+
+    @Override
+    public void dataEnergistics$confirmLong(long amount) {
+        if (isClientSide()) {
+            sendClientAction("data_energistics_confirm_long", amount);
+            return;
+        }
+        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config && config.getKey(slot) != null) {
+            config.setUnlimitedSlot(slot, false);
+            if (amount == Long.MAX_VALUE) {
+                config.setUnlimitedSlot(slot, true);
+            } else if (amount > 0) {
+                config.setStack(slot, new GenericStack(config.getKey(slot), amount));
+            } else {
+                config.setStack(slot, null);
+            }
+            host.returnToMainMenu(getPlayer(), (SetStockAmountMenu) (Object) this);
         }
     }
 }

@@ -145,7 +145,7 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
 
         @Override
         protected Icon getIcon() {
-            return isHoveredOrFocused() ? Icon.COG : Icon.COG_DISABLED;
+            return Icon.COG;
         }
     }
 }

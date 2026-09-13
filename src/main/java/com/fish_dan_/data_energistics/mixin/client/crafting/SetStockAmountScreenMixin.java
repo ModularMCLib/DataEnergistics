@@ -7,13 +7,16 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;
 import appeng.client.gui.me.crafting.SetStockAmountScreen;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.NumberEntryWidget;
 import appeng.client.gui.widgets.ToggleButton;
 import appeng.menu.implementations.SetStockAmountMenu;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,6 +30,11 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
     private ToggleButton dataEnergistics$unlimitedButton;
     @Unique
     private ToggleButton dataEnergistics$policyButton;
+    @Unique
+    private boolean dataEnergistics$amountInitialized;
+    @Shadow
+    @Final
+    private NumberEntryWidget amount;
 
     protected SetStockAmountScreenMixin(SetStockAmountMenu menu, Inventory inventory, Component title, ScreenStyle style) {
         super(menu, inventory, title, style);
@@ -43,7 +51,11 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
                 Icon.FILTER_ON_EXTRACT_DISABLED,
                 Component.translatable("gui.data_energistics.data_sanctum_interface.unlimited_pull.enabled"),
                 Component.translatable("gui.data_energistics.data_sanctum_interface.unlimited_pull.disabled"),
-                ignored -> access.dataEnergistics$setUnlimited(!access.dataEnergistics$isUnlimited()));
+                ignored -> {
+                    boolean enabled = !access.dataEnergistics$isUnlimited();
+                    access.dataEnergistics$setUnlimited(enabled);
+                    amount.setLongValue(enabled ? Long.MAX_VALUE : access.dataEnergistics$getFiniteAmount());
+                });
         dataEnergistics$unlimitedButton.setState(access.dataEnergistics$isUnlimited());
         addToLeftToolbar(dataEnergistics$unlimitedButton);
         dataEnergistics$policyButton = new ToggleButton(
@@ -61,6 +73,19 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
         if (dataEnergistics$unlimitedButton != null && getMenu() instanceof SetStockAmountMenuAccess access) {
             dataEnergistics$unlimitedButton.setState(access.dataEnergistics$isUnlimited());
             dataEnergistics$policyButton.setState(access.dataEnergistics$getPolicy() == 1);
+            if (!dataEnergistics$amountInitialized) {
+                amount.setMaxValue(Long.MAX_VALUE);
+                amount.setLongValue(access.dataEnergistics$getInitialAmount());
+                dataEnergistics$amountInitialized = true;
+            }
+        }
+    }
+
+    @Inject(method = "confirm", at = @At("HEAD"), cancellable = true)
+    private void dataEnergistics$confirmLong(CallbackInfo ci) {
+        if (getMenu() instanceof SetStockAmountMenuAccess access && getMenu().getHost() instanceof DataSanctumLargeInterfaceHost) {
+            amount.getLongValue().ifPresent(access::dataEnergistics$confirmLong);
+            ci.cancel();
         }
     }
 }

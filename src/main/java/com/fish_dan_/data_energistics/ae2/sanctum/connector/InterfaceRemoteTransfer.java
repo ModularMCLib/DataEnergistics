@@ -42,7 +42,8 @@ final class InterfaceRemoteTransfer {
         int start = Math.floorMod(state.linkCursor(), links.size());
         int visited = Math.min(LINKS_PER_TICK, links.size());
         for (int offset = 0; offset < visited; offset++) {
-            var link = links.get((start + offset) % links.size());
+            int linkIndex = (start + offset) % links.size();
+            var link = links.get(linkIndex);
             if (link.slot() >= state.slotCount() || link.position().equals(host.getInterfaceBlockPos()) || !level.hasChunkAt(link.position())) {
                 continue;
             }
@@ -51,9 +52,9 @@ final class InterfaceRemoteTransfer {
             // Pull before pushing so BOTH never immediately removes the inputs placed by this tick.
             if (link.mode().supportsPull()) {
                 if (generic != null) {
-                    pullGeneric(host, state, generic, actionSource);
+                    pullGeneric(host, state, linkIndex, generic, actionSource);
                 } else if (storage != null) {
-                    pullStorage(host, state, storage, actionSource);
+                    pullStorage(host, state, linkIndex, storage, actionSource);
                 }
                 if (!state.flushReturn()) {
                     visited = offset + 1;
@@ -68,7 +69,7 @@ final class InterfaceRemoteTransfer {
                 }
             }
         }
-        state.advance((start + visited) % links.size(), state.sourceCursor());
+        state.advanceLink((start + visited) % links.size());
     }
 
     private static @Nullable MEStorage externalStorage(ServerLevel level, DataSanctumLargeInterfaceHost host,
@@ -122,12 +123,12 @@ final class InterfaceRemoteTransfer {
         return inserted;
     }
 
-    private static void pullGeneric(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state,
+    private static void pullGeneric(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
                                     GenericInternalInventory inventory, IActionSource actionSource) {
         if (!inventory.canExtract() || inventory.size() == 0) {
             return;
         }
-        int start = Math.floorMod(state.sourceCursor(), inventory.size());
+        int start = Math.floorMod(state.sourceCursor(linkIndex), inventory.size());
         int visited = Math.min(KEYS_PER_LINK, inventory.size());
         for (int offset = 0; offset < visited; offset++) {
             int slot = (start + offset) % inventory.size();
@@ -145,10 +146,10 @@ final class InterfaceRemoteTransfer {
                 }
             }
         }
-        state.advance(state.linkCursor(), (start + visited) % inventory.size());
+        state.advanceSource(linkIndex, (start + visited) % inventory.size());
     }
 
-    private static void pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state,
+    private static void pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
                                     MEStorage storage, IActionSource actionSource) {
         var keys = new ArrayList<AEKey>();
         for (var entry : storage.getAvailableStacks()) {
@@ -157,7 +158,7 @@ final class InterfaceRemoteTransfer {
         if (keys.isEmpty()) {
             return;
         }
-        int start = Math.floorMod(state.sourceCursor(), keys.size());
+        int start = Math.floorMod(state.sourceCursor(linkIndex), keys.size());
         int visited = Math.min(KEYS_PER_LINK, keys.size());
         for (int offset = 0; offset < visited; offset++) {
             AEKey key = keys.get((start + offset) % keys.size());
@@ -171,6 +172,6 @@ final class InterfaceRemoteTransfer {
                 }
             }
         }
-        state.advance(state.linkCursor(), (start + visited) % keys.size());
+        state.advanceSource(linkIndex, (start + visited) % keys.size());
     }
 }

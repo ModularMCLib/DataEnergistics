@@ -39,7 +39,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     private ConnectorMode mode = ConnectorMode.INPUT;
     private int syncedSlots = DataSanctumInterfaceConstants.BASE_PAGE_COUNT * DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     private int linkCursor;
-    private int sourceCursor;
+    private int[] sourceCursors = new int[0];
     private @Nullable GenericStack pendingReturn;
 
     public InterfaceRemoteLinks(DataSanctumLargeInterfaceHost host, IManagedGridNode mainNode, IActionSource actionSource, Runnable changed) {
@@ -96,7 +96,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         }
         links = List.copyOf(unique.values());
         linkCursor = links.isEmpty() ? 0 : Math.floorMod(linkCursor, links.size());
-        sourceCursor = 0;
+        sourceCursors = new int[links.size()];
         changed.run();
         return links.size();
     }
@@ -109,8 +109,8 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         return linkCursor;
     }
 
-    int sourceCursor() {
-        return sourceCursor;
+    int sourceCursor(int linkIndex) {
+        return sourceCursors[linkIndex];
     }
 
     boolean isActive() {
@@ -121,9 +121,13 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         return actionSource;
     }
 
-    void advance(int nextLink, int nextSource) {
+    void advanceLink(int nextLink) {
         linkCursor = nextLink;
-        sourceCursor = nextSource;
+        host.saveChanges();
+    }
+
+    void advanceSource(int linkIndex, int nextSource) {
+        sourceCursors[linkIndex] = nextSource;
         host.saveChanges();
     }
 
@@ -154,15 +158,16 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         CompoundTag state = new CompoundTag();
         state.putString("mode", mode.name());
         state.putInt("link_cursor", linkCursor);
-        state.putInt("source_cursor", sourceCursor);
         state.put("pending_return", GenericStack.writeTag(registries, pendingReturn));
         ListTag targets = new ListTag();
-        for (var link : links) {
+        for (int index = 0; index < links.size(); index++) {
+            var link = links.get(index);
             CompoundTag target = new CompoundTag();
             target.putLong("pos", link.position().asLong());
             target.putByte("side", (byte) link.side().get3DDataValue());
             target.putString("mode", link.mode().name());
             target.putInt("slot", link.slot());
+            target.putInt("source_cursor", sourceCursors[index]);
             targets.add(target);
         }
         state.put("targets", targets);
@@ -174,6 +179,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         mode = state.contains("mode") ? ConnectorMode.valueOf(state.getString("mode")) : ConnectorMode.INPUT;
         var restored = new ArrayList<ConnectorLink>();
         ListTag targets = state.getList("targets", Tag.TAG_COMPOUND);
+        int[] restoredCursors = new int[targets.size()];
         for (int index = 0; index < targets.size(); index++) {
             CompoundTag target = targets.getCompound(index);
             int side = target.getByte("side");
@@ -183,10 +189,11 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
             }
             restored.add(new ConnectorLink(BlockPos.of(target.getLong("pos")), Direction.from3DDataValue(side),
                     ConnectorMode.valueOf(target.getString("mode")), slot));
+            restoredCursors[index] = Math.max(0, target.contains("source_cursor") ? target.getInt("source_cursor") : state.getInt("source_cursor"));
         }
         links = List.copyOf(restored);
         linkCursor = links.isEmpty() ? 0 : Math.floorMod(state.getInt("link_cursor"), links.size());
-        sourceCursor = Math.max(0, state.getInt("source_cursor"));
+        sourceCursors = restoredCursors;
         pendingReturn = GenericStack.readTag(registries, state.getCompound("pending_return"));
     }
 
@@ -221,6 +228,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         mode = nextMode;
         syncedSlots = nextSlots;
         links = List.copyOf(nextLinks);
+        sourceCursors = new int[links.size()];
         return updated;
     }
 

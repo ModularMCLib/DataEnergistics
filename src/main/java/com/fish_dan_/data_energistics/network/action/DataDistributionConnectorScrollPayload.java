@@ -17,6 +17,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import java.util.Locale;
+
 /** Server-validated Ctrl/Shift wheel actions for a held distribution connector. */
 public record DataDistributionConnectorScrollPayload(boolean reverse, boolean offHand, boolean control, boolean shift)
         implements CustomPacketPayload {
@@ -51,7 +53,8 @@ public record DataDistributionConnectorScrollPayload(boolean reverse, boolean of
                         ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
                 logic.setConnectorMode(mode);
                 player.displayClientMessage(Component.translatable(
-                        "item.data_energistics.data_distribution_connector.mode_changed", mode.name()), true);
+                        "item.data_energistics.data_distribution_connector.mode_changed",
+                        Component.translatable("item.data_energistics.data_distribution_connector.mode." + mode.name().toLowerCase(Locale.ROOT))), true);
             } else if (payload.shift() && logic != null) {
                 int count = logic.connectorTargets().size();
                 if (count > 0) {
@@ -60,6 +63,9 @@ public record DataDistributionConnectorScrollPayload(boolean reverse, boolean of
                     player.displayClientMessage(Component.translatable(
                             "item.data_energistics.data_distribution_connector.selection_changed", (index + 1) + "/" + count), true);
                 }
+            } else if (payload.control()) {
+                player.displayClientMessage(Component.translatable(
+                        "item.data_energistics.data_distribution_connector.mode_unavailable"), true);
             }
         });
     }

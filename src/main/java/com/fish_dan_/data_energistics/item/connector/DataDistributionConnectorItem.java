@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.item.connector;
 
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
@@ -21,11 +22,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,6 +39,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 
 public class DataDistributionConnectorItem extends Item {
 
@@ -43,6 +47,26 @@ public class DataDistributionConnectorItem extends Item {
 
     public DataDistributionConnectorItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        DataDistributionConnectorItemData data = getConnectorData(stack);
+        AdaptivePatternProviderLogic logic = resolveProviderLogic(level, data);
+        if (logic == null || !data.isAdaptiveProvider()) {
+            return InteractionResultHolder.pass(stack);
+        }
+        if (level.isClientSide()) {
+            return InteractionResultHolder.success(stack);
+        }
+        AdaptiveProviderConnectorMode next = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT
+                ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
+        logic.setConnectorMode(next);
+        player.displayClientMessage(Component.translatable(
+                KEY_PREFIX + ".mode_changed",
+                Component.translatable(KEY_PREFIX + ".mode." + next.name().toLowerCase(Locale.ROOT))), true);
+        return InteractionResultHolder.success(stack);
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.network.action;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorClipboard;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItemData;
@@ -15,7 +14,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record DataDistributionConnectorClipboardPayload(
@@ -60,7 +58,7 @@ public record DataDistributionConnectorClipboardPayload(
             return;
         }
         var bindings = logic.adaptiveConnectorBindings();
-        DataDistributionConnectorClipboard.write(stack, logic.hostPosition(), bindings);
+        DataDistributionConnectorClipboard.write(stack, bindings);
         if (cut) {
             logic.clearConnectorTargets();
         }
@@ -83,14 +81,7 @@ public record DataDistributionConnectorClipboardPayload(
                     "item.data_energistics.data_distribution_connector.clipboard.empty"), true);
             return;
         }
-        BlockPos sourceOrigin = clipboard.origin();
-        BlockPos targetOrigin = logic.hostPosition();
-        var translated = clipboard.bindings().stream().map(binding -> new AdaptiveProviderConnectorBinding(
-                targetOrigin.offset(binding.position().getX() - sourceOrigin.getX(),
-                        binding.position().getY() - sourceOrigin.getY(),
-                        binding.position().getZ() - sourceOrigin.getZ()),
-                binding.side(), binding.mode())).toList();
-        int pasted = logic.replaceConnectorTargets(translated);
+        int pasted = logic.replaceConnectorTargets(clipboard.bindings());
         player.displayClientMessage(Component.translatable(
                 "item.data_energistics.data_distribution_connector.clipboard.pasted", pasted), true);
     }

@@ -26,9 +26,8 @@ public final class DataDistributionConnectorClipboard {
     public static Snapshot read(ItemStack stack) {
         CompoundTag tag = stack.get(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR_CLIPBOARD.get());
         if (tag == null || !tag.contains(LINKS, Tag.TAG_LIST)) {
-            return new Snapshot(BlockPos.ZERO, List.of());
+            return new Snapshot(List.of());
         }
-        BlockPos origin = BlockPos.of(tag.getLong("origin"));
         ListTag links = tag.getList(LINKS, Tag.TAG_COMPOUND);
         ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(Math.min(links.size(), MAX_LINKS));
         for (int index = 0; index < links.size() && index < MAX_LINKS; index++) {
@@ -46,15 +45,14 @@ public final class DataDistributionConnectorClipboard {
             result.add(new AdaptiveProviderConnectorBinding(
                     BlockPos.of(link.getLong("pos")), Direction.from3DDataValue(side), mode));
         }
-        return new Snapshot(origin, List.copyOf(result));
+        return new Snapshot(List.copyOf(result));
     }
 
-    public static void write(ItemStack stack, BlockPos origin, List<AdaptiveProviderConnectorBinding> bindings) {
+    public static void write(ItemStack stack, List<AdaptiveProviderConnectorBinding> bindings) {
         if (bindings.size() > MAX_LINKS) {
             throw new IllegalArgumentException("Connector clipboard cannot contain more than " + MAX_LINKS + " links");
         }
         CompoundTag tag = new CompoundTag();
-        tag.putLong("origin", origin.asLong());
         ListTag links = new ListTag();
         for (AdaptiveProviderConnectorBinding binding : bindings) {
             CompoundTag link = new CompoundTag();
@@ -67,7 +65,7 @@ public final class DataDistributionConnectorClipboard {
         stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR_CLIPBOARD.get(), tag);
     }
 
-    public record Snapshot(BlockPos origin, List<AdaptiveProviderConnectorBinding> bindings) {
+    public record Snapshot(List<AdaptiveProviderConnectorBinding> bindings) {
         public Snapshot {
             bindings = List.copyOf(bindings);
         }

@@ -98,6 +98,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -356,6 +357,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private boolean hasInputConnectorTargets() {
         return this.connectorTargets.stream().anyMatch(
                 target -> target.mode().supportsInput());
+    }
+
+    private boolean hasPullConnectorTargets() {
+        return this.connectorTargets.stream().anyMatch(
+                target -> target.mode().supportsPull());
     }
 
     public boolean bindConnectorTarget(BlockPos position, Direction side) {
@@ -1202,12 +1208,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     /** Pulls a bounded batch from linked generic inventories into the provider return inventory. */
     private boolean tickConnectorPull() {
-        if (this.connectorTargets.isEmpty() || this.connectorTargets.stream().noneMatch(
-                target -> target.mode().supportsPull())) {
+        if (!hasPullConnectorTargets()) {
             return false;
         }
-        Level currentLevel = this.host.getBlockEntity().getLevel();
-        if (currentLevel == null || currentLevel.isClientSide()) {
+        if (!(this.host.getBlockEntity().getLevel() instanceof ServerLevel currentLevel)) {
             return false;
         }
         int scanned = 0;
@@ -1223,6 +1227,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 break;
             }
             BlockPos position = binding.position();
+            if (!currentLevel.isLoaded(position)) {
+                continue;
+            }
             MEStorage storage = currentLevel.getCapability(
                     AECapabilities.ME_STORAGE,
                     position,
@@ -1233,6 +1240,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 PullResult result = pullStorage(storage, scanned);
                 scanned = result.keysScanned();
                 if (result.changed()) {
+                    changed = true;
                     advanceConnectorPullCursor(offset + 1);
                     break;
                 }
@@ -1255,7 +1263,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 continue;
             }
             IItemHandler itemHandler = currentLevel.getCapability(
-                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                    Capabilities.ItemHandler.BLOCK,
                     position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
             if (itemHandler != null) {
                 changed |= pullItemHandler(itemHandler);
@@ -1266,7 +1274,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 continue;
             }
             IFluidHandler fluidHandler = currentLevel.getCapability(
-                    net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                    Capabilities.FluidHandler.BLOCK,
                     position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
             if (fluidHandler != null) {
                 changed |= pullFluidHandler(fluidHandler);
@@ -1974,7 +1982,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         @Override
         public TickingRequest getTickingRequest(IGridNode node) {
             boolean routeHasWork = hasDispatchWork();
-            boolean sleeping = !invokeBaseHasWorkToDo() && !routeHasWork && getReturnInv().isEmpty() && !reusableCrafting.hasResidents();
+            boolean sleeping = !invokeBaseHasWorkToDo() && !routeHasWork && !hasPullConnectorTargets() && getReturnInv().isEmpty() && !reusableCrafting.hasResidents();
             return new TickingRequest(
                     TickRates.Interface,
                     sleeping);
@@ -1996,7 +2004,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             dataEnergistics$tryFinishDispatchPulse();
             couldDoWork = tickReusableCrafting() || couldDoWork;
             boolean routeHasWork = hasDispatchWork();
-            boolean hasWork = invokeBaseHasWorkToDo() || routeHasWork || !getReturnInv().isEmpty() || reusableCrafting.hasResidents();
+            // Linked outputs can become available without a crafting dispatch or a local inventory notification.
+            boolean hasWork = invokeBaseHasWorkToDo() || routeHasWork || hasPullConnectorTargets() || !getReturnInv().isEmpty() || reusableCrafting.hasResidents();
             adaptiveResetReusableWorkCount();
             return hasWork ? (couldDoWork ? TickRateModulation.URGENT : TickRateModulation.SLOWER) : TickRateModulation.SLEEP;
         }

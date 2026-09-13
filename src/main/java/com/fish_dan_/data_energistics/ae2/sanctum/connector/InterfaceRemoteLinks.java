@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IManagedGridNode;
@@ -37,6 +38,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     private final IManagedGridNode mainNode;
     private List<ConnectorLink> links = List.of();
     private ConnectorMode mode = ConnectorMode.INPUT;
+    private ConnectorPolicy policy = ConnectorPolicy.ROUND_ROBIN;
     private int syncedSlots = DataSanctumInterfaceConstants.BASE_PAGE_COUNT * DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     private int linkCursor;
     private int[] sourceCursors = new int[0];
@@ -57,6 +59,15 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     @Override
     public ConnectorMode mode() {
         return mode;
+    }
+
+    public ConnectorPolicy policy() {
+        return policy;
+    }
+
+    public void setPolicy(ConnectorPolicy policy) {
+        this.policy = policy;
+        changed.run();
     }
 
     @Override
@@ -157,6 +168,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     public void write(CompoundTag root, HolderLookup.Provider registries) {
         CompoundTag state = new CompoundTag();
         state.putString("mode", mode.name());
+        state.putString("policy", policy.name());
         state.putInt("link_cursor", linkCursor);
         state.put("pending_return", GenericStack.writeTag(registries, pendingReturn));
         ListTag targets = new ListTag();
@@ -177,6 +189,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     public void read(CompoundTag root, HolderLookup.Provider registries) {
         CompoundTag state = root.getCompound(NBT_KEY);
         mode = state.contains("mode") ? ConnectorMode.valueOf(state.getString("mode")) : ConnectorMode.INPUT;
+        policy = state.contains("policy") ? ConnectorPolicy.valueOf(state.getString("policy")) : ConnectorPolicy.ROUND_ROBIN;
         var restored = new ArrayList<ConnectorLink>();
         ListTag targets = state.getList("targets", Tag.TAG_COMPOUND);
         int[] restoredCursors = new int[targets.size()];
@@ -199,6 +212,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
 
     public void writeToStream(RegistryFriendlyByteBuf data) {
         data.writeEnum(mode);
+        data.writeEnum(policy);
         data.writeVarInt(slotCount());
         data.writeCollection(links, (buffer, link) -> {
             buffer.writeBlockPos(link.position());
@@ -210,6 +224,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
 
     public boolean readFromStream(RegistryFriendlyByteBuf data) {
         var nextMode = data.readEnum(ConnectorMode.class);
+        var nextPolicy = data.readEnum(ConnectorPolicy.class);
         int nextSlots = data.readVarInt();
         if (nextSlots < 1 || nextSlots > DataSanctumInterfaceConstants.LOGIC_SLOT_COUNT) {
             throw new IllegalArgumentException("Invalid interface slot count");
@@ -224,8 +239,9 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
             }
             return new ConnectorLink(position, side, linkMode, slot);
         });
-        boolean updated = mode != nextMode || syncedSlots != nextSlots || !links.equals(nextLinks);
+        boolean updated = mode != nextMode || policy != nextPolicy || syncedSlots != nextSlots || !links.equals(nextLinks);
         mode = nextMode;
+        policy = nextPolicy;
         syncedSlots = nextSlots;
         links = List.copyOf(nextLinks);
         sourceCursors = new int[links.size()];

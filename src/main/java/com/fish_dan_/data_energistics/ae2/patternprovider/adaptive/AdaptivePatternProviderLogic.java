@@ -22,9 +22,9 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -125,19 +125,19 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private static final long CONNECTOR_PULL_AMOUNT_PER_KEY = 4096L;
     private static final String NBT_PATTERN_SLOT_OVERFLOW = "adaptive_pattern_slot_overflow";
     private static final String NBT_RECONCILED_PATTERN_SLOT_COUNT = "adaptive_reconciled_pattern_slot_count";
-    private static final String NBT_CONNECTOR_MODE = "adaptive_connector_mode";
-    private static final String NBT_CONNECTOR_POLICY = "adaptive_connector_policy";
-    private static final String NBT_CONNECTOR_CURSOR = "adaptive_connector_cursor";
-    private static final String NBT_CONNECTOR_PULL_CURSOR = "adaptive_connector_pull_cursor";
-    private static final String NBT_CONNECTOR_PULL_SLOT_CURSOR = "adaptive_connector_pull_slot_cursor";
-    private static final String NBT_CONNECTOR_TARGETS = "adaptive_connector_targets";
+    private static final String NBT_CONNECTOR_MODE = "connector_mode";
+    private static final String NBT_CONNECTOR_POLICY = "connector_policy";
+    private static final String NBT_CONNECTOR_CURSOR = "connector_cursor";
+    private static final String NBT_CONNECTOR_PULL_CURSOR = "connector_pull_cursor";
+    private static final String NBT_CONNECTOR_PULL_SLOT_CURSOR = "connector_pull_slot_cursor";
+    private static final String NBT_CONNECTOR_TARGETS = "connector_targets";
 
     private final PatternProviderLogicHost host;
     private final IManagedGridNode mainNode;
     private final IActionSource actionSource;
     private int localRoundRobinIndex;
     private ConnectorMode connectorMode = ConnectorMode.INPUT;
-    private AdaptiveProviderConnectorPolicy connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN;
+    private ConnectorPolicy connectorPolicy = ConnectorPolicy.ROUND_ROBIN;
     private int connectorCursor;
     private int connectorPullCursor;
     private int connectorPullSlotCursor;
@@ -247,12 +247,12 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         super.readFromNBT(tag, registries);
 
         this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, ConnectorMode.INPUT);
-        this.connectorPolicy = readConnectorPolicy(tag, NBT_CONNECTOR_POLICY, AdaptiveProviderConnectorPolicy.ROUND_ROBIN);
-        this.connectorCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_CURSOR));
-        this.connectorPullCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_CURSOR));
-        this.connectorPullSlotCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_SLOT_CURSOR));
+        this.connectorPolicy = readConnectorPolicy(tag, NBT_CONNECTOR_POLICY, ConnectorPolicy.ROUND_ROBIN);
+        this.connectorCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_CURSOR));
+        this.connectorPullCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_PULL_CURSOR));
+        this.connectorPullSlotCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_PULL_SLOT_CURSOR));
         this.connectorTargets.clear();
-        ListTag connectorTargetTags = tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
+        ListTag connectorTargetTags = tag.contains(NBT_CONNECTOR_TARGETS, Tag.TAG_LIST) ? tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND) : tag.getList("adaptive_" + NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
         for (int index = 0; this.host instanceof BlockEntity && index < connectorTargetTags.size(); index++) {
             CompoundTag targetTag = connectorTargetTags.getCompound(index);
             int side = targetTag.getByte("side");
@@ -284,7 +284,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorMode;
     }
 
-    public AdaptiveProviderConnectorPolicy connectorPolicy() {
+    public ConnectorPolicy connectorPolicy() {
         return this.connectorPolicy;
     }
 
@@ -297,7 +297,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         onConnectorChanged();
     }
 
-    public void setConnectorPolicy(AdaptiveProviderConnectorPolicy policy) {
+    public void setConnectorPolicy(ConnectorPolicy policy) {
         this.connectorPolicy = policy;
         onConnectorChanged();
     }
@@ -326,7 +326,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     /** Replaces the client display state after a complete update has been decoded; performs no world writes. */
     public boolean readConnectorVisualState(RegistryFriendlyByteBuf data) {
         ConnectorMode mode = data.readEnum(ConnectorMode.class);
-        AdaptiveProviderConnectorPolicy policy = data.readEnum(AdaptiveProviderConnectorPolicy.class);
+        ConnectorPolicy policy = data.readEnum(ConnectorPolicy.class);
         List<ConnectorTarget> targets = data.readList(buffer -> new ConnectorTarget(
                 buffer.readBlockPos(), buffer.readEnum(Direction.class), buffer.readEnum(ConnectorMode.class)));
         boolean changed = this.connectorMode != mode || this.connectorPolicy != policy || !this.connectorTargets.equals(targets);
@@ -434,26 +434,32 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     private static ConnectorMode readConnectorMode(
                                                    CompoundTag tag, String key, ConnectorMode fallback) {
-        if (!tag.contains(key)) {
+        String readKey = tag.contains(key) ? key : "adaptive_" + key;
+        if (!tag.contains(readKey)) {
             return fallback;
         }
         try {
-            return ConnectorMode.valueOf(tag.getString(key));
+            return ConnectorMode.valueOf(tag.getString(readKey));
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid adaptive connector mode", exception);
         }
     }
 
-    private static AdaptiveProviderConnectorPolicy readConnectorPolicy(
-                                                                       CompoundTag tag, String key, AdaptiveProviderConnectorPolicy fallback) {
-        if (!tag.contains(key)) {
+    private static ConnectorPolicy readConnectorPolicy(
+                                                       CompoundTag tag, String key, ConnectorPolicy fallback) {
+        String readKey = tag.contains(key) ? key : "adaptive_" + key;
+        if (!tag.contains(readKey)) {
             return fallback;
         }
         try {
-            return AdaptiveProviderConnectorPolicy.valueOf(tag.getString(key));
+            return ConnectorPolicy.valueOf(tag.getString(readKey));
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid adaptive connector policy", exception);
         }
+    }
+
+    private static int readLegacyInt(CompoundTag tag, String key) {
+        return tag.contains(key, Tag.TAG_INT) ? tag.getInt(key) : tag.getInt("adaptive_" + key);
     }
 
     public record ConnectorTarget(BlockPos position, Direction side, ConnectorMode mode) {}
@@ -1207,7 +1213,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         int scanned = 0;
         boolean changed = false;
         int targetCount = this.connectorTargets.size();
-        int start = this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
+        int start = this.connectorPolicy == ConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
         for (int offset = 0; offset < targetCount; offset++) {
             ConnectorTarget binding = this.connectorTargets.get((start + offset) % targetCount);
             if (!binding.mode().supportsPull()) {
@@ -1264,7 +1270,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private void advanceConnectorPullCursor(int amount) {
-        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN && !this.connectorTargets.isEmpty()) {
+        if (this.connectorPolicy == ConnectorPolicy.ROUND_ROBIN && !this.connectorTargets.isEmpty()) {
             this.connectorPullCursor = Math.floorMod(this.connectorPullCursor + Math.max(1, amount), this.connectorTargets.size());
         }
     }
@@ -1396,7 +1402,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     /* Package-private provider mechanics consumed by AdaptivePatternProviderRuntimeTarget. */
 
     boolean adaptivePushDefault(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
-        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN) {
+        if (this.connectorPolicy == ConnectorPolicy.ROUND_ROBIN) {
             return super.pushPattern(patternDetails, inputHolder);
         }
         var access = (PatternProviderBatchAccess) this;
@@ -1505,14 +1511,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     int adaptiveRoundRobinIndex() {
-        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY) {
+        if (this.connectorPolicy == ConnectorPolicy.PRIORITY) {
             return 0;
         }
         return this.connectorTargets.isEmpty() ? this.localRoundRobinIndex : this.connectorCursor;
     }
 
     void adaptiveAdvanceRoundRobin(int amount) {
-        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY) {
+        if (this.connectorPolicy == ConnectorPolicy.PRIORITY) {
             return;
         }
         this.localRoundRobinIndex += Math.max(0, amount);

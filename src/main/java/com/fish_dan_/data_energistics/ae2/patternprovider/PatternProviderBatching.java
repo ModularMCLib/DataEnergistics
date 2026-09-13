@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineScope;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -193,7 +193,7 @@ public final class PatternProviderBatching {
 
         List<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
         boolean priority = logic instanceof AdaptivePatternProviderLogic adaptive &&
-                adaptive.connectorPolicy() == AdaptiveProviderConnectorPolicy.PRIORITY;
+                adaptive.connectorPolicy() == ConnectorPolicy.PRIORITY;
         int roundRobinIndex = priority ? 0 : access.dataEnergistics$getRoundRobinIndex();
         int inventoryRoundRobin = rearrangeRoundRobin(
                 possibleTargets,

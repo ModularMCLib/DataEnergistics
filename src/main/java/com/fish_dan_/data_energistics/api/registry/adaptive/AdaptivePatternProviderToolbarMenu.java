@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.YesNo;
@@ -87,7 +88,7 @@ public interface AdaptivePatternProviderToolbarMenu {
     void sendSetConnectorMode(ConnectorMode mode);
 
     /** Requests a connector target policy change. */
-    void sendSetConnectorPolicy(AdaptiveProviderConnectorPolicy policy);
+    void sendSetConnectorPolicy(ConnectorPolicy policy);
 
     /** Whether this provider currently has at least one connector target. */
     boolean isConnectorBound();

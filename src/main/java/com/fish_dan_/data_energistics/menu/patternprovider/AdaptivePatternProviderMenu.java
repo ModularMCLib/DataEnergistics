@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.LockCraftingMode;
@@ -112,7 +112,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     @GuiSync(794)
     public int connectorMode = ConnectorMode.INPUT.ordinal();
     @GuiSync(795)
-    public int connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal();
+    public int connectorPolicy = ConnectorPolicy.ROUND_ROBIN.ordinal();
     @GuiSync(796)
     public boolean connectorBound;
 
@@ -391,7 +391,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         return this.connectorBound;
     }
 
-    public void sendSetConnectorPolicy(AdaptiveProviderConnectorPolicy policy) {
+    public void sendSetConnectorPolicy(ConnectorPolicy policy) {
         this.connectorPolicy = policy.ordinal();
         sendClientAction(ACTION_SET_CONNECTOR_POLICY, this.connectorPolicy);
     }
@@ -406,10 +406,10 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     }
 
     private void setConnectorPolicy(int ordinal) {
-        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) || ordinal < 0 || ordinal >= AdaptiveProviderConnectorPolicy.values().length) {
+        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) || ordinal < 0 || ordinal >= ConnectorPolicy.values().length) {
             return;
         }
-        adaptiveLogic.setConnectorPolicy(AdaptiveProviderConnectorPolicy.values()[ordinal]);
+        adaptiveLogic.setConnectorPolicy(ConnectorPolicy.values()[ordinal]);
         syncConnectorState();
         broadcastChanges();
     }

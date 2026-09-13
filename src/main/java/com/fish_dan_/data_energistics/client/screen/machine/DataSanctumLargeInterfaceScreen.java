@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu.PageSlotTarget;
@@ -31,6 +32,8 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
     private final ToggleButton nextPageButton;
     private final OutputSideActionButton activePullToggleButton;
     private final OutputSideActionButton activePullConfigButton;
+    private final ToggleButton connectorPolicyButton;
+    private final OutputSideActionButton unlimitedPullButton;
     private final List<Button> amountButtons = new ArrayList<>();
 
     public DataSanctumLargeInterfaceScreen(DataSanctumLargeInterfaceMenu menu, Inventory playerInventory, Component title,
@@ -41,6 +44,18 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         addToLeftToolbar(this.fuzzyMode);
 
         widgets.addOpenPriorityButton();
+
+        this.connectorPolicyButton = new ToggleButton(
+                Icon.PRIORITY,
+                Icon.SCHEDULING_ROUND_ROBIN,
+                Component.translatable("button.data_energistics.data_sanctum_interface.connector_policy.priority"),
+                Component.translatable("button.data_energistics.data_sanctum_interface.connector_policy.round_robin"),
+                ignored -> this.menu.sendSetConnectorPolicy(this.menu.connectorPolicy == ConnectorPolicy.ROUND_ROBIN.ordinal() ? ConnectorPolicy.PRIORITY : ConnectorPolicy.ROUND_ROBIN));
+        addToLeftToolbar(this.connectorPolicyButton);
+
+        this.unlimitedPullButton = new OutputSideActionButton(button -> this.menu.sendSetUnlimitedPull(!this.menu.unlimitedActivePull));
+        this.unlimitedPullButton.setMessageKey("gui.data_energistics.data_sanctum_interface.unlimited_pull.disabled");
+        addToLeftToolbar(this.unlimitedPullButton);
 
         this.previousPageButton = new ToggleButton(
                 Icon.BACK,
@@ -126,6 +141,12 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         this.activePullToggleButton.setIconName(activePullEnabled ? "POWER_UNIT_YES" : "POWER_UNIT_NO");
         this.activePullToggleButton.setMessageKey(activePullEnabled ? "gui.data_energistics.set_active_pull_sides.enable" : "gui.data_energistics.set_active_pull_sides.disable");
         this.activePullConfigButton.visible = activePullEnabled && this.menu.getHost() != null && this.menu.getHost().hasActivePullSideSelection();
+        boolean priority = this.menu.connectorPolicy == ConnectorPolicy.PRIORITY.ordinal();
+        this.connectorPolicyButton.setState(priority);
+        this.connectorPolicyButton.setMessage(Component.translatable(
+                "button.data_energistics.data_sanctum_interface.connector_policy." + (priority ? "priority" : "round_robin")));
+        this.unlimitedPullButton.setIconName(this.menu.unlimitedActivePull ? "POWER_UNIT_YES" : "POWER_UNIT_NO");
+        this.unlimitedPullButton.setMessageKey("gui.data_energistics.data_sanctum_interface.unlimited_pull." + (this.menu.unlimitedActivePull ? "enabled" : "disabled"));
         setTextContent("page_info", Component.translatable(
                 "screen.data_energistics.page",
                 this.menu.pageIndex + 1,

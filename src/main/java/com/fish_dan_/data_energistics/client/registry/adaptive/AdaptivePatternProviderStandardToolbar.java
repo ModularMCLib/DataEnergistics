@@ -4,9 +4,9 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClientPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.client.DataEnergisticsClientRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarButton;
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarContext;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
 
 import appeng.api.config.LockCraftingMode;
@@ -59,13 +59,13 @@ public final class AdaptivePatternProviderStandardToolbar implements DataEnergis
         toolbar.register(AdaptivePatternProviderToolbarActions.CONNECTOR_POLICY, 910, context -> {
             var menu = context.menu();
             var button = new ToggleButton(Icon.PRIORITY, Icon.SCHEDULING_ROUND_ROBIN,
-                    ignored -> menu.sendSetConnectorPolicy(menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal() ? AdaptiveProviderConnectorPolicy.PRIORITY : AdaptiveProviderConnectorPolicy.ROUND_ROBIN));
+                    ignored -> menu.sendSetConnectorPolicy(menu.getConnectorPolicy() == ConnectorPolicy.ROUND_ROBIN.ordinal() ? ConnectorPolicy.PRIORITY : ConnectorPolicy.ROUND_ROBIN));
             button.setTooltipOn(List.of(Component.translatable(
                     "button.data_energistics.adaptive_pattern_provider.connector_policy.priority")));
             button.setTooltipOff(List.of(Component.translatable(
                     "button.data_energistics.adaptive_pattern_provider.connector_policy.round_robin")));
             return new AdaptivePatternProviderToolbarButton(button, () -> {
-                boolean priority = menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.PRIORITY.ordinal();
+                boolean priority = menu.getConnectorPolicy() == ConnectorPolicy.PRIORITY.ordinal();
                 button.setState(priority);
                 button.setMessage(Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_policy." +
                         (priority ? "priority" : "round_robin")));

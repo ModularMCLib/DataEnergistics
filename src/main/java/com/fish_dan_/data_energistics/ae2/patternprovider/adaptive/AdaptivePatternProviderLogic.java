@@ -413,8 +413,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
     }
 
-    public record ConnectorTarget(BlockPos position, Direction side, AdaptiveProviderConnectorMode mode) {
-    }
+    public record ConnectorTarget(BlockPos position, Direction side, AdaptiveProviderConnectorMode mode) {}
 
     /** Dismantled physical items carry escrow independently from copyable MemoryCard settings. */
     public void exportReusableItem(DataComponentMap.Builder builder, HolderLookup.Provider registries) {

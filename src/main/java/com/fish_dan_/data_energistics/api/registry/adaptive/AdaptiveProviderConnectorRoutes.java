@@ -34,8 +34,7 @@ public final class AdaptiveProviderConnectorRoutes {
         if (!configured.isEmpty()) {
             ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(configured.size());
             for (AdaptiveProviderConnectorBinding binding : configured) {
-                if (mode == AdaptiveProviderConnectorMode.INPUT && binding.mode().supportsInput()
-                        || mode == AdaptiveProviderConnectorMode.PULL && binding.mode().supportsPull()) {
+                if (mode == AdaptiveProviderConnectorMode.INPUT && binding.mode().supportsInput() || mode == AdaptiveProviderConnectorMode.PULL && binding.mode().supportsPull()) {
                     result.add(binding);
                 }
             }

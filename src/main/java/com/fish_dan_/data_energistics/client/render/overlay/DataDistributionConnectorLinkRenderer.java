@@ -27,8 +27,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
-import java.util.OptionalDouble;
 import java.util.List;
+import java.util.OptionalDouble;
 
 /** Renders client-synchronized bindings while their connector is held in either hand. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
@@ -83,13 +83,12 @@ public final class DataDistributionConnectorLinkRenderer {
         PoseStack pose = event.getPoseStack();
         var buffers = minecraft.renderBuffers().bufferSource();
         VertexConsumer lines = buffers.getBuffer(LINK_LINES);
-            pose.pushPose();
+        pose.pushPose();
         try {
             pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
             List<AdaptivePatternProviderLogic.ConnectorTarget> targets = logic != null ? logic.connectorTargets() : List.of();
             int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
-            Color sourceColor = logic == null ? level.isLoaded(provider) ? MISSING : UNLOADED
-                    : selected >= 0 ? currentColor(targets.get(selected).mode(), true) : SOURCE;
+            Color sourceColor = logic == null ? level.isLoaded(provider) ? MISSING : UNLOADED : selected >= 0 ? currentColor(targets.get(selected).mode(), true) : SOURCE;
             LevelRenderer.renderLineBox(pose, lines, new AABB(source, source).inflate(0.15D),
                     sourceColor.red(), sourceColor.green(), sourceColor.blue(), sourceColor.alpha());
             if (logic == null) {

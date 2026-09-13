@@ -100,7 +100,7 @@ public final class DEFluids {
     public static final DeferredBlock<LiquidBlock> ENDER_BLOCK = DEBlocks.BLOCKS.register(
             "ender",
             () -> new LiquidBlock((FlowingFluid) ENDER.get(),
-                    BlockBehaviour.Properties.ofLegacyCopy(Blocks.WATER)
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.WATER)
                             .noLootTable()
                             .replaceable()
                             .strength(100.0F)
@@ -108,7 +108,7 @@ public final class DEFluids {
     public static final DeferredBlock<LiquidBlock> DATA_CORROSION_LIQUID_BLOCK = DEBlocks.BLOCKS.register(
             "data_corrosion_liquid",
             () -> new LiquidBlock((FlowingFluid) DATA_CORROSION_LIQUID.get(),
-                    BlockBehaviour.Properties.ofLegacyCopy(Blocks.WATER)
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.WATER)
                             .noLootTable()
                             .replaceable()
                             .strength(100.0F)

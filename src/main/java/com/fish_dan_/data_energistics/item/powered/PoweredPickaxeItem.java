@@ -23,7 +23,6 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
@@ -228,12 +227,10 @@ public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements Con
                 miner.getName().getString(),
                 BuiltInRegistries.ITEM.getKey(tool.getItem()),
                 tool.getItem() instanceof PoweredPickaxeItem pickaxe ? pickaxe.getAECurrentPower(tool) : 0.0D,
-                EnchantmentHelper.getItemEnchantmentLevel(
-                        level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH),
-                        tool),
-                EnchantmentHelper.getItemEnchantmentLevel(
-                        level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE),
-                        tool),
+                tool.getEnchantmentLevel(
+                        level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH)),
+                tool.getEnchantmentLevel(
+                        level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE)),
                 dropCount,
                 formatDrops(drops));
     }

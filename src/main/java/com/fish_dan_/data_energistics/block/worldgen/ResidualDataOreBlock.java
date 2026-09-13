@@ -13,7 +13,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DropExperienceBlock;
@@ -87,7 +86,7 @@ public class ResidualDataOreBlock extends DropExperienceBlock {
     }
 
     private static void spawnDispersingData(ServerLevel level, BlockPos pos, RandomSource random, ItemStack tool) {
-        int fortuneLevel = EnchantmentHelper.getItemEnchantmentLevel(level.registryAccess().holderOrThrow(Enchantments.FORTUNE), tool);
+        int fortuneLevel = tool.getEnchantmentLevel(level.registryAccess().holderOrThrow(Enchantments.FORTUNE));
         int count = 1 + random.nextInt(3);
         for (int i = 0; i < fortuneLevel; i++) {
             count += random.nextInt(2);

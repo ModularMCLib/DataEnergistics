@@ -96,7 +96,7 @@ public class DataSolarPanelBlock extends AEBaseBlock implements EntityBlock {
     }
 
     private static boolean matchesLoadedPanel(LevelReader level, BlockPos pos) {
-        return level.hasChunkAt(pos) && connectsVisually(level.getBlockState(pos));
+        return level.isAreaLoaded(pos, 0) && connectsVisually(level.getBlockState(pos));
     }
 
     /** Both solar variants share an outer frame, without sharing power storage or their AE network nodes. */
@@ -149,7 +149,7 @@ public class DataSolarPanelBlock extends AEBaseBlock implements EntityBlock {
     }
 
     private static void refreshPanelAt(Level level, BlockPos pos) {
-        if (!level.hasChunkAt(pos)) {
+        if (!level.isAreaLoaded(pos, 0)) {
             return;
         }
         BlockState state = level.getBlockState(pos);

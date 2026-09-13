@@ -10,6 +10,7 @@ import appeng.api.networking.IGridNode;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -58,7 +59,7 @@ public final class SolarPanelArray {
                     continue;
                 }
                 BlockPos neighborPos = member.owner.getBlockPos().relative(direction);
-                if (level.hasChunkAt(neighborPos) &&
+                if (level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(neighborPos.getX()), SectionPos.blockToSectionCoord(neighborPos.getZ())) &&
                         level.getBlockEntity(neighborPos) instanceof DataSolarPanelBlockEntity neighbor &&
                         !neighbor.isRemoved() && neighbor.energyMembership().ready &&
                         DataSolarPanelBlock.connectsOnSide(neighbor.getBlockState(), direction.getOpposite())) {
@@ -166,7 +167,7 @@ public final class SolarPanelArray {
             if (level != null) {
                 for (Direction direction : Direction.Plane.HORIZONTAL) {
                     BlockPos pos = this.owner.getBlockPos().relative(direction);
-                    if (level.hasChunkAt(pos) && level.getBlockEntity(pos) instanceof DataSolarPanelBlockEntity neighbor) {
+                    if (level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())) && level.getBlockEntity(pos) instanceof DataSolarPanelBlockEntity neighbor) {
                         neighbor.energyMembership().invalidate();
                     }
                 }

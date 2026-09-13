@@ -128,7 +128,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     }
 
     @Override
-    public int getEnchantmentValue() {
+    public int getEnchantmentValue(ItemStack stack) {
         return 1;
     }
 
@@ -225,7 +225,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         if (this.isBlockedBowEnchantment(enchantment)) {
             return false;
         }
-        return enchantment.value().isSupportedItem(stack);
+        return super.supportsEnchantment(stack, enchantment);
     }
 
     @Override

@@ -66,7 +66,7 @@ public class DataSanctumInterfaceBlock extends AEBaseBlock implements EntityBloc
 
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return this.rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 
     @Nullable

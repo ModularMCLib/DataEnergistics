@@ -65,7 +65,7 @@ public final class DataSolarPanelBlockConnectionGameTest {
                 .setValue(DataSolarPanelBlock.CONNECT_NORTH, true)
                 .setValue(DataSolarPanelBlock.CONNECT_EAST, true);
 
-        BlockState rotated = state.rotate(Rotation.CLOCKWISE_90);
+        BlockState rotated = state.rotate(helper.getLevel(), helper.absolutePos(BlockPos.ZERO), Rotation.CLOCKWISE_90);
         helper.assertValueEqual(rotated.getValue(DataSolarPanelBlock.FACING), Direction.EAST,
                 "Clockwise rotation must rotate the panel facing");
         helper.assertTrue(rotated.getValue(DataSolarPanelBlock.CONNECT_EAST),

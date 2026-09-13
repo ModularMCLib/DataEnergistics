@@ -73,8 +73,7 @@ public abstract class AbstractFlatteningTntPrimedEntity extends PrimedTnt {
 
         for (int chunkX = centerChunkX - definition.clearChunkRadius; chunkX <= centerChunkX + definition.clearChunkRadius; chunkX++) {
             for (int chunkZ = centerChunkZ - definition.clearChunkRadius; chunkZ <= centerChunkZ + definition.clearChunkRadius; chunkZ++) {
-                BlockPos chunkOrigin = new BlockPos(chunkX << 4, center.getY(), chunkZ << 4);
-                if (!level.hasChunkAt(chunkOrigin)) {
+                if (!level.getChunkSource().hasChunk(chunkX, chunkZ)) {
                     continue;
                 }
 
@@ -114,8 +113,7 @@ public abstract class AbstractFlatteningTntPrimedEntity extends PrimedTnt {
 
         for (int chunkX = centerChunkX - definition.fillChunkRadius; chunkX <= centerChunkX + definition.fillChunkRadius; chunkX++) {
             for (int chunkZ = centerChunkZ - definition.fillChunkRadius; chunkZ <= centerChunkZ + definition.fillChunkRadius; chunkZ++) {
-                BlockPos chunkOrigin = new BlockPos(chunkX << 4, fillY, chunkZ << 4);
-                if (!level.hasChunkAt(chunkOrigin)) {
+                if (!level.getChunkSource().hasChunk(chunkX, chunkZ)) {
                     continue;
                 }
 

@@ -264,10 +264,10 @@ public final class TrinityGraphPlanAssembler {
         stages.forEach(stage -> stagesByIndex.put(stage.index(), stage));
         Int2ObjectOpenHashMap<TrinityCycleRepeatBlock> blocksByStage = new Int2ObjectOpenHashMap<>();
         repeatBlocks.forEach(block -> block.stageOrder().forEach(
-                stageIndex -> blocksByStage.put(stageIndex, block)));
+                stageIndex -> blocksByStage.put(stageIndex.intValue(), block)));
         IntOpenHashSet completedBlocks = new IntOpenHashSet();
         LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>(initialInputs);
-        for (Integer stageIndex : stageOrder) {
+        for (int stageIndex : stageOrder) {
             TrinityPlanStage stage = stagesByIndex.get(stageIndex);
             if (!stage.cycleStage()) {
                 mergeScaled(balances, stage.netChange(), BigInteger.ONE);

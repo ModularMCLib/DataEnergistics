@@ -1002,17 +1002,17 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         int minX = pattern.getMinX();
         int minY = pattern.getMinY();
         int expandedZ = pattern.getMinZ();
-        for (int unit = 0; unit < pattern.aisleRepetitions.length; unit++) {
-            int minimum = pattern.aisleRepetitions[unit][0];
-            int maximum = pattern.aisleRepetitions[unit][1];
+        for (var unit : pattern.getLayout().units()) {
+            int minimum = unit.repeats().min();
+            int maximum = unit.repeats().max();
             int repetitions = minimum == maximum ? minimum : repeatCount;
             if (repetitions < minimum || repetitions > maximum) {
                 throw new IllegalArgumentException("Requested repetition " + repeatCount + " is outside [" + minimum +
-                        ", " + maximum + "] for Trinity pattern unit " + unit);
+                        ", " + maximum + "] for Trinity pattern unit " + unit.index());
             }
             for (int repeat = 0; repeat < repetitions; repeat++) {
-                for (int inner = 0; inner < pattern.unitDepths[unit]; inner++) {
-                    int patternZ = pattern.unitStarts[unit] + inner;
+                for (int inner = 0; inner < unit.depth(); inner++) {
+                    int patternZ = unit.sourceStart() + inner;
                     for (int y = 0; y < pattern.getThumbLength(); y++) {
                         for (int x = 0; x < pattern.getPalmLength(); x++) {
                             TraceabilityPredicate predicate = pattern.getPredicate(patternZ, y, x);

@@ -810,7 +810,7 @@ public final class TrinityGraphDemandAggregator {
             return this.topology.variantsByOutputKey()
                     .getOrDefault(key, List.of())
                     .stream()
-                    .filter(variant -> !crossBoundaryOnly || variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1)) < outputPosition))
+                    .filter(variant -> !crossBoundaryOnly || variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1).intValue()) < outputPosition))
                     .toList();
         }
 
@@ -823,7 +823,7 @@ public final class TrinityGraphDemandAggregator {
                 boolean hasEarlierProducer = this.topology.variantsByOutputKey()
                         .getOrDefault(key, List.of())
                         .stream()
-                        .anyMatch(variant -> variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1)) <
+                        .anyMatch(variant -> variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1).intValue()) <
                                 cyclePosition));
                 if (hasEarlierProducer) {
                     producible.add(key);

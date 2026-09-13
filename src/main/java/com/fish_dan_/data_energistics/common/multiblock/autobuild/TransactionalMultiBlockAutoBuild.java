@@ -192,10 +192,10 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         int reused = 0;
         int expandedZ = coordinates.minZ();
 
-        for (int unit = 0; unit < pattern.aisleRepetitions.length; unit++) {
-            for (int repeat = 0; repeat < repetitionOutcome.repetitions()[unit]; repeat++) {
-                for (int inner = 0; inner < pattern.unitDepths[unit]; inner++) {
-                    int patternZ = pattern.unitStarts[unit] + inner;
+        for (var unit : pattern.getLayout().units()) {
+            for (int repeat = 0; repeat < repetitionOutcome.repetitions()[unit.index()]; repeat++) {
+                for (int inner = 0; inner < unit.depth(); inner++) {
+                    int patternZ = unit.sourceStart() + inner;
                     state.getLayerCount().clear();
                     state.getStructureLayerCount().clear();
                     LayerOutcome layer = planLayer(
@@ -360,12 +360,12 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     }
 
     private static RepetitionOutcome resolveRepetitions(BlockPattern pattern, int requestedRepeat) {
-        int[] repetitions = new int[pattern.aisleRepetitions.length];
-        for (int unit = 0; unit < pattern.aisleRepetitions.length; unit++) {
-            int minimum = pattern.aisleRepetitions[unit][0];
-            int maximum = pattern.aisleRepetitions[unit][1];
+        int[] repetitions = new int[pattern.getLayout().units().size()];
+        for (var unit : pattern.getLayout().units()) {
+            int minimum = unit.repeats().min();
+            int maximum = unit.repeats().max();
             if (minimum == maximum) {
-                repetitions[unit] = minimum;
+                repetitions[unit.index()] = minimum;
                 continue;
             }
             if (requestedRepeat < minimum || requestedRepeat > maximum) {
@@ -373,9 +373,9 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                         FailureType.INVALID_REPETITION,
                         null,
                         "Requested repetition " + requestedRepeat + " is outside [" + minimum + ", " + maximum +
-                                "] for unit " + unit));
+                                "] for unit " + unit.index()));
             }
-            repetitions[unit] = requestedRepeat;
+            repetitions[unit.index()] = requestedRepeat;
         }
         return new RepetitionOutcome(repetitions, null);
     }

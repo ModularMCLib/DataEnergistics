@@ -40,11 +40,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
@@ -148,7 +148,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
     @Override
     protected void setupConfig() {
-        this.configSlots = new ArrayList<>(CONFIG_SLOT_COUNT);
+        this.configSlots = new ObjectArrayList<>(CONFIG_SLOT_COUNT);
         var config = this.getHost().getInterfaceLogic().getConfig();
         for (int i = 0; i < CONFIG_SLOT_COUNT; i++) {
             int slotOnPage = i;
@@ -244,7 +244,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     }
 
     public List<Direction> getActivePullSides() {
-        List<Direction> sides = new ArrayList<>();
+        List<Direction> sides = new ObjectArrayList<>();
         for (Direction side : Direction.values()) {
             if ((this.activePullSidesMask & (1 << side.ordinal())) != 0) {
                 sides.add(side);

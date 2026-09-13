@@ -14,9 +14,9 @@ import appeng.util.ConfigInventory;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -87,7 +87,7 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
     @Override
     public List<@Nullable GenericStack> toList() {
         // Snapshots, like inherited NBT serialization, retain locked configuration slots.
-        return new ArrayList<>(Arrays.asList(this.stacks));
+        return new ObjectArrayList<>(Arrays.asList(this.stacks));
     }
 
     @Override

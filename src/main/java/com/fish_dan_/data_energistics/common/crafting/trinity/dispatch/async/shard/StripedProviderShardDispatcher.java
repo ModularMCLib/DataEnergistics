@@ -9,7 +9,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Dis
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.MachineTargetId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -172,8 +173,8 @@ final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
     private static final class ProviderShard {
 
         private final ReentrantLock lock = new ReentrantLock(true);
-        private final Map<ProviderRouteKey, Long> reservedByProviderRoute = new HashMap<>();
-        private final Map<CraftingProviderId, Integer> reservedProposalsByProvider = new HashMap<>();
+        private final Map<ProviderRouteKey, Long> reservedByProviderRoute = new Object2ObjectOpenHashMap<>();
+        private final Map<CraftingProviderId, Integer> reservedProposalsByProvider = new Object2ObjectOpenHashMap<>();
     }
 
     /**

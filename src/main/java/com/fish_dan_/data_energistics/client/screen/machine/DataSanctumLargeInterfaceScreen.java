@@ -29,9 +29,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanctumLargeInterfaceMenu> {
@@ -41,7 +41,7 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
     private final ToggleButton nextPageButton;
     private final OutputSideActionButton activePullToggleButton;
     private final OutputSideActionButton activePullConfigButton;
-    private final List<Button> amountButtons = new ArrayList<>();
+    private final List<Button> amountButtons = new ObjectArrayList<>();
     private @Nullable Slot pressedSlot;
     private boolean draggingAcrossSlots;
 

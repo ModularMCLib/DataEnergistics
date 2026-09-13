@@ -19,12 +19,12 @@ import appeng.parts.automation.StackWorldBehaviors;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /** Bounded remote inventory transfers, independent of interface config markers and legacy adjacent pull settings. */
@@ -44,11 +44,11 @@ final class InterfaceRemoteTransfer {
             return;
         }
         IActionSource actionSource = state.actionSource();
-        var bySlot = new LinkedHashMap<Integer, List<Integer>>();
+        var bySlot = new Object2ObjectLinkedOpenHashMap<Integer, List<Integer>>();
         for (int index = 0; index < links.size(); index++) {
-            bySlot.computeIfAbsent(links.get(index).slot(), ignored -> new ArrayList<>()).add(index);
+            bySlot.computeIfAbsent(links.get(index).slot(), ignored -> new ObjectArrayList<>()).add(index);
         }
-        var groups = new ArrayList<>(bySlot.entrySet());
+        var groups = new ObjectArrayList<>(bySlot.entrySet());
         int groupStart = Math.floorMod(state.linkCursor(), groups.size());
         int budget = LINKS_PER_TICK;
         var config = (DataSanctumInterfaceInventory) host.getInterfaceLogic().getConfig();
@@ -100,7 +100,7 @@ final class InterfaceRemoteTransfer {
         if (storage != null) {
             return storage;
         }
-        var wrappers = new IdentityHashMap<AEKeyType, MEStorage>();
+        var wrappers = new Reference2ReferenceOpenHashMap<AEKeyType, MEStorage>();
         for (var entry : StackWorldBehaviors.createExternalStorageStrategies(level, link.position(), link.side()).entrySet()) {
             var wrapper = entry.getValue().createWrapper(false, host::saveChanges);
             if (wrapper != null) {
@@ -181,8 +181,8 @@ final class InterfaceRemoteTransfer {
 
     private static boolean pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
                                        MEStorage storage, IActionSource actionSource) {
-        var keys = new ArrayList<AEKey>();
-        var amounts = new HashMap<AEKey, Long>();
+        var keys = new ObjectArrayList<AEKey>();
+        var amounts = new Object2ObjectOpenHashMap<AEKey, Long>();
         for (var entry : storage.getAvailableStacks()) {
             keys.add(entry.getKey());
             amounts.put(entry.getKey(), entry.getLongValue());

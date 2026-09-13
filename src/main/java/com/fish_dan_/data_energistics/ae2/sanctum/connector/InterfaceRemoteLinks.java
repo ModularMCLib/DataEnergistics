@@ -21,10 +21,10 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /** Per-interface link metadata and transfer progress; the stock/config and legacy side-pull settings are separate. */
@@ -77,7 +77,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         if (slot < 0 || slot >= slotCount()) {
             throw new IllegalArgumentException("Interface connector slot is locked or out of range: " + slot);
         }
-        var replacement = new ArrayList<>(links);
+        var replacement = new ObjectArrayList<>(links);
         boolean removed = replacement.removeIf(link -> link.position().equals(position) && link.side() == side && link.slot() == slot);
         if (!removed) {
             replacement.add(new ConnectorLink(position.immutable(), side, mode, slot));
@@ -88,7 +88,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
 
     @Override
     public int replace(List<ConnectorLink> bindings) {
-        var unique = new LinkedHashMap<Identity, ConnectorLink>();
+        var unique = new Object2ObjectLinkedOpenHashMap<Identity, ConnectorLink>();
         for (var link : bindings) {
             if (link.slot() < 0 || link.slot() >= DataSanctumInterfaceConstants.LOGIC_SLOT_COUNT) {
                 throw new IllegalArgumentException("Interface link has no valid stock slot: " + link.slot());
@@ -192,7 +192,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
             routeCursors[slot] = slot < savedRouteCursors.length ? Math.max(0, savedRouteCursors[slot]) : 0;
         }
         mode = state.contains("mode") ? ConnectorMode.valueOf(state.getString("mode")) : ConnectorMode.INPUT;
-        var restored = new ArrayList<ConnectorLink>();
+        var restored = new ObjectArrayList<ConnectorLink>();
         ListTag targets = state.getList("targets", Tag.TAG_COMPOUND);
         int[] restoredCursors = new int[targets.size()];
         for (int index = 0; index < targets.size(); index++) {

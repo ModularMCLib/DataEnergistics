@@ -7,9 +7,9 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Read-only joint slot accounting for AECS input inventories, on the server thread. */
@@ -63,7 +63,7 @@ public final class AecsInputCapacity {
                 }
             }
         }
-        List<Input> result = new ArrayList<>();
+        List<Input> result = new ObjectArrayList<>();
         for (var entry : totals) {
             result.add(new Input(entry.getKey(), entry.getLongValue()));
         }

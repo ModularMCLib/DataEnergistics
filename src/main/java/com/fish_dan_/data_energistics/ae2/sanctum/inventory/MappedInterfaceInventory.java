@@ -11,10 +11,10 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.AEKeySlotFilter;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.function.IntSupplier;
 
 /**
@@ -113,7 +113,7 @@ public final class MappedInterfaceInventory extends DataSanctumInterfaceInventor
     @Override
     public void getAvailableStacks(KeyCounter out) {
         if (accessingNetwork) return;
-        var mappedKeys = new HashSet<AEKey>();
+        var mappedKeys = new ObjectOpenHashSet<AEKey>();
         for (int slot = 0; slot < size(); slot++) {
             if (isMapped(slot)) {
                 AEKey key = config.getKey(slot);

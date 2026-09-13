@@ -56,9 +56,9 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -721,15 +721,15 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         return groups.size() == 1 ? groups.iterator().next() : null;
     }
 
-    private LinkedHashSet<PatternContainerGroup> getAdjacentMachineGroups() {
+    private ObjectLinkedOpenHashSet<PatternContainerGroup> getAdjacentMachineGroups() {
         var hostLevel = this.getLevel();
         if (hostLevel == null) {
-            return new LinkedHashSet<>();
+            return new ObjectLinkedOpenHashSet<>();
         }
 
         var hostPos = this.getBlockPos();
         var sides = this.getTargets();
-        var groups = new LinkedHashSet<PatternContainerGroup>(sides.size());
+        var groups = new ObjectLinkedOpenHashSet<PatternContainerGroup>(sides.size());
         for (var side : sides) {
             var sidePos = hostPos.relative(side);
             var group = AdaptivePatternProviderDisplayHelper.resolveAdjacentMachineGroup(hostLevel, sidePos, side.getOpposite());

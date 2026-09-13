@@ -60,9 +60,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -577,7 +577,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
 
         if (level instanceof ServerLevel serverLevel) {
             BlockEntity blockEntity = level.getBlockEntity(basePos);
-            List<ItemStack> drops = new ArrayList<>();
+            List<ItemStack> drops = new ObjectArrayList<>();
             drops.add(createTowerItemDrop(blockEntity, player));
             if (blockEntity instanceof DataDistributionTowerBlockEntity tower) {
                 tower.addAdditionalDrops(level, basePos, drops);
@@ -599,7 +599,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
             return;
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new ObjectArrayList<>();
         tower.addAdditionalDrops(level, pos, drops);
         tower.clearContent();
         for (ItemStack drop : drops) {
@@ -625,7 +625,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
             return;
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new ObjectArrayList<>();
         drops.add(createTowerItemDrop(blockEntity, player));
         if (blockEntity instanceof DataDistributionTowerBlockEntity tower) {
             tower.addAdditionalDrops(level, basePos, drops);

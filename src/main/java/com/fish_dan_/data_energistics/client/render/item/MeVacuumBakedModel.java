@@ -58,9 +58,11 @@ public final class MeVacuumBakedModel implements BakedModel {
         return this.customRenderer ? new MeVacuumBakedModel(this.delegate, false) : this;
     }
 
+    /** @deprecated Required legacy model entry point; use the ModelData overload. */
+    @Deprecated
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random) {
-        return this.delegate.getQuads(state, direction, random);
+        return getQuads(state, direction, random, ModelData.EMPTY, null);
     }
 
     @Override
@@ -94,9 +96,11 @@ public final class MeVacuumBakedModel implements BakedModel {
         return this.customRenderer || this.delegate.isCustomRenderer();
     }
 
+    /** @deprecated Required legacy model entry point; use getParticleIcon(ModelData). */
+    @Deprecated
     @Override
     public TextureAtlasSprite getParticleIcon() {
-        return this.delegate.getParticleIcon();
+        return getParticleIcon(ModelData.EMPTY);
     }
 
     @Override
@@ -104,6 +108,8 @@ public final class MeVacuumBakedModel implements BakedModel {
         return this.delegate.getParticleIcon(data);
     }
 
+    /** @deprecated Retained for legacy model callers; rendering uses applyTransform. */
+    @Deprecated
     @Override
     public ItemTransforms getTransforms() {
         return this.delegate.getTransforms();
@@ -165,6 +171,8 @@ public final class MeVacuumBakedModel implements BakedModel {
 
     private record CellRenderPass(BakedModel delegate, NonNullList<ItemStack> cells) implements BakedModel {
 
+        /** @deprecated Required legacy model entry point; use the ModelData overload. */
+        @Deprecated
         @Override
         public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random) {
             return getQuads(state, direction, random, ModelData.EMPTY, null);
@@ -227,14 +235,30 @@ public final class MeVacuumBakedModel implements BakedModel {
             return this.delegate.isCustomRenderer();
         }
 
+        /** @deprecated Required legacy model entry point; use getParticleIcon(ModelData). */
+        @Deprecated
         @Override
         public TextureAtlasSprite getParticleIcon() {
-            return this.delegate.getParticleIcon();
+            return getParticleIcon(ModelData.EMPTY);
         }
 
         @Override
+        public TextureAtlasSprite getParticleIcon(ModelData data) {
+            return this.delegate.getParticleIcon(data);
+        }
+
+        /** @deprecated Retained for legacy model callers; rendering uses applyTransform. */
+        @Deprecated
+        @Override
         public ItemTransforms getTransforms() {
             return this.delegate.getTransforms();
+        }
+
+        @Override
+        public BakedModel applyTransform(ItemDisplayContext transformType, PoseStack poseStack,
+                                         boolean applyLeftHandTransform) {
+            BakedModel transformed = this.delegate.applyTransform(transformType, poseStack, applyLeftHandTransform);
+            return transformed == this.delegate ? this : new CellRenderPass(transformed, this.cells);
         }
 
         @Override

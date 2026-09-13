@@ -21,6 +21,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
@@ -118,7 +119,7 @@ public final class OrbitalDirectedBeamGameTest {
                 level.dimension().location(), target, scan.walker(end - 1).position(), geometry.radius(),
                 OrbitalAttackPhase.DELIVERY, 10, 42, end, end, sweep);
         var payload = OrbitalAttackVisualsPayload.batches(40, level.dimension().location(), List.of(snapshot)).getFirst();
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), level.registryAccess());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), level.registryAccess(), ConnectionType.NEOFORGE);
         try {
             OrbitalAttackVisualsPayload.STREAM_CODEC.encode(buffer, payload);
             var decoded = OrbitalAttackVisualsPayload.STREAM_CODEC.decode(buffer);

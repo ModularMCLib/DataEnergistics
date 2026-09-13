@@ -51,6 +51,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
@@ -435,7 +436,7 @@ public final class RailChargeGameTest {
         var source = new RailRoundEntity(h.getLevel(), player(h), new ItemStack(Items.HEAVY_CORE));
         source.setDeltaMovement(0, 0, 14.3);
         var receiver = new RailRoundEntity(DEEntities.RAIL_ROUND.get(), h.getLevel());
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), h.getLevel().registryAccess());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), h.getLevel().registryAccess(), ConnectionType.NEOFORGE);
         try {
             source.writeSpawnData(buffer);
             receiver.readSpawnData(buffer);

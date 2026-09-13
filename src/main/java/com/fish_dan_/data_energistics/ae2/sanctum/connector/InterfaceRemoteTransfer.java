@@ -28,9 +28,11 @@ import java.util.List;
 /** Bounded remote inventory transfers, independent of interface config markers and legacy adjacent pull settings. */
 final class InterfaceRemoteTransfer {
 
-    private static final int LINKS_PER_TICK = 8;
+    /** Maximum number of registered targets inspected by one interface tick. */
+    private static final int LINKS_PER_TICK = 32;
     private static final int KEYS_PER_LINK = 16;
-    private static final long AMOUNT_PER_TRANSFER = 4000;
+    /** Keeps one remote operation bounded while avoiding the old 4k/tick bottleneck. */
+    private static final long AMOUNT_PER_TRANSFER = 64_000;
 
     private InterfaceRemoteTransfer() {}
 

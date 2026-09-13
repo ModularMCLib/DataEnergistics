@@ -129,6 +129,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private static final String NBT_CONNECTOR_MODE = "adaptive_connector_mode";
     private static final String NBT_CONNECTOR_POLICY = "adaptive_connector_policy";
     private static final String NBT_CONNECTOR_CURSOR = "adaptive_connector_cursor";
+    private static final String NBT_CONNECTOR_PULL_CURSOR = "adaptive_connector_pull_cursor";
+    private static final String NBT_CONNECTOR_PULL_SLOT_CURSOR = "adaptive_connector_pull_slot_cursor";
     private static final String NBT_CONNECTOR_TARGETS = "adaptive_connector_targets";
 
     private final PatternProviderLogicHost host;
@@ -138,6 +140,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private AdaptiveProviderConnectorMode connectorMode = AdaptiveProviderConnectorMode.INPUT;
     private AdaptiveProviderConnectorPolicy connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN;
     private int connectorCursor;
+    private int connectorPullCursor;
+    private int connectorPullSlotCursor;
     private final ObjectArrayList<ConnectorTarget> connectorTargets = new ObjectArrayList<>();
     private final ObjectArrayList<ItemStack> patternSlotOverflow = new ObjectArrayList<>();
     private final ObjectSet<AEKey> trackedCrafts = new ObjectOpenHashSet<>();
@@ -204,6 +208,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         tag.putString(NBT_CONNECTOR_MODE, this.connectorMode.name());
         tag.putString(NBT_CONNECTOR_POLICY, this.connectorPolicy.name());
         tag.putInt(NBT_CONNECTOR_CURSOR, this.connectorCursor);
+        tag.putInt(NBT_CONNECTOR_PULL_CURSOR, this.connectorPullCursor);
+        tag.putInt(NBT_CONNECTOR_PULL_SLOT_CURSOR, this.connectorPullSlotCursor);
         ListTag connectorTargetTags = new ListTag();
         for (ConnectorTarget target : this.connectorTargets) {
             CompoundTag targetTag = new CompoundTag();
@@ -243,6 +249,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, AdaptiveProviderConnectorMode.INPUT);
         this.connectorPolicy = readConnectorPolicy(tag, NBT_CONNECTOR_POLICY, AdaptiveProviderConnectorPolicy.ROUND_ROBIN);
         this.connectorCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_CURSOR));
+        this.connectorPullCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_CURSOR));
+        this.connectorPullSlotCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_SLOT_CURSOR));
         this.connectorTargets.clear();
         ListTag connectorTargetTags = tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
         for (int index = 0; index < connectorTargetTags.size(); index++) {
@@ -324,6 +332,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     public boolean unbindConnectorTarget(BlockPos position, Direction side) {
         boolean removed = this.connectorTargets.remove(new ConnectorTarget(position, side));
         if (removed) {
+            if (this.connectorTargets.isEmpty()) {
+                this.connectorCursor = 0;
+                this.connectorPullCursor = 0;
+                this.connectorPullSlotCursor = 0;
+            } else {
+                this.connectorCursor = Math.floorMod(this.connectorCursor, this.connectorTargets.size());
+                this.connectorPullCursor = Math.floorMod(this.connectorPullCursor, this.connectorTargets.size());
+            }
             this.host.saveChanges();
         }
         return removed;
@@ -1109,7 +1125,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         int scanned = 0;
         boolean changed = false;
-        for (ConnectorTarget binding : this.connectorTargets) {
+        int targetCount = this.connectorTargets.size();
+        int start = this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN
+                ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
+        for (int offset = 0; offset < targetCount; offset++) {
+            ConnectorTarget binding = this.connectorTargets.get((start + offset) % targetCount);
             if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {
                 break;
             }
@@ -1123,6 +1143,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (source != null && source.canExtract()) {
                 changed |= pullGenericInventory(source, scanned);
                 scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + source.size());
+                if (changed) {
+                    advanceConnectorPullCursor(offset + 1);
+                    break;
+                }
                 continue;
             }
             IItemHandler itemHandler = currentLevel.getCapability(
@@ -1131,6 +1155,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (itemHandler != null) {
                 changed |= pullItemHandler(itemHandler, scanned);
                 scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + itemHandler.getSlots());
+                if (changed) {
+                    advanceConnectorPullCursor(offset + 1);
+                    break;
+                }
                 continue;
             }
             IFluidHandler fluidHandler = currentLevel.getCapability(
@@ -1139,6 +1167,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (fluidHandler != null) {
                 changed |= pullFluidHandler(fluidHandler, scanned);
                 scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + fluidHandler.getTanks());
+                if (changed) {
+                    advanceConnectorPullCursor(offset + 1);
+                    break;
+                }
             }
             continue;
         }
@@ -1148,9 +1180,19 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return changed;
     }
 
+    private void advanceConnectorPullCursor(int amount) {
+        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN && !this.connectorTargets.isEmpty()) {
+            this.connectorPullCursor = Math.floorMod(this.connectorPullCursor + Math.max(1, amount), this.connectorTargets.size());
+        }
+    }
+
     private boolean pullGenericInventory(GenericInternalInventory source, int scanned) {
         boolean changed = false;
-        for (int slot = 0; slot < source.size() && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; slot++) {
+        int size = source.size();
+        if (size == 0) return false;
+        int start = Math.floorMod(this.connectorPullSlotCursor, size);
+        for (int offset = 0; offset < size && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; offset++) {
+            int slot = (start + offset) % size;
             AEKey key = source.getKey(slot);
             long available = source.getAmount(slot);
             if (key == null || available <= 0L) continue;
@@ -1162,13 +1204,18 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             long inserted = this.returnInv.insert(key, extracted, Actionable.MODULATE, this.actionSource);
             if (inserted < extracted) source.insert(slot, key, extracted - inserted, Actionable.MODULATE);
             changed |= inserted > 0L;
+            if (inserted > 0L) this.connectorPullSlotCursor = slot + 1;
         }
         return changed;
     }
 
     private boolean pullItemHandler(IItemHandler source, int scanned) {
         boolean changed = false;
-        for (int slot = 0; slot < source.getSlots() && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; slot++) {
+        int size = source.getSlots();
+        if (size == 0) return false;
+        int start = Math.floorMod(this.connectorPullSlotCursor, size);
+        for (int offset = 0; offset < size && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; offset++) {
+            int slot = (start + offset) % size;
             ItemStack available = source.getStackInSlot(slot);
             AEItemKey key = AEItemKey.of(available);
             if (key == null || available.isEmpty()) continue;
@@ -1180,13 +1227,18 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             long inserted = this.returnInv.insert(key, extracted.getCount(), Actionable.MODULATE, this.actionSource);
             if (inserted < extracted.getCount()) source.insertItem(slot, extracted.copyWithCount((int) (extracted.getCount() - inserted)), false);
             changed |= inserted > 0L;
+            if (inserted > 0L) this.connectorPullSlotCursor = slot + 1;
         }
         return changed;
     }
 
     private boolean pullFluidHandler(IFluidHandler source, int scanned) {
         boolean changed = false;
-        for (int tank = 0; tank < source.getTanks() && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; tank++) {
+        int size = source.getTanks();
+        if (size == 0) return false;
+        int start = Math.floorMod(this.connectorPullSlotCursor, size);
+        for (int offset = 0; offset < size && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; offset++) {
+            int tank = (start + offset) % size;
             FluidStack available = source.getFluidInTank(tank);
             AEFluidKey key = AEFluidKey.of(available);
             if (key == null || available.isEmpty()) continue;
@@ -1198,6 +1250,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             long inserted = this.returnInv.insert(key, extracted.getAmount(), Actionable.MODULATE, this.actionSource);
             if (inserted < extracted.getAmount()) source.fill(extracted.copyWithAmount((int) (extracted.getAmount() - inserted)), IFluidHandler.FluidAction.EXECUTE);
             changed |= inserted > 0L;
+            if (inserted > 0L) this.connectorPullSlotCursor = tank + 1;
         }
         return changed;
     }
@@ -1339,6 +1392,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return PatternProviderTarget.get(level, position, null, side, this.actionSource);
     }
 
+    public @Nullable PatternProviderTarget dataEnergistics$invokeExternalTarget(BlockPos position, Direction side) {
+        Level level = this.host.getBlockEntity().getLevel();
+        return level == null ? null : adaptiveExternalTarget(level, position, side);
+    }
+
     @Nullable
     PatternProviderTarget adaptiveResolvedTarget(GlobalPos target, Direction face, ServerLevel sourceLevel) {
         var targetLevel = sourceLevel.getServer().getLevel(target.dimension());
@@ -1353,7 +1411,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     int adaptiveRoundRobinIndex() {
-        return this.connectorTargets.isEmpty() || this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY ? this.localRoundRobinIndex : this.connectorCursor;
+        if (!this.connectorTargets.isEmpty()) {
+            return this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY ? 0 : this.connectorCursor;
+        }
+        return this.localRoundRobinIndex;
     }
 
     void adaptiveAdvanceRoundRobin(int amount) {
@@ -1393,7 +1454,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return false;
     }
 
-    List<AdaptiveProviderConnectorBinding> adaptiveConnectorBindings() {
+    public List<AdaptiveProviderConnectorBinding> adaptiveConnectorBindings() {
         ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(this.connectorTargets.size());
         for (ConnectorTarget target : this.connectorTargets) {
             result.add(new AdaptiveProviderConnectorBinding(target.position(), target.side()));
@@ -1458,6 +1519,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.reconciledPatternSlotCount = -1;
         this.reusableCrafting = new AdaptiveReusableCraftingState();
         this.reusableItemHandoff = null;
+        this.connectorCursor = 0;
+        this.connectorPullCursor = 0;
+        this.connectorPullSlotCursor = 0;
     }
 
     public Set<AEKey> getTrackedCrafts() {

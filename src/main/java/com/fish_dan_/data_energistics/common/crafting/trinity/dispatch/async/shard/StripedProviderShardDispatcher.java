@@ -153,10 +153,16 @@ final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
     /**
      * Provider-local reservation key; machine identity is independently global.
      */
-    private record ProviderRouteKey(CraftingProviderId providerId, CraftingDispatchTarget route) {
+    private record ProviderRouteKey(CraftingProviderId providerId,
+                                    CraftingDispatchTarget route,
+                                    String patternIdentity,
+                                    long publicationRevision,
+                                    long capacityRevision,
+                                    Optional<MachineTargetId> machineTargetId) {
 
         private static ProviderRouteKey from(ProviderCapacitySnapshot target) {
-            return new ProviderRouteKey(target.providerId(), target.route());
+            return new ProviderRouteKey(target.providerId(), target.route(), target.patternIdentity(),
+                    target.publicationRevision(), target.capacityRevision(), target.machineTargetId());
         }
     }
 

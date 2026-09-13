@@ -270,21 +270,24 @@ public class DataDistributionConnectorItem extends Item {
             }
             return InteractionResult.FAIL;
         }
-        if (!hasTargetCapability(level, clickedPos, clickedFace.getOpposite())) {
+        // The persisted side is the actual capability face on the target block. The clicked face is
+        // the face whose capability was selected; inverting it queries the far side and breaks remote links.
+        if (!hasTargetCapability(level, clickedPos, clickedFace)) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
             }
             return InteractionResult.FAIL;
         }
         AdaptivePatternProviderLogic logic = adaptiveLogic(blockEntity, data.providerSide());
-        Direction targetSide = clickedFace.getOpposite();
+        Direction targetSide = clickedFace;
         if (logic == null) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
             }
             return InteractionResult.FAIL;
         }
-        boolean changed = logic.hasConnectorTarget(clickedPos, targetSide)
+        boolean wasBound = logic.hasConnectorTarget(clickedPos, targetSide);
+        boolean changed = wasBound
                 ? logic.unbindConnectorTarget(clickedPos, targetSide)
                 : logic.bindConnectorTarget(clickedPos, targetSide);
         if (!changed) {
@@ -293,6 +296,10 @@ public class DataDistributionConnectorItem extends Item {
             }
             return InteractionResult.FAIL;
         }
+        player.displayClientMessage(Component.translatable(
+                KEY_PREFIX + (wasBound ? ".unbound_target" : ".bound_target"),
+                clickedPos.getX() + ", " + clickedPos.getY() + ", " + clickedPos.getZ(),
+                targetSide.getName()), true);
         return InteractionResult.SUCCESS;
     }
 

@@ -134,7 +134,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         var returnInventory = this.getHost().getReturnInventory();
         for (int i = 0; i < STOCK_SLOT_COUNT; i++) {
             int slotOnPage = i;
-            this.addSlot(new AppEngSlot(new PagedMenuInventory(storage, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage), this::isClientSide), 0), SlotSemantics.STORAGE);
+            this.addSlot(new AppEngSlot(new PagedMenuInventory(storage, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage), this::isClientSide), 0).setNotDraggable(), SlotSemantics.STORAGE);
         }
         for (int i = 0; i < CONFIG_SLOT_COUNT; i++) {
             int slotOnPage = i;
@@ -152,7 +152,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         var config = this.getHost().getInterfaceLogic().getConfig();
         for (int i = 0; i < CONFIG_SLOT_COUNT; i++) {
             int slotOnPage = i;
-            this.configSlots.add(this.addSlot(new PagedFakeSlot(new PagedMenuInventory(config, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage), this::isClientSide)), SlotSemantics.CONFIG));
+            this.configSlots.add(this.addSlot(new PagedFakeSlot(new PagedMenuInventory(config, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage), this::isClientSide)).setNotDraggable(), SlotSemantics.CONFIG));
         }
     }
 
@@ -190,6 +190,29 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
     public List<Slot> getConfigSlots() {
         return this.configSlots != null ? this.configSlots : List.of();
+    }
+
+    /** Identifies the upper rows that only accept individually placed cursor items in this menu. */
+    public boolean isManualPlacementSlot(@Nullable Slot slot) {
+        if (slot == null) return false;
+        var semantic = getSlotSemantic(slot);
+        return semantic == SlotSemantics.CONFIG || semantic == SlotSemantics.STORAGE;
+    }
+
+    @Override
+    protected boolean isValidQuickMoveDestination(Slot slot, ItemStack stack, boolean fromPlayerSide) {
+        return !isManualPlacementSlot(slot) && super.isValidQuickMoveDestination(slot, stack, fromPlayerSide);
+    }
+
+    @Override
+    public ItemStack quickMoveStack(Player player, int slotIndex) {
+        if (isClientSide() || slotIndex < 0 || slotIndex >= slots.size()) return ItemStack.EMPTY;
+        var source = slots.get(slotIndex);
+        if (isPlayerSideSlot(source) && getQuickMoveDestinationSlots(source.getItem(), true).isEmpty()) {
+            // AE2 otherwise falls back to writing an empty filter slot when real destinations are unavailable.
+            return ItemStack.EMPTY;
+        }
+        return super.quickMoveStack(player, slotIndex);
     }
 
     public boolean isUnlimitedConfigSlot(int slotOnPage) {

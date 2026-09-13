@@ -19,13 +19,17 @@ import appeng.client.gui.widgets.ToggleButton;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
 import appeng.menu.slot.AppEngSlot;
+import appeng.menu.slot.FakeSlot;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
+
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +42,8 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
     private final OutputSideActionButton activePullToggleButton;
     private final OutputSideActionButton activePullConfigButton;
     private final List<Button> amountButtons = new ArrayList<>();
+    private @Nullable Slot pressedSlot;
+    private boolean draggingAcrossSlots;
 
     public DataSanctumLargeInterfaceScreen(DataSanctumLargeInterfaceMenu menu, Inventory playerInventory, Component title,
                                            ScreenStyle style) {
@@ -141,6 +147,50 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         for (int i = 0; i < this.amountButtons.size(); i++) {
             this.amountButtons.get(i).visible = i < configSlots.size() && !configSlots.get(i).getItem().isEmpty();
         }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        pressedSlot = slotAtPosition(mouseX, mouseY);
+        draggingAcrossSlots = false;
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        var slot = slotAtPosition(mouseX, mouseY);
+        draggingAcrossSlots |= slot != pressedSlot;
+        if (menu.isManualPlacementSlot(slot)) {
+            // AE2's ghost-slot drag path sends filter actions without checking the slot's draggable flag.
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        try {
+            return super.mouseReleased(mouseX, mouseY, button);
+        } finally {
+            pressedSlot = null;
+            draggingAcrossSlots = false;
+        }
+    }
+
+    private @Nullable Slot slotAtPosition(double mouseX, double mouseY) {
+        for (var slot : menu.slots) {
+            if (slot.isActive() && isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) return slot;
+        }
+        return null;
+    }
+
+    @Override
+    protected void slotClicked(@Nullable Slot slot, int slotIndex, int button, ClickType clickType) {
+        if (menu.isManualPlacementSlot(slot) && (draggingAcrossSlots || clickType != ClickType.PICKUP && (clickType != ClickType.QUICK_MOVE || slot instanceof FakeSlot))) {
+            // A drag released over an excluded slot must not become a single-item placement either.
+            return;
+        }
+        super.slotClicked(slot, slotIndex, button, clickType);
     }
 
     @Override

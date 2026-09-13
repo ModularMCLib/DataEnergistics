@@ -130,7 +130,10 @@ repositories {
     }
     exclusiveContent { // XaeroLib
         forRepository { maven { url = "https://chocolateminecraft.com/maven" } }
-        filter { includeGroup("xaero.lib") }
+        filter {
+            includeGroup("xaero.lib")
+            includeGroup("xaero.map")
+        }
     }
     exclusiveContent { // Modrinth Maven
         forRepository { maven { url = "https://api.modrinth.com/maven" } }

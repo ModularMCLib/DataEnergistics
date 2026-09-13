@@ -19,7 +19,9 @@ public abstract class CraftingCalculationTimingMixin {
     private ICraftingPlan dataEnergistics$measureCalculation(Operation<ICraftingPlan> original) {
         long startedNanos = System.nanoTime();
         ICraftingPlan plan = original.call();
-        ((CraftingPlanTiming.Mutable) plan).dataEnergistics$setCalculationNanos(System.nanoTime() - startedNanos);
+        if (plan instanceof CraftingPlanTiming.Mutable mutablePlan) {
+            mutablePlan.dataEnergistics$setCalculationNanos(System.nanoTime() - startedNanos);
+        }
         return plan;
     }
 }

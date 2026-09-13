@@ -32,8 +32,8 @@ ftbchunks = "2101.1.22"
 jmapi = "2.0.0-1.21.1-20260529.024614-31"
 jmruntime = "1.21.1-6.0.8+neoforge"
 jmcompat = "1.21.1-6.0.8"
-xaerolib = "1.0.42"
-xaeros-world-map = "8849973"
+xaerolib = "1.7.3"
+xaeros-world-map = "1.46.0"
 
 ## modrinth maven ##
 jade = "15.10.6+neoforge"
@@ -107,8 +107,8 @@ ftbchunks           = { module = "dev.ftb.mods:ftb-chunks-neoforge", version.ref
 
 journeymap-api      = { module = "info.journeymap:journeymap-api-neoforge", version.ref = "jmapi" }
 journeymap          = { module = "maven.modrinth:journeymap", version.ref = "jmruntime" }
-xaerolib            = { module = "xaero.lib:xaerolib-neoforge-1.21", version.ref = "xaerolib" }
-xaeros-world-map    = { module = "curse.maven:xaeros-world-map-317780", version.ref = "xaeros-world-map" }
+xaerolib            = { module = "xaero.lib:xaerolib-neoforge-1.21.1", version.ref = "xaerolib" }
+xaeros-world-map    = { module = "xaero.map:xaeroworldmap-neoforge-1.21.1", version.ref = "xaeros-world-map" }
 
 jade                = { module = "maven.modrinth:jade", version.ref = "jade" }
 sodium              = { module = "maven.modrinth:sodium", version.ref = "sodium" }

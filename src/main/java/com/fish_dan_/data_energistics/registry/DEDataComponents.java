@@ -54,6 +54,14 @@ public final class DEDataComponents {
                     .cacheEncoding()
                     .build());
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> DATA_DISTRIBUTION_CONNECTOR_CLIPBOARD = DATA_COMPONENT_TYPES.register(
+            "data_distribution_connector_clipboard",
+            () -> DataComponentType.<CompoundTag>builder()
+                    .persistent(CompoundTag.CODEC)
+                    .networkSynchronized(ByteBufCodecs.COMPOUND_TAG)
+                    .cacheEncoding()
+                    .build());
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<DigitalStorageDepotMemoryCardData>> DIGITAL_STORAGE_DEPOT_OUTPUT_SETTINGS = DATA_COMPONENT_TYPES.register(
             "digital_storage_depot_output_settings",
             () -> DataComponentType.<DigitalStorageDepotMemoryCardData>builder()

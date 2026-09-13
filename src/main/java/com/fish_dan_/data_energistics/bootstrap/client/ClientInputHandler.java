@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
 import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
+import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardOperation;
+import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
@@ -97,9 +99,38 @@ final class ClientInputHandler {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
+        if (tryConnectorClipboardShortcut(minecraft, event.getKey())) {
+            return;
+        }
         if (minecraft.options.keyAttack.matches(event.getKey(), event.getScanCode())) {
             tryLaunchMeVacuum(minecraft);
         }
+    }
+
+    private static boolean tryConnectorClipboardShortcut(Minecraft minecraft, int key) {
+        if (!Screen.hasControlDown() || minecraft.player == null || minecraft.screen != null) {
+            return false;
+        }
+        ItemStack mainHand = minecraft.player.getMainHandItem();
+        ItemStack offHand = minecraft.player.getOffhandItem();
+        boolean offHandConnector = !DataDistributionConnectorItem.isConnectorStack(mainHand)
+                && DataDistributionConnectorItem.isConnectorStack(offHand);
+        if (!DataDistributionConnectorItem.isConnectorStack(mainHand)
+                && !DataDistributionConnectorItem.isConnectorStack(offHand)) {
+            return false;
+        }
+        DataDistributionConnectorClipboardOperation operation = switch (key) {
+            case GLFW.GLFW_KEY_A -> DataDistributionConnectorClipboardOperation.SELECT_ALL;
+            case GLFW.GLFW_KEY_C -> DataDistributionConnectorClipboardOperation.COPY;
+            case GLFW.GLFW_KEY_X -> DataDistributionConnectorClipboardOperation.CUT;
+            case GLFW.GLFW_KEY_V -> DataDistributionConnectorClipboardOperation.PASTE;
+            default -> null;
+        };
+        if (operation == null) {
+            return false;
+        }
+        PacketDistributor.sendToServer(new DataDistributionConnectorClipboardPayload(operation, offHandConnector));
+        return true;
     }
 
     private static boolean tryLaunchMeVacuum(Minecraft minecraft) {

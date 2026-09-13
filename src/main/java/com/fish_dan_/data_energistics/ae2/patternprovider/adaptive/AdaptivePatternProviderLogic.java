@@ -385,6 +385,44 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return removed;
     }
 
+    /** Replaces all links from a validated clipboard while preserving their independent transfer modes. */
+    public int replaceConnectorTargets(List<AdaptiveProviderConnectorBinding> bindings) {
+        this.connectorTargets.clear();
+        ObjectOpenHashSet<String> identities = new ObjectOpenHashSet<>();
+        for (AdaptiveProviderConnectorBinding binding : bindings) {
+            String identity = binding.position().asLong() + ":" + binding.side().get3DDataValue();
+            if (identities.add(identity)) {
+                this.connectorTargets.add(new ConnectorTarget(binding.position(), binding.side(), binding.mode()));
+            }
+        }
+        normalizeConnectorCursors();
+        onConnectorChanged();
+        return this.connectorTargets.size();
+    }
+
+    /** Clears every provider-owned link without changing the connector's current default mode. */
+    public void clearConnectorTargets() {
+        if (this.connectorTargets.isEmpty()) {
+            return;
+        }
+        this.connectorTargets.clear();
+        this.connectorCursor = 0;
+        this.connectorPullCursor = 0;
+        this.connectorPullSlotCursor = 0;
+        onConnectorChanged();
+    }
+
+    private void normalizeConnectorCursors() {
+        if (this.connectorTargets.isEmpty()) {
+            this.connectorCursor = 0;
+            this.connectorPullCursor = 0;
+            this.connectorPullSlotCursor = 0;
+        } else {
+            this.connectorCursor = Math.floorMod(this.connectorCursor, this.connectorTargets.size());
+            this.connectorPullCursor = Math.floorMod(this.connectorPullCursor, this.connectorTargets.size());
+        }
+    }
+
     public boolean hasConnectorTarget(BlockPos position, Direction side) {
         return this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side);
     }

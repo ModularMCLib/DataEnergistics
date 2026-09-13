@@ -53,6 +53,14 @@ public class DataDistributionConnectorItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         DataDistributionConnectorItemData data = getConnectorData(stack);
+        if (player.isShiftKeyDown() && data.hasSelection()) {
+            if (level.isClientSide()) {
+                return InteractionResultHolder.success(stack);
+            }
+            stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), data.clear());
+            player.displayClientMessage(Component.translatable(KEY_PREFIX + ".unbound_current"), true);
+            return InteractionResultHolder.success(stack);
+        }
         AdaptivePatternProviderLogic logic = resolveProviderLogic(level, data);
         if (logic == null || !data.isAdaptiveProvider()) {
             return InteractionResultHolder.pass(stack);

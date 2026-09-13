@@ -19,13 +19,12 @@ import appeng.parts.automation.StackWorldBehaviors;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /** Bounded remote inventory transfers, independent of interface config markers and legacy adjacent pull settings. */
 final class InterfaceRemoteTransfer {
@@ -44,11 +43,11 @@ final class InterfaceRemoteTransfer {
             return;
         }
         IActionSource actionSource = state.actionSource();
-        var bySlot = new Object2ObjectLinkedOpenHashMap<Integer, List<Integer>>();
+        var bySlot = new Int2ObjectLinkedOpenHashMap<IntArrayList>();
         for (int index = 0; index < links.size(); index++) {
-            bySlot.computeIfAbsent(links.get(index).slot(), ignored -> new ObjectArrayList<>()).add(index);
+            bySlot.computeIfAbsent(links.get(index).slot(), ignored -> new IntArrayList()).add(index);
         }
-        var groups = new ObjectArrayList<>(bySlot.entrySet());
+        var groups = new ObjectArrayList<>(bySlot.int2ObjectEntrySet());
         int groupStart = Math.floorMod(state.linkCursor(), groups.size());
         int budget = LINKS_PER_TICK;
         var config = (DataSanctumInterfaceInventory) host.getInterfaceLogic().getConfig();
@@ -56,13 +55,13 @@ final class InterfaceRemoteTransfer {
             int groupIndex = (groupStart + groupOffset) % groups.size();
             var group = groups.get(groupIndex);
             var indices = group.getValue();
-            boolean priority = config.getSlotPolicy(group.getKey()) == ConnectorPolicy.PRIORITY;
-            int start = priority ? 0 : Math.floorMod(state.routeCursor(group.getKey()), indices.size());
+            boolean priority = config.getSlotPolicy(group.getIntKey()) == ConnectorPolicy.PRIORITY;
+            int start = priority ? 0 : Math.floorMod(state.routeCursor(group.getIntKey()), indices.size());
             state.advanceLink((groupIndex + 1) % groups.size());
             for (int offset = 0; offset < indices.size() && budget > 0; offset++) {
                 budget--;
                 int localIndex = (start + offset) % indices.size();
-                int linkIndex = indices.get(localIndex);
+                int linkIndex = indices.getInt(localIndex);
                 var link = links.get(linkIndex);
                 if (link.slot() >= state.slotCount() || link.position().equals(host.getInterfaceBlockPos()) ||
                         !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(link.position().getX()), SectionPos.blockToSectionCoord(link.position().getZ()))) {
@@ -88,7 +87,7 @@ final class InterfaceRemoteTransfer {
                         return;
                     }
                 }
-                state.advanceRoute(group.getKey(), (localIndex + 1) % indices.size());
+                state.advanceRoute(group.getIntKey(), (localIndex + 1) % indices.size());
                 if (moved) break;
             }
         }

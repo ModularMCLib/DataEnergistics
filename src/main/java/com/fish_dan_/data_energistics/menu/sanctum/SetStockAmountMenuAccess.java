@@ -6,4 +6,8 @@ public interface SetStockAmountMenuAccess {
     boolean dataEnergistics$isUnlimited();
 
     void dataEnergistics$setUnlimited(boolean enabled);
+
+    int dataEnergistics$getPolicy();
+
+    void dataEnergistics$setPolicy(int ordinal);
 }

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.ae2.sanctum;
 
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
+
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
@@ -26,6 +28,7 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
     private final IntSupplier capacityCardCountSupplier;
     private final boolean[] unlimitedSlots;
     private final long[] finiteAmounts;
+    private final ConnectorPolicy[] slotPolicies;
 
     public DataSanctumInterfaceInventory(Set<AEKeyType> supportedTypes,
                                          @Nullable AEKeySlotFilter slotFilter,
@@ -37,6 +40,8 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         this.capacityCardCountSupplier = capacityCardCountSupplier;
         this.unlimitedSlots = new boolean[size];
         this.finiteAmounts = new long[size];
+        this.slotPolicies = new ConnectorPolicy[size];
+        Arrays.fill(this.slotPolicies, ConnectorPolicy.ROUND_ROBIN);
     }
 
     @Override
@@ -114,6 +119,7 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
                 if (stack == null || previous == null || !previous.what().equals(stack.what())) {
                     unlimitedSlots[slot] = false;
                     finiteAmounts[slot] = 0;
+                    slotPolicies[slot] = ConnectorPolicy.ROUND_ROBIN;
                 } else if (!unlimitedSlots[slot]) {
                     finiteAmounts[slot] = stack.amount();
                 }
@@ -186,6 +192,18 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         onChange();
     }
 
+    public ConnectorPolicy getSlotPolicy(int slot) {
+        return getMode() == Mode.CONFIG_STACKS ? slotPolicies[slot] : ConnectorPolicy.ROUND_ROBIN;
+    }
+
+    public void setSlotPolicy(int slot, ConnectorPolicy policy) {
+        if (getMode() != Mode.CONFIG_STACKS || slot < 0 || slot >= size() || slotPolicies[slot] == policy) {
+            return;
+        }
+        slotPolicies[slot] = policy;
+        onChange();
+    }
+
     @Override
     public void writeToChildTag(CompoundTag tag, String name, HolderLookup.Provider registries) {
         super.writeToChildTag(tag, name, registries);
@@ -201,6 +219,11 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         }
         flags.putLongArray("enabled", enabled);
         flags.putLongArray("finite_amounts", finiteAmounts);
+        int[] policies = new int[size()];
+        for (int slot = 0; slot < size(); slot++) {
+            policies[slot] = slotPolicies[slot].ordinal();
+        }
+        flags.putIntArray("policies", policies);
         tag.put(name + "_unlimited", flags);
     }
 
@@ -213,8 +236,10 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         CompoundTag flags = tag.getCompound(name + "_unlimited");
         long[] enabled = flags.getLongArray("enabled");
         long[] savedFinite = flags.getLongArray("finite_amounts");
+        int[] savedPolicies = flags.getIntArray("policies");
         Arrays.fill(unlimitedSlots, false);
         Arrays.fill(finiteAmounts, 0L);
+        Arrays.fill(slotPolicies, ConnectorPolicy.ROUND_ROBIN);
         for (int slot = 0; slot < size(); slot++) {
             if (slot / Long.SIZE < enabled.length && (enabled[slot / Long.SIZE] & (1L << (slot % Long.SIZE))) != 0 && this.stacks[slot] != null) {
                 unlimitedSlots[slot] = true;
@@ -222,6 +247,9 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
                 this.stacks[slot] = new GenericStack(this.stacks[slot].what(), Long.MAX_VALUE);
             } else if (this.stacks[slot] != null) {
                 finiteAmounts[slot] = this.stacks[slot].amount();
+            }
+            if (slot < savedPolicies.length && savedPolicies[slot] >= 0 && savedPolicies[slot] < ConnectorPolicy.values().length) {
+                slotPolicies[slot] = ConnectorPolicy.values()[savedPolicies[slot]];
             }
         }
     }

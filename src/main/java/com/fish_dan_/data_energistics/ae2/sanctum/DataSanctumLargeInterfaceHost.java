@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.ae2.sanctum;
 
-import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
-
 import appeng.api.orientation.RelativeSide;
 import appeng.helpers.InterfaceLogicHost;
 
@@ -23,12 +21,6 @@ public interface DataSanctumLargeInterfaceHost extends InterfaceLogicHost {
     Set<Direction> getActivePullSides();
 
     void setActivePullSideEnabled(Direction side, boolean enabled);
-
-    default ConnectorPolicy getConnectorPolicy() {
-        return ConnectorPolicy.ROUND_ROBIN;
-    }
-
-    default void setConnectorPolicy(ConnectorPolicy policy) {}
 
     default boolean hasActivePullSideSelection() {
         return true;

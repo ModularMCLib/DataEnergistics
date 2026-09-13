@@ -25,6 +25,8 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
 
     @Unique
     private ToggleButton dataEnergistics$unlimitedButton;
+    @Unique
+    private ToggleButton dataEnergistics$policyButton;
 
     protected SetStockAmountScreenMixin(SetStockAmountMenu menu, Inventory inventory, Component title, ScreenStyle style) {
         super(menu, inventory, title, style);
@@ -44,13 +46,21 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
                 ignored -> access.dataEnergistics$setUnlimited(!access.dataEnergistics$isUnlimited()));
         dataEnergistics$unlimitedButton.setState(access.dataEnergistics$isUnlimited());
         addToLeftToolbar(dataEnergistics$unlimitedButton);
+        dataEnergistics$policyButton = new ToggleButton(
+                Icon.PRIORITY,
+                Icon.SCHEDULING_ROUND_ROBIN,
+                Component.translatable("button.data_energistics.data_sanctum_interface.connector_policy.priority"),
+                Component.translatable("button.data_energistics.data_sanctum_interface.connector_policy.round_robin"),
+                ignored -> access.dataEnergistics$setPolicy(access.dataEnergistics$getPolicy() == 0 ? 1 : 0));
+        dataEnergistics$policyButton.setState(access.dataEnergistics$getPolicy() == 1);
+        addToLeftToolbar(dataEnergistics$policyButton);
     }
 
-    @Override
-    protected void updateBeforeRender() {
-        super.updateBeforeRender();
+    @Inject(method = "updateBeforeRender", at = @At("TAIL"))
+    private void dataEnergistics$syncUnlimitedButton(CallbackInfo ci) {
         if (dataEnergistics$unlimitedButton != null && getMenu() instanceof SetStockAmountMenuAccess access) {
             dataEnergistics$unlimitedButton.setState(access.dataEnergistics$isUnlimited());
+            dataEnergistics$policyButton.setState(access.dataEnergistics$getPolicy() == 1);
         }
     }
 }

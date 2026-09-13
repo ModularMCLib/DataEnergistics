@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.ae2.sanctum.connector;
 
+import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
@@ -40,7 +41,7 @@ final class InterfaceRemoteTransfer {
             return;
         }
         IActionSource actionSource = state.actionSource();
-        int start = state.policy() == ConnectorPolicy.PRIORITY ? 0 : Math.floorMod(state.linkCursor(), links.size());
+        int start = host.getInterfaceLogic().getConfig() instanceof DataSanctumInterfaceInventory config && config.getSlotPolicy(links.get(Math.floorMod(state.linkCursor(), links.size())).slot()) == ConnectorPolicy.PRIORITY ? 0 : Math.floorMod(state.linkCursor(), links.size());
         int visited = Math.min(LINKS_PER_TICK, links.size());
         for (int offset = 0; offset < visited; offset++) {
             int linkIndex = (start + offset) % links.size();

@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnFluidHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnItemHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderState;
+import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
@@ -23,7 +24,6 @@ import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
-import appeng.api.upgrades.UpgradeInventories;
 import appeng.core.definitions.AEItems;
 import appeng.items.parts.PartModels;
 import appeng.menu.ISubMenu;
@@ -46,6 +46,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 
@@ -53,6 +54,7 @@ import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class AdaptivePatternProviderPart extends PatternProviderPart implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
@@ -558,8 +560,11 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     }
 
     private IUpgradeInventory createUpgradeInventory() {
-        return UpgradeInventories.forMachine(
-                this.getPartItem().asItem(),
+        return new FixedSizeMachineUpgradeInventory(
+                (Supplier<Item>) () -> {
+                    ItemStack providerStack = getProviderStack();
+                    return providerStack.isEmpty() ? getPartItem().asItem() : providerStack.getItem();
+                },
                 AdaptivePatternProviderState.BASE_UPGRADE_SLOTS,
                 this::onUpgradesChanged);
     }

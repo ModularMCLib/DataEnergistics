@@ -1223,6 +1223,23 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 break;
             }
             BlockPos position = binding.position();
+            MEStorage storage = currentLevel.getCapability(
+                    AECapabilities.ME_STORAGE,
+                    position,
+                    currentLevel.getBlockState(position),
+                    currentLevel.getBlockEntity(position),
+                    binding.side());
+            if (storage != null) {
+                PullResult result = pullStorage(storage, scanned);
+                scanned = result.keysScanned();
+                if (result.changed()) {
+                    advanceConnectorPullCursor(offset + 1);
+                    break;
+                }
+                if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {
+                    break;
+                }
+            }
             GenericInternalInventory source = currentLevel.getCapability(
                     AECapabilities.GENERIC_INTERNAL_INV,
                     position,
@@ -1230,8 +1247,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                     currentLevel.getBlockEntity(position),
                     binding.side());
             if (source != null && source.canExtract()) {
-                changed |= pullGenericInventory(source, scanned);
-                scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + source.size());
+                changed |= pullGenericInventory(source);
                 if (changed) {
                     advanceConnectorPullCursor(offset + 1);
                     break;
@@ -1242,8 +1258,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                     net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                     position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
             if (itemHandler != null) {
-                changed |= pullItemHandler(itemHandler, scanned);
-                scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + itemHandler.getSlots());
+                changed |= pullItemHandler(itemHandler);
                 if (changed) {
                     advanceConnectorPullCursor(offset + 1);
                     break;
@@ -1254,8 +1269,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                     net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
                     position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
             if (fluidHandler != null) {
-                changed |= pullFluidHandler(fluidHandler, scanned);
-                scanned = Math.min(CONNECTOR_PULL_KEYS_PER_TICK, scanned + fluidHandler.getTanks());
+                changed |= pullFluidHandler(fluidHandler);
                 if (changed) {
                     advanceConnectorPullCursor(offset + 1);
                     break;
@@ -1275,12 +1289,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
     }
 
-    private boolean pullGenericInventory(GenericInternalInventory source, int scanned) {
-        boolean changed = false;
+    private boolean pullGenericInventory(GenericInternalInventory source) {
         int size = source.size();
         if (size == 0) return false;
         int start = Math.floorMod(this.connectorPullSlotCursor, size);
-        for (int offset = 0; offset < size && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; offset++) {
+        for (int offset = 0; offset < size; offset++) {
             int slot = (start + offset) % size;
             AEKey key = source.getKey(slot);
             long available = source.getAmount(slot);
@@ -1292,18 +1305,19 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (extracted <= 0L) continue;
             long inserted = this.returnInv.insert(key, extracted, Actionable.MODULATE, this.actionSource);
             if (inserted < extracted) source.insert(slot, key, extracted - inserted, Actionable.MODULATE);
-            changed |= inserted > 0L;
-            if (inserted > 0L) this.connectorPullSlotCursor = slot + 1;
+            if (inserted > 0L) {
+                this.connectorPullSlotCursor = (slot + 1) % size;
+                return true;
+            }
         }
-        return changed;
+        return false;
     }
 
-    private boolean pullItemHandler(IItemHandler source, int scanned) {
-        boolean changed = false;
+    private boolean pullItemHandler(IItemHandler source) {
         int size = source.getSlots();
         if (size == 0) return false;
         int start = Math.floorMod(this.connectorPullSlotCursor, size);
-        for (int offset = 0; offset < size && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; offset++) {
+        for (int offset = 0; offset < size; offset++) {
             int slot = (start + offset) % size;
             ItemStack available = source.getStackInSlot(slot);
             AEItemKey key = AEItemKey.of(available);
@@ -1315,18 +1329,19 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (extracted.isEmpty()) continue;
             long inserted = this.returnInv.insert(key, extracted.getCount(), Actionable.MODULATE, this.actionSource);
             if (inserted < extracted.getCount()) source.insertItem(slot, extracted.copyWithCount((int) (extracted.getCount() - inserted)), false);
-            changed |= inserted > 0L;
-            if (inserted > 0L) this.connectorPullSlotCursor = slot + 1;
+            if (inserted > 0L) {
+                this.connectorPullSlotCursor = (slot + 1) % size;
+                return true;
+            }
         }
-        return changed;
+        return false;
     }
 
-    private boolean pullFluidHandler(IFluidHandler source, int scanned) {
-        boolean changed = false;
+    private boolean pullFluidHandler(IFluidHandler source) {
         int size = source.getTanks();
         if (size == 0) return false;
         int start = Math.floorMod(this.connectorPullSlotCursor, size);
-        for (int offset = 0; offset < size && scanned++ < CONNECTOR_PULL_KEYS_PER_TICK; offset++) {
+        for (int offset = 0; offset < size; offset++) {
             int tank = (start + offset) % size;
             FluidStack available = source.getFluidInTank(tank);
             AEFluidKey key = AEFluidKey.of(available);
@@ -1338,11 +1353,61 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (extracted.isEmpty()) continue;
             long inserted = this.returnInv.insert(key, extracted.getAmount(), Actionable.MODULATE, this.actionSource);
             if (inserted < extracted.getAmount()) source.fill(extracted.copyWithAmount((int) (extracted.getAmount() - inserted)), IFluidHandler.FluidAction.EXECUTE);
-            changed |= inserted > 0L;
-            if (inserted > 0L) this.connectorPullSlotCursor = tank + 1;
+            if (inserted > 0L) {
+                this.connectorPullSlotCursor = (tank + 1) % size;
+                return true;
+            }
         }
-        return changed;
+        return false;
     }
+
+    private PullResult pullStorage(MEStorage storage, int keysScanned) {
+        var availableStacks = storage.getAvailableStacks();
+        int availableKeyCount = availableStacks.size();
+        if (availableKeyCount == 0) {
+            return new PullResult(false, keysScanned);
+        }
+        int remainingBudget = CONNECTOR_PULL_KEYS_PER_TICK - keysScanned;
+        if (remainingBudget <= 0) {
+            return new PullResult(false, keysScanned);
+        }
+        int start = Math.floorMod(this.connectorPullSlotCursor, availableKeyCount);
+        var iterator = availableStacks.iterator();
+        for (int skipped = 0; skipped < start; skipped++) {
+            iterator.next();
+        }
+        int inspected = 0;
+        while (inspected < Math.min(remainingBudget, availableKeyCount)) {
+            if (!iterator.hasNext()) {
+                iterator = availableStacks.iterator();
+            }
+            var stack = iterator.next();
+            inspected++;
+            this.connectorPullSlotCursor = (start + inspected) % availableKeyCount;
+            AEKey key = stack.getKey();
+            long available = stack.getLongValue();
+            if (available <= 0) {
+                continue;
+            }
+            long requested = Math.min(available, CONNECTOR_PULL_AMOUNT_PER_KEY);
+            long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
+            if (accepted <= 0) {
+                continue;
+            }
+            long extracted = storage.extract(key, accepted, Actionable.MODULATE, this.actionSource);
+            if (extracted <= 0) {
+                continue;
+            }
+            long inserted = this.returnInv.insert(key, extracted, Actionable.MODULATE, this.actionSource);
+            if (inserted < extracted) {
+                storage.insert(key, extracted - inserted, Actionable.MODULATE, this.actionSource);
+            }
+            return new PullResult(inserted > 0, keysScanned + inspected);
+        }
+        return new PullResult(false, keysScanned + inspected);
+    }
+
+    private record PullResult(boolean changed, int keysScanned) {}
 
     private boolean activeDispatchSupportsReusable() {
         AdaptivePatternProviderRegistration registration = resolvedRegistration();

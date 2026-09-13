@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnFluidHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnItemHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderState;
+import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -23,7 +24,6 @@ import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
-import appeng.api.upgrades.UpgradeInventories;
 import appeng.blockentity.crafting.PatternProviderBlockEntity;
 import appeng.core.definitions.AEItems;
 import appeng.menu.ISubMenu;
@@ -60,6 +60,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEntity implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
@@ -599,8 +600,11 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     }
 
     private IUpgradeInventory createUpgradeInventory() {
-        return UpgradeInventories.forMachine(
-                getProviderBlock().get(),
+        return new FixedSizeMachineUpgradeInventory(
+                (Supplier<Item>) () -> {
+                    ItemStack providerStack = getProviderStack();
+                    return providerStack.isEmpty() ? getProviderBlock().get().asItem() : providerStack.getItem();
+                },
                 AdaptivePatternProviderState.BASE_UPGRADE_SLOTS,
                 this::onUpgradesChanged);
     }

@@ -25,7 +25,9 @@ public abstract class PatternEncodingTermScreenMixin extends MEStorageScreen<Pat
                                                      implements ProcessingPatternAmountContext {
 
     @Unique
-    private boolean dataEnergistics$processingOutputAmountTarget;
+    private int dataEnergistics$processingInputAmountTarget = -1;
+    @Unique
+    private int dataEnergistics$processingOutputAmountTarget = -1;
 
     protected PatternEncodingTermScreenMixin(PatternEncodingTermMenu menu,
                                              Inventory playerInventory,
@@ -39,7 +41,8 @@ public abstract class PatternEncodingTermScreenMixin extends MEStorageScreen<Pat
                                                                double yCoord,
                                                                int button,
                                                                CallbackInfoReturnable<Boolean> cir) {
-        this.dataEnergistics$processingOutputAmountTarget = false;
+        this.dataEnergistics$processingInputAmountTarget = -1;
+        this.dataEnergistics$processingOutputAmountTarget = -1;
         if (!Minecraft.getInstance().options.keyPickItem.matchesMouse(button) ||
                 this.menu.getMode() != EncodingMode.PROCESSING) {
             return;
@@ -52,12 +55,29 @@ public abstract class PatternEncodingTermScreenMixin extends MEStorageScreen<Pat
                 break;
             }
         }
+        var inputs = this.menu.getProcessingInputSlots();
+        for (int index = 0; index < inputs.length; index++) {
+            if (clicked == inputs[index]) {
+                this.dataEnergistics$processingInputAmountTarget = index;
+                return;
+            }
+        }
         var outputs = this.menu.getProcessingOutputSlots();
-        this.dataEnergistics$processingOutputAmountTarget = outputs.length > 0 && clicked == outputs[0];
+        for (int index = 0; index < outputs.length; index++) {
+            if (clicked == outputs[index]) {
+                this.dataEnergistics$processingOutputAmountTarget = index;
+                return;
+            }
+        }
     }
 
     @Override
-    public boolean data_energistics$isProcessingOutputAmountTarget() {
+    public int data_energistics$getProcessingInputAmountTarget() {
+        return this.dataEnergistics$processingInputAmountTarget;
+    }
+
+    @Override
+    public int data_energistics$getProcessingOutputAmountTarget() {
         return this.dataEnergistics$processingOutputAmountTarget;
     }
 }

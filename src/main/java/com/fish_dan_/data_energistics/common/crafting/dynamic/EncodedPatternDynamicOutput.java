@@ -17,36 +17,58 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class EncodedPatternDynamicOutput {
 
+    public static final int PROCESSING_INPUT_SLOTS = 9;
+
     /** Stable source recorded in the CPU dynamic-output ledger. */
     public static final ResourceLocation SOURCE_ID = Data_Energistics.id("encoded_pattern_output");
 
     private EncodedPatternDynamicOutput() {}
 
-    /**
-     * Applies the selected output rule to the final encoded pattern stack.
-     *
-     * @param encodedPattern final pattern item produced by AE2 or another encoder
-     * @param sameItem       whether its first processing output accepts the same registered item
-     */
-    public static void apply(ItemStack encodedPattern, boolean sameItem) {
+    /** Applies per-slot matching rules to the final encoded pattern stack. */
+    public static void apply(ItemStack encodedPattern, int markerMask) {
         if (encodedPattern.isEmpty()) {
             throw new IllegalArgumentException("Cannot mark an empty encoded pattern");
         }
-        if (sameItem) {
+        if (markerMask != 0) {
+            encodedPattern.set(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS, markerMask);
+        } else {
+            encodedPattern.remove(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS);
+        }
+        // Keep the original component readable for patterns saved before per-slot markers existed.
+        if ((markerMask & (1 << PROCESSING_INPUT_SLOTS)) != 0) {
             encodedPattern.set(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM, true);
         } else {
             encodedPattern.remove(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM);
         }
     }
 
+    /** Backwards-compatible entry point for integrations that only know the primary output rule. */
+    public static void apply(ItemStack encodedPattern, boolean sameItem) {
+        apply(encodedPattern, sameItem ? 1 << PROCESSING_INPUT_SLOTS : 0);
+    }
+
     /**
      * Reads the rule without weakening the complete encoded-pattern definition key.
      *
      * @param definition complete encoded-pattern identity
-     * @return whether the pattern explicitly opted into SAME_ITEM output matching
+     * @return whether the pattern explicitly opted into SAME_ITEM matching on any processing slot
      */
     public static boolean isMarked(AEItemKey definition) {
-        return Boolean.TRUE.equals(definition.get(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM.get()));
+        return markerMask(definition) != 0;
+    }
+
+    /** Returns the persisted per-slot marker mask, including the legacy primary-output marker. */
+    public static int markerMask(AEItemKey definition) {
+        Integer mask = definition.get(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS.get());
+        if (mask != null && mask != 0) {
+            return mask;
+        }
+        return Boolean.TRUE.equals(definition.get(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM.get())) ? 1 << PROCESSING_INPUT_SLOTS : 0;
+    }
+
+    public static boolean isMarked(AEItemKey definition, int inputIndex, int outputIndex) {
+        int bit = inputIndex >= 0 ? inputIndex : PROCESSING_INPUT_SLOTS + outputIndex;
+        return bit >= 0 && bit < Integer.SIZE - 1 && (markerMask(definition) & (1 << bit)) != 0;
     }
 
     /**

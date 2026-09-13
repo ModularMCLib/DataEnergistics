@@ -257,6 +257,15 @@ public final class DEDataComponents {
                     .cacheEncoding()
                     .build());
 
+    /** Bit mask of processing input/output slots that use component-insensitive item matching. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PROCESSING_SAME_ITEM_SLOTS = DATA_COMPONENT_TYPES.register(
+            "processing_same_item_slots",
+            () -> DataComponentType.<Integer>builder()
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .cacheEncoding()
+                    .build());
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> PROCESSING_PATTERN_RECIPE_ID = DATA_COMPONENT_TYPES.register(
             "processing_pattern_recipe_id",
             () -> DataComponentType.<ResourceLocation>builder()

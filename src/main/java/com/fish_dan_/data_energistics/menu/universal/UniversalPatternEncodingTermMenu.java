@@ -198,8 +198,7 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
             // Inventory callbacks must observe the completed pattern, including this transfer's metadata.
             EncodedPatternDynamicOutput.apply(
                     encodedPattern,
-                    this.mode == EncodingMode.PROCESSING &&
-                            ((PatternOutputMatchMenu) this).data_energistics$isProcessingOutputSameItem());
+                    this.mode == EncodingMode.PROCESSING ? ((PatternOutputMatchMenu) this).data_energistics$getProcessingSameItemMask() : 0);
             EncodedPatternRecipeReference.applyProcessingRecipeMetadata(
                     encodedPattern,
                     PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(

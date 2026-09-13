@@ -154,7 +154,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     private String dataEnergistics$displayTransferKeyOutputSerialized;
     @GuiSync(797)
     @Unique
-    public boolean dataEnergistics$processingOutputSameItem;
+    public int dataEnergistics$processingSameItemMask;
     @GuiSync(798)
     @Unique
     public boolean dataEnergistics$networkBackedBlankPatternSlot = DataEnergisticsEarlyConfig.get().isEnabled(Option.PATTERN_ENCODING_NETWORK_BACKED_BLANK_PATTERN_SLOT);
@@ -185,38 +185,66 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     protected abstract void dataEnergistics$invokeClearPattern();
 
     @Override
-    public boolean data_energistics$isProcessingOutputSameItem() {
-        return this.dataEnergistics$processingOutputSameItem;
+    public int data_energistics$getProcessingSameItemMask() {
+        return this.dataEnergistics$processingSameItemMask;
     }
 
     @Override
-    public void data_energistics$setProcessingOutputSameItem(boolean enabled) {
-        if (enabled && !dataEnergistics$canUseSameItemOutput()) {
+    public boolean data_energistics$isProcessingSameItem(int inputIndex, int outputIndex) {
+        int bit = dataEnergistics$processingSameItemBit(inputIndex, outputIndex);
+        return bit >= 0 && (this.dataEnergistics$processingSameItemMask & (1 << bit)) != 0;
+    }
+
+    @Override
+    public void data_energistics$setProcessingSameItem(int inputIndex, int outputIndex, boolean enabled) {
+        int bit = dataEnergistics$processingSameItemBit(inputIndex, outputIndex);
+        if (bit < 0 || (enabled && !dataEnergistics$canUseSameItem(inputIndex, outputIndex))) {
             if (this.isServerSide()) {
                 Data_Energistics.LOGGER.warn(
-                        "Rejected SAME_ITEM processing-output action from {} because output slot zero is not an item",
+                        "Rejected SAME_ITEM processing-slot action from {} because the selected slot is not an item",
                         this.getPlayer().getGameProfile().getName());
             }
-            this.dataEnergistics$processingOutputSameItem = false;
             return;
         }
         if (this.isClientSide()) {
-            sendClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM, enabled);
+            sendClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM,
+                    inputIndex + ":" + outputIndex + ":" + enabled);
         }
-        this.dataEnergistics$processingOutputSameItem = enabled;
+        if (enabled) {
+            this.dataEnergistics$processingSameItemMask |= 1 << bit;
+        } else {
+            this.dataEnergistics$processingSameItemMask &= ~(1 << bit);
+        }
     }
 
     @Unique
-    private boolean dataEnergistics$canUseSameItemOutput() {
+    private int dataEnergistics$processingSameItemBit(int inputIndex, int outputIndex) {
+        if (this.mode != EncodingMode.PROCESSING || (inputIndex >= 0) == (outputIndex >= 0)) {
+            return -1;
+        }
+        if (outputIndex > 0) {
+            return -1;
+        }
+        return inputIndex >= 0 ? inputIndex : EncodedPatternDynamicOutput.PROCESSING_INPUT_SLOTS + outputIndex;
+    }
+
+    @Unique
+    private boolean dataEnergistics$canUseSameItem(int inputIndex, int outputIndex) {
         if (this.mode != EncodingMode.PROCESSING) {
             return false;
         }
-        var outputs = ((PatternEncodingTermMenu) (Object) this).getProcessingOutputSlots();
-        if (outputs.length == 0) {
-            return false;
+        Slot slot;
+        if (inputIndex >= 0) {
+            var inputs = ((PatternEncodingTermMenu) (Object) this).getProcessingInputSlots();
+            if (inputIndex >= inputs.length) return false;
+            slot = inputs[inputIndex];
+        } else {
+            var outputs = ((PatternEncodingTermMenu) (Object) this).getProcessingOutputSlots();
+            if (outputIndex < 0 || outputIndex >= outputs.length) return false;
+            slot = outputs[outputIndex];
         }
-        GenericStack output = GenericStack.fromItemStack(outputs[0].getItem());
-        return output != null && output.what() instanceof AEItemKey;
+        GenericStack stack = GenericStack.fromItemStack(slot.getItem());
+        return stack != null && stack.what() instanceof AEItemKey;
     }
 
     @Unique
@@ -538,7 +566,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             // Publishing the slot re-enters broadcastChanges, so its recipe context must already be complete.
             EncodedPatternDynamicOutput.apply(
                     encodedPattern,
-                    this.mode == EncodingMode.PROCESSING && this.dataEnergistics$processingOutputSameItem);
+                    this.mode == EncodingMode.PROCESSING ? this.dataEnergistics$processingSameItemMask : 0);
             EncodedPatternRecipeReference.applyProcessingRecipeMetadata(
                     encodedPattern,
                     PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(
@@ -1027,8 +1055,8 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                 this::dataEnergistics$setPatternSourceEnabledFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_SET_UPLOAD_ENABLED, Boolean.class,
                 this::dataEnergistics$setUploadEnabledFromClient);
-        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM, Boolean.class,
-                this::data_energistics$setProcessingOutputSameItem);
+        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM, String.class,
+                this::dataEnergistics$setProcessingSameItemFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE,
                 this::data_energistics$clearPatternSourceState);
         registerClientAction(PatternEncodingPreviewLayoutHelper.ACTION_SET_PREVIEW_PANEL_OFFSET, String.class,
@@ -1093,7 +1121,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
         }
         var fallbackWorkstation = PatternEncodingSourceHelper.resolveFallbackWorkstationForMode(mode);
         if (mode != EncodingMode.PROCESSING) {
-            this.dataEnergistics$processingOutputSameItem = false;
+            this.dataEnergistics$processingSameItemMask = 0;
         }
         this.dataEnergistics$pendingPatternSource = fallbackWorkstation;
         data_energistics$getPreferenceSession().setRankingContext(
@@ -1110,13 +1138,28 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             return;
         }
         this.dataEnergistics$observedEncodedPattern = definition;
-        this.dataEnergistics$processingOutputSameItem = definition != null &&
-                EncodedPatternDynamicOutput.isMarked(definition);
+        this.dataEnergistics$processingSameItemMask = definition == null ? 0 :
+                EncodedPatternDynamicOutput.markerMask(definition);
     }
 
     @Unique
     private void dataEnergistics$setPendingPatternSourceFromClient(@Nullable String workstationId) {
         data_energistics$setPendingPatternSource(workstationId == null || workstationId.isEmpty() ? null : ResourceLocation.tryParse(workstationId));
+    }
+
+    @Unique
+    private void dataEnergistics$setProcessingSameItemFromClient(@Nullable String payload) {
+        if (payload == null) return;
+        String[] parts = payload.split(":", -1);
+        if (parts.length != 3) return;
+        try {
+            int inputIndex = Integer.parseInt(parts[0]);
+            int outputIndex = Integer.parseInt(parts[1]);
+            boolean enabled = Boolean.parseBoolean(parts[2]);
+            data_energistics$setProcessingSameItem(inputIndex, outputIndex, enabled);
+        } catch (NumberFormatException ignored) {
+            Data_Energistics.LOGGER.warn("Rejected malformed processing same-item action payload: {}", payload);
+        }
     }
 
     @Unique

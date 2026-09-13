@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.ae2.patternprovider.adaptive;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.energy.IEnergyService;
@@ -225,7 +225,7 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     }
 
     @Override
-    public List<AdaptiveProviderConnectorBinding> connectorBindings() {
+    public List<ConnectorLink> connectorBindings() {
         return this.logic.adaptiveConnectorBindings();
     }
 

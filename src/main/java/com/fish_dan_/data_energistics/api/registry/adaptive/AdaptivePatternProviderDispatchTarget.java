@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionSource;
@@ -144,7 +146,7 @@ public interface AdaptivePatternProviderDispatchTarget {
     int installedSpeedCardCount();
 
     /** Returns the provider-owned connector links in stable configured order. */
-    List<AdaptiveProviderConnectorBinding> connectorBindings();
+    List<ConnectorLink> connectorBindings();
 
     /**
      * Returns or creates state owned by the current registration.

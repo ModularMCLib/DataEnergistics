@@ -2,9 +2,12 @@ package com.fish_dan_.data_energistics.item.connector;
 
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.part.AdaptivePatternProviderPart;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
@@ -12,7 +15,6 @@ import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
-import appeng.api.parts.IPart;
 import appeng.blockentity.networking.CableBusBlockEntity;
 
 import net.minecraft.core.BlockPos;
@@ -41,18 +43,18 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Locale;
 
-public class DataDistributionConnectorItem extends Item {
+public class RemoteLinkConnectorItem extends Item {
 
     private static final String KEY_PREFIX = "item.data_energistics.data_distribution_connector";
 
-    public DataDistributionConnectorItem(Properties properties) {
+    public RemoteLinkConnectorItem(Properties properties) {
         super(properties);
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        DataDistributionConnectorItemData data = getConnectorData(stack);
+        RemoteLinkConnectorData data = getConnectorData(stack);
         if (player.isShiftKeyDown() && data.hasSelection()) {
             if (level.isClientSide()) {
                 return InteractionResultHolder.success(stack);
@@ -61,19 +63,19 @@ public class DataDistributionConnectorItem extends Item {
             player.displayClientMessage(Component.translatable(KEY_PREFIX + ".unbound_current"), true);
             return InteractionResultHolder.success(stack);
         }
-        AdaptivePatternProviderLogic logic = resolveProviderLogic(level, data);
-        if (logic == null || !data.isAdaptiveProvider()) {
+        ConnectorEndpoint endpoint = resolveEndpoint(level, data);
+        if (endpoint == null) {
             return InteractionResultHolder.pass(stack);
         }
         if (level.isClientSide()) {
             return InteractionResultHolder.success(stack);
         }
-        AdaptiveProviderConnectorMode next = switch (logic.connectorMode()) {
-            case INPUT -> AdaptiveProviderConnectorMode.PULL;
-            case PULL -> AdaptiveProviderConnectorMode.BOTH;
-            case BOTH -> AdaptiveProviderConnectorMode.INPUT;
+        ConnectorMode next = switch (endpoint.mode()) {
+            case INPUT -> ConnectorMode.PULL;
+            case PULL -> ConnectorMode.BOTH;
+            case BOTH -> ConnectorMode.INPUT;
         };
-        logic.setConnectorMode(next);
+        endpoint.setMode(next);
         player.displayClientMessage(Component.translatable(
                 KEY_PREFIX + ".mode_changed",
                 Component.translatable(KEY_PREFIX + ".mode." + next.name().toLowerCase(Locale.ROOT))), true);
@@ -92,8 +94,24 @@ public class DataDistributionConnectorItem extends Item {
         BlockState clickedState = level.getBlockState(clickedPos);
         ItemStack stack = context.getItemInHand();
 
-        if (player.isShiftKeyDown() && isAdaptiveProvider(level, clickedPos, context.getClickedFace())) {
-            return bindAdaptiveProvider(stack, player, level, clickedPos, context.getClickedFace());
+        if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof CableBusBlockEntity bus && (bus.getPart(context.getClickedFace().getOpposite()) instanceof AdaptivePatternProviderPart || bus.getPart(context.getClickedFace().getOpposite()) instanceof DataSanctumLargeInterfaceHost || bus.getPart(context.getClickedFace()) instanceof AdaptivePatternProviderPart || bus.getPart(context.getClickedFace()) instanceof DataSanctumLargeInterfaceHost)) {
+            if (!level.isClientSide()) {
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".block_only"), true);
+            }
+            return InteractionResult.FAIL;
+        }
+
+        if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof DataSanctumInterfaceBlockEntity) {
+            if (!level.isClientSide()) {
+                stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(),
+                        getConnectorData(stack).withInterface(level.dimension().location().toString(), clickedPos, -1));
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".bound_interface"), true);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof AdaptivePatternProviderBlockEntity) {
+            return bindAdaptiveProvider(stack, player, level, clickedPos);
         }
         if (clickedState.is(DEBlocks.DATA_DISTRIBUTION_TOWER.get()) && player.isShiftKeyDown()) {
             return bindTower(stack, player, level, clickedPos, clickedState);
@@ -112,11 +130,17 @@ public class DataDistributionConnectorItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents,
                                 TooltipFlag tooltipFlag) {
-        DataDistributionConnectorItemData data = getConnectorData(stack);
+        RemoteLinkConnectorData data = getConnectorData(stack);
         if (!data.hasSelection()) {
             return;
         }
 
+        if (data.isInterface()) {
+            tooltipComponents.add(Component.translatable(KEY_PREFIX + ".tooltip.bound_interface",
+                    data.providerDimensionId(), data.getProviderPos().getX(), data.getProviderPos().getY(), data.getProviderPos().getZ()));
+            tooltipComponents.add(Component.translatable(KEY_PREFIX + ".slot_selected", data.selectedSlot() + 1));
+            return;
+        }
         if (data.isAdaptiveProvider()) {
             tooltipComponents.add(Component.translatable(
                     KEY_PREFIX + ".tooltip.bound_provider",
@@ -185,7 +209,7 @@ public class DataDistributionConnectorItem extends Item {
 
     private InteractionResult connectTarget(ItemStack stack, Player player, Level level, BlockPos clickedPos,
                                             Direction clickedFace, boolean showFailureMessages) {
-        DataDistributionConnectorItemData data = getConnectorData(stack);
+        RemoteLinkConnectorData data = getConnectorData(stack);
         if (!data.hasSelection()) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".unbound"), true);
@@ -193,6 +217,9 @@ public class DataDistributionConnectorItem extends Item {
             return InteractionResult.FAIL;
         }
 
+        if (data.isInterface()) {
+            return connectInterface(stack, player, level, clickedPos, clickedFace, showFailureMessages);
+        }
         if (data.isAdaptiveProvider()) {
             return connectAdaptiveProvider(stack, player, level, clickedPos, clickedFace, showFailureMessages);
         }
@@ -259,25 +286,13 @@ public class DataDistributionConnectorItem extends Item {
     }
 
     private InteractionResult bindAdaptiveProvider(ItemStack stack, Player player, Level level,
-                                                   BlockPos position, Direction clickedFace) {
+                                                   BlockPos position) {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
-        int side = -1;
-        BlockEntity blockEntity = level.getBlockEntity(position);
-        if (blockEntity instanceof CableBusBlockEntity cableBus) {
-            Direction exposedSide = clickedFace.getOpposite();
-            IPart part = cableBus.getPart(exposedSide);
-            if (!(part instanceof AdaptivePatternProviderPart)) {
-                return InteractionResult.FAIL;
-            }
-            side = exposedSide.get3DDataValue();
-        } else if (!(blockEntity instanceof AdaptivePatternProviderBlockEntity)) {
-            return InteractionResult.FAIL;
-        }
         stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(),
                 getConnectorData(stack).withAdaptiveProvider(
-                        level.dimension().location().toString(), position, side));
+                        level.dimension().location().toString(), position, -1));
         player.displayClientMessage(Component.translatable(KEY_PREFIX + ".bound_provider"), true);
         return InteractionResult.SUCCESS;
     }
@@ -285,7 +300,13 @@ public class DataDistributionConnectorItem extends Item {
     private InteractionResult connectAdaptiveProvider(ItemStack stack, Player player, Level level,
                                                       BlockPos clickedPos, Direction clickedFace,
                                                       boolean showFailureMessages) {
-        DataDistributionConnectorItemData data = getConnectorData(stack);
+        RemoteLinkConnectorData data = getConnectorData(stack);
+        if (data.providerSide() != -1) {
+            if (showFailureMessages) {
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".block_only"), true);
+            }
+            return InteractionResult.FAIL;
+        }
         if (!level.dimension().location().toString().equals(data.providerDimensionId()) || !level.isLoaded(data.getProviderPos())) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".provider_missing"), true);
@@ -293,13 +314,7 @@ public class DataDistributionConnectorItem extends Item {
             return InteractionResult.FAIL;
         }
         BlockEntity blockEntity = level.getBlockEntity(data.getProviderPos());
-        boolean valid = blockEntity instanceof AdaptivePatternProviderBlockEntity;
-        if (blockEntity instanceof CableBusBlockEntity cableBus && data.providerSide() >= 0) {
-            Direction side = Direction.from3DDataValue(data.providerSide());
-            valid = cableBus.getPart(side) instanceof AdaptivePatternProviderPart;
-        }
-        if (!valid || !AdaptivePatternProviderResolver.isSupportedProviderStack(
-                providerStack(blockEntity, data.providerSide()))) {
+        if (!(blockEntity instanceof AdaptivePatternProviderBlockEntity provider) || !AdaptivePatternProviderResolver.isSupportedProviderStack(provider.getProviderStack()) || !(provider.getLogic() instanceof AdaptivePatternProviderLogic logic)) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".provider_invalid"), true);
             }
@@ -313,14 +328,7 @@ public class DataDistributionConnectorItem extends Item {
             }
             return InteractionResult.FAIL;
         }
-        AdaptivePatternProviderLogic logic = adaptiveLogic(blockEntity, data.providerSide());
         Direction targetSide = clickedFace;
-        if (logic == null) {
-            if (showFailureMessages) {
-                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
-            }
-            return InteractionResult.FAIL;
-        }
         boolean wasBound = logic.hasConnectorTarget(clickedPos, targetSide);
         boolean changed = wasBound ? logic.unbindConnectorTarget(clickedPos, targetSide) : logic.bindConnectorTarget(clickedPos, targetSide);
         if (!changed) {
@@ -332,13 +340,16 @@ public class DataDistributionConnectorItem extends Item {
         player.displayClientMessage(Component.translatable(
                 KEY_PREFIX + (wasBound ? ".unbound_target" : ".bound_target"),
                 clickedPos.getX() + ", " + clickedPos.getY() + ", " + clickedPos.getZ(),
-                targetSide.getName()), true);
+                Component.translatable(KEY_PREFIX + ".face." + targetSide.getName())), true);
         return InteractionResult.SUCCESS;
     }
 
     private static boolean hasTargetCapability(Level level, BlockPos position, Direction side) {
         BlockState state = level.getBlockState(position);
         BlockEntity blockEntity = level.getBlockEntity(position);
+        if (level.getCapability(AECapabilities.ME_STORAGE, position, state, blockEntity, side) != null) {
+            return true;
+        }
         GenericInternalInventory generic = level.getCapability(
                 AECapabilities.GENERIC_INTERNAL_INV, position, state, blockEntity, side);
         if (generic != null) {
@@ -352,53 +363,59 @@ public class DataDistributionConnectorItem extends Item {
         return fluids != null;
     }
 
-    private static boolean isAdaptiveProvider(Level level, BlockPos position, Direction clickedFace) {
-        BlockEntity blockEntity = level.getBlockEntity(position);
-        if (blockEntity instanceof AdaptivePatternProviderBlockEntity) {
-            return true;
+    private InteractionResult connectInterface(ItemStack stack, Player player, Level level, BlockPos target,
+                                               Direction side, boolean feedback) {
+        var data = getConnectorData(stack);
+        var endpoint = resolveEndpoint(level, data);
+        if (endpoint == null || target.equals(data.getProviderPos()) || !level.hasChunkAt(target) || !hasTargetCapability(level, target, side)) {
+            if (feedback) {
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
+            }
+            return InteractionResult.FAIL;
         }
-        return blockEntity instanceof CableBusBlockEntity cableBus && cableBus.getPart(clickedFace.getOpposite()) instanceof AdaptivePatternProviderPart;
+        if (data.selectedSlot() >= endpoint.slotCount()) {
+            if (feedback) {
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".slot_locked", data.selectedSlot() + 1), true);
+            }
+            return InteractionResult.FAIL;
+        }
+        boolean added = endpoint.toggle(target, side, data.selectedSlot());
+        if (feedback) {
+            player.displayClientMessage(Component.translatable(KEY_PREFIX + (added ? ".bound_interface_target" : ".unbound_interface_target"),
+                    data.selectedSlot() + 1, target.toShortString(), Component.translatable(KEY_PREFIX + ".face." + side.getName())), true);
+        }
+        return InteractionResult.SUCCESS;
     }
 
-    private static ItemStack providerStack(BlockEntity blockEntity, int side) {
-        if (blockEntity instanceof AdaptivePatternProviderBlockEntity provider) {
-            return provider.getProviderStack();
+    public static @Nullable ConnectorEndpoint resolveEndpoint(Level level, RemoteLinkConnectorData data) {
+        if (!data.hasSelection() || data.providerSide() != -1 || !level.dimension().location().toString().equals(data.providerDimensionId()) || !level.hasChunkAt(data.getProviderPos())) {
+            return null;
         }
-        if (blockEntity instanceof CableBusBlockEntity cableBus && side >= 0 && cableBus.getPart(Direction.from3DDataValue(side)) instanceof AdaptivePatternProviderPart part) {
-            return part.getProviderStack();
+        if (data.isInterface()) {
+            return level.getBlockEntity(data.getProviderPos()) instanceof DataSanctumInterfaceBlockEntity host ? host.getRemoteLinks() : null;
         }
-        return ItemStack.EMPTY;
-    }
-
-    @Nullable
-    private static AdaptivePatternProviderLogic adaptiveLogic(BlockEntity blockEntity, int side) {
-        if (blockEntity instanceof AdaptivePatternProviderBlockEntity provider && provider.getLogic() instanceof AdaptivePatternProviderLogic logic) {
-            return logic;
-        }
-        if (blockEntity instanceof CableBusBlockEntity cableBus && side >= 0 && cableBus.getPart(Direction.from3DDataValue(side)) instanceof AdaptivePatternProviderPart part) {
-            return part.getLogic();
-        }
-        return null;
+        var logic = resolveProviderLogic(level, data);
+        return logic == null ? null : new AdaptiveProviderConnectorEndpoint(logic);
     }
 
     public static boolean isConnectorStack(ItemStack stack) {
-        return stack.getItem() instanceof DataDistributionConnectorItem;
+        return stack.getItem() instanceof RemoteLinkConnectorItem;
     }
 
-    public static DataDistributionConnectorItemData readData(ItemStack stack) {
-        DataDistributionConnectorItemData data = stack.get(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get());
-        return data != null ? data : DataDistributionConnectorItemData.EMPTY;
+    public static RemoteLinkConnectorData readData(ItemStack stack) {
+        RemoteLinkConnectorData data = stack.get(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get());
+        return data != null ? data : RemoteLinkConnectorData.EMPTY;
     }
 
-    public static AdaptivePatternProviderLogic resolveProviderLogic(
-                                                                    Level level, DataDistributionConnectorItemData data) {
-        if (!data.isAdaptiveProvider() || !data.hasSelection() || !level.dimension().location().toString().equals(data.providerDimensionId()) || !level.isLoaded(data.getProviderPos())) {
+    public static @Nullable AdaptivePatternProviderLogic resolveProviderLogic(
+                                                                              Level level, RemoteLinkConnectorData data) {
+        if (!data.isAdaptiveProvider() || data.providerSide() != -1 || !data.hasSelection() || !level.dimension().location().toString().equals(data.providerDimensionId()) || !level.isLoaded(data.getProviderPos())) {
             return null;
         }
-        return adaptiveLogic(level.getBlockEntity(data.getProviderPos()), data.providerSide());
+        return level.getBlockEntity(data.getProviderPos()) instanceof AdaptivePatternProviderBlockEntity provider && provider.getLogic() instanceof AdaptivePatternProviderLogic logic ? logic : null;
     }
 
-    private static DataDistributionConnectorItemData getConnectorData(ItemStack stack) {
+    private static RemoteLinkConnectorData getConnectorData(ItemStack stack) {
         return readData(stack);
     }
 }

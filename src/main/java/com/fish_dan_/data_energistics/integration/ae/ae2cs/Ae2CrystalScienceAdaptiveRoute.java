@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.integration.ae.ae2cs;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorRoutes;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorRouteTargets;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -101,7 +101,7 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
                 return false;
             }
             ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
-            for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(context, AdaptiveProviderConnectorMode.INPUT)) {
+            for (ConnectorLink binding : ConnectorRouteTargets.resolve(context, ConnectorMode.INPUT)) {
                 Direction side = binding.side().getOpposite();
                 PatternProviderTarget target = context.externalTarget(
                         level, binding.position(), binding.side());
@@ -156,7 +156,7 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
         var returnInventory = context.returnInventory();
         final int maxKeysPerTick = 32;
         int scanned = 0;
-        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(context, AdaptiveProviderConnectorMode.PULL)) {
+        for (ConnectorLink binding : ConnectorRouteTargets.resolve(context, ConnectorMode.PULL)) {
             BlockPos adjacentPos = binding.position();
             Direction adjacentFace = binding.side();
             if (!level.hasChunkAt(adjacentPos) || context.isPatternProviderAttachment(level, adjacentPos, adjacentFace)) {

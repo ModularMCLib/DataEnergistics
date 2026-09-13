@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.YesNo;
 
@@ -82,7 +84,7 @@ public interface AdaptivePatternProviderToolbarMenu {
     int getConnectorPolicy();
 
     /** Requests a connector transfer mode change. */
-    void sendSetConnectorMode(AdaptiveProviderConnectorMode mode);
+    void sendSetConnectorMode(ConnectorMode mode);
 
     /** Requests a connector target policy change. */
     void sendSetConnectorPolicy(AdaptiveProviderConnectorPolicy policy);

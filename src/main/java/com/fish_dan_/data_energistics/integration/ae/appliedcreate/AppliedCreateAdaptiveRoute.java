@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.integration.ae.appliedcreate;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorRoutes;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorRouteTargets;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 
 import appeng.api.crafting.IPatternDetails;
@@ -113,7 +113,7 @@ public final class AppliedCreateAdaptiveRoute implements AdaptivePatternProvider
                                                                    AdaptivePatternProviderDispatchTarget context,
                                                                    Level level) {
         ObjectArrayList<CrafterCandidate> candidates = new ObjectArrayList<>();
-        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(context, AdaptiveProviderConnectorMode.INPUT)) {
+        for (ConnectorLink binding : ConnectorRouteTargets.resolve(context, ConnectorMode.INPUT)) {
             BlockPos position = binding.position();
             BlockEntity blockEntity = level.getBlockEntity(position);
             if (!(blockEntity instanceof MechanicalCrafterBlockEntity crafter)) {

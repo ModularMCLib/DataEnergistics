@@ -22,9 +22,9 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -112,7 +112,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -137,7 +136,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private final IManagedGridNode mainNode;
     private final IActionSource actionSource;
     private int localRoundRobinIndex;
-    private AdaptiveProviderConnectorMode connectorMode = AdaptiveProviderConnectorMode.INPUT;
+    private ConnectorMode connectorMode = ConnectorMode.INPUT;
     private AdaptiveProviderConnectorPolicy connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN;
     private int connectorCursor;
     private int connectorPullCursor;
@@ -247,14 +246,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         super.readFromNBT(tag, registries);
 
-        this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, AdaptiveProviderConnectorMode.INPUT);
+        this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, ConnectorMode.INPUT);
         this.connectorPolicy = readConnectorPolicy(tag, NBT_CONNECTOR_POLICY, AdaptiveProviderConnectorPolicy.ROUND_ROBIN);
         this.connectorCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_CURSOR));
         this.connectorPullCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_CURSOR));
         this.connectorPullSlotCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_SLOT_CURSOR));
         this.connectorTargets.clear();
         ListTag connectorTargetTags = tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
-        for (int index = 0; index < connectorTargetTags.size(); index++) {
+        for (int index = 0; this.host instanceof BlockEntity && index < connectorTargetTags.size(); index++) {
             CompoundTag targetTag = connectorTargetTags.getCompound(index);
             int side = targetTag.getByte("side");
             if (side >= 0 && side < 6) {
@@ -281,7 +280,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
     }
 
-    public AdaptiveProviderConnectorMode connectorMode() {
+    public ConnectorMode connectorMode() {
         return this.connectorMode;
     }
 
@@ -293,13 +292,13 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorCursor;
     }
 
-    public void setConnectorMode(AdaptiveProviderConnectorMode mode) {
-        this.connectorMode = Objects.requireNonNull(mode, "Connector mode");
+    public void setConnectorMode(ConnectorMode mode) {
+        this.connectorMode = mode;
         onConnectorChanged();
     }
 
     public void setConnectorPolicy(AdaptiveProviderConnectorPolicy policy) {
-        this.connectorPolicy = Objects.requireNonNull(policy, "Connector policy");
+        this.connectorPolicy = policy;
         onConnectorChanged();
     }
 
@@ -326,10 +325,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     /** Replaces the client display state after a complete update has been decoded; performs no world writes. */
     public boolean readConnectorVisualState(RegistryFriendlyByteBuf data) {
-        AdaptiveProviderConnectorMode mode = data.readEnum(AdaptiveProviderConnectorMode.class);
+        ConnectorMode mode = data.readEnum(ConnectorMode.class);
         AdaptiveProviderConnectorPolicy policy = data.readEnum(AdaptiveProviderConnectorPolicy.class);
         List<ConnectorTarget> targets = data.readList(buffer -> new ConnectorTarget(
-                buffer.readBlockPos(), buffer.readEnum(Direction.class), buffer.readEnum(AdaptiveProviderConnectorMode.class)));
+                buffer.readBlockPos(), buffer.readEnum(Direction.class), buffer.readEnum(ConnectorMode.class)));
         boolean changed = this.connectorMode != mode || this.connectorPolicy != policy || !this.connectorTargets.equals(targets);
         this.connectorMode = mode;
         this.connectorPolicy = policy;
@@ -360,6 +359,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     public boolean bindConnectorTarget(BlockPos position, Direction side) {
+        if (!(this.host instanceof BlockEntity)) {
+            return false;
+        }
         if (this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side)) {
             return false;
         }
@@ -386,10 +388,13 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     /** Replaces all links from a validated clipboard while preserving their independent transfer modes. */
-    public int replaceConnectorTargets(List<AdaptiveProviderConnectorBinding> bindings) {
+    public int replaceConnectorTargets(List<ConnectorLink> bindings) {
+        if (!(this.host instanceof BlockEntity)) {
+            return 0;
+        }
         this.connectorTargets.clear();
         ObjectOpenHashSet<String> identities = new ObjectOpenHashSet<>();
-        for (AdaptiveProviderConnectorBinding binding : bindings) {
+        for (ConnectorLink binding : bindings) {
             String identity = binding.position().asLong() + ":" + binding.side().get3DDataValue();
             if (identities.add(identity)) {
                 this.connectorTargets.add(new ConnectorTarget(binding.position(), binding.side(), binding.mode()));
@@ -427,13 +432,13 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side);
     }
 
-    private static AdaptiveProviderConnectorMode readConnectorMode(
-                                                                   CompoundTag tag, String key, AdaptiveProviderConnectorMode fallback) {
+    private static ConnectorMode readConnectorMode(
+                                                   CompoundTag tag, String key, ConnectorMode fallback) {
         if (!tag.contains(key)) {
             return fallback;
         }
         try {
-            return AdaptiveProviderConnectorMode.valueOf(tag.getString(key));
+            return ConnectorMode.valueOf(tag.getString(key));
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid adaptive connector mode", exception);
         }
@@ -451,7 +456,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
     }
 
-    public record ConnectorTarget(BlockPos position, Direction side, AdaptiveProviderConnectorMode mode) {}
+    public record ConnectorTarget(BlockPos position, Direction side, ConnectorMode mode) {}
 
     /** Dismantled physical items carry escrow independently from copyable MemoryCard settings. */
     public void exportReusableItem(DataComponentMap.Builder builder, HolderLookup.Provider registries) {
@@ -1120,7 +1125,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         boolean hasRegisteredCapacity = false;
         for (ConnectorTarget binding : this.connectorTargets) {
-            if (binding.mode() != AdaptiveProviderConnectorMode.INPUT) {
+            if (!binding.mode().supportsInput()) {
                 continue;
             }
             CraftingMachineCapacityAdapters.Observation observation = CraftingMachineCapacityAdapters.capture(
@@ -1546,10 +1551,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return false;
     }
 
-    public List<AdaptiveProviderConnectorBinding> adaptiveConnectorBindings() {
-        ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(this.connectorTargets.size());
+    public List<ConnectorLink> adaptiveConnectorBindings() {
+        ObjectArrayList<ConnectorLink> result = new ObjectArrayList<>(this.connectorTargets.size());
         for (ConnectorTarget target : this.connectorTargets) {
-            result.add(new AdaptiveProviderConnectorBinding(target.position(), target.side(), target.mode()));
+            result.add(new ConnectorLink(target.position(), target.side(), target.mode()));
         }
         return ObjectLists.unmodifiable(result);
     }

@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.LockCraftingMode;
@@ -110,7 +110,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     @GuiSync(793)
     public int redstoneTuningMode = RedstoneTuningMode.EMIT_ON_DISPATCH.ordinal();
     @GuiSync(794)
-    public int connectorMode = AdaptiveProviderConnectorMode.INPUT.ordinal();
+    public int connectorMode = ConnectorMode.INPUT.ordinal();
     @GuiSync(795)
     public int connectorPolicy = AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal();
     @GuiSync(796)
@@ -371,7 +371,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
         syncConnectorState();
     }
 
-    public void sendSetConnectorMode(AdaptiveProviderConnectorMode mode) {
+    public void sendSetConnectorMode(ConnectorMode mode) {
         this.connectorMode = mode.ordinal();
         sendClientAction(ACTION_SET_CONNECTOR_MODE, this.connectorMode);
     }
@@ -397,10 +397,10 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     }
 
     private void setConnectorMode(int ordinal) {
-        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) || ordinal < 0 || ordinal >= AdaptiveProviderConnectorMode.values().length) {
+        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) || ordinal < 0 || ordinal >= ConnectorMode.values().length) {
             return;
         }
-        adaptiveLogic.setConnectorMode(AdaptiveProviderConnectorMode.values()[ordinal]);
+        adaptiveLogic.setConnectorMode(ConnectorMode.values()[ordinal]);
         syncConnectorState();
         broadcastChanges();
     }

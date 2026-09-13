@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumReturnInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
+import com.fish_dan_.data_energistics.ae2.sanctum.connector.InterfaceRemoteLinks;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.InterfaceLogicUpgradesAccessor;
@@ -44,6 +45,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -87,6 +89,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
             this::onReturnInventoryChanged,
             this::getInstalledCapacityCardCount);
     private final MachineSource actionSource = new MachineSource(this);
+    private final InterfaceRemoteLinks remoteLinks = new InterfaceRemoteLinks(this, getMainNode(), actionSource, this::onRemoteLinksChanged);
     private final EnumSet<Direction> activePullSides = EnumSet.noneOf(Direction.class);
     private final EnumMap<Direction, Integer> activePullKeyCursors = new EnumMap<>(Direction.class);
     private AdjacentBlockCapabilityCache<MEStorage> adjacentMeStorages;
@@ -154,6 +157,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         super.saveAdditional(data, registries);
         this.interfaceLogic.writeToNBT(data, registries);
         this.returnInventory.writeToChildTag(data, RETURN_INVENTORY_TAG, registries);
+        this.remoteLinks.write(data, registries);
         data.putInt(ACTIVE_PULL_SIDES_TAG, encodeSides(this.activePullSides));
     }
 
@@ -162,6 +166,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         super.loadTag(data, registries);
         this.interfaceLogic.readFromNBT(data, registries);
         this.returnInventory.readFromChildTag(data, RETURN_INVENTORY_TAG, registries);
+        this.remoteLinks.read(data, registries);
         decodeSides(data.getInt(ACTIVE_PULL_SIDES_TAG), this.activePullSides);
     }
 
@@ -195,6 +200,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         super.addAdditionalDrops(level, pos, drops);
         this.interfaceLogic.addDrops(drops);
         this.returnInventory.addDrops(drops, level, pos);
+        this.remoteLinks.addDrops(drops, level, pos);
     }
 
     @Override
@@ -202,6 +208,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         super.clearContent();
         this.interfaceLogic.clearContent();
         this.returnInventory.clear();
+        this.remoteLinks.clearContent();
     }
 
     @Override
@@ -293,6 +300,28 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
 
         tryActivePull();
         injectReturnInventory();
+        this.remoteLinks.tick();
+    }
+
+    public InterfaceRemoteLinks getRemoteLinks() {
+        return this.remoteLinks;
+    }
+
+    private void onRemoteLinksChanged() {
+        this.saveChanges();
+        this.markForClientUpdate();
+    }
+
+    @Override
+    protected void writeToStream(RegistryFriendlyByteBuf data) {
+        super.writeToStream(data);
+        this.remoteLinks.writeToStream(data);
+    }
+
+    @Override
+    protected boolean readFromStream(RegistryFriendlyByteBuf data) {
+        boolean changed = super.readFromStream(data);
+        return this.remoteLinks.readFromStream(data) || changed;
     }
 
     private void onReturnInventoryChanged() {

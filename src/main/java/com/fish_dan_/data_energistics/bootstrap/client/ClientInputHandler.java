@@ -4,14 +4,14 @@ import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClient
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
-import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardOperation;
-import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardPayload;
-import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
+import com.fish_dan_.data_energistics.network.action.ConnectorClipboardAction;
+import com.fish_dan_.data_energistics.network.action.ConnectorClipboardPayload;
+import com.fish_dan_.data_energistics.network.action.ConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
@@ -113,21 +113,21 @@ final class ClientInputHandler {
         }
         ItemStack mainHand = minecraft.player.getMainHandItem();
         ItemStack offHand = minecraft.player.getOffhandItem();
-        boolean offHandConnector = !DataDistributionConnectorItem.isConnectorStack(mainHand) && DataDistributionConnectorItem.isConnectorStack(offHand);
-        if (!DataDistributionConnectorItem.isConnectorStack(mainHand) && !DataDistributionConnectorItem.isConnectorStack(offHand)) {
+        boolean offHandConnector = !RemoteLinkConnectorItem.isConnectorStack(mainHand) && RemoteLinkConnectorItem.isConnectorStack(offHand);
+        if (!RemoteLinkConnectorItem.isConnectorStack(mainHand) && !RemoteLinkConnectorItem.isConnectorStack(offHand)) {
             return false;
         }
-        DataDistributionConnectorClipboardOperation operation = switch (key) {
-            case GLFW.GLFW_KEY_A -> DataDistributionConnectorClipboardOperation.SELECT_ALL;
-            case GLFW.GLFW_KEY_C -> DataDistributionConnectorClipboardOperation.COPY;
-            case GLFW.GLFW_KEY_X -> DataDistributionConnectorClipboardOperation.CUT;
-            case GLFW.GLFW_KEY_V -> DataDistributionConnectorClipboardOperation.PASTE;
+        ConnectorClipboardAction operation = switch (key) {
+            case GLFW.GLFW_KEY_A -> ConnectorClipboardAction.SELECT_ALL;
+            case GLFW.GLFW_KEY_C -> ConnectorClipboardAction.COPY;
+            case GLFW.GLFW_KEY_X -> ConnectorClipboardAction.CUT;
+            case GLFW.GLFW_KEY_V -> ConnectorClipboardAction.PASTE;
             default -> null;
         };
         if (operation == null) {
             return false;
         }
-        PacketDistributor.sendToServer(new DataDistributionConnectorClipboardPayload(operation, offHandConnector));
+        PacketDistributor.sendToServer(new ConnectorClipboardPayload(operation, offHandConnector));
         return true;
     }
 
@@ -160,12 +160,12 @@ final class ClientInputHandler {
         boolean altDown = Screen.hasAltDown();
         ItemStack mainHand = minecraft.player.getMainHandItem();
         ItemStack offHand = minecraft.player.getOffhandItem();
-        boolean useConnectorMain = DataDistributionConnectorItem.isConnectorStack(mainHand);
-        boolean useConnectorOff = !useConnectorMain && DataDistributionConnectorItem.isConnectorStack(offHand);
+        boolean useConnectorMain = RemoteLinkConnectorItem.isConnectorStack(mainHand);
+        boolean useConnectorOff = !useConnectorMain && RemoteLinkConnectorItem.isConnectorStack(offHand);
         if (useConnectorMain || useConnectorOff) {
             double delta = event.getScrollDeltaY();
             if (delta != 0 && (controlDown || Screen.hasShiftDown())) {
-                PacketDistributor.sendToServer(new DataDistributionConnectorScrollPayload(
+                PacketDistributor.sendToServer(new ConnectorScrollPayload(
                         delta < 0, useConnectorOff, controlDown, Screen.hasShiftDown()));
                 event.setCanceled(true);
             }

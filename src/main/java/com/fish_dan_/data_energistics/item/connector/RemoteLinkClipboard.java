@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.item.connector;
 
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.core.BlockPos;
@@ -15,57 +15,60 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
 
-/** Stores copied connector links on the connector item until they are pasted into another provider. */
-public final class DataDistributionConnectorClipboard {
+/** Stores copied absolute links on the connector until they are pasted into another host of the same type. */
+public final class RemoteLinkClipboard {
 
     private static final String LINKS = "links";
     private static final int MAX_LINKS = 256;
 
-    private DataDistributionConnectorClipboard() {}
+    private RemoteLinkClipboard() {}
 
     public static Snapshot read(ItemStack stack) {
         CompoundTag tag = stack.get(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR_CLIPBOARD.get());
         if (tag == null || !tag.contains(LINKS, Tag.TAG_LIST)) {
-            return new Snapshot(List.of());
+            return new Snapshot("", ConnectorHostType.ADAPTIVE_PROVIDER, List.of());
         }
         ListTag links = tag.getList(LINKS, Tag.TAG_COMPOUND);
-        ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(Math.min(links.size(), MAX_LINKS));
-        for (int index = 0; index < links.size() && index < MAX_LINKS; index++) {
+        if (links.size() > MAX_LINKS) {
+            throw new IllegalArgumentException("Connector clipboard has too many links");
+        }
+        ObjectArrayList<ConnectorLink> result = new ObjectArrayList<>(links.size());
+        for (int index = 0; index < links.size(); index++) {
             CompoundTag link = links.getCompound(index);
             int side = link.getByte("side");
             if (side < 0 || side >= Direction.values().length) {
-                continue;
+                throw new IllegalArgumentException("Invalid clipboard target face");
             }
-            AdaptiveProviderConnectorMode mode;
-            try {
-                mode = AdaptiveProviderConnectorMode.valueOf(link.getString("mode"));
-            } catch (IllegalArgumentException exception) {
-                continue;
-            }
-            result.add(new AdaptiveProviderConnectorBinding(
-                    BlockPos.of(link.getLong("pos")), Direction.from3DDataValue(side), mode));
+            var mode = ConnectorMode.valueOf(link.getString("mode"));
+            result.add(new ConnectorLink(
+                    BlockPos.of(link.getLong("pos")), Direction.from3DDataValue(side), mode,
+                    link.contains("slot", Tag.TAG_INT) ? link.getInt("slot") : -1));
         }
-        return new Snapshot(List.copyOf(result));
+        var type = tag.contains("type") ? ConnectorHostType.valueOf(tag.getString("type")) : ConnectorHostType.ADAPTIVE_PROVIDER;
+        return new Snapshot(tag.getString("dimension"), type, result);
     }
 
-    public static void write(ItemStack stack, List<AdaptiveProviderConnectorBinding> bindings) {
+    public static void write(ItemStack stack, RemoteLinkConnectorData selection, List<ConnectorLink> bindings) {
         if (bindings.size() > MAX_LINKS) {
             throw new IllegalArgumentException("Connector clipboard cannot contain more than " + MAX_LINKS + " links");
         }
         CompoundTag tag = new CompoundTag();
+        tag.putString("dimension", selection.providerDimensionId());
+        tag.putString("type", selection.targetType().name());
         ListTag links = new ListTag();
-        for (AdaptiveProviderConnectorBinding binding : bindings) {
+        for (ConnectorLink binding : bindings) {
             CompoundTag link = new CompoundTag();
             link.putLong("pos", binding.position().asLong());
             link.putByte("side", (byte) binding.side().get3DDataValue());
             link.putString("mode", binding.mode().name());
+            link.putInt("slot", binding.slot());
             links.add(link);
         }
         tag.put(LINKS, links);
         stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR_CLIPBOARD.get(), tag);
     }
 
-    public record Snapshot(List<AdaptiveProviderConnectorBinding> bindings) {
+    public record Snapshot(String dimensionId, ConnectorHostType type, List<ConnectorLink> bindings) {
 
         public Snapshot {
             bindings = List.copyOf(bindings);

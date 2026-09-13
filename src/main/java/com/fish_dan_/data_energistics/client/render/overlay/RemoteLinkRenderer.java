@@ -1,11 +1,12 @@
 package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItemData;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -13,7 +14,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -32,7 +32,7 @@ import java.util.OptionalDouble;
 
 /** Renders client-synchronized bindings while their connector is held in either hand. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
-public final class DataDistributionConnectorLinkRenderer {
+public final class RemoteLinkRenderer {
 
     private static final Color INPUT_CURRENT = new Color(0.2F, 0.85F, 1.0F, 1.0F);
     private static final Color INPUT_OTHER = new Color(0.18F, 0.62F, 0.95F, 0.95F);
@@ -55,7 +55,7 @@ public final class DataDistributionConnectorLinkRenderer {
                     .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
                     .createCompositeState(false));
 
-    private DataDistributionConnectorLinkRenderer() {}
+    private RemoteLinkRenderer() {}
 
     @SubscribeEvent
     public static void render(RenderLevelStageEvent event) {
@@ -67,18 +67,18 @@ public final class DataDistributionConnectorLinkRenderer {
         if (level == null || minecraft.player == null) {
             return;
         }
-        ItemStack stack = DataDistributionConnectorItem.isConnectorStack(minecraft.player.getMainHandItem()) ? minecraft.player.getMainHandItem() : minecraft.player.getOffhandItem();
-        if (!DataDistributionConnectorItem.isConnectorStack(stack)) {
+        ItemStack stack = RemoteLinkConnectorItem.isConnectorStack(minecraft.player.getMainHandItem()) ? minecraft.player.getMainHandItem() : minecraft.player.getOffhandItem();
+        if (!RemoteLinkConnectorItem.isConnectorStack(stack)) {
             return;
         }
-        DataDistributionConnectorItemData data = DataDistributionConnectorItem.readData(stack);
-        if (!data.hasSelection() || !data.isAdaptiveProvider() || !level.dimension().location().toString().equals(data.providerDimensionId())) {
+        RemoteLinkConnectorData data = RemoteLinkConnectorItem.readData(stack);
+        if (!data.hasSelection() || data.providerSide() != -1 || !(data.isAdaptiveProvider() || data.isInterface()) || !level.dimension().location().toString().equals(data.providerDimensionId())) {
             return;
         }
 
         BlockPos provider = data.getProviderPos();
-        AdaptivePatternProviderLogic logic = DataDistributionConnectorItem.resolveProviderLogic(level, data);
-        Vec3 source = data.providerSide() < 0 ? new Vec3(0.5D, 0.5D, 0.5D) : ConnectorLinkGeometry.face(BlockPos.ZERO, Direction.from3DDataValue(data.providerSide())).center();
+        ConnectorEndpoint endpoint = RemoteLinkConnectorItem.resolveEndpoint(level, data);
+        Vec3 source = new Vec3(0.5D, 0.5D, 0.5D);
         Vec3 camera = event.getCamera().getPosition();
         PoseStack pose = event.getPoseStack();
         var buffers = minecraft.renderBuffers().bufferSource();
@@ -86,17 +86,18 @@ public final class DataDistributionConnectorLinkRenderer {
         pose.pushPose();
         try {
             pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
-            List<AdaptivePatternProviderLogic.ConnectorTarget> targets = logic != null ? logic.connectorTargets() : List.of();
+            List<ConnectorLink> targets = endpoint != null ? endpoint.bindings() : List.of();
             int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
-            Color sourceColor = logic == null ? level.isLoaded(provider) ? MISSING : UNLOADED : selected >= 0 ? currentColor(targets.get(selected).mode(), true) : SOURCE;
+            Color sourceColor = endpoint == null ? level.isLoaded(provider) ? MISSING : UNLOADED : selected >= 0 ? currentColor(targets.get(selected).mode(), true) : SOURCE;
             LevelRenderer.renderLineBox(pose, lines, new AABB(source, source).inflate(0.15D),
                     sourceColor.red(), sourceColor.green(), sourceColor.blue(), sourceColor.alpha());
-            if (logic == null) {
+            if (endpoint == null) {
                 return;
             }
             for (int index = 0; index < targets.size(); index++) {
                 var target = targets.get(index);
-                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : currentColor(target.mode(), index == selected);
+                boolean selectedLink = data.allLinksSelected() || index == selected;
+                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : currentColor(target.mode(), selectedLink);
                 // Client capabilities may legitimately be absent for server-only inventories. The synchronized
                 // binding is authoritative; only loaded world geometry determines a missing marker here.
                 var face = ConnectorLinkGeometry.face(target.position().subtract(provider), target.side());
@@ -105,7 +106,7 @@ public final class DataDistributionConnectorLinkRenderer {
                 for (int corner = 0; corner < face.corners().size(); corner++) {
                     line(pose, lines, face.corners().get(corner), face.corners().get((corner + 1) % 4), color);
                 }
-                if (index == selected) {
+                if (selectedLink) {
                     line(pose, lines, face.corners().get(0), face.corners().get(2), color);
                     line(pose, lines, face.corners().get(1), face.corners().get(3), color);
                 }
@@ -131,11 +132,11 @@ public final class DataDistributionConnectorLinkRenderer {
                 .setNormal(transform, (float) normal.x, (float) normal.y, (float) normal.z);
     }
 
-    private static Color currentColor(AdaptiveProviderConnectorMode mode, boolean selected) {
-        if (mode == AdaptiveProviderConnectorMode.INPUT) {
+    private static Color currentColor(ConnectorMode mode, boolean selected) {
+        if (mode == ConnectorMode.INPUT) {
             return selected ? INPUT_CURRENT : INPUT_OTHER;
         }
-        if (mode == AdaptiveProviderConnectorMode.BOTH) {
+        if (mode == ConnectorMode.BOTH) {
             return selected ? BOTH_CURRENT : BOTH_OTHER;
         }
         return selected ? OUTPUT_CURRENT : OUTPUT_OTHER;

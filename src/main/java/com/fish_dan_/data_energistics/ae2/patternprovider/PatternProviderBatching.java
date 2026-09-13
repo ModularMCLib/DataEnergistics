@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineScope;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -140,8 +140,8 @@ public final class PatternProviderBatching {
 
         var possibleTargets = new ObjectArrayList<PushTarget>();
         var machineTargets = new ObjectArrayList<MachinePushTarget>();
-        List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
-        for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
+        List<ConnectorLink> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
+        for (ConnectorLink binding : connectorBindings) {
             if (!binding.mode().supportsInput()) {
                 continue;
             }
@@ -336,8 +336,8 @@ public final class PatternProviderBatching {
         ObjectArrayList<ProviderCapacitySnapshot> snapshots = new ObjectArrayList<>();
         boolean providerRouteCaptured = false;
         if (patternDetails.supportsPushInputsToExternalInventory()) {
-            List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
-            for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
+            List<ConnectorLink> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
+            for (ConnectorLink binding : connectorBindings) {
                 if (!binding.mode().supportsInput()) {
                     continue;
                 }
@@ -360,7 +360,7 @@ public final class PatternProviderBatching {
                         new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
             }
         }
-        List<AdaptiveProviderConnectorBinding> configuredBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
+        List<ConnectorLink> configuredBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
         if (configuredBindings.isEmpty()) {
             for (Direction direction : access.dataEnergistics$invokeGetActiveSides()) {
                 var adjacentPosition = blockEntity.getBlockPos().relative(direction);

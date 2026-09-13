@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.item.cell.DataStorageComponentItem;
 import com.fish_dan_.data_energistics.item.cell.DigitalStorageCellItem;
 import com.fish_dan_.data_energistics.item.cell.InfiniteDataCellItem;
 import com.fish_dan_.data_energistics.item.cell.PortableDigitalStorageCellItem;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.item.dataripper.DataRipperPartItem;
 import com.fish_dan_.data_energistics.item.decor.DollBlockItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
@@ -288,9 +288,9 @@ public final class DEItems {
             "order_package",
             () -> new OrderPackageItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> DATA_FLOW_COMPONENT_HOUSING = ITEMS.registerSimpleItem("data_flow_component_housing");
-    public static final DeferredItem<DataDistributionConnectorItem> DATA_DISTRIBUTION_CONNECTOR = ITEMS.register(
+    public static final DeferredItem<RemoteLinkConnectorItem> DATA_DISTRIBUTION_CONNECTOR = ITEMS.register(
             "data_distribution_connector",
-            () -> new DataDistributionConnectorItem(new Item.Properties().stacksTo(1)));
+            () -> new RemoteLinkConnectorItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> DATA_INSCRIBER_TEMPLATE = ITEMS.registerSimpleItem("data_inscriber_template");
     public static final DeferredItem<Item> DATA_CIRCUIT_BOARD = ITEMS.registerSimpleItem("data_circuit_board");
     public static final DeferredItem<Item> DATA_PROCESSOR = ITEMS.registerSimpleItem("data_processor");

@@ -235,11 +235,11 @@ public final class TrinityGraphDemandAggregator {
                         pendingFailure = null;
                     }
                     SearchAction action = advanceChoice(choice);
-                    if (action instanceof ContinueAction continuation) {
+                    if (action instanceof ContinueAction(SearchCursor cursor)) {
                         frames.push(choice);
-                        frames.push(continuation.cursor());
-                    } else if (action instanceof FailureAction failure) {
-                        pendingFailure = failure.diagnostic();
+                        frames.push(cursor);
+                    } else if (action instanceof FailureAction(TrinityPlanningDiagnostic diagnostic)) {
+                        pendingFailure = diagnostic;
                     } else {
                         throw new IllegalStateException("A Trinity producer choice returned an invalid search action");
                     }
@@ -250,14 +250,14 @@ public final class TrinityGraphDemandAggregator {
                 }
 
                 SearchAction action = advanceCursor((SearchCursor) frame);
-                if (action instanceof ContinueAction continuation) {
-                    frames.push(continuation.cursor());
-                } else if (action instanceof ChoiceAction choice) {
-                    frames.push(choice.choice());
-                } else if (action instanceof CompleteAction complete) {
-                    return TrinityAlgorithmResult.success(complete.solution());
-                } else if (action instanceof FailureAction failure) {
-                    pendingFailure = failure.diagnostic();
+                switch (action) {
+                    case ContinueAction(SearchCursor cursor) -> frames.push(cursor);
+                    case ChoiceAction(ProducerChoiceFrame choice1) -> frames.push(choice1);
+                    case CompleteAction(TrinityGraphDemandSolution solution) -> {
+                        return TrinityAlgorithmResult.success(solution);
+                    }
+                    case FailureAction(TrinityPlanningDiagnostic diagnostic) -> pendingFailure = diagnostic;
+                    default -> {}
                 }
             }
             if (pendingFailure != null) {
@@ -410,7 +410,7 @@ public final class TrinityGraphDemandAggregator {
                 TrinityAlgorithmResult<StepSuccess> applied = applyProducerChoice(
                         component,
                         key,
-                        candidates.get(0),
+                        candidates.getFirst(),
                         outputDemand,
                         false);
                 if (!applied.successful()) {
@@ -884,7 +884,7 @@ public final class TrinityGraphDemandAggregator {
             Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
             metadata.put("shortageKinds", Integer.toString(this.inputShortages.size()));
             if (this.inputShortages.size() == 1) {
-                Map.Entry<AEKey, InputRequirement> shortage = this.inputShortages.entrySet().iterator().next();
+                Map.Entry<AEKey, InputRequirement> shortage = this.inputShortages.entrySet().getFirst();
                 metadata.put("key", shortage.getKey().toString());
                 metadata.put("required", shortage.getValue().required().toString());
                 metadata.put("available", shortage.getValue().available().toString());

@@ -1,4 +1,5 @@
 [versions]
+guideme = "21.1.17"
 ae2 = "19.2.17"
 ae2wt = "19.5.1"
 configuration = "3.1.1-neoforge"
@@ -42,7 +43,6 @@ bhc = "1.21.1-1.4.1"
 ## cursemaven ##
 ato = "7825464"
 spark = "6225208"
-guideme = "21.1.17"
 geckolib = "8350073"
 glodium = "5821676"
 ae2ji = "7727898"

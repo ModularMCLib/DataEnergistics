@@ -185,6 +185,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
      */
     private static final MultiBlockAutoBuild AUTO_BUILD = new TransactionalMultiBlockAutoBuild();
 
+    @Getter
     private UUID storageId = UUID.randomUUID();
     @Getter
     private UUID hostId = UUID.randomUUID();
@@ -251,6 +252,12 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private boolean structureRecheckInProgress;
     private final CompartmentHostState compartmentHostState = new CompartmentHostState();
     private final JsonMultiBlockCompartmentBinder compartmentBinder = new JsonDeclaredCompartmentBinder();
+    /**
+     * -- GETTER --
+     *
+     * @return crafting runtime used by AE2 CraftingService mixins
+     */
+    @Getter
     private final TrinityDataCoreCraftingRuntime craftingRuntime = new TrinityDataCoreCraftingRuntime(this);
     @Nullable
     private TrinityInformationExchangeLease accessLease;
@@ -1062,10 +1069,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         return compartmentHost$outputStorage(mainDefinitionKey().structureName());
     }
 
-    public UUID getStorageId() {
-        return this.storageId;
-    }
-
     public TrinityDataCoreStorageProfile storageProfile() {
         return this.storageProfile;
     }
@@ -1476,13 +1479,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
      */
     public List<TrinityDataCoreVirtualCpu> getCpuPartitions() {
         return this.craftingRuntime.publishedCpus();
-    }
-
-    /**
-     * @return crafting runtime used by AE2 CraftingService mixins
-     */
-    public TrinityDataCoreCraftingRuntime getCraftingRuntime() {
-        return this.craftingRuntime;
     }
 
     @Override
@@ -3816,7 +3812,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         }
 
         @Override
-        public BlockEntity getBlockEntity(BlockPos pos) {
+        public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
             return this.level.getBlockEntity(pos);
         }
 

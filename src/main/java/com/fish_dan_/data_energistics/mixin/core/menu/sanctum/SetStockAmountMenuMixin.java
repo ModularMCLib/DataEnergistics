@@ -70,7 +70,15 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
 
     @Override
     public boolean dataEnergistics$isUnlimited() {
+        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
+            return config.isUnlimitedSlot(slot);
+        }
         return dataEnergistics$unlimited;
+    }
+
+    @Override
+    public int dataEnergistics$getSlot() {
+        return slot;
     }
 
     @Override
@@ -89,6 +97,9 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
 
     @Override
     public int dataEnergistics$getPolicy() {
+        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
+            return config.getSlotPolicy(slot).ordinal();
+        }
         return dataEnergistics$policy;
     }
 
@@ -111,6 +122,9 @@ public abstract class SetStockAmountMenuMixin extends AEBaseMenu implements SetS
 
     @Override
     public long dataEnergistics$getInitialAmount() {
+        if (host instanceof DataSanctumLargeInterfaceHost largeHost && largeHost.getConfig() instanceof DataSanctumInterfaceInventory config) {
+            return config.isUnlimitedSlot(slot) ? Long.MAX_VALUE : config.getAmount(slot);
+        }
         return dataEnergistics$initialAmount;
     }
 

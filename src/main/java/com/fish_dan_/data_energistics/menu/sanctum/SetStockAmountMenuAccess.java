@@ -5,6 +5,8 @@ public interface SetStockAmountMenuAccess {
 
     boolean dataEnergistics$isUnlimited();
 
+    int dataEnergistics$getSlot();
+
     void dataEnergistics$setUnlimited(boolean enabled);
 
     int dataEnergistics$getPolicy();

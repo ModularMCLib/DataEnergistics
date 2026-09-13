@@ -60,7 +60,11 @@ public class DataDistributionConnectorItem extends Item {
         if (level.isClientSide()) {
             return InteractionResultHolder.success(stack);
         }
-        AdaptiveProviderConnectorMode next = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
+        AdaptiveProviderConnectorMode next = switch (logic.connectorMode()) {
+            case INPUT -> AdaptiveProviderConnectorMode.PULL;
+            case PULL -> AdaptiveProviderConnectorMode.BOTH;
+            case BOTH -> AdaptiveProviderConnectorMode.INPUT;
+        };
         logic.setConnectorMode(next);
         player.displayClientMessage(Component.translatable(
                 KEY_PREFIX + ".mode_changed",

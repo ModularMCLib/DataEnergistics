@@ -356,7 +356,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     private boolean hasInputConnectorTargets() {
         return this.connectorTargets.stream().anyMatch(
-                target -> target.mode() == AdaptiveProviderConnectorMode.INPUT);
+                target -> target.mode().supportsInput());
     }
 
     public boolean bindConnectorTarget(BlockPos position, Direction side) {
@@ -1155,7 +1155,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     /** Pulls a bounded batch from linked generic inventories into the provider return inventory. */
     private boolean tickConnectorPull() {
         if (this.connectorTargets.isEmpty() || this.connectorTargets.stream().noneMatch(
-                target -> target.mode() == AdaptiveProviderConnectorMode.PULL)) {
+                target -> target.mode().supportsPull())) {
             return false;
         }
         Level currentLevel = this.host.getBlockEntity().getLevel();
@@ -1168,7 +1168,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         int start = this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
         for (int offset = 0; offset < targetCount; offset++) {
             ConnectorTarget binding = this.connectorTargets.get((start + offset) % targetCount);
-            if (binding.mode() != AdaptiveProviderConnectorMode.PULL) {
+            if (!binding.mode().supportsPull()) {
                 continue;
             }
             if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {

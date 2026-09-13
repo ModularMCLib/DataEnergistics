@@ -48,7 +48,11 @@ public record DataDistributionConnectorScrollPayload(boolean reverse, boolean of
             DataDistributionConnectorItemData data = DataDistributionConnectorItem.readData(stack);
             AdaptivePatternProviderLogic logic = DataDistributionConnectorItem.resolveProviderLogic(player.level(), data);
             if (payload.control() && logic != null) {
-                AdaptiveProviderConnectorMode mode = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
+                AdaptiveProviderConnectorMode mode = switch (logic.connectorMode()) {
+                    case INPUT -> AdaptiveProviderConnectorMode.PULL;
+                    case PULL -> AdaptiveProviderConnectorMode.BOTH;
+                    case BOTH -> AdaptiveProviderConnectorMode.INPUT;
+                };
                 logic.setConnectorMode(mode);
                 player.displayClientMessage(Component.translatable(
                         "item.data_energistics.data_distribution_connector.mode_changed",

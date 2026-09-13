@@ -38,6 +38,8 @@ public final class DataDistributionConnectorLinkRenderer {
     private static final Color INPUT_OTHER = new Color(0.08F, 0.38F, 0.65F, 0.75F);
     private static final Color OUTPUT_CURRENT = new Color(0.85F, 0.35F, 1.0F, 1.0F);
     private static final Color OUTPUT_OTHER = new Color(0.42F, 0.16F, 0.62F, 0.75F);
+    private static final Color BOTH_CURRENT = new Color(1.0F, 0.75F, 0.2F, 1.0F);
+    private static final Color BOTH_OTHER = new Color(0.58F, 0.38F, 0.08F, 0.75F);
     private static final Color SOURCE = new Color(0.85F, 0.85F, 0.85F, 0.8F);
     private static final Color MISSING = new Color(1.0F, 0.2F, 0.2F, 0.85F);
     private static final Color UNLOADED = new Color(0.6F, 0.6F, 0.6F, 0.7F);
@@ -133,6 +135,9 @@ public final class DataDistributionConnectorLinkRenderer {
     private static Color currentColor(AdaptiveProviderConnectorMode mode, boolean selected) {
         if (mode == AdaptiveProviderConnectorMode.INPUT) {
             return selected ? INPUT_CURRENT : INPUT_OTHER;
+        }
+        if (mode == AdaptiveProviderConnectorMode.BOTH) {
+            return selected ? BOTH_CURRENT : BOTH_OTHER;
         }
         return selected ? OUTPUT_CURRENT : OUTPUT_OTHER;
     }

@@ -143,7 +143,7 @@ public final class PatternProviderBatching {
         var machineTargets = new ObjectArrayList<MachinePushTarget>();
         List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
         for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
-            if (binding.mode() != AdaptiveProviderConnectorMode.INPUT) {
+            if (!binding.mode().supportsInput()) {
                 continue;
             }
             if (!patternDetails.supportsPushInputsToExternalInventory()) {
@@ -339,7 +339,7 @@ public final class PatternProviderBatching {
         if (patternDetails.supportsPushInputsToExternalInventory()) {
             List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
             for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
-                if (binding.mode() != AdaptiveProviderConnectorMode.INPUT) {
+                if (!binding.mode().supportsInput()) {
                     continue;
                 }
                 PatternProviderTarget target = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;

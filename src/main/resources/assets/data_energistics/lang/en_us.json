@@ -106,6 +106,8 @@
 	"button.data_energistics.data_distribution_tower.connection_mode": "Connection Mode",
 	"button.data_energistics.adaptive_pattern_provider.connector_mode": "Connector Mode: Input / Pull",
 	"button.data_energistics.adaptive_pattern_provider.connector_policy": "Connector Policy: Round Robin / Priority",
+	"button.data_energistics.adaptive_pattern_provider.connector_policy.round_robin": "Connector Policy: Round Robin",
+	"button.data_energistics.adaptive_pattern_provider.connector_policy.priority": "Connector Policy: Priority",
 	"button.data_energistics.data_distribution_tower.connection_mode.ae": "Connect AE devices only",
 	"button.data_energistics.data_distribution_tower.connection_mode.af": "Connect both AE and FE devices",
 	"button.data_energistics.data_distribution_tower.connection_mode.fe": "Connect FE devices only",

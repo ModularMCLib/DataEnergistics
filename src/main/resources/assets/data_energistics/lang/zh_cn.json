@@ -106,6 +106,8 @@
 	"button.data_energistics.data_distribution_tower.connection_mode": "连接模式",
 	"button.data_energistics.adaptive_pattern_provider.connector_mode": "连接器模式：输入 / 抽回",
 	"button.data_energistics.adaptive_pattern_provider.connector_policy": "连接器策略：轮询 / 优先",
+	"button.data_energistics.adaptive_pattern_provider.connector_policy.round_robin": "连接器策略：轮询",
+	"button.data_energistics.adaptive_pattern_provider.connector_policy.priority": "连接器策略：优先",
 	"button.data_energistics.data_distribution_tower.connection_mode.ae": "仅连接 AE 设备",
 	"button.data_energistics.data_distribution_tower.connection_mode.af": "同时连接 AE 和 FE 设备",
 	"button.data_energistics.data_distribution_tower.connection_mode.fe": "仅连接 FE 设备",

@@ -29,7 +29,8 @@ public final class AdaptivePatternProviderToolbarActions {
             new AdaptivePatternProviderToolbarAction(PATTERN_ACCESS_TERMINAL),
             new AdaptivePatternProviderToolbarAction(PREVIOUS_PAGE),
             new AdaptivePatternProviderToolbarAction(NEXT_PAGE),
-            new AdaptivePatternProviderToolbarAction(REDSTONE_TUNING));
+            new AdaptivePatternProviderToolbarAction(REDSTONE_TUNING),
+            new AdaptivePatternProviderToolbarAction(CONNECTOR_POLICY));
 
     /** Common controls remain available when the provider slot is empty; conditional buttons hide themselves. */
     public static ObjectList<AdaptivePatternProviderToolbarAction> standard() {

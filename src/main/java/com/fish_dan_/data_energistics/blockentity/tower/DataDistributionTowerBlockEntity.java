@@ -43,8 +43,8 @@ import com.fish_dan_.data_energistics.integration.curios.CuriosDataDistributionC
 import com.fish_dan_.data_energistics.integration.tower.crafting.AeCraftingDisplayBridge;
 import com.fish_dan_.data_energistics.integration.tower.energy.appflux.AE2FluxIntegration;
 import com.fish_dan_.data_energistics.integration.tower.energy.neoecoae.NeoEcoAeTowerBridge;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
@@ -1417,7 +1417,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 () -> findEquippedConnector(player));
         if (selectedConnector.isPresent()) {
             ItemStack connectorStack = selectedConnector.get().copy();
-            DataDistributionConnectorItem connectorItem = (DataDistributionConnectorItem) connectorStack.getItem();
+            RemoteLinkConnectorItem connectorItem = (RemoteLinkConnectorItem) connectorStack.getItem();
             MinecraftServer server = level.getServer();
             BlockPos placedPos = event.getPos().immutable();
             BlockState placedState = event.getPlacedBlock();

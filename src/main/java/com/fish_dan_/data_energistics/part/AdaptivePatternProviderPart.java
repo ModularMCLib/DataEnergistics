@@ -5,13 +5,13 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLo
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderDisplayHelper;
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderExternalHandlers;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnFluidHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnItemHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderState;
+import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
@@ -24,7 +24,6 @@ import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
-import appeng.api.upgrades.UpgradeInventories;
 import appeng.core.definitions.AEItems;
 import appeng.items.parts.PartModels;
 import appeng.menu.ISubMenu;
@@ -41,10 +40,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -53,6 +54,7 @@ import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class AdaptivePatternProviderPart extends PatternProviderPart implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
@@ -83,8 +85,6 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     private final IItemHandler externalReturnItemHandler = new AdaptivePatternProviderReturnItemHandler(this::getLogic);
     @Getter
     private final IFluidHandler externalReturnFluidHandler = new AdaptivePatternProviderReturnFluidHandler(this::getLogic);
-    @Getter
-    private final Object externalReturnChemicalHandler = AdaptivePatternProviderExternalHandlers.createChemicalHandler(this::getLogic);
     private RedstoneTuningMode redstoneTuningMode = RedstoneTuningMode.EMIT_ON_DISPATCH;
     private int redstonePulseTicks;
     private long lastPulseTickTime = Long.MIN_VALUE;
@@ -188,9 +188,6 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
 
     @Override
     public boolean isAppliedCreateMechanicalProviderSelected() {
-        if (!AdaptivePatternProviderExternalHandlers.supportsMechanicalProviders()) {
-            return false;
-        }
         return hasProviderCapability(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING);
     }
 
@@ -235,6 +232,19 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         if (this.getHost() != null) {
             this.getHost().markForUpdate();
         }
+    }
+
+    @Override
+    public void writeToStream(RegistryFriendlyByteBuf data) {
+        super.writeToStream(data);
+        getLogic().writeConnectorVisualState(data);
+    }
+
+    @Override
+    public boolean readFromStream(RegistryFriendlyByteBuf data) {
+        boolean changed = super.readFromStream(data);
+        changed |= getLogic().readConnectorVisualState(data);
+        return changed;
     }
 
     @Override
@@ -550,8 +560,11 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     }
 
     private IUpgradeInventory createUpgradeInventory() {
-        return UpgradeInventories.forMachine(
-                this.getPartItem().asItem(),
+        return new FixedSizeMachineUpgradeInventory(
+                (Supplier<Item>) () -> {
+                    ItemStack providerStack = getProviderStack();
+                    return providerStack.isEmpty() ? getPartItem().asItem() : providerStack.getItem();
+                },
                 AdaptivePatternProviderState.BASE_UPGRADE_SLOTS,
                 this::onUpgradesChanged);
     }
@@ -652,7 +665,8 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         return AdaptivePatternProviderDisplayHelper.resolveAdjacentMachineGroup(level, adjacentPos, side.getOpposite());
     }
 
-    private ItemStack getProviderStack() {
+    @Override
+    public ItemStack getProviderStack() {
         return getAdaptiveState().getProviderStack();
     }
 

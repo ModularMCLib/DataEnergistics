@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.network;
 
 import com.fish_dan_.data_energistics.network.action.CannonChargePayload;
 import com.fish_dan_.data_energistics.network.action.ChromaticGlowPayload;
+import com.fish_dan_.data_energistics.network.action.ConnectorClipboardPayload;
+import com.fish_dan_.data_energistics.network.action.ConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DataTeleportAnchorKnifeTeleportPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
@@ -50,7 +52,7 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("7");
+        PayloadRegistrar registrar = event.registrar("26.9.13");
         registrar.playToServer(CannonChargePayload.TYPE, CannonChargePayload.STREAM_CODEC, CannonChargePayload::handle);
         registrar.playToClient(RailChainPayload.TYPE, RailChainPayload.STREAM_CODEC, RailChainPayload::handle);
         registrar.playToClient(ChromaticGlowPayload.TYPE, ChromaticGlowPayload.STREAM_CODEC, ChromaticGlowPayload::handle);
@@ -109,6 +111,14 @@ public final class DEPayloads {
                 DigitalStorageDepotScrollPayload.TYPE,
                 DigitalStorageDepotScrollPayload.STREAM_CODEC,
                 DigitalStorageDepotScrollPayload::handle);
+        registrar.playToServer(
+                ConnectorScrollPayload.TYPE,
+                ConnectorScrollPayload.STREAM_CODEC,
+                ConnectorScrollPayload::handle);
+        registrar.playToServer(
+                ConnectorClipboardPayload.TYPE,
+                ConnectorClipboardPayload.STREAM_CODEC,
+                ConnectorClipboardPayload::handle);
         registrar.playToServer(
                 DigitalStorageDepotBucketModePayload.TYPE,
                 DigitalStorageDepotBucketModePayload.STREAM_CODEC,

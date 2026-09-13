@@ -39,6 +39,11 @@
 
 - [注册 definition](adaptive-pattern-provider/registration.md)
 - [profile 与 capability](adaptive-pattern-provider/profiles-and-capabilities.md)
+- [左侧工具栏注册](adaptive-pattern-provider/toolbar-registration.md)
+
+### Remote Connector
+
+- [链接元数据、槽位与迁移](connector/remote-links.md)
 
 ### Crafting
 

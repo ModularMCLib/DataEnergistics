@@ -4,10 +4,14 @@ import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClient
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
+import com.fish_dan_.data_energistics.network.action.ConnectorClipboardAction;
+import com.fish_dan_.data_energistics.network.action.ConnectorClipboardPayload;
+import com.fish_dan_.data_energistics.network.action.ConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
@@ -95,9 +99,36 @@ final class ClientInputHandler {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
+        if (tryConnectorClipboardShortcut(minecraft, event.getKey())) {
+            return;
+        }
         if (minecraft.options.keyAttack.matches(event.getKey(), event.getScanCode())) {
             tryLaunchMeVacuum(minecraft);
         }
+    }
+
+    private static boolean tryConnectorClipboardShortcut(Minecraft minecraft, int key) {
+        if (!Screen.hasControlDown() || minecraft.player == null || minecraft.screen != null) {
+            return false;
+        }
+        ItemStack mainHand = minecraft.player.getMainHandItem();
+        ItemStack offHand = minecraft.player.getOffhandItem();
+        boolean offHandConnector = !RemoteLinkConnectorItem.isConnectorStack(mainHand) && RemoteLinkConnectorItem.isConnectorStack(offHand);
+        if (!RemoteLinkConnectorItem.isConnectorStack(mainHand) && !RemoteLinkConnectorItem.isConnectorStack(offHand)) {
+            return false;
+        }
+        ConnectorClipboardAction operation = switch (key) {
+            case GLFW.GLFW_KEY_A -> ConnectorClipboardAction.SELECT_ALL;
+            case GLFW.GLFW_KEY_C -> ConnectorClipboardAction.COPY;
+            case GLFW.GLFW_KEY_X -> ConnectorClipboardAction.CUT;
+            case GLFW.GLFW_KEY_V -> ConnectorClipboardAction.PASTE;
+            default -> null;
+        };
+        if (operation == null) {
+            return false;
+        }
+        PacketDistributor.sendToServer(new ConnectorClipboardPayload(operation, offHandConnector));
+        return true;
     }
 
     private static boolean tryLaunchMeVacuum(Minecraft minecraft) {
@@ -127,12 +158,22 @@ final class ClientInputHandler {
 
         boolean controlDown = Screen.hasControlDown();
         boolean altDown = Screen.hasAltDown();
+        ItemStack mainHand = minecraft.player.getMainHandItem();
+        ItemStack offHand = minecraft.player.getOffhandItem();
+        boolean useConnectorMain = RemoteLinkConnectorItem.isConnectorStack(mainHand);
+        boolean useConnectorOff = !useConnectorMain && RemoteLinkConnectorItem.isConnectorStack(offHand);
+        if (useConnectorMain || useConnectorOff) {
+            double delta = event.getScrollDeltaY();
+            if (delta != 0 && (controlDown || Screen.hasShiftDown())) {
+                PacketDistributor.sendToServer(new ConnectorScrollPayload(
+                        delta < 0, useConnectorOff, controlDown, Screen.hasShiftDown()));
+                event.setCanceled(true);
+            }
+            return;
+        }
         if (controlDown == altDown) {
             return;
         }
-
-        ItemStack mainHand = minecraft.player.getMainHandItem();
-        ItemStack offHand = minecraft.player.getOffhandItem();
         boolean useMainHand = DigitalStorageDepotBlockItem.isDepotStack(mainHand);
         boolean useOffHand = !useMainHand && DigitalStorageDepotBlockItem.isDepotStack(offHand);
         if (!useMainHand && !useOffHand) {

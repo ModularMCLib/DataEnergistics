@@ -44,10 +44,10 @@ final class HandFirstConnectorSelector implements DataDistributionConnectorSelec
     @Override
     public Optional<ItemStack> select(ItemStack offhandStack,
                                       Supplier<Optional<ItemStack>> equippedStackSupplier) {
-        if (offhandStack.getItem() instanceof DataDistributionConnectorItem) {
+        if (offhandStack.getItem() instanceof RemoteLinkConnectorItem) {
             return Optional.of(offhandStack);
         }
         return equippedStackSupplier.get()
-                .filter(stack -> stack.getItem() instanceof DataDistributionConnectorItem);
+                .filter(stack -> stack.getItem() instanceof RemoteLinkConnectorItem);
     }
 }

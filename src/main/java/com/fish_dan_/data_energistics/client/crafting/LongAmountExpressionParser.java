@@ -10,11 +10,23 @@ public final class LongAmountExpressionParser {
     private LongAmountExpressionParser() {}
 
     public static OptionalLong parse(String input) {
+        return parse(input, 1, false);
+    }
+
+    /**
+     * Stock settings allow zero for clearing and retain fractional resource units only when they represent whole base
+     * units.
+     */
+    public static OptionalLong parseStockAmount(String input, long amountPerUnit) {
+        return parse(input, amountPerUnit, true);
+    }
+
+    private static OptionalLong parse(String input, long amountPerUnit, boolean allowZero) {
         try {
-            BigDecimal value = new Parser(input).parse();
-            if (value.signum() <= 0 || value.stripTrailingZeros().scale() > 0) return OptionalLong.empty();
+            BigDecimal value = new Parser(input).parse().multiply(BigDecimal.valueOf(amountPerUnit));
+            if (value.signum() < 0 || !allowZero && value.signum() == 0 || value.stripTrailingZeros().scale() > 0) return OptionalLong.empty();
             BigInteger integer = value.toBigIntegerExact();
-            if (integer.compareTo(BigInteger.ONE) < 0 || integer.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) return OptionalLong.empty();
+            if (integer.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) return OptionalLong.empty();
             return OptionalLong.of(integer.longValueExact());
         } catch (RuntimeException ex) {
             return OptionalLong.empty();

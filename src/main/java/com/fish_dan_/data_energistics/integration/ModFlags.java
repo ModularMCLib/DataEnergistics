@@ -53,14 +53,6 @@ public final class ModFlags {
         return isLoaded("mekanism");
     }
 
-    public static boolean isAppMekLoaded() {
-        return isLoaded("appmek");
-    }
-
-    public static boolean isAppMekChemicalSupportLoaded() {
-        return isMekanismLoaded() && isAppMekLoaded();
-    }
-
     public static boolean isAppFluxLoaded() {
         return isLoaded("appflux");
     }

@@ -3,10 +3,10 @@ package com.fish_dan_.data_energistics.part;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumFluidPuller;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceConstants;
-import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumReturnInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
+import com.fish_dan_.data_energistics.ae2.sanctum.InterfaceStockLogic;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.InterfaceLogicTickAccessor;
@@ -128,16 +128,14 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     public DataSanctumInterfacePart(IPartItem<?> partItem) {
         super(partItem);
         expandUpgradeSlots();
-        installInterfaceInventories();
         getMainNode().addService(IGridTickable.class, this);
     }
 
     protected InterfaceLogic createLogic() {
-        return new InterfaceLogic(
+        return new InterfaceStockLogic(
                 getMainNode(),
                 this,
-                getPartItem().asItem(),
-                DataSanctumInterfaceConstants.LOGIC_SLOT_COUNT);
+                getPartItem().asItem());
     }
 
     @Override
@@ -386,24 +384,16 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         }
     }
 
-    private void installInterfaceInventories() {
-        var config = DataSanctumInterfaceInventory.config(
-                this.interfaceLogic::onConfigRowChanged,
-                this::getInstalledCapacityCardCount);
-        var storage = DataSanctumInterfaceInventory.storage(
-                this.interfaceLogic::isAllowedInStorageSlot,
-                this.interfaceLogic::onStorageChanged,
-                this::getInstalledCapacityCardCount);
-        this.interfaceLogic.config = config;
-        this.interfaceLogic.storage = storage;
-    }
-
     private void expandUpgradeSlots() {
         InterfaceLogicUpgradesAccessor accessor = (InterfaceLogicUpgradesAccessor) this.interfaceLogic;
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
                 getPartItem().asItem(),
                 DataSanctumInterfaceConstants.UPGRADE_SLOT_COUNT,
-                accessor::dataEnergistics$invokeOnUpgradesChanged));
+                () -> {
+                    accessor.dataEnergistics$invokeOnUpgradesChanged();
+                    this.interfaceLogic.onConfigRowChanged();
+                    this.markForClientUpdate();
+                }));
     }
 
     private void markForClientUpdate() {

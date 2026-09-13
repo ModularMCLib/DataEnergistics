@@ -17,18 +17,30 @@ import it.unimi.dsi.fastutil.objects.Reference2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public class FixedSizeMachineUpgradeInventory extends AppEngInternalInventory implements InternalInventoryHost, IUpgradeInventory {
 
     @Nullable
     private Reference2IntMap<Item> installed;
 
-    private final Item item;
+    private final Supplier<? extends Item> itemSupplier;
     @Nullable
     private final Runnable changeCallback;
 
     public FixedSizeMachineUpgradeInventory(ItemLike item, int slots, @Nullable Runnable changeCallback) {
+        this((Supplier<Item>) item::asItem, slots, changeCallback);
+    }
+
+    /**
+     * Creates an upgrade inventory whose supported cards follow the current machine item.
+     * The supplier is evaluated whenever the upgrade state is queried, so a host can change
+     * the represented machine without replacing the inventory object used by an open menu.
+     */
+    public FixedSizeMachineUpgradeInventory(Supplier<? extends Item> itemSupplier, int slots,
+                                            @Nullable Runnable changeCallback) {
         super(null, slots, 1);
-        this.item = item.asItem();
+        this.itemSupplier = itemSupplier;
         this.changeCallback = changeCallback;
         this.setHost(this);
         this.setFilter(new UpgradeInvFilter());
@@ -46,17 +58,17 @@ public class FixedSizeMachineUpgradeInventory extends AppEngInternalInventory im
 
     @Override
     public int getMaxInstalled(ItemLike upgradeCard) {
-        return Upgrades.getMaxInstallable(upgradeCard, this.item);
+        return Upgrades.getMaxInstallable(upgradeCard, getUpgradableItem());
     }
 
     @Override
     public ItemLike getUpgradableItem() {
-        return this.item;
+        return this.itemSupplier.get();
     }
 
     @Override
     public int getInstalledUpgrades(ItemLike upgradeCard) {
-        if (this.installed == null) {
+        if (this.installed == null || this.cachedItem != getUpgradableItem().asItem()) {
             updateUpgradeInfo();
         }
         return this.installed.getOrDefault(upgradeCard.asItem(), 0);
@@ -91,6 +103,7 @@ public class FixedSizeMachineUpgradeInventory extends AppEngInternalInventory im
     }
 
     private void updateUpgradeInfo() {
+        this.cachedItem = getUpgradableItem().asItem();
         this.installed = new Reference2IntArrayMap<>(size());
         for (ItemStack stack : this) {
             int maxInstalled = getMaxInstalled(stack.getItem());
@@ -99,6 +112,9 @@ public class FixedSizeMachineUpgradeInventory extends AppEngInternalInventory im
             }
         }
     }
+
+    @Nullable
+    private Item cachedItem;
 
     private class UpgradeInvFilter implements IAEItemFilter {
 

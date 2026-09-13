@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.bootstrap.client;
 
+import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.ModFlags;
 import com.fish_dan_.data_energistics.integration.curios.client.CuriosDollRendererRegistry;
@@ -12,6 +13,7 @@ final class ClientSetupRegistrar {
     private ClientSetupRegistrar() {}
 
     static void register() {
+        AdaptivePatternProviderToolbarFactories.initialize();
         ClientAeKeyRendererRegistrar.register();
         ConfigurationClientRegistrar.register();
         DEStorageCells.registerClientModels();

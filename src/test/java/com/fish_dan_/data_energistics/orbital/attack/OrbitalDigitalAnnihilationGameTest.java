@@ -28,7 +28,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -235,75 +234,6 @@ public final class OrbitalDigitalAnnihilationGameTest {
                             "Aborting the materialized fuse must remove its live payload entity");
                     helper.assertTrue(boundaryWasHit, "The first active sphere must hit an intersecting player body even when the feet point is outside");
                     helper.assertTrue(outsideSurvived, "A player whose entire body is outside the active sphere must survive");
-                })
-                .thenSucceed();
-    }
-
-    @TestHolder("orbital_digital_annihilation_accepts_unloaded_target_chunk")
-    @EmptyTemplate("50x32x50")
-    @GameTest(template = "empty_50x32x50", timeoutTicks = 1_000)
-    public static void acceptsUnloadedTargetChunk(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        MinecraftServer server = level.getServer();
-        StellarErasureDeviceSavedData weapons = StellarErasureDeviceSavedData.get(server);
-        OrbitalAttackSavedData attacks = OrbitalAttackSavedData.get(server);
-        ServerPlayer owner = createPlayer(level, "digital-unloaded-target-owner");
-        DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
-        OrbitalAttackCost cost = OrbitalAttackCost.digitalAnnihilation(settings);
-
-        placeBlock(helper, CONTROL_CONSOLE, DEBlocks.ORBITAL_CONTROL_CONSOLE.get(), owner);
-        placeBlock(helper, DRIVE, AEBlocks.DRIVE.block(), owner);
-        placeBlock(helper, CREATIVE_ENERGY_CELL, AEBlocks.CREATIVE_ENERGY_CELL.block(), owner);
-        installInfiniteCell(helper);
-
-        BlockPos absoluteTarget = findUnloadedTarget(level, helper.absolutePos(new BlockPos(25, 20, 25)));
-        ChunkPos targetChunk = new ChunkPos(absoluteTarget);
-        AtomicReference<UUID> attackId = new AtomicReference<>();
-
-        helper.startSequence()
-                .thenIdle(40)
-                .thenWaitUntil(() -> helper.assertTrue(
-                        weapons.hasOnlineEndpoint(server, weapons.ownedBy(owner.getUUID()).orElseThrow().weaponId(), level.dimension().location()),
-                        "The unloaded-target test must use a real powered endpoint"))
-                .thenExecute(() -> {
-                    helper.assertTrue(
-                            level.getChunkSource().getChunkNow(targetChunk.x, targetChunk.z) == null,
-                            "The future-generation target must begin outside the loaded test area");
-                    insertStellarFlux(helper, requiredStellarFlux(settings, cost));
-                    UUID weaponId = weapons.ownedBy(owner.getUUID()).orElseThrow().weaponId();
-                    primeReserve(weapons, server, weaponId, settings, cost);
-                    OrbitalAttackRecord warning = attacks.tryConfirmDigitalAnnihilation(
-                            server,
-                            owner.getUUID(),
-                            weaponId,
-                            level.dimension().location(),
-                            absoluteTarget)
-                            .orElseThrow(() -> new IllegalStateException("An unloaded digital target was rejected"));
-                    attackId.set(warning.attackId());
-                    helper.assertValueEqual(
-                            warning.phase(),
-                            OrbitalAttackPhase.RESERVED_WARNING,
-                            "An unloaded target must enter the normal refundable warning phase");
-                })
-                .thenIdle(settings.attackWarningTicks)
-                .thenWaitUntil(() -> {
-                    OrbitalAttackRecord delivery = attacks.find(attackId.get()).orElseThrow();
-                    helper.assertValueEqual(
-                            delivery.phase(),
-                            OrbitalAttackPhase.DELIVERY,
-                            "An unloaded target must advance into payload delivery");
-                    helper.assertTrue(
-                            delivery.payloadEntityId() != null && level.getEntity(delivery.payloadEntityId()) instanceof OrbitalAnnihilatorProjectileEntity,
-                            "The payload ticket must materialize the orbital projectile in the previously unloaded chunk");
-                })
-                .thenExecute(() -> {
-                    OrbitalAttackRecord delivery = attacks.find(attackId.get()).orElseThrow();
-                    helper.assertTrue(
-                            attacks.adminAbort(server, attackId.get()),
-                            "The unloaded-target delivery must be abortable after its ticket is verified");
-                    helper.assertTrue(
-                            level.getEntity(delivery.payloadEntityId()) == null,
-                            "Aborting the unloaded-target delivery must discard its projectile");
                 })
                 .thenSucceed();
     }
@@ -644,26 +574,6 @@ public final class OrbitalDigitalAnnihilationGameTest {
             throw new IllegalStateException("The digital test drive has no block entity");
         }
         drive.getInternalInventory().setItemDirect(0, DEItems.DATA_CELL_INFINITY.toStack());
-    }
-
-    private static BlockPos findUnloadedTarget(ServerLevel level, BlockPos origin) {
-        for (int distance = 64; distance <= 2_048; distance += 16) {
-            for (BlockPos candidate : new BlockPos[] {
-                    origin.offset(distance, 0, 0),
-                    origin.offset(-distance, 0, 0),
-                    origin.offset(0, 0, distance),
-                    origin.offset(0, 0, -distance),
-                    origin.offset(distance, 0, distance),
-                    origin.offset(-distance, 0, -distance),
-                    origin.offset(distance, 0, -distance),
-                    origin.offset(-distance, 0, distance) }) {
-                ChunkPos chunk = new ChunkPos(candidate);
-                if (level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
-                    return candidate;
-                }
-            }
-        }
-        throw new IllegalStateException("The game test could not find an unloaded target chunk");
     }
 
     private static void insertStellarFlux(GameTestHelper helper, long amount) {

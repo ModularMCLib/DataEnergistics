@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.item.carrier.CropDataCarrierItemData;
 import com.fish_dan_.data_energistics.item.carrier.MobDataCarrierItemData;
 import com.fish_dan_.data_energistics.item.carrier.OreDataCarrierItemData;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItemData;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotItemData;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
@@ -46,11 +46,19 @@ public final class DEDataComponents {
                     .cacheEncoding()
                     .build());
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<DataDistributionConnectorItemData>> DATA_DISTRIBUTION_CONNECTOR = DATA_COMPONENT_TYPES.register(
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<RemoteLinkConnectorData>> DATA_DISTRIBUTION_CONNECTOR = DATA_COMPONENT_TYPES.register(
             "data_distribution_connector",
-            () -> DataComponentType.<DataDistributionConnectorItemData>builder()
-                    .persistent(DataDistributionConnectorItemData.CODEC)
-                    .networkSynchronized(DataDistributionConnectorItemData.STREAM_CODEC)
+            () -> DataComponentType.<RemoteLinkConnectorData>builder()
+                    .persistent(RemoteLinkConnectorData.CODEC)
+                    .networkSynchronized(RemoteLinkConnectorData.STREAM_CODEC)
+                    .cacheEncoding()
+                    .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> DATA_DISTRIBUTION_CONNECTOR_CLIPBOARD = DATA_COMPONENT_TYPES.register(
+            "data_distribution_connector_clipboard",
+            () -> DataComponentType.<CompoundTag>builder()
+                    .persistent(CompoundTag.CODEC)
+                    .networkSynchronized(ByteBufCodecs.COMPOUND_TAG)
                     .cacheEncoding()
                     .build());
 

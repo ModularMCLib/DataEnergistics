@@ -5,8 +5,10 @@ import appeng.client.gui.widgets.ToggleButton;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.List;
-import java.util.function.Consumer;
 
 public class DataExtractorToggleButton extends ToggleButton {
 
@@ -21,7 +23,7 @@ public class DataExtractorToggleButton extends ToggleButton {
                                      String titleKey,
                                      String enabledKey,
                                      String disabledKey,
-                                     Consumer<Boolean> onChange) {
+                                     BooleanConsumer onChange) {
         super(enabledIcon, disabledIcon, onChange::accept);
         this.titleKey = titleKey;
         this.enabledKey = enabledKey;
@@ -36,7 +38,7 @@ public class DataExtractorToggleButton extends ToggleButton {
 
     @Override
     public List<Component> getTooltipMessage() {
-        return List.of(
+        return ObjectList.of(
                 Component.translatable(this.titleKey),
                 Component.translatable(this.state ? this.enabledKey : this.disabledKey));
     }

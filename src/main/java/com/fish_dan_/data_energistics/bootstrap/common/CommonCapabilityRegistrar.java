@@ -4,8 +4,6 @@ import com.fish_dan_.data_energistics.block.sanctum.DataSanctumBlock;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
-import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.ae.appmek.AppMekCompat;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotFluidHandlerItem;
 import com.fish_dan_.data_energistics.item.powered.PoweredItemEnergyStorage;
@@ -259,13 +257,15 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 AECapabilities.GENERIC_INTERNAL_INV,
                 DEBlockEntities.DATA_SANCTUM_INTERFACE_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getReturnInventory());
+                (blockEntity, context) -> blockEntity.getExternalInventory());
         event.registerBlockEntity(
                 AECapabilities.GENERIC_INTERNAL_INV,
                 DEBlockEntities.ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> {
-                    var logic = blockEntity.getLogic();
-                    return logic != null ? logic.getReturnInv() : null;
+                    if (context != null && !blockEntity.getTargets().contains(context)) {
+                        return null;
+                    }
+                    return blockEntity.getLogic().getReturnInv();
                 });
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
@@ -295,9 +295,6 @@ final class CommonCapabilityRegistrar {
                 Capabilities.FluidHandler.BLOCK,
                 DEBlockEntities.ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity.getExternalReturnFluidHandler(context));
-        if (ModFlags.isAppMekChemicalSupportLoaded()) {
-            AppMekCompat.registerChemicalBlockEntityCapabilities(event);
-        }
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
                 AEBlockEntities.CABLE_BUS.get(),
@@ -328,9 +325,6 @@ final class CommonCapabilityRegistrar {
 
                     return null;
                 });
-        if (ModFlags.isAppMekChemicalSupportLoaded()) {
-            AppMekCompat.registerChemicalCableBusCapabilities(event);
-        }
         event.registerBlockEntity(
                 AECapabilities.CRANKABLE,
                 AEBlockEntities.CONTROLLER.get(),
@@ -356,7 +350,7 @@ final class CommonCapabilityRegistrar {
     static void registerPartCapabilities(RegisterPartCapabilitiesEvent event) {
         event.register(
                 AECapabilities.GENERIC_INTERNAL_INV,
-                (part, context) -> part.getReturnInventory(),
+                (part, context) -> part.getExternalInventory(),
                 DataSanctumInterfacePart.class);
         event.register(
                 AECapabilities.GENERIC_INTERNAL_INV,

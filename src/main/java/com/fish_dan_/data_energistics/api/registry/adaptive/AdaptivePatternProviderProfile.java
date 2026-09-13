@@ -6,7 +6,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 /**
  * Immutable presentation and behavior facts for one installed provider stack.
@@ -22,7 +24,7 @@ public record AdaptivePatternProviderProfile(
                                              ItemStack mainMenuIcon,
                                              AEItemKey terminalIcon,
                                              Component displayName,
-                                             Set<ResourceLocation> capabilities) {
+                                             ObjectSet<ResourceLocation> capabilities) {
 
     /**
      * Validates profile invariants and detaches mutable values at the public boundary.
@@ -36,7 +38,7 @@ public record AdaptivePatternProviderProfile(
             throw new IllegalArgumentException("Adaptive pattern provider main-menu icon must not be empty");
         }
         displayName = displayName.copy();
-        capabilities = Set.copyOf(capabilities);
+        capabilities = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(capabilities));
     }
 
     /**

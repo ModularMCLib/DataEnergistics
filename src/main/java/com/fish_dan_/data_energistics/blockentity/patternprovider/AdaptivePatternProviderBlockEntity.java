@@ -4,13 +4,13 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderDisplayHelper;
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderExternalHandlers;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnFluidHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnItemHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderState;
+import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -24,7 +24,6 @@ import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
-import appeng.api.upgrades.UpgradeInventories;
 import appeng.blockentity.crafting.PatternProviderBlockEntity;
 import appeng.core.definitions.AEItems;
 import appeng.menu.ISubMenu;
@@ -57,10 +56,11 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEntity implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
@@ -75,7 +75,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     private final IUpgradeInventory upgrades;
     private final IItemHandler externalReturnItemHandler = new AdaptivePatternProviderReturnItemHandler(this::getAdaptiveLogic);
     private final IFluidHandler externalReturnFluidHandler = new AdaptivePatternProviderReturnFluidHandler(this::getAdaptiveLogic);
-    private final Object externalReturnChemicalHandler = AdaptivePatternProviderExternalHandlers.createChemicalHandler(this::getAdaptiveLogic);
     private int syncedPatternSlotCount = 0;
     private RedstoneTuningMode redstoneTuningMode = RedstoneTuningMode.EMIT_ON_DISPATCH;
     private int redstonePulseTicks;
@@ -120,14 +119,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
             return null;
         }
         return this.externalReturnFluidHandler;
-    }
-
-    @Nullable
-    public Object getExternalReturnChemicalHandler(@Nullable Direction side) {
-        if (side != null && !this.getTargets().contains(side)) {
-            return null;
-        }
-        return this.externalReturnChemicalHandler;
     }
 
     @Override
@@ -192,6 +183,11 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     }
 
     @Override
+    public ItemStack getProviderStack() {
+        return getAdaptiveState().getProviderStack();
+    }
+
+    @Override
     public boolean isMeteoriteProviderSelected() {
         return hasProviderCapability(AdaptivePatternProviderCapabilities.METEORITE);
     }
@@ -203,9 +199,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
 
     @Override
     public boolean isAppliedCreateMechanicalProviderSelected() {
-        if (!AdaptivePatternProviderExternalHandlers.supportsMechanicalProviders()) {
-            return false;
-        }
         return hasProviderCapability(AdaptivePatternProviderCapabilities.MECHANICAL_CRAFTING);
     }
 
@@ -343,6 +336,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         super.writeToStream(data);
         data.writeVarInt(getConfiguredPatternSlotCount());
         getAdaptiveState().writeToStream(data);
+        ((AdaptivePatternProviderLogic) getLogic()).writeConnectorVisualState(data);
     }
 
     @Override
@@ -353,7 +347,9 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
             this.syncedPatternSlotCount = syncedPatternSlotCount;
             changed = true;
         }
-        return getAdaptiveState().readFromStream(data) || changed;
+        changed |= getAdaptiveState().readFromStream(data);
+        changed |= ((AdaptivePatternProviderLogic) getLogic()).readConnectorVisualState(data);
+        return changed;
     }
 
     @Override
@@ -604,8 +600,11 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     }
 
     private IUpgradeInventory createUpgradeInventory() {
-        return UpgradeInventories.forMachine(
-                getProviderBlock().get(),
+        return new FixedSizeMachineUpgradeInventory(
+                (Supplier<Item>) () -> {
+                    ItemStack providerStack = getProviderStack();
+                    return providerStack.isEmpty() ? getProviderBlock().get().asItem() : providerStack.getItem();
+                },
                 AdaptivePatternProviderState.BASE_UPGRADE_SLOTS,
                 this::onUpgradesChanged);
     }
@@ -722,15 +721,15 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         return groups.size() == 1 ? groups.iterator().next() : null;
     }
 
-    private LinkedHashSet<PatternContainerGroup> getAdjacentMachineGroups() {
+    private ObjectLinkedOpenHashSet<PatternContainerGroup> getAdjacentMachineGroups() {
         var hostLevel = this.getLevel();
         if (hostLevel == null) {
-            return new LinkedHashSet<>();
+            return new ObjectLinkedOpenHashSet<>();
         }
 
         var hostPos = this.getBlockPos();
         var sides = this.getTargets();
-        var groups = new LinkedHashSet<PatternContainerGroup>(sides.size());
+        var groups = new ObjectLinkedOpenHashSet<PatternContainerGroup>(sides.size());
         for (var side : sides) {
             var sidePos = hostPos.relative(side);
             var group = AdaptivePatternProviderDisplayHelper.resolveAdjacentMachineGroup(hostLevel, sidePos, side.getOpposite());

@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlo
 import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
 import com.fish_dan_.data_energistics.integration.ModFlags;
 import com.fish_dan_.data_energistics.integration.curios.CuriosDataDistributionConnectorAccess;
-import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
+import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
@@ -60,9 +60,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -408,7 +408,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
                     () -> findEquippedConnector(player));
             if (connectorStack.isPresent()) {
                 ItemStack stack = connectorStack.get();
-                DataDistributionConnectorItem connectorItem = (DataDistributionConnectorItem) stack.getItem();
+                RemoteLinkConnectorItem connectorItem = (RemoteLinkConnectorItem) stack.getItem();
                 return connectorItem.bindTower(stack, player, level, pos, state);
             }
         }
@@ -577,7 +577,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
 
         if (level instanceof ServerLevel serverLevel) {
             BlockEntity blockEntity = level.getBlockEntity(basePos);
-            List<ItemStack> drops = new ArrayList<>();
+            List<ItemStack> drops = new ObjectArrayList<>();
             drops.add(createTowerItemDrop(blockEntity, player));
             if (blockEntity instanceof DataDistributionTowerBlockEntity tower) {
                 tower.addAdditionalDrops(level, basePos, drops);
@@ -599,7 +599,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
             return;
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new ObjectArrayList<>();
         tower.addAdditionalDrops(level, pos, drops);
         tower.clearContent();
         for (ItemStack drop : drops) {
@@ -625,7 +625,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
             return;
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new ObjectArrayList<>();
         drops.add(createTowerItemDrop(blockEntity, player));
         if (blockEntity instanceof DataDistributionTowerBlockEntity tower) {
             tower.addAdditionalDrops(level, basePos, drops);

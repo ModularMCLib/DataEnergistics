@@ -10,7 +10,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+
 import java.util.List;
 
 public final class AdaptivePatternProviderDisplayHelper {
@@ -83,12 +85,12 @@ public final class AdaptivePatternProviderDisplayHelper {
 
     public static List<Component> appendLockedSlotsTooltip(List<Component> baseTooltip, String translationKey, int unlockedSlots, int totalSlots) {
         if (unlockedSlots >= totalSlots) {
-            return List.copyOf(baseTooltip);
+            return ObjectLists.unmodifiable(new ObjectArrayList<>(baseTooltip));
         }
 
-        var tooltip = new ArrayList<>(baseTooltip);
+        ObjectArrayList<Component> tooltip = new ObjectArrayList<>(baseTooltip);
         tooltip.add(Component.translatable(translationKey, unlockedSlots, totalSlots));
-        return List.copyOf(tooltip);
+        return ObjectLists.unmodifiable(tooltip);
     }
 
     public static PatternContainerGroup createTerminalFallbackGroup(AEItemKey icon, List<PatternContainerGroup> groups) {
@@ -98,7 +100,7 @@ public final class AdaptivePatternProviderDisplayHelper {
 
         List<Component> tooltip = List.of();
         if (groups.size() > 1) {
-            var builtTooltip = new ArrayList<Component>();
+            ObjectArrayList<Component> builtTooltip = new ObjectArrayList<>();
             builtTooltip.add(GuiText.AdjacentToDifferentMachines.text());
             for (var group : groups) {
                 builtTooltip.add(group.name());
@@ -106,7 +108,7 @@ public final class AdaptivePatternProviderDisplayHelper {
                     builtTooltip.add(Component.literal("  ").append(line));
                 }
             }
-            tooltip = List.copyOf(builtTooltip);
+            tooltip = ObjectLists.unmodifiable(builtTooltip);
         }
 
         return new PatternContainerGroup(icon, icon.getDisplayName(), tooltip);

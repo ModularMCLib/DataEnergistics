@@ -152,10 +152,6 @@ public final class DataEnergisticsConfiguration {
         public DataDistributionTowerSchema dataDistributionTower = new DataDistributionTowerSchema();
 
         @Configurable
-        @Configurable.Comment({ "Data Sanctum Interface stocking capacities.", "数据圣所接口的储备容量设置。" })
-        public DataSanctumInterfaceSchema dataSanctumInterface = new DataSanctumInterfaceSchema();
-
-        @Configurable
         @Configurable.Comment({ "Data Extractor work and carrier requirements.", "数据提取器的工作与载体需求设置。" })
         public DataExtractorSchema dataExtractor = new DataExtractorSchema();
 
@@ -248,43 +244,6 @@ public final class DataEnergisticsConfiguration {
         })
         @Configurable.Range(min = 1, max = 128)
         public int range = 1;
-    }
-
-    public static final class DataSanctumInterfaceSchema {
-
-        private static final int MAX_BASE_CAPACITY = Integer.MAX_VALUE / 8;
-
-        @Configurable(key = Configurable.LocalizationKey.FULL)
-        @Configurable.Comment({
-                "Base stocked item amount per config or stock slot. Each capacity card doubles it.",
-                "每个配置或库存槽的基础物品储备数量。每张容量卡会使其翻倍。"
-        })
-        @Configurable.Range(min = 1, max = MAX_BASE_CAPACITY)
-        public int itemLimit = 2048;
-
-        @Configurable(key = Configurable.LocalizationKey.FULL)
-        @Configurable.Comment({
-                "Base stocked fluid buckets per config or stock slot. Each capacity card doubles it.",
-                "每个配置或库存槽的基础流体桶数。每张容量卡会使其翻倍。"
-        })
-        @Configurable.Range(min = 1, max = MAX_BASE_CAPACITY)
-        public int fluidBuckets = 2048;
-
-        @Configurable(key = Configurable.LocalizationKey.FULL)
-        @Configurable.Comment({
-                "Base item amount per return slot. Each capacity card doubles it.",
-                "每个返回槽的基础物品数量。每张容量卡会使其翻倍。"
-        })
-        @Configurable.Range(min = 1, max = MAX_BASE_CAPACITY)
-        public int returnItemLimit = 2048;
-
-        @Configurable(key = Configurable.LocalizationKey.FULL)
-        @Configurable.Comment({
-                "Base fluid buckets per return slot. Each capacity card doubles it.",
-                "每个返回槽的基础流体桶数。每张容量卡会使其翻倍。"
-        })
-        @Configurable.Range(min = 1, max = MAX_BASE_CAPACITY)
-        public int returnFluidBuckets = 2048;
     }
 
     public static final class DataExtractorSchema {

@@ -229,7 +229,11 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
                 DEBlocks.DATA_SANCTUM_INTERFACE.get(),
                 DataSanctumInterfaceConstants.UPGRADE_SLOT_COUNT,
-                accessor::dataEnergistics$invokeOnUpgradesChanged));
+                () -> {
+                    accessor.dataEnergistics$invokeOnUpgradesChanged();
+                    this.interfaceLogic.onConfigRowChanged();
+                    this.markForClientUpdate();
+                }));
     }
 
     public DataSanctumReturnInventory getReturnInventory() {

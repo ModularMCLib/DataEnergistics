@@ -1,10 +1,6 @@
 package com.fish_dan_.data_energistics.ae2.sanctum;
 
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataSanctumInterfaceSchema;
-
 import appeng.api.config.Actionable;
-import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
@@ -15,6 +11,9 @@ import appeng.util.ConfigInventory;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntSupplier;
@@ -35,12 +34,58 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
 
     @Override
     public long getMaxAmount(AEKey key) {
-        long capacity = getConfiguredCapacity(key, getCapacityCardCount());
-        return capacity <= 0 ? 0 : capacity;
+        return Long.MAX_VALUE;
+    }
+
+    @Override
+    public long getCapacity(AEKeyType space) {
+        return Long.MAX_VALUE;
+    }
+
+    @Override
+    public @Nullable GenericStack getStack(int slot) {
+        GenericStack stack = this.stacks[slot];
+        // AE2 plans stock from this view; retain the original configuration in the serialized backing array.
+        if (getMode() != Mode.STORAGE && !isSlotUnlocked(slot)) {
+            return null;
+        }
+        return stack;
+    }
+
+    @Override
+    public @Nullable AEKey getKey(int slot) {
+        GenericStack stack = getStack(slot);
+        return stack != null ? stack.what() : null;
+    }
+
+    @Override
+    public long getAmount(int slot) {
+        GenericStack stack = getStack(slot);
+        return stack != null ? stack.amount() : 0;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        for (int slot = 0; slot < size(); slot++) {
+            if (getStack(slot) != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public List<@Nullable GenericStack> toList() {
+        // Snapshots, like inherited NBT serialization, retain locked configuration slots.
+        return new ArrayList<>(Arrays.asList(this.stacks));
     }
 
     @Override
     public void setStack(int slot, @Nullable GenericStack stack) {
+        GenericStack previous = this.stacks[slot];
+        if (stack != null && !isSlotUnlocked(slot) && (getMode() != Mode.STORAGE || previous == null || !previous.what().equals(stack.what()) || stack.amount() > previous.amount())) {
+            return;
+        }
         if (stack != null) {
             if (!isSupportedType(stack.what())) {
                 return;
@@ -57,12 +102,6 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
             }
         }
 
-        if (stack != null) {
-            long maxAmount = getConfiguredCapacity(stack.what(), getCapacityCardCount());
-            if (stack.amount() > maxAmount) {
-                stack = new GenericStack(stack.what(), maxAmount);
-            }
-        }
         if (!Objects.equals(this.stacks[slot], stack)) {
             this.stacks[slot] = stack;
             onChange();
@@ -75,11 +114,11 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
             throw new IllegalArgumentException("amount >= 0");
         }
 
-        if (!canInsert() || !isAllowedIn(slot, what)) {
+        if (!isSlotUnlocked(slot) || !canInsert() || !isAllowedIn(slot, what)) {
             return 0;
         }
 
-        long capacity = getConfiguredCapacity(what, getCapacityCardCount());
+        long capacity = Long.MAX_VALUE;
         AEKey currentWhat = getKey(slot);
         long currentAmount = getAmount(slot);
         if (currentWhat != null && !currentWhat.equals(what)) {
@@ -104,31 +143,9 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
                 this.capacityCardCountSupplier.getAsInt()));
     }
 
-    private static long getConfiguredCapacity(AEKey key, int capacityCardCount) {
-        DataSanctumInterfaceSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.dataSanctumInterface;
-        long baseCapacity;
-        if (key.getType() == AEKeyType.items()) {
-            baseCapacity = settings.itemLimit;
-        } else if (key.getType() == AEKeyType.fluids()) {
-            baseCapacity = safeMultiply(settings.fluidBuckets, AEFluidKey.AMOUNT_BUCKET);
-        } else {
-            baseCapacity = settings.itemLimit;
-        }
-        return applyCapacityCards(baseCapacity, capacityCardCount);
-    }
-
-    private static long applyCapacityCards(long baseCapacity, int capacityCardCount) {
-        return safeMultiply(baseCapacity, 1L << capacityCardCount);
-    }
-
-    private static long safeMultiply(long value, long multiplier) {
-        if (value <= 0 || multiplier <= 0) {
-            return 0;
-        }
-        if (value > Long.MAX_VALUE / multiplier) {
-            return Long.MAX_VALUE;
-        }
-        return value * multiplier;
+    private boolean isSlotUnlocked(int slot) {
+        int pages = DataSanctumInterfaceConstants.BASE_PAGE_COUNT + getCapacityCardCount() * DataSanctumInterfaceConstants.PAGES_PER_CAPACITY_CARD;
+        return slot < pages * DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     }
 
     public static DataSanctumInterfaceInventory config(Runnable listener, IntSupplier capacityCardCountSupplier) {

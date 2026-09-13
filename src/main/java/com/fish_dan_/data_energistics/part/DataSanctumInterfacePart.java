@@ -402,7 +402,11 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
                 getPartItem().asItem(),
                 DataSanctumInterfaceConstants.UPGRADE_SLOT_COUNT,
-                accessor::dataEnergistics$invokeOnUpgradesChanged));
+                () -> {
+                    accessor.dataEnergistics$invokeOnUpgradesChanged();
+                    this.interfaceLogic.onConfigRowChanged();
+                    this.markForClientUpdate();
+                }));
     }
 
     private void markForClientUpdate() {

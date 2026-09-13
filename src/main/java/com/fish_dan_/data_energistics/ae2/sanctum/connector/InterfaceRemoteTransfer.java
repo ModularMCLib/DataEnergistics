@@ -31,7 +31,6 @@ final class InterfaceRemoteTransfer {
 
     /** Maximum number of registered targets inspected by one interface tick. */
     private static final int LINKS_PER_TICK = 32;
-    private static final int KEYS_PER_LINK = 16;
 
     private InterfaceRemoteTransfer() {}
 
@@ -154,7 +153,7 @@ final class InterfaceRemoteTransfer {
         }
         boolean moved = false;
         int start = Math.floorMod(state.sourceCursor(linkIndex), inventory.size());
-        int visited = Math.min(KEYS_PER_LINK, inventory.size());
+        int visited = inventory.size();
         for (int offset = 0; offset < visited; offset++) {
             int slot = (start + offset) % inventory.size();
             var key = inventory.getKey(slot);
@@ -167,8 +166,10 @@ final class InterfaceRemoteTransfer {
                 if (extracted > 0) {
                     state.receive(new GenericStack(key, extracted));
                     moved = true;
-                    visited = offset + 1;
-                    break;
+                    if (!state.flushReturn()) {
+                        visited = offset + 1;
+                        break;
+                    }
                 }
             }
         }
@@ -189,7 +190,7 @@ final class InterfaceRemoteTransfer {
         }
         boolean moved = false;
         int start = Math.floorMod(state.sourceCursor(linkIndex), keys.size());
-        int visited = Math.min(KEYS_PER_LINK, keys.size());
+        int visited = keys.size();
         for (int offset = 0; offset < visited; offset++) {
             AEKey key = keys.get((start + offset) % keys.size());
             long available = amounts.getOrDefault(key, 0L);
@@ -199,8 +200,10 @@ final class InterfaceRemoteTransfer {
                 if (extracted > 0) {
                     state.receive(new GenericStack(key, extracted));
                     moved = true;
-                    visited = offset + 1;
-                    break;
+                    if (!state.flushReturn()) {
+                        visited = offset + 1;
+                        break;
+                    }
                 }
             }
         }

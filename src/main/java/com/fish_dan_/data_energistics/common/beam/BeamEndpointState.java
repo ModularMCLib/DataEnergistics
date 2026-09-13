@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.registry.DEItems;
 import appeng.api.networking.GridHelper;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.level.Level;
@@ -163,7 +164,7 @@ public final class BeamEndpointState {
         while (iterator.hasNext()) {
             long packed = iterator.nextLong();
             BlockPos pos = BlockPos.of(packed);
-            if (!level.hasChunkAt(pos)) {
+            if (!level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()))) {
                 closeConnection(packed);
                 continue;
             }

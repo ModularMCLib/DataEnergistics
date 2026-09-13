@@ -12,9 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 
 import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.client.IClientPlugin;
-import journeymap.api.v2.client.JourneyMapPlugin;
 import journeymap.api.v2.client.event.FullscreenMapEvent;
 import journeymap.api.v2.client.event.PopupMenuEvent;
+import journeymap.api.v2.common.JourneyMapPlugin;
 import journeymap.api.v2.common.event.FullscreenEventRegistry;
 import org.jspecify.annotations.Nullable;
 

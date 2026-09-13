@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.orbital.endpoint;
 
 import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalEndpointBlockEntity;
 
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -59,7 +60,7 @@ public final class OrbitalEndpointAvailability {
         OrbitalEndpointLocation location = endpoint.location();
         ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, location.dimensionId());
         ServerLevel level = server.getLevel(dimension);
-        if (level == null || !level.hasChunkAt(location.pos())) {
+        if (level == null || !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(location.pos().getX()), SectionPos.blockToSectionCoord(location.pos().getZ()))) {
             return Optional.empty();
         }
         if (!(level.getBlockEntity(location.pos()) instanceof OrbitalEndpointBlockEntity blockEntity)) {

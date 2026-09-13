@@ -16,7 +16,7 @@
 
 runtime 按 scope 去重。一个 provider 通过多个 route 到达同一个 `BLOCK_ENTITY` 工作站时，同一次 leaf upload 只 prepare 一次；`INPUT_SIDE` 则按 face 分别 prepare。
 
-3.2 已发布的 `CraftingMachineCapacityRegistration.scope()` 仍返回 `CraftingMachineCapacityScope`，以保持到 3.3.0 前的二进制兼容；新代码可调用 `machineScope()`。Data Energistics 提供的旧 `craftingMachineCapacities()` facet 与新 `craftingMachines()` 共享同一个 staging transaction，不维护第二份注册表。
+从 3.3.0 起，`CraftingMachineCapacityRegistration` 的构造参数和 `scope()` 返回类型均为 `CraftingMachineScope`。容量统一通过 `craftingMachines().registerCapacity(...)` 注册，旧容量 facet、旧 scope 类型和 `machineScope()` 兼容方法已移除；旧插件需要迁移后重新编译。
 
 ## 容量注册
 

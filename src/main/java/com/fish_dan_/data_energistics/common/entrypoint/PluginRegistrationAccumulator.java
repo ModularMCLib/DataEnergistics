@@ -9,7 +9,6 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutputRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
-import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
@@ -241,7 +240,6 @@ final class PluginRegistrationAccumulator {
         private final UniversalTerminalRegistry universalTerminalRegistry = new StagedUniversalTerminalRegistry();
         private final PatternProviderRegistry patternProviderRegistry = new StagedPatternProviderRegistry();
         private final CraftingMachineRegistry craftingMachineRegistry = new StagedCraftingMachineRegistry();
-        private final CraftingMachineCapacityRegistry craftingMachineCapacityRegistry = this.craftingMachineRegistry::registerCapacity;
         private final AdaptivePatternProviderRegistry adaptivePatternProviderRegistry = new StagedAdaptivePatternProviderRegistry();
         private final TrinityPatternRecipeIdRegistry trinityPatternRecipeIdRegistry = new StagedTrinityPatternRecipeIdRegistry();
         private final TrinityPatternSearchRegistry trinityPatternSearchRegistry = new StagedTrinityPatternSearchRegistry();
@@ -271,12 +269,6 @@ final class PluginRegistrationAccumulator {
         @Override
         public CraftingMachineRegistry craftingMachines() {
             return this.craftingMachineRegistry;
-        }
-
-        @Deprecated(since = "3.2.0")
-        @Override
-        public CraftingMachineCapacityRegistry craftingMachineCapacities() {
-            return this.craftingMachineCapacityRegistry;
         }
 
         @Override

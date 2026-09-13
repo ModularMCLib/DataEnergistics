@@ -12,7 +12,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -68,9 +67,8 @@ public class EnderCohesionMeteoriteBlock extends Block {
     }
 
     public static boolean hasSilkTouch(ServerLevel level, ItemStack tool) {
-        return EnchantmentHelper.getItemEnchantmentLevel(
-                level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH),
-                tool) > 0;
+        return tool.getEnchantmentLevel(
+                level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH)) > 0;
     }
 
     private static boolean hasSpecialSilkTouch(ServerLevel level, ItemStack tool) {
@@ -82,9 +80,8 @@ public class EnderCohesionMeteoriteBlock extends Block {
     }
 
     public static int getFortuneLevel(ServerLevel level, ItemStack tool) {
-        int fortuneLevel = EnchantmentHelper.getItemEnchantmentLevel(
-                level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE),
-                tool);
+        int fortuneLevel = tool.getEnchantmentLevel(
+                level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE));
         return capFortuneLevel(fortuneLevel);
     }
 

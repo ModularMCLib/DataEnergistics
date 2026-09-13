@@ -25,7 +25,7 @@ public abstract class AbstractPoweredTieredItem extends PoweredItem {
     }
 
     @Override
-    public int getEnchantmentValue() {
+    public int getEnchantmentValue(ItemStack stack) {
         return this.tier.getEnchantmentValue();
     }
 

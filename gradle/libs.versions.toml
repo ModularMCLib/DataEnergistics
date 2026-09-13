@@ -12,7 +12,7 @@ jetbrains-annotations = "26.1.0"
 jspecify = "1.0.1"
 renderNurse = "0.0.26"
 mixin = "0.8.7"
-ojalgo = "57.2.0"
+ojalgo = "57.3.0"
 
 [libraries]
 minecraft               = { module = "com.mojang:minecraft", version.ref = "minecraft" }

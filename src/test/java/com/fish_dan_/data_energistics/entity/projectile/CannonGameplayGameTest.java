@@ -36,6 +36,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
@@ -164,7 +165,7 @@ public final class CannonGameplayGameTest {
     public static void chargeAndShotSerialization(GameTestHelper helper) {
         Player player = player(helper);
         CannonCharge charge = new CannonCharge(helper.getLevel().getGameTime(), 20, MatterConvergingCrossbowMode.RAIL, InteractionHand.MAIN_HAND, player.getUUID(), helper.getLevel().dimension().location());
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess(), ConnectionType.NEOFORGE);
         try {
             CannonCharge.STREAM_CODEC.encode(buffer, charge);
             helper.assertValueEqual(CannonCharge.STREAM_CODEC.decode(buffer), charge, "Charge synchronization lost fields");

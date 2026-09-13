@@ -51,8 +51,7 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
         dataEnergistics$unlimitedButton = new ToggleButton(
                 Icon.FILTER_ON_EXTRACT_ENABLED,
                 Icon.FILTER_ON_EXTRACT_DISABLED,
-                ignored -> {
-                    boolean enabled = !access.dataEnergistics$isUnlimited();
+                enabled -> {
                     access.dataEnergistics$setUnlimited(enabled);
                     amount.setLongValue(enabled ? Long.MAX_VALUE : access.dataEnergistics$getFiniteAmount());
                 });
@@ -65,7 +64,7 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
         dataEnergistics$policyButton = new ToggleButton(
                 Icon.PRIORITY,
                 Icon.SCHEDULING_ROUND_ROBIN,
-                ignored -> access.dataEnergistics$setPolicy(access.dataEnergistics$getPolicy() == 0 ? 1 : 0));
+                priority -> access.dataEnergistics$setPolicy(priority ? 1 : 0));
         dataEnergistics$policyButton.setTooltipOn(List.of(Component.translatable(
                 "button.data_energistics.data_sanctum_interface.connector_policy.priority")));
         dataEnergistics$policyButton.setTooltipOff(List.of(Component.translatable(

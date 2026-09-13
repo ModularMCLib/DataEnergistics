@@ -25,13 +25,12 @@ public record DataDistributionConnectorScrollPayload(boolean reverse, boolean of
 
     public static final Type<DataDistributionConnectorScrollPayload> TYPE = new Type<>(
             Data_Energistics.id("data_distribution_connector_scroll"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, DataDistributionConnectorScrollPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::reverse,
-                    ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::offHand,
-                    ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::control,
-                    ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::shift,
-                    DataDistributionConnectorScrollPayload::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, DataDistributionConnectorScrollPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::reverse,
+            ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::offHand,
+            ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::control,
+            ByteBufCodecs.BOOL, DataDistributionConnectorScrollPayload::shift,
+            DataDistributionConnectorScrollPayload::new);
 
     @Override
     public Type<DataDistributionConnectorScrollPayload> type() {
@@ -49,8 +48,7 @@ public record DataDistributionConnectorScrollPayload(boolean reverse, boolean of
             DataDistributionConnectorItemData data = DataDistributionConnectorItem.readData(stack);
             AdaptivePatternProviderLogic logic = DataDistributionConnectorItem.resolveProviderLogic(player.level(), data);
             if (payload.control() && logic != null) {
-                AdaptiveProviderConnectorMode mode = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT
-                        ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
+                AdaptiveProviderConnectorMode mode = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
                 logic.setConnectorMode(mode);
                 player.displayClientMessage(Component.translatable(
                         "item.data_energistics.data_distribution_connector.mode_changed",

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider;
 
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchAccess;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
@@ -140,49 +140,47 @@ public final class PatternProviderBatching {
 
         var possibleTargets = new ObjectArrayList<PushTarget>();
         var machineTargets = new ObjectArrayList<MachinePushTarget>();
-        List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive
-                ? adaptive.adaptiveConnectorBindings() : List.of();
+        List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
         for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
             if (!patternDetails.supportsPushInputsToExternalInventory()) {
                 continue;
             }
-            var target = logic instanceof AdaptivePatternProviderLogic adaptive
-                    ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
+            var target = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
             if (target != null) {
                 possibleTargets.add(new InventoryPushTarget(binding.side(), binding.position(), target, true));
             }
         }
         if (connectorBindings.isEmpty()) {
             for (Direction direction : access.dataEnergistics$invokeGetActiveSides()) {
-            var adjacentPosition = blockEntity.getBlockPos().relative(direction);
-            var adjacentSide = direction.getOpposite();
-            var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
-            boolean dedicatedCraftingMachine = craftingMachine != null && craftingMachine.acceptsPlans();
-            if (!singleCraftPath && dedicatedCraftingMachine && craftingMachine instanceof CountedCraftingMachine machine) {
-                machineTargets.add(new MachinePushTarget(direction, machine));
-                continue;
-            }
-            if (requiresSingleCraftPath(LockCraftingMode.NONE, dedicatedCraftingMachine)) {
-                if (targetAvailability.canAttempt(CraftingDispatchTarget.provider())) {
-                    return prepareSingle(
-                            logic,
-                            patternDetails,
-                            prototype,
-                            requestedCount,
-                            targetAvailability);
+                var adjacentPosition = blockEntity.getBlockPos().relative(direction);
+                var adjacentSide = direction.getOpposite();
+                var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
+                boolean dedicatedCraftingMachine = craftingMachine != null && craftingMachine.acceptsPlans();
+                if (!singleCraftPath && dedicatedCraftingMachine && craftingMachine instanceof CountedCraftingMachine machine) {
+                    machineTargets.add(new MachinePushTarget(direction, machine));
+                    continue;
                 }
-                // A proposal may have selected another exact side from the same complete capacity capture. The
-                // provider-scoped dedicated-machine route is not that target, so continue scanning rather than
-                // allowing one adjacent crafting machine to hide every external processing route.
-                continue;
-            }
+                if (requiresSingleCraftPath(LockCraftingMode.NONE, dedicatedCraftingMachine)) {
+                    if (targetAvailability.canAttempt(CraftingDispatchTarget.provider())) {
+                        return prepareSingle(
+                                logic,
+                                patternDetails,
+                                prototype,
+                                requestedCount,
+                                targetAvailability);
+                    }
+                    // A proposal may have selected another exact side from the same complete capacity capture. The
+                    // provider-scoped dedicated-machine route is not that target, so continue scanning rather than
+                    // allowing one adjacent crafting machine to hide every external processing route.
+                    continue;
+                }
 
-            if (patternDetails.supportsPushInputsToExternalInventory()) {
-                var target = access.dataEnergistics$invokeFindAdapter(direction);
-                if (target != null) {
-                    possibleTargets.add(new InventoryPushTarget(direction, adjacentPosition, target, false));
+                if (patternDetails.supportsPushInputsToExternalInventory()) {
+                    var target = access.dataEnergistics$invokeFindAdapter(direction);
+                    if (target != null) {
+                        possibleTargets.add(new InventoryPushTarget(direction, adjacentPosition, target, false));
+                    }
                 }
-            }
             }
         }
 
@@ -335,19 +333,15 @@ public final class PatternProviderBatching {
         ObjectArrayList<ProviderCapacitySnapshot> snapshots = new ObjectArrayList<>();
         boolean providerRouteCaptured = false;
         if (patternDetails.supportsPushInputsToExternalInventory()) {
-            List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive
-                    ? adaptive.adaptiveConnectorBindings() : List.of();
+            List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
             for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
-                PatternProviderTarget target = logic instanceof AdaptivePatternProviderLogic adaptive
-                        ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
+                PatternProviderTarget target = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
                 if (target == null) {
                     continue;
                 }
                 boolean blocked = isBlockedByTargetContents(logic.isBlocking(), target, access.dataEnergistics$getPatternInputs());
                 long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
-                Observation observation = capacity > 0L
-                        ? CraftingMachineCapacityAdapters.capture(level, binding.position(), binding.side(), patternDetails, prototype, capacity)
-                        : null;
+                Observation observation = capacity > 0L ? CraftingMachineCapacityAdapters.capture(level, binding.position(), binding.side(), patternDetails, prototype, capacity) : null;
                 if (observation != null) {
                     capacity = Math.min(capacity, observation.remainingLogicalCrafts());
                 }
@@ -360,87 +354,86 @@ public final class PatternProviderBatching {
                         new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
             }
         }
-        List<AdaptiveProviderConnectorBinding> configuredBindings = logic instanceof AdaptivePatternProviderLogic adaptive
-                ? adaptive.adaptiveConnectorBindings() : List.of();
+        List<AdaptiveProviderConnectorBinding> configuredBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
         if (configuredBindings.isEmpty()) {
             for (Direction direction : access.dataEnergistics$invokeGetActiveSides()) {
-            var adjacentPosition = blockEntity.getBlockPos().relative(direction);
-            var adjacentSide = direction.getOpposite();
-            var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
-            if (craftingMachine != null && craftingMachine.acceptsPlans()) {
-                if (craftingMachine instanceof CountedCraftingMachine) {
-                    Observation observation = CraftingMachineCapacityAdapters.capture(
-                            level, adjacentPosition, adjacentSide, patternDetails, prototype, requestedCount);
-                    snapshots.add(new ProviderCapacitySnapshot(
-                            providerId,
-                            targetFor(direction),
-                            Optional.of(observation == null ?
-                                    MachineTargetId.forBlockEntity(level.dimension(), adjacentPosition) :
-                                    machineTargetId(observation, level, adjacentPosition, adjacentSide)),
-                            patternIdentity,
-                            publicationRevision,
-                            capacityRevision,
-                            captureTick,
-                            ProviderRoutingMode.TARGETED,
-                            observation == null ? DispatchCapacity.Unknown.INSTANCE :
-                                    new DispatchCapacity.Known(observation.remainingLogicalCrafts()),
-                            new DispatchCapacity.Known(observation == null ? 1L : observation.remainingLogicalCrafts())));
+                var adjacentPosition = blockEntity.getBlockPos().relative(direction);
+                var adjacentSide = direction.getOpposite();
+                var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
+                if (craftingMachine != null && craftingMachine.acceptsPlans()) {
+                    if (craftingMachine instanceof CountedCraftingMachine) {
+                        Observation observation = CraftingMachineCapacityAdapters.capture(
+                                level, adjacentPosition, adjacentSide, patternDetails, prototype, requestedCount);
+                        snapshots.add(new ProviderCapacitySnapshot(
+                                providerId,
+                                targetFor(direction),
+                                Optional.of(observation == null ?
+                                        MachineTargetId.forBlockEntity(level.dimension(), adjacentPosition) :
+                                        machineTargetId(observation, level, adjacentPosition, adjacentSide)),
+                                patternIdentity,
+                                publicationRevision,
+                                capacityRevision,
+                                captureTick,
+                                ProviderRoutingMode.TARGETED,
+                                observation == null ? DispatchCapacity.Unknown.INSTANCE :
+                                        new DispatchCapacity.Known(observation.remainingLogicalCrafts()),
+                                new DispatchCapacity.Known(observation == null ? 1L : observation.remainingLogicalCrafts())));
+                        continue;
+                    }
+                    if (!providerRouteCaptured) {
+                        snapshots.add(singleRouteSnapshot(
+                                providerId,
+                                patternIdentity,
+                                publicationRevision,
+                                capacityRevision,
+                                captureTick));
+                        providerRouteCaptured = true;
+                    }
+                    // Dedicated crafting-machine semantics remain a conservative one-craft provider route, but they do
+                    // not erase independent external-inventory sides published by this processing-pattern provider.
                     continue;
                 }
-                if (!providerRouteCaptured) {
-                    snapshots.add(singleRouteSnapshot(
-                            providerId,
-                            patternIdentity,
-                            publicationRevision,
-                            capacityRevision,
-                            captureTick));
-                    providerRouteCaptured = true;
-                }
-                // Dedicated crafting-machine semantics remain a conservative one-craft provider route, but they do
-                // not erase independent external-inventory sides published by this processing-pattern provider.
-                continue;
-            }
 
-            if (!patternDetails.supportsPushInputsToExternalInventory()) {
-                continue;
-            }
-            PatternProviderTarget target = access.dataEnergistics$invokeFindAdapter(direction);
-            if (target == null) {
-                continue;
-            }
-            boolean blocked = isBlockedByTargetContents(
-                    logic.isBlocking(),
-                    target,
-                    access.dataEnergistics$getPatternInputs());
-            long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
-            Observation observation = null;
-            if (capacity > 0L) {
-                observation = CraftingMachineCapacityAdapters.capture(
-                        level,
-                        adjacentPosition,
-                        adjacentSide,
-                        patternDetails,
-                        prototype,
-                        capacity);
-                if (observation != null) {
-                    capacity = Math.min(capacity, observation.remainingLogicalCrafts());
+                if (!patternDetails.supportsPushInputsToExternalInventory()) {
+                    continue;
                 }
-            }
-            snapshots.add(new ProviderCapacitySnapshot(
-                    providerId,
-                    targetFor(direction),
-                    Optional.of(machineTargetId(
-                            observation,
+                PatternProviderTarget target = access.dataEnergistics$invokeFindAdapter(direction);
+                if (target == null) {
+                    continue;
+                }
+                boolean blocked = isBlockedByTargetContents(
+                        logic.isBlocking(),
+                        target,
+                        access.dataEnergistics$getPatternInputs());
+                long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
+                Observation observation = null;
+                if (capacity > 0L) {
+                    observation = CraftingMachineCapacityAdapters.capture(
                             level,
                             adjacentPosition,
-                            adjacentSide)),
-                    patternIdentity,
-                    publicationRevision,
-                    capacityRevision,
-                    captureTick,
-                    ProviderRoutingMode.TARGETED,
-                    new DispatchCapacity.Known(capacity),
-                    new DispatchCapacity.Known(capacity)));
+                            adjacentSide,
+                            patternDetails,
+                            prototype,
+                            capacity);
+                    if (observation != null) {
+                        capacity = Math.min(capacity, observation.remainingLogicalCrafts());
+                    }
+                }
+                snapshots.add(new ProviderCapacitySnapshot(
+                        providerId,
+                        targetFor(direction),
+                        Optional.of(machineTargetId(
+                                observation,
+                                level,
+                                adjacentPosition,
+                                adjacentSide)),
+                        patternIdentity,
+                        publicationRevision,
+                        capacityRevision,
+                        captureTick,
+                        ProviderRoutingMode.TARGETED,
+                        new DispatchCapacity.Known(capacity),
+                        new DispatchCapacity.Known(capacity)));
             }
         }
         return List.copyOf(snapshots);
@@ -671,11 +664,11 @@ public final class PatternProviderBatching {
     }
 
     private static void pushExpandedToTarget(
-                                           IPatternDetails inputEmissionDetails,
-                                           KeyCounter[] prototype,
-                                           long count,
-                                           PatternProviderTarget target,
-                                           Runnable transferOwnership) {
+                                             IPatternDetails inputEmissionDetails,
+                                             KeyCounter[] prototype,
+                                             long count,
+                                             PatternProviderTarget target,
+                                             Runnable transferOwnership) {
         List<GenericStack> expandedInputs = expandPatternInputs(inputEmissionDetails, prototype, count);
         transferOwnership.run();
         for (GenericStack input : expandedInputs) {
@@ -834,7 +827,8 @@ public final class PatternProviderBatching {
     }
 
     private record InventoryPushTarget(Direction direction, BlockPos position, PatternProviderTarget target,
-                                       boolean remote) implements PushTarget {}
+                                       boolean remote)
+            implements PushTarget {}
 
     private record MachinePushTarget(Direction direction, CountedCraftingMachine machine) implements PushTarget {}
 

@@ -10,9 +10,9 @@ import com.fish_dan_.data_energistics.part.AdaptivePatternProviderPart;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
-import appeng.api.parts.IPart;
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
+import appeng.api.parts.IPart;
 import appeng.blockentity.networking.CableBusBlockEntity;
 
 import net.minecraft.core.BlockPos;
@@ -21,6 +21,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -28,13 +29,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import org.jspecify.annotations.Nullable;
 
@@ -60,8 +60,7 @@ public class DataDistributionConnectorItem extends Item {
         if (level.isClientSide()) {
             return InteractionResultHolder.success(stack);
         }
-        AdaptiveProviderConnectorMode next = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT
-                ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
+        AdaptiveProviderConnectorMode next = logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT ? AdaptiveProviderConnectorMode.PULL : AdaptiveProviderConnectorMode.INPUT;
         logic.setConnectorMode(next);
         player.displayClientMessage(Component.translatable(
                 KEY_PREFIX + ".mode_changed",
@@ -311,9 +310,7 @@ public class DataDistributionConnectorItem extends Item {
             return InteractionResult.FAIL;
         }
         boolean wasBound = logic.hasConnectorTarget(clickedPos, targetSide);
-        boolean changed = wasBound
-                ? logic.unbindConnectorTarget(clickedPos, targetSide)
-                : logic.bindConnectorTarget(clickedPos, targetSide);
+        boolean changed = wasBound ? logic.unbindConnectorTarget(clickedPos, targetSide) : logic.bindConnectorTarget(clickedPos, targetSide);
         if (!changed) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
@@ -342,7 +339,6 @@ public class DataDistributionConnectorItem extends Item {
         IFluidHandler fluids = level.getCapability(Capabilities.FluidHandler.BLOCK, position, state, blockEntity, side);
         return fluids != null;
     }
-
 
     private static boolean isAdaptiveProvider(Level level, BlockPos position, Direction clickedFace) {
         BlockEntity blockEntity = level.getBlockEntity(position);
@@ -383,10 +379,8 @@ public class DataDistributionConnectorItem extends Item {
     }
 
     public static AdaptivePatternProviderLogic resolveProviderLogic(
-            Level level, DataDistributionConnectorItemData data) {
-        if (!data.isAdaptiveProvider() || !data.hasSelection()
-                || !level.dimension().location().toString().equals(data.providerDimensionId())
-                || !level.isLoaded(data.getProviderPos())) {
+                                                                    Level level, DataDistributionConnectorItemData data) {
+        if (!data.isAdaptiveProvider() || !data.hasSelection() || !level.dimension().location().toString().equals(data.providerDimensionId()) || !level.isLoaded(data.getProviderPos())) {
             return null;
         }
         return adaptiveLogic(level.getBlockEntity(data.getProviderPos()), data.providerSide());

@@ -59,8 +59,7 @@ public final class AdaptivePatternProviderStandardToolbar implements DataEnergis
         toolbar.register(AdaptivePatternProviderToolbarActions.CONNECTOR_POLICY, 910, context -> {
             var menu = context.menu();
             var button = new ToggleButton(Icon.PRIORITY, Icon.SCHEDULING_ROUND_ROBIN,
-                    ignored -> menu.sendSetConnectorPolicy(menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal()
-                            ? AdaptiveProviderConnectorPolicy.PRIORITY : AdaptiveProviderConnectorPolicy.ROUND_ROBIN));
+                    ignored -> menu.sendSetConnectorPolicy(menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal() ? AdaptiveProviderConnectorPolicy.PRIORITY : AdaptiveProviderConnectorPolicy.ROUND_ROBIN));
             button.setTooltipOn(List.of(Component.translatable(
                     "button.data_energistics.adaptive_pattern_provider.connector_policy.priority")));
             button.setTooltipOff(List.of(Component.translatable(

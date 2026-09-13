@@ -60,21 +60,18 @@ public final class DataDistributionConnectorLinkRenderer {
         if (level == null || minecraft.player == null) {
             return;
         }
-        ItemStack stack = DataDistributionConnectorItem.isConnectorStack(minecraft.player.getMainHandItem())
-                ? minecraft.player.getMainHandItem() : minecraft.player.getOffhandItem();
+        ItemStack stack = DataDistributionConnectorItem.isConnectorStack(minecraft.player.getMainHandItem()) ? minecraft.player.getMainHandItem() : minecraft.player.getOffhandItem();
         if (!DataDistributionConnectorItem.isConnectorStack(stack)) {
             return;
         }
         DataDistributionConnectorItemData data = DataDistributionConnectorItem.readData(stack);
-        if (!data.hasSelection() || !data.isAdaptiveProvider()
-                || !level.dimension().location().toString().equals(data.providerDimensionId())) {
+        if (!data.hasSelection() || !data.isAdaptiveProvider() || !level.dimension().location().toString().equals(data.providerDimensionId())) {
             return;
         }
 
         BlockPos provider = data.getProviderPos();
         AdaptivePatternProviderLogic logic = DataDistributionConnectorItem.resolveProviderLogic(level, data);
-        Vec3 source = data.providerSide() < 0 ? new Vec3(0.5D, 0.5D, 0.5D)
-                : ConnectorLinkGeometry.face(BlockPos.ZERO, Direction.from3DDataValue(data.providerSide())).center();
+        Vec3 source = data.providerSide() < 0 ? new Vec3(0.5D, 0.5D, 0.5D) : ConnectorLinkGeometry.face(BlockPos.ZERO, Direction.from3DDataValue(data.providerSide())).center();
         Vec3 camera = event.getCamera().getPosition();
         PoseStack pose = event.getPoseStack();
         var buffers = minecraft.renderBuffers().bufferSource();
@@ -92,8 +89,7 @@ public final class DataDistributionConnectorLinkRenderer {
             int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
             for (int index = 0; index < targets.size(); index++) {
                 var target = targets.get(index);
-                Color color = !level.isLoaded(target.position()) ? UNLOADED
-                        : level.getBlockState(target.position()).isAir() ? MISSING : index == selected ? SELECTED : LINK;
+                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : index == selected ? SELECTED : LINK;
                 // Client capabilities may legitimately be absent for server-only inventories. The synchronized
                 // binding is authoritative; only loaded world geometry determines a missing marker here.
                 var face = ConnectorLinkGeometry.face(target.position().subtract(provider), target.side());

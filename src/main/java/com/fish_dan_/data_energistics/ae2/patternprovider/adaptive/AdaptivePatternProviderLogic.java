@@ -65,16 +65,12 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
-
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
@@ -102,6 +98,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -326,8 +325,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     public boolean readConnectorVisualState(RegistryFriendlyByteBuf data) {
         AdaptiveProviderConnectorMode mode = data.readEnum(AdaptiveProviderConnectorMode.class);
         AdaptiveProviderConnectorPolicy policy = data.readEnum(AdaptiveProviderConnectorPolicy.class);
-        List<ConnectorTarget> targets = data.readList(buffer ->
-                new ConnectorTarget(buffer.readBlockPos(), buffer.readEnum(Direction.class)));
+        List<ConnectorTarget> targets = data.readList(buffer -> new ConnectorTarget(buffer.readBlockPos(), buffer.readEnum(Direction.class)));
         boolean changed = this.connectorMode != mode || this.connectorPolicy != policy || !this.connectorTargets.equals(targets);
         this.connectorMode = mode;
         this.connectorPolicy = policy;
@@ -1159,8 +1157,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         int scanned = 0;
         boolean changed = false;
         int targetCount = this.connectorTargets.size();
-        int start = this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN
-                ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
+        int start = this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
         for (int offset = 0; offset < targetCount; offset++) {
             ConnectorTarget binding = this.connectorTargets.get((start + offset) % targetCount);
             if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {

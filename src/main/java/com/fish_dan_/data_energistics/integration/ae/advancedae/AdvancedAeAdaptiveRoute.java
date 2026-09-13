@@ -261,7 +261,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
             PatternProviderTarget adapter = targetsByKey.get(what);
             long inserted = adapter == null ? 0 : adapter.insert(what, amount, Actionable.MODULATE);
             if (inserted < amount) {
-            queueRemainder(target, what, amount - inserted, adjacentPos, primaryDirection, inputDirections.get(what));
+                queueRemainder(target, what, amount - inserted, adjacentPos, primaryDirection, inputDirections.get(what));
             }
         });
 
@@ -327,8 +327,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         if (level == null) {
             return false;
         }
-        BlockPos adjacentPos = state.sendPosition != null
-                ? state.sendPosition : target.providerPos().relative(state.sendDirection);
+        BlockPos adjacentPos = state.sendPosition != null ? state.sendPosition : target.providerPos().relative(state.sendDirection);
         Direction defaultSide = state.sendDirection.getOpposite();
         boolean changed = false;
         var iterator = state.sendList.object2LongEntrySet().iterator();

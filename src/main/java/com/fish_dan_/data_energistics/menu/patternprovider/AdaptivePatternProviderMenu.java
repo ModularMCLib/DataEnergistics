@@ -6,12 +6,11 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
-import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.LockCraftingMode;
@@ -398,8 +397,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     }
 
     private void setConnectorMode(int ordinal) {
-        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic)
-                || ordinal < 0 || ordinal >= AdaptiveProviderConnectorMode.values().length) {
+        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) || ordinal < 0 || ordinal >= AdaptiveProviderConnectorMode.values().length) {
             return;
         }
         adaptiveLogic.setConnectorMode(AdaptiveProviderConnectorMode.values()[ordinal]);
@@ -408,8 +406,7 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
     }
 
     private void setConnectorPolicy(int ordinal) {
-        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic)
-                || ordinal < 0 || ordinal >= AdaptiveProviderConnectorPolicy.values().length) {
+        if (!(this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) || ordinal < 0 || ordinal >= AdaptiveProviderConnectorPolicy.values().length) {
             return;
         }
         adaptiveLogic.setConnectorPolicy(AdaptiveProviderConnectorPolicy.values()[ordinal]);

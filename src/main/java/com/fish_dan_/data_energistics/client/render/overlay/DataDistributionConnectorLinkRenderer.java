@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItemData;
@@ -32,8 +33,10 @@ import java.util.OptionalDouble;
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class DataDistributionConnectorLinkRenderer {
 
-    private static final Color LINK = new Color(0.2F, 0.85F, 1.0F, 0.8F);
-    private static final Color SELECTED = new Color(1.0F, 0.85F, 0.15F, 1.0F);
+    private static final Color INPUT_CURRENT = new Color(0.2F, 0.85F, 1.0F, 1.0F);
+    private static final Color INPUT_OTHER = new Color(0.08F, 0.38F, 0.65F, 0.75F);
+    private static final Color OUTPUT_CURRENT = new Color(0.85F, 0.35F, 1.0F, 1.0F);
+    private static final Color OUTPUT_OTHER = new Color(0.42F, 0.16F, 0.62F, 0.75F);
     private static final Color MISSING = new Color(1.0F, 0.2F, 0.2F, 0.85F);
     private static final Color UNLOADED = new Color(0.6F, 0.6F, 0.6F, 0.7F);
     private static final RenderType LINK_LINES = RenderType.create(
@@ -79,7 +82,10 @@ public final class DataDistributionConnectorLinkRenderer {
         pose.pushPose();
         try {
             pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
-            Color sourceColor = logic != null ? LINK : level.isLoaded(provider) ? MISSING : UNLOADED;
+            boolean inputMode = logic == null || logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT;
+            Color current = inputMode ? INPUT_CURRENT : OUTPUT_CURRENT;
+            Color other = inputMode ? INPUT_OTHER : OUTPUT_OTHER;
+            Color sourceColor = logic != null ? current : level.isLoaded(provider) ? MISSING : UNLOADED;
             LevelRenderer.renderLineBox(pose, lines, new AABB(source, source).inflate(0.15D),
                     sourceColor.red(), sourceColor.green(), sourceColor.blue(), sourceColor.alpha());
             if (logic == null) {
@@ -89,7 +95,7 @@ public final class DataDistributionConnectorLinkRenderer {
             int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
             for (int index = 0; index < targets.size(); index++) {
                 var target = targets.get(index);
-                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : index == selected ? SELECTED : LINK;
+                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : index == selected ? current : other;
                 // Client capabilities may legitimately be absent for server-only inventories. The synchronized
                 // binding is authoritative; only loaded world geometry determines a missing marker here.
                 var face = ConnectorLinkGeometry.face(target.position().subtract(provider), target.side());

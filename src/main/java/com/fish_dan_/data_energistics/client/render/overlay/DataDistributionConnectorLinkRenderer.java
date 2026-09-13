@@ -2,107 +2,131 @@ package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
+import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItem;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorItemData;
-
-import appeng.api.AECapabilities;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.phys.AABB;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+
+import java.util.OptionalDouble;
+
+/** Renders client-synchronized bindings while their connector is held in either hand. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class DataDistributionConnectorLinkRenderer {
+
+    private static final Color LINK = new Color(0.2F, 0.85F, 1.0F, 0.8F);
+    private static final Color SELECTED = new Color(1.0F, 0.85F, 0.15F, 1.0F);
+    private static final Color MISSING = new Color(1.0F, 0.2F, 0.2F, 0.85F);
+    private static final Color UNLOADED = new Color(0.6F, 0.6F, 0.6F, 0.7F);
+    private static final RenderType LINK_LINES = RenderType.create(
+            "data_energistics_connector_links", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES,
+            1536, false, false, RenderType.CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
+                    .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.of(2.0D)))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setOutputState(RenderStateShard.MAIN_TARGET)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                    .createCompositeState(false));
+
     private DataDistributionConnectorLinkRenderer() {}
 
     @SubscribeEvent
     public static void render(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            return;
+        }
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null || minecraft.player == null) return;
+        ClientLevel level = minecraft.level;
+        if (level == null || minecraft.player == null) {
+            return;
+        }
         ItemStack stack = DataDistributionConnectorItem.isConnectorStack(minecraft.player.getMainHandItem())
                 ? minecraft.player.getMainHandItem() : minecraft.player.getOffhandItem();
-        if (!DataDistributionConnectorItem.isConnectorStack(stack)) return;
-        DataDistributionConnectorItemData data = DataDistributionConnectorItem.readData(stack);
-        AdaptivePatternProviderLogic logic = DataDistributionConnectorItem.resolveProviderLogic(minecraft.level, data);
-        if (logic == null) return;
-        BlockPos provider = logic.hostPosition();
-        var camera = event.getCamera().getPosition();
-        PoseStack pose = event.getPoseStack();
-        pose.pushPose();
-        pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
-        var consumer = minecraft.renderBuffers().bufferSource().getBuffer(RenderType.lines());
-        LevelRenderer.renderLineBox(pose, consumer, new AABB(.35, .35, .35, .65, .65, .65), .2f, .8f, 1f, .45f);
-        int selected = data.selectedBindingIndex();
-        int index = 0;
-        for (AdaptivePatternProviderLogic.ConnectorTarget target : logic.connectorTargets()) {
-            BlockPos pos = target.position();
-            BlockPos offset = pos.subtract(provider);
-            double[] endpoint = faceCenter(offset, target.side());
-            double x = endpoint[0], y = endpoint[1], z = endpoint[2];
-            double minX = Math.min(.5, x) - .025, maxX = Math.max(.5, x) + .025;
-            double minY = Math.min(.5, y) - .025, maxY = Math.max(.5, y) + .025;
-            double minZ = Math.min(.5, z) - .025, maxZ = Math.max(.5, z) + .025;
-            boolean active = index == selected;
-            LevelRenderer.renderLineBox(pose, consumer, new AABB(minX, minY, minZ, maxX, maxY, maxZ), active ? 1f : .3f, active ? .8f : .6f, .2f, .5f);
-            boolean loaded = minecraft.level.isLoaded(pos);
-            boolean valid = loaded && hasTargetCapability(minecraft.level, pos, target.side());
-            float red = valid ? (active ? 1f : .3f) : 1f;
-            float green = valid ? (active ? .8f : .6f) : .15f;
-            float blue = valid ? .2f : .15f;
-            AABB face = faceBox(offset, target.side());
-            LevelRenderer.renderLineBox(pose, consumer, face, red, green, blue, .7f);
-            index++;
+        if (!DataDistributionConnectorItem.isConnectorStack(stack)) {
+            return;
         }
-        minecraft.renderBuffers().bufferSource().endBatch(RenderType.lines());
-        pose.popPose();
+        DataDistributionConnectorItemData data = DataDistributionConnectorItem.readData(stack);
+        if (!data.hasSelection() || !data.isAdaptiveProvider()
+                || !level.dimension().location().toString().equals(data.providerDimensionId())) {
+            return;
+        }
+
+        BlockPos provider = data.getProviderPos();
+        AdaptivePatternProviderLogic logic = DataDistributionConnectorItem.resolveProviderLogic(level, data);
+        Vec3 source = data.providerSide() < 0 ? new Vec3(0.5D, 0.5D, 0.5D)
+                : ConnectorLinkGeometry.face(BlockPos.ZERO, Direction.from3DDataValue(data.providerSide())).center();
+        Vec3 camera = event.getCamera().getPosition();
+        PoseStack pose = event.getPoseStack();
+        var buffers = minecraft.renderBuffers().bufferSource();
+        VertexConsumer lines = buffers.getBuffer(LINK_LINES);
+        pose.pushPose();
+        try {
+            pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
+            Color sourceColor = logic != null ? LINK : level.isLoaded(provider) ? MISSING : UNLOADED;
+            LevelRenderer.renderLineBox(pose, lines, new AABB(source, source).inflate(0.15D),
+                    sourceColor.red(), sourceColor.green(), sourceColor.blue(), sourceColor.alpha());
+            if (logic == null) {
+                return;
+            }
+            var targets = logic.connectorTargets();
+            int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
+            for (int index = 0; index < targets.size(); index++) {
+                var target = targets.get(index);
+                Color color = !level.isLoaded(target.position()) ? UNLOADED
+                        : level.getBlockState(target.position()).isAir() ? MISSING : index == selected ? SELECTED : LINK;
+                // Client capabilities may legitimately be absent for server-only inventories. The synchronized
+                // binding is authoritative; only loaded world geometry determines a missing marker here.
+                var face = ConnectorLinkGeometry.face(target.position().subtract(provider), target.side());
+                line(pose, lines, source, face.approach(), color);
+                line(pose, lines, face.approach(), face.center(), color);
+                for (int corner = 0; corner < face.corners().size(); corner++) {
+                    line(pose, lines, face.corners().get(corner), face.corners().get((corner + 1) % 4), color);
+                }
+                if (index == selected) {
+                    line(pose, lines, face.corners().get(0), face.corners().get(2), color);
+                    line(pose, lines, face.corners().get(1), face.corners().get(3), color);
+                }
+            }
+        } finally {
+            buffers.endBatch(LINK_LINES);
+            pose.popPose();
+        }
     }
 
-    private static AABB faceBox(BlockPos offset, Direction side) {
-        double x = offset.getX(), y = offset.getY(), z = offset.getZ();
-        double e = .015;
-        return switch (side) {
-            case DOWN -> new AABB(x + .2, y - e, z + .2, x + .8, y + e, z + .8);
-            case UP -> new AABB(x + .2, y + 1 - e, z + .2, x + .8, y + 1 + e, z + .8);
-            case NORTH -> new AABB(x + .2, y + .2, z - e, x + .8, y + .8, z + e);
-            case SOUTH -> new AABB(x + .2, y + .2, z + 1 - e, x + .8, y + .8, z + 1 + e);
-            case WEST -> new AABB(x - e, y + .2, z + .2, x + e, y + .8, z + .8);
-            case EAST -> new AABB(x + 1 - e, y + .2, z + .2, x + 1 + e, y + .8, z + .8);
-        };
+    private static void line(PoseStack pose, VertexConsumer vertices, Vec3 from, Vec3 to, Color color) {
+        Vec3 direction = to.subtract(from);
+        if (direction.lengthSqr() < 1.0E-10D) {
+            return;
+        }
+        Vec3 normal = direction.normalize();
+        var transform = pose.last();
+        vertices.addVertex(transform.pose(), (float) from.x, (float) from.y, (float) from.z)
+                .setColor(color.red(), color.green(), color.blue(), color.alpha())
+                .setNormal(transform, (float) normal.x, (float) normal.y, (float) normal.z);
+        vertices.addVertex(transform.pose(), (float) to.x, (float) to.y, (float) to.z)
+                .setColor(color.red(), color.green(), color.blue(), color.alpha())
+                .setNormal(transform, (float) normal.x, (float) normal.y, (float) normal.z);
     }
 
-    private static double[] faceCenter(BlockPos offset, Direction side) {
-        double x = offset.getX() + .5, y = offset.getY() + .5, z = offset.getZ() + .5;
-        return switch (side) {
-            case DOWN -> new double[]{x, offset.getY(), z};
-            case UP -> new double[]{x, offset.getY() + 1, z};
-            case NORTH -> new double[]{x, y, offset.getZ()};
-            case SOUTH -> new double[]{x, y, offset.getZ() + 1};
-            case WEST -> new double[]{offset.getX(), y, z};
-            case EAST -> new double[]{offset.getX() + 1, y, z};
-        };
-    }
-
-    private static boolean hasTargetCapability(ClientLevel level, BlockPos position,
-                                               Direction side) {
-        var state = level.getBlockState(position);
-        var entity = level.getBlockEntity(position);
-        return level.getCapability(Capabilities.ItemHandler.BLOCK,
-                position, state, entity, side) != null
-                || level.getCapability(Capabilities.FluidHandler.BLOCK,
-                position, state, entity, side) != null
-                || level.getCapability(AECapabilities.GENERIC_INTERNAL_INV,
-                position, state, entity, side) != null;
-    }
+    private record Color(float red, float green, float blue, float alpha) {}
 }

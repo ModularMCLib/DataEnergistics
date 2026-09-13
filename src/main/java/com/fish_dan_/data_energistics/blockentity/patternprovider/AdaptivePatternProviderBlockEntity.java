@@ -335,6 +335,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         super.writeToStream(data);
         data.writeVarInt(getConfiguredPatternSlotCount());
         getAdaptiveState().writeToStream(data);
+        ((AdaptivePatternProviderLogic) getLogic()).writeConnectorVisualState(data);
     }
 
     @Override
@@ -345,7 +346,9 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
             this.syncedPatternSlotCount = syncedPatternSlotCount;
             changed = true;
         }
-        return getAdaptiveState().readFromStream(data) || changed;
+        changed |= getAdaptiveState().readFromStream(data);
+        changed |= ((AdaptivePatternProviderLogic) getLogic()).readConnectorVisualState(data);
+        return changed;
     }
 
     @Override

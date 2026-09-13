@@ -40,6 +40,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -229,6 +230,19 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         if (this.getHost() != null) {
             this.getHost().markForUpdate();
         }
+    }
+
+    @Override
+    public void writeToStream(RegistryFriendlyByteBuf data) {
+        super.writeToStream(data);
+        getLogic().writeConnectorVisualState(data);
+    }
+
+    @Override
+    public boolean readFromStream(RegistryFriendlyByteBuf data) {
+        boolean changed = super.readFromStream(data);
+        changed |= getLogic().readConnectorVisualState(data);
+        return changed;
     }
 
     @Override

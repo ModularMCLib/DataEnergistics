@@ -95,6 +95,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -293,12 +294,12 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     public void setConnectorMode(AdaptiveProviderConnectorMode mode) {
         this.connectorMode = Objects.requireNonNull(mode, "Connector mode");
-        this.host.saveChanges();
+        onConnectorChanged();
     }
 
     public void setConnectorPolicy(AdaptiveProviderConnectorPolicy policy) {
         this.connectorPolicy = Objects.requireNonNull(policy, "Connector policy");
-        this.host.saveChanges();
+        onConnectorChanged();
     }
 
     public void advanceConnectorCursor(int routeCount) {
@@ -309,6 +310,38 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     public List<ConnectorTarget> connectorTargets() {
         return List.copyOf(this.connectorTargets);
+    }
+
+    /** Writes only connector display data into the host's normal client update, in binding order. */
+    public void writeConnectorVisualState(RegistryFriendlyByteBuf data) {
+        data.writeEnum(this.connectorMode);
+        data.writeEnum(this.connectorPolicy);
+        data.writeCollection(this.connectorTargets, (buffer, target) -> {
+            buffer.writeBlockPos(target.position());
+            buffer.writeEnum(target.side());
+        });
+    }
+
+    /** Replaces the client display state after a complete update has been decoded; performs no world writes. */
+    public boolean readConnectorVisualState(RegistryFriendlyByteBuf data) {
+        AdaptiveProviderConnectorMode mode = data.readEnum(AdaptiveProviderConnectorMode.class);
+        AdaptiveProviderConnectorPolicy policy = data.readEnum(AdaptiveProviderConnectorPolicy.class);
+        List<ConnectorTarget> targets = data.readList(buffer ->
+                new ConnectorTarget(buffer.readBlockPos(), buffer.readEnum(Direction.class)));
+        boolean changed = this.connectorMode != mode || this.connectorPolicy != policy || !this.connectorTargets.equals(targets);
+        this.connectorMode = mode;
+        this.connectorPolicy = policy;
+        this.connectorTargets.clear();
+        this.connectorTargets.addAll(targets);
+        return changed;
+    }
+
+    private void onConnectorChanged() {
+        this.host.saveChanges();
+        if (this.host instanceof AdaptivePatternProviderHost adaptiveHost) {
+            adaptiveHost.markForClientUpdate();
+        }
+        adaptiveAlertDevice();
     }
 
     public BlockPos hostPosition() {
@@ -325,7 +358,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return false;
         }
         this.connectorTargets.add(candidate);
-        this.host.saveChanges();
+        onConnectorChanged();
         return true;
     }
 
@@ -340,7 +373,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 this.connectorCursor = Math.floorMod(this.connectorCursor, this.connectorTargets.size());
                 this.connectorPullCursor = Math.floorMod(this.connectorPullCursor, this.connectorTargets.size());
             }
-            this.host.saveChanges();
+            onConnectorChanged();
         }
         return removed;
     }

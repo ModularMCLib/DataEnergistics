@@ -1,5 +1,5 @@
 String getConfig(String key) {
-    return project.properties.get(key)
+    return project.findProperty(key)
 }
 
 def mod_id = getConfig("mod_id")

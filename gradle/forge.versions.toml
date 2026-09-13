@@ -37,8 +37,9 @@ xaeros-world-map = "8849973"
 
 ## modrinth maven ##
 jade = "15.10.6+neoforge"
-sodium = "mc1.21.1-0.8.13-neoforge" # Required by Iris 1.8.14 beta (Sodium 0.8)
-iris = "1.8.14-beta.1+1.21.1-neoforge"
+# Keep this pair together: Iris 1.8.12 targets Sodium 0.6; Sodium 0.8's production shell is not a dev runtime mod.
+sodium = "mc1.21.1-0.6.13-neoforge"
+iris = "1.8.12+1.21.1-neoforge"
 modernfix = "5HLHxQ2F" # 5.27.24+mc1.21.1
 bhc = "1.21.1-1.4.1"
 

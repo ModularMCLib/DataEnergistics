@@ -22,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.List;
+
 /** Adds the per-slot unlimited toggle to AE2's stock amount editor. */
 @Mixin(SetStockAmountScreen.class)
 public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmountMenu> {
@@ -49,21 +51,25 @@ public abstract class SetStockAmountScreenMixin extends AEBaseScreen<SetStockAmo
         dataEnergistics$unlimitedButton = new ToggleButton(
                 Icon.FILTER_ON_EXTRACT_ENABLED,
                 Icon.FILTER_ON_EXTRACT_DISABLED,
-                Component.translatable("gui.data_energistics.data_sanctum_interface.unlimited_pull.enabled"),
-                Component.translatable("gui.data_energistics.data_sanctum_interface.unlimited_pull.disabled"),
                 ignored -> {
                     boolean enabled = !access.dataEnergistics$isUnlimited();
                     access.dataEnergistics$setUnlimited(enabled);
                     amount.setLongValue(enabled ? Long.MAX_VALUE : access.dataEnergistics$getFiniteAmount());
                 });
+        dataEnergistics$unlimitedButton.setTooltipOn(List.of(Component.translatable(
+                "gui.data_energistics.data_sanctum_interface.unlimited_pull.enabled")));
+        dataEnergistics$unlimitedButton.setTooltipOff(List.of(Component.translatable(
+                "gui.data_energistics.data_sanctum_interface.unlimited_pull.disabled")));
         dataEnergistics$unlimitedButton.setState(access.dataEnergistics$isUnlimited());
         addToLeftToolbar(dataEnergistics$unlimitedButton);
         dataEnergistics$policyButton = new ToggleButton(
                 Icon.PRIORITY,
                 Icon.SCHEDULING_ROUND_ROBIN,
-                Component.translatable("button.data_energistics.data_sanctum_interface.connector_policy.priority"),
-                Component.translatable("button.data_energistics.data_sanctum_interface.connector_policy.round_robin"),
                 ignored -> access.dataEnergistics$setPolicy(access.dataEnergistics$getPolicy() == 0 ? 1 : 0));
+        dataEnergistics$policyButton.setTooltipOn(List.of(Component.translatable(
+                "button.data_energistics.data_sanctum_interface.connector_policy.priority")));
+        dataEnergistics$policyButton.setTooltipOff(List.of(Component.translatable(
+                "button.data_energistics.data_sanctum_interface.connector_policy.round_robin")));
         dataEnergistics$policyButton.setState(access.dataEnergistics$getPolicy() == 1);
         addToLeftToolbar(dataEnergistics$policyButton);
     }

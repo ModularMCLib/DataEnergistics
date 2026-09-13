@@ -21,6 +21,8 @@ import appeng.core.network.serverbound.ConfigButtonPacket;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.List;
+
 /**
  * Registers AE2 settings and Adaptive paging/card controls through the client entrypoint contract.
  */
@@ -56,11 +58,13 @@ public final class AdaptivePatternProviderStandardToolbar implements DataEnergis
         });
         toolbar.register(AdaptivePatternProviderToolbarActions.CONNECTOR_POLICY, 910, context -> {
             var menu = context.menu();
-            var button = new ToggleButton(Icon.ARROW_RIGHT, Icon.ARROW_LEFT,
-                    Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_policy"),
-                    Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_policy"),
+            var button = new ToggleButton(Icon.PRIORITY, Icon.SCHEDULING_ROUND_ROBIN,
                     ignored -> menu.sendSetConnectorPolicy(menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.ROUND_ROBIN.ordinal()
                             ? AdaptiveProviderConnectorPolicy.PRIORITY : AdaptiveProviderConnectorPolicy.ROUND_ROBIN));
+            button.setTooltipOn(List.of(Component.translatable(
+                    "button.data_energistics.adaptive_pattern_provider.connector_policy.priority")));
+            button.setTooltipOff(List.of(Component.translatable(
+                    "button.data_energistics.adaptive_pattern_provider.connector_policy.round_robin")));
             return new AdaptivePatternProviderToolbarButton(button, () -> {
                 button.visible = menu.isConnectorBound();
                 boolean priority = menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.PRIORITY.ordinal();

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.network.action;
 
 public enum DataDistributionConnectorClipboardOperation {
+
     SELECT_ALL,
     COPY,
     CUT,

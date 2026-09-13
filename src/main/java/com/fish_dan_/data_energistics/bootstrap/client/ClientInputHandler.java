@@ -9,9 +9,9 @@ import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
-import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardOperation;
 import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardPayload;
+import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
@@ -113,10 +113,8 @@ final class ClientInputHandler {
         }
         ItemStack mainHand = minecraft.player.getMainHandItem();
         ItemStack offHand = minecraft.player.getOffhandItem();
-        boolean offHandConnector = !DataDistributionConnectorItem.isConnectorStack(mainHand)
-                && DataDistributionConnectorItem.isConnectorStack(offHand);
-        if (!DataDistributionConnectorItem.isConnectorStack(mainHand)
-                && !DataDistributionConnectorItem.isConnectorStack(offHand)) {
+        boolean offHandConnector = !DataDistributionConnectorItem.isConnectorStack(mainHand) && DataDistributionConnectorItem.isConnectorStack(offHand);
+        if (!DataDistributionConnectorItem.isConnectorStack(mainHand) && !DataDistributionConnectorItem.isConnectorStack(offHand)) {
             return false;
         }
         DataDistributionConnectorClipboardOperation operation = switch (key) {

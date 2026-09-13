@@ -17,16 +17,16 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record DataDistributionConnectorClipboardPayload(
-        DataDistributionConnectorClipboardOperation operation, boolean offHand) implements CustomPacketPayload {
+                                                        DataDistributionConnectorClipboardOperation operation, boolean offHand)
+        implements CustomPacketPayload {
 
     public static final Type<DataDistributionConnectorClipboardPayload> TYPE = new Type<>(
             Data_Energistics.id("data_distribution_connector_clipboard"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, DataDistributionConnectorClipboardPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.VAR_INT, payload -> payload.operation().ordinal(),
-                    ByteBufCodecs.BOOL, DataDistributionConnectorClipboardPayload::offHand,
-                    (ordinal, offHand) -> new DataDistributionConnectorClipboardPayload(
-                            DataDistributionConnectorClipboardOperation.fromOrdinal(ordinal), offHand));
+    public static final StreamCodec<RegistryFriendlyByteBuf, DataDistributionConnectorClipboardPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, payload -> payload.operation().ordinal(),
+            ByteBufCodecs.BOOL, DataDistributionConnectorClipboardPayload::offHand,
+            (ordinal, offHand) -> new DataDistributionConnectorClipboardPayload(
+                    DataDistributionConnectorClipboardOperation.fromOrdinal(ordinal), offHand));
 
     @Override
     public Type<DataDistributionConnectorClipboardPayload> type() {

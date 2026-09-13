@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.network;
 
 import com.fish_dan_.data_energistics.network.action.CannonChargePayload;
 import com.fish_dan_.data_energistics.network.action.ChromaticGlowPayload;
-import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorClipboardPayload;
+import com.fish_dan_.data_energistics.network.action.DataDistributionConnectorScrollPayload;
 import com.fish_dan_.data_energistics.network.action.DataTeleportAnchorKnifeTeleportPayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
 import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;

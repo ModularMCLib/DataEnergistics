@@ -4,11 +4,11 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConn
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -66,6 +66,7 @@ public final class DataDistributionConnectorClipboard {
     }
 
     public record Snapshot(List<AdaptiveProviderConnectorBinding> bindings) {
+
         public Snapshot {
             bindings = List.copyOf(bindings);
         }

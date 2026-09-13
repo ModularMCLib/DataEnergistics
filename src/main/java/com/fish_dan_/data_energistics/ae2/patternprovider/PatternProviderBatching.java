@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineScope;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -190,10 +191,13 @@ public final class PatternProviderBatching {
         }
 
         List<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
+        boolean priority = logic instanceof AdaptivePatternProviderLogic adaptive &&
+                adaptive.connectorPolicy() == AdaptiveProviderConnectorPolicy.PRIORITY;
+        int roundRobinIndex = priority ? 0 : access.dataEnergistics$getRoundRobinIndex();
         int inventoryRoundRobin = rearrangeRoundRobin(
                 possibleTargets,
-                access.dataEnergistics$getRoundRobinIndex());
-        int machineRoundRobin = rearrangeRoundRobin(machineTargets, access.dataEnergistics$getRoundRobinIndex());
+                roundRobinIndex);
+        int machineRoundRobin = rearrangeRoundRobin(machineTargets, roundRobinIndex);
         // Preserve AE2's machine-first order while fairly rotating destinations within each route kind.
         possibleTargets.addAll(0, machineTargets);
         for (int targetOffset = 0; targetOffset < possibleTargets.size(); targetOffset++) {
@@ -207,7 +211,9 @@ public final class PatternProviderBatching {
                     nextRoundRobinIndex(inventoryRoundRobin, targetOffset - machineTargets.size());
             Runnable onSuccess = () -> {
                 access.dataEnergistics$invokeOnPushPatternSuccess(patternDetails);
-                access.dataEnergistics$setRoundRobinIndex(nextRoundRobinIndex);
+                if (!priority) {
+                    access.dataEnergistics$setRoundRobinIndex(nextRoundRobinIndex);
+                }
                 afterCommit.run();
             };
             if (possibleTarget instanceof MachinePushTarget(var direction, var machine)) {

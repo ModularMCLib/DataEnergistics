@@ -66,7 +66,6 @@ public final class AdaptivePatternProviderStandardToolbar implements DataEnergis
             button.setTooltipOff(List.of(Component.translatable(
                     "button.data_energistics.adaptive_pattern_provider.connector_policy.round_robin")));
             return new AdaptivePatternProviderToolbarButton(button, () -> {
-                button.visible = menu.isConnectorBound();
                 boolean priority = menu.getConnectorPolicy() == AdaptiveProviderConnectorPolicy.PRIORITY.ordinal();
                 button.setState(priority);
                 button.setMessage(Component.translatable("button.data_energistics.adaptive_pattern_provider.connector_policy." +

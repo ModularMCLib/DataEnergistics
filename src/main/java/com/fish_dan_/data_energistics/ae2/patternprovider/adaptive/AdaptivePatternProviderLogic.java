@@ -1068,7 +1068,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             }
         }
 
-        boolean pushed = super.pushPattern(patternDetails, inputHolder);
+        boolean pushed = adaptivePushDefault(patternDetails, inputHolder);
         if (pushed) {
             dataEnergistics$afterPushPattern();
         }
@@ -1346,7 +1346,18 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     /* Package-private provider mechanics consumed by AdaptivePatternProviderRuntimeTarget. */
 
     boolean adaptivePushDefault(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
-        return super.pushPattern(patternDetails, inputHolder);
+        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN) {
+            return super.pushPattern(patternDetails, inputHolder);
+        }
+        var access = (PatternProviderBatchAccess) this;
+        int previousIndex = access.dataEnergistics$getRoundRobinIndex();
+        access.dataEnergistics$setRoundRobinIndex(0);
+        try {
+            return super.pushPattern(patternDetails, inputHolder);
+        } finally {
+            // Priority always starts at the first target; switching back resumes the round-robin cursor.
+            access.dataEnergistics$setRoundRobinIndex(previousIndex);
+        }
     }
 
     boolean adaptiveIsBusy() {
@@ -1444,15 +1455,18 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     int adaptiveRoundRobinIndex() {
-        if (!this.connectorTargets.isEmpty()) {
-            return this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY ? 0 : this.connectorCursor;
+        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY) {
+            return 0;
         }
-        return this.localRoundRobinIndex;
+        return this.connectorTargets.isEmpty() ? this.localRoundRobinIndex : this.connectorCursor;
     }
 
     void adaptiveAdvanceRoundRobin(int amount) {
+        if (this.connectorPolicy == AdaptiveProviderConnectorPolicy.PRIORITY) {
+            return;
+        }
         this.localRoundRobinIndex += Math.max(0, amount);
-        if (!this.connectorTargets.isEmpty() && this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN) {
+        if (!this.connectorTargets.isEmpty()) {
             this.connectorCursor = Math.floorMod(this.connectorCursor + Math.max(0, amount), this.connectorTargets.size());
         }
     }

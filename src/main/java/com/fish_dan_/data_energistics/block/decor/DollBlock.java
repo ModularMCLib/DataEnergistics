@@ -79,7 +79,7 @@ public class DollBlock extends Block implements EntityBlock {
 
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return this.rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override

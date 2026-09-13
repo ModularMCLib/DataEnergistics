@@ -4,6 +4,7 @@ import appeng.api.parts.IPartHost;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 
 import org.jspecify.annotations.Nullable;
@@ -14,7 +15,7 @@ final class BeamTargetResolver {
     private BeamTargetResolver() {}
 
     static @Nullable BeamEndpoint omni(Level level, BlockPos pos) {
-        if (!level.hasChunkAt(pos)) {
+        if (!level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()))) {
             return null;
         }
         return level.getBlockEntity(pos) instanceof BeamEndpoint endpoint &&
@@ -26,7 +27,7 @@ final class BeamTargetResolver {
         BlockPos.MutableBlockPos cursor = source.beamPosition().mutable();
         for (int distance = 1; distance <= source.beamState().range(); distance++) {
             cursor.move(facing);
-            if (!level.isInWorldBounds(cursor) || !level.hasChunkAt(cursor)) {
+            if (!level.isInWorldBounds(cursor) || !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(cursor.getX()), SectionPos.blockToSectionCoord(cursor.getZ()))) {
                 return null;
             }
             var state = level.getBlockState(cursor);

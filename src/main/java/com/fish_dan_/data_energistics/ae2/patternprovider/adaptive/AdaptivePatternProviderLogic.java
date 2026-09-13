@@ -79,6 +79,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -2420,7 +2421,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         for (var dir : sides) {
             BlockPos adjacentPos = hostBe.getBlockPos().relative(dir);
             Direction adjacentFace = dir.getOpposite();
-            if (!hostLevel.hasChunkAt(adjacentPos) || AdaptivePatternProviderResolver.isPatternProviderAttachment(hostLevel, adjacentPos, adjacentFace)) {
+            if (!hostLevel.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(adjacentPos.getX()), SectionPos.blockToSectionCoord(adjacentPos.getZ())) || AdaptivePatternProviderResolver.isPatternProviderAttachment(hostLevel, adjacentPos, adjacentFace)) {
                 continue;
             }
 

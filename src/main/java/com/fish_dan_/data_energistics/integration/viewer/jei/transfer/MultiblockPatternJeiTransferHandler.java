@@ -16,9 +16,11 @@ import net.minecraft.world.inventory.MenuType;
 
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.recipe.transfer.IRecipeTransferContext;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
+import mezz.jei.api.recipe.transfer.RecipeTransferResult;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -71,12 +73,30 @@ public final class MultiblockPatternJeiTransferHandler<T extends AbstractContain
 
     @Override
     @Nullable
+    public IRecipeTransferError transferRecipe(IRecipeTransferContext<R, T> context, boolean doTransfer) {
+        IRecipeTransferError error = transfer(context.getContainer(), context.getRecipe(), doTransfer);
+        if (doTransfer) {
+            context.completeRecipeTransfer(error == null ? RecipeTransferResult.SUCCESS : RecipeTransferResult.REJECTED);
+        }
+        return error;
+    }
+
+    /** @deprecated JEI 19.x still requires this abstract entry point; current JEI callers use the context overload. */
+    @Deprecated(since = "19.52.0", forRemoval = true)
+    @SuppressWarnings("removal") // Required by the current JEI interface until its legacy abstract method is removed.
+    @Override
+    @Nullable
     public IRecipeTransferError transferRecipe(T menu,
                                                R recipe,
                                                IRecipeSlotsView recipeSlots,
                                                Player player,
                                                boolean maxTransfer,
                                                boolean doTransfer) {
+        return transfer(menu, recipe, doTransfer);
+    }
+
+    @Nullable
+    private IRecipeTransferError transfer(T menu, R recipe, boolean doTransfer) {
         MultiblockRecipeView view;
         try {
             ResourceLocation registeredRecipeId = recipe.registeredRecipeId();

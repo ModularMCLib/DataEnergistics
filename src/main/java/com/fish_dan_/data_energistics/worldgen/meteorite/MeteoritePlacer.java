@@ -18,6 +18,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -47,7 +48,7 @@ public final class MeteoritePlacer {
     private final List<BlockState> quartzGrowthStages;
     private final Map<Long, CoreColumnData> coreColumns = new HashMap<>();
     private final MeteoriteBlockPutter putter = new MeteoriteBlockPutter();
-    private final LevelAccessor level;
+    private final WorldGenLevel level;
     private final RandomSource random;
     private final Fallout type;
     private final BlockPos pos;
@@ -63,12 +64,12 @@ public final class MeteoritePlacer {
     private final boolean craterLake;
     private final BoundingBox boundingBox;
 
-    public static void place(LevelAccessor level, PlacedMeteoriteSettings settings, BoundingBox boundingBox, RandomSource random) {
+    public static void place(WorldGenLevel level, PlacedMeteoriteSettings settings, BoundingBox boundingBox, RandomSource random) {
         MeteoritePlacer placer = new MeteoritePlacer(level, settings, boundingBox, random);
         placer.place();
     }
 
-    private MeteoritePlacer(LevelAccessor level, PlacedMeteoriteSettings settings, BoundingBox boundingBox, RandomSource random) {
+    private MeteoritePlacer(WorldGenLevel level, PlacedMeteoriteSettings settings, BoundingBox boundingBox, RandomSource random) {
         this.boundingBox = boundingBox;
         this.level = level;
         this.random = random;
@@ -186,7 +187,7 @@ public final class MeteoritePlacer {
                     double distanceFrom = dx * dx + dz * dz;
                     if ((double) j > h + distanceFrom * 0.02) {
                         BlockState currentBlock = this.level.getBlockState(blockPos);
-                        if (this.craterType != CraterType.NORMAL && j < this.y && currentBlock.isSolid()) {
+                        if (this.craterType != CraterType.NORMAL && j < this.y && currentBlock.isCollisionShapeFullBlock(this.level, blockPos)) {
                             if ((double) j > h + distanceFrom * 0.02) {
                                 this.putter.put(this.level, blockPos, filler);
                             }
@@ -405,7 +406,7 @@ public final class MeteoritePlacer {
     }
 
     private void placeCraterLake() {
-        int maxY = this.level.getSeaLevel() - 1;
+        int maxY = this.level.getLevel().getSeaLevel() - 1;
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         for (int currentX = this.boundingBox.minX(); currentX <= this.boundingBox.maxX(); ++currentX) {

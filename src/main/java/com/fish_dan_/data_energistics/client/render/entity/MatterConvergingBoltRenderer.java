@@ -20,6 +20,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -86,7 +87,7 @@ public class MatterConvergingBoltRenderer extends EntityRenderer<MatterConvergin
                 for (int face = -1; face < MODEL_FACES.length; face++) {
                     // Match ItemRenderer's seed and include both culled and unculled item faces.
                     random.setSeed(42L);
-                    for (BakedQuad quad : pass.getQuads(null, face < 0 ? null : MODEL_FACES[face], random)) {
+                    for (BakedQuad quad : pass.getQuads(null, face < 0 ? null : MODEL_FACES[face], random, ModelData.EMPTY, null)) {
                         int[] vertices = quad.getVertices();
                         int stride = vertices.length / 4;
                         for (int vertex = 0; vertex < 4; vertex++) {

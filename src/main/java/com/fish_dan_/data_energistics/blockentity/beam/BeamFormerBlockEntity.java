@@ -22,6 +22,7 @@ import appeng.blockentity.grid.AENetworkedBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -178,7 +179,7 @@ public final class BeamFormerBlockEntity extends AENetworkedBlockEntity implemen
     @Override
     public int beamColor() {
         BlockPos back = this.worldPosition.relative(beamFacing().getOpposite());
-        if (this.level != null && this.level.hasChunkAt(back) &&
+        if (this.level != null && this.level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(back.getX()), SectionPos.blockToSectionCoord(back.getZ())) &&
                 this.level.getBlockEntity(back) instanceof IColorableBlockEntity colorable) {
             AEColor color = colorable.getColor();
             return color == AEColor.TRANSPARENT ? -1 : color.blackVariant;

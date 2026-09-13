@@ -83,7 +83,8 @@ apply from: "$rootDir/gradle/scripts/spotless.gradle"
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
-    options.compilerArgs << "-Xlint:-removal"
+    options.compilerArgs << "-Xlint:removal"
+    options.compilerArgs << "-Xlint:deprecation"
 }
 
 // GameTests run through NeoForge's dedicated launcher; no ordinary JVM test suite is retained.

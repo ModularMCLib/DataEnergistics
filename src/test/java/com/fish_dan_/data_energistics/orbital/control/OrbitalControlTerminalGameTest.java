@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
@@ -70,7 +71,7 @@ public final class OrbitalControlTerminalGameTest {
         var encoded = OrbitalControlTerminalSnapshot.CODEC.encodeStart(JsonOps.INSTANCE, snapshot).getOrThrow();
         helper.assertValueEqual(OrbitalControlTerminalSnapshot.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow(), snapshot,
                 "LDLib menu metadata must round-trip through its typed codec");
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), level.registryAccess());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), level.registryAccess(), ConnectionType.NEOFORGE);
         try {
             OrbitalControlTerminalSnapshot.STREAM_CODEC.encode(buffer, snapshot);
             helper.assertValueEqual(OrbitalControlTerminalSnapshot.STREAM_CODEC.decode(buffer), snapshot, "Menu wire metadata must round-trip");
@@ -160,7 +161,7 @@ public final class OrbitalControlTerminalGameTest {
         StellarErasureDeviceSavedData.get(level.getServer()).createForOwner(level.getServer(), player.getUUID());
         var weapon = OrbitalControlTerminalSnapshot.capture(level.getServer(), player.getUUID()).selectedWeapon().orElseThrow();
         var hud = new OrbitalControlHudSnapshotPayload(42L, true, new OrbitalHudSnapshot(weapon));
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), level.registryAccess());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), level.registryAccess(), ConnectionType.NEOFORGE);
         try {
             OrbitalControlHudSnapshotPayload.STREAM_CODEC.encode(buffer, hud);
             helper.assertValueEqual(OrbitalControlHudSnapshotPayload.STREAM_CODEC.decode(buffer), hud,

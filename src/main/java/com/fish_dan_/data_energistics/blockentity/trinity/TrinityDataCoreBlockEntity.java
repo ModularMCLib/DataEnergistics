@@ -185,6 +185,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
      */
     private static final MultiBlockAutoBuild AUTO_BUILD = new TransactionalMultiBlockAutoBuild();
 
+    @Getter
     private UUID storageId = UUID.randomUUID();
     @Getter
     private UUID hostId = UUID.randomUUID();
@@ -251,6 +252,12 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private boolean structureRecheckInProgress;
     private final CompartmentHostState compartmentHostState = new CompartmentHostState();
     private final JsonMultiBlockCompartmentBinder compartmentBinder = new JsonDeclaredCompartmentBinder();
+    /**
+     * -- GETTER --
+     *
+     * @return crafting runtime used by AE2 CraftingService mixins
+     */
+    @Getter
     private final TrinityDataCoreCraftingRuntime craftingRuntime = new TrinityDataCoreCraftingRuntime(this);
     @Nullable
     private TrinityInformationExchangeLease accessLease;
@@ -1002,17 +1009,17 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         int minX = pattern.getMinX();
         int minY = pattern.getMinY();
         int expandedZ = pattern.getMinZ();
-        for (int unit = 0; unit < pattern.aisleRepetitions.length; unit++) {
-            int minimum = pattern.aisleRepetitions[unit][0];
-            int maximum = pattern.aisleRepetitions[unit][1];
+        for (var unit : pattern.getLayout().units()) {
+            int minimum = unit.repeats().min();
+            int maximum = unit.repeats().max();
             int repetitions = minimum == maximum ? minimum : repeatCount;
             if (repetitions < minimum || repetitions > maximum) {
                 throw new IllegalArgumentException("Requested repetition " + repeatCount + " is outside [" + minimum +
-                        ", " + maximum + "] for Trinity pattern unit " + unit);
+                        ", " + maximum + "] for Trinity pattern unit " + unit.index());
             }
             for (int repeat = 0; repeat < repetitions; repeat++) {
-                for (int inner = 0; inner < pattern.unitDepths[unit]; inner++) {
-                    int patternZ = pattern.unitStarts[unit] + inner;
+                for (int inner = 0; inner < unit.depth(); inner++) {
+                    int patternZ = unit.sourceStart() + inner;
                     for (int y = 0; y < pattern.getThumbLength(); y++) {
                         for (int x = 0; x < pattern.getPalmLength(); x++) {
                             TraceabilityPredicate predicate = pattern.getPredicate(patternZ, y, x);
@@ -1060,10 +1067,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             return UnavailableCompartmentStorage.INSTANCE;
         }
         return compartmentHost$outputStorage(mainDefinitionKey().structureName());
-    }
-
-    public UUID getStorageId() {
-        return this.storageId;
     }
 
     public TrinityDataCoreStorageProfile storageProfile() {
@@ -1476,13 +1479,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
      */
     public List<TrinityDataCoreVirtualCpu> getCpuPartitions() {
         return this.craftingRuntime.publishedCpus();
-    }
-
-    /**
-     * @return crafting runtime used by AE2 CraftingService mixins
-     */
-    public TrinityDataCoreCraftingRuntime getCraftingRuntime() {
-        return this.craftingRuntime;
     }
 
     @Override
@@ -3816,7 +3812,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         }
 
         @Override
-        public BlockEntity getBlockEntity(BlockPos pos) {
+        public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
             return this.level.getBlockEntity(pos);
         }
 

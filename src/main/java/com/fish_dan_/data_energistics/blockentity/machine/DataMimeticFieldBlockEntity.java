@@ -92,6 +92,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -1189,7 +1190,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
             livingEntity.setPos(Vec3.atCenterOf(this.worldPosition));
             livingEntity.setSilent(true);
             if (livingEntity instanceof Mob mob) {
-                mob.finalizeSpawn(
+                EventHooks.finalizeMobSpawn(mob,
                         serverLevel,
                         serverLevel.getCurrentDifficultyAt(this.worldPosition),
                         MobSpawnType.COMMAND,

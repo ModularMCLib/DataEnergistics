@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.integration.viewer.jei.ingredient;
 
 import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIngredientViewer;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
-import com.fish_dan_.data_energistics.mixin.viewer.jei.BookmarkOverlayAccessor;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.integration.xei.jei.JEIUIEvents;
@@ -76,9 +75,8 @@ public final class CraftingPlanJeiIngredientViewer implements CraftingPlanIngred
     }
 
     private static <T> void favorite(IJeiRuntime runtime, JeiGenericStackIngredientResolver.ResolvedIngredient<T> ingredient) {
-        var bookmarks = ((BookmarkOverlayAccessor) runtime.getBookmarkOverlay()).data_energistics$getBookmarkList();
         runtime.getIngredientManager().createTypedIngredient(ingredient.type(), ingredient.ingredient(), true)
-                .ifPresent(bookmarks::addIngredientBookmark);
+                .ifPresent(runtime.getBookmarkManager()::add);
     }
 
     private static <T> void show(IJeiRuntime runtime, JeiGenericStackIngredientResolver.ResolvedIngredient<T> ingredient,

@@ -370,7 +370,7 @@ public class DigitalStorageDepotBlockItem extends BlockItem {
             return true;
         }
 
-        if (state.liquid() && state.getFluidState().isSource() && FluidStack.isSameFluidSameComponents(expectedFluid, new FluidStack(state.getFluidState().getType(), expectedFluid.getAmount()))) {
+        if (state.getFluidState().isSource() && state.getBlock() == state.getFluidState().createLegacyBlock().getBlock() && FluidStack.isSameFluidSameComponents(expectedFluid, new FluidStack(state.getFluidState().getType(), expectedFluid.getAmount()))) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             playPickupFeedback(level, player, pos, expectedFluid);
             return true;

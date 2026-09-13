@@ -11,6 +11,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import io.netty.buffer.Unpooled;
@@ -58,7 +59,7 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
         List<CraftingPlanGraphRecord> group = new ObjectArrayList<>();
         int size = 0;
         int total = 0;
-        RegistryFriendlyByteBuf scratch = new RegistryFriendlyByteBuf(Unpooled.buffer(256, MAX_BATCH_BYTES), registries);
+        RegistryFriendlyByteBuf scratch = new RegistryFriendlyByteBuf(Unpooled.buffer(256, MAX_BATCH_BYTES), registries, ConnectionType.OTHER);
         try {
             for (CraftingPlanGraphRecord record : all) {
                 scratch.clear();
@@ -127,7 +128,7 @@ public record CraftingPlanGraphPayload(int containerId, UUID sessionId, long rev
         if (count <= 0 || count > RECORDS_PER_BATCH || count > totalRecords || bytes < count || bytes > MAX_BATCH_BYTES || bytes > totalBytes || bytes > buffer.readableBytes()) {
             throw new IllegalArgumentException("Invalid graph batch body length");
         }
-        RegistryFriendlyByteBuf body = new RegistryFriendlyByteBuf(buffer.readSlice(bytes), buffer.registryAccess());
+        RegistryFriendlyByteBuf body = new RegistryFriendlyByteBuf(buffer.readSlice(bytes), buffer.registryAccess(), buffer.getConnectionType());
         List<CraftingPlanGraphRecord> records = new ObjectArrayList<>(count);
         for (int record = 0; record < count; record++) records.add(CraftingPlanGraphRecordCodec.read(body));
         if (body.isReadable()) throw new IllegalArgumentException("Trailing graph record bytes");

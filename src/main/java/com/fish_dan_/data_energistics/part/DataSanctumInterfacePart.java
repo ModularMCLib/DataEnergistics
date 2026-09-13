@@ -50,6 +50,7 @@ import appeng.util.SettingsFrom;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -440,7 +441,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         int keysScanned = 0;
         for (Direction side : activePullSides) {
             BlockPos targetPos = getInterfaceBlockPos().relative(side);
-            if (!serverLevel.hasChunkAt(targetPos)) {
+            if (!serverLevel.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(targetPos.getX()), SectionPos.blockToSectionCoord(targetPos.getZ()))) {
                 continue;
             }
 

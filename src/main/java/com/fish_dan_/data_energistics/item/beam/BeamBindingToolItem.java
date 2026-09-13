@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -53,7 +54,7 @@ public final class BeamBindingToolItem extends Item {
         if (!selected.dimension().equals(level.dimension())) {
             return fail(player, "wrong_dimension");
         }
-        if (!level.hasChunkAt(selected.pos())) {
+        if (!level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(selected.pos().getX()), SectionPos.blockToSectionCoord(selected.pos().getZ()))) {
             return fail(player, "unloaded");
         }
         if (!(level.getBlockEntity(selected.pos()) instanceof BeamEndpoint source) ||

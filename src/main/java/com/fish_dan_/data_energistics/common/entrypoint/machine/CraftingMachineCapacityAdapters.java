@@ -91,7 +91,7 @@ public final class CraftingMachineCapacityAdapters {
                 return null;
             }
             long remaining = resolved.get().remainingLogicalCrafts();
-            return new Observation(registration.machineScope(), Math.min(remaining, requestedCrafts));
+            return new Observation(registration.scope(), Math.min(remaining, requestedCrafts));
         } catch (RuntimeException | LinkageError exception) {
             Data_Energistics.LOGGER.error(
                     "Crafting machine capacity adapter {} failed for type {} at {} {} side {} and pattern {}; treating the target as full",
@@ -102,7 +102,7 @@ public final class CraftingMachineCapacityAdapters {
                     inputSide,
                     patternDetails.getDefinition(),
                     exception);
-            return new Observation(registration.machineScope(), 0L);
+            return new Observation(registration.scope(), 0L);
         }
     }
 

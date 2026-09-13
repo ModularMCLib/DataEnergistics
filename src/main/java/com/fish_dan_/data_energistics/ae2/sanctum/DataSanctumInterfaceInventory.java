@@ -27,7 +27,6 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
 
     private final IntSupplier capacityCardCountSupplier;
     private final boolean[] unlimitedSlots;
-    private final long[] finiteAmounts;
     private final ConnectorPolicy[] slotPolicies;
 
     public DataSanctumInterfaceInventory(Set<AEKeyType> supportedTypes,
@@ -39,7 +38,6 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         super(supportedTypes, slotFilter, mode, size, listener, true);
         this.capacityCardCountSupplier = capacityCardCountSupplier;
         this.unlimitedSlots = new boolean[size];
-        this.finiteAmounts = new long[size];
         this.slotPolicies = new ConnectorPolicy[size];
         Arrays.fill(this.slotPolicies, ConnectorPolicy.ROUND_ROBIN);
     }
@@ -118,10 +116,7 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
             if (getMode() == Mode.CONFIG_STACKS) {
                 if (stack == null || previous == null || !previous.what().equals(stack.what())) {
                     unlimitedSlots[slot] = false;
-                    finiteAmounts[slot] = 0;
                     slotPolicies[slot] = ConnectorPolicy.ROUND_ROBIN;
-                } else if (!unlimitedSlots[slot]) {
-                    finiteAmounts[slot] = stack.amount();
                 }
             }
             this.stacks[slot] = stack;
@@ -164,17 +159,13 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
                 this.capacityCardCountSupplier.getAsInt()));
     }
 
-    private boolean isSlotUnlocked(int slot) {
+    public boolean isSlotUnlocked(int slot) {
         int pages = DataSanctumInterfaceConstants.BASE_PAGE_COUNT + getCapacityCardCount() * DataSanctumInterfaceConstants.PAGES_PER_CAPACITY_CARD;
         return slot < pages * DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     }
 
     public boolean isUnlimitedSlot(int slot) {
         return getMode() == Mode.CONFIG_STACKS && unlimitedSlots[slot];
-    }
-
-    public long getFiniteAmount(int slot) {
-        return Math.max(1L, finiteAmounts[slot]);
     }
 
     public void setUnlimitedSlot(int slot, boolean enabled) {
@@ -184,13 +175,6 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         GenericStack current = this.stacks[slot];
         if (current == null || unlimitedSlots[slot] == enabled) {
             return;
-        }
-        if (enabled) {
-            finiteAmounts[slot] = current.amount();
-            this.stacks[slot] = new GenericStack(current.what(), Long.MAX_VALUE);
-        } else {
-            long amount = Math.max(1L, finiteAmounts[slot]);
-            this.stacks[slot] = new GenericStack(current.what(), amount);
         }
         unlimitedSlots[slot] = enabled;
         onChange();
@@ -209,6 +193,13 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
     }
 
     @Override
+    public void clear() {
+        Arrays.fill(unlimitedSlots, false);
+        Arrays.fill(slotPolicies, ConnectorPolicy.ROUND_ROBIN);
+        super.clear();
+    }
+
+    @Override
     public void writeToChildTag(CompoundTag tag, String name, HolderLookup.Provider registries) {
         super.writeToChildTag(tag, name, registries);
         if (getMode() != Mode.CONFIG_STACKS) {
@@ -222,7 +213,6 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
             }
         }
         flags.putLongArray("enabled", enabled);
-        flags.putLongArray("finite_amounts", finiteAmounts);
         int[] policies = new int[size()];
         for (int slot = 0; slot < size(); slot++) {
             policies[slot] = slotPolicies[slot].ordinal();
@@ -239,18 +229,12 @@ public class DataSanctumInterfaceInventory extends ConfigInventory {
         }
         CompoundTag flags = tag.getCompound(name + "_unlimited");
         long[] enabled = flags.getLongArray("enabled");
-        long[] savedFinite = flags.getLongArray("finite_amounts");
         int[] savedPolicies = flags.getIntArray("policies");
         Arrays.fill(unlimitedSlots, false);
-        Arrays.fill(finiteAmounts, 0L);
         Arrays.fill(slotPolicies, ConnectorPolicy.ROUND_ROBIN);
         for (int slot = 0; slot < size(); slot++) {
             if (slot / Long.SIZE < enabled.length && (enabled[slot / Long.SIZE] & (1L << (slot % Long.SIZE))) != 0 && this.stacks[slot] != null) {
                 unlimitedSlots[slot] = true;
-                finiteAmounts[slot] = slot < savedFinite.length ? savedFinite[slot] : 1L;
-                this.stacks[slot] = new GenericStack(this.stacks[slot].what(), Long.MAX_VALUE);
-            } else if (this.stacks[slot] != null) {
-                finiteAmounts[slot] = this.stacks[slot].amount();
             }
             if (slot < savedPolicies.length && savedPolicies[slot] >= 0 && savedPolicies[slot] < ConnectorPolicy.values().length) {
                 slotPolicies[slot] = ConnectorPolicy.values()[savedPolicies[slot]];

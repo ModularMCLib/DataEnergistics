@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.ae2.sanctum;
 
+import com.fish_dan_.data_energistics.ae2.sanctum.inventory.InterfaceInventoryAccess;
+
+import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.orientation.RelativeSide;
 import appeng.helpers.InterfaceLogicHost;
 
@@ -15,6 +18,11 @@ import java.util.Set;
 public interface DataSanctumLargeInterfaceHost extends InterfaceLogicHost {
 
     DataSanctumReturnInventory getReturnInventory();
+
+    /** Server-thread capability view: insertion enters the return bar; extraction reads stock or a live AE mapping. */
+    default GenericInternalInventory getExternalInventory() {
+        return new InterfaceInventoryAccess(getReturnInventory(), getInterfaceLogic().getStorage());
+    }
 
     int getInstalledCapacityCardCount();
 

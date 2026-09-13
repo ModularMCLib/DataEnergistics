@@ -39,6 +39,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     private ConnectorMode mode = ConnectorMode.INPUT;
     private int syncedSlots = DataSanctumInterfaceConstants.BASE_PAGE_COUNT * DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     private int linkCursor;
+    private final int[] routeCursors = new int[DataSanctumInterfaceConstants.LOGIC_SLOT_COUNT];
     private int[] sourceCursors = new int[0];
     private @Nullable GenericStack pendingReturn;
 
@@ -113,6 +114,15 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         return sourceCursors[linkIndex];
     }
 
+    int routeCursor(int slot) {
+        return routeCursors[slot];
+    }
+
+    void advanceRoute(int slot, int next) {
+        routeCursors[slot] = next;
+        host.saveChanges();
+    }
+
     boolean isActive() {
         return mainNode.isActive();
     }
@@ -158,6 +168,7 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         CompoundTag state = new CompoundTag();
         state.putString("mode", mode.name());
         state.putInt("link_cursor", linkCursor);
+        state.putIntArray("route_cursors", routeCursors);
         state.put("pending_return", GenericStack.writeTag(registries, pendingReturn));
         ListTag targets = new ListTag();
         for (int index = 0; index < links.size(); index++) {
@@ -176,6 +187,10 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
 
     public void read(CompoundTag root, HolderLookup.Provider registries) {
         CompoundTag state = root.getCompound(NBT_KEY);
+        int[] savedRouteCursors = state.getIntArray("route_cursors");
+        for (int slot = 0; slot < routeCursors.length; slot++) {
+            routeCursors[slot] = slot < savedRouteCursors.length ? Math.max(0, savedRouteCursors[slot]) : 0;
+        }
         mode = state.contains("mode") ? ConnectorMode.valueOf(state.getString("mode")) : ConnectorMode.INPUT;
         var restored = new ArrayList<ConnectorLink>();
         ListTag targets = state.getList("targets", Tag.TAG_COMPOUND);

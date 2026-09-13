@@ -257,7 +257,7 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 AECapabilities.GENERIC_INTERNAL_INV,
                 DEBlockEntities.DATA_SANCTUM_INTERFACE_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getReturnInventory());
+                (blockEntity, context) -> blockEntity.getExternalInventory());
         event.registerBlockEntity(
                 AECapabilities.GENERIC_INTERNAL_INV,
                 DEBlockEntities.ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY.get(),
@@ -350,7 +350,7 @@ final class CommonCapabilityRegistrar {
     static void registerPartCapabilities(RegisterPartCapabilitiesEvent event) {
         event.register(
                 AECapabilities.GENERIC_INTERNAL_INV,
-                (part, context) -> part.getReturnInventory(),
+                (part, context) -> part.getExternalInventory(),
                 DataSanctumInterfacePart.class);
         event.register(
                 AECapabilities.GENERIC_INTERNAL_INV,

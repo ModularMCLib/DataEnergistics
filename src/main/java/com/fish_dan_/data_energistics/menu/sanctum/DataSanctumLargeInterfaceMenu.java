@@ -4,17 +4,20 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.Settings;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.util.IConfigManager;
+import appeng.helpers.InventoryAction;
 import appeng.helpers.externalstorage.GenericStackInv;
 import appeng.menu.SlotSemantic;
 import appeng.menu.SlotSemantics;
 import appeng.menu.guisync.GuiSync;
-import appeng.menu.implementations.SetStockAmountMenu;
 import appeng.menu.implementations.UpgradeableMenu;
 import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.FakeSlot;
@@ -27,6 +30,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -42,12 +46,13 @@ import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.regex.Pattern;
 
 public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLargeInterfaceHost> {
 
-    public static final String ACTION_OPEN_SET_AMOUNT = "setAmount";
+    public static final String ACTION_CONFIGURE_SLOT = "configure_slot";
     public static final String ACTION_SET_PAGE = "set_page";
     public static final String ACTION_SET_ACTIVE_PULL_SIDE = "set_active_pull_side";
     public static final int CONFIG_SLOT_COUNT = DataSanctumInterfaceConstants.CONFIG_SLOTS_PER_PAGE;
@@ -106,12 +111,19 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     public int totalPages = DataSanctumInterfaceConstants.BASE_PAGE_COUNT;
     @GuiSync(862)
     public int activePullSidesMask;
+    @GuiSync(863)
+    public int unlimitedSlotsMask;
+    @GuiSync(864)
+    public int prioritySlotsMask;
+
+    public record SlotConfiguration(PageSlotTarget target, String expectedKey, String amount,
+                                    Boolean unlimited, ConnectorPolicy policy) {}
 
     private List<Slot> configSlots;
 
     public DataSanctumLargeInterfaceMenu(int id, Inventory playerInventory, DataSanctumLargeInterfaceHost host) {
         super(DEMenus.DATA_SANCTUM_LARGE_INTERFACE.get(), id, playerInventory, host);
-        registerClientAction(ACTION_OPEN_SET_AMOUNT, PageSlotTarget.class, this::openSetAmountMenu);
+        registerClientAction(ACTION_CONFIGURE_SLOT, SlotConfiguration.class, this::applySlotConfiguration);
         registerClientAction(ACTION_SET_PAGE, Integer.class, this::setPage);
         registerClientAction(ACTION_SET_ACTIVE_PULL_SIDE, String.class, this::setActivePullSide);
     }
@@ -122,15 +134,15 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         var returnInventory = this.getHost().getReturnInventory();
         for (int i = 0; i < STOCK_SLOT_COUNT; i++) {
             int slotOnPage = i;
-            this.addSlot(new AppEngSlot(new PagedMenuInventory(storage, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage)), 0), SlotSemantics.STORAGE);
+            this.addSlot(new AppEngSlot(new PagedMenuInventory(storage, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage), this::isClientSide), 0), SlotSemantics.STORAGE);
         }
         for (int i = 0; i < CONFIG_SLOT_COUNT; i++) {
             int slotOnPage = i;
-            this.addSlot(new AppEngSlot(new PagedMenuInventory(returnInventory, () -> DataSanctumInterfaceConstants.returnSlotIndex(this.pageIndex, slotOnPage)), 0), RETURN_ROW_1);
+            this.addSlot(new AppEngSlot(new PagedMenuInventory(returnInventory, () -> DataSanctumInterfaceConstants.returnSlotIndex(this.pageIndex, slotOnPage), this::isClientSide), 0), RETURN_ROW_1);
         }
         for (int i = CONFIG_SLOT_COUNT; i < RETURN_SLOT_COUNT; i++) {
             int slotOnPage = i;
-            this.addSlot(new AppEngSlot(new PagedMenuInventory(returnInventory, () -> DataSanctumInterfaceConstants.returnSlotIndex(this.pageIndex, slotOnPage)), 0), RETURN_ROW_2);
+            this.addSlot(new AppEngSlot(new PagedMenuInventory(returnInventory, () -> DataSanctumInterfaceConstants.returnSlotIndex(this.pageIndex, slotOnPage), this::isClientSide), 0), RETURN_ROW_2);
         }
     }
 
@@ -140,7 +152,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         var config = this.getHost().getInterfaceLogic().getConfig();
         for (int i = 0; i < CONFIG_SLOT_COUNT; i++) {
             int slotOnPage = i;
-            this.configSlots.add(this.addSlot(new PagedFakeSlot(new PagedMenuInventory(config, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage))), SlotSemantics.CONFIG));
+            this.configSlots.add(this.addSlot(new PagedFakeSlot(new PagedMenuInventory(config, () -> DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage), this::isClientSide)), SlotSemantics.CONFIG));
         }
     }
 
@@ -163,6 +175,14 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             this.totalPages = this.getHost().getUnlockedPageCount();
             this.pageIndex = clampPage(this.pageIndex);
             this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
+            this.unlimitedSlotsMask = 0;
+            this.prioritySlotsMask = 0;
+            var config = (DataSanctumInterfaceInventory) getHost().getConfig();
+            for (int i = 0; i < CONFIG_SLOT_COUNT; i++) {
+                int slot = DataSanctumInterfaceConstants.stockSlotIndex(pageIndex, i);
+                if (config.isUnlimitedSlot(slot)) this.unlimitedSlotsMask |= 1 << i;
+                if (config.getSlotPolicy(slot) == ConnectorPolicy.PRIORITY) this.prioritySlotsMask |= 1 << i;
+            }
         }
 
         super.broadcastChanges();
@@ -176,8 +196,23 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         if (slotOnPage < 0 || slotOnPage >= CONFIG_SLOT_COUNT || this.getHost() == null) {
             return false;
         }
-        int slot = DataSanctumInterfaceConstants.stockSlotIndex(this.pageIndex, slotOnPage);
-        return this.getHost().getConfig() instanceof DataSanctumInterfaceInventory config && config.isUnlimitedSlot(slot);
+        return (unlimitedSlotsMask & (1 << slotOnPage)) != 0;
+    }
+
+    public ConnectorPolicy getSlotPolicy(int slotOnPage) {
+        return (prioritySlotsMask & (1 << slotOnPage)) != 0 ? ConnectorPolicy.PRIORITY : ConnectorPolicy.ROUND_ROBIN;
+    }
+
+    public void configureSlot(int page, int slot, AEKey key, long amount, boolean unlimited, ConnectorPolicy policy) {
+        var request = new SlotConfiguration(new PageSlotTarget(page, slot), key.toTag(registryAccess()).toString(),
+                Long.toString(amount), unlimited, policy);
+        if (isClientSide()) {
+            unlimitedSlotsMask = unlimited ? unlimitedSlotsMask | (1 << slot) : unlimitedSlotsMask & ~(1 << slot);
+            prioritySlotsMask = policy == ConnectorPolicy.PRIORITY ? prioritySlotsMask | (1 << slot) : prioritySlotsMask & ~(1 << slot);
+            sendClientAction(ACTION_CONFIGURE_SLOT, request);
+        } else {
+            applySlotConfiguration(request);
+        }
     }
 
     public void sendSetPage(int page) {
@@ -202,11 +237,73 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         sendClientAction(ACTION_SET_ACTIVE_PULL_SIDE, side.getName() + ":" + enabled);
     }
 
-    public void openSetAmountMenu(@Nullable PageSlotTarget target) {
-        if (isClientSide()) {
-            sendClientAction(ACTION_OPEN_SET_AMOUNT, target);
+    @Override
+    public void doAction(ServerPlayer player, InventoryAction action, int slotId, long id) {
+        if (slotId >= 0 && slotId < slots.size() && slots.get(slotId) instanceof AppEngSlot slot && !(slot instanceof FakeSlot) && slot.getInventory() instanceof PagedMenuInventory inventory) {
+            var backing = inventory.getDelegate();
+            int index = inventory.backingSlot();
+            var key = backing.getKey(index);
+            if (action == InventoryAction.FILL_ITEM || action == InventoryAction.FILL_ENTIRE_ITEM) {
+                if (key != null) handleFillingHeldItem((amount, mode) -> backing.extract(index, key, amount, mode),
+                        key, action == InventoryAction.FILL_ENTIRE_ITEM);
+                return;
+            }
+            if (action == InventoryAction.EMPTY_ITEM || action == InventoryAction.EMPTY_ENTIRE_ITEM) {
+                handleEmptyHeldItem((what, amount, mode) -> backing.insert(index, what, amount, mode),
+                        action == InventoryAction.EMPTY_ENTIRE_ITEM);
+                return;
+            }
+        }
+        super.doAction(player, action, slotId, id);
+        getHost().getInterfaceLogic().updateStorage();
+        broadcastChanges();
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (slotId < 0 || slotId >= slots.size() || !(slots.get(slotId) instanceof AppEngSlot slot) || slot instanceof FakeSlot || !(slot.getInventory() instanceof PagedMenuInventory inventory)) {
+            super.clicked(slotId, button, type, player);
             return;
         }
+        if (isClientSide()) return; // Server performs transfers; slot snapshots are display data only.
+        var backing = inventory.getDelegate();
+        int index = inventory.backingSlot();
+        var key = backing.getKey(index);
+        var carried = getCarried();
+        if (type == ClickType.PICKUP && !carried.isEmpty()) {
+            AEItemKey carriedKey = AEItemKey.of(carried);
+            if (key == null || key instanceof AEItemKey) {
+                long inserted = backing.insert(index, carriedKey, button == 1 ? 1 : carried.getCount(), Actionable.MODULATE);
+                carried.shrink((int) inserted); // A real cursor stack is bounded by Minecraft's stack size.
+                setCarried(carried);
+            } else if (button == 0) {
+                handleFillingHeldItem((amount, mode) -> backing.extract(index, key, amount, mode), key, false);
+            } else {
+                handleEmptyHeldItem((what, amount, mode) -> backing.insert(index, what, amount, mode), false);
+            }
+        } else if ((type == ClickType.PICKUP || type == ClickType.QUICK_MOVE) && key instanceof AEItemKey itemKey) {
+            long available = backing.getAmount(index);
+            long request = Math.min(itemKey.getMaxStackSize(), button == 1 ? available / 2 + available % 2 : available);
+            long extracted = backing.extract(index, key, request, Actionable.MODULATE);
+            var taken = itemKey.toStack((int) extracted);
+            if (type == ClickType.QUICK_MOVE) {
+                player.getInventory().add(taken);
+                if (!taken.isEmpty()) {
+                    // Player inventory was full; retain refused network returns as owned items.
+                    long restored = backing.insert(index, key, taken.getCount(), Actionable.MODULATE);
+                    taken.shrink((int) restored);
+                    if (!taken.isEmpty()) player.drop(taken, false);
+                }
+            } else {
+                setCarried(taken);
+            }
+        }
+        broadcastChanges();
+    }
+
+    private void applySlotConfiguration(@Nullable SlotConfiguration request) {
+        if (request == null || request.amount() == null || request.unlimited() == null || request.policy() == null) return;
+        PageSlotTarget target = request.target();
 
         if (target == null || target.pageIndex() == null || target.slotOnPage() == null) {
             Data_Energistics.LOGGER.warn(
@@ -253,7 +350,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             return;
         }
 
-        var config = getHost().getConfig();
+        var config = (DataSanctumInterfaceInventory) getHost().getConfig();
         int configSlot = DataSanctumInterfaceConstants.stockSlotIndex(serverPage, slotOnPage);
         if (configSlot < 0 || configSlot >= config.size()) {
             Data_Energistics.LOGGER.warn(
@@ -267,9 +364,29 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         }
 
         var stack = config.getStack(configSlot);
-        if (stack != null) {
-            SetStockAmountMenu.open((ServerPlayer) getPlayer(), getLocator(), configSlot, stack.what(), (int) stack.amount());
+        if (stack == null || !stack.what().toTag(registryAccess()).toString().equals(request.expectedKey())) return;
+        long amount;
+        try {
+            amount = Long.parseLong(request.amount());
+        } catch (NumberFormatException invalidAmount) {
+            Data_Energistics.LOGGER.warn("Rejected invalid interface stock amount at {}: {}", getHost().getInterfaceBlockPos(), request.amount());
+            return;
         }
+        if (amount < 0) return;
+        config.beginBatch();
+        try {
+            if (amount == 0) {
+                config.setStack(configSlot, null);
+            } else {
+                config.setStack(configSlot, new GenericStack(stack.what(), amount));
+                config.setUnlimitedSlot(configSlot, request.unlimited());
+                config.setSlotPolicy(configSlot, request.policy());
+            }
+        } finally {
+            config.endBatch();
+        }
+        getHost().getInterfaceLogic().updateStorage();
+        broadcastChanges();
     }
 
     private void setPage(Integer page) {
@@ -324,10 +441,13 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     private static final class PagedMenuInventory extends ConfigMenuInventory {
 
         private final IntSupplier backingSlotSupplier;
+        private final BooleanSupplier clientSide;
+        private ItemStack snapshot = ItemStack.EMPTY;
 
-        private PagedMenuInventory(GenericStackInv inv, IntSupplier backingSlotSupplier) {
+        private PagedMenuInventory(GenericStackInv inv, IntSupplier backingSlotSupplier, BooleanSupplier clientSide) {
             super(inv);
             this.backingSlotSupplier = backingSlotSupplier;
+            this.clientSide = clientSide;
         }
 
         private int backingSlot() {
@@ -351,12 +471,22 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
         @Override
         public ItemStack getStackInSlot(int slotIndex) {
-            return super.getStackInSlot(backingSlot());
+            return clientSide.getAsBoolean() ? snapshot : GenericStack.wrapInItemStack(getDelegate().getStack(backingSlot()));
+        }
+
+        @Override
+        public @Nullable GenericStack convertToSuitableStack(ItemStack stack) {
+            GenericStack wrapped = GenericStack.unwrapItemStack(stack);
+            return wrapped != null ? wrapped : super.convertToSuitableStack(stack);
         }
 
         @Override
         public void setItemDirect(int slotIndex, ItemStack stack) {
-            super.setItemDirect(backingSlot(), stack);
+            if (clientSide.getAsBoolean()) {
+                snapshot = stack.copy();
+            } else {
+                super.setItemDirect(backingSlot(), stack);
+            }
         }
     }
 

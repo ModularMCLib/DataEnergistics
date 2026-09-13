@@ -1,13 +1,16 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
+import com.fish_dan_.data_energistics.client.screen.sanctum.InterfaceSlotSettingsScreen;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
-import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu.PageSlotTarget;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
+import appeng.api.stacks.AmountFormat;
+import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
 import appeng.client.gui.implementations.UpgradeableScreen;
+import appeng.client.gui.me.common.StackSizeRenderer;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.IconButton;
 import appeng.client.gui.widgets.ServerSettingToggleButton;
@@ -15,6 +18,7 @@ import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.client.gui.widgets.ToggleButton;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
+import appeng.menu.slot.AppEngSlot;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -71,7 +75,7 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
             var button = new SetAmountButton(btn -> {
                 int index = amountButtons.indexOf(btn);
                 if (index >= 0 && index < this.menu.getConfigSlots().size()) {
-                    this.menu.openSetAmountMenu(new PageSlotTarget(this.menu.pageIndex, index));
+                    this.switchToScreen(new InterfaceSlotSettingsScreen(this, index));
                 }
             });
             button.setDisableBackground(true);
@@ -143,16 +147,21 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
         int configIndex = this.menu.getConfigSlots().indexOf(slot);
         boolean unlimited = configIndex >= 0 && this.menu.isUnlimitedConfigSlot(configIndex);
-        if (unlimited && !slot.getItem().isEmpty()) {
-            var item = slot.getItem();
-            int count = item.getCount();
-            item.setCount(1);
-            super.renderSlot(guiGraphics, slot);
-            item.setCount(count);
-            guiGraphics.drawString(this.font, "∞", slot.x + 9, slot.y + 8, 0xFFFFFFFF, true);
-            return;
+        var stack = GenericStack.unwrapItemStack(slot.getItem());
+        if (slot instanceof AppEngSlot aeSlot && stack != null) {
+            // Draw amounts after the model, instead of inside AE2's wrapped-item render hook.
+            aeSlot.setHideAmount(true);
         }
         super.renderSlot(guiGraphics, slot);
+        if (stack != null && (unlimited || stack.amount() > 0)) {
+            guiGraphics.flush();
+            guiGraphics.pose().pushPose();
+            // Restore vanilla's slot offset; the renderer adds 200 for labels, below tooltips and carried items.
+            guiGraphics.pose().translate(0, 0, 100);
+            String label = unlimited ? "∞" : stack.what().formatAmount(stack.amount(), AmountFormat.SLOT);
+            StackSizeRenderer.renderSizeLabel(guiGraphics, this.font, slot.x, slot.y, label, false);
+            guiGraphics.pose().popPose();
+        }
     }
 
     private static class SetAmountButton extends IconButton {

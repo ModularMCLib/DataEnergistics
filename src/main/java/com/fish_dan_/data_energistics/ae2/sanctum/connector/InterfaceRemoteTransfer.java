@@ -22,6 +22,8 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /** Bounded remote inventory transfers, independent of interface config markers and legacy adjacent pull settings. */
 final class InterfaceRemoteTransfer {
@@ -41,37 +43,53 @@ final class InterfaceRemoteTransfer {
             return;
         }
         IActionSource actionSource = state.actionSource();
-        int start = host.getInterfaceLogic().getConfig() instanceof DataSanctumInterfaceInventory config && config.getSlotPolicy(links.get(Math.floorMod(state.linkCursor(), links.size())).slot()) == ConnectorPolicy.PRIORITY ? 0 : Math.floorMod(state.linkCursor(), links.size());
-        int visited = Math.min(LINKS_PER_TICK, links.size());
-        for (int offset = 0; offset < visited; offset++) {
-            int linkIndex = (start + offset) % links.size();
-            var link = links.get(linkIndex);
-            if (link.slot() >= state.slotCount() || link.position().equals(host.getInterfaceBlockPos()) || !level.hasChunkAt(link.position())) {
-                continue;
-            }
-            var generic = level.getCapability(AECapabilities.GENERIC_INTERNAL_INV, link.position(), link.side());
-            var storage = generic == null ? externalStorage(level, host, link) : null;
-            // Pull before pushing so BOTH never immediately removes the inputs placed by this tick.
-            if (link.mode().supportsPull()) {
-                if (generic != null) {
-                    pullGeneric(host, state, linkIndex, generic, actionSource);
-                } else if (storage != null) {
-                    pullStorage(host, state, linkIndex, storage, actionSource);
+        var bySlot = new LinkedHashMap<Integer, List<Integer>>();
+        for (int index = 0; index < links.size(); index++) {
+            bySlot.computeIfAbsent(links.get(index).slot(), ignored -> new ArrayList<>()).add(index);
+        }
+        var groups = new ArrayList<>(bySlot.entrySet());
+        int groupStart = Math.floorMod(state.linkCursor(), groups.size());
+        int budget = LINKS_PER_TICK;
+        var config = (DataSanctumInterfaceInventory) host.getInterfaceLogic().getConfig();
+        for (int groupOffset = 0; groupOffset < groups.size() && budget > 0; groupOffset++) {
+            int groupIndex = (groupStart + groupOffset) % groups.size();
+            var group = groups.get(groupIndex);
+            var indices = group.getValue();
+            boolean priority = config.getSlotPolicy(group.getKey()) == ConnectorPolicy.PRIORITY;
+            int start = priority ? 0 : Math.floorMod(state.routeCursor(group.getKey()), indices.size());
+            state.advanceLink((groupIndex + 1) % groups.size());
+            for (int offset = 0; offset < indices.size() && budget > 0; offset++) {
+                budget--;
+                int localIndex = (start + offset) % indices.size();
+                int linkIndex = indices.get(localIndex);
+                var link = links.get(linkIndex);
+                if (link.slot() >= state.slotCount() || link.position().equals(host.getInterfaceBlockPos()) || !level.hasChunkAt(link.position())) {
+                    continue;
                 }
-                if (!state.flushReturn()) {
-                    visited = offset + 1;
-                    break;
+                var generic = level.getCapability(AECapabilities.GENERIC_INTERNAL_INV, link.position(), link.side());
+                var storage = generic == null ? externalStorage(level, host, link) : null;
+                boolean moved = false;
+                // Pull before pushing so BOTH never immediately removes the inputs placed by this tick.
+                if (link.mode().supportsPull()) {
+                    if (generic != null) {
+                        moved = pullGeneric(host, state, linkIndex, generic, actionSource);
+                    } else if (storage != null) {
+                        moved = pullStorage(host, state, linkIndex, storage, actionSource);
+                    }
+                    if (!state.flushReturn()) {
+                        return;
+                    }
                 }
-            }
-            if (link.mode().supportsInput()) {
-                push(host, state, link, generic, storage, actionSource);
-                if (!state.flushReturn()) {
-                    visited = offset + 1;
-                    break;
+                if (link.mode().supportsInput()) {
+                    moved |= push(host, state, link, generic, storage, actionSource);
+                    if (!state.flushReturn()) {
+                        return;
+                    }
                 }
+                state.advanceRoute(group.getKey(), (localIndex + 1) % indices.size());
+                if (moved) break;
             }
         }
-        state.advanceLink((start + visited) % links.size());
     }
 
     private static @Nullable MEStorage externalStorage(ServerLevel level, DataSanctumLargeInterfaceHost host,
@@ -90,21 +108,21 @@ final class InterfaceRemoteTransfer {
         return wrappers.isEmpty() ? null : new CompositeStorage(wrappers);
     }
 
-    private static void push(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, ConnectorLink link,
-                             @Nullable GenericInternalInventory generic, @Nullable MEStorage storage, IActionSource actionSource) {
+    private static boolean push(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, ConnectorLink link,
+                                @Nullable GenericInternalInventory generic, @Nullable MEStorage storage, IActionSource actionSource) {
         var source = host.getInterfaceLogic().getStorage();
         var stack = source.getStack(link.slot());
         if (stack == null || generic == null && storage == null) {
-            return;
+            return false;
         }
         long offered = Math.min(stack.amount(), AMOUNT_PER_TRANSFER);
         long accepted = generic != null ? insertGeneric(generic, stack.what(), offered, Actionable.SIMULATE) : storage.insert(stack.what(), offered, Actionable.SIMULATE, actionSource);
         if (accepted <= 0) {
-            return;
+            return false;
         }
         long extracted = source.extract(link.slot(), stack.what(), accepted, Actionable.MODULATE);
         if (extracted <= 0) {
-            return;
+            return false;
         }
         long inserted = generic != null ? insertGeneric(generic, stack.what(), extracted, Actionable.MODULATE) : storage.insert(stack.what(), extracted, Actionable.MODULATE, actionSource);
         long remainder = extracted - inserted;
@@ -112,6 +130,7 @@ final class InterfaceRemoteTransfer {
             // A refused remainder is still owned; retain it even if the source slot's capacity changed during transfer.
             state.receive(new GenericStack(stack.what(), remainder));
         }
+        return inserted > 0;
     }
 
     private static long insertGeneric(GenericInternalInventory inventory, AEKey key, long amount, Actionable mode) {
@@ -125,11 +144,12 @@ final class InterfaceRemoteTransfer {
         return inserted;
     }
 
-    private static void pullGeneric(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
-                                    GenericInternalInventory inventory, IActionSource actionSource) {
+    private static boolean pullGeneric(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
+                                       GenericInternalInventory inventory, IActionSource actionSource) {
         if (!inventory.canExtract() || inventory.size() == 0) {
-            return;
+            return false;
         }
+        boolean moved = false;
         int start = Math.floorMod(state.sourceCursor(linkIndex), inventory.size());
         int visited = Math.min(KEYS_PER_LINK, inventory.size());
         for (int offset = 0; offset < visited; offset++) {
@@ -143,23 +163,26 @@ final class InterfaceRemoteTransfer {
                 long extracted = inventory.extract(slot, key, amount, Actionable.MODULATE);
                 if (extracted > 0) {
                     state.receive(new GenericStack(key, extracted));
+                    moved = true;
                     visited = offset + 1;
                     break;
                 }
             }
         }
         state.advanceSource(linkIndex, (start + visited) % inventory.size());
+        return moved;
     }
 
-    private static void pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
-                                    MEStorage storage, IActionSource actionSource) {
+    private static boolean pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
+                                       MEStorage storage, IActionSource actionSource) {
         var keys = new ArrayList<AEKey>();
         for (var entry : storage.getAvailableStacks()) {
             keys.add(entry.getKey());
         }
         if (keys.isEmpty()) {
-            return;
+            return false;
         }
+        boolean moved = false;
         int start = Math.floorMod(state.sourceCursor(linkIndex), keys.size());
         int visited = Math.min(KEYS_PER_LINK, keys.size());
         for (int offset = 0; offset < visited; offset++) {
@@ -169,11 +192,13 @@ final class InterfaceRemoteTransfer {
                 long extracted = storage.extract(key, amount, Actionable.MODULATE, actionSource);
                 if (extracted > 0) {
                     state.receive(new GenericStack(key, extracted));
+                    moved = true;
                     visited = offset + 1;
                     break;
                 }
             }
         }
         state.advanceSource(linkIndex, (start + visited) % keys.size());
+        return moved;
     }
 }

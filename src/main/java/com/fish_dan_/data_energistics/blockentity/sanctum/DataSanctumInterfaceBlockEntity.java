@@ -2,10 +2,10 @@ package com.fish_dan_.data_energistics.blockentity.sanctum;
 
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumFluidPuller;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceConstants;
-import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumReturnInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
+import com.fish_dan_.data_energistics.ae2.sanctum.InterfaceStockLogic;
 import com.fish_dan_.data_energistics.ae2.sanctum.connector.InterfaceRemoteLinks;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
@@ -81,11 +81,10 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         }
     };
 
-    private final InterfaceLogic interfaceLogic = new InterfaceLogic(
+    private final InterfaceLogic interfaceLogic = new InterfaceStockLogic(
             this.getMainNode(),
             this,
-            DEBlocks.DATA_SANCTUM_INTERFACE.get().asItem(),
-            DataSanctumInterfaceConstants.LOGIC_SLOT_COUNT);
+            DEBlocks.DATA_SANCTUM_INTERFACE.get().asItem());
     private final DataSanctumReturnInventory returnInventory = new DataSanctumReturnInventory(
             this::onReturnInventoryChanged,
             this::getInstalledCapacityCardCount);
@@ -105,7 +104,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         this.getMainNode()
                 .setVisualRepresentation(DEBlocks.DATA_SANCTUM_INTERFACE.get())
                 .setIdlePowerUsage(0.0D);
-        installInterfaceInventories();
     }
 
     @Override
@@ -221,18 +219,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         return super.getSubInventory(id);
     }
 
-    private void installInterfaceInventories() {
-        var config = DataSanctumInterfaceInventory.config(
-                this.interfaceLogic::onConfigRowChanged,
-                this::getInstalledCapacityCardCount);
-        var storage = DataSanctumInterfaceInventory.storage(
-                this.interfaceLogic::isAllowedInStorageSlot,
-                this.interfaceLogic::onStorageChanged,
-                this::getInstalledCapacityCardCount);
-        this.interfaceLogic.config = config;
-        this.interfaceLogic.storage = storage;
-    }
-
     private void expandUpgradeSlots() {
         InterfaceLogicUpgradesAccessor accessor = (InterfaceLogicUpgradesAccessor) this.interfaceLogic;
         accessor.dataEnergistics$setUpgradesField(new FixedSizeMachineUpgradeInventory(
@@ -300,6 +286,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
             return;
         }
 
+        this.interfaceLogic.updateStorage();
         tryActivePull();
         injectReturnInventory();
         this.remoteLinks.tick();

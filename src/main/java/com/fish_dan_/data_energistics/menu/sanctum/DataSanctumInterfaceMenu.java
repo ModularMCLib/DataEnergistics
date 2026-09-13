@@ -18,7 +18,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataSanctumInterfaceMenu extends UpgradeableMenu<DataSanctumBlockEntity> {
@@ -54,7 +55,7 @@ public class DataSanctumInterfaceMenu extends UpgradeableMenu<DataSanctumBlockEn
 
     @Override
     protected void setupConfig() {
-        this.configSlots = new ArrayList<>(CONFIG_SLOT_COUNT);
+        this.configSlots = new ObjectArrayList<>(CONFIG_SLOT_COUNT);
         var config = this.getHost().getInterfaceLogic().getConfig().createMenuWrapper();
         for (int i = 0; i < Math.min(CONFIG_SLOT_COUNT, config.size()); i++) {
             this.configSlots.add(this.addSlot(new FakeSlot(config, i), SlotSemantics.CONFIG));

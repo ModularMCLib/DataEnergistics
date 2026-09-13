@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,8 +32,6 @@ final class InterfaceRemoteTransfer {
     /** Maximum number of registered targets inspected by one interface tick. */
     private static final int LINKS_PER_TICK = 32;
     private static final int KEYS_PER_LINK = 16;
-    /** Keeps one remote operation bounded while avoiding the old 4k/tick bottleneck. */
-    private static final long AMOUNT_PER_TRANSFER = 64_000;
 
     private InterfaceRemoteTransfer() {}
 
@@ -117,7 +116,9 @@ final class InterfaceRemoteTransfer {
         if (stack == null || generic == null && storage == null) {
             return false;
         }
-        long offered = Math.min(stack.amount(), AMOUNT_PER_TRANSFER);
+        // Do not impose an artificial batch size. The destination's simulated insert decides how much
+        // the container can accept, while the source slot remains the upper bound.
+        long offered = stack.amount();
         long accepted = generic != null ? insertGeneric(generic, stack.what(), offered, Actionable.SIMULATE) : storage.insert(stack.what(), offered, Actionable.SIMULATE, actionSource);
         if (accepted <= 0) {
             return false;
@@ -160,7 +161,7 @@ final class InterfaceRemoteTransfer {
             if (key == null) {
                 continue;
             }
-            long amount = host.getReturnInventory().insert(key, Math.min(AMOUNT_PER_TRANSFER, inventory.getAmount(slot)), Actionable.SIMULATE, actionSource);
+            long amount = host.getReturnInventory().insert(key, inventory.getAmount(slot), Actionable.SIMULATE, actionSource);
             if (amount > 0) {
                 long extracted = inventory.extract(slot, key, amount, Actionable.MODULATE);
                 if (extracted > 0) {
@@ -178,8 +179,10 @@ final class InterfaceRemoteTransfer {
     private static boolean pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
                                        MEStorage storage, IActionSource actionSource) {
         var keys = new ArrayList<AEKey>();
+        var amounts = new HashMap<AEKey, Long>();
         for (var entry : storage.getAvailableStacks()) {
             keys.add(entry.getKey());
+            amounts.put(entry.getKey(), entry.getLongValue());
         }
         if (keys.isEmpty()) {
             return false;
@@ -189,7 +192,8 @@ final class InterfaceRemoteTransfer {
         int visited = Math.min(KEYS_PER_LINK, keys.size());
         for (int offset = 0; offset < visited; offset++) {
             AEKey key = keys.get((start + offset) % keys.size());
-            long amount = host.getReturnInventory().insert(key, AMOUNT_PER_TRANSFER, Actionable.SIMULATE, actionSource);
+            long available = amounts.getOrDefault(key, 0L);
+            long amount = host.getReturnInventory().insert(key, available, Actionable.SIMULATE, actionSource);
             if (amount > 0) {
                 long extracted = storage.extract(key, amount, Actionable.MODULATE, actionSource);
                 if (extracted > 0) {

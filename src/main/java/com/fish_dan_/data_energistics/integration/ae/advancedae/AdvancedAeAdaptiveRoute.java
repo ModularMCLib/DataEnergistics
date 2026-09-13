@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorRoutes;
 
 import appeng.api.config.Actionable;
@@ -79,7 +80,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         }
 
         ObjectArrayList<FallbackTarget> candidates = new ObjectArrayList<>();
-        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(target)) {
+        for (AdaptiveProviderConnectorBinding binding : AdaptiveProviderConnectorRoutes.resolve(target, AdaptiveProviderConnectorMode.INPUT)) {
             BlockPos adjacentPos = binding.position();
             Direction adjacentFace = binding.side();
             ICraftingMachine craftingMachine = ICraftingMachine.of(level, adjacentPos, adjacentFace);

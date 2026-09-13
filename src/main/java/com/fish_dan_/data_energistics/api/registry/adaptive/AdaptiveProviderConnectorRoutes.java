@@ -25,4 +25,26 @@ public final class AdaptiveProviderConnectorRoutes {
         }
         return active;
     }
+
+    /** Returns only links assigned to the requested transfer direction. */
+    public static ObjectList<AdaptiveProviderConnectorBinding> resolve(
+                                                                       AdaptivePatternProviderDispatchTarget target,
+                                                                       AdaptiveProviderConnectorMode mode) {
+        List<AdaptiveProviderConnectorBinding> configured = target.connectorBindings();
+        if (!configured.isEmpty()) {
+            ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(configured.size());
+            for (AdaptiveProviderConnectorBinding binding : configured) {
+                if (binding.mode() == mode) {
+                    result.add(binding);
+                }
+            }
+            return result;
+        }
+        ObjectArrayList<AdaptiveProviderConnectorBinding> fallback = new ObjectArrayList<>(target.targetSides().size());
+        for (var side : target.targetSides()) {
+            fallback.add(new AdaptiveProviderConnectorBinding(
+                    target.providerPos().relative(side), side.getOpposite(), mode));
+        }
+        return fallback;
+    }
 }

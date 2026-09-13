@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorBinding;
+import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptiveProviderConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineScope;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
@@ -142,6 +143,9 @@ public final class PatternProviderBatching {
         var machineTargets = new ObjectArrayList<MachinePushTarget>();
         List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
         for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
+            if (binding.mode() != AdaptiveProviderConnectorMode.INPUT) {
+                continue;
+            }
             if (!patternDetails.supportsPushInputsToExternalInventory()) {
                 continue;
             }
@@ -335,6 +339,9 @@ public final class PatternProviderBatching {
         if (patternDetails.supportsPushInputsToExternalInventory()) {
             List<AdaptiveProviderConnectorBinding> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
             for (AdaptiveProviderConnectorBinding binding : connectorBindings) {
+                if (binding.mode() != AdaptiveProviderConnectorMode.INPUT) {
+                    continue;
+                }
                 PatternProviderTarget target = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
                 if (target == null) {
                     continue;

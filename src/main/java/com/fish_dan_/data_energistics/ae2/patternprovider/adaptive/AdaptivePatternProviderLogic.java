@@ -215,6 +215,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             CompoundTag targetTag = new CompoundTag();
             targetTag.putLong("pos", target.position().asLong());
             targetTag.putByte("side", (byte) target.side().get3DDataValue());
+            targetTag.putString("mode", target.mode().name());
             connectorTargetTags.add(targetTag);
         }
         tag.put(NBT_CONNECTOR_TARGETS, connectorTargetTags);
@@ -258,7 +259,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             int side = targetTag.getByte("side");
             if (side >= 0 && side < 6) {
                 this.connectorTargets.add(new ConnectorTarget(
-                        BlockPos.of(targetTag.getLong("pos")), Direction.from3DDataValue(side)));
+                        BlockPos.of(targetTag.getLong("pos")), Direction.from3DDataValue(side),
+                        readConnectorMode(targetTag, "mode", this.connectorMode)));
             }
         }
 
@@ -318,6 +320,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         data.writeCollection(this.connectorTargets, (buffer, target) -> {
             buffer.writeBlockPos(target.position());
             buffer.writeEnum(target.side());
+            buffer.writeEnum(target.mode());
         });
     }
 
@@ -325,7 +328,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     public boolean readConnectorVisualState(RegistryFriendlyByteBuf data) {
         AdaptiveProviderConnectorMode mode = data.readEnum(AdaptiveProviderConnectorMode.class);
         AdaptiveProviderConnectorPolicy policy = data.readEnum(AdaptiveProviderConnectorPolicy.class);
-        List<ConnectorTarget> targets = data.readList(buffer -> new ConnectorTarget(buffer.readBlockPos(), buffer.readEnum(Direction.class)));
+        List<ConnectorTarget> targets = data.readList(buffer -> new ConnectorTarget(
+                buffer.readBlockPos(), buffer.readEnum(Direction.class), buffer.readEnum(AdaptiveProviderConnectorMode.class)));
         boolean changed = this.connectorMode != mode || this.connectorPolicy != policy || !this.connectorTargets.equals(targets);
         this.connectorMode = mode;
         this.connectorPolicy = policy;
@@ -350,18 +354,23 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return !this.connectorTargets.isEmpty();
     }
 
+    private boolean hasInputConnectorTargets() {
+        return this.connectorTargets.stream().anyMatch(
+                target -> target.mode() == AdaptiveProviderConnectorMode.INPUT);
+    }
+
     public boolean bindConnectorTarget(BlockPos position, Direction side) {
-        ConnectorTarget candidate = new ConnectorTarget(position, side);
-        if (this.connectorTargets.contains(candidate)) {
+        if (this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side)) {
             return false;
         }
+        ConnectorTarget candidate = new ConnectorTarget(position, side, this.connectorMode);
         this.connectorTargets.add(candidate);
         onConnectorChanged();
         return true;
     }
 
     public boolean unbindConnectorTarget(BlockPos position, Direction side) {
-        boolean removed = this.connectorTargets.remove(new ConnectorTarget(position, side));
+        boolean removed = this.connectorTargets.removeIf(target -> target.position().equals(position) && target.side() == side);
         if (removed) {
             if (this.connectorTargets.isEmpty()) {
                 this.connectorCursor = 0;
@@ -377,7 +386,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     public boolean hasConnectorTarget(BlockPos position, Direction side) {
-        return this.connectorTargets.contains(new ConnectorTarget(position, side));
+        return this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side);
     }
 
     private static AdaptiveProviderConnectorMode readConnectorMode(
@@ -404,12 +413,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
     }
 
-    public record ConnectorTarget(BlockPos position, Direction side) {
-
-        public ConnectorTarget {
-            Objects.requireNonNull(position, "Connector target position");
-            Objects.requireNonNull(side, "Connector target side");
-        }
+    public record ConnectorTarget(BlockPos position, Direction side, AdaptiveProviderConnectorMode mode) {
     }
 
     /** Dismantled physical items carry escrow independently from copyable MemoryCard settings. */
@@ -1048,10 +1052,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     @Override
     public boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
-        if (this.connectorMode == AdaptiveProviderConnectorMode.PULL && !this.connectorTargets.isEmpty()) {
+        if (!this.connectorTargets.isEmpty() && !hasInputConnectorTargets()) {
             return false;
         }
-        if (this.connectorMode == AdaptiveProviderConnectorMode.INPUT && !this.connectorTargets.isEmpty() && !hasConnectorCapacity(patternDetails, inputHolder)) {
+        if (!this.connectorTargets.isEmpty() && hasInputConnectorTargets() && !hasConnectorCapacity(patternDetails, inputHolder)) {
             return false;
         }
         AdaptivePatternProviderRegistration registration = resolvedRegistration();
@@ -1079,6 +1083,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         boolean hasRegisteredCapacity = false;
         for (ConnectorTarget binding : this.connectorTargets) {
+            if (binding.mode() != AdaptiveProviderConnectorMode.INPUT) {
+                continue;
+            }
             CraftingMachineCapacityAdapters.Observation observation = CraftingMachineCapacityAdapters.capture(
                     level,
                     binding.position(),
@@ -1147,7 +1154,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     /** Pulls a bounded batch from linked generic inventories into the provider return inventory. */
     private boolean tickConnectorPull() {
-        if (this.connectorMode != AdaptiveProviderConnectorMode.PULL || this.connectorTargets.isEmpty()) {
+        if (this.connectorTargets.isEmpty() || this.connectorTargets.stream().noneMatch(
+                target -> target.mode() == AdaptiveProviderConnectorMode.PULL)) {
             return false;
         }
         Level currentLevel = this.host.getBlockEntity().getLevel();
@@ -1160,6 +1168,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         int start = this.connectorPolicy == AdaptiveProviderConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.connectorPullCursor, targetCount) : 0;
         for (int offset = 0; offset < targetCount; offset++) {
             ConnectorTarget binding = this.connectorTargets.get((start + offset) % targetCount);
+            if (binding.mode() != AdaptiveProviderConnectorMode.PULL) {
+                continue;
+            }
             if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {
                 break;
             }
@@ -1501,7 +1512,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     public List<AdaptiveProviderConnectorBinding> adaptiveConnectorBindings() {
         ObjectArrayList<AdaptiveProviderConnectorBinding> result = new ObjectArrayList<>(this.connectorTargets.size());
         for (ConnectorTarget target : this.connectorTargets) {
-            result.add(new AdaptiveProviderConnectorBinding(target.position(), target.side()));
+            result.add(new AdaptiveProviderConnectorBinding(target.position(), target.side(), target.mode()));
         }
         return ObjectLists.unmodifiable(result);
     }

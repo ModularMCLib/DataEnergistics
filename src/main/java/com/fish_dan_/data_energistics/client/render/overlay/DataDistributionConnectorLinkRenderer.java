@@ -28,6 +28,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
 import java.util.OptionalDouble;
+import java.util.List;
 
 /** Renders client-synchronized bindings while their connector is held in either hand. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
@@ -37,6 +38,7 @@ public final class DataDistributionConnectorLinkRenderer {
     private static final Color INPUT_OTHER = new Color(0.08F, 0.38F, 0.65F, 0.75F);
     private static final Color OUTPUT_CURRENT = new Color(0.85F, 0.35F, 1.0F, 1.0F);
     private static final Color OUTPUT_OTHER = new Color(0.42F, 0.16F, 0.62F, 0.75F);
+    private static final Color SOURCE = new Color(0.85F, 0.85F, 0.85F, 0.8F);
     private static final Color MISSING = new Color(1.0F, 0.2F, 0.2F, 0.85F);
     private static final Color UNLOADED = new Color(0.6F, 0.6F, 0.6F, 0.7F);
     private static final RenderType LINK_LINES = RenderType.create(
@@ -79,23 +81,21 @@ public final class DataDistributionConnectorLinkRenderer {
         PoseStack pose = event.getPoseStack();
         var buffers = minecraft.renderBuffers().bufferSource();
         VertexConsumer lines = buffers.getBuffer(LINK_LINES);
-        pose.pushPose();
+            pose.pushPose();
         try {
             pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
-            boolean inputMode = logic == null || logic.connectorMode() == AdaptiveProviderConnectorMode.INPUT;
-            Color current = inputMode ? INPUT_CURRENT : OUTPUT_CURRENT;
-            Color other = inputMode ? INPUT_OTHER : OUTPUT_OTHER;
-            Color sourceColor = logic != null ? current : level.isLoaded(provider) ? MISSING : UNLOADED;
+            List<AdaptivePatternProviderLogic.ConnectorTarget> targets = logic != null ? logic.connectorTargets() : List.of();
+            int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
+            Color sourceColor = logic == null ? level.isLoaded(provider) ? MISSING : UNLOADED
+                    : selected >= 0 ? currentColor(targets.get(selected).mode(), true) : SOURCE;
             LevelRenderer.renderLineBox(pose, lines, new AABB(source, source).inflate(0.15D),
                     sourceColor.red(), sourceColor.green(), sourceColor.blue(), sourceColor.alpha());
             if (logic == null) {
                 return;
             }
-            var targets = logic.connectorTargets();
-            int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
             for (int index = 0; index < targets.size(); index++) {
                 var target = targets.get(index);
-                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : index == selected ? current : other;
+                Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : currentColor(target.mode(), index == selected);
                 // Client capabilities may legitimately be absent for server-only inventories. The synchronized
                 // binding is authoritative; only loaded world geometry determines a missing marker here.
                 var face = ConnectorLinkGeometry.face(target.position().subtract(provider), target.side());
@@ -128,6 +128,13 @@ public final class DataDistributionConnectorLinkRenderer {
         vertices.addVertex(transform.pose(), (float) to.x, (float) to.y, (float) to.z)
                 .setColor(color.red(), color.green(), color.blue(), color.alpha())
                 .setNormal(transform, (float) normal.x, (float) normal.y, (float) normal.z);
+    }
+
+    private static Color currentColor(AdaptiveProviderConnectorMode mode, boolean selected) {
+        if (mode == AdaptiveProviderConnectorMode.INPUT) {
+            return selected ? INPUT_CURRENT : INPUT_OTHER;
+        }
+        return selected ? OUTPUT_CURRENT : OUTPUT_OTHER;
     }
 
     private record Color(float red, float green, float blue, float alpha) {}

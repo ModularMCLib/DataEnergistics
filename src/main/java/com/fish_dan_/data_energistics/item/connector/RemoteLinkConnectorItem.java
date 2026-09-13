@@ -19,6 +19,7 @@ import appeng.blockentity.networking.CableBusBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -367,7 +368,7 @@ public class RemoteLinkConnectorItem extends Item {
                                                Direction side, boolean feedback) {
         var data = getConnectorData(stack);
         var endpoint = resolveEndpoint(level, data);
-        if (endpoint == null || target.equals(data.getProviderPos()) || !level.hasChunkAt(target) || !hasTargetCapability(level, target, side)) {
+        if (endpoint == null || target.equals(data.getProviderPos()) || !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(target.getX()), SectionPos.blockToSectionCoord(target.getZ())) || !hasTargetCapability(level, target, side)) {
             if (feedback) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
             }
@@ -388,7 +389,8 @@ public class RemoteLinkConnectorItem extends Item {
     }
 
     public static @Nullable ConnectorEndpoint resolveEndpoint(Level level, RemoteLinkConnectorData data) {
-        if (!data.hasSelection() || data.providerSide() != -1 || !level.dimension().location().toString().equals(data.providerDimensionId()) || !level.hasChunkAt(data.getProviderPos())) {
+        if (!data.hasSelection() || data.providerSide() != -1 || !level.dimension().location().toString().equals(data.providerDimensionId()) ||
+                !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(data.getProviderPos().getX()), SectionPos.blockToSectionCoord(data.getProviderPos().getZ()))) {
             return null;
         }
         if (data.isInterface()) {

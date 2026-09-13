@@ -18,6 +18,7 @@ import appeng.helpers.patternprovider.PatternProviderTarget;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -159,7 +160,7 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
         for (ConnectorLink binding : ConnectorRouteTargets.resolve(context, ConnectorMode.PULL)) {
             BlockPos adjacentPos = binding.position();
             Direction adjacentFace = binding.side();
-            if (!level.hasChunkAt(adjacentPos) || context.isPatternProviderAttachment(level, adjacentPos, adjacentFace)) {
+            if (!level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(adjacentPos.getX()), SectionPos.blockToSectionCoord(adjacentPos.getZ())) || context.isPatternProviderAttachment(level, adjacentPos, adjacentFace)) {
                 continue;
             }
 

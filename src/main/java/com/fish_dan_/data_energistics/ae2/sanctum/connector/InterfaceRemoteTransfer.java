@@ -16,6 +16,7 @@ import appeng.api.storage.MEStorage;
 import appeng.me.storage.CompositeStorage;
 import appeng.parts.automation.StackWorldBehaviors;
 
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 
 import org.jspecify.annotations.Nullable;
@@ -63,7 +64,8 @@ final class InterfaceRemoteTransfer {
                 int localIndex = (start + offset) % indices.size();
                 int linkIndex = indices.get(localIndex);
                 var link = links.get(linkIndex);
-                if (link.slot() >= state.slotCount() || link.position().equals(host.getInterfaceBlockPos()) || !level.hasChunkAt(link.position())) {
+                if (link.slot() >= state.slotCount() || link.position().equals(host.getInterfaceBlockPos()) ||
+                        !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(link.position().getX()), SectionPos.blockToSectionCoord(link.position().getZ()))) {
                     continue;
                 }
                 var generic = level.getCapability(AECapabilities.GENERIC_INTERNAL_INV, link.position(), link.side());

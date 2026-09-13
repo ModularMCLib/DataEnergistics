@@ -70,7 +70,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
 
     private static final String RETURN_INVENTORY_TAG = "returnInv";
     private static final String ACTIVE_PULL_SIDES_TAG = "active_pull_sides";
-    private static final String UNLIMITED_ACTIVE_PULL_TAG = "unlimited_active_pull";
     private static final int ACTIVE_PULL_KEYS_PER_TICK = 32;
     private static final int ACTIVE_PULL_AMOUNT_PER_KEY = 4000;
     private static final int ACTIVE_PULL_FLUID_AMOUNT_PER_TICK = 4000;
@@ -96,7 +95,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
     private final InterfaceRemoteLinks remoteLinks = new InterfaceRemoteLinks(this, getMainNode(), actionSource, this::onRemoteLinksChanged);
     private final EnumSet<Direction> activePullSides = EnumSet.noneOf(Direction.class);
     private final EnumMap<Direction, Integer> activePullKeyCursors = new EnumMap<>(Direction.class);
-    private boolean unlimitedActivePull;
     private AdjacentBlockCapabilityCache<MEStorage> adjacentMeStorages;
     private AdjacentBlockCapabilityCache<GenericInternalInventory> adjacentGenericInventories;
     private AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
@@ -164,7 +162,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         this.returnInventory.writeToChildTag(data, RETURN_INVENTORY_TAG, registries);
         this.remoteLinks.write(data, registries);
         data.putInt(ACTIVE_PULL_SIDES_TAG, encodeSides(this.activePullSides));
-        data.putBoolean(UNLIMITED_ACTIVE_PULL_TAG, this.unlimitedActivePull);
     }
 
     @Override
@@ -174,7 +171,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         this.returnInventory.readFromChildTag(data, RETURN_INVENTORY_TAG, registries);
         this.remoteLinks.read(data, registries);
         decodeSides(data.getInt(ACTIVE_PULL_SIDES_TAG), this.activePullSides);
-        this.unlimitedActivePull = data.getBoolean(UNLIMITED_ACTIVE_PULL_TAG);
     }
 
     @Override
@@ -308,20 +304,6 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
         tryActivePull();
         injectReturnInventory();
         this.remoteLinks.tick();
-    }
-
-    @Override
-    public boolean isUnlimitedActivePull() {
-        return this.unlimitedActivePull;
-    }
-
-    @Override
-    public void setUnlimitedActivePull(boolean enabled) {
-        if (this.unlimitedActivePull != enabled) {
-            this.unlimitedActivePull = enabled;
-            this.saveChanges();
-            this.markForClientUpdate();
-        }
     }
 
     @Override
@@ -473,7 +455,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
                 continue;
             }
 
-            long request = this.unlimitedActivePull ? available : Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
+            long request = Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
             long canBuffer = this.returnInventory.insert(key, request, Actionable.SIMULATE, this.actionSource);
             if (canBuffer <= 0) {
                 continue;
@@ -507,7 +489,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
                 continue;
             }
 
-            long request = this.unlimitedActivePull ? available : Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
+            long request = Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
             long canBuffer = this.returnInventory.insert(key, request, Actionable.SIMULATE, this.actionSource);
             if (canBuffer <= 0) {
                 continue;

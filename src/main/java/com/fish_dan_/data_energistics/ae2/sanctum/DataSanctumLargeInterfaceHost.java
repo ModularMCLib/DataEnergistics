@@ -24,12 +24,6 @@ public interface DataSanctumLargeInterfaceHost extends InterfaceLogicHost {
 
     void setActivePullSideEnabled(Direction side, boolean enabled);
 
-    default boolean isUnlimitedActivePull() {
-        return false;
-    }
-
-    default void setUnlimitedActivePull(boolean enabled) {}
-
     default ConnectorPolicy getConnectorPolicy() {
         return ConnectorPolicy.ROUND_ROBIN;
     }

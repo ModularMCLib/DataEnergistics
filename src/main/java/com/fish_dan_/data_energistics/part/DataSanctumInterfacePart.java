@@ -76,7 +76,6 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     private static final String RETURN_INVENTORY_TAG = "returnInv";
     private static final String ACTIVE_PULL_ENABLED_TAG = "active_pull_enabled";
     private static final String ACTIVE_PULL_SIDES_TAG = "active_pull_sides";
-    private static final String UNLIMITED_ACTIVE_PULL_TAG = "unlimited_active_pull";
     private static final int ACTIVE_PULL_KEYS_PER_TICK = 32;
     private static final int ACTIVE_PULL_AMOUNT_PER_KEY = 4000;
     private static final int ACTIVE_PULL_FLUID_AMOUNT_PER_TICK = 4000;
@@ -119,7 +118,6 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
     private final MachineSource actionSource = new MachineSource(this);
     private final EnumSet<Direction> activePullSides = EnumSet.noneOf(Direction.class);
     private final EnumMap<Direction, Integer> activePullKeyCursors = new EnumMap<>(Direction.class);
-    private boolean unlimitedActivePull;
     private AdjacentBlockCapabilityCache<MEStorage> adjacentMeStorages;
     private AdjacentBlockCapabilityCache<GenericInternalInventory> adjacentGenericInventories;
     private AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
@@ -168,7 +166,6 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         this.interfaceLogic.readFromNBT(data, registries);
         this.returnInventory.readFromChildTag(data, RETURN_INVENTORY_TAG, registries);
         decodeSides(data.getInt(ACTIVE_PULL_SIDES_TAG), this.activePullSides);
-        this.unlimitedActivePull = data.getBoolean(UNLIMITED_ACTIVE_PULL_TAG);
         this.activePullEnabled = data.contains(ACTIVE_PULL_ENABLED_TAG) ? data.getBoolean(ACTIVE_PULL_ENABLED_TAG) : !this.activePullSides.isEmpty();
         normalizeActivePullState();
     }
@@ -180,7 +177,6 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         this.returnInventory.writeToChildTag(data, RETURN_INVENTORY_TAG, registries);
         data.putBoolean(ACTIVE_PULL_ENABLED_TAG, this.activePullEnabled);
         data.putInt(ACTIVE_PULL_SIDES_TAG, encodeSides(getActivePullSides()));
-        data.putBoolean(UNLIMITED_ACTIVE_PULL_TAG, this.unlimitedActivePull);
     }
 
     @Override
@@ -294,20 +290,6 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         this.activePullEnabled = enabled;
         normalizeActivePullState();
         if (changed) {
-            saveChanges();
-            markForClientUpdate();
-        }
-    }
-
-    @Override
-    public boolean isUnlimitedActivePull() {
-        return this.unlimitedActivePull;
-    }
-
-    @Override
-    public void setUnlimitedActivePull(boolean enabled) {
-        if (this.unlimitedActivePull != enabled) {
-            this.unlimitedActivePull = enabled;
             saveChanges();
             markForClientUpdate();
         }
@@ -568,7 +550,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
                 continue;
             }
 
-            long request = this.unlimitedActivePull ? available : Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
+            long request = Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
             long canBuffer = this.returnInventory.insert(key, request, Actionable.SIMULATE, this.actionSource);
             if (canBuffer <= 0) {
                 continue;
@@ -602,7 +584,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
                 continue;
             }
 
-            long request = this.unlimitedActivePull ? available : Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
+            long request = Math.min(available, ACTIVE_PULL_AMOUNT_PER_KEY);
             long canBuffer = this.returnInventory.insert(key, request, Actionable.SIMULATE, this.actionSource);
             if (canBuffer <= 0) {
                 continue;

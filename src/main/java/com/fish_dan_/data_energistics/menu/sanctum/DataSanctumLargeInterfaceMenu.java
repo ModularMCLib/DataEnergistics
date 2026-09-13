@@ -50,7 +50,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     public static final String ACTION_OPEN_SET_AMOUNT = "setAmount";
     public static final String ACTION_SET_PAGE = "set_page";
     public static final String ACTION_SET_ACTIVE_PULL_SIDE = "set_active_pull_side";
-    public static final String ACTION_SET_UNLIMITED_PULL = "set_unlimited_pull";
     public static final String ACTION_SET_CONNECTOR_POLICY = "set_connector_policy";
     public static final int CONFIG_SLOT_COUNT = DataSanctumInterfaceConstants.CONFIG_SLOTS_PER_PAGE;
     public static final int STOCK_SLOT_COUNT = DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
@@ -109,8 +108,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     @GuiSync(862)
     public int activePullSidesMask;
     @GuiSync(863)
-    public boolean unlimitedActivePull;
-    @GuiSync(864)
     public int connectorPolicy = ConnectorPolicy.ROUND_ROBIN.ordinal();
 
     private List<Slot> configSlots;
@@ -120,7 +117,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         registerClientAction(ACTION_OPEN_SET_AMOUNT, PageSlotTarget.class, this::openSetAmountMenu);
         registerClientAction(ACTION_SET_PAGE, Integer.class, this::setPage);
         registerClientAction(ACTION_SET_ACTIVE_PULL_SIDE, String.class, this::setActivePullSide);
-        registerClientAction(ACTION_SET_UNLIMITED_PULL, Boolean.class, this::setUnlimitedPull);
         registerClientAction(ACTION_SET_CONNECTOR_POLICY, Integer.class, this::setConnectorPolicy);
     }
 
@@ -171,7 +167,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             this.totalPages = this.getHost().getUnlockedPageCount();
             this.pageIndex = clampPage(this.pageIndex);
             this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
-            this.unlimitedActivePull = this.getHost().isUnlimitedActivePull();
             this.connectorPolicy = this.getHost().getConnectorPolicy().ordinal();
         }
 
@@ -202,10 +197,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             return;
         }
         sendClientAction(ACTION_SET_ACTIVE_PULL_SIDE, side.getName() + ":" + enabled);
-    }
-
-    public void sendSetUnlimitedPull(boolean enabled) {
-        sendClientAction(ACTION_SET_UNLIMITED_PULL, enabled);
     }
 
     public void sendSetConnectorPolicy(ConnectorPolicy policy) {
@@ -312,14 +303,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
         this.getHost().setActivePullSideEnabled(targetSide, enabled);
         this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
-        broadcastChanges();
-    }
-
-    private void setUnlimitedPull(Boolean enabled) {
-        if (enabled == null) {
-            return;
-        }
-        this.getHost().setUnlimitedActivePull(enabled);
         broadcastChanges();
     }
 

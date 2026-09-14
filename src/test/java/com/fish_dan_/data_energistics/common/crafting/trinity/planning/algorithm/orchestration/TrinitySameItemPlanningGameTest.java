@@ -150,7 +150,8 @@ public final class TrinitySameItemPlanningGameTest {
 
     private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output, boolean sameItem) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs, List.of(output));
-        EncodedPatternDynamicOutput.apply(encoded, sameItem);
+        EncodedPatternDynamicOutput.apply(encoded,
+                sameItem ? 1 << EncodedPatternDynamicOutput.PROCESSING_INPUT_SLOTS : 0);
         return new AEProcessingPattern(AEItemKey.of(encoded));
     }
 

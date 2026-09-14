@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.storage;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView.Entry;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -188,7 +188,7 @@ final class TrinityStorageContentsList extends BindableUIElement<TrinityDataCore
     private static void activate(StorageRow row, Entry entry) {
         row.icon().setKey(entry.key());
         row.name().setText(entry.key().getDisplayName());
-        row.amount().setText(Component.literal(TrinityAmountFormatter.format(entry.amount())));
+        row.amount().setText(Component.literal(AmountFormatter.format(entry.amount())));
         row.entry = entry;
         row.root().setVisible(true);
     }
@@ -206,7 +206,7 @@ final class TrinityStorageContentsList extends BindableUIElement<TrinityDataCore
         if (tooltip.isEmpty()) {
             tooltip.add(entry.key().getDisplayName());
         }
-        String formattedAmount = TrinityAmountFormatter.format(entry.amount());
+        String formattedAmount = AmountFormatter.format(entry.amount());
         tooltip.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.entry_amount",
                 formattedAmount).withStyle(ChatFormatting.GRAY));

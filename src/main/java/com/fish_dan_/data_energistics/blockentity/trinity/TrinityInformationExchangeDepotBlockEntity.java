@@ -102,6 +102,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.apache.logging.log4j.Logger;
@@ -1636,14 +1637,14 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         private final ReusableCustodyAggregation custodyCoverage = new ReusableCustodyAggregation();
 
         @Override
-        public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel serverLevel) {
+        public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel serverLevel) {
             TrinityDataCoreBlockEntity host = patternProviderHost();
             if (host == null || serverLevel != level || !(pattern instanceof RoutedCraftingPatternDetails routed) ||
                     !host.getPatternCatalog().getAvailablePatterns().contains(pattern) || loadedCore(host, routed.route()) == null) {
-                return List.of();
+                return ObjectList.of();
             }
             String identity = TrinityReusableSlot.targetIdentity(routed.route().coreId(), routed.route().slot());
-            return List.of(new Target(identity, CountedCraftingTarget.route(identity), Optional.empty()));
+            return ObjectList.of(new Target(identity, CountedCraftingTarget.route(identity), Optional.empty()));
         }
 
         @Override
@@ -1673,7 +1674,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                 }
 
                 @Override
-                public List<SlotStack> physicalInputs() {
+                public ObjectList<SlotStack> physicalInputsFast() {
                     return prepared.physicalInputsFast();
                 }
 

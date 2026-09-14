@@ -106,6 +106,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -846,11 +847,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return registration == null || registration.dispatch().usesSpecialBatchRoute(patternDetails);
     }
 
-    @SuppressWarnings("removal")
     @Override
-    public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
+    public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
         if (!reusableNativeAvailable() || this.host.getBlockEntity().getLevel() != level || !(pattern instanceof IMolecularAssemblerSupportedPattern)) {
-            return List.of();
+            return ObjectList.of();
         }
         ObjectArrayList<Target> targets = new ObjectArrayList<>();
         for (var entry : this.nativePatternSlots.int2ObjectEntrySet()) {
@@ -897,7 +897,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
             @SuppressWarnings("removal")
             @Override
-            public List<SlotStack> physicalInputs() {
+            public ObjectList<SlotStack> physicalInputsFast() {
                 return prepared.physicalInputsFast();
             }
 
@@ -1516,7 +1516,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.host.getBlockEntity().getBlockPos();
     }
 
-    List<Direction> adaptiveTargetSides() {
+    ObjectList<Direction> adaptiveTargetSides() {
         if (!this.connectorTargets.isEmpty()) {
             ObjectArrayList<Direction> linkedSides = new ObjectArrayList<>();
             for (ConnectorTarget target : this.connectorTargets) {
@@ -1555,7 +1555,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return isBlocking();
     }
 
-    Set<AEKey> adaptivePatternInputs() {
+    ObjectSet<AEKey> adaptivePatternInputs() {
         return getPatternInputs();
     }
 
@@ -1632,7 +1632,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return false;
     }
 
-    public List<ConnectorLink> adaptiveConnectorBindings() {
+    public ObjectList<ConnectorLink> adaptiveConnectorBindings() {
         ObjectArrayList<ConnectorLink> result = new ObjectArrayList<>(this.connectorTargets.size());
         for (ConnectorTarget target : this.connectorTargets) {
             result.add(new ConnectorLink(target.position(), target.side(), target.mode()));
@@ -1704,11 +1704,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.connectorPullSlotCursor = 0;
     }
 
-    public Set<AEKey> getTrackedCrafts() {
+    public ObjectSet<AEKey> getTrackedCrafts() {
         return this.trackedCrafts;
     }
 
-    public Set<AEKey> getOutputCache() {
+    public ObjectSet<AEKey> getOutputCache() {
         return this.outputCache;
     }
 
@@ -1757,8 +1757,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.mainNode.ifPresent((grid, node) -> grid.getTickManager().alertDevice(node));
     }
 
-    private Set<AEKey> getPatternInputs() {
-        return this.patternInputs;
+    private ObjectSet<AEKey> getPatternInputs() {
+        return (ObjectSet<AEKey>) this.patternInputs;
     }
 
     private void invokePatternSuccess(IPatternDetails patternDetails) {

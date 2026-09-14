@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.storage;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.BindableUIElement;
@@ -112,19 +112,19 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
         List<Component> lines = new ObjectArrayList<>();
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.amount_exact",
-                TrinityAmountFormatter.format(status.totalAmount()),
+                AmountFormatter.format(status.totalAmount()),
                 status.unlimited() ?
                         Component.translatable("gui.data_energistics.trinity.unlimited") :
-                        Component.literal(TrinityAmountFormatter.format(status.amountCapacity()))));
+                        Component.literal(AmountFormatter.format(status.amountCapacity()))));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.item_amount",
-                TrinityAmountFormatter.format(status.itemAmount())).withStyle(ChatFormatting.LIGHT_PURPLE));
+                AmountFormatter.format(status.itemAmount())).withStyle(ChatFormatting.LIGHT_PURPLE));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.fluid_amount",
-                TrinityAmountFormatter.format(status.fluidAmount())).withStyle(ChatFormatting.AQUA));
+                AmountFormatter.format(status.fluidAmount())).withStyle(ChatFormatting.AQUA));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.other_amount",
-                TrinityAmountFormatter.format(status.otherKeyAmount())).withStyle(ChatFormatting.GREEN));
+                AmountFormatter.format(status.otherKeyAmount())).withStyle(ChatFormatting.GREEN));
         return lines;
     }
 

@@ -25,8 +25,10 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -156,7 +158,7 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
 
     /** Merges outputs produced by a resident reusable session into the route buffer. */
     @Override
-    public void acceptReusableOutputs(AdaptivePatternProviderDispatchTarget target, List<GenericStack> outputs) {
+    public void acceptReusableOutputsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<GenericStack> outputs) {
         State state = target.routeState(State.class, State::new);
         Object2LongOpenHashMap<AEKey> next = new Object2LongOpenHashMap<>(state.craftedContents);
         for (GenericStack output : outputs) {
@@ -204,7 +206,7 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
 
     /** Adds buffered outputs to block or part drops. */
     @Override
-    public void addDrops(AdaptivePatternProviderDispatchTarget target, List<ItemStack> drops) {
+    public void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {
         State state = target.routeState(State.class, State::new);
         for (var entry : state.craftedContents.object2LongEntrySet()) {
             if (entry.getKey() != null && entry.getLongValue() > 0) {
@@ -254,9 +256,7 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
                                                     KeyCounter[] inputHolder,
                                                     ServerLevel level) {
         ItemStack[] grid = new ItemStack[9];
-        for (int index = 0; index < grid.length; index++) {
-            grid[index] = ItemStack.EMPTY;
-        }
+        Arrays.fill(grid, ItemStack.EMPTY);
         KeyCounter[] copy = copyKeyCounters(inputHolder);
         pattern.fillCraftingGrid(copy, (slot, stack) -> grid[slot] = stack);
 

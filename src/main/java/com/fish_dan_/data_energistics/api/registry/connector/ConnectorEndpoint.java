@@ -24,7 +24,9 @@ public interface ConnectorEndpoint {
      * @deprecated scheduled for removal in plan 340; use {@link #bindingsFast()}
      */
     @Deprecated(forRemoval = true)
-    List<ConnectorLink> bindings();
+    default List<ConnectorLink> bindings() {
+        return List.of();
+    }
 
     /** Returns the configured links through the FastUtil collection API. */
     @SuppressWarnings("unchecked")
@@ -56,7 +58,9 @@ public interface ConnectorEndpoint {
      * @deprecated scheduled for removal in plan 340; use {@link #replaceFast(ObjectList)}
      */
     @Deprecated(forRemoval = true)
-    int replace(List<ConnectorLink> bindings);
+    default int replace(List<ConnectorLink> bindings) {
+        return 0;
+    }
 
     /** Replaces links through the FastUtil collection API. */
     default int replaceFast(ObjectList<ConnectorLink> bindings) {

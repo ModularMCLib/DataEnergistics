@@ -7,8 +7,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,11 +15,8 @@ public final class ReflectionAccess {
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     private static final Map<MethodLookupKey, Optional<MethodHandle>> VIRTUAL_METHOD_CACHE = new ConcurrentHashMap<>();
-    private static final Map<StaticMethodLookupKey, Optional<MethodHandle>> STATIC_METHOD_CACHE = new ConcurrentHashMap<>();
     private static final Map<Method, Optional<MethodHandle>> METHOD_CACHE = new ConcurrentHashMap<>();
     private static final Map<FieldLookupKey, Optional<VarHandle>> FIELD_CACHE = new ConcurrentHashMap<>();
-    private static final Map<FieldLookupKey, Optional<VarHandle>> STATIC_FIELD_CACHE = new ConcurrentHashMap<>();
-    private static final Map<ConstructorLookupKey, Optional<MethodHandle>> CONSTRUCTOR_CACHE = new ConcurrentHashMap<>();
 
     private ReflectionAccess() {}
 
@@ -47,29 +42,8 @@ public final class ReflectionAccess {
         }
     }
 
-    public static void invokeNoArgBestEffort(@Nullable Object target, String methodName) {
-        invokeNoArg(target, methodName);
-    }
-
     public static Optional<VarHandle> findField(Class<?> owner, String fieldName) {
         return FIELD_CACHE.computeIfAbsent(new FieldLookupKey(owner, fieldName), ReflectionAccess::findInstanceField);
-    }
-
-    public static Optional<VarHandle> findFieldAssignable(Class<?> owner, String fieldName, Class<?> fieldType) {
-        Optional<VarHandle> handle = findField(owner, fieldName);
-        return handle.filter(varHandle -> fieldType.isAssignableFrom(varHandle.varType()));
-    }
-
-    public static Optional<VarHandle> findStaticField(Class<?> owner, String fieldName) {
-        return STATIC_FIELD_CACHE.computeIfAbsent(new FieldLookupKey(owner, fieldName), ReflectionAccess::findStaticField);
-    }
-
-    public static Optional<VarHandle> findStaticField(String ownerClassName, String fieldName) {
-        try {
-            return findStaticField(Class.forName(ownerClassName), fieldName);
-        } catch (ClassNotFoundException | LinkageError ignored) {
-            return Optional.empty();
-        }
     }
 
     @Nullable
@@ -85,35 +59,6 @@ public final class ReflectionAccess {
         }
     }
 
-    public static boolean setField(Optional<VarHandle> handle, Object target, @Nullable Object value) {
-        if (handle.isEmpty()) {
-            return false;
-        }
-
-        try {
-            handle.get().set(target, value);
-            return true;
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    @Nullable
-    public static Object newInstance(String ownerClassName, Class<?>[] parameterTypes, Object... args) {
-        Optional<MethodHandle> constructor = CONSTRUCTOR_CACHE.computeIfAbsent(
-                new ConstructorLookupKey(ownerClassName, List.copyOf(Arrays.asList(parameterTypes))),
-                ReflectionAccess::findConstructor);
-        if (constructor.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return constructor.get().invokeWithArguments(args);
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
     @Nullable
     public static Object invoke(Method method, @Nullable Object target, Object... args) {
         Optional<MethodHandle> handle = METHOD_CACHE.computeIfAbsent(method, ReflectionAccess::unreflectMethod);
@@ -124,22 +69,6 @@ public final class ReflectionAccess {
         Object[] arguments = target == null ? args : prependTarget(target, args);
         try {
             return handle.get().invokeWithArguments(arguments);
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
-    @Nullable
-    public static Object invokeStatic(String ownerClassName, String methodName, Class<?>[] parameterTypes, Object... args) {
-        Optional<MethodHandle> method = STATIC_METHOD_CACHE.computeIfAbsent(
-                new StaticMethodLookupKey(ownerClassName, methodName, List.copyOf(Arrays.asList(parameterTypes))),
-                ReflectionAccess::findStaticMethod);
-        if (method.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return method.get().invokeWithArguments(args);
         } catch (Throwable ignored) {
             return null;
         }
@@ -167,17 +96,6 @@ public final class ReflectionAccess {
         return Optional.empty();
     }
 
-    private static Optional<MethodHandle> findStaticMethod(StaticMethodLookupKey key) {
-        try {
-            Class<?> owner = Class.forName(key.ownerClassName());
-            Method method = owner.getDeclaredMethod(key.methodName(), key.parameterTypes().toArray(Class<?>[]::new));
-            method.setAccessible(true);
-            return Optional.of(MethodHandles.privateLookupIn(owner, LOOKUP).unreflect(method));
-        } catch (ReflectiveOperationException | SecurityException ignored) {
-            return Optional.empty();
-        }
-    }
-
     private static Optional<MethodHandle> unreflectMethod(Method method) {
         try {
             method.setAccessible(true);
@@ -203,27 +121,6 @@ public final class ReflectionAccess {
         return Optional.empty();
     }
 
-    private static Optional<VarHandle> findStaticField(FieldLookupKey key) {
-        try {
-            Field field = key.owner().getDeclaredField(key.fieldName());
-            field.setAccessible(true);
-            return Optional.of(MethodHandles.privateLookupIn(key.owner(), LOOKUP).unreflectVarHandle(field));
-        } catch (ReflectiveOperationException | SecurityException ignored) {
-            return Optional.empty();
-        }
-    }
-
-    private static Optional<MethodHandle> findConstructor(ConstructorLookupKey key) {
-        try {
-            Class<?> owner = Class.forName(key.ownerClassName());
-            var constructor = owner.getDeclaredConstructor(key.parameterTypes().toArray(Class<?>[]::new));
-            constructor.setAccessible(true);
-            return Optional.of(MethodHandles.privateLookupIn(owner, LOOKUP).unreflectConstructor(constructor));
-        } catch (ReflectiveOperationException | SecurityException ignored) {
-            return Optional.empty();
-        }
-    }
-
     private static Object[] prependTarget(Object target, Object[] args) {
         Object[] arguments = new Object[args.length + 1];
         arguments[0] = target;
@@ -233,9 +130,5 @@ public final class ReflectionAccess {
 
     private record MethodLookupKey(Class<?> type, String methodName) {}
 
-    private record StaticMethodLookupKey(String ownerClassName, String methodName, List<Class<?>> parameterTypes) {}
-
     private record FieldLookupKey(Class<?> owner, String fieldName) {}
-
-    private record ConstructorLookupKey(String ownerClassName, List<Class<?>> parameterTypes) {}
 }

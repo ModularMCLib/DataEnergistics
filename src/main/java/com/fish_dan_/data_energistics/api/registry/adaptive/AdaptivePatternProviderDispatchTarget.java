@@ -78,7 +78,9 @@ public interface AdaptivePatternProviderDispatchTarget {
      * @deprecated scheduled for removal in plan 340; use {@link #targetSidesFast()}
      */
     @Deprecated(forRemoval = true)
-    List<Direction> targetSides();
+    default List<Direction> targetSides() {
+        return List.of();
+    }
 
     /** Returns adjacent target sides through the FastUtil collection API. */
     @SuppressWarnings("unchecked")
@@ -113,7 +115,9 @@ public interface AdaptivePatternProviderDispatchTarget {
      * @deprecated scheduled for removal in plan 340; use {@link #patternInputsFast()}
      */
     @Deprecated(forRemoval = true)
-    Set<AEKey> patternInputs();
+    default Set<AEKey> patternInputs() {
+        return Set.of();
+    }
 
     /** Returns normalized pattern inputs through the FastUtil collection API. */
     @SuppressWarnings("unchecked")
@@ -157,7 +161,9 @@ public interface AdaptivePatternProviderDispatchTarget {
      * @deprecated scheduled for removal in plan 340; use {@link #trackedCraftsFast()}
      */
     @Deprecated(forRemoval = true)
-    Set<AEKey> trackedCrafts();
+    default Set<AEKey> trackedCrafts() {
+        return Set.of();
+    }
 
     /** Returns tracked craft keys through the FastUtil collection API. */
     @SuppressWarnings("unchecked")
@@ -172,7 +178,9 @@ public interface AdaptivePatternProviderDispatchTarget {
      * @deprecated scheduled for removal in plan 340; use {@link #outputCacheFast()}
      */
     @Deprecated(forRemoval = true)
-    Set<AEKey> outputCache();
+    default Set<AEKey> outputCache() {
+        return Set.of();
+    }
 
     /** Returns decoded output keys through the FastUtil collection API. */
     @SuppressWarnings("unchecked")
@@ -205,7 +213,9 @@ public interface AdaptivePatternProviderDispatchTarget {
      * @deprecated scheduled for removal in plan 340; use {@link #connectorBindingsFast()}
      */
     @Deprecated(forRemoval = true)
-    List<ConnectorLink> connectorBindings();
+    default List<ConnectorLink> connectorBindings() {
+        return List.of();
+    }
 
     /** Returns configured connector links through the FastUtil collection API. */
     @SuppressWarnings("unchecked")

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.client.gui;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter.FormattedAmount;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.AmountFormatter.FormattedAmount;
 
 import appeng.core.localization.Tooltips;
 
@@ -22,7 +22,7 @@ public abstract class TooltipsMixin {
     private static void dataEnergistics$formatByteAmount(long amount,
                                                          CallbackInfoReturnable<Tooltips.Amount> cir) {
         if (amount >= 0L) {
-            cir.setReturnValue(dataEnergistics$toAe2Amount(TrinityAmountFormatter.formatParts(amount)));
+            cir.setReturnValue(dataEnergistics$toAe2Amount(AmountFormatter.formatParts(amount)));
         }
     }
 
@@ -32,7 +32,7 @@ public abstract class TooltipsMixin {
             cancellable = true)
     private static void dataEnergistics$formatAmount(long amount, CallbackInfoReturnable<Tooltips.Amount> cir) {
         if (amount >= 0L) {
-            cir.setReturnValue(dataEnergistics$toAe2Amount(TrinityAmountFormatter.formatParts(amount)));
+            cir.setReturnValue(dataEnergistics$toAe2Amount(AmountFormatter.formatParts(amount)));
         }
     }
 

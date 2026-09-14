@@ -330,7 +330,7 @@ final class TrinityReusableDispatch {
                     ledger.observeCompleted(session.id(), entry.sequence(), receipt.completed(),
                             amount -> owner.completeReusableOutputs(session.jobId(), entry.submission(), amount));
                 }
-                for (SlotStack tool : located.view().heldTools()) owner.wakeReusableTool(tool.stack().what());
+                for (SlotStack tool : located.view().heldToolsFast()) owner.wakeReusableTool(tool.stack().what());
                 if (session.closing() || !owner.ownsReusableJob(session.jobId()) || located.view().state() == State.FAULTED) {
                     ledger.close(session.id());
                     adapter.closeReusableSession(session.id());
@@ -473,7 +473,7 @@ final class TrinityReusableDispatch {
             if (endpoint == null) continue;
             try {
                 var view = endpoint.adapter().reusableSession(session.id());
-                if (view.isPresent() && view.orElseThrow().heldTools().stream().anyMatch(tool -> missing.contains(tool.stack().what()) &&
+                if (view.isPresent() && view.orElseThrow().heldToolsFast().stream().anyMatch(tool -> missing.contains(tool.stack().what()) &&
                         owner.getStored(tool.stack().what()).signum() == 0)) {
                     ledger.close(session.id());
                     owner.cpu().markDirty();

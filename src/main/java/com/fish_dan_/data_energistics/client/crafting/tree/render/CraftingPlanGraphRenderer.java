@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.client.crafting.tree.render;
 
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphDrawingFacts.CycleMark;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphDrawingFacts.RouteStyle;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Bounds;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Layout;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
@@ -17,6 +16,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRo
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.GraphViewLod;
 
@@ -240,9 +240,9 @@ public final class CraftingPlanGraphRenderer {
             boolean materialNode = node.viewNode().sourceNode() instanceof Material;
             boolean missing = materialNode && (((Material) node.viewNode().sourceNode()).missing().signum() > 0 || ((Material) node.viewNode().sourceNode()).unresolved().signum() > 0);
             BigInteger amount = node.id() == this.graph.rootId() ? this.graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
-            String embedded = node.embeddedProcessId() == null ? "" : "× " + TrinityAmountFormatter.format(((Process) this.graph.node(node.embeddedProcessId())).executions());
+            String embedded = node.embeddedProcessId() == null ? "" : "× " + AmountFormatter.format(((Process) this.graph.node(node.embeddedProcessId())).executions());
             this.nodeDrawings.add(new NodeDrawing(node, key, key.getDisplayName().getString(),
-                    (materialNode ? "" : "× ") + TrinityAmountFormatter.format(amount), embedded, missing));
+                    (materialNode ? "" : "× ") + AmountFormatter.format(amount), embedded, missing));
         }
         this.styledLayout = layout;
     }

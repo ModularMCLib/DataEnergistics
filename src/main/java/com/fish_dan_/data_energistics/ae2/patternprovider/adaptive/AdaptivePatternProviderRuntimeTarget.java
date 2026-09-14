@@ -21,11 +21,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -100,7 +100,7 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     }
 
     @Override
-    public List<Direction> targetSides() {
+    public ObjectList<Direction> targetSidesFast() {
         return this.logic.adaptiveTargetSides();
     }
 
@@ -135,7 +135,7 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     }
 
     @Override
-    public Set<AEKey> patternInputs() {
+    public ObjectSet<AEKey> patternInputsFast() {
         return this.logic.adaptivePatternInputs();
     }
 
@@ -185,12 +185,12 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     }
 
     @Override
-    public Set<AEKey> trackedCrafts() {
+    public ObjectSet<AEKey> trackedCraftsFast() {
         return this.logic.getTrackedCrafts();
     }
 
     @Override
-    public Set<AEKey> outputCache() {
+    public ObjectSet<AEKey> outputCacheFast() {
         return this.logic.getOutputCache();
     }
 
@@ -225,7 +225,7 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     }
 
     @Override
-    public List<ConnectorLink> connectorBindings() {
+    public ObjectList<ConnectorLink> connectorBindingsFast() {
         return this.logic.adaptiveConnectorBindings();
     }
 

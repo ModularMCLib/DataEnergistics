@@ -63,10 +63,7 @@ public interface CountedCraftingProviderAdapter {
                                                           IPatternDetails patternDetails,
                                                           KeyCounter[] prototype,
                                                           long requestedCount) {
-        if (requestedCount <= 0L) {
-            throw new IllegalArgumentException("Requested counted crafting capacity must be positive");
-        }
-        return List.of(CountedCraftingCapacity.aggregateUnknown());
+        return List.of();
     }
 
     /** Captures capacity as an immutable FastUtil snapshot. */

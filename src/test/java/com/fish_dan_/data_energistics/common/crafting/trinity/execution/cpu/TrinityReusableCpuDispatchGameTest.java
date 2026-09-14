@@ -402,12 +402,6 @@ public final class TrinityReusableCpuDispatchGameTest {
             return null;
         }
 
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
-            return reusableTargetsFast(pattern, source, level);
-        }
-
         @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
             return ObjectList.of(target);
@@ -447,12 +441,6 @@ public final class TrinityReusableCpuDispatchGameTest {
                 @Override
                 public long count() {
                     return admission.count();
-                }
-
-                @Deprecated(forRemoval = true)
-                @Override
-                public List<ReusableCraftingRequest.SlotStack> physicalInputs() {
-                    return physicalInputsFast();
                 }
 
                 @Override

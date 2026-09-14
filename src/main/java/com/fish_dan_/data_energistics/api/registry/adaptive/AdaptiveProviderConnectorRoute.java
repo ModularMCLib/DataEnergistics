@@ -35,8 +35,11 @@ public interface AdaptiveProviderConnectorRoute {
      *             {@link #resolveTargetsFast(AdaptivePatternProviderDispatchTarget, IPatternDetails)}
      */
     @Deprecated(forRemoval = true)
-    List<PatternProviderTarget> resolveTargets(
-                                               AdaptivePatternProviderDispatchTarget target, IPatternDetails patternDetails);
+    default List<PatternProviderTarget> resolveTargets(
+                                                       AdaptivePatternProviderDispatchTarget target,
+                                                       IPatternDetails patternDetails) {
+        return List.of();
+    }
 
     /** Returns the live target sequence through the FastUtil collection API. */
     @SuppressWarnings("unchecked")
@@ -59,8 +62,10 @@ public interface AdaptiveProviderConnectorRoute {
      *             {@link #extractOutputsFast(PatternProviderTarget, long, boolean)}
      */
     @Deprecated(forRemoval = true)
-    List<GenericStack> extractOutputs(
-                                      PatternProviderTarget target, long maximum, boolean simulate);
+    default List<GenericStack> extractOutputs(
+                                              PatternProviderTarget target, long maximum, boolean simulate) {
+        return List.of();
+    }
 
     /** Performs one bounded output extraction and returns a FastUtil collection. */
     @SuppressWarnings("unchecked")

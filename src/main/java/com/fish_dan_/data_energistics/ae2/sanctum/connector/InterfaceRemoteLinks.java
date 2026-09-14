@@ -23,6 +23,8 @@ import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -51,8 +53,8 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
     }
 
     @Override
-    public List<ConnectorLink> bindings() {
-        return links;
+    public ObjectList<ConnectorLink> bindingsFast() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(links));
     }
 
     @Override
@@ -82,12 +84,12 @@ public final class InterfaceRemoteLinks implements ConnectorEndpoint {
         if (!removed) {
             replacement.add(new ConnectorLink(position.immutable(), side, mode, slot));
         }
-        replace(replacement);
+        replaceFast(replacement);
         return !removed;
     }
 
     @Override
-    public int replace(List<ConnectorLink> bindings) {
+    public int replaceFast(ObjectList<ConnectorLink> bindings) {
         var unique = new Object2ObjectLinkedOpenHashMap<Identity, ConnectorLink>();
         for (var link : bindings) {
             if (link.slot() < 0 || link.slot() >= DataSanctumInterfaceConstants.LOGIC_SLOT_COUNT) {

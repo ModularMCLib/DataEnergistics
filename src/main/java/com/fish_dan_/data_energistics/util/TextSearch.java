@@ -1,19 +1,19 @@
-package com.fish_dan_.data_energistics.client.util;
+package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.integration.ModFlags;
 
 import me.towdium.jecharacters.utils.Match;
 
-public final class PinyinUtil {
+public final class TextSearch {
 
-    private PinyinUtil() {}
+    private TextSearch() {}
 
     public static boolean isCjk(char ch) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
         return block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B || block == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS || block == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT;
     }
 
-    public static String normalizeSearch(String text) {
+    public static String normalize(String text) {
         if (text.isBlank()) {
             return "";
         }
@@ -27,7 +27,7 @@ public final class PinyinUtil {
         return builder.toString();
     }
 
-    public static boolean matchesSearch(String text, String filter) {
+    public static boolean matches(String text, String filter) {
         if (text.isEmpty()) {
             return false;
         }
@@ -35,22 +35,22 @@ public final class PinyinUtil {
             return true;
         }
 
-        String normalizedFilter = normalizeSearch(filter);
-        return matchesNormalizedSearch(text, normalizedFilter);
+        String normalizedFilter = normalize(filter);
+        return matchesNormalized(text, normalizedFilter);
     }
 
     /** Matches one candidate against an already normalized query. */
-    public static boolean matchesNormalizedSearch(String text, String normalizedFilter) {
+    public static boolean matchesNormalized(String text, String normalizedFilter) {
         if (normalizedFilter.isEmpty()) {
             return true;
         }
-        String normalized = normalizeSearch(text);
+        String normalized = normalize(text);
 
         if (normalized.contains(normalizedFilter) || isSubsequenceMatch(normalizedFilter, normalized)) {
             return true;
         }
 
-        return matchesNormalizedJech(text, normalizedFilter);
+        return matchesJech(text, normalizedFilter);
     }
 
     /**
@@ -58,10 +58,10 @@ public final class PinyinUtil {
      * normalize it once and reuse this method.
      *
      * @param text             candidate text shown by the UI
-     * @param normalizedFilter query normalized by {@link #normalizeSearch(String)}
+     * @param normalizedFilter query normalized by {@link #normalize(String)}
      * @return whether JECh matches the candidate, or {@code false} when JECh is not loaded
      */
-    public static boolean matchesNormalizedJech(String text, String normalizedFilter) {
+    public static boolean matchesJech(String text, String normalizedFilter) {
         if (!ModFlags.isJechLoaded() || text.isEmpty() || normalizedFilter.isEmpty()) {
             return false;
         }

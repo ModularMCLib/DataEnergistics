@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.crafting.status;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
@@ -53,7 +53,7 @@ public final class TrinityCraftingStatusText {
         BigDecimal raw = new BigDecimal(amount);
         BigDecimal perUnit = BigDecimal.valueOf(key.getAmountPerUnit());
         if (!full) {
-            return TrinityAmountFormatter.format(raw.divide(perUnit, MathContext.DECIMAL128));
+            return AmountFormatter.format(raw.divide(perUnit, MathContext.DECIMAL128));
         }
         String number;
         try {

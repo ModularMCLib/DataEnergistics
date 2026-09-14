@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.integration.jade.tower;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -46,7 +46,7 @@ public class DataDistributionTowerJadeProvider implements IBlockComponentProvide
                 serverData.getInt(TAG_AE_MAX)));
         tooltip.add(Component.translatable(
                 "screen.data_energistics.network_fe",
-                TrinityAmountFormatter.format(serverData.getLong(TAG_FE))));
+                AmountFormatter.format(serverData.getLong(TAG_FE))));
         tooltip.add(Component.translatable(
                 "screen.data_energistics.range",
                 formatRangeText(serverData.getInt(TAG_RANGE))));

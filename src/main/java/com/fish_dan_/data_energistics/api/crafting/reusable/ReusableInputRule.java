@@ -289,7 +289,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
             }
             visits.put(cursor, new Visit(completed, new Object2LongLinkedOpenHashMap<>(outputs)));
             Transition transition = requireTransition(table, cursor);
-            for (GenericStack output : transition.byproducts()) {
+            for (GenericStack output : transition.byproductsFast()) {
                 outputs.put(output.what(), Math.addExact(outputs.getLong(output.what()), output.amount()));
             }
             completed++;

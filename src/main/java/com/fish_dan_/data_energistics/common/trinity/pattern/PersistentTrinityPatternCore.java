@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
@@ -325,7 +326,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             }
 
             @Override
-            public List<SlotStack> physicalInputs() {
+            public ObjectList<SlotStack> physicalInputsFast() {
                 return prepared.physicalInputsFast();
             }
 

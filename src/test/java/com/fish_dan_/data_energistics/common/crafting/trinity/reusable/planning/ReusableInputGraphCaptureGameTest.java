@@ -230,12 +230,6 @@ public final class ReusableInputGraphCaptureGameTest {
             return false;
         }
 
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
-            return reusableTargetsFast(pattern, source, level);
-        }
-
         @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
             return ObjectList.of(target("second"), target("first"));

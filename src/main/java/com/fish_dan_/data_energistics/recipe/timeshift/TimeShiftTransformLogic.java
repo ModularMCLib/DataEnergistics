@@ -15,13 +15,15 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.item.ItemExpireEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class TimeShiftTransformLogic {
 
@@ -29,7 +31,7 @@ public final class TimeShiftTransformLogic {
     private static final int RECIPE_CANDIDATE_CACHE_LIMIT = 256;
     private static final double SEARCH_RADIUS = 1.0D;
 
-    private final LinkedHashMap<RecipeCandidateKey, List<ResourceLocation>> recipeCandidateCache = new LinkedHashMap<>(RECIPE_CANDIDATE_CACHE_LIMIT, 0.75F, true);
+    private final Object2ObjectLinkedOpenHashMap<RecipeCandidateKey, ObjectList<ResourceLocation>> recipeCandidateCache = new Object2ObjectLinkedOpenHashMap<>(RECIPE_CANDIDATE_CACHE_LIMIT, 0.75F);
     private long recipeCandidateCacheEpoch = Long.MIN_VALUE;
 
     @SubscribeEvent
@@ -62,19 +64,19 @@ public final class TimeShiftTransformLogic {
         int age = itemEntity.getAge();
         int extraLife = 0;
         Level level = itemEntity.level();
-        List<ResourceLocation> candidateIds = findRecipeCandidateIds(level, itemEntity.getItem());
+        ObjectList<ResourceLocation> candidateIds = findRecipeCandidateIds(level, itemEntity.getItem());
         if (candidateIds.isEmpty()) {
             return 0;
         }
 
-        List<ItemEntity> nearbyItems = getNearbyItems(level, itemEntity);
+        ObjectList<ItemEntity> nearbyItems = getNearbyItems(level, itemEntity);
         for (ResourceLocation candidateId : candidateIds) {
             TimeShiftRecipe recipe = resolveRecipe(level, candidateId);
             if (recipe == null) {
                 continue;
             }
 
-            Map<ItemEntity, Integer> usedItems = findUsedItems(recipe, nearbyItems, false);
+            Reference2IntMap<ItemEntity> usedItems = findUsedItems(recipe, nearbyItems, false);
             if (usedItems == null || !usedItems.containsKey(itemEntity)) {
                 continue;
             }
@@ -100,12 +102,12 @@ public final class TimeShiftTransformLogic {
 
     private void tryTransform(ItemEntity trigger) {
         Level level = trigger.level();
-        List<ResourceLocation> candidateIds = findRecipeCandidateIds(level, trigger.getItem());
+        ObjectList<ResourceLocation> candidateIds = findRecipeCandidateIds(level, trigger.getItem());
         if (candidateIds.isEmpty()) {
             return;
         }
 
-        List<ItemEntity> nearbyItems = null;
+        ObjectList<ItemEntity> nearbyItems = null;
         for (ResourceLocation candidateId : candidateIds) {
             TimeShiftRecipe recipe = resolveRecipe(level, candidateId);
             if (recipe == null || trigger.getAge() < recipe.getDurationTicks() || !recipe.canRunAt(level)) {
@@ -115,7 +117,7 @@ public final class TimeShiftTransformLogic {
             if (nearbyItems == null) {
                 nearbyItems = getNearbyItems(level, trigger);
             }
-            Map<ItemEntity, Integer> usedItems = findUsedItems(recipe, nearbyItems, true);
+            Reference2IntMap<ItemEntity> usedItems = findUsedItems(recipe, nearbyItems, true);
             if (usedItems == null) {
                 continue;
             }
@@ -126,7 +128,7 @@ public final class TimeShiftTransformLogic {
         }
     }
 
-    private static List<ItemEntity> getNearbyItems(Level level, ItemEntity trigger) {
+    private static ObjectList<ItemEntity> getNearbyItems(Level level, ItemEntity trigger) {
         AABB bounds = new AABB(
                 trigger.getX() - SEARCH_RADIUS,
                 trigger.getY() - SEARCH_RADIUS,
@@ -135,13 +137,13 @@ public final class TimeShiftTransformLogic {
                 trigger.getY() + SEARCH_RADIUS,
                 trigger.getZ() + SEARCH_RADIUS);
 
-        return level.getEntitiesOfClass(
+        return new ObjectArrayList<>(level.getEntitiesOfClass(
                 ItemEntity.class,
                 bounds,
-                item -> !item.isRemoved() && !item.getItem().isEmpty());
+                item -> !item.isRemoved() && !item.getItem().isEmpty()));
     }
 
-    private List<ResourceLocation> findRecipeCandidateIds(Level level, ItemStack stack) {
+    private ObjectList<ResourceLocation> findRecipeCandidateIds(Level level, ItemStack stack) {
         long reloadEpoch = RecipeReloadEpoch.current();
         if (this.recipeCandidateCacheEpoch != reloadEpoch) {
             this.recipeCandidateCache.clear();
@@ -149,18 +151,18 @@ public final class TimeShiftTransformLogic {
         }
 
         RecipeCandidateKey key = new RecipeCandidateKey(reloadEpoch, AEItemKey.of(stack), stack.getCount());
-        List<ResourceLocation> cached = this.recipeCandidateCache.get(key);
+        ObjectList<ResourceLocation> cached = this.recipeCandidateCache.get(key);
         if (cached != null) {
             return cached;
         }
 
-        List<ResourceLocation> candidates = new ArrayList<>();
+        ObjectArrayList<ResourceLocation> candidates = new ObjectArrayList<>();
         for (var holder : level.getRecipeManager().getAllRecipesFor(DERecipes.TIME_SHIFT_TYPE.get())) {
             if (canBeIngredient(holder.value(), stack)) {
                 candidates.add(holder.id());
             }
         }
-        List<ResourceLocation> result = candidates.isEmpty() ? List.of() : List.copyOf(candidates);
+        ObjectList<ResourceLocation> result = candidates.isEmpty() ? ObjectLists.emptyList() : ObjectLists.unmodifiable(candidates);
         this.recipeCandidateCache.put(key, result);
         if (this.recipeCandidateCache.size() > RECIPE_CANDIDATE_CACHE_LIMIT) {
             var eldest = this.recipeCandidateCache.keySet().iterator();
@@ -175,9 +177,9 @@ public final class TimeShiftTransformLogic {
         return holder != null && holder.value() instanceof TimeShiftRecipe recipe ? recipe : null;
     }
 
-    private static Map<ItemEntity, Integer> findUsedItems(TimeShiftRecipe recipe, List<ItemEntity> nearbyItems, boolean requireDuration) {
-        List<Ingredient> remaining = new ArrayList<>(recipe.getIngredients());
-        Map<ItemEntity, Integer> usedItems = new IdentityHashMap<>();
+    private static Reference2IntMap<ItemEntity> findUsedItems(TimeShiftRecipe recipe, ObjectList<ItemEntity> nearbyItems, boolean requireDuration) {
+        ObjectList<Ingredient> remaining = new ObjectArrayList<>(recipe.getIngredients());
+        Reference2IntMap<ItemEntity> usedItems = new Reference2IntOpenHashMap<>();
 
         for (ItemEntity itemEntity : nearbyItems) {
             if (requireDuration && itemEntity.getAge() < recipe.getDurationTicks()) {
@@ -187,7 +189,7 @@ public final class TimeShiftTransformLogic {
             ItemStack stack = itemEntity.getItem();
             var iterator = remaining.iterator();
             while (iterator.hasNext()) {
-                int usedFromThisEntity = usedItems.getOrDefault(itemEntity, 0);
+                int usedFromThisEntity = usedItems.getInt(itemEntity);
                 if (stack.getCount() - usedFromThisEntity <= 0) {
                     break;
                 }
@@ -206,10 +208,10 @@ public final class TimeShiftTransformLogic {
         return null;
     }
 
-    private static void consumeInputs(Map<ItemEntity, Integer> usedItems) {
-        for (Map.Entry<ItemEntity, Integer> entry : usedItems.entrySet()) {
+    private static void consumeInputs(Reference2IntMap<ItemEntity> usedItems) {
+        for (Reference2IntMap.Entry<ItemEntity> entry : usedItems.reference2IntEntrySet()) {
             ItemEntity itemEntity = entry.getKey();
-            itemEntity.getItem().shrink(entry.getValue());
+            itemEntity.getItem().shrink(entry.getIntValue());
             if (itemEntity.getItem().isEmpty()) {
                 itemEntity.discard();
             }

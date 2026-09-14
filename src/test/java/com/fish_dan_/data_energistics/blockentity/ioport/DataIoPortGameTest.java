@@ -130,8 +130,10 @@ public final class DataIoPortGameTest {
         helper.assertTrue(!port.getUpgrades().addItems(AEItems.SPEED_CARD.stack()).isEmpty(), "Fifth speed card is rejected");
         for (int i = 0; i < 4; i++) helper.assertTrue(port.getUpgrades().addItems(new ItemStack(DEItems.CARD_SABER_ENERGY.get())).isEmpty(), "Four energy cards fit");
         helper.assertTrue(!port.getUpgrades().addItems(new ItemStack(DEItems.CARD_SABER_ENERGY.get())).isEmpty(), "Fifth energy card is rejected");
-        helper.assertTrue(port.getUpgrades().addItems(AEItems.REDSTONE_CARD.stack()).isEmpty(), "Redstone card fits alongside all eight upgrades");
-        equal(helper, 9, port.getUpgrades().size(), "Upgrade slot count");
+        helper.assertTrue(!port.getUpgrades().addItems(AEItems.REDSTONE_CARD.stack()).isEmpty(), "Eight installed upgrades leave no room for a redstone card");
+        port.getUpgrades().setItemDirect(7, ItemStack.EMPTY);
+        helper.assertTrue(port.getUpgrades().addItems(AEItems.REDSTONE_CARD.stack()).isEmpty(), "Redstone card fits after freeing one upgrade slot");
+        equal(helper, 8, port.getUpgrades().size(), "Upgrade slot count");
         helper.succeed();
     }
 

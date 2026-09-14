@@ -60,7 +60,7 @@ public final class DataIoPortBlockEntity extends AENetworkedInvBlockEntity
                                          implements IGridTickable, IUpgradeableObject, IConfigurableObject {
 
     public static final int CELL_SLOTS = 6;
-    public static final int UPGRADE_SLOTS = 9;
+    public static final int UPGRADE_SLOTS = 8;
     private static final String ITEM_STATE = "data_io_port";
 
     private final AppEngInternalInventory inputCells = new AppEngInternalInventory(this, CELL_SLOTS, 1);

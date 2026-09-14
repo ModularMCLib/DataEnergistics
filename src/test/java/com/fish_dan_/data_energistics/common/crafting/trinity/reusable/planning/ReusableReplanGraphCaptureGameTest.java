@@ -33,6 +33,7 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;

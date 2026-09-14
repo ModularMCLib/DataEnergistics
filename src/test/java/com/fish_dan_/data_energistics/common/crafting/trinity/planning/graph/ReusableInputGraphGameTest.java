@@ -22,7 +22,6 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPubli
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -36,6 +35,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.util.List;

@@ -36,10 +36,10 @@ public final class RemoteLinkRenderer {
 
     private static final Color INPUT_CURRENT = new Color(0.2F, 0.85F, 1.0F, 1.0F);
     private static final Color INPUT_OTHER = new Color(0.18F, 0.62F, 0.95F, 0.95F);
-    private static final Color OUTPUT_CURRENT = new Color(0.85F, 0.35F, 1.0F, 1.0F);
-    private static final Color OUTPUT_OTHER = new Color(0.68F, 0.32F, 0.92F, 0.95F);
-    private static final Color BOTH_CURRENT = new Color(1.0F, 0.75F, 0.2F, 1.0F);
-    private static final Color BOTH_OTHER = new Color(0.85F, 0.58F, 0.16F, 0.95F);
+    private static final Color PULL_CURRENT = new Color(1.0F, 0.9F, 0.2F, 1.0F);
+    private static final Color PULL_OTHER = new Color(0.9F, 0.78F, 0.16F, 0.95F);
+    private static final Color BOTH_CURRENT = new Color(0.85F, 0.35F, 1.0F, 1.0F);
+    private static final Color BOTH_OTHER = new Color(0.68F, 0.32F, 0.92F, 0.95F);
     private static final Color SOURCE = new Color(0.85F, 0.85F, 0.85F, 0.8F);
     private static final Color MISSING = new Color(1.0F, 0.2F, 0.2F, 0.85F);
     private static final Color UNLOADED = new Color(0.6F, 0.6F, 0.6F, 0.7F);
@@ -139,7 +139,7 @@ public final class RemoteLinkRenderer {
         if (mode == ConnectorMode.BOTH) {
             return selected ? BOTH_CURRENT : BOTH_OTHER;
         }
-        return selected ? OUTPUT_CURRENT : OUTPUT_OTHER;
+        return selected ? PULL_CURRENT : PULL_OTHER;
     }
 
     private record Color(float red, float green, float blue, float alpha) {}

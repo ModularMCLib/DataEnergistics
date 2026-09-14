@@ -252,7 +252,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             return false;
         }
         ensurePersistentRevisionAvailable();
-        return slot(route.slot()).enqueue(route, patternSnapshot, inputs, queuedTick);
+        return slot(route.slot()).enqueue(route, patternSnapshot, new ObjectArrayList<>(inputs), queuedTick);
     }
 
     @Override
@@ -411,7 +411,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     public void appendPendingOutputs(PatternRoute route, List<TrinityItemAmount> outputs) {
         ensureNoActiveRefundTransaction();
         validateOwnedRoute(route);
-        slot(route.slot()).appendPendingOutputs(route, outputs);
+        slot(route.slot()).appendPendingOutputs(route, new ObjectArrayList<>(outputs));
     }
 
     @Override
@@ -834,7 +834,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
                 }
             }
         }
-        for (Map.Entry<PatternRoute, List<TrinityItemAmount>> entry : work.pendingOutputs().entrySet()) {
+        for (var entry : work.pendingOutputs().object2ObjectEntrySet()) {
             if (hostFilter != null && !hostFilter.equals(entry.getKey().hostId())) {
                 continue;
             }
@@ -1396,7 +1396,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             if (!result.completed()) {
                 break;
             }
-            slot.completeHead(batch, result.countedOutputs());
+            slot.completeHead(batch, new ObjectArrayList<>(result.countedOutputs()));
             completedGroups = Math.incrementExact(completedGroups);
         }
         return completedGroups;

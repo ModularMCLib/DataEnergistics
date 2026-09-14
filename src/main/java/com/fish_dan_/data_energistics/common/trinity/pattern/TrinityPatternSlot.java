@@ -12,19 +12,26 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -93,17 +100,17 @@ public final class TrinityPatternSlot {
     private final TrinityPatternCore.PatternDecoder decoder;
     private final TrinityPatternRecipeIdLookup recipeIdResolvers;
     private final ChangeListener changeListener;
-    private LinkedHashMap<Long, TrinityPatternDefinition> definitions = new LinkedHashMap<>();
+    private Long2ObjectLinkedOpenHashMap<TrinityPatternDefinition> definitions = new Long2ObjectLinkedOpenHashMap<>();
     private ArrayDeque<TrinityCraftingBatch> queue = new ArrayDeque<>();
-    private LinkedHashMap<PatternRoute, ArrayList<TrinityItemAmount>> pendingOutputs = new LinkedHashMap<>();
+    private Object2ObjectLinkedOpenHashMap<PatternRoute, ObjectArrayList<TrinityItemAmount>> pendingOutputs = new Object2ObjectLinkedOpenHashMap<>();
     /**
      * Counts queued groups per host so ordinary mutations never rescan the FIFO.
      */
-    private Map<UUID, Integer> queuedGroupsByHost = new HashMap<>();
+    private Object2IntMap<UUID> queuedGroupsByHost = new Object2IntOpenHashMap<>();
     /**
      * Counts pending routes per host so partial output consumption leaves membership untouched.
      */
-    private Map<UUID, Integer> pendingRoutesByHost = new HashMap<>();
+    private Object2IntMap<UUID> pendingRoutesByHost = new Object2IntOpenHashMap<>();
 
     private ItemStack pattern = ItemStack.EMPTY;
     @Nullable
@@ -115,11 +122,11 @@ public final class TrinityPatternSlot {
     /**
      * Separates queue and pending topology for one precise internal WORK notification.
      */
-    private WorkMembership workMembership = new WorkMembership(Set.of(), Set.of());
+    private WorkMembership workMembership = new WorkMembership(ObjectSets.emptySet(), ObjectSets.emptySet());
     /**
      * Immutable union consumed by the core's sparse per-host work index.
      */
-    private Set<UUID> workHostIds = Set.of();
+    private ObjectSet<UUID> workHostIds = ObjectSets.emptySet();
     private TrinityPatternSlot.@Nullable ExclusivePendingOutputCursor activePendingOutputCursor;
 
     /**
@@ -266,7 +273,7 @@ public final class TrinityPatternSlot {
      * @param queuedTick      accepting server tick
      * @return whether the current installed definition accepted the dispatch
      */
-    public boolean enqueue(PatternRoute route, ItemStack patternSnapshot, List<ItemStack> inputs, long queuedTick) {
+    public boolean enqueue(PatternRoute route, ItemStack patternSnapshot, ObjectList<ItemStack> inputs, long queuedTick) {
         return enqueue(route, patternSnapshot, inputs, queuedTick, 1L);
     }
 
@@ -282,7 +289,7 @@ public final class TrinityPatternSlot {
      */
     public boolean enqueue(PatternRoute route,
                            ItemStack patternSnapshot,
-                           List<ItemStack> inputs,
+                           ObjectList<ItemStack> inputs,
                            long queuedTick,
                            long count) {
         validateCount(count);
@@ -331,11 +338,11 @@ public final class TrinityPatternSlot {
         TrinityCraftingBatch remainingBatch = remainingCount > 0L && mergeCount > 0L ?
                 incoming.withCount(remainingCount) : null;
         boolean addsQueueGroup = mergeCount == 0L || remainingBatch != null;
-        Integer currentHostGroups = this.queuedGroupsByHost.get(route.hostId());
-        if (addsQueueGroup && currentHostGroups != null && currentHostGroups == Integer.MAX_VALUE) {
+        int currentHostGroups = this.queuedGroupsByHost.getInt(route.hostId());
+        if (addsQueueGroup && this.queuedGroupsByHost.containsKey(route.hostId()) && currentHostGroups == Integer.MAX_VALUE) {
             throw new ArithmeticException("Trinity queued host-group count overflow");
         }
-        int requiredRevisions = addsQueueGroup && currentHostGroups == null ? 2 : 1;
+        int requiredRevisions = addsQueueGroup && !this.queuedGroupsByHost.containsKey(route.hostId()) ? 2 : 1;
         if (this.revision > Long.MAX_VALUE - requiredRevisions) {
             throw new ArithmeticException("Trinity pattern slot revision overflow");
         }
@@ -367,8 +374,10 @@ public final class TrinityPatternSlot {
     }
 
     /** @return immutable defensive FIFO snapshot of counted groups */
-    public List<TrinityCraftingBatch> queuedBatches() {
-        return this.queue.stream().map(TrinityCraftingBatch::copy).toList();
+    public ObjectList<TrinityCraftingBatch> queuedBatches() {
+        ObjectArrayList<TrinityCraftingBatch> result = new ObjectArrayList<>(this.queue.size());
+        this.queue.forEach(batch -> result.add(batch.copy()));
+        return ObjectLists.unmodifiable(result);
     }
 
     /** @return number of physical queue groups after adjacent merging */
@@ -391,30 +400,30 @@ public final class TrinityPatternSlot {
      *
      * @return immutable host-membership snapshot for sparse core work indexes
      */
-    Set<UUID> workHostIds() {
+    ObjectSet<UUID> workHostIds() {
         return this.workHostIds;
     }
 
     /**
      * Returns the cached host set that currently owns at least one pending-output route.
      */
-    Set<UUID> pendingOutputHostIds() {
+    ObjectSet<UUID> pendingOutputHostIds() {
         return this.workMembership.pendingOutputHosts();
     }
 
     /** @return immutable insertion-ordered route snapshot for this slot's pending outputs */
-    public List<PatternRoute> pendingOutputRoutes() {
-        return List.copyOf(this.pendingOutputs.keySet());
+    public ObjectList<PatternRoute> pendingOutputRoutes() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(this.pendingOutputs.keySet()));
     }
 
     /**
      * @param route exact route owned by this physical slot
      * @return immutable defensive snapshot of that route's counted outputs
      */
-    public List<TrinityItemAmount> pendingOutputs(PatternRoute route) {
+    public ObjectList<TrinityItemAmount> pendingOutputs(PatternRoute route) {
         validateRoute(route);
-        List<TrinityItemAmount> outputs = this.pendingOutputs.get(route);
-        return outputs == null ? List.of() : List.copyOf(outputs);
+        ObjectArrayList<TrinityItemAmount> outputs = this.pendingOutputs.get(route);
+        return outputs == null ? ObjectLists.emptyList() : ObjectLists.unmodifiable(new ObjectArrayList<>(outputs));
     }
 
     /**
@@ -433,17 +442,17 @@ public final class TrinityPatternSlot {
         return cursor;
     }
 
-    void appendPendingOutputs(PatternRoute route, List<TrinityItemAmount> outputs) {
+    void appendPendingOutputs(PatternRoute route, ObjectList<TrinityItemAmount> outputs) {
         validateRoute(route);
         ensureNoPendingOutputCursor();
         if (outputs.isEmpty()) {
             return;
         }
-        List<TrinityItemAmount> appended = List.copyOf(outputs);
+        ObjectList<TrinityItemAmount> appended = ObjectLists.unmodifiable(new ObjectArrayList<>(outputs));
         WorkMembership previousWork = this.workMembership;
-        ArrayList<TrinityItemAmount> routeOutputs = this.pendingOutputs.get(route);
+        ObjectArrayList<TrinityItemAmount> routeOutputs = this.pendingOutputs.get(route);
         if (routeOutputs == null) {
-            routeOutputs = new ArrayList<>();
+            routeOutputs = new ObjectArrayList<>();
             this.pendingOutputs.put(route, routeOutputs);
             if (incrementHostCount(this.pendingRoutesByHost, route.hostId())) {
                 refreshWorkMembership();
@@ -485,19 +494,19 @@ public final class TrinityPatternSlot {
      * @param completed group previously returned by {@link #readyHead(long)}
      * @param outputs   counted outputs produced by the complete group
      */
-    public void completeHead(TrinityCraftingBatch completed, List<TrinityItemAmount> outputs) {
+    public void completeHead(TrinityCraftingBatch completed, ObjectList<TrinityItemAmount> outputs) {
         if (this.queue.isEmpty() || this.queue.getFirst() != completed) {
             throw new IllegalStateException("Completed Trinity crafting group is no longer the FIFO head");
         }
         ensureNoPendingOutputCursor();
-        List<TrinityItemAmount> completedOutputs = List.copyOf(outputs);
+        ObjectList<TrinityItemAmount> completedOutputs = ObjectLists.unmodifiable(new ObjectArrayList<>(outputs));
         WorkMembership previousWork = this.workMembership;
         boolean membershipChanged = false;
         if (!completedOutputs.isEmpty()) {
             PatternRoute route = completed.route();
-            ArrayList<TrinityItemAmount> routeOutputs = this.pendingOutputs.get(route);
+            ObjectArrayList<TrinityItemAmount> routeOutputs = this.pendingOutputs.get(route);
             if (routeOutputs == null) {
-                routeOutputs = new ArrayList<>();
+                routeOutputs = new ObjectArrayList<>();
                 this.pendingOutputs.put(route, routeOutputs);
                 membershipChanged = incrementHostCount(this.pendingRoutesByHost, route.hostId());
             }
@@ -559,7 +568,7 @@ public final class TrinityPatternSlot {
         if (!changedQueue) {
             return;
         }
-        this.queuedGroupsByHost.remove(hostId);
+        this.queuedGroupsByHost.removeInt(hostId);
         refreshWorkMembership();
         collectUnusedDefinitions();
         changed(ChangeKind.PERSISTENT);
@@ -571,7 +580,7 @@ public final class TrinityPatternSlot {
      *
      * @param batches ordered queue snapshot
      */
-    public void replaceQueuedBatches(List<TrinityCraftingBatch> batches) {
+    public void replaceQueuedBatches(ObjectList<TrinityCraftingBatch> batches) {
         WorkMembership previousWork = this.workMembership;
         this.queue.clear();
         for (TrinityCraftingBatch batch : batches) {
@@ -632,7 +641,7 @@ public final class TrinityPatternSlot {
         CompoundTag data = new CompoundTag();
         data.putInt(SLOT_TAG, this.index);
 
-        Set<Long> queuedDefinitionIds = new HashSet<>();
+        LongOpenHashSet queuedDefinitionIds = new LongOpenHashSet();
         ListTag batchList = new ListTag();
         for (TrinityCraftingBatch batch : this.queue) {
             queuedDefinitionIds.add(batch.definition().id());
@@ -670,7 +679,7 @@ public final class TrinityPatternSlot {
         }
         TrinityPatternSlot slot = new TrinityPatternSlot(
                 data.getInt(SLOT_TAG), decoder, recipeIdResolvers, changeListener);
-        Map<Long, IMolecularAssemblerSupportedPattern> validatedPatterns = new HashMap<>();
+        Long2ObjectMap<IMolecularAssemblerSupportedPattern> validatedPatterns = new Long2ObjectLinkedOpenHashMap<>();
         ListTag definitionList = compoundList(data, DEFINITIONS_TAG);
         for (int index = 0; index < definitionList.size(); index++) {
             TrinityPatternDefinition definition = readDefinition(definitionList.getCompound(index), registries);
@@ -746,9 +755,9 @@ public final class TrinityPatternSlot {
 
     WorkState captureWorkState() {
         ensureNoPendingOutputCursor();
-        LinkedHashMap<PatternRoute, List<TrinityItemAmount>> outputSnapshot = new LinkedHashMap<>();
-        for (Map.Entry<PatternRoute, ArrayList<TrinityItemAmount>> entry : this.pendingOutputs.entrySet()) {
-            outputSnapshot.put(entry.getKey(), List.copyOf(entry.getValue()));
+        Object2ObjectMap<PatternRoute, ObjectList<TrinityItemAmount>> outputSnapshot = new Object2ObjectLinkedOpenHashMap<>();
+        for (Object2ObjectMap.Entry<PatternRoute, ObjectArrayList<TrinityItemAmount>> entry : this.pendingOutputs.object2ObjectEntrySet()) {
+            outputSnapshot.put(entry.getKey(), ObjectLists.unmodifiable(new ObjectArrayList<>(entry.getValue())));
         }
         return new WorkState(queuedBatches(), outputSnapshot);
     }
@@ -771,10 +780,10 @@ public final class TrinityPatternSlot {
             this.pendingRoutesByHost.clear();
         } else {
             if (queueChanged) {
-                this.queuedGroupsByHost.remove(hostId);
+                this.queuedGroupsByHost.removeInt(hostId);
             }
             if (outputsChanged) {
-                this.pendingRoutesByHost.remove(hostId);
+                this.pendingRoutesByHost.removeInt(hostId);
             }
         }
         refreshWorkMembership();
@@ -862,7 +871,7 @@ public final class TrinityPatternSlot {
     }
 
     private void collectUnusedDefinitions() {
-        Set<Long> retained = new HashSet<>();
+        LongOpenHashSet retained = new LongOpenHashSet();
         if (this.installedDefinition != null) {
             retained.add(this.installedDefinition.id());
         }
@@ -873,7 +882,7 @@ public final class TrinityPatternSlot {
     }
 
     private void validateDefinitionReferences() {
-        Set<Long> referenced = new HashSet<>();
+        LongOpenHashSet referenced = new LongOpenHashSet();
         if (this.installedDefinition != null) {
             referenced.add(this.installedDefinition.id());
         }
@@ -887,7 +896,7 @@ public final class TrinityPatternSlot {
 
     private ListTag writePendingOutputs(HolderLookup.Provider registries) {
         ListTag groups = new ListTag();
-        for (Map.Entry<PatternRoute, ArrayList<TrinityItemAmount>> group : this.pendingOutputs.entrySet()) {
+        for (Object2ObjectMap.Entry<PatternRoute, ObjectArrayList<TrinityItemAmount>> group : this.pendingOutputs.object2ObjectEntrySet()) {
             CompoundTag groupData = new CompoundTag();
             groupData.put(ROUTE_TAG, group.getKey().writeToTag());
             ListTag outputs = new ListTag();
@@ -904,7 +913,7 @@ public final class TrinityPatternSlot {
     }
 
     private void readPendingOutputs(ListTag groups, HolderLookup.Provider registries) {
-        Set<PatternRoute> populated = new HashSet<>();
+        ObjectSet<PatternRoute> populated = new ObjectOpenHashSet<>();
         for (int groupIndex = 0; groupIndex < groups.size(); groupIndex++) {
             CompoundTag groupData = groups.getCompound(groupIndex);
             if (!groupData.contains(ROUTE_TAG, Tag.TAG_COMPOUND)) {
@@ -919,7 +928,7 @@ public final class TrinityPatternSlot {
             if (outputEntries.isEmpty()) {
                 throw new IllegalArgumentException("Trinity pending-output route " + route + " is empty");
             }
-            ArrayList<TrinityItemAmount> outputs = new ArrayList<>(outputEntries.size());
+            ObjectArrayList<TrinityItemAmount> outputs = new ObjectArrayList<>(outputEntries.size());
             for (int outputIndex = 0; outputIndex < outputEntries.size(); outputIndex++) {
                 CompoundTag outputData = outputEntries.getCompound(outputIndex);
                 if (!outputData.contains(PROTOTYPE_TAG, Tag.TAG_COMPOUND) ||
@@ -981,12 +990,12 @@ public final class TrinityPatternSlot {
     }
 
     private void refreshWorkMembership() {
-        Set<UUID> queuedHosts = Set.copyOf(this.queuedGroupsByHost.keySet());
-        Set<UUID> pendingOutputHosts = Set.copyOf(this.pendingRoutesByHost.keySet());
+        ObjectSet<UUID> queuedHosts = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(this.queuedGroupsByHost.keySet()));
+        ObjectSet<UUID> pendingOutputHosts = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(this.pendingRoutesByHost.keySet()));
         this.workMembership = new WorkMembership(queuedHosts, pendingOutputHosts);
-        HashSet<UUID> combinedHosts = new HashSet<>(queuedHosts);
+        ObjectOpenHashSet<UUID> combinedHosts = new ObjectOpenHashSet<>(queuedHosts);
         combinedHosts.addAll(pendingOutputHosts);
-        this.workHostIds = Set.copyOf(combinedHosts);
+        this.workHostIds = ObjectSets.unmodifiable(combinedHosts);
     }
 
     private void notifyWorkMembershipChanged(WorkMembership previousWork) {
@@ -995,30 +1004,29 @@ public final class TrinityPatternSlot {
         }
     }
 
-    private static boolean incrementHostCount(Map<UUID, Integer> counts, UUID hostId) {
-        Integer previous = counts.get(hostId);
-        if (previous == null) {
+    private static boolean incrementHostCount(Object2IntMap<UUID> counts, UUID hostId) {
+        if (!counts.containsKey(hostId)) {
             counts.put(hostId, 1);
             return true;
         }
-        counts.put(hostId, Math.incrementExact(previous));
+        counts.put(hostId, Math.incrementExact(counts.getInt(hostId)));
         return false;
     }
 
-    private static boolean decrementHostCount(Map<UUID, Integer> counts, UUID hostId) {
-        Integer previous = counts.get(hostId);
-        if (previous == null) {
+    private static boolean decrementHostCount(Object2IntMap<UUID> counts, UUID hostId) {
+        if (!counts.containsKey(hostId)) {
             throw new IllegalStateException("Missing Trinity work membership for host " + hostId);
         }
+        int previous = counts.getInt(hostId);
         if (previous == 1) {
-            counts.remove(hostId);
+            counts.removeInt(hostId);
             return true;
         }
         counts.put(hostId, previous - 1);
         return false;
     }
 
-    private static void appendCountedOutput(ArrayList<TrinityItemAmount> outputs, TrinityItemAmount output) {
+    private static void appendCountedOutput(ObjectArrayList<TrinityItemAmount> outputs, TrinityItemAmount output) {
         long remaining = output.amount();
         if (!outputs.isEmpty()) {
             TrinityItemAmount previous = outputs.getLast();
@@ -1033,18 +1041,18 @@ public final class TrinityPatternSlot {
         }
     }
 
-    private static LinkedHashMap<PatternRoute, ArrayList<TrinityItemAmount>> copyPendingOutputs(
-                                                                                                Map<PatternRoute, ? extends List<TrinityItemAmount>> outputs) {
-        LinkedHashMap<PatternRoute, ArrayList<TrinityItemAmount>> copy = new LinkedHashMap<>();
-        for (Map.Entry<PatternRoute, ? extends List<TrinityItemAmount>> entry : outputs.entrySet()) {
-            copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+    private static Object2ObjectLinkedOpenHashMap<PatternRoute, ObjectArrayList<TrinityItemAmount>> copyPendingOutputs(
+                                                                                                                       Object2ObjectMap<PatternRoute, ? extends ObjectList<TrinityItemAmount>> outputs) {
+        Object2ObjectLinkedOpenHashMap<PatternRoute, ObjectArrayList<TrinityItemAmount>> copy = new Object2ObjectLinkedOpenHashMap<>();
+        for (Object2ObjectMap.Entry<PatternRoute, ? extends ObjectList<TrinityItemAmount>> entry : outputs.object2ObjectEntrySet()) {
+            copy.put(entry.getKey(), new ObjectArrayList<>(entry.getValue()));
         }
         return copy;
     }
 
     private static boolean queuesMatch(Iterable<TrinityCraftingBatch> current,
-                                       List<TrinityCraftingBatch> captured) {
-        ArrayList<TrinityCraftingBatch> currentBatches = new ArrayList<>();
+                                       ObjectList<TrinityCraftingBatch> captured) {
+        ObjectArrayList<TrinityCraftingBatch> currentBatches = new ObjectArrayList<>();
         current.forEach(currentBatches::add);
         if (currentBatches.size() != captured.size()) {
             return false;
@@ -1062,8 +1070,8 @@ public final class TrinityPatternSlot {
     }
 
     private static boolean pendingOutputsMatch(
-                                               Map<PatternRoute, ? extends List<TrinityItemAmount>> current,
-                                               Map<PatternRoute, ? extends List<TrinityItemAmount>> captured) {
+                                               Object2ObjectMap<PatternRoute, ? extends ObjectList<TrinityItemAmount>> current,
+                                               Object2ObjectMap<PatternRoute, ? extends ObjectList<TrinityItemAmount>> captured) {
         return current.equals(captured);
     }
 
@@ -1119,29 +1127,31 @@ public final class TrinityPatternSlot {
         return normalized;
     }
 
-    record WorkState(List<TrinityCraftingBatch> batches,
-                     Map<PatternRoute, List<TrinityItemAmount>> pendingOutputs) {
+    record WorkState(ObjectList<TrinityCraftingBatch> batches,
+                     Object2ObjectMap<PatternRoute, ObjectList<TrinityItemAmount>> pendingOutputs) {
 
         WorkState {
-            batches = batches.stream().map(TrinityCraftingBatch::copy).toList();
-            LinkedHashMap<PatternRoute, List<TrinityItemAmount>> outputCopy = new LinkedHashMap<>();
-            for (Map.Entry<PatternRoute, List<TrinityItemAmount>> entry : pendingOutputs.entrySet()) {
-                outputCopy.put(entry.getKey(), List.copyOf(entry.getValue()));
+            ObjectArrayList<TrinityCraftingBatch> batchCopy = new ObjectArrayList<>(batches.size());
+            batches.forEach(batch -> batchCopy.add(batch.copy()));
+            batches = ObjectLists.unmodifiable(batchCopy);
+            Object2ObjectLinkedOpenHashMap<PatternRoute, ObjectList<TrinityItemAmount>> outputCopy = new Object2ObjectLinkedOpenHashMap<>();
+            for (Object2ObjectMap.Entry<PatternRoute, ObjectList<TrinityItemAmount>> entry : pendingOutputs.object2ObjectEntrySet()) {
+                outputCopy.put(entry.getKey(), ObjectLists.unmodifiable(new ObjectArrayList<>(entry.getValue())));
             }
-            pendingOutputs = Collections.unmodifiableMap(outputCopy);
+            pendingOutputs = Object2ObjectMaps.unmodifiable(outputCopy);
         }
     }
 
     /**
      * Separates queued and pending host membership so sparse indexes are refreshed during queue-to-output handoff.
      */
-    private record WorkMembership(Set<UUID> queuedHosts, Set<UUID> pendingOutputHosts) {}
+    private record WorkMembership(ObjectSet<UUID> queuedHosts, ObjectSet<UUID> pendingOutputHosts) {}
 
     private final class ExclusivePendingOutputCursor implements TrinityPatternOutputRouter.PendingOutputCursor {
 
         private final PatternRoute route;
         @Nullable
-        private final ArrayList<TrinityItemAmount> outputs;
+        private final ObjectArrayList<TrinityItemAmount> outputs;
         @Nullable
         private final ListIterator<TrinityItemAmount> iterator;
         @Nullable
@@ -1149,7 +1159,7 @@ public final class TrinityPatternSlot {
         private boolean currentSelected;
         private boolean closed;
 
-        private ExclusivePendingOutputCursor(PatternRoute route, @Nullable ArrayList<TrinityItemAmount> outputs) {
+        private ExclusivePendingOutputCursor(PatternRoute route, @Nullable ObjectArrayList<TrinityItemAmount> outputs) {
             this.route = route;
             this.outputs = outputs;
             this.iterator = outputs == null ? null : outputs.listIterator();

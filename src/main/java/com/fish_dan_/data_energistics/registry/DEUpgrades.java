@@ -43,6 +43,7 @@ public final class DEUpgrades {
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_RIPPER_REASSEMBLER_BLOCK_ENTITY.get(), DEBlocks.DATA_RIPPER_REASSEMBLER.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_ASYNCHRONOUS_PROCESSING_FACTORY_BLOCK_ENTITY.get(), DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(), DEBlocks.DATA_INTEGRATED_CHARGER.get().asItem());
+        AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_IO_PORT.get(), DEBlocks.DATA_IO_PORT.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_ENERGY_CELL_BLOCK_ENTITY.get(), DEBlocks.DATA_ENERGY_CELL.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.TRINITY_DATA_CORE_BLOCK_ENTITY.get(), DEBlocks.TRINITY_DATA_CORE.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_DISTRIBUTION_TOWER_BLOCK_ENTITY.get(), DEBlocks.DATA_DISTRIBUTION_TOWER.get().asItem());
@@ -61,6 +62,9 @@ public final class DEUpgrades {
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.TRINITY_INFORMATION_EXCHANGE_DEPOT_BLOCK_ENTITY.get(), DEBlocks.TRINITY_INFORMATION_EXCHANGE_DEPOT.get().asItem());
         Upgrades.add(AEItems.ENERGY_CARD, DEItems.DATA_RIPPER.get(), 8, "item.data_energistics.data_ripper");
         Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_RIPPER.get(), 5, "item.data_energistics.data_ripper");
+        Upgrades.add(AEItems.SPEED_CARD, DEItems.DATA_IO_PORT.get(), 4, "block.data_energistics.data_io_port");
+        Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_IO_PORT.get(), 4, "block.data_energistics.data_io_port");
+        Upgrades.add(AEItems.REDSTONE_CARD, DEItems.DATA_IO_PORT.get(), 1, "block.data_energistics.data_io_port");
         Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.DATA_RIPPER.get(), 5, "item.data_energistics.data_ripper");
         Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.ME_BEAM_FORMER_PART.get(), 3, "item.data_energistics.me_beam_former_part");
         Upgrades.add(DEItems.CARD_SABER_ENERGY.get(), DEItems.ME_BEAM_FORMER.get(), 3, "block.data_energistics.me_beam_former");

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.bootstrap.client;
 
 import com.fish_dan_.data_energistics.client.screen.beam.BeamFormerScreen;
 import com.fish_dan_.data_energistics.client.screen.crafting.CraftingPlanTreeScreen;
+import com.fish_dan_.data_energistics.client.screen.ioport.DataIoPortScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.AdaptivePatternProviderScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataAsynchronousProcessingFactoryScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataDistributionTowerScreen;
@@ -52,6 +53,7 @@ final class ClientScreenRegistrar {
                 "/screens/data_asynchronous_processing_factory.json");
         InitScreens.register(event, DEMenus.DATA_INTEGRATED_CHARGER.get(), DataIntegratedChargerScreen::new,
                 "/screens/data_integrated_charger.json");
+        InitScreens.register(event, DEMenus.DATA_IO_PORT.get(), DataIoPortScreen::new, "/screens/data_io_port.json");
         event.register(DEMenus.TRINITY_INFORMATION_EXCHANGE_DEPOT.get(), TrinityInformationExchangeDepotScreen::new);
         event.register(DEMenus.TRINITY_DATA_CORE.get(), TrinityDataCoreScreen::new);
         InitScreens.register(event, DEMenus.DATA_MIMETIC_FIELD.get(), DataMimeticFieldScreen::new, "/screens/data_mimetic_field.json");

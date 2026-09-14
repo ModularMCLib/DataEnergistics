@@ -1,0 +1,224 @@
+{
+	"variants": {
+		"facing=down,spin=0,powered=false": {
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 90
+		},
+		"facing=down,spin=0,powered=true": {
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 90
+		},
+		"facing=down,spin=1,powered=false": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 90
+		},
+		"facing=down,spin=1,powered=true": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 90
+		},
+		"facing=down,spin=2,powered=false": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 90
+		},
+		"facing=down,spin=2,powered=true": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 90
+		},
+		"facing=down,spin=3,powered=false": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 90
+		},
+		"facing=down,spin=3,powered=true": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 90
+		},
+		"facing=east,spin=0,powered=false": {
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 90
+		},
+		"facing=east,spin=0,powered=true": {
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 90
+		},
+		"facing=east,spin=1,powered=false": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 90
+		},
+		"facing=east,spin=1,powered=true": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 90
+		},
+		"facing=east,spin=2,powered=false": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 90
+		},
+		"facing=east,spin=2,powered=true": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 90
+		},
+		"facing=east,spin=3,powered=false": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 90
+		},
+		"facing=east,spin=3,powered=true": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 90
+		},
+		"facing=north,spin=0,powered=false": {
+			"model": "data_energistics:block/data_io_port_off"
+		},
+		"facing=north,spin=0,powered=true": {
+			"model": "data_energistics:block/data_io_port_on"
+		},
+		"facing=north,spin=1,powered=false": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_off"
+		},
+		"facing=north,spin=1,powered=true": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_on"
+		},
+		"facing=north,spin=2,powered=false": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_off"
+		},
+		"facing=north,spin=2,powered=true": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_on"
+		},
+		"facing=north,spin=3,powered=false": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_off"
+		},
+		"facing=north,spin=3,powered=true": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_on"
+		},
+		"facing=south,spin=0,powered=false": {
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 180
+		},
+		"facing=south,spin=0,powered=true": {
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 180
+		},
+		"facing=south,spin=1,powered=false": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 180
+		},
+		"facing=south,spin=1,powered=true": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 180
+		},
+		"facing=south,spin=2,powered=false": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 180
+		},
+		"facing=south,spin=2,powered=true": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 180
+		},
+		"facing=south,spin=3,powered=false": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 180
+		},
+		"facing=south,spin=3,powered=true": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 180
+		},
+		"facing=up,spin=0,powered=false": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 270
+		},
+		"facing=up,spin=0,powered=true": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 270
+		},
+		"facing=up,spin=1,powered=false": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 270
+		},
+		"facing=up,spin=1,powered=true": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 270
+		},
+		"facing=up,spin=2,powered=false": {
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 270
+		},
+		"facing=up,spin=2,powered=true": {
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 270
+		},
+		"facing=up,spin=3,powered=false": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_off",
+			"x": 270
+		},
+		"facing=up,spin=3,powered=true": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_on",
+			"x": 270
+		},
+		"facing=west,spin=0,powered=false": {
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 270
+		},
+		"facing=west,spin=0,powered=true": {
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 270
+		},
+		"facing=west,spin=1,powered=false": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 270
+		},
+		"facing=west,spin=1,powered=true": {
+			"ae2:z": 270,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 270
+		},
+		"facing=west,spin=2,powered=false": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 270
+		},
+		"facing=west,spin=2,powered=true": {
+			"ae2:z": 180,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 270
+		},
+		"facing=west,spin=3,powered=false": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_off",
+			"y": 270
+		},
+		"facing=west,spin=3,powered=true": {
+			"ae2:z": 90,
+			"model": "data_energistics:block/data_io_port_on",
+			"y": 270
+		}
+	}
+}

@@ -23,6 +23,7 @@
 	"block.data_energistics.data_extractor": "Data Extractor",
 	"block.data_energistics.data_framework": "Data Framework",
 	"block.data_energistics.data_integrated_charger": "Integrated Data Charger",
+	"block.data_energistics.data_io_port": "Data IO Port",
 	"block.data_energistics.data_meteorite_0": "Cracked Digitalized Meteorite",
 	"block.data_energistics.data_meteorite_1": "Fractured Digitalized Meteorite",
 	"block.data_energistics.data_meteorite_2": "Shattered Digitalized Meteorite",

@@ -61,6 +61,10 @@ final class CommonCapabilityRegistrar {
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.DATA_IO_PORT.get(),
+                (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, DEBlockEntities.DATA_IO_PORT.get(),
+                (blockEntity, context) -> blockEntity.getExposedItemHandler(context));
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_ENERGY_CELL_BLOCK_ENTITY.get(),

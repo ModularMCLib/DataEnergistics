@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.blockentity.TuningForkBaseBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.TuningForkBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.beam.BeamFormerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.decor.DollBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataChargerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
@@ -158,6 +159,13 @@ public final class DEBlockEntities {
             () -> BlockEntityType.Builder.of(
                     DataIntegratedChargerBlockEntity::new,
                     DEBlocks.DATA_INTEGRATED_CHARGER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DataIoPortBlockEntity>> DATA_IO_PORT = BLOCK_ENTITY_TYPES.register(
+            "data_io_port", () -> {
+                var type = BlockEntityType.Builder.of(DataIoPortBlockEntity::new, DEBlocks.DATA_IO_PORT.get()).build(null);
+                DEBlocks.DATA_IO_PORT.get().setBlockEntity(DataIoPortBlockEntity.class, type, null, null);
+                return type;
+            });
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EnergyCellBlockEntity>> DATA_ENERGY_CELL_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register(
             "data_energy_cell",

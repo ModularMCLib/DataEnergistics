@@ -123,6 +123,7 @@ public final class DEItems {
     public static final DeferredItem<BlockItem> DATA_CHARGER = ITEMS.registerSimpleBlockItem(DEBlocks.DATA_CHARGER);
     public static final DeferredItem<BlockItem> EXTENDED_DATA_CHARGER = ITEMS.registerSimpleBlockItem(DEBlocks.EXTENDED_DATA_CHARGER);
     public static final DeferredItem<BlockItem> DATA_INTEGRATED_CHARGER = ITEMS.registerSimpleBlockItem(DEBlocks.DATA_INTEGRATED_CHARGER);
+    public static final DeferredItem<BlockItem> DATA_IO_PORT = ITEMS.registerSimpleBlockItem(DEBlocks.DATA_IO_PORT);
     public static final DeferredItem<EnergyCellBlockItem> DATA_ENERGY_CELL = ITEMS.register(
             "data_energy_cell",
             () -> new EnergyCellBlockItem(DEBlocks.DATA_ENERGY_CELL.get(), new Item.Properties()));

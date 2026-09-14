@@ -1,0 +1,56 @@
+{
+	"$schema": "schema.json",
+	"includes": [
+		"common/common.json",
+		"common/player_inventory.json",
+		"common/toolbox.json"
+	],
+	"background": {
+		"texture": "guis/io_port.png",
+		"srcRect": [0, 0, 176, 168]
+	},
+	"slots": {
+		"MACHINE_INPUT": {
+			"left": 19,
+			"top": 17,
+			"grid": "BREAK_AFTER_2COLS"
+		},
+		"MACHINE_OUTPUT": {
+			"left": 122,
+			"top": 17,
+			"grid": "BREAK_AFTER_2COLS"
+		},
+		"TOOLBOX": {
+			"left": 209,
+			"top": 120,
+			"grid": "BREAK_AFTER_3COLS"
+		}
+	},
+	"text": {
+		"dialog_title": {
+			"text": {
+				"translate": "block.data_energistics.data_io_port"
+			},
+			"position": {
+				"left": 8,
+				"top": 6
+			}
+		}
+	},
+	"widgets": {
+		"operationMode": {
+			"left": 80,
+			"top": 17
+		},
+		"upgrades": {
+			"left": 174,
+			"top": 0
+		},
+		"toolbox": {
+			"left": 204,
+			"top": 102,
+			"width": 59,
+			"height": 66
+		}
+	}
+}

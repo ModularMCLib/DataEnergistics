@@ -40,6 +40,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -144,7 +145,7 @@ public final class TrinityReusableDispatchContractGameTest {
         KeyCounter returned = new KeyCounter();
         helper.assertTrue(chain.ledger().settle(settlement, ReusableCpuSettlement.fingerprint(settlement, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(chain.ledger().session(SESSION), actual);
-            actual.returnedAssets().forEach(asset -> returned.add(asset.what(), asset.amount()));
+            actual.returnedAssetsFast().forEach(asset -> returned.add(asset.what(), asset.amount()));
         }), "Receipt identity gate and actual-asset verification accept the complete transition chain");
         helper.assertValueEqual(chain.accounting().waiting, 8L, "Waiting expectations are registered once for both accepted firing batches");
         helper.assertValueEqual(chain.accounting().accounted, 8L, "Accepted work is accounted exactly once");
@@ -168,7 +169,7 @@ public final class TrinityReusableDispatchContractGameTest {
         KeyCounter returned = new KeyCounter();
         helper.assertTrue(ledger.settle(settlement, ReusableCpuSettlement.fingerprint(settlement, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(ledger.session(SESSION), actual);
-            actual.returnedAssets().forEach(asset -> returned.add(asset.what(), asset.amount()));
+            actual.returnedAssetsFast().forEach(asset -> returned.add(asset.what(), asset.amount()));
         }), "One actual exhaustion plus one cancelled operation is fully explained");
         helper.assertValueEqual(returned.get(tool(0)), 1L, "Only the tool for the unexecuted operation survives");
         helper.assertValueEqual(returned.get(MATERIAL), 1L, "Unused material is returned once");
@@ -191,13 +192,13 @@ public final class TrinityReusableDispatchContractGameTest {
         KeyCounter deposited = new KeyCounter();
         expectState(helper, () -> ledger.settle(wrongComponents, ReusableCpuSettlement.fingerprint(wrongComponents, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(ledger.session(SESSION), actual);
-            actual.returnedAssets().forEach(asset -> deposited.add(asset.what(), asset.amount()));
+            actual.returnedAssetsFast().forEach(asset -> deposited.add(asset.what(), asset.amount()));
         }), "A successor with altered components must fail asset conservation");
         Settlement inventedExhaustion = settlement(List.of(stack(tool(0), 1), stack(tool(1), 1), stack(MATERIAL, 1)), 1,
                 List.of(new AppendReceipt(0, 2, 1, 1)));
         expectState(helper, () -> ledger.settle(inventedExhaustion, ReusableCpuSettlement.fingerprint(inventedExhaustion, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(ledger.session(SESSION), actual);
-            actual.returnedAssets().forEach(asset -> deposited.add(asset.what(), asset.amount()));
+            actual.returnedAssetsFast().forEach(asset -> deposited.add(asset.what(), asset.amount()));
         }), "A legal surviving use cannot also be counted as exhaustion");
         helper.assertTrue(deposited.isEmpty(), "Rejected asset verification occurs before inventory deposition");
         helper.assertValueEqual(ledger.snapshot(), before, "Known-invalid returns do not acknowledge or mutate custody");
@@ -241,11 +242,11 @@ public final class TrinityReusableDispatchContractGameTest {
         helper.assertTrue(chain.ledger().settle(aggregated, first, actual -> {
             ReusableCpuSettlement.verify(chain.ledger().session(SESSION), actual);
             deposits[0]++;
-            actual.returnedAssets().forEach(asset -> returned.add(asset.what(), asset.amount()));
+            actual.returnedAssetsFast().forEach(asset -> returned.add(asset.what(), asset.amount()));
         }), "First actual return is accepted");
         helper.assertTrue(chain.ledger().settle(split, second, actual -> {
             deposits[0]++;
-            actual.returnedAssets().forEach(asset -> returned.add(asset.what(), asset.amount()));
+            actual.returnedAssetsFast().forEach(asset -> returned.add(asset.what(), asset.amount()));
         }), "Equivalent differently split return is recognized as replay");
         helper.assertValueEqual(deposits[0], 1, "Replay cannot deposit the same physical assets twice");
         helper.assertValueEqual(returned.get(tool(6)), 1L, "The actual resident tool is not doubled by replay");
@@ -271,7 +272,7 @@ public final class TrinityReusableDispatchContractGameTest {
         helper.assertValueEqual(offer.count(), count, "Fixture's real offer must cover the requested exact firing count");
         List<SlotStack> physical = new ObjectArrayList<>(offer.addedTools());
         for (var input : recipe.inputs()) {
-            for (GenericStack material : input.consumedPerOperation()) {
+            for (GenericStack material : input.consumedPerOperationFast()) {
                 physical.add(slot(input.slot(), material.what(), Math.multiplyExact(material.amount(), count)));
             }
         }
@@ -311,8 +312,8 @@ public final class TrinityReusableDispatchContractGameTest {
 
     private static TrinityBoundPatternInput toolBinding(int slot, ReusableInputRule rule, long units) {
         var transition = rule.advance(rule.initialKey(), 1);
-        return new TrinityBoundPatternInput(slot, 0, stack(rule.initialKey(), units), 1, transition.successor(), rule, transition.byproducts(),
-                rule.kind() == ReusableInputRule.Kind.FIXED_DAMAGE && rule.exhaustionByproducts().isEmpty());
+        return new TrinityBoundPatternInput(slot, 0, stack(rule.initialKey(), units), 1, transition.successor(), rule, transition.byproductsFast(),
+                rule.kind() == ReusableInputRule.Kind.FIXED_DAMAGE && rule.exhaustionByproductsFast().isEmpty());
     }
 
     private static TrinityBoundPatternInput ordinary(int slot, AEKey key, long amount) {
@@ -324,7 +325,7 @@ public final class TrinityReusableDispatchContractGameTest {
     }
 
     private static ReusableInputRule damageRule(int damage, int boundary) {
-        return ReusableInputRule.fixedDamage(RULE_ID, 1, tool(damage), 1, boundary, List.of());
+        return ReusableInputRule.fixedDamageFast(RULE_ID, 1, tool(damage), 1, boundary, ObjectList.of());
     }
 
     private static AEItemKey tool(int damage) {

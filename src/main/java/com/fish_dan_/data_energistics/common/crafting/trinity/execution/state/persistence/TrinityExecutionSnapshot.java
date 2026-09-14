@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
@@ -58,7 +60,7 @@ public record TrinityExecutionSnapshot(
                                        String failureReason,
                                        long generation,
                                        List<Stage> stages,
-                                       List<Integer> stageOrder,
+                                       IntList stageOrder,
                                        List<RepeatBlock> repeatBlocks,
                                        Map<AEKey, BigInteger> seedReserve,
                                        boolean completionSealed,
@@ -75,7 +77,7 @@ public record TrinityExecutionSnapshot(
      */
     public TrinityExecutionSnapshot {
         stages = List.copyOf(stages);
-        stageOrder = List.copyOf(stageOrder);
+        stageOrder = IntList.of(stageOrder.toIntArray());
         repeatBlocks = List.copyOf(repeatBlocks);
         seedReserve = immutableBigAmounts(seedReserve, false, "seed reserve");
         actualFinalOutputs = immutableBigAmounts(actualFinalOutputs, false, "actual final output");
@@ -170,7 +172,7 @@ public record TrinityExecutionSnapshot(
     public record Stage(
                         int index,
                         boolean cycle,
-                        List<Integer> dependencies,
+                        IntList dependencies,
                         int currentFiring,
                         boolean completed,
                         Set<AEKey> inputKeys,
@@ -215,7 +217,7 @@ public record TrinityExecutionSnapshot(
      */
     public record RepeatBlock(
                               int index,
-                              List<Integer> stageOrder,
+                              IntList stageOrder,
                               BigInteger remainingRepetitions,
                               int cursor,
                               BigInteger waveCount) {
@@ -254,7 +256,7 @@ public record TrinityExecutionSnapshot(
         return Collections.unmodifiableSet(new ObjectLinkedOpenHashSet<>(source));
     }
 
-    private static List<Integer> immutableIndexes(List<Integer> source, String role) {
+    private static IntList immutableIndexes(IntList source, String role) {
         IntArrayList copied = new IntArrayList(source.size());
         IntOpenHashSet seen = new IntOpenHashSet();
         for (int index : source) {
@@ -263,6 +265,6 @@ public record TrinityExecutionSnapshot(
             }
             copied.add(index);
         }
-        return Collections.unmodifiableList(copied);
+        return IntLists.unmodifiable(copied);
     }
 }

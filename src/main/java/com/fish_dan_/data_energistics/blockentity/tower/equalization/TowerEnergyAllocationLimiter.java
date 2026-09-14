@@ -1,7 +1,8 @@
 package com.fish_dan_.data_energistics.blockentity.tower.equalization;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public final class TowerEnergyAllocationLimiter {
             return List.of();
         }
 
-        List<TowerEnergySourceAllocation> limited = new ArrayList<>(sources.size());
+        List<TowerEnergySourceAllocation> limited = new ObjectArrayList<>(sources.size());
         BigInteger remaining = transferAmount;
         for (TowerEnergySourceAllocation source : sources) {
             if (remaining.signum() == 0) {
@@ -64,7 +65,7 @@ public final class TowerEnergyAllocationLimiter {
         }
 
         long[] amounts = new long[sinks.size()];
-        List<FractionalShare> shares = new ArrayList<>(sinks.size());
+        List<FractionalShare> shares = new ObjectArrayList<>(sinks.size());
         BigInteger floorTotal = BigInteger.ZERO;
         for (int index = 0; index < sinks.size(); index++) {
             TowerEnergySinkAllocation sink = sinks.get(index);
@@ -83,7 +84,7 @@ public final class TowerEnergyAllocationLimiter {
             amounts[sinkIndex] = Math.addExact(amounts[sinkIndex], 1);
         }
 
-        List<TowerEnergySinkAllocation> limited = new ArrayList<>(sinks.size());
+        List<TowerEnergySinkAllocation> limited = new ObjectArrayList<>(sinks.size());
         for (int index = 0; index < sinks.size(); index++) {
             if (amounts[index] > 0) {
                 limited.add(new TowerEnergySinkAllocation(sinks.get(index).endpoint(), amounts[index]));

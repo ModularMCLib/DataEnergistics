@@ -34,10 +34,11 @@ import appeng.api.stacks.AEKey;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -220,14 +221,14 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
         if (!analyzed.successful()) {
             return TrinityAlgorithmResult.failure(analyzed.diagnostic());
         }
-        Integer targetComponent = analyzed.value().componentByKey().get(target);
-        if (targetComponent == null) {
+        if (!analyzed.value().componentByKey().containsKey(target)) {
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
                     Map.of("target", target.toString()));
         }
 
+        int targetComponent = analyzed.value().componentByKey().getInt(target);
         boolean reachableCycle = hasReachableCycle(analyzed.value(), targetComponent);
         List<AEKey> relevantInventoryKeys = sameItemPolicy.normalizeKeys(reachableSnapshot.keys()).stream()
                 .filter(analyzed.value().componentByKey()::containsKey)
@@ -399,7 +400,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
 
     private static boolean hasReachableCycle(TrinityCraftingTopology topology, int targetComponent) {
         ArrayDeque<Integer> pending = new ArrayDeque<>();
-        HashSet<Integer> visited = new HashSet<>();
+        IntSet visited = new IntOpenHashSet();
         pending.add(targetComponent);
         while (!pending.isEmpty()) {
             int componentIndex = pending.removeFirst();

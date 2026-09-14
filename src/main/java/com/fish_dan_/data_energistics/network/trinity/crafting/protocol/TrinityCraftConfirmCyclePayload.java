@@ -24,8 +24,9 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -94,7 +95,7 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
         List<TrinityCraftConfirmCycleRecord> records = flatten(summary);
         int totalRecordCount = records.size();
         int batchCount = totalRecordCount == 0 ? 1 : ((totalRecordCount - 1) / MAX_RECORDS_PER_BATCH) + 1;
-        ArrayList<TrinityCraftConfirmCyclePayload> payloads = new ArrayList<>(batchCount);
+        ObjectArrayList<TrinityCraftConfirmCyclePayload> payloads = new ObjectArrayList<>(batchCount);
         for (int batchIndex = 0; batchIndex < batchCount; batchIndex++) {
             int fromIndex = batchIndex * MAX_RECORDS_PER_BATCH;
             int toIndex = Math.min(totalRecordCount, fromIndex + MAX_RECORDS_PER_BATCH);
@@ -158,7 +159,7 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
                         Math.addExact(summary.exactShortages().size(), summary.unresolvedDemands().size()),
                         summary.exactPlanAmounts().size()));
         int totalRecordCount = Math.addExact(materialRecordCount, summary.exactBytes().isPresent() ? 1 : 0);
-        ArrayList<TrinityCraftConfirmCycleRecord> records = new ArrayList<>(totalRecordCount);
+        ObjectArrayList<TrinityCraftConfirmCycleRecord> records = new ObjectArrayList<>(totalRecordCount);
         summary.cycles().forEach(cycle -> records.add(new Header(cycle)));
         summary.inventoryUsageBasisPoints().forEach((key, basisPoints) -> records.add(new InventoryUsage(key, basisPoints)));
         summary.contributions().forEach(contribution -> records.add(new Material(contribution)));
@@ -184,7 +185,7 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
         if (recordCount < 0 || recordCount > MAX_RECORDS_PER_BATCH) {
             throw new IllegalArgumentException("Trinity crafting confirmation batch record count is outside [0, " + MAX_RECORDS_PER_BATCH + "]: " + recordCount);
         }
-        ArrayList<TrinityCraftConfirmCycleRecord> records = new ArrayList<>(recordCount);
+        ObjectArrayList<TrinityCraftConfirmCycleRecord> records = new ObjectArrayList<>(recordCount);
         for (int index = 0; index < recordCount; index++) {
             records.add(readRecord(buffer));
         }

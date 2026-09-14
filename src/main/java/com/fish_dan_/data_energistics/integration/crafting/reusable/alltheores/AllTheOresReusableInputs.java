@@ -15,7 +15,8 @@ import appeng.api.stacks.AEItemKey;
 import net.allthemods.alltheores.content.items.OreHammer;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 
 /** ATO 3.2.0 hammers deterministically damage the input once and break when the new damage reaches maxDamage. */
@@ -60,6 +61,6 @@ public final class AllTheOresReusableInputs implements DataEnergisticsPlugin, Re
         if (stack.getMaxDamage() <= 0 || stack.getDamageValue() >= stack.getMaxDamage()) {
             return Optional.empty();
         }
-        return Optional.of(ReusableInputRule.fixedDamage(ID, 1L, key, 1, stack.getMaxDamage(), List.of()));
+        return Optional.of(ReusableInputRule.fixedDamageFast(ID, 1L, key, 1, stack.getMaxDamage(), ObjectList.of()));
     }
 }

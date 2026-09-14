@@ -7,6 +7,7 @@ import appeng.api.storage.ISubMenuHost;
 import appeng.helpers.ICraftingGridMenu.AutoCraftEntry;
 import appeng.menu.locator.MenuHostLocator;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -16,13 +17,13 @@ import java.util.UUID;
 public record CraftingPlanTreeRequest(UUID playerId, AEKey target, long amount,
                                       CraftingQuantityMode quantityMode, MenuHostLocator locator,
                                       ISubMenuHost host, @Nullable List<AutoCraftEntry> queue,
-                                      @Nullable List<Integer> requestedSlots) {
+                                      @Nullable IntList requestedSlots) {
 
     public CraftingPlanTreeRequest {
         if (amount <= 0) {
             throw new IllegalArgumentException("A plan-tree request requires a positive amount");
         }
         queue = queue == null ? null : List.copyOf(queue);
-        requestedSlots = requestedSlots == null ? null : List.copyOf(requestedSlots);
+        requestedSlots = requestedSlots == null ? null : IntList.of(requestedSlots.toIntArray());
     }
 }

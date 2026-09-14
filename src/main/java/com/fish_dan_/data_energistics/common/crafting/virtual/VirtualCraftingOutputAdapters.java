@@ -10,11 +10,11 @@ import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +38,7 @@ public final class VirtualCraftingOutputAdapters {
         if (installed) {
             throw new IllegalStateException("Virtual crafting output adapters have already been installed");
         }
-        ArrayList<VirtualCraftingOutputAdapter> validated = new ArrayList<>(adapters.size());
+        ObjectArrayList<VirtualCraftingOutputAdapter> validated = new ObjectArrayList<>(adapters.size());
         for (VirtualCraftingOutputAdapter adapter : adapters) {
             if (validated.stream().anyMatch(existing -> existing == adapter)) {
                 throw new IllegalStateException("Virtual crafting output adapter is registered more than once");
@@ -83,8 +83,8 @@ public final class VirtualCraftingOutputAdapters {
     private static VirtualCraftingOutputProjection project(
                                                            List<@Nullable GenericStack> declaredOutputs,
                                                            List<VirtualCraftingOutputAdapter> adapters) {
-        LinkedHashMap<AEKey, BigInteger> logical = new LinkedHashMap<>();
-        ArrayList<VirtualCraftingCompletion> virtual = new ArrayList<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> logical = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectArrayList<VirtualCraftingCompletion> virtual = new ObjectArrayList<>();
         for (GenericStack output : declaredOutputs) {
             // AE2's encoded processing pattern deliberately preserves sparse slot positions with null entries.
             // A routing/wrapper pattern may expose that same list through either its definition or live outputs.

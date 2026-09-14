@@ -31,10 +31,13 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -49,23 +52,23 @@ public final class ReusableExactExecutionBindingGameTest {
         AEItemKey initial = tool(2);
         AEItemKey next = tool(3);
         AEItemKey output = AEItemKey.of(Items.DIAMOND);
-        ReusableInputRule rule = ReusableInputRule.fixedDamage(
+        ReusableInputRule rule = ReusableInputRule.fixedDamageFast(
                 ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "exact_execution_test"),
-                1L, initial, 1, 8, List.of());
+                1L, initial, 1, 8, ObjectList.of());
         List<TrinityBoundPatternInput> bindings = List.of(new TrinityBoundPatternInput(
                 0, 42, new GenericStack(initial, 1), 1L, next, rule, List.of()));
         var identity = new TrinityPatternIdentity("definition", "publication");
         var firing = new TrinityPlanPatternFiring(identity, output, 42, BigInteger.ONE,
                 Map.of(initial, BigInteger.ONE), Map.of(output, BigInteger.ONE), Map.of(next, BigInteger.ONE), bindings);
         var delta = Map.<AEKey, BigInteger>of(initial, BigInteger.ONE.negate(), next, BigInteger.ONE, output, BigInteger.ONE);
-        var stage = new TrinityPlanStage(0, false, Set.of(), List.of(firing), Map.of(initial, BigInteger.ONE), delta);
+        var stage = new TrinityPlanStage(0, false, IntSet.of(), List.of(firing), Map.of(initial, BigInteger.ONE), delta);
         var plan = TrinityCraftingPlan.builder().finalOutput(new GenericStack(output, 1L))
                 .bytes(BigInteger.ZERO).catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW)
                 .initialExpectedInputs(Map.of(initial, BigInteger.ONE)).patternFirings(Map.of(identity, BigInteger.ONE))
-                .stages(List.of(stage)).stageOrder(List.of(0)).targetNetChange(delta).build();
+                .stages(List.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta).build();
         CompoundTag encoded = TrinityPlanExecution.create(plan, 10L).save(helper.getLevel().registryAccess(), 10L);
         var restored = TrinityPlanExecution.restore(encoded, helper.getLevel().registryAccess(), 20L);
-        var work = restored.pollDispatchable(20L, Set.of(), ignored -> true, true).orElseThrow();
+        var work = restored.pollDispatchable(20L, IntSet.of(), ignored -> true, true).orElseThrow();
         helper.assertValueEqual(work.exactBindings(), bindings, "Rule, quantities and damaged keys survive restore");
         var selected = TrinityPatternSelector.create().selectExact(new ToolPattern(), work.plannedVariantOrdinal(),
                 work.exactBindings(), 100L, key -> key.equals(initial) ? 1L : 0L, ignored -> 0L, helper.getLevel());

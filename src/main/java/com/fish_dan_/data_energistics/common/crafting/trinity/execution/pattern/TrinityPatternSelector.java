@@ -12,6 +12,7 @@ import appeng.api.stacks.GenericStack;
 
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
@@ -182,7 +183,7 @@ public final class TrinityPatternSelector {
                 case TrinityPatternBindingEnumerator.Enumerated(var enumerated) -> bindings = enumerated;
             }
         } else {
-            List<Integer> alternatives = decodeCartesianOrdinal(plannedOrdinal, inputs);
+            IntList alternatives = decodeCartesianOrdinal(plannedOrdinal, inputs);
             if (alternatives == null) {
                 return new Unavailable(observedKeys);
             }
@@ -242,7 +243,7 @@ public final class TrinityPatternSelector {
     }
 
     private static Candidate evaluate(List<RuntimeInput> inputs,
-                                      List<Integer> alternatives,
+                                      IntList alternatives,
                                       int ordinal,
                                       long remainingCrafts,
                                       ToLongFunction<AEKey> cpuAvailability,
@@ -262,7 +263,7 @@ public final class TrinityPatternSelector {
             RuntimeInput input = inputs.get(slot);
             TrinityPatternPublicationSignature.Alternative alternative = input.signature()
                     .alternatives()
-                    .get(alternatives.get(slot));
+                    .get(alternatives.getInt(slot));
             GenericStack template = alternative.stack();
             templates.add(template);
             remaining[slot] = Math.multiplyExact(template.amount(), input.signature().multiplier());
@@ -376,15 +377,15 @@ public final class TrinityPatternSelector {
         return left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right;
     }
 
-    private static @Nullable List<Integer> decodeCartesianOrdinal(int ordinal, List<RuntimeInput> inputs) {
+    private static @Nullable IntList decodeCartesianOrdinal(int ordinal, List<RuntimeInput> inputs) {
         int remaining = ordinal;
-        Integer[] alternatives = new Integer[inputs.size()];
+        int[] alternatives = new int[inputs.size()];
         for (int slot = inputs.size() - 1; slot >= 0; slot--) {
             int alternativeCount = inputs.get(slot).signature().alternatives().size();
             alternatives[slot] = remaining % alternativeCount;
             remaining /= alternativeCount;
         }
-        return remaining == 0 ? List.of(alternatives) : null;
+        return remaining == 0 ? IntList.of(alternatives) : null;
     }
 
     private record Candidate(int ordinal,

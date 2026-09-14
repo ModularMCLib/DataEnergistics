@@ -3,7 +3,10 @@ package com.fish_dan_.data_energistics.common.multiblock.preview.model;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
 import java.util.Set;
 
@@ -32,8 +35,8 @@ public record PreviewTierDomain(String id,
         }
         label = label.copy();
         options = List.copyOf(options);
-        Set<Integer> values = new HashSet<>();
-        Set<ResourceLocation> blockIds = new HashSet<>();
+        IntSet values = new IntOpenHashSet();
+        Set<ResourceLocation> blockIds = new ObjectOpenHashSet<>();
         for (PreviewTierOption option : options) {
             if (!values.add(option.value())) {
                 throw new IllegalArgumentException(

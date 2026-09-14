@@ -170,7 +170,7 @@ public final class TrinityAutoBuildDraft {
      * Returns the active structure's selected tier value.
      */
     public int activeTierValue() {
-        return this.previewSelection.activeSelection().tierSelections().get(activeTierDomain().id());
+        return this.previewSelection.activeSelection().tierSelections().getInt(activeTierDomain().id());
     }
 
     /**
@@ -213,7 +213,7 @@ public final class TrinityAutoBuildDraft {
                 this.previewSelection.activeSubstructureId())) {
             throw new IllegalStateException("Trinity main auto-build structure cannot expose a variable repeat unit");
         }
-        return this.previewSelection.activeSelection().repeatCounts().get(variableUnit.getAsInt());
+        return this.previewSelection.activeSelection().repeatCounts().getInt(variableUnit.getAsInt());
     }
 
     /**

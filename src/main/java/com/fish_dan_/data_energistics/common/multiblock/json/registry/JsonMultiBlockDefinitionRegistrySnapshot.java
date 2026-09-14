@@ -3,8 +3,9 @@ package com.fish_dan_.data_energistics.common.multiblock.json.registry;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockDefinition;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -27,7 +28,7 @@ public record JsonMultiBlockDefinitionRegistrySnapshot(
         if (definitions == null) {
             throw new IllegalArgumentException("JSON multiblock definition snapshot map cannot be null");
         }
-        LinkedHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> copy = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> copy = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> entry : definitions.entrySet()) {
             JsonMultiBlockStructureKey key = entry.getKey();
             JsonMultiBlockDefinition definition = entry.getValue();

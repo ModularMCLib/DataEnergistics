@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
@@ -20,7 +21,7 @@ public final class FifoVirtualChannelLedger<B, N> implements VirtualChannelLedge
             .thenComparingLong(binding -> binding.fifoOrder);
     private static final Comparator<VirtualChannelNodeRequest<?>> NODE_ORDER = Comparator.comparingLong(VirtualChannelNodeRequest::stableOrder);
 
-    private final Map<B, MutableBinding<B, N>> bindings = new HashMap<>();
+    private final Map<B, MutableBinding<B, N>> bindings = new Object2ObjectOpenHashMap<>();
     private VirtualChannelCapacity totalCapacity;
     private long physicalChannelUsage;
 
@@ -74,17 +75,17 @@ public final class FifoVirtualChannelLedger<B, N> implements VirtualChannelLedge
 
     @Override
     public VirtualChannelLedgerSnapshot<B, N> snapshot() {
-        List<MutableBinding<B, N>> orderedBindings = new ArrayList<>(this.bindings.values());
+        List<MutableBinding<B, N>> orderedBindings = new ObjectArrayList<>(this.bindings.values());
         orderedBindings.sort(bindingComparator());
 
         boolean unlimited = this.totalCapacity.isUnlimited();
         long remaining = unlimited ? Long.MAX_VALUE : finiteVirtualBudget();
         long virtualUsage = 0;
-        List<VirtualChannelBindingAllocation<B, N>> allocations = new ArrayList<>(orderedBindings.size());
+        List<VirtualChannelBindingAllocation<B, N>> allocations = new ObjectArrayList<>(orderedBindings.size());
         for (MutableBinding<B, N> binding : orderedBindings) {
-            List<VirtualChannelNodeRequest<N>> orderedNodes = new ArrayList<>(binding.nodes.values());
+            List<VirtualChannelNodeRequest<N>> orderedNodes = new ObjectArrayList<>(binding.nodes.values());
             orderedNodes.sort(nodeComparator());
-            List<VirtualChannelNodeAllocation<N>> nodeAllocations = new ArrayList<>(orderedNodes.size());
+            List<VirtualChannelNodeAllocation<N>> nodeAllocations = new ObjectArrayList<>(orderedNodes.size());
             for (VirtualChannelNodeRequest<N> node : orderedNodes) {
                 VirtualChannelNodeState state;
                 if (!binding.enabled) {
@@ -143,7 +144,7 @@ public final class FifoVirtualChannelLedger<B, N> implements VirtualChannelLedge
         private final B bindingKey;
         private final VirtualChannelBindingSource source;
         private final long fifoOrder;
-        private final Map<N, VirtualChannelNodeRequest<N>> nodes = new HashMap<>();
+        private final Map<N, VirtualChannelNodeRequest<N>> nodes = new Object2ObjectOpenHashMap<>();
         private boolean enabled;
 
         private MutableBinding(VirtualChannelBindingRequest<B, N> request) {
@@ -158,7 +159,7 @@ public final class FifoVirtualChannelLedger<B, N> implements VirtualChannelLedge
             if (this.source != request.source() || this.fifoOrder != request.fifoOrder()) {
                 throw new IllegalArgumentException("Virtual binding ordering metadata is immutable for key " + this.bindingKey);
             }
-            Map<N, VirtualChannelNodeRequest<N>> refreshedNodes = new HashMap<>();
+            Map<N, VirtualChannelNodeRequest<N>> refreshedNodes = new Object2ObjectOpenHashMap<>();
             for (VirtualChannelNodeRequest<N> node : request.nodes()) {
                 VirtualChannelNodeRequest<N> existingNode = this.nodes.get(node.nodeKey());
                 if (existingNode != null && existingNode.stableOrder() != node.stableOrder()) {

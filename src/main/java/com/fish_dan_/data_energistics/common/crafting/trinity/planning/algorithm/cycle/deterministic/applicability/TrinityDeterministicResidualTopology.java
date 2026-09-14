@@ -9,13 +9,14 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,8 +47,8 @@ public final class TrinityDeterministicResidualTopology {
                                                                         TrinityStronglyConnectedComponent component,
                                                                         AEKey reservoir) {
         List<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().toList();
-        LinkedHashMap<AEKey, TrinityPatternVariant> producerByKey = new LinkedHashMap<>();
-        LinkedHashSet<AEKey> ambiguous = new LinkedHashSet<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, TrinityPatternVariant> producerByKey = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectLinkedOpenHashSet<AEKey> ambiguous = new ObjectLinkedOpenHashSet<>();
         for (TrinityPatternVariant variant : variants) {
             for (Map.Entry<AEKey, BigInteger> effect : variant.netChange().entrySet()) {
                 AEKey output = effect.getKey();
@@ -62,11 +63,11 @@ public final class TrinityDeterministicResidualTopology {
             }
         }
 
-        HashMap<TrinityPatternVariant, Integer> indegrees = new HashMap<>();
-        HashMap<TrinityPatternVariant, LinkedHashSet<TrinityPatternVariant>> successors = new HashMap<>();
+        Object2IntLinkedOpenHashMap<TrinityPatternVariant> indegrees = new Object2IntLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, ObjectLinkedOpenHashSet<TrinityPatternVariant>> successors = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> {
             indegrees.put(variant, 0);
-            successors.put(variant, new LinkedHashSet<>());
+            successors.put(variant, new ObjectLinkedOpenHashSet<>());
         });
         for (TrinityPatternVariant consumer : variants) {
             for (Map.Entry<AEKey, BigInteger> effect : consumer.netChange().entrySet()) {
@@ -85,23 +86,23 @@ public final class TrinityDeterministicResidualTopology {
                     continue;
                 }
                 if (successors.get(producer).add(consumer)) {
-                    indegrees.merge(consumer, 1, Integer::sum);
+                    indegrees.mergeInt(consumer, 1, Integer::sum);
                 }
             }
         }
-        ArrayList<TrinityPatternVariant> ready = new ArrayList<>();
+        ObjectArrayList<TrinityPatternVariant> ready = new ObjectArrayList<>();
         indegrees.forEach((variant, degree) -> {
             if (degree == 0) {
                 ready.add(variant);
             }
         });
         ready.sort(Comparator.naturalOrder());
-        ArrayList<TrinityPatternVariant> order = new ArrayList<>(variants.size());
+        ObjectArrayList<TrinityPatternVariant> order = new ObjectArrayList<>(variants.size());
         while (!ready.isEmpty()) {
             TrinityPatternVariant selected = ready.removeFirst();
             order.add(selected);
             for (TrinityPatternVariant successor : successors.get(selected)) {
-                int degree = indegrees.merge(successor, -1, Integer::sum);
+                int degree = indegrees.mergeInt(successor, -1, Integer::sum);
                 if (degree == 0) {
                     ready.add(successor);
                     ready.sort(Comparator.naturalOrder());
@@ -122,7 +123,7 @@ public final class TrinityDeterministicResidualTopology {
                                                                                     Map<AEKey, BigInteger> requiredNet,
                                                                                     Map<AEKey, BigInteger> primitiveNet,
                                                                                     BigInteger repetitions) {
-        LinkedHashMap<AEKey, BigInteger> requirements = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requirements = new Object2ObjectLinkedOpenHashMap<>();
         requiredNet.forEach((key, amount) -> {
             if (!key.equals(this.reservoir)) {
                 BigInteger remaining = amount.subtract(
@@ -138,7 +139,7 @@ public final class TrinityDeterministicResidualTopology {
             }
         }
 
-        LinkedHashMap<TrinityPatternVariant, BigInteger> firings = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = this.executionOrder.size() - 1; index >= 0; index--) {
             TrinityPatternVariant variant = this.executionOrder.get(index);
             BigInteger count = TrinityDeterministicFiringMath.ZERO;
@@ -165,7 +166,7 @@ public final class TrinityDeterministicResidualTopology {
             });
         }
         Map<AEKey, BigInteger> net = TrinityDeterministicFiringMath.netChange(firings);
-        ArrayList<TrinityVariantFiring> ordered = new ArrayList<>();
+        ObjectArrayList<TrinityVariantFiring> ordered = new ObjectArrayList<>();
         for (TrinityPatternVariant variant : this.executionOrder) {
             BigInteger count = firings.getOrDefault(variant, TrinityDeterministicFiringMath.ZERO);
             if (count.signum() > 0) {

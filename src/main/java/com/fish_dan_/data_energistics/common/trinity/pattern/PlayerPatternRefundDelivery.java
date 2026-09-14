@@ -11,9 +11,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Default AE-network, player-inventory, then checked world-drop implementation for installed-pattern refunds. */
@@ -120,7 +120,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
     }
 
     private static List<ItemStack> copyPatterns(List<ItemStack> patterns) {
-        ArrayList<ItemStack> copies = new ArrayList<>(patterns.size());
+        ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(patterns.size());
         for (ItemStack pattern : patterns) {
             copies.add(pattern.copy());
         }
@@ -128,7 +128,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
     }
 
     private static List<ItemStack> undeliveredPatterns(List<ItemStack> patterns, int index, ItemStack remainder) {
-        ArrayList<ItemStack> undelivered = new ArrayList<>(patterns.size() - index);
+        ObjectArrayList<ItemStack> undelivered = new ObjectArrayList<>(patterns.size() - index);
         undelivered.add(remainder.copy());
         for (int remainingIndex = index + 1; remainingIndex < patterns.size(); remainingIndex++) {
             undelivered.add(patterns.get(remainingIndex).copy());

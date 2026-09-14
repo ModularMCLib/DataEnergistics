@@ -8,9 +8,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.sha
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.DispatchProposalCandidatePlanner;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -142,7 +142,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
         if (!this.closed.compareAndSet(false, true)) {
             return;
         }
-        Set<ScheduledProposalTicket> closing = new HashSet<>();
+        Set<ScheduledProposalTicket> closing = new ObjectOpenHashSet<>();
         for (GridAdmission admission : this.admissionsByGrid.values()) {
             closing.addAll(admission.snapshotTickets());
         }
@@ -242,7 +242,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
     private final class GridAdmission {
 
         private final long gridGeneration;
-        private final Set<ScheduledProposalTicket> tickets = new HashSet<>();
+        private final Set<ScheduledProposalTicket> tickets = new ObjectOpenHashSet<>();
 
         private GridAdmission(long gridGeneration) {
             this.gridGeneration = gridGeneration;

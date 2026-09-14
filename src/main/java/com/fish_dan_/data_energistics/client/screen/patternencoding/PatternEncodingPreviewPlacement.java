@@ -2,7 +2,8 @@ package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
 import net.minecraft.client.renderer.Rect2i;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /** Chooses a stable, low-overlap automatic anchor for a pattern-provider preview panel. */
@@ -21,7 +22,7 @@ final class PatternEncodingPreviewPlacement {
         int aboveY = anchor.getY() - panelHeight - verticalGap;
         int belowY = anchor.getY() + anchor.getHeight() + verticalGap;
 
-        List<Rect2i> candidates = new ArrayList<>();
+        List<Rect2i> candidates = new ObjectArrayList<>();
         addCandidate(candidates, rightX, preferredY, panelWidth, panelHeight, screenWidth, screenHeight);
         addCandidate(candidates, leftX, preferredY, panelWidth, panelHeight, screenWidth, screenHeight);
         addCandidate(candidates, rightX, aboveY, panelWidth, panelHeight, screenWidth, screenHeight);

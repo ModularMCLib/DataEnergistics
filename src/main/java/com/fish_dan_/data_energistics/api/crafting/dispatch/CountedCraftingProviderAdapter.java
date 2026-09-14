@@ -3,6 +3,9 @@ package com.fish_dan_.data_energistics.api.crafting.dispatch;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -52,7 +55,10 @@ public interface CountedCraftingProviderAdapter {
      * @param prototype      read-only exact per-craft input prototype; it must not be retained or mutated
      * @param requestedCount positive logical craft count still eligible for dispatch
      * @return immutable capacity observations, or an empty immutable list when no target is currently usable
+     * @deprecated scheduled for removal in plan 340; use
+     *             {@link #captureCapacityFast(IPatternDetails, KeyCounter[], long)}
      */
+    @Deprecated(forRemoval = true)
     default List<CountedCraftingCapacity> captureCapacity(
                                                           IPatternDetails patternDetails,
                                                           KeyCounter[] prototype,
@@ -63,8 +69,15 @@ public interface CountedCraftingProviderAdapter {
         return List.of(CountedCraftingCapacity.aggregateUnknown());
     }
 
+    /** Captures capacity as an immutable FastUtil snapshot. */
+    default ObjectList<CountedCraftingCapacity> captureCapacityFast(
+                                                                    IPatternDetails patternDetails, KeyCounter[] prototype, long requestedCount) {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(
+                captureCapacity(patternDetails, prototype, requestedCount)));
+    }
+
     /**
-     * Prepares one counted submission for the exact target selected from {@link #captureCapacity}.
+     * Prepares one counted submission for the exact target selected from {@link #captureCapacityFast}.
      *
      * <p>
      * The default keeps source compatibility for aggregate adapters and rejects any target they did not publish.

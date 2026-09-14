@@ -28,9 +28,9 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.util.TriState;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class MeVacuumBakedModel implements BakedModel {
@@ -181,7 +181,7 @@ public final class MeVacuumBakedModel implements BakedModel {
         @Override
         public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random,
                                         ModelData data, @Nullable RenderType renderType) {
-            var quads = new ArrayList<BakedQuad>(
+            var quads = new ObjectArrayList<BakedQuad>(
                     this.delegate.getQuads(state, direction, random, data, renderType));
             Minecraft minecraft = Minecraft.getInstance();
 
@@ -207,7 +207,7 @@ public final class MeVacuumBakedModel implements BakedModel {
         private static List<BakedQuad> getAllCellQuads(BakedModel cellModel, @Nullable BlockState state,
                                                        RandomSource random,
                                                        @Nullable RenderType renderType) {
-            var quads = new ArrayList<BakedQuad>();
+            var quads = new ObjectArrayList<BakedQuad>();
             quads.addAll(cellModel.getQuads(state, null, random, ModelData.EMPTY, renderType));
             for (Direction side : Direction.values()) {
                 quads.addAll(cellModel.getQuads(state, side, random, ModelData.EMPTY, renderType));

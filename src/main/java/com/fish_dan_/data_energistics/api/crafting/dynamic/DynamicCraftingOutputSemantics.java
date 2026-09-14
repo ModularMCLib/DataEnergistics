@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.api.crafting.dynamic;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -9,6 +13,20 @@ import java.util.Objects;
  * @param outputs non-empty dynamic physical outputs in deterministic declaration order
  */
 public record DynamicCraftingOutputSemantics(List<DynamicCraftingOutput> outputs) {
+
+    /**
+     * @deprecated scheduled for removal in plan 340; use {@link #outputsFast()}
+     */
+    @Deprecated(forRemoval = true)
+    @Override
+    public List<DynamicCraftingOutput> outputs() {
+        return outputs;
+    }
+
+    /** Returns an immutable FastUtil view of the declared outputs. */
+    public ObjectList<DynamicCraftingOutput> outputsFast() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(outputs));
+    }
 
     /**
      * Copies and validates declarations before an adapter can expose them to crafting execution.

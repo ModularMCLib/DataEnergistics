@@ -43,6 +43,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.List;
@@ -171,8 +172,8 @@ public final class ReusableInputGraphCaptureGameTest {
                 if (firstTargetUnchanged && context.machineMode().orElseThrow().getPath().equals("first")) {
                     return Optional.of(ReusableInputRule.unchanged(id, epoch, (AEItemKey) context.actualInput().what()));
                 }
-                return Optional.of(ReusableInputRule.fixedDamage(id,
-                        epoch, (AEItemKey) context.actualInput().what(), 1, 2, List.of()));
+                return Optional.of(ReusableInputRule.fixedDamageFast(id,
+                        epoch, (AEItemKey) context.actualInput().what(), 1, 2, ObjectList.of()));
             };
         }
 
@@ -229,9 +230,15 @@ public final class ReusableInputGraphCaptureGameTest {
             return false;
         }
 
+        @Deprecated(forRemoval = true)
         @Override
         public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
-            return List.of(target("second"), target("first"));
+            return reusableTargetsFast(pattern, source, level);
+        }
+
+        @Override
+        public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
+            return ObjectList.of(target("second"), target("first"));
         }
 
         private static Target target(String mode) {

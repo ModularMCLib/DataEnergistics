@@ -10,10 +10,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +44,7 @@ public final class CapabilityTowerDomainEnergyResolver {
             return List.of();
         }
         Set<IEnergyStorage> seenStorageRoutes = new ReferenceOpenHashSet<>();
-        ArrayList<TowerDomainEnergyEndpoint> endpoints = new ArrayList<>();
+        ObjectArrayList<TowerDomainEnergyEndpoint> endpoints = new ObjectArrayList<>();
         int storageIdentity = 0;
         for (Direction side : Direction.values()) {
             storageIdentity = addEndpoint(location, side, storageIdentity, seenStorageRoutes, endpoints);

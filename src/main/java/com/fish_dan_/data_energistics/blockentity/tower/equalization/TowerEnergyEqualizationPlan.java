@@ -1,7 +1,8 @@
 package com.fish_dan_.data_energistics.blockentity.tower.equalization;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ public record TowerEnergyEqualizationPlan(List<TowerEnergySourceAllocation> sour
         sources = List.copyOf(sources);
         sinks = List.copyOf(sinks);
 
-        Set<TowerEnergyEndpointId> sourceEndpoints = new HashSet<>();
+        Set<TowerEnergyEndpointId> sourceEndpoints = new ObjectOpenHashSet<>();
         BigInteger sourceTotal = BigInteger.ZERO;
         for (TowerEnergySourceAllocation source : sources) {
             if (!sourceEndpoints.add(source.endpoint())) {
@@ -42,7 +43,7 @@ public record TowerEnergyEqualizationPlan(List<TowerEnergySourceAllocation> sour
             sourceTotal = sourceTotal.add(BigInteger.valueOf(source.amount()));
         }
 
-        Set<TowerEnergyEndpointId> sinkEndpoints = new HashSet<>();
+        Set<TowerEnergyEndpointId> sinkEndpoints = new ObjectOpenHashSet<>();
         BigInteger sinkTotal = BigInteger.ZERO;
         for (TowerEnergySinkAllocation sink : sinks) {
             if (!sinkEndpoints.add(sink.endpoint())) {

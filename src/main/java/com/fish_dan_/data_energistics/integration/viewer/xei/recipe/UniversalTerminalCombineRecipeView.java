@@ -7,8 +7,9 @@ import com.fish_dan_.data_energistics.registry.DEItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
 import java.util.Set;
 
@@ -57,8 +58,8 @@ public record UniversalTerminalCombineRecipeView(
     static List<UniversalTerminalCombineRecipeView> build(
                                                           List<UniversalTerminalData.TerminalEntry> terminals,
                                                           ItemStack output) {
-        List<UniversalTerminalCombineRecipeView> recipes = new ArrayList<>();
-        Set<ResourceLocation> recipeIds = new HashSet<>();
+        List<UniversalTerminalCombineRecipeView> recipes = new ObjectArrayList<>();
+        Set<ResourceLocation> recipeIds = new ObjectOpenHashSet<>();
         for (int i = 0; i < terminals.size(); i++) {
             for (int j = i + 1; j < terminals.size(); j++) {
                 UniversalTerminalData.TerminalEntry first = terminals.get(i);

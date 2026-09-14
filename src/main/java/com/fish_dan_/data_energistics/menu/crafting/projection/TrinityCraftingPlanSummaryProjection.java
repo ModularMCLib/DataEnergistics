@@ -9,10 +9,11 @@ import appeng.api.stacks.AEKey;
 import appeng.menu.me.crafting.CraftingPlanSummary;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ public final class TrinityCraftingPlanSummaryProjection {
      * @return native AE2 confirmation summary
      */
     public static CraftingPlanSummary create(TrinityCraftingPlan plan) {
-        LinkedHashMap<AEKey, Amounts> amounts = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, Amounts> amounts = new Object2ObjectLinkedOpenHashMap<>();
         plan.initialExpectedInputs().forEach((key, amount) -> amounts
                 .computeIfAbsent(key, ignored -> new Amounts())
                 .addStored(amount));
@@ -49,7 +50,7 @@ public final class TrinityCraftingPlanSummaryProjection {
         if (plan.ae2FallbackEstimate()) {
             throw new IllegalArgumentException("An AE2 fallback diagnostic must use its native delegate summary");
         }
-        LinkedHashMap<AEKey, Amounts> amounts = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, Amounts> amounts = new Object2ObjectLinkedOpenHashMap<>();
         TrinityPlanningDiagnostic diagnostic = plan.diagnostic();
         if (diagnostic.inputShortage().isPresent()) {
             TrinityPlanningDiagnostic.InputShortage shortage = diagnostic.inputShortage().orElseThrow();
@@ -78,8 +79,8 @@ public final class TrinityCraftingPlanSummaryProjection {
 
     private static CraftingPlanSummary summarize(long bytes,
                                                  boolean simulation,
-                                                 LinkedHashMap<AEKey, Amounts> amounts) {
-        ArrayList<CraftingPlanSummaryEntry> entries = new ArrayList<>(amounts.size());
+                                                 Object2ObjectLinkedOpenHashMap<AEKey, Amounts> amounts) {
+        ObjectArrayList<CraftingPlanSummaryEntry> entries = new ObjectArrayList<>(amounts.size());
         amounts.forEach((key, value) -> entries.add(new CraftingPlanSummaryEntry(
                 key,
                 TrinityAe2AmountProjection.toAe2Amount(value.missing),

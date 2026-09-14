@@ -58,6 +58,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -676,7 +677,8 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
             var request = new CraftingPlanTreeRequest(getPlayer().getUUID(),
                     this.whatToCraft == null ? this.result.finalOutput().what() : this.whatToCraft,
                     this.dataEnergistics$requestedAmount > 0 ? this.dataEnergistics$requestedAmount : this.result.finalOutput().amount(),
-                    data_energistics$quantityMode(), getLocator(), self.getHost(), this.autoCraftingQueue, this.requestedSlots);
+                    data_energistics$quantityMode(), getLocator(), self.getHost(), this.autoCraftingQueue,
+                    this.requestedSlots == null ? null : new IntArrayList(this.requestedSlots));
             var outcome = CraftingPlanTreeResult.create(this.result, request, grid, getActionSrc());
             this.dataEnergistics$treeSession = new CraftingPlanTreeSession(request, outcome,
                     this.dataEnergistics$planRevision, this, this.selectedCpu);

@@ -259,16 +259,16 @@ final class TrinityDataCoreAutoBuildPanel {
             updated = updated.select(structureKey)
                     .withVariantIndex(structureSelection.variantIndex());
             String tierDomainId = updated.activeTierDomain().id();
-            Integer tierValue = structureSelection.tierSelections().get(tierDomainId);
-            if (tierValue == null) {
+            int tierValue = structureSelection.tierSelections().getInt(tierDomainId);
+            if (!structureSelection.tierSelections().containsKey(tierDomainId)) {
                 throw new IllegalStateException("Trinity automatic-build selection lacks tier domain " + tierDomainId);
             }
             updated = updated.withTier(tierValue);
             for (int unitIndex = 0; unitIndex < structureSelection.repeatCounts().size(); unitIndex++) {
-                updated = updated.withRepeat(unitIndex, structureSelection.repeatCounts().get(unitIndex));
+                updated = updated.withRepeat(unitIndex, structureSelection.repeatCounts().getInt(unitIndex));
             }
-            for (var candidate : structureSelection.candidateSelections().entrySet()) {
-                updated = updated.withCandidate(candidate.getKey(), candidate.getValue());
+            for (var candidate : structureSelection.candidateSelections().object2IntEntrySet()) {
+                updated = updated.withCandidate(candidate.getKey(), candidate.getIntValue());
             }
         }
         updated = updated.select(selection.activeSubstructureId());

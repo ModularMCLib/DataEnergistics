@@ -41,9 +41,9 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataExtractorBlock extends AEBaseBlock implements EntityBlock {
@@ -159,7 +159,7 @@ public class DataExtractorBlock extends AEBaseBlock implements EntityBlock {
             return;
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new ObjectArrayList<>();
         extractor.addAdditionalDrops(level, pos, drops);
         extractor.clearContent();
         for (ItemStack drop : drops) {

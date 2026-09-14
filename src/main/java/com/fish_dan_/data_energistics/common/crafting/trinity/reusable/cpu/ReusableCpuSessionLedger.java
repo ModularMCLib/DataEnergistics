@@ -406,7 +406,7 @@ public final class ReusableCpuSessionLedger {
             throw new IllegalArgumentException("Reusable settlement requires a stable fingerprint");
         }
         Long2ObjectLinkedOpenHashMap<Submission> unsettled = new Long2ObjectLinkedOpenHashMap<>(session.submissions);
-        for (var receipt : settlement.receipts()) {
+        for (var receipt : settlement.receiptsFast()) {
             Submission submission = unsettled.getOrDefault(receipt.sequence(), null);
             if (submission == null || !submission.transferred() || receipt.accepted() != submission.count() ||
                     receipt.completed() < submission.completed() ||
@@ -419,7 +419,7 @@ public final class ReusableCpuSessionLedger {
             throw new IllegalStateException("Reusable settlement omitted CPU work");
         }
         receive.accept(settlement);
-        if (settlement.receipts().stream().anyMatch(receipt -> receipt.cancelled() > 0L)) {
+        if (settlement.receiptsFast().stream().anyMatch(receipt -> receipt.cancelled() > 0L)) {
             replanningJobs.add(session.jobId);
         }
         session.closing = true;

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.dataripper;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -11,7 +12,7 @@ public final class DataRipperConfigParsingUtils {
     public record MultiplierEntry(Pattern pattern, double value) {}
 
     public static List<Pattern> precompilePatterns(List<String> textPatterns) {
-        List<Pattern> patterns = new ArrayList<>(textPatterns.size());
+        List<Pattern> patterns = new ObjectArrayList<>(textPatterns.size());
         for (String entry : textPatterns) {
             if (entry.isBlank()) {
                 throw new IllegalArgumentException("Data Ripper blacklist regex must not be blank");
@@ -22,7 +23,7 @@ public final class DataRipperConfigParsingUtils {
     }
 
     public static List<MultiplierEntry> precompileMultipliers(List<String> textMultipliers) {
-        List<MultiplierEntry> entries = new ArrayList<>(textMultipliers.size());
+        List<MultiplierEntry> entries = new ObjectArrayList<>(textMultipliers.size());
         for (String entry : textMultipliers) {
             int separator = entry.lastIndexOf('=');
             if (separator <= 0 || separator >= entry.length() - 1) {
@@ -46,7 +47,7 @@ public final class DataRipperConfigParsingUtils {
         if (patterns.length != values.length) {
             throw new IllegalArgumentException("Data Ripper multiplier patterns and values must have equal lengths");
         }
-        List<MultiplierEntry> entries = new ArrayList<>(patterns.length);
+        List<MultiplierEntry> entries = new ObjectArrayList<>(patterns.length);
         for (int index = 0; index < patterns.length; index++) {
             String patternText = patterns[index];
             if (patternText == null || patternText.isBlank()) {

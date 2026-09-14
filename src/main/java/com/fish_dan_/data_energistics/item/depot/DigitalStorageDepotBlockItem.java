@@ -49,9 +49,9 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -642,7 +642,7 @@ public class DigitalStorageDepotBlockItem extends BlockItem {
         CompoundTag blockEntityTag = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
         inventory.readFromNBT(blockEntityTag, DigitalStorageDepotBlockEntity.getStorageTagKey(), registries);
 
-        List<GenericStack> stacks = new ArrayList<>();
+        List<GenericStack> stacks = new ObjectArrayList<>();
         for (int i = 0; i < inventory.size(); i++) {
             ItemStack itemStack = inventory.getStackInSlot(i);
             AEItemKey itemKey = AEItemKey.of(itemStack);
@@ -654,7 +654,7 @@ public class DigitalStorageDepotBlockItem extends BlockItem {
     }
 
     private static List<GenericStack> readStoredFluidStacks(ItemStack stack, HolderLookup.Provider registries) {
-        List<GenericStack> stacks = new ArrayList<>();
+        List<GenericStack> stacks = new ObjectArrayList<>();
         for (FluidStack fluid : readStoredFluids(stack, registries)) {
             AEFluidKey fluidKey = AEFluidKey.of(fluid);
             if (fluidKey != null) {
@@ -665,7 +665,7 @@ public class DigitalStorageDepotBlockItem extends BlockItem {
     }
 
     private static List<GenericStack> readStoredKeyStacks(ItemStack stack, HolderLookup.Provider registries) {
-        List<GenericStack> stacks = new ArrayList<>();
+        List<GenericStack> stacks = new ObjectArrayList<>();
         for (GenericStack keyStack : readStoredKeys(stack, registries)) {
             if (keyStack != null && keyStack.what() != null && keyStack.amount() > 0) {
                 stacks.add(keyStack);

@@ -203,7 +203,7 @@ public final class MultiblockXeiComposition implements MultiblockRecipeViewSourc
                 "tier:" + tierDomain.id(),
                 tierDomain::label,
                 () -> tierDomain.option(
-                        this.previewUi.session().selection().activeSelection().tierSelections().get(tierDomain.id()))
+                        this.previewUi.session().selection().activeSelection().tierSelections().getInt(tierDomain.id()))
                         .label(),
                 this.previewUi.panel()::previousTier,
                 this.previewUi.panel()::nextTier,
@@ -214,7 +214,7 @@ public final class MultiblockXeiComposition implements MultiblockRecipeViewSourc
                     "repeat:" + unitIndex,
                     () -> Component.translatable(PREVIEW_TRANSLATION_PREFIX + "repeat", unitIndex + 1),
                     () -> Component.literal(Integer.toString(
-                            this.previewUi.session().selection().activeSelection().repeatCounts().get(unitIndex))),
+                            this.previewUi.session().selection().activeSelection().repeatCounts().getInt(unitIndex))),
                     () -> this.previewUi.panel().previousRepeat(unitIndex),
                     () -> this.previewUi.panel().nextRepeat(unitIndex),
                     () -> true));

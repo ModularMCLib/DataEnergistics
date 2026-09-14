@@ -20,9 +20,9 @@ import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -116,7 +116,7 @@ public record JsonMultiBlockCompartmentPredicate(CompartmentType compartmentType
         if (matchedCompartments == null || matchedCompartments.isEmpty()) {
             return Map.of();
         }
-        Map<BlockPos, CompartmentType> compartments = new LinkedHashMap<>();
+        Map<BlockPos, CompartmentType> compartments = new Object2ObjectLinkedOpenHashMap<>();
         for (Long2ObjectMap.Entry<CompartmentType> entry : matchedCompartments.long2ObjectEntrySet()) {
             compartments.put(BlockPos.of(entry.getLongKey()), entry.getValue());
         }

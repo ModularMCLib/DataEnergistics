@@ -27,6 +27,7 @@ import net.minecraft.world.level.Level;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -36,7 +37,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -247,8 +247,8 @@ public abstract class CraftingCpuLogicVirtualCompletionMixin {
             return;
         }
 
-        ArrayList<GenericStack> intermediate = new ArrayList<>();
-        ArrayList<GenericStack> finalResults = new ArrayList<>();
+        ObjectArrayList<GenericStack> intermediate = new ObjectArrayList<>();
+        ObjectArrayList<GenericStack> finalResults = new ObjectArrayList<>();
         for (var entry : this.dataEnergistics$pendingVirtualCompletions.list) {
             GenericStack completion = new GenericStack(entry.getKey(), entry.getLongValue());
             (entry.getKey().matches(finalOutput) ? finalResults : intermediate).add(completion);
@@ -297,7 +297,7 @@ public abstract class CraftingCpuLogicVirtualCompletionMixin {
         if (this.dataEnergistics$pendingNoOutputCompletions.list.isEmpty()) {
             return;
         }
-        ArrayList<GenericStack> completions = new ArrayList<>();
+        ObjectArrayList<GenericStack> completions = new ObjectArrayList<>();
         for (var entry : this.dataEnergistics$pendingNoOutputCompletions.list) {
             completions.add(new GenericStack(entry.getKey(), entry.getLongValue()));
         }
@@ -408,7 +408,7 @@ public abstract class CraftingCpuLogicVirtualCompletionMixin {
             }
             return;
         }
-        ArrayList<GenericStack> recoverable = new ArrayList<>();
+        ObjectArrayList<GenericStack> recoverable = new ObjectArrayList<>();
         for (var entry : this.dataEnergistics$pendingVirtualCompletions.list) {
             recoverable.add(new GenericStack(entry.getKey(), entry.getLongValue()));
         }

@@ -47,9 +47,9 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +71,7 @@ public class MeVacuumItem extends Item implements PoweredEnergyItem, IMenuItem {
     private static final double LAUNCH_SPEED = 15.0D;
     private static final double LAUNCH_UPWARD_SPEED = 0.45D;
     private static final long FLUID_SOURCE_AMOUNT = AEFluidKey.AMOUNT_BLOCK;
-    private static final Map<UUID, HoveredEntityState> HOVERED_ENTITY_STATES = new HashMap<>();
+    private static final Map<UUID, HoveredEntityState> HOVERED_ENTITY_STATES = new Object2ObjectOpenHashMap<>();
 
     public MeVacuumItem(Properties properties) {
         super(properties);

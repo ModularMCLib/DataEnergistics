@@ -9,11 +9,10 @@ import appeng.blockentity.networking.ControllerBlockEntity;
 
 import net.minecraft.core.BlockPos;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Set;
 
 /**
@@ -95,7 +94,7 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
             return calculate(controllerState, channelMode, Set.of());
         }
 
-        Set<Object> controllerOwners = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Object> controllerOwners = new ReferenceOpenHashSet<>();
         int totalSupply = 0;
         for (IGridNode node : grid.getNodes()) {
             Object owner = node.getOwner();
@@ -183,7 +182,7 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
      * @return immutable-position set used by the controller calculation
      */
     private static Set<BlockPos> immutablePositionSet(Iterable<BlockPos> controllerPositions) {
-        Set<BlockPos> positions = new HashSet<>();
+        Set<BlockPos> positions = new ObjectOpenHashSet<>();
         for (BlockPos position : controllerPositions) {
             positions.add(position.immutable());
         }

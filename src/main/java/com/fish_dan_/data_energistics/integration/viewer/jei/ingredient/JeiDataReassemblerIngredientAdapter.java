@@ -13,10 +13,10 @@ import appeng.api.stacks.GenericStack;
 
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.ITypedIngredient;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -59,7 +59,7 @@ public final class JeiDataReassemblerIngredientAdapter
     }
 
     private static List<ITypedIngredient<?>> toTypedItems(List<ItemStack> candidates) {
-        List<ITypedIngredient<?>> typedIngredients = new ArrayList<>(candidates.size());
+        List<ITypedIngredient<?>> typedIngredients = new ObjectArrayList<>(candidates.size());
         for (ItemStack candidate : candidates) {
             typedIngredients.add(toTypedItem(candidate));
         }

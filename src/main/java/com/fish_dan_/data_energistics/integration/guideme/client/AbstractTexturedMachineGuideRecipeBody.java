@@ -24,9 +24,9 @@ import guideme.document.interaction.InteractiveElement;
 import guideme.layout.LayoutContext;
 import guideme.render.RenderContext;
 import guideme.siteexport.ResourceExporter;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -230,7 +230,7 @@ abstract class AbstractTexturedMachineGuideRecipeBody extends LytBlock implement
     }
 
     protected final GuideTooltip createItemTooltip(ItemStack stack) {
-        List<Component> lines = new ArrayList<>(Screen.getTooltipFromItem(Minecraft.getInstance(), stack));
+        List<Component> lines = new ObjectArrayList<>(Screen.getTooltipFromItem(Minecraft.getInstance(), stack));
         if (stack.getCount() > 1) {
             lines.add(Component.literal("x" + stack.getCount()));
         }
@@ -238,7 +238,7 @@ abstract class AbstractTexturedMachineGuideRecipeBody extends LytBlock implement
     }
 
     protected final GuideTooltip createGenericStackTooltip(GenericStack stack, List<Component> extraLines) {
-        List<Component> lines = new ArrayList<>();
+        List<Component> lines = new ObjectArrayList<>();
         lines.add(stack.what().getDisplayName());
         lines.add(Component.literal(formatFullAmount(stack)));
         lines.addAll(extraLines);

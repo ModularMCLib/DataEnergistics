@@ -14,16 +14,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class DataMeteoriteSavedData extends SavedData {
 
     private static final String DATA_NAME = Data_Energistics.MODID + "_meteorites";
     private static final String POSITIONS_TAG = "positions";
-    private final Set<Long> meteoritePositions = new HashSet<>();
+    private final LongSet meteoritePositions = new LongOpenHashSet();
 
     public static final Factory<DataMeteoriteSavedData> FACTORY = new Factory<>(
             DataMeteoriteSavedData::new,

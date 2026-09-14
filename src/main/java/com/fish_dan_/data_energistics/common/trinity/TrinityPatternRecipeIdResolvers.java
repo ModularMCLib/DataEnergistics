@@ -10,8 +10,11 @@ import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,7 +37,7 @@ public final class TrinityPatternRecipeIdResolvers implements TrinityPatternReci
      */
     public static final ResourceLocation AE2_SMITHING = resolverId("ae2/smithing");
 
-    private final List<RegisteredResolver> resolvers;
+    private final ObjectList<RegisteredResolver> resolvers;
 
     /**
      * Captures the IDs validated by plugin staging and rejects an adapter that changed its identity before freeze.
@@ -43,13 +46,13 @@ public final class TrinityPatternRecipeIdResolvers implements TrinityPatternReci
      */
     public TrinityPatternRecipeIdResolvers(
                                            Map<ResourceLocation, TrinityPatternRecipeIdResolver> registeredResolvers) {
-        ArrayList<RegisteredResolver> captured = new ArrayList<>(registeredResolvers.size());
+        ObjectArrayList<RegisteredResolver> captured = new ObjectArrayList<>(registeredResolvers.size());
         for (Map.Entry<ResourceLocation, TrinityPatternRecipeIdResolver> entry : registeredResolvers.entrySet()) {
             ResourceLocation resolverId = entry.getKey();
             TrinityPatternRecipeIdResolver resolver = entry.getValue();
             captured.add(new RegisteredResolver(resolverId, resolver));
         }
-        this.resolvers = List.copyOf(captured);
+        this.resolvers = ObjectLists.unmodifiable(captured);
     }
 
     /**
@@ -81,7 +84,7 @@ public final class TrinityPatternRecipeIdResolvers implements TrinityPatternReci
     @Override
     public Optional<TrinityPatternRecipeIdResolution> resolve(
                                                               IMolecularAssemblerSupportedPattern pattern) {
-        List<RegisteredResolver> matches = new ArrayList<>();
+        ObjectArrayList<RegisteredResolver> matches = new ObjectArrayList<>();
         for (RegisteredResolver registered : this.resolvers) {
             boolean supported;
             try {
@@ -126,8 +129,10 @@ public final class TrinityPatternRecipeIdResolvers implements TrinityPatternReci
     /**
      * Returns the built-ins so the Data Energistics plugin registers them through the same staging lifecycle.
      */
-    static List<TrinityPatternRecipeIdResolver> builtIns() {
-        return List.of(BuiltInResolver.CRAFTING, BuiltInResolver.STONECUTTING, BuiltInResolver.SMITHING);
+    static ObjectList<TrinityPatternRecipeIdResolver> builtIns() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(new TrinityPatternRecipeIdResolver[] {
+                BuiltInResolver.CRAFTING, BuiltInResolver.STONECUTTING, BuiltInResolver.SMITHING
+        }));
     }
 
     /**
@@ -135,7 +140,7 @@ public final class TrinityPatternRecipeIdResolvers implements TrinityPatternReci
      */
     private static Map<ResourceLocation, TrinityPatternRecipeIdResolver> indexResolvers(
                                                                                         List<TrinityPatternRecipeIdResolver> resolvers) {
-        LinkedHashMap<ResourceLocation, TrinityPatternRecipeIdResolver> indexed = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<ResourceLocation, TrinityPatternRecipeIdResolver> indexed = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternRecipeIdResolver resolver : resolvers) {
             ResourceLocation resolverId = resolver.id();
             if (indexed.putIfAbsent(resolverId, resolver) != null) {

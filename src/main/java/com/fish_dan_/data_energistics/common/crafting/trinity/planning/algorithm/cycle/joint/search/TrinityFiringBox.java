@@ -3,11 +3,12 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityFiringBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public record TrinityFiringBox(
         if (!variants.equals(variants.stream().sorted().toList())) {
             throw new IllegalArgumentException("A Trinity firing box requires stable sorted variants");
         }
-        if (new LinkedHashSet<>(variants).size() != variants.size()) {
+        if (new ObjectLinkedOpenHashSet<>(variants).size() != variants.size()) {
             throw new IllegalArgumentException("A Trinity firing box cannot repeat a variant");
         }
     }
@@ -50,7 +51,7 @@ public record TrinityFiringBox(
      * @return stable map accepted by the exact feasibility backend
      */
     public Map<TrinityPatternVariant, TrinityFiringBounds> asMap() {
-        LinkedHashMap<TrinityPatternVariant, TrinityFiringBounds> mapped = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, TrinityFiringBounds> mapped = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < variants.size(); index++) {
             mapped.put(variants.get(index), bounds.get(index));
         }
@@ -75,7 +76,7 @@ public record TrinityFiringBox(
         if (candidate == null) {
             throw new IllegalArgumentException("A Trinity firing-box split requires a candidate");
         }
-        ArrayList<BigInteger> vector = new ArrayList<>(variants.size());
+        ObjectArrayList<BigInteger> vector = new ObjectArrayList<>(variants.size());
         for (int index = 0; index < variants.size(); index++) {
             BigInteger value = candidate.getOrDefault(variants.get(index), BigInteger.ZERO);
             if (!bounds.get(index).contains(value)) {
@@ -90,7 +91,7 @@ public record TrinityFiringBox(
         }
         TrinityFiringBounds parent = bounds.get(splitAxis);
         BigInteger value = vector.get(splitAxis);
-        ArrayList<TrinityFiringBox> children = new ArrayList<>(3);
+        ObjectArrayList<TrinityFiringBox> children = new ObjectArrayList<>(3);
         if (value.compareTo(parent.lowerInclusive()) > 0) {
             children.add(withBounds(
                     splitAxis,
@@ -141,7 +142,7 @@ public record TrinityFiringBox(
     }
 
     private TrinityFiringBox withBounds(int axis, TrinityFiringBounds value) {
-        ArrayList<TrinityFiringBounds> child = new ArrayList<>(bounds);
+        ObjectArrayList<TrinityFiringBounds> child = new ObjectArrayList<>(bounds);
         child.set(axis, value);
         return new TrinityFiringBox(variants, child);
     }

@@ -4,6 +4,10 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+
 import java.util.List;
 
 /**
@@ -17,8 +21,15 @@ public interface ReusableCraftingAdmission {
 
     /**
      * @return immutable total CPU-owned inputs to transfer for this sequence; replay admissions return an empty list
+     * @deprecated scheduled for removal in plan 340; use {@link #physicalInputsFast()}
      */
+    @Deprecated(forRemoval = true)
     List<SlotStack> physicalInputs();
+
+    /** Returns an immutable FastUtil snapshot of physical inputs. */
+    default ObjectList<SlotStack> physicalInputsFast() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(physicalInputs()));
+    }
 
     /** @return true only when this exact sequence has already been accepted, without requiring another transfer */
     boolean replay();

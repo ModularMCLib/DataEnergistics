@@ -2,9 +2,10 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +28,8 @@ public final class TrinityServerDispatchScheduler {
     private static final String STEP_FAILURE_SOURCE = "server dispatch step";
     private static final String COMPLETION_FAILURE_SOURCE = "server dispatch completion";
 
-    private final List<CraftingDispatchParticipant> registeredParticipants = new ArrayList<>();
-    private final List<CraftingDispatchCompletion> registeredCompletions = new ArrayList<>();
+    private final List<CraftingDispatchParticipant> registeredParticipants = new ObjectArrayList<>();
+    private final List<CraftingDispatchCompletion> registeredCompletions = new ObjectArrayList<>();
     private String nextParticipantIdentity;
     private boolean tickOpen;
 
@@ -120,7 +121,7 @@ public final class TrinityServerDispatchScheduler {
         if (start <= 0) {
             return participants;
         }
-        List<CraftingDispatchParticipant> rotated = new ArrayList<>(participants.size());
+        List<CraftingDispatchParticipant> rotated = new ObjectArrayList<>(participants.size());
         rotated.addAll(participants.subList(start, participants.size()));
         rotated.addAll(participants.subList(0, start));
         return List.copyOf(rotated);
@@ -128,11 +129,12 @@ public final class TrinityServerDispatchScheduler {
 
     private void dispatchParticipants(List<CraftingDispatchParticipant> participants) {
         Map<CraftingDispatchParticipant, String> successorIdentities = successorIdentities(participants);
-        ArrayDeque<CraftingDispatchParticipant> ready = new ArrayDeque<>(participants);
+        ObjectArrayFIFOQueue<CraftingDispatchParticipant> ready = new ObjectArrayFIFOQueue<>();
+        participants.forEach(ready::enqueue);
         int remainingInRound = ready.size();
         boolean roundProgressed = false;
         while (!ready.isEmpty()) {
-            CraftingDispatchParticipant participant = ready.removeFirst();
+            CraftingDispatchParticipant participant = ready.dequeue();
             CraftingDispatchStepResult result;
             try {
                 result = participant.dispatchStep();
@@ -149,7 +151,7 @@ public final class TrinityServerDispatchScheduler {
             }
             roundProgressed |= result.progressed();
             if (result.progressed() && result.hasReadyWork() && !result.windowExhausted()) {
-                ready.addLast(participant);
+                ready.enqueue(participant);
             }
 
             remainingInRound--;
@@ -165,7 +167,7 @@ public final class TrinityServerDispatchScheduler {
 
     private static Map<CraftingDispatchParticipant, String> successorIdentities(
                                                                                 List<CraftingDispatchParticipant> participants) {
-        Map<CraftingDispatchParticipant, String> successors = new IdentityHashMap<>(participants.size());
+        Map<CraftingDispatchParticipant, String> successors = new Reference2ReferenceOpenHashMap<>(participants.size());
         for (int index = 0; index < participants.size(); index++) {
             int successorIndex = (index + 1) % participants.size();
             successors.put(participants.get(index), participants.get(successorIndex).diagnosticIdentity());

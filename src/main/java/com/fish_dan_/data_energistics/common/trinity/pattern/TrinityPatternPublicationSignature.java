@@ -5,10 +5,10 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -55,7 +55,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
         if (patternInputs == null) {
             throw new IllegalArgumentException("A Trinity pattern publication requires an input array");
         }
-        ArrayList<Input> inputs = new ArrayList<>(patternInputs.length);
+        ObjectArrayList<Input> inputs = new ObjectArrayList<>(patternInputs.length);
         for (IPatternDetails.IInput input : patternInputs) {
             if (input == null) {
                 throw new IllegalArgumentException("A Trinity pattern publication cannot contain a null input");
@@ -92,7 +92,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
             if (alternatives.isEmpty()) {
                 throw new IllegalArgumentException("A Trinity pattern input requires at least one alternative");
             }
-            LinkedHashSet<Alternative> unique = new LinkedHashSet<>();
+            ObjectLinkedOpenHashSet<Alternative> unique = new ObjectLinkedOpenHashSet<>();
             for (Alternative alternative : alternatives) {
                 if (alternative == null) {
                     throw new IllegalArgumentException("A Trinity pattern input cannot contain a null alternative");
@@ -113,7 +113,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
             if (possibleInputs == null) {
                 throw new IllegalArgumentException("A Trinity pattern input requires an alternative array");
             }
-            ArrayList<Alternative> alternatives = new ArrayList<>(possibleInputs.length);
+            ObjectArrayList<Alternative> alternatives = new ObjectArrayList<>(possibleInputs.length);
             for (GenericStack stack : possibleInputs) {
                 GenericStack validated = requirePositiveStack(stack, "input alternative");
                 alternatives.add(new Alternative(validated, input.getRemainingKey(validated.what())));
@@ -146,7 +146,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
     }
 
     private static List<GenericStack> copyPositiveOutputs(List<GenericStack> stacks) {
-        ArrayList<GenericStack> copied = new ArrayList<>(stacks.size());
+        ObjectArrayList<GenericStack> copied = new ObjectArrayList<>(stacks.size());
         for (GenericStack stack : stacks) {
             copied.add(requirePositiveStack(stack, "output"));
         }

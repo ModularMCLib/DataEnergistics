@@ -17,9 +17,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
 import net.minecraft.network.chat.Component;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,7 +69,7 @@ final class PreviewLayerSelector extends UIElement {
      * Rebuilds the exact ALL-plus-layer candidate domain after a new structure snapshot is installed.
      */
     void refresh() {
-        List<PreviewVisibleLayer> updated = new ArrayList<>(this.session.snapshot().layers().size() + 1);
+        List<PreviewVisibleLayer> updated = new ObjectArrayList<>(this.session.snapshot().layers().size() + 1);
         updated.add(PreviewVisibleLayer.all());
         for (int layerIndex = 0; layerIndex < this.session.snapshot().layers().size(); layerIndex++) {
             updated.add(PreviewVisibleLayer.logicalLayer(layerIndex));

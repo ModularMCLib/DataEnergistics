@@ -13,7 +13,8 @@ import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -82,7 +83,7 @@ public class UniversalTerminalCombineRecipe extends CustomRecipe {
     }
 
     private static List<ItemStack> getNonEmptyStacks(CraftingInput input) {
-        List<ItemStack> stacks = new ArrayList<>(2);
+        List<ItemStack> stacks = new ObjectArrayList<>(2);
         for (int i = 0; i < input.size(); i++) {
             ItemStack stack = input.getItem(i);
             if (!stack.isEmpty()) {

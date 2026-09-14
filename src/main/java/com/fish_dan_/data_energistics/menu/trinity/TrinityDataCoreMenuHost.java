@@ -13,9 +13,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -166,7 +166,7 @@ public interface TrinityDataCoreMenuHost {
     /** Moves one ordered set of installed patterns into the requesting player's inventory. */
     TrinityHostedActionStatus quickMovePatternsToPlayer(Player player,
                                                         long layoutRevision,
-                                                        List<Integer> globalSlots);
+                                                        IntList globalSlots);
 
     /**
      * Installs one pattern from the main UI player inventory into the first available aggregate slot.

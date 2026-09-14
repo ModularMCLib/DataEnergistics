@@ -32,6 +32,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -189,8 +191,8 @@ public final class ReusableReplanGraphCaptureGameTest {
     }
 
     private static TrinityCraftingGraphSnapshot graph(long revision, GameTestHelper helper) {
-        ReusableInputRule zero = ReusableInputRule.fixedDamage(RULE, 1, tool(0), 1, 3, List.of());
-        ReusableInputRule one = ReusableInputRule.fixedDamage(RULE, 1, tool(1), 1, 3, List.of());
+        ReusableInputRule zero = ReusableInputRule.fixedDamageFast(RULE, 1, tool(0), 1, 3, ObjectList.of());
+        ReusableInputRule one = ReusableInputRule.fixedDamageFast(RULE, 1, tool(1), 1, 3, ObjectList.of());
         TrinityBoundPatternInput first = new TrinityBoundPatternInput(0, 0, new GenericStack(tool(0), 1), 1, tool(1), zero, List.of());
         TrinityBoundPatternInput second = new TrinityBoundPatternInput(0, 0, new GenericStack(tool(1), 1), 1, tool(2), one, List.of());
         TrinityPatternPublicationSignature signature = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE),

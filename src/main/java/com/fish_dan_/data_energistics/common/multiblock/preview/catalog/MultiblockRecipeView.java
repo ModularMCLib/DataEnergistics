@@ -14,8 +14,8 @@ import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -63,7 +63,7 @@ public record MultiblockRecipeView(ResourceLocation registeredRecipeId,
         if (inputs.isEmpty()) {
             throw new IllegalArgumentException("Multiblock recipe view requires at least one material input");
         }
-        Set<AEKey> inputKeys = new HashSet<>();
+        Set<AEKey> inputKeys = new ObjectOpenHashSet<>();
         for (PreviewMaterial input : inputs) {
             if (!inputKeys.add(input.key())) {
                 throw new IllegalArgumentException("Multiblock recipe view contains a duplicate material input key");

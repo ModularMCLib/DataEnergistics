@@ -10,7 +10,8 @@ import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 
-import java.util.IdentityHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import java.util.Map;
 
 public final class ClientAeKeyRenderers {
@@ -38,7 +39,7 @@ public final class ClientAeKeyRenderers {
     }
 
     private static void overwrite(AEKeyType type, AEKeyRenderHandler<?> handler) {
-        Map<AEKeyType, AEKeyRenderHandler<?>> updated = new IdentityHashMap<>(AEKeyRendering.renderers);
+        Map<AEKeyType, AEKeyRenderHandler<?>> updated = new Reference2ReferenceOpenHashMap<>(AEKeyRendering.renderers);
         updated.put(type, (AEKeyRenderHandler<? extends AEKey>) handler);
         AEKeyRendering.renderers = updated;
     }

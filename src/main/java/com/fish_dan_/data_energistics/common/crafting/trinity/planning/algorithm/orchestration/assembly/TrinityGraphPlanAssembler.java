@@ -24,20 +24,25 @@ import appeng.api.stacks.GenericStack;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Converts solved graph demands into compact execution stages and final immutable Trinity crafting plans.
@@ -71,10 +76,10 @@ public final class TrinityGraphPlanAssembler {
         if (acyclicPlan == null) {
             throw new IllegalArgumentException("A Trinity acyclic plan assembly requires a solved plan");
         }
-        ArrayList<TrinityPlanStage> stages = new ArrayList<>(acyclicPlan.executionOrder().size());
-        ArrayList<Integer> stageOrder = new ArrayList<>(acyclicPlan.executionOrder().size());
-        LinkedHashMap<TrinityPatternIdentity, BigInteger> patternFirings = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> stackRequests = new LinkedHashMap<>();
+        ObjectArrayList<TrinityPlanStage> stages = new ObjectArrayList<>(acyclicPlan.executionOrder().size());
+        IntArrayList stageOrder = new IntArrayList(acyclicPlan.executionOrder().size());
+        Object2ObjectLinkedOpenHashMap<TrinityPatternIdentity, BigInteger> patternFirings = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> stackRequests = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : acyclicPlan.executionOrder()) {
             int stageIndex = stages.size();
             stages.add(stage(
@@ -96,7 +101,7 @@ public final class TrinityGraphPlanAssembler {
                 acyclicPlan.externalInputs(),
                 Collections.unmodifiableMap(patternFirings),
                 plannedStages,
-                List.copyOf(stageOrder),
+                IntLists.unmodifiable(new IntArrayList(stageOrder)),
                 List.of(),
                 Map.of(),
                 acyclicPlan.netChange(),
@@ -119,8 +124,8 @@ public final class TrinityGraphPlanAssembler {
         if (target == null || topology == null || demandSolution == null) {
             throw new IllegalArgumentException("A Trinity aggregate plan assembly request is incomplete");
         }
-        Map<Integer, Integer> topologicalPositions = topologicalPositions(topology);
-        ArrayList<OrderedUnit> units = new ArrayList<>();
+        Int2IntMap topologicalPositions = topologicalPositions(topology);
+        ObjectArrayList<OrderedUnit> units = new ObjectArrayList<>();
         demandSolution.acyclicFirings().forEach((variant, firing) -> units.add(new AcyclicUnit(
                 firing.rank(),
                 variant,
@@ -136,14 +141,14 @@ public final class TrinityGraphPlanAssembler {
                 .comparingInt(OrderedUnit::rank)
                 .thenComparing(OrderedUnit::stableKey));
 
-        ArrayList<TrinityPlanStage> stages = new ArrayList<>();
-        ArrayList<Integer> stageOrder = new ArrayList<>();
-        ArrayList<TrinityCycleRepeatBlock> repeatBlocks = new ArrayList<>();
-        LinkedHashMap<TrinityPatternIdentity, BigInteger> patternFirings = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> netChange = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> minimumSeed = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> retainedSeed = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> stackRequests = new LinkedHashMap<>();
+        ObjectArrayList<TrinityPlanStage> stages = new ObjectArrayList<>();
+        IntArrayList stageOrder = new IntArrayList();
+        ObjectArrayList<TrinityCycleRepeatBlock> repeatBlocks = new ObjectArrayList<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternIdentity, BigInteger> patternFirings = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> minimumSeed = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> retainedSeed = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> stackRequests = new Object2ObjectLinkedOpenHashMap<>();
         int seedRefinementPasses = 0;
         int repeatIndex = 0;
 
@@ -170,7 +175,7 @@ public final class TrinityGraphPlanAssembler {
                     stageOrder,
                     patternFirings,
                     stackRequests);
-            ArrayList<Integer> blockStages = new ArrayList<>();
+            IntArrayList blockStages = new IntArrayList();
             for (TrinityVariantFiring batch : cycle.localOrder()) {
                 int stageIndex = stages.size();
                 stages.add(stage(
@@ -187,7 +192,7 @@ public final class TrinityGraphPlanAssembler {
             }
             repeatBlocks.add(new TrinityCycleRepeatBlock(
                     repeatIndex++,
-                    blockStages,
+                    IntList.of(blockStages.toIntArray()),
                     cycle.repetitions(),
                     minimumBalances(cycle.localOrder()),
                     repeatedNetChange(cycle.localOrder(), cycle.repetitions())));
@@ -238,7 +243,7 @@ public final class TrinityGraphPlanAssembler {
                 demandSolution.initialInputs(),
                 Collections.unmodifiableMap(patternFirings),
                 plannedStages,
-                List.copyOf(stageOrder),
+                IntList.of(stageOrder.toIntArray()),
                 List.copyOf(repeatBlocks),
                 Collections.unmodifiableMap(minimumSeed),
                 Collections.unmodifiableMap(netChange),
@@ -254,7 +259,7 @@ public final class TrinityGraphPlanAssembler {
     private static Map<AEKey, BigInteger> terminalSeedBalances(
                                                                Map<AEKey, BigInteger> initialInputs,
                                                                List<TrinityPlanStage> stages,
-                                                               List<Integer> stageOrder,
+                                                               IntList stageOrder,
                                                                List<TrinityCycleRepeatBlock> repeatBlocks,
                                                                Map<AEKey, BigInteger> retainedSeed) {
         if (retainedSeed.isEmpty()) {
@@ -264,9 +269,9 @@ public final class TrinityGraphPlanAssembler {
         stages.forEach(stage -> stagesByIndex.put(stage.index(), stage));
         Int2ObjectOpenHashMap<TrinityCycleRepeatBlock> blocksByStage = new Int2ObjectOpenHashMap<>();
         repeatBlocks.forEach(block -> block.stageOrder().forEach(
-                stageIndex -> blocksByStage.put(stageIndex.intValue(), block)));
+                stageIndex -> blocksByStage.put(stageIndex, block)));
         IntOpenHashSet completedBlocks = new IntOpenHashSet();
-        LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>(initialInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         for (int stageIndex : stageOrder) {
             TrinityPlanStage stage = stagesByIndex.get(stageIndex);
             if (!stage.cycleStage()) {
@@ -336,7 +341,7 @@ public final class TrinityGraphPlanAssembler {
                 .initialExpectedInputs(assembly.initialInputs())
                 .patternFirings(assembly.patternFirings())
                 .stages(assembly.stages())
-                .stageOrder(assembly.stageOrder())
+                .stageOrder(IntList.of(assembly.stageOrder().toIntArray()))
                 .cycleRepeatBlocks(assembly.repeatBlocks())
                 .minimumSeed(assembly.minimumSeed())
                 .targetNetChange(assembly.netChange())
@@ -349,7 +354,7 @@ public final class TrinityGraphPlanAssembler {
     private static void appendOneTimeStages(
                                             List<TrinityVariantFiring> order,
                                             List<TrinityPlanStage> stages,
-                                            List<Integer> stageOrder,
+                                            IntList stageOrder,
                                             Map<TrinityPatternIdentity, BigInteger> patternFirings,
                                             Map<AEKey, BigInteger> stackRequests) {
         for (TrinityVariantFiring batch : order) {
@@ -369,7 +374,7 @@ public final class TrinityGraphPlanAssembler {
     private static Map<AEKey, BigInteger> repeatedNetChange(
                                                             List<TrinityVariantFiring> order,
                                                             BigInteger repetitions) {
-        LinkedHashMap<AEKey, BigInteger> netChange = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange = new Object2ObjectLinkedOpenHashMap<>();
         order.forEach(batch -> mergeScaled(
                 netChange,
                 batch.variant().netChange(),
@@ -379,8 +384,8 @@ public final class TrinityGraphPlanAssembler {
     }
 
     private static Map<AEKey, BigInteger> minimumBalances(List<TrinityVariantFiring> order) {
-        LinkedHashMap<AEKey, BigInteger> required = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : order) {
             requiredAtStart(firing.variant(), firing.count()).forEach((key, amount) -> {
                 BigInteger deficit = amount.subtract(balances.getOrDefault(key, BigInteger.ZERO));
@@ -411,7 +416,7 @@ public final class TrinityGraphPlanAssembler {
         return new TrinityPlanStage(
                 index,
                 cycle,
-                Set.of(),
+                IntSets.emptySet(),
                 List.of(new TrinityPlanPatternFiring(
                         variant.patternIdentity(),
                         variant.primaryOutput(),
@@ -428,7 +433,7 @@ public final class TrinityGraphPlanAssembler {
     private static Map<AEKey, BigInteger> requiredAtStart(
                                                           TrinityPatternVariant variant,
                                                           BigInteger count) {
-        LinkedHashMap<AEKey, BigInteger> required = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         variant.inputs().forEach((key, input) -> {
             BigInteger net = variant.netChange().getOrDefault(key, BigInteger.ZERO);
             BigInteger amount = net.signum() < 0 ?
@@ -442,7 +447,7 @@ public final class TrinityGraphPlanAssembler {
     private static Map<AEKey, BigInteger> multiplyPositive(
                                                            Map<AEKey, BigInteger> amounts,
                                                            BigInteger multiplier) {
-        LinkedHashMap<AEKey, BigInteger> result = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> result.put(key, amount.multiply(multiplier)));
         return Collections.unmodifiableMap(result);
     }
@@ -450,7 +455,7 @@ public final class TrinityGraphPlanAssembler {
     private static Map<AEKey, BigInteger> multiplySigned(
                                                          Map<AEKey, BigInteger> amounts,
                                                          BigInteger multiplier) {
-        LinkedHashMap<AEKey, BigInteger> result = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             BigInteger multiplied = amount.multiply(multiplier);
             if (multiplied.signum() != 0) {
@@ -460,19 +465,19 @@ public final class TrinityGraphPlanAssembler {
         return Collections.unmodifiableMap(result);
     }
 
-    private static Map<Integer, Integer> topologicalPositions(TrinityCraftingTopology topology) {
-        HashMap<Integer, Integer> positions = new HashMap<>();
+    private static Int2IntMap topologicalPositions(TrinityCraftingTopology topology) {
+        Int2IntOpenHashMap positions = new Int2IntOpenHashMap();
         for (int position = 0; position < topology.topologicalOrder().size(); position++) {
-            positions.put(topology.topologicalOrder().get(position), position);
+            positions.put(topology.topologicalOrder().getInt(position), position);
         }
-        return Collections.unmodifiableMap(positions);
+        return positions;
     }
 
     private static boolean hasMultiplePaths(List<TrinityPatternVariant> variants) {
-        HashMap<AEKey, Integer> producerCounts = new HashMap<>();
+        Object2IntMap<AEKey> producerCounts = new Object2IntOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             for (AEKey output : variant.outputs().keySet()) {
-                int count = producerCounts.merge(output, 1, Integer::sum);
+                int count = producerCounts.mergeInt(output, 1, Integer::sum);
                 if (count > 1) {
                     return true;
                 }

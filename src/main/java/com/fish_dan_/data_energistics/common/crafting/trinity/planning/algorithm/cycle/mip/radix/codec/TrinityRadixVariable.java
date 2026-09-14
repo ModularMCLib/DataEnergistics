@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +20,7 @@ public record TrinityRadixVariable(String name, List<Variable> digits, BigIntege
      * Reconstructs and bounds-checks the exact logical value from decoded digit assignments.
      */
     public BigInteger decode(Map<Variable, BigInteger> values) {
-        ArrayList<Integer> decoded = new ArrayList<>(digits.size());
+        IntArrayList decoded = new IntArrayList(digits.size());
         for (Variable digit : digits) {
             decoded.add(values.get(digit).intValueExact());
         }

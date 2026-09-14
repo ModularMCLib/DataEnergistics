@@ -20,10 +20,10 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.ArrayDeque;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 
 /**
  * Removes broken data meteorite centers and pushes a fresh compass target after the block is gone.
@@ -31,7 +31,7 @@ import java.util.Queue;
 public final class DataMeteoriteCompassTargetInvalidation {
 
     private static final int MAX_RETRIES = 3;
-    private final Queue<PendingRefresh> pendingRefreshes = new ArrayDeque<>();
+    private final ObjectArrayFIFOQueue<PendingRefresh> pendingRefreshes = new ObjectArrayFIFOQueue<>();
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockEvent.BreakEvent event) {
@@ -41,7 +41,7 @@ public final class DataMeteoriteCompassTargetInvalidation {
 
         BlockPos pos = event.getPos().immutable();
         if (DataMeteoriteSavedData.get(level).remove(pos)) {
-            this.pendingRefreshes.add(new PendingRefresh(level, pos, MAX_RETRIES));
+            this.pendingRefreshes.enqueue(new PendingRefresh(level, pos, MAX_RETRIES));
         }
     }
 
@@ -64,10 +64,10 @@ public final class DataMeteoriteCompassTargetInvalidation {
     public void onServerTick(ServerTickEvent.Post event) {
         int pendingCount = this.pendingRefreshes.size();
         for (int i = 0; i < pendingCount; i++) {
-            PendingRefresh pending = this.pendingRefreshes.remove();
+            PendingRefresh pending = this.pendingRefreshes.dequeue();
             if (isDataMeteoriteCenter(pending.level().getBlockState(pending.pos()))) {
                 if (pending.retriesRemaining() > 0) {
-                    this.pendingRefreshes.add(pending.retry());
+                    this.pendingRefreshes.enqueue(pending.retry());
                 }
                 continue;
             }

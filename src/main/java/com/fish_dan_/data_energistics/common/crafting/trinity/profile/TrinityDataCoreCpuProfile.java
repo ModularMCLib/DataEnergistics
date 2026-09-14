@@ -4,9 +4,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCp
 
 import appeng.api.config.CpuSelectionMode;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Aggregate CPU data for a formed Trinity Data Core host.
@@ -55,7 +56,7 @@ public record TrinityDataCoreCpuProfile(TrinityCpuStorageCapacity storageCapacit
      */
     public static TrinityDataCoreCpuProfile fromContributions(
                                                               Map<String, TrinityDataCoreCpuContribution> contributions) {
-        Map<String, TrinityDataCoreCpuContribution> sorted = new TreeMap<>(contributions);
+        Map<String, TrinityDataCoreCpuContribution> sorted = new Object2ObjectAVLTreeMap<>(contributions);
 
         TrinityCpuStorageCapacity storageCapacity = new TrinityCpuStorageCapacity.Finite(BigInteger.ZERO);
         int partitionCount = 0;

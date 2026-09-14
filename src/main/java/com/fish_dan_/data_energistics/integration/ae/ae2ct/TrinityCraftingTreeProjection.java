@@ -10,14 +10,18 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import com.neuvillette.ae2ct.api.RecipeHelper;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +44,8 @@ public final class TrinityCraftingTreeProjection {
      * @return complete recipe tree payload for the current request
      */
     public static RecipeHelper create(TrinityCraftingPlan plan) {
-        Map<Integer, BigInteger> stageMultipliers = stageMultipliers(plan);
-        LinkedHashMap<AEKey, AggregateRecipe> recipesByPrimaryOutput = new LinkedHashMap<>();
+        Int2ObjectMap<BigInteger> stageMultipliers = stageMultipliers(plan);
+        Object2ObjectLinkedOpenHashMap<AEKey, AggregateRecipe> recipesByPrimaryOutput = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPlanStage stage : plan.stages()) {
             BigInteger multiplier = stageMultipliers.get(stage.index());
             for (TrinityPlanPatternFiring firing : stage.firings()) {
@@ -60,7 +64,7 @@ public final class TrinityCraftingTreeProjection {
         truncateDeepEdges(requestedOutput, recipesByPrimaryOutput);
         Set<AEKey> reachableOutputs = findReachableOutputs(requestedOutput, recipesByPrimaryOutput);
 
-        ArrayList<RecipeHelper.Recipe> recipes = new ArrayList<>(reachableOutputs.size());
+        ObjectArrayList<RecipeHelper.Recipe> recipes = new ObjectArrayList<>(reachableOutputs.size());
         recipesByPrimaryOutput.forEach((output, recipe) -> {
             if (reachableOutputs.contains(output)) {
                 recipes.add(recipe.toRecipe());
@@ -84,8 +88,8 @@ public final class TrinityCraftingTreeProjection {
         return new RecipeHelper(requestedOutput, List.of(root));
     }
 
-    private static Map<Integer, BigInteger> stageMultipliers(TrinityCraftingPlan plan) {
-        HashMap<Integer, BigInteger> multipliers = new HashMap<>();
+    private static Int2ObjectMap<BigInteger> stageMultipliers(TrinityCraftingPlan plan) {
+        Int2ObjectOpenHashMap<BigInteger> multipliers = new Int2ObjectOpenHashMap<>();
         plan.stages().forEach(stage -> multipliers.put(stage.index(), BigInteger.ONE));
         for (TrinityCycleRepeatBlock block : plan.cycleRepeatBlocks()) {
             block.stageOrder().forEach(stage -> multipliers.put(stage, block.repetitions()));
@@ -101,7 +105,7 @@ public final class TrinityCraftingTreeProjection {
     private static void removeCycleEdges(
                                          AEKey requestedOutput,
                                          Map<AEKey, AggregateRecipe> recipesByPrimaryOutput) {
-        HashMap<AEKey, VisitState> visitStates = new HashMap<>();
+        Object2ObjectOpenHashMap<AEKey, VisitState> visitStates = new Object2ObjectOpenHashMap<>();
         ArrayDeque<TraversalFrame> stack = new ArrayDeque<>();
         visitStates.put(requestedOutput, VisitState.VISITING);
         stack.push(new TraversalFrame(
@@ -135,12 +139,12 @@ public final class TrinityCraftingTreeProjection {
                                           AEKey requestedOutput,
                                           Map<AEKey, AggregateRecipe> recipesByPrimaryOutput) {
         Set<AEKey> reachableOutputs = findReachableOutputs(requestedOutput, recipesByPrimaryOutput);
-        LinkedHashMap<AEKey, Integer> indegrees = new LinkedHashMap<>();
+        Object2IntLinkedOpenHashMap<AEKey> indegrees = new Object2IntLinkedOpenHashMap<>();
         reachableOutputs.forEach(output -> indegrees.put(output, 0));
         for (AEKey output : reachableOutputs) {
             for (AEKey input : producerInputs(output, recipesByPrimaryOutput)) {
                 if (reachableOutputs.contains(input)) {
-                    indegrees.computeIfPresent(input, (ignored, degree) -> degree + 1);
+                    indegrees.addTo(input, 1);
                 }
             }
         }
@@ -151,23 +155,24 @@ public final class TrinityCraftingTreeProjection {
                 ready.addLast(output);
             }
         });
-        HashMap<AEKey, Integer> longestDepths = new HashMap<>();
+        Object2IntOpenHashMap<AEKey> longestDepths = new Object2IntOpenHashMap<>();
         longestDepths.put(requestedOutput, 0);
 
         while (!ready.isEmpty()) {
             AEKey output = ready.removeFirst();
-            Integer outputDepth = longestDepths.get(output);
+            boolean hasOutputDepth = longestDepths.containsKey(output);
+            int outputDepth = longestDepths.getInt(output);
             for (AEKey input : producerInputs(output, recipesByPrimaryOutput)) {
-                Integer inputDegree = indegrees.get(input);
-                if (inputDegree == null) {
+                if (!indegrees.containsKey(input)) {
                     continue;
                 }
-                if (outputDepth != null) {
+                int inputDegree = indegrees.getInt(input);
+                if (hasOutputDepth) {
                     int inputDepth = outputDepth + 1;
                     if (inputDepth > MAX_PROJECTED_TREE_DEPTH) {
                         recipesByPrimaryOutput.get(output).removeInput(input);
                     } else {
-                        longestDepths.merge(input, inputDepth, Math::max);
+                        longestDepths.mergeInt(input, inputDepth, Math::max);
                     }
                 }
                 int remainingDegree = inputDegree - 1;
@@ -182,7 +187,7 @@ public final class TrinityCraftingTreeProjection {
     private static Set<AEKey> findReachableOutputs(
                                                    AEKey requestedOutput,
                                                    Map<AEKey, AggregateRecipe> recipesByPrimaryOutput) {
-        LinkedHashSet<AEKey> reachableOutputs = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> reachableOutputs = new ObjectLinkedOpenHashSet<>();
         ArrayDeque<AEKey> pending = new ArrayDeque<>();
         if (recipesByPrimaryOutput.containsKey(requestedOutput)) {
             reachableOutputs.add(requestedOutput);
@@ -206,7 +211,7 @@ public final class TrinityCraftingTreeProjection {
         if (recipe == null) {
             return List.of();
         }
-        ArrayList<AEKey> inputs = new ArrayList<>();
+        ObjectArrayList<AEKey> inputs = new ObjectArrayList<>();
         recipe.inputs().keySet().forEach(input -> {
             if (recipesByPrimaryOutput.containsKey(input)) {
                 inputs.add(input);
@@ -247,8 +252,8 @@ public final class TrinityCraftingTreeProjection {
     private static final class AggregateRecipe {
 
         private final AEKey primaryOutput;
-        private final LinkedHashMap<AEKey, BigInteger> inputs = new LinkedHashMap<>();
-        private final LinkedHashMap<AEKey, BigInteger> outputs = new LinkedHashMap<>();
+        private final Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
+        private final Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> outputs = new Object2ObjectLinkedOpenHashMap<>();
 
         private AggregateRecipe(AEKey primaryOutput) {
             this.primaryOutput = primaryOutput;
@@ -291,7 +296,7 @@ public final class TrinityCraftingTreeProjection {
         }
 
         private List<GenericStack> toOutputStacks() {
-            ArrayList<GenericStack> stacks = new ArrayList<>(this.outputs.size());
+            ObjectArrayList<GenericStack> stacks = new ObjectArrayList<>(this.outputs.size());
             stacks.add(new GenericStack(
                     this.primaryOutput,
                     TrinityAe2AmountProjection.toAe2Amount(this.outputs.get(this.primaryOutput))));
@@ -304,7 +309,7 @@ public final class TrinityCraftingTreeProjection {
         }
 
         private static List<GenericStack> toStacks(Map<AEKey, BigInteger> amounts) {
-            ArrayList<GenericStack> stacks = new ArrayList<>(amounts.size());
+            ObjectArrayList<GenericStack> stacks = new ObjectArrayList<>(amounts.size());
             amounts.forEach((key, amount) -> stacks.add(new GenericStack(
                     key,
                     TrinityAe2AmountProjection.toAe2Amount(amount))));

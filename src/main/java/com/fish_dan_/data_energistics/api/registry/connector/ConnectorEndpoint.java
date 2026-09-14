@@ -3,6 +3,9 @@ package com.fish_dan_.data_energistics.api.registry.connector;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
@@ -15,8 +18,20 @@ import java.util.List;
 @NullMarked
 public interface ConnectorEndpoint {
 
-    /** Returns links in registration order, including face, mode and optional interface slot. */
+    /**
+     * Returns links in registration order, including face, mode and optional interface slot.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #bindingsFast()}
+     */
+    @Deprecated(forRemoval = true)
     List<ConnectorLink> bindings();
+
+    /** Returns the configured links through the FastUtil collection API. */
+    @SuppressWarnings("unchecked")
+    default ObjectList<ConnectorLink> bindingsFast() {
+        List<ConnectorLink> legacy = bindings();
+        return legacy instanceof ObjectList<?> fast ? (ObjectList<ConnectorLink>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
+    }
 
     /** Returns the default mode for the next link; existing links retain their own modes. */
     ConnectorMode mode();
@@ -37,6 +52,14 @@ public interface ConnectorEndpoint {
      * Replaces all links on the server thread after caller validation and returns the number retained. Absolute targets
      * and first registration order are preserved. Interface slots must remain in the valid logical range, but may be
      * locked after a capacity card was removed. Invalid slots throw IllegalArgumentException.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #replaceFast(ObjectList)}
      */
+    @Deprecated(forRemoval = true)
     int replace(List<ConnectorLink> bindings);
+
+    /** Replaces links through the FastUtil collection API. */
+    default int replaceFast(ObjectList<ConnectorLink> bindings) {
+        return replace((List<ConnectorLink>) bindings);
+    }
 }

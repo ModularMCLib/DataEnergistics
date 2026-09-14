@@ -2,6 +2,10 @@ package com.fish_dan_.data_energistics.api.registry.search;
 
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+
 import java.util.List;
 
 /**
@@ -21,6 +25,13 @@ public interface TrinityPatternSearchTermContributor {
      *
      * @param encodedPattern encoded pattern displayed by the Trinity information exchange depot
      * @return non-null independent candidate names in declaration order
+     * @deprecated scheduled for removal in plan 340; use {@link #searchTermsFast(ItemStack)}
      */
+    @Deprecated(forRemoval = true)
     List<String> searchTerms(ItemStack encodedPattern);
+
+    /** Returns candidate names as an immutable FastUtil snapshot. */
+    default ObjectList<String> searchTermsFast(ItemStack encodedPattern) {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(searchTerms(encodedPattern)));
+    }
 }

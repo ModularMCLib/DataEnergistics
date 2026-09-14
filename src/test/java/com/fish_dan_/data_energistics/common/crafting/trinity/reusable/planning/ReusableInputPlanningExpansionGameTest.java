@@ -26,6 +26,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +53,8 @@ public final class ReusableInputPlanningExpansionGameTest {
                 return Optional.empty();
             }
             AEItemKey key = (AEItemKey) context.actualInput().what();
-            return Optional.of(context.exactInputs().get(1).what().equals(redstone) ?
-                    ReusableInputRule.fixedDamage(RULE_ID, 1L, key, 1, 4, List.of()) :
+            return Optional.of(context.exactInputsFast().get(1).what().equals(redstone) ?
+                    ReusableInputRule.fixedDamageFast(RULE_ID, 1L, key, 1, 4, ObjectList.of()) :
                     ReusableInputRule.unchanged(RULE_ID, 2L, key));
         };
         var result = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(), rules, 8,
@@ -82,8 +84,8 @@ public final class ReusableInputPlanningExpansionGameTest {
         helper.assertFalse(legacy.hasReusableInputs(), "Observed unchanged remainder must not imply a reusable rule");
         helper.assertValueEqual(legacy.bindings().size(), 1, "Unknown inventory-only variants are not guessed");
         var known = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(),
-                input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamage(
-                        RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4, List.of())) : Optional.empty(),
+                input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamageFast(
+                        RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4, ObjectList.of())) : Optional.empty(),
                 4, TrinityPlanningControl.unbounded());
         helper.assertTrue(known instanceof ReusableInputPlanningExpansion.Captured, "Known states should be captured");
         var bounded = (ReusableInputPlanningExpansion.Captured) known;
@@ -98,8 +100,8 @@ public final class ReusableInputPlanningExpansionGameTest {
     @GameTest(template = "empty_5x5")
     public static void limitsNeverPublishPartialStateGraphs(GameTestHelper helper) {
         TestPattern pattern = new TestPattern(3, false);
-        ReusableInputRules rules = input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamage(
-                RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4, List.of())) : Optional.empty();
+        ReusableInputRules rules = input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamageFast(
+                RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4, ObjectList.of())) : Optional.empty();
         var limit = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(tool(1), tool(2), tool(3)), rules, 3,
                 TrinityPlanningControl.unbounded());
         helper.assertTrue(limit instanceof ReusableInputPlanningExpansion.Stopped, "One state beyond the limit rejects capture");
@@ -127,9 +129,9 @@ public final class ReusableInputPlanningExpansionGameTest {
         AtomicLong callbacks = new AtomicLong();
         ReusableInputRules rules = input -> {
             callbacks.incrementAndGet();
-            return input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamage(
+            return input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamageFast(
                     RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4,
-                    List.of(new GenericStack(AEItemKey.of(Items.STICK), 3L)))) : Optional.empty();
+                    ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 3L)))) : Optional.empty();
         };
         ReusableInputPlanningCursor cursor = new ReusableInputPlanningCursor(context(helper, pattern), List.of(tool(2)),
                 rules, 4, TrinityPlanningControl.unbounded());

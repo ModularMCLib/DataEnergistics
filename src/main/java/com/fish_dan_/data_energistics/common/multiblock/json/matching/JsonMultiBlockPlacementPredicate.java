@@ -15,8 +15,8 @@ import com.google.gson.JsonObject;
 import com.modularmc.mdl.api.multiblock.MultiblockState;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,7 +50,7 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List
 
     public static JsonMultiBlockPlacementPredicate fromJson(JsonObject object) {
         StructurePredicate delegate = StructurePredicateTypes.decode(readRequiredObject(object, PREDICATE_PROPERTY));
-        List<ItemStack> items = new ArrayList<>();
+        List<ItemStack> items = new ObjectArrayList<>();
         for (String itemId : readItemIds(object)) {
             items.add(resolveItem(parseId(itemId, "item")).getDefaultInstance());
         }
@@ -100,7 +100,7 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List
     private static List<String> readItemIds(JsonObject object) {
         if (object.has(ITEMS_PROPERTY)) {
             JsonArray array = readRequiredArray(object, ITEMS_PROPERTY);
-            List<String> ids = new ArrayList<>();
+            List<String> ids = new ObjectArrayList<>();
             for (JsonElement element : array) {
                 if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
                     throw new IllegalArgumentException("Placement item entries must be strings");

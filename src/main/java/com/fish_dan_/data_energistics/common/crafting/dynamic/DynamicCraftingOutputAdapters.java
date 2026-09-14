@@ -13,9 +13,10 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +40,7 @@ public final class DynamicCraftingOutputAdapters {
         if (installed) {
             throw new IllegalStateException("Dynamic crafting output adapters have already been installed");
         }
-        ArrayList<DynamicCraftingOutputAdapter> validated = new ArrayList<>(values.size());
+        ObjectArrayList<DynamicCraftingOutputAdapter> validated = new ObjectArrayList<>(values.size());
         for (DynamicCraftingOutputAdapter adapter : values) {
             if (adapter == null || adapter.id() == null) {
                 throw new IllegalStateException("A dynamic crafting output adapter requires a stable ID");
@@ -93,14 +94,14 @@ public final class DynamicCraftingOutputAdapters {
     private static ResolvedSemantics validate(IPatternDetails details,
                                               ResourceLocation adapterId,
                                               DynamicCraftingOutputSemantics semantics) {
-        LinkedHashMap<AEKey, Long> declared = new LinkedHashMap<>();
+        Object2LongLinkedOpenHashMap<AEKey> declared = new Object2LongLinkedOpenHashMap<>();
         for (GenericStack output : details.getOutputs()) {
             if (output == null || output.what() == null || output.amount() <= 0L) {
                 throw new DynamicCraftingOutputResolutionException(
                         "Pattern " + details.getDefinition() + " exposes an invalid physical output");
             }
             try {
-                declared.merge(output.what(), output.amount(), Math::addExact);
+                declared.mergeLong(output.what(), output.amount(), Math::addExact);
             } catch (ArithmeticException exception) {
                 throw new DynamicCraftingOutputResolutionException(
                         "Pattern " + details.getDefinition() + " overflows its physical output amount",
@@ -108,9 +109,9 @@ public final class DynamicCraftingOutputAdapters {
             }
         }
 
-        LinkedHashMap<AEKey, Long> claimed = new LinkedHashMap<>();
-        Map<Item, AEItemKey> domains = new HashMap<>();
-        for (DynamicCraftingOutput output : semantics.outputs()) {
+        Object2LongLinkedOpenHashMap<AEKey> claimed = new Object2LongLinkedOpenHashMap<>();
+        Map<Item, AEItemKey> domains = new Object2ObjectOpenHashMap<>();
+        for (DynamicCraftingOutput output : semantics.outputsFast()) {
             if (output.matchMode() != DynamicCraftingOutputMatchMode.SAME_ITEM ||
                     !(output.plannedOutput().what() instanceof AEItemKey plannedKey)) {
                 throw new DynamicCraftingOutputResolutionException(
@@ -123,7 +124,7 @@ public final class DynamicCraftingOutputAdapters {
                                 " declared multiple component templates for the same registered item");
             }
             try {
-                claimed.merge(plannedKey, output.plannedOutput().amount(), Math::addExact);
+                claimed.mergeLong(plannedKey, output.plannedOutput().amount(), Math::addExact);
             } catch (ArithmeticException exception) {
                 throw new DynamicCraftingOutputResolutionException(
                         "Dynamic output adapter " + adapterId + " overflows a declared output amount",
@@ -138,7 +139,7 @@ public final class DynamicCraftingOutputAdapters {
                                 " x" + amount + " for pattern " + details.getDefinition());
             }
         });
-        return new ResolvedSemantics(adapterId, semantics.outputs());
+        return new ResolvedSemantics(adapterId, semantics.outputsFast());
     }
 
     private static void requireInstalled() {

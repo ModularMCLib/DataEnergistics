@@ -17,11 +17,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import com.modularmc.mdl.api.multiblock.PatternCandidate;
 import com.modularmc.mdl.api.multiblock.json.StructurePatternResolver.StringArrayDefinition;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
+import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,13 +40,13 @@ import java.util.Set;
  */
 public final class JsonMultiBlockAutoBuildStaging {
 
-    private static final JsonMultiBlockAutoBuildStaging NONE = new JsonMultiBlockAutoBuildStaging(Map.of(), Map.of());
+    private static final JsonMultiBlockAutoBuildStaging NONE = new JsonMultiBlockAutoBuildStaging(Object2BooleanMaps.emptyMap(), Map.of());
 
-    private final Map<BlockState, Boolean> blockStaging;
+    private final Object2BooleanMap<BlockState> blockStaging;
     private final Map<Item, BlockState> partHosts;
 
-    private JsonMultiBlockAutoBuildStaging(Map<BlockState, Boolean> blockStaging, Map<Item, BlockState> partHosts) {
-        this.blockStaging = Map.copyOf(blockStaging);
+    private JsonMultiBlockAutoBuildStaging(Object2BooleanMap<BlockState> blockStaging, Map<Item, BlockState> partHosts) {
+        this.blockStaging = Object2BooleanMaps.unmodifiable(new Object2BooleanLinkedOpenHashMap<>(blockStaging));
         this.partHosts = Map.copyOf(partHosts);
     }
 
@@ -62,8 +65,8 @@ public final class JsonMultiBlockAutoBuildStaging {
         }
         Set<Character> usedSymbols = usedSymbols(definition);
         Map<Character, StructurePredicate> predicates = definition.predicates();
-        LinkedHashMap<BlockState, Boolean> blockStaging = new LinkedHashMap<>();
-        LinkedHashMap<Item, BlockState> partHosts = new LinkedHashMap<>();
+        Object2BooleanLinkedOpenHashMap<BlockState> blockStaging = new Object2BooleanLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<Item, BlockState> partHosts = new Object2ObjectLinkedOpenHashMap<>();
 
         for (String symbol : metadata.blockSymbols()) {
             StructurePredicate predicate = requiredPredicate(resourceId, symbol, usedSymbols, predicates);
@@ -125,7 +128,7 @@ public final class JsonMultiBlockAutoBuildStaging {
      * Returns whether the exact final state is authorized for a real-world pre-publication write.
      */
     public boolean allowsPhysicalBlock(BlockState desiredState) {
-        return Boolean.TRUE.equals(this.blockStaging.get(desiredState));
+        return this.blockStaging.getBoolean(desiredState);
     }
 
     /**
@@ -137,7 +140,7 @@ public final class JsonMultiBlockAutoBuildStaging {
     }
 
     private static Set<Character> usedSymbols(StringArrayDefinition definition) {
-        LinkedHashSet<Character> symbols = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<Character> symbols = new ObjectLinkedOpenHashSet<>();
         definition.units().forEach(unit -> unit.slices().forEach(slice -> {
             for (String row : slice) {
                 for (int index = 0; index < row.length(); index++) {
@@ -184,7 +187,7 @@ public final class JsonMultiBlockAutoBuildStaging {
     }
 
     private static List<BlockState> blockPlacementStates(StructurePredicate predicate) {
-        LinkedHashSet<BlockState> states = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<BlockState> states = new ObjectLinkedOpenHashSet<>();
         for (PatternCandidate candidate : predicate.patternCandidates()) {
             if (candidate.placementStack().getItem() instanceof BlockItem) {
                 states.add(candidate.previewState());
@@ -198,7 +201,7 @@ public final class JsonMultiBlockAutoBuildStaging {
 
     private static List<BlockState> replaceableCompartmentStates(
                                                                  JsonMultiBlockReplaceableCompartmentPredicate replaceablePredicate) {
-        ArrayList<BlockState> states = new ArrayList<>();
+        ObjectArrayList<BlockState> states = new ObjectArrayList<>();
         for (var type : replaceablePredicate.compartmentTypes()) {
             Block block = JsonMultiBlockCompartmentPredicate.blockFor(type);
             if (!(block.asItem() instanceof BlockItem)) {
@@ -211,11 +214,12 @@ public final class JsonMultiBlockAutoBuildStaging {
 
     private static void addBlockState(ResourceLocation resourceId,
                                       String symbol,
-                                      Map<BlockState, Boolean> blockStaging,
+                                      Object2BooleanMap<BlockState> blockStaging,
                                       BlockState state,
                                       boolean physical) {
-        Boolean previous = blockStaging.putIfAbsent(state, physical);
-        if (previous != null && previous != physical) {
+        boolean present = blockStaging.containsKey(state);
+        boolean previous = blockStaging.putIfAbsent(state, physical);
+        if (present && previous != physical) {
             throw new IllegalArgumentException("JSON multiblock staging state has conflicting physical modes for symbol '" +
                     symbol + "': " + resourceId);
         }
@@ -236,7 +240,7 @@ public final class JsonMultiBlockAutoBuildStaging {
     private static void rejectAmbiguousUnmarkedCandidates(ResourceLocation resourceId,
                                                           JsonMultiBlockAutoBuildStagingMetadata metadata,
                                                           Map<Character, StructurePredicate> predicates,
-                                                          Map<BlockState, Boolean> blockStaging,
+                                                          Object2BooleanMap<BlockState> blockStaging,
                                                           Map<Item, BlockState> partHosts) {
         for (Map.Entry<Character, StructurePredicate> entry : predicates.entrySet()) {
             String symbol = Character.toString(entry.getKey());

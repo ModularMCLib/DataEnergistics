@@ -8,9 +8,13 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,10 +86,10 @@ public final class TrinityAutoBuildBlockMap {
      * Returns immutable category metadata without resolving Minecraft block registrations.
      */
     public static Map<String, List<ResourceLocation>> categories() {
-        Map<String, List<ResourceLocation>> categories = new LinkedHashMap<>();
+        Map<String, List<ResourceLocation>> categories = new Object2ObjectLinkedOpenHashMap<>();
         for (String category : CATEGORY_ORDER) {
             List<TierDefinition> tiers = CATEGORIES.get(category);
-            List<ResourceLocation> blockIds = new ArrayList<>(tiers.size());
+            List<ResourceLocation> blockIds = new ObjectArrayList<>(tiers.size());
             for (TierDefinition tier : tiers) {
                 blockIds.add(tier.blockId());
             }
@@ -135,9 +139,9 @@ public final class TrinityAutoBuildBlockMap {
      *
      * @param tierSelections requested predicate category to tier index map
      */
-    public static void validateTierSelections(Map<String, Integer> tierSelections) {
-        for (Map.Entry<String, Integer> entry : tierSelections.entrySet()) {
-            tierDefinition(entry.getKey(), entry.getValue());
+    public static void validateTierSelections(Object2IntMap<String> tierSelections) {
+        for (Object2IntMap.Entry<String> entry : tierSelections.object2IntEntrySet()) {
+            tierDefinition(entry.getKey(), entry.getIntValue());
         }
     }
 
@@ -173,7 +177,7 @@ public final class TrinityAutoBuildBlockMap {
      */
     public static Map<Block, Block> selectedTierBlocks(int structureIndex,
                                                        int repeatCount,
-                                                       Map<String, Integer> tierSelections) {
+                                                       Object2IntMap<String> tierSelections) {
         validateRepeatCount(structureIndex, repeatCount);
         String requiredCategory = categoryForStructure(structureIndex);
         if (tierSelections.size() != 1 || !tierSelections.containsKey(requiredCategory)) {
@@ -181,8 +185,8 @@ public final class TrinityAutoBuildBlockMap {
                     " requires exactly one '" + requiredCategory + "' tier selection");
         }
 
-        Block selectedBlock = resolveBlock(requiredCategory, tierSelections.get(requiredCategory));
-        LinkedHashMap<Block, Block> selections = new LinkedHashMap<>();
+        Block selectedBlock = resolveBlock(requiredCategory, tierSelections.getInt(requiredCategory));
+        Object2ObjectLinkedOpenHashMap<Block, Block> selections = new Object2ObjectLinkedOpenHashMap<>();
         for (TierDefinition tier : CATEGORIES.get(requiredCategory)) {
             selections.put(resolveTierBlock(tier), selectedBlock);
         }
@@ -200,16 +204,16 @@ public final class TrinityAutoBuildBlockMap {
      * @param structureIndex structure selector being built
      * @return immutable candidate block to positive tier-rank mapping
      */
-    public static Map<Block, Integer> tierRanksForStructure(int structureIndex) {
+    public static Object2IntMap<Block> tierRanksForStructure(int structureIndex) {
         String category = categoryForStructure(structureIndex);
-        LinkedHashMap<Block, Integer> ranks = new LinkedHashMap<>();
+        Object2IntLinkedOpenHashMap<Block> ranks = new Object2IntLinkedOpenHashMap<>();
         List<TierDefinition> tiers = CATEGORIES.get(category);
         for (int index = 0; index < tiers.size(); index++) {
             TierDefinition tier = tiers.get(index);
             int rank = EMPTY_TRINITY_UNIT_ID.equals(tier.blockId()) ? EMPTY_TRINITY_UNIT_RANK : index + 2;
             ranks.put(resolveTierBlock(tier), rank);
         }
-        return Map.copyOf(ranks);
+        return Object2IntMaps.unmodifiable(ranks);
     }
 
     private static TierDefinition tier(String blockPath, TrinityCoreKind coreKind) {

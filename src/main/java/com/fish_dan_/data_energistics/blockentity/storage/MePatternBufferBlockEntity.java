@@ -18,8 +18,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.state.BlockState;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,8 +47,8 @@ public class MePatternBufferBlockEntity extends CompartmentBlockEntity implement
             () -> SHARED_CATALYST_SLOTS);
     private final CompartmentInventory fluidConfig = CompartmentInventory.fluidConfig(this::onContentInventoryChanged, 2);
     private final CompartmentInventory keyConfig = CompartmentInventory.keyConfig(this::onContentInventoryChanged);
-    private final ArrayList<CompartmentStorage> patternBufferStorages = new ArrayList<>(PATTERN_SLOT_COUNT);
-    private final ArrayList<CompartmentStorage> patternBufferStorageViews = new ArrayList<>(PATTERN_SLOT_COUNT);
+    private final ObjectArrayList<CompartmentStorage> patternBufferStorages = new ObjectArrayList<>(PATTERN_SLOT_COUNT);
+    private final ObjectArrayList<CompartmentStorage> patternBufferStorageViews = new ObjectArrayList<>(PATTERN_SLOT_COUNT);
     private final CompartmentStorage patternAggregateStorageView = new AvailabilityCheckedCompartmentStorage(
             this::isCompartmentBound,
             () -> new CompartmentStorageGroup(this::unlockedPatternBufferStorageViews));

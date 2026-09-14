@@ -31,10 +31,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,10 +72,10 @@ public final class ExternalFactoryRecipeCatalog {
             return;
         }
 
-        List<RecipeHolder<DataRipperReassemblerRecipe>> rebuiltRecipes = new ArrayList<>();
+        List<RecipeHolder<DataRipperReassemblerRecipe>> rebuiltRecipes = new ObjectArrayList<>();
         appendRecipes(currentRecipeManager, ExternalRecipeSource.EAE_CRYSTAL_ASSEMBLER, rebuiltRecipes);
         appendRecipes(currentRecipeManager, ExternalRecipeSource.AAE_REACTION_CHAMBER, rebuiltRecipes);
-        Map<ResourceLocation, RecipeHolder<DataRipperReassemblerRecipe>> rebuiltById = new LinkedHashMap<>();
+        Map<ResourceLocation, RecipeHolder<DataRipperReassemblerRecipe>> rebuiltById = new Object2ObjectLinkedOpenHashMap<>();
         for (RecipeHolder<DataRipperReassemblerRecipe> recipe : rebuiltRecipes) {
             rebuiltById.put(recipe.id(), recipe);
         }
@@ -126,7 +126,7 @@ public final class ExternalFactoryRecipeCatalog {
             return null;
         }
 
-        List<DataRipperReassemblerIngredient> inputs = new ArrayList<>(inputArray.size());
+        List<DataRipperReassemblerIngredient> inputs = new ObjectArrayList<>(inputArray.size());
         for (JsonElement rawInput : inputArray) {
             if (!(rawInput instanceof JsonObject input)) {
                 Data_Energistics.LOGGER.warn("Skipped external factory recipe {} because an item input is not an object", recipeId);
@@ -188,7 +188,7 @@ public final class ExternalFactoryRecipeCatalog {
             return null;
         }
 
-        List<List<GenericStack>> variants = new ArrayList<>();
+        List<List<GenericStack>> variants = new ObjectArrayList<>();
         for (FluidStack candidate : ingredient.getStacks()) {
             if (!candidate.isEmpty()) {
                 variants.add(List.of(new GenericStack(AEFluidKey.of(candidate), amount)));
@@ -248,7 +248,7 @@ public final class ExternalFactoryRecipeCatalog {
                                                                                   List<DataRipperReassemblerIngredient> itemInputs,
                                                                                   List<List<GenericStack>> fluidVariants,
                                                                                   OutputDefinition outputs) {
-        List<RecipeHolder<DataRipperReassemblerRecipe>> variants = new ArrayList<>(fluidVariants.size());
+        List<RecipeHolder<DataRipperReassemblerRecipe>> variants = new ObjectArrayList<>(fluidVariants.size());
         for (int variantIndex = 0; variantIndex < fluidVariants.size(); variantIndex++) {
             try {
                 DataRipperReassemblerRecipe recipe = new DataRipperReassemblerRecipe(

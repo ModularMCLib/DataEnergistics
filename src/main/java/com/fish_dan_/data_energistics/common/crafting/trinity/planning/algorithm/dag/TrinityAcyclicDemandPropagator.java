@@ -203,13 +203,13 @@ public final class TrinityAcyclicDemandPropagator {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> reservedInputs = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, InputRequirement> shortages = new Object2ObjectLinkedOpenHashMap<>();
         int states = 0;
-        List<Integer> componentOrder = topology.topologicalOrder();
+        IntList componentOrder = topology.topologicalOrder();
         for (int position = componentOrder.size() - 1; position >= 0; position--) {
             StopState state = stopState(control);
             if (state != StopState.RUNNING) {
                 return stopped(state, reservedInputs, firings, need, shortages);
             }
-            TrinityStronglyConnectedComponent component = topology.components().get(componentOrder.get(position));
+            TrinityStronglyConnectedComponent component = topology.components().get(componentOrder.getInt(position));
             for (AEKey key : component.keys()) {
                 state = stopState(control);
                 if (state != StopState.RUNNING) {
@@ -467,7 +467,7 @@ public final class TrinityAcyclicDemandPropagator {
         Int2IntMap positions = new Int2IntOpenHashMap();
         positions.defaultReturnValue(-1);
         for (int position = 0; position < topology.topologicalOrder().size(); position++) {
-            positions.put(topology.topologicalOrder().get(position).intValue(), position);
+            positions.put(topology.topologicalOrder().getInt(position), position);
         }
         return positions;
     }

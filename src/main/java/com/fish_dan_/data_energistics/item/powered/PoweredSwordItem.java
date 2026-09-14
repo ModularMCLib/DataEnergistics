@@ -59,9 +59,9 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ItemAbility;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -442,7 +442,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
     }
 
     private static List<ItemStack> collectUpgradeItems(IUpgradeInventory upgrades) {
-        List<ItemStack> upgradeItems = new ArrayList<>(upgrades.size());
+        List<ItemStack> upgradeItems = new ObjectArrayList<>(upgrades.size());
         for (int i = 0; i < upgrades.size(); i++) {
             ItemStack upgrade = upgrades.getStackInSlot(i);
             if (!upgrade.isEmpty()) {

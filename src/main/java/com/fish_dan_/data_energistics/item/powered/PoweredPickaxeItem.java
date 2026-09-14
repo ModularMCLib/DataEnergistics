@@ -29,8 +29,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,7 +39,7 @@ import java.util.Set;
 public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements ConditionalDataFlowCellItem {
 
     private static final float SABER_ENERGY_DESTROY_SPEED_BONUS = 8.0F;
-    private static final ThreadLocal<Set<BlockPos>> FTB_ULTIMINE_DUPLICATED_POSITIONS = ThreadLocal.withInitial(HashSet::new);
+    private static final ThreadLocal<Set<BlockPos>> FTB_ULTIMINE_DUPLICATED_POSITIONS = ThreadLocal.withInitial(ObjectOpenHashSet::new);
 
     public PoweredPickaxeItem(Tier tier, Properties properties) {
         super(tier, properties, tier.createToolProperties(BlockTags.MINEABLE_WITH_PICKAXE));
@@ -248,7 +249,7 @@ public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements Con
             return "[]";
         }
 
-        List<String> formattedDrops = new ArrayList<>(drops.size());
+        List<String> formattedDrops = new ObjectArrayList<>(drops.size());
         for (ItemStack drop : drops) {
             formattedDrops.add(drop.getCount() + "x" + BuiltInRegistries.ITEM.getKey(drop.getItem()));
         }

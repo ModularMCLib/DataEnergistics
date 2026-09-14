@@ -65,9 +65,10 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -118,7 +119,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
             this::getInstalledCapacityCardCount);
     private final MachineSource actionSource = new MachineSource(this);
     private final EnumSet<Direction> activePullSides = EnumSet.noneOf(Direction.class);
-    private final EnumMap<Direction, Integer> activePullKeyCursors = new EnumMap<>(Direction.class);
+    private final Object2IntMap<Direction> activePullKeyCursors = new Object2IntOpenHashMap<>();
     private AdjacentBlockCapabilityCache<MEStorage> adjacentMeStorages;
     private AdjacentBlockCapabilityCache<GenericInternalInventory> adjacentGenericInventories;
     private AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
@@ -508,7 +509,7 @@ public class DataSanctumInterfacePart extends AEBasePart implements DataSanctumL
         var availableStacks = storage.getAvailableStacks();
         int availableKeyCount = availableStacks.size();
         if (availableKeyCount == 0) {
-            this.activePullKeyCursors.remove(side);
+            this.activePullKeyCursors.removeInt(side);
             return new PullResult(false, keysScanned);
         }
 

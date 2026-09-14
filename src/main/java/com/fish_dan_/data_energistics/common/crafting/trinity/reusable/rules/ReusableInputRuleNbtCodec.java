@@ -40,16 +40,16 @@ public final class ReusableInputRuleNbtCodec {
         tag.put("initial", rule.initialKey().toTagGeneric(registries));
         tag.putInt("damage_per_use", rule.damagePerUse());
         tag.putInt("break_at_damage", rule.breakAtDamage());
-        tag.put("exhaustion_outputs", encodeOutputs(rule.exhaustionByproducts(), registries));
+        tag.put("exhaustion_outputs", encodeOutputs(rule.exhaustionByproductsFast(), registries));
         ListTag transitions = new ListTag();
-        for (Transition transition : rule.transitions()) {
+        for (Transition transition : rule.transitionsFast()) {
             CompoundTag entry = new CompoundTag();
             entry.put("input", transition.input().toTagGeneric(registries));
             entry.putBoolean("exhausted", transition.successor() == null);
             if (transition.successor() != null) {
                 entry.put("successor", transition.successor().toTagGeneric(registries));
             }
-            entry.put("outputs", encodeOutputs(transition.byproducts(), registries));
+            entry.put("outputs", encodeOutputs(transition.byproductsFast(), registries));
             transitions.add(entry);
         }
         tag.put("transitions", transitions);

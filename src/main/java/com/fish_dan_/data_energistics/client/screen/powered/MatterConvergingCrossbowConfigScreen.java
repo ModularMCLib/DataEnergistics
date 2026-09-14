@@ -18,7 +18,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +123,7 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
 
     @Override
     protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
-        List<Component> lines = new ArrayList<>(super.getTooltipFromContainerItem(stack));
+        List<Component> lines = new ObjectArrayList<>(super.getTooltipFromContainerItem(stack));
         if (hoveredSlot != null) {
             MatterConvergingCrossbowMode row = menu.rowOf(hoveredSlot);
             if (row != null) {

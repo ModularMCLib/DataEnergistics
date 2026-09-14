@@ -20,9 +20,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -92,7 +92,7 @@ public class NativePatternEncodingTermScreen extends PatternEncodingPreviewScree
             return List.of();
         }
 
-        List<FakeSlot> visibleSlots = new ArrayList<>(processingInputSlots.length);
+        List<FakeSlot> visibleSlots = new ObjectArrayList<>(processingInputSlots.length);
         for (FakeSlot slot : processingInputSlots) {
             if (slot != null && slot.isActive()) {
                 visibleSlots.add(slot);

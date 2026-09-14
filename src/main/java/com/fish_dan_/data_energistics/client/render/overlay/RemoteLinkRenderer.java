@@ -86,7 +86,7 @@ public final class RemoteLinkRenderer {
         pose.pushPose();
         try {
             pose.translate(provider.getX() - camera.x, provider.getY() - camera.y, provider.getZ() - camera.z);
-            List<ConnectorLink> targets = endpoint != null ? endpoint.bindings() : List.of();
+            List<ConnectorLink> targets = endpoint != null ? endpoint.bindingsFast() : List.of();
             int selected = targets.isEmpty() ? -1 : Math.floorMod(data.selectedBindingIndex(), targets.size());
             Color sourceColor = endpoint == null ? level.isLoaded(provider) ? MISSING : UNLOADED : selected >= 0 ? currentColor(targets.get(selected).mode(), true) : SOURCE;
             LevelRenderer.renderLineBox(pose, lines, new AABB(source, source).inflate(0.15D),

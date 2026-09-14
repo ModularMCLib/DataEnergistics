@@ -20,12 +20,11 @@ import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,7 +66,7 @@ public final class TrinityDeterministicProofAssembler {
         TrinityDeterministicBasis basis = firingSolution.basis();
         Map<TrinityPatternVariant, BigInteger> firings = firingSolution.firings();
         Map<AEKey, BigInteger> totalNet = firingSolution.totalNet();
-        LinkedHashMap<AEKey, BigInteger> conservationInputs = conservationInputs(
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> conservationInputs = conservationInputs(
                 component,
                 demand,
                 totalNet);
@@ -76,9 +75,9 @@ public final class TrinityDeterministicProofAssembler {
                 firings,
                 basis.reservoir(),
                 basis.residualTopology().executionOrder());
-        LinkedHashMap<AEKey, BigInteger> initialInputs = new LinkedHashMap<>(conservationInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>(conservationInputs);
         applyRequiredPrefix(decomposition.prefixOrder(), initialInputs);
-        LinkedHashMap<AEKey, BigInteger> cycleStart = simulate(
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> cycleStart = simulate(
                 initialInputs,
                 decomposition.prefixOrder());
         Map<AEKey, BigInteger> cycleMaximum = cycleStartMaximum(
@@ -167,13 +166,13 @@ public final class TrinityDeterministicProofAssembler {
             return TrinityDeterministicDiagnostics.searchLimit(maxStates, states);
         }
         Set<AEKey> internalKeys = Set.copyOf(component.keys());
-        LinkedHashSet<AEKey> externalKeys = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> externalKeys = new ObjectLinkedOpenHashSet<>();
         primitiveOrder.forEach(firing -> firing.variant().inputs().keySet().forEach(key -> {
             if (!internalKeys.contains(key)) {
                 externalKeys.add(key);
             }
         }));
-        LinkedHashMap<AEKey, BigInteger> requiredBalances = new LinkedHashMap<>(
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requiredBalances = new Object2ObjectLinkedOpenHashMap<>(
                 schedulableInputBalances(minimumBalances, externalKeys, internalKeys));
         TrinityCycleSeedRequirement.minimumInputs(primitiveOrder).forEach(
                 (key, amount) -> requiredBalances.merge(key, amount, BigInteger::max));
@@ -194,7 +193,7 @@ public final class TrinityDeterministicProofAssembler {
                                                                    Map<AEKey, BigInteger> balances,
                                                                    Set<AEKey> externalKeys,
                                                                    Set<AEKey> internalKeys) {
-        LinkedHashMap<AEKey, BigInteger> inputs = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
         balances.forEach((key, amount) -> {
             if (externalKeys.contains(key) || internalKeys.contains(key)) {
                 inputs.put(key, amount);
@@ -214,11 +213,11 @@ public final class TrinityDeterministicProofAssembler {
         if (maxStates <= 0) {
             return TrinityDeterministicDiagnostics.searchLimit(0, 0);
         }
-        ArrayList<TrinityVariantFiring> prefixBatches = new ArrayList<>();
-        ArrayList<TrinityVariantFiring> suffixBatches = new ArrayList<>();
+        ObjectArrayList<TrinityVariantFiring> prefixBatches = new ObjectArrayList<>();
+        ObjectArrayList<TrinityVariantFiring> suffixBatches = new ObjectArrayList<>();
         List<TrinityVariantFiring> repeatUnit = List.of();
         BigInteger repeatCount = BigInteger.ZERO;
-        LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>(initialInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         int states = 1;
         for (TrinityVariantFiring firing : prefixOrder) {
             TrinityAlgorithmResult<Integer> executed = executeBatch(
@@ -324,7 +323,7 @@ public final class TrinityDeterministicProofAssembler {
         if (repetitions == null) {
             throw new IllegalStateException("A deterministic Trinity basis cannot be empty");
         }
-        LinkedHashMap<TrinityPatternVariant, BigInteger> residual = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> residual = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : topologicalOrder) {
             BigInteger count = firings.getOrDefault(variant, TrinityDeterministicFiringMath.ZERO)
                     .subtract(primitiveFirings
@@ -337,8 +336,8 @@ public final class TrinityDeterministicProofAssembler {
                 residual.put(variant, count);
             }
         }
-        ArrayList<TrinityVariantFiring> prefix = new ArrayList<>();
-        ArrayList<TrinityVariantFiring> suffix = new ArrayList<>();
+        ObjectArrayList<TrinityVariantFiring> prefix = new ObjectArrayList<>();
+        ObjectArrayList<TrinityVariantFiring> suffix = new ObjectArrayList<>();
         residual.forEach((variant, count) -> {
             TrinityVariantFiring firing = new TrinityVariantFiring(variant, count);
             if (variant.netChange().getOrDefault(reservoir, TrinityDeterministicFiringMath.ZERO).signum() > 0) {
@@ -353,14 +352,14 @@ public final class TrinityDeterministicProofAssembler {
                 List.copyOf(suffix));
     }
 
-    private static LinkedHashMap<AEKey, BigInteger> conservationInputs(
-                                                                       TrinityStronglyConnectedComponent component,
-                                                                       TrinityCycleDemand demand,
-                                                                       Map<AEKey, BigInteger> netChange) {
-        LinkedHashSet<AEKey> keys = new LinkedHashSet<>();
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> conservationInputs(
+                                                                                        TrinityStronglyConnectedComponent component,
+                                                                                        TrinityCycleDemand demand,
+                                                                                        Map<AEKey, BigInteger> netChange) {
+        ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         component.cycleVariants().forEach(variant -> keys.addAll(variant.netChange().keySet()));
         keys.addAll(demand.finalBalanceLowerBounds().keySet());
-        LinkedHashMap<AEKey, BigInteger> inputs = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
         for (AEKey key : keys) {
             BigInteger required = demand.finalBalanceLowerBounds()
                     .getOrDefault(key, TrinityDeterministicFiringMath.ZERO)
@@ -376,7 +375,7 @@ public final class TrinityDeterministicProofAssembler {
     private static void applyRequiredPrefix(
                                             List<TrinityVariantFiring> prefix,
                                             Map<AEKey, BigInteger> initialInputs) {
-        LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>(initialInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         for (TrinityVariantFiring firing : prefix) {
             requiredAtStart(firing).forEach((key, required) -> {
                 BigInteger deficit = required.subtract(
@@ -390,10 +389,10 @@ public final class TrinityDeterministicProofAssembler {
         }
     }
 
-    private static LinkedHashMap<AEKey, BigInteger> simulate(
-                                                             Map<AEKey, BigInteger> initial,
-                                                             List<TrinityVariantFiring> order) {
-        LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>(initial);
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> simulate(
+                                                                              Map<AEKey, BigInteger> initial,
+                                                                              List<TrinityVariantFiring> order) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initial);
         for (TrinityVariantFiring firing : order) {
             if (lacksInputs(balances, requiredAtStart(firing))) {
                 throw new IllegalStateException("A derived Trinity prefix is not executable from its reserved inputs");
@@ -412,13 +411,13 @@ public final class TrinityDeterministicProofAssembler {
                                                             List<TrinityVariantFiring> prefix) {
         Map<AEKey, BigInteger> prefixNet = TrinityDeterministicFiringMath.netChange(
                 TrinityDeterministicFiringMath.aggregate(prefix));
-        LinkedHashMap<AEKey, BigInteger> primitiveConsumption = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> primitiveConsumption = new Object2ObjectLinkedOpenHashMap<>();
         primitiveFirings.forEach((variant, count) -> variant.inputs().forEach(
                 (key, amount) -> primitiveConsumption.merge(key, amount.multiply(count), BigInteger::add)));
-        LinkedHashSet<AEKey> keys = new LinkedHashSet<>(component.keys());
+        ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>(component.keys());
         primitiveFirings.keySet().forEach(variant -> keys.addAll(variant.inputs().keySet()));
         keys.addAll(cycleStart.keySet());
-        LinkedHashMap<AEKey, BigInteger> maximum = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> maximum = new Object2ObjectLinkedOpenHashMap<>();
         for (AEKey key : keys) {
             BigInteger value;
             if (producibleInputs.contains(key)) {
@@ -473,7 +472,7 @@ public final class TrinityDeterministicProofAssembler {
                                                           Map<AEKey, BigInteger> amounts,
                                                           List<AEKey> internalKeys) {
         Set<AEKey> internal = Set.copyOf(internalKeys);
-        LinkedHashMap<AEKey, BigInteger> selected = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> selected = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             if (internal.contains(key) && amount.signum() > 0) {
                 selected.put(key, amount);
@@ -483,7 +482,7 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static Map<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
-        LinkedHashMap<AEKey, BigInteger> required = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         firing.variant().inputs().forEach((key, input) -> {
             BigInteger net = firing.variant().netChange()
                     .getOrDefault(key, TrinityDeterministicFiringMath.ZERO);
@@ -532,7 +531,7 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static Map<AEKey, BigInteger> positiveBalances(Map<AEKey, BigInteger> balances) {
-        LinkedHashMap<AEKey, BigInteger> positive = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         balances.forEach((key, amount) -> {
             if (amount.signum() > 0) {
                 positive.put(key, amount);

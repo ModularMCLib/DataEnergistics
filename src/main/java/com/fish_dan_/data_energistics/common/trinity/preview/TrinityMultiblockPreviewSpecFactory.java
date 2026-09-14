@@ -21,10 +21,11 @@ import net.minecraft.resources.ResourceLocation;
 
 import com.modularmc.mdl.api.multiblock.PatternUnit;
 import com.modularmc.mdl.api.multiblock.RepeatRange;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Declares Trinity's three named structures and reuses its authoritative auto-build tier registrations.
@@ -78,10 +79,10 @@ public final class TrinityMultiblockPreviewSpecFactory implements MultiblockPrev
                                                         String titleTranslationKey,
                                                         String tierCategory) {
         PreviewTierDomain tierDomain = tierDomain(tierCategory);
-        List<Integer> repeatCounts = definition.pattern().getLayout().units().stream()
+        IntList repeatCounts = IntList.of(definition.pattern().getLayout().units().stream()
                 .map(PatternUnit::repeats)
-                .map(RepeatRange::min)
-                .toList();
+                .mapToInt(RepeatRange::min)
+                .toArray());
         return new SubstructurePreviewSpec(
                 List.of(definition),
                 Component.translatable(titleTranslationKey),
@@ -89,8 +90,8 @@ public final class TrinityMultiblockPreviewSpecFactory implements MultiblockPrev
                 new SubstructureSelection(
                         0,
                         repeatCounts,
-                        Map.of(tierCategory, tierDomain.defaultValue()),
-                        Map.of()));
+                        Object2IntMaps.singleton(tierCategory, tierDomain.defaultValue()),
+                        Object2IntMaps.emptyMap()));
     }
 
     private static PreviewTierDomain tierDomain(String category) {
@@ -98,7 +99,7 @@ public final class TrinityMultiblockPreviewSpecFactory implements MultiblockPrev
         if (blockIds == null || blockIds.isEmpty()) {
             throw new IllegalStateException("Trinity preview tier category is not registered: " + category);
         }
-        List<PreviewTierOption> options = new ArrayList<>(blockIds.size());
+        List<PreviewTierOption> options = new ObjectArrayList<>(blockIds.size());
         for (int index = 0; index < blockIds.size(); index++) {
             ResourceLocation blockId = blockIds.get(index);
             options.add(new PreviewTierOption(

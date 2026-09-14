@@ -5,9 +5,10 @@ import com.fish_dan_.data_energistics.common.multiblock.json.registry.JsonMultiB
 
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +32,8 @@ public final class DefinitionBackedMultiblockPreviewCatalog implements Multibloc
         if (definitionRegistry == null || factories == null) {
             throw new IllegalArgumentException("Multiblock preview catalog arguments cannot be null");
         }
-        List<MultiblockPreviewSpecFactory> copy = new ArrayList<>(factories);
-        Set<ResourceLocation> controllerIds = new HashSet<>();
+        List<MultiblockPreviewSpecFactory> copy = new ObjectArrayList<>(factories);
+        Set<ResourceLocation> controllerIds = new ObjectOpenHashSet<>();
         for (MultiblockPreviewSpecFactory factory : copy) {
             if (factory == null || factory.controllerId() == null) {
                 throw new IllegalArgumentException("Multiblock preview factories cannot contain null entries or ids");
@@ -49,7 +50,7 @@ public final class DefinitionBackedMultiblockPreviewCatalog implements Multibloc
     @Override
     public MultiblockPreviewCatalogSnapshot snapshot() {
         JsonMultiBlockDefinitionRegistrySnapshot definitions = this.definitionRegistry.snapshot();
-        Map<ResourceLocation, MultiblockPreviewSpec> specs = new LinkedHashMap<>();
+        Map<ResourceLocation, MultiblockPreviewSpec> specs = new Object2ObjectLinkedOpenHashMap<>();
         for (MultiblockPreviewSpecFactory factory : this.factories) {
             MultiblockPreviewSpec spec = factory.create(definitions);
             if (!factory.controllerId().equals(spec.controllerId())) {

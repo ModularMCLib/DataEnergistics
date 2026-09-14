@@ -4,10 +4,13 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPubli
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,17 +81,17 @@ public final class TrinityPatternBindingEnumerator {
      * @param cartesianOrdinal    first raw Cartesian ordinal with this aggregate effect
      * @param alternativeOrdinals selected alternative index for every ordered input slot
      */
-    public record Binding(int cartesianOrdinal, List<Integer> alternativeOrdinals) {
+    public record Binding(int cartesianOrdinal, IntList alternativeOrdinals) {
 
         /**
          * Freezes and validates the representative choice vector.
          */
         public Binding {
             if (cartesianOrdinal < 0 || alternativeOrdinals == null ||
-                    alternativeOrdinals.stream().anyMatch(index -> index == null || index < 0)) {
+                    alternativeOrdinals.intStream().anyMatch(index -> index < 0)) {
                 throw new IllegalArgumentException("A Trinity pattern binding requires a legal representative");
             }
-            alternativeOrdinals = List.copyOf(alternativeOrdinals);
+            alternativeOrdinals = IntList.of(alternativeOrdinals.toIntArray());
         }
     }
 
@@ -113,7 +116,7 @@ public final class TrinityPatternBindingEnumerator {
         List<PartialBinding> current = List.of(PartialBinding.empty());
         for (int slot = 0; slot < orderedInputs.size(); slot++) {
             TrinityPatternPublicationSignature.Input input = orderedInputs.get(slot);
-            LinkedHashMap<BindingEffect, PartialBinding> distinct = new LinkedHashMap<>();
+            Object2ObjectLinkedOpenHashMap<BindingEffect, PartialBinding> distinct = new Object2ObjectLinkedOpenHashMap<>();
             for (PartialBinding prefix : current) {
                 for (int alternativeIndex = 0; alternativeIndex < input.alternatives().size(); alternativeIndex++) {
                     PartialBinding candidate = prefix.append(
@@ -129,7 +132,7 @@ public final class TrinityPatternBindingEnumerator {
             current = List.copyOf(distinct.values());
         }
 
-        ArrayList<Binding> bindings = new ArrayList<>(current.size());
+        ObjectArrayList<Binding> bindings = new ObjectArrayList<>(current.size());
         try {
             for (PartialBinding binding : current) {
                 bindings.add(new Binding(binding.cartesianOrdinal().intValueExact(), binding.alternatives()));
@@ -155,11 +158,11 @@ public final class TrinityPatternBindingEnumerator {
      */
     private record PartialBinding(
                                   BigInteger cartesianOrdinal,
-                                  List<Integer> alternatives,
+                                  IntList alternatives,
                                   BindingEffect effect) {
 
         private static PartialBinding empty() {
-            return new PartialBinding(BigInteger.ZERO, List.of(), BindingEffect.empty());
+            return new PartialBinding(BigInteger.ZERO, IntList.of(), BindingEffect.empty());
         }
 
         private PartialBinding append(
@@ -167,15 +170,15 @@ public final class TrinityPatternBindingEnumerator {
                                       BigInteger stride,
                                       TrinityPatternPublicationSignature.Input input) {
             TrinityPatternPublicationSignature.Alternative alternative = input.alternatives().get(alternativeIndex);
-            ArrayList<Integer> selected = new ArrayList<>(this.alternatives);
+            IntArrayList selected = new IntArrayList(this.alternatives);
             selected.add(alternativeIndex);
-            LinkedHashMap<AEKey, BigInteger> consumed = new LinkedHashMap<>(this.effect.consumed());
+            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> consumed = new Object2ObjectLinkedOpenHashMap<>(this.effect.consumed());
             consumed.merge(
                     alternative.stack().what(),
                     BigInteger.valueOf(alternative.stack().amount())
                             .multiply(BigInteger.valueOf(input.multiplier())),
                     BigInteger::add);
-            LinkedHashMap<AEKey, BigInteger> remainders = new LinkedHashMap<>(this.effect.remainders());
+            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> remainders = new Object2ObjectLinkedOpenHashMap<>(this.effect.remainders());
             if (alternative.remainingKey() != null) {
                 remainders.merge(
                         alternative.remainingKey(),
@@ -184,7 +187,7 @@ public final class TrinityPatternBindingEnumerator {
             }
             return new PartialBinding(
                     this.cartesianOrdinal.add(stride.multiply(BigInteger.valueOf(alternativeIndex))),
-                    List.copyOf(selected),
+                    IntList.of(selected.toIntArray()),
                     new BindingEffect(immutable(consumed), immutable(remainders)));
         }
     }
@@ -200,6 +203,6 @@ public final class TrinityPatternBindingEnumerator {
     }
 
     private static Map<AEKey, BigInteger> immutable(Map<AEKey, BigInteger> source) {
-        return Collections.unmodifiableMap(new LinkedHashMap<>(source));
+        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(source));
     }
 }

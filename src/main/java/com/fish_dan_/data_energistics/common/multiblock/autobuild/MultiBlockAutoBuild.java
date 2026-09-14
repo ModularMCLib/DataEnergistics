@@ -14,9 +14,12 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.modularmc.mdl.api.multiblock.BlockPattern;
 import com.modularmc.mdl.api.multiblock.StructureWorldView;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -180,11 +183,11 @@ public interface MultiBlockAutoBuild {
         /**
          * Maps unexpanded source predicates to the exact candidate index selected in the preview.
          */
-        private final Map<PreviewPredicateKey, Integer> candidateSelections;
+        private final Object2IntMap<PreviewPredicateKey> candidateSelections;
         /**
          * Maps upgradeable candidate blocks to their positive, host-defined tier rank.
          */
-        private final Map<Block, Integer> tierRanks;
+        private final Object2IntMap<Block> tierRanks;
         /**
          * Resolves the explicit AE2 host side required by each planned part placement.
          */
@@ -206,8 +209,8 @@ public interface MultiBlockAutoBuild {
             this.flipped = builder.flipped;
             this.repeatCount = builder.repeatCount;
             this.selectedTierBlocks = Map.copyOf(builder.selectedTierBlocks);
-            this.candidateSelections = Map.copyOf(builder.candidateSelections);
-            this.tierRanks = Map.copyOf(builder.tierRanks);
+            this.candidateSelections = Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(builder.candidateSelections));
+            this.tierRanks = Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(builder.tierRanks));
             this.partSideResolver = builder.partSideResolver;
             this.stagingPolicy = builder.stagingPolicy;
             this.materialGrid = builder.materialGrid;
@@ -310,14 +313,14 @@ public interface MultiBlockAutoBuild {
         /**
          * Returns exact source-predicate choices that override automatic candidate selection.
          */
-        public Map<PreviewPredicateKey, Integer> candidateSelections() {
+        public Object2IntMap<PreviewPredicateKey> candidateSelections() {
             return this.candidateSelections;
         }
 
         /**
          * Returns host-declared tier ranks used to permit only safe upward replacement of existing tier candidates.
          */
-        public Map<Block, Integer> tierRanks() {
+        public Object2IntMap<Block> tierRanks() {
             return this.tierRanks;
         }
 
@@ -386,15 +389,15 @@ public interface MultiBlockAutoBuild {
             /**
              * Mutable accumulation of candidate-to-tier selections.
              */
-            private final Map<Block, Block> selectedTierBlocks = new LinkedHashMap<>();
+            private final Map<Block, Block> selectedTierBlocks = new Object2ObjectLinkedOpenHashMap<>();
             /**
              * Mutable accumulation of exact source-predicate candidate choices.
              */
-            private final Map<PreviewPredicateKey, Integer> candidateSelections = new LinkedHashMap<>();
+            private final Object2IntMap<PreviewPredicateKey> candidateSelections = new Object2IntLinkedOpenHashMap<>();
             /**
              * Mutable host-defined rank table for candidates that support upward replacement.
              */
-            private final Map<Block, Integer> tierRanks = new LinkedHashMap<>();
+            private final Object2IntMap<Block> tierRanks = new Object2IntLinkedOpenHashMap<>();
             /**
              * Defaults to no side so an unresolved AE2 part is rejected during preflight.
              */
@@ -496,7 +499,7 @@ public interface MultiBlockAutoBuild {
             /**
              * Supplies exact candidate indexes for source predicates overridden in the structure preview.
              */
-            public Builder candidateSelections(Map<PreviewPredicateKey, Integer> candidateSelections) {
+            public Builder candidateSelections(Object2IntMap<PreviewPredicateKey> candidateSelections) {
                 this.candidateSelections.clear();
                 this.candidateSelections.putAll(candidateSelections);
                 return this;
@@ -510,7 +513,7 @@ public interface MultiBlockAutoBuild {
              * greater than the existing block's rank. Omitting ranks preserves the default no-replacement behavior.
              * </p>
              */
-            public Builder tierRanks(Map<Block, Integer> tierRanks) {
+            public Builder tierRanks(Object2IntMap<Block> tierRanks) {
                 this.tierRanks.clear();
                 this.tierRanks.putAll(tierRanks);
                 return this;

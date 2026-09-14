@@ -11,9 +11,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Default AE-network, player-inventory, then world-drop implementation of {@link TrinityRefundDelivery}. */
@@ -63,7 +63,7 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
             TrinityItemAmount item = items.get(index);
             long remaining = deliverItem(item);
             if (remaining > 0L) {
-                ArrayList<TrinityItemAmount> undelivered = new ArrayList<>(items.size() - index);
+                ObjectArrayList<TrinityItemAmount> undelivered = new ObjectArrayList<>(items.size() - index);
                 undelivered.add(item.withAmount(remaining));
                 undelivered.addAll(items.subList(index + 1, items.size()));
                 return List.copyOf(undelivered);

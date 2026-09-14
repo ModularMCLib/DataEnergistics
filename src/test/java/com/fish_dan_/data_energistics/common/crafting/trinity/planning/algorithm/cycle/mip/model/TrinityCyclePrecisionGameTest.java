@@ -25,6 +25,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +82,7 @@ public final class TrinityCyclePrecisionGameTest {
     }
 
     private static TrinityPatternVariant conversion(String name, AEKey input, long consumed, AEKey output, long produced) {
-        return TrinityPatternVariant.create(new TrinityPatternIdentity(name, name), output, 0, List.of(0),
+        return TrinityPatternVariant.create(new TrinityPatternIdentity(name, name), output, 0, IntList.of(0),
                 List.of(new TrinityBoundPatternInput(0, 0, new GenericStack(input, consumed), 1, null)),
                 List.of(new GenericStack(output, produced)));
     }

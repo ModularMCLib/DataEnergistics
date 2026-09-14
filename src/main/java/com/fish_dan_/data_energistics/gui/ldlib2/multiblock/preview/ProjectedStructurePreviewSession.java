@@ -18,9 +18,10 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Subst
 import net.minecraft.core.BlockPos;
 
 import com.modularmc.mdl.api.multiblock.RepeatRange;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -93,12 +94,11 @@ final class ProjectedStructurePreviewSession implements StructurePreviewSession 
     }
 
     @Override
-    public List<Integer> variableRepeatUnits() {
+    public IntList variableRepeatUnits() {
         List<RepeatRange> ranges = activeSubstructure().repeatRanges(this.selection.activeSelection().variantIndex());
-        return IntStream.range(0, ranges.size())
+        return IntList.of(IntStream.range(0, ranges.size())
                 .filter(index -> ranges.get(index).min() != ranges.get(index).max())
-                .boxed()
-                .toList();
+                .toArray());
     }
 
     @Override
@@ -264,7 +264,7 @@ final class ProjectedStructurePreviewSession implements StructurePreviewSession 
     private void changeTier(int direction) {
         PreviewTierDomain domain = activeSubstructure().tierDomains().getFirst();
         List<PreviewTierOption> options = domain.options();
-        int currentValue = this.selection.activeSelection().tierSelections().get(domain.id());
+        int currentValue = this.selection.activeSelection().tierSelections().getInt(domain.id());
         int currentIndex = -1;
         for (int index = 0; index < options.size(); index++) {
             if (options.get(index).value() == currentValue) {
@@ -288,7 +288,7 @@ final class ProjectedStructurePreviewSession implements StructurePreviewSession 
         if (range.min() == range.max()) {
             throw new IllegalArgumentException("Structure preview repeat unit " + unitIndex + " is fixed");
         }
-        int current = this.selection.activeSelection().repeatCounts().get(unitIndex);
+        int current = this.selection.activeSelection().repeatCounts().getInt(unitIndex);
         int next = current + direction;
         if (next < range.min()) {
             next = range.max();
@@ -341,7 +341,7 @@ final class ProjectedStructurePreviewSession implements StructurePreviewSession 
         if (allowedStructureKeys.isEmpty()) {
             throw new IllegalArgumentException("Structure preview session requires at least one allowed structure");
         }
-        LinkedHashSet<String> uniqueKeys = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<String> uniqueKeys = new ObjectLinkedOpenHashSet<>();
         for (String structureKey : allowedStructureKeys) {
             if (structureKey == null || structureKey.isBlank() || !uniqueKeys.add(structureKey)) {
                 throw new IllegalArgumentException("Structure preview allowed keys cannot be null, blank, or duplicate");

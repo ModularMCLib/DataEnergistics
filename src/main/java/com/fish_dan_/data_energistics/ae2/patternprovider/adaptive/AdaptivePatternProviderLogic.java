@@ -846,6 +846,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return registration == null || registration.dispatch().usesSpecialBatchRoute(patternDetails);
     }
 
+    @SuppressWarnings("removal")
     @Override
     public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
         if (!reusableNativeAvailable() || this.host.getBlockEntity().getLevel() != level || !(pattern instanceof IMolecularAssemblerSupportedPattern)) {
@@ -894,9 +895,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 return prepared.count();
             }
 
+            @SuppressWarnings("removal")
             @Override
             public List<SlotStack> physicalInputs() {
-                return prepared.physicalInputs();
+                return prepared.physicalInputsFast();
             }
 
             @Override
@@ -1062,7 +1064,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             public void acceptOutputs(Identity identity, List<GenericStack> outputs) {
                 var target = activeDispatchTarget();
                 if (target != null) {
-                    target.dispatch().acceptReusableOutputs(target, outputs);
+                    target.dispatch().acceptReusableOutputsFast(target, new ObjectArrayList<>(outputs));
                 }
             }
 
@@ -1678,7 +1680,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
 
         for (var target : this.dispatchTargets.values()) {
-            target.dispatch().addDrops(target, drops);
+            ObjectArrayList<ItemStack> fastDrops = new ObjectArrayList<>();
+            target.dispatch().addDropsFast(target, fastDrops);
+            drops.addAll(fastDrops);
         }
     }
 

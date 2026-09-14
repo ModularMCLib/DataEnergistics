@@ -18,12 +18,13 @@ import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityC
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -31,7 +32,7 @@ import java.util.Optional;
  */
 public final class TrinityCraftConfirmCycleAssembler {
 
-    private final Map<Integer, Assembly> assemblies = new HashMap<>();
+    private final Int2ObjectMap<Assembly> assemblies = new Int2ObjectOpenHashMap<>();
 
     /** Accepts one validated batch and publishes exactly once after all unique batches arrive. */
     public synchronized Optional<Snapshot> accept(TrinityCraftConfirmCyclePayload payload) {
@@ -52,12 +53,12 @@ public final class TrinityCraftConfirmCycleAssembler {
     }
 
     private static TrinityCraftingCycleSummary rebuildSummary(List<TrinityCraftConfirmCycleRecord> records) {
-        ArrayList<TrinityCraftingCycleHeader> cycles = new ArrayList<>();
-        ArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ArrayList<>();
-        LinkedHashMap<AEKey, Integer> inventoryUsage = new LinkedHashMap<>();
-        ArrayList<TrinityCraftingExactShortage> exactShortages = new ArrayList<>();
-        ArrayList<TrinityCraftingUnresolvedDemand> unresolvedDemands = new ArrayList<>();
-        ArrayList<TrinityCraftingExactPlanAmounts> exactPlanAmounts = new ArrayList<>();
+        ObjectArrayList<TrinityCraftingCycleHeader> cycles = new ObjectArrayList<>();
+        ObjectArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ObjectArrayList<>();
+        Object2IntLinkedOpenHashMap<AEKey> inventoryUsage = new Object2IntLinkedOpenHashMap<>();
+        ObjectArrayList<TrinityCraftingExactShortage> exactShortages = new ObjectArrayList<>();
+        ObjectArrayList<TrinityCraftingUnresolvedDemand> unresolvedDemands = new ObjectArrayList<>();
+        ObjectArrayList<TrinityCraftingExactPlanAmounts> exactPlanAmounts = new ObjectArrayList<>();
         Optional<BigInteger> exactBytes = Optional.empty();
         for (TrinityCraftConfirmCycleRecord record : records) {
             switch (record) {
@@ -101,7 +102,7 @@ public final class TrinityCraftConfirmCycleAssembler {
         private final long revision;
         private final int batchCount;
         private final int totalRecordCount;
-        private final Map<Integer, List<TrinityCraftConfirmCycleRecord>> batches = new HashMap<>();
+        private final Int2ObjectMap<List<TrinityCraftConfirmCycleRecord>> batches = new Int2ObjectOpenHashMap<>();
         private int receivedRecordCount;
         private boolean published;
 
@@ -134,7 +135,7 @@ public final class TrinityCraftConfirmCycleAssembler {
                         "Trinity crafting confirmation batches do not match their declared total");
             }
 
-            ArrayList<TrinityCraftConfirmCycleRecord> records = new ArrayList<>(this.totalRecordCount);
+            ObjectArrayList<TrinityCraftConfirmCycleRecord> records = new ObjectArrayList<>(this.totalRecordCount);
             for (int batchIndex = 0; batchIndex < this.batchCount; batchIndex++) {
                 records.addAll(this.batches.get(batchIndex));
             }

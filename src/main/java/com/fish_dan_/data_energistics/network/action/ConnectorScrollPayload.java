@@ -62,12 +62,12 @@ public record ConnectorScrollPayload(boolean reverse, boolean offHand, boolean c
                         "item.data_energistics.data_distribution_connector.mode_changed",
                         Component.translatable("item.data_energistics.data_distribution_connector.mode." + mode.name().toLowerCase(Locale.ROOT))), true);
             } else if (payload.shift() && endpoint != null) {
-                int count = endpoint.bindings().size();
+                int count = endpoint.bindingsFast().size();
                 if (count > 0) {
                     int index = Math.floorMod(data.selectedBindingIndex() + (payload.reverse() ? -1 : 1), count);
                     var selection = data.withSelectedBindingIndex(index);
                     if (data.isInterface()) {
-                        selection = selection.withSelectedSlot(endpoint.bindings().get(index).slot());
+                        selection = selection.withSelectedSlot(endpoint.bindingsFast().get(index).slot());
                     }
                     stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), selection);
                     player.displayClientMessage(Component.translatable(

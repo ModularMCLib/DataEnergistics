@@ -26,16 +26,17 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Executes one server-thread, snapshot-based, best-effort pattern migration into an active Trinity catalog.
@@ -93,11 +94,11 @@ public final class TrinityPatternMigrator {
 
         private final @Nullable Batch batch;
         private final List<InstalledSlotSnapshot> installedSlots;
-        private final List<InstalledRefundCandidate> installedRefunds = new ArrayList<>();
-        private final List<StorageCandidate> storageCandidates = new ArrayList<>();
-        private final List<ContainerBuilder> containerBuilders = new ArrayList<>();
-        private final List<SortSegment> sortSegments = new ArrayList<>();
-        private final List<SortEntry> pendingSortSegment = new ArrayList<>();
+        private final List<InstalledRefundCandidate> installedRefunds = new ObjectArrayList<>();
+        private final List<StorageCandidate> storageCandidates = new ObjectArrayList<>();
+        private final List<ContainerBuilder> containerBuilders = new ObjectArrayList<>();
+        private final List<SortSegment> sortSegments = new ObjectArrayList<>();
+        private final List<SortEntry> pendingSortSegment = new ObjectArrayList<>();
         private List<SortSlotSnapshot> sortSlots = List.of();
         private List<ContainerSnapshot> containers = List.of();
         private CursorStage cursorStage;
@@ -247,14 +248,14 @@ public final class TrinityPatternMigrator {
         }
 
         private void captureContainerSources(Batch current) {
-            ArrayList<Class<? extends PatternContainer>> classes = new ArrayList<>();
+            ObjectArrayList<Class<? extends PatternContainer>> classes = new ObjectArrayList<>();
             for (Class<?> machineClass : current.grid.getMachineClasses()) {
                 if (PatternContainer.class.isAssignableFrom(machineClass)) {
                     classes.add(machineClass.asSubclass(PatternContainer.class));
                 }
             }
             classes.sort(Comparator.comparing(Class::getName));
-            Set<PatternContainer> identities = Collections.newSetFromMap(new IdentityHashMap<>());
+            Set<PatternContainer> identities = new ReferenceOpenHashSet<>();
             int ordinal = 0;
             for (Class<? extends PatternContainer> machineClass : classes) {
                 for (PatternContainer container : current.grid.getMachines(machineClass)) {
@@ -291,7 +292,7 @@ public final class TrinityPatternMigrator {
         }
 
         private static List<InstalledSlotSnapshot> snapshotInstalled(TrinityPatternCatalog.LayoutSnapshot layout) {
-            ArrayList<InstalledSlotSnapshot> snapshots = new ArrayList<>();
+            ObjectArrayList<InstalledSlotSnapshot> snapshots = new ObjectArrayList<>();
             for (TrinityPatternCatalog.CoreRange range : layout.ranges()) {
                 for (int slot : range.mount().core().occupiedPatternSlots()) {
                     snapshots.add(new InstalledSlotSnapshot(
@@ -326,7 +327,7 @@ public final class TrinityPatternMigrator {
         }
 
         private static List<StorageKeySnapshot> snapshotStorage(Batch batch) {
-            ArrayList<StorageKeySnapshot> snapshots = new ArrayList<>();
+            ObjectArrayList<StorageKeySnapshot> snapshots = new ObjectArrayList<>();
             for (var entry : batch.storage.getAvailableStacks()) {
                 if (entry.getLongValue() > 0L) {
                     snapshots.add(new StorageKeySnapshot(entry.getKey(), entry.getLongValue()));
@@ -338,7 +339,7 @@ public final class TrinityPatternMigrator {
 
         private boolean captureContainerSlot() {
             if (this.captureContainerIndex >= this.containerBuilders.size()) {
-                ArrayList<ContainerSnapshot> snapshots = new ArrayList<>(this.containerBuilders.size());
+                ObjectArrayList<ContainerSnapshot> snapshots = new ObjectArrayList<>(this.containerBuilders.size());
                 for (ContainerBuilder builder : this.containerBuilders) {
                     snapshots.add(builder.snapshot());
                 }
@@ -510,8 +511,8 @@ public final class TrinityPatternMigrator {
                 batch.abortTarget("Trinity pattern layout changed before pattern sorting");
                 return List.of();
             }
-            TreeMap<Integer, TargetSlot> occupied = new TreeMap<>();
-            Set<Integer> working = new HashSet<>();
+            Int2ObjectAVLTreeMap<TargetSlot> occupied = new Int2ObjectAVLTreeMap<>();
+            IntSet working = new IntOpenHashSet();
             for (TrinityPatternCatalog.CoreRange range : batch.layout.ranges()) {
                 TrinityPatternCore core = range.mount().core();
                 for (int slot : core.occupiedPatternSlots()) {
@@ -524,7 +525,7 @@ public final class TrinityPatternMigrator {
                 }
             }
             int destinationsRemaining = occupied.size();
-            TreeMap<Integer, TargetSlot> sortTargets = new TreeMap<>(occupied);
+            Int2ObjectAVLTreeMap<TargetSlot> sortTargets = new Int2ObjectAVLTreeMap<>(occupied);
             for (TrinityPatternCatalog.CoreRange range : batch.layout.ranges()) {
                 for (int slot = 0; slot < range.mount().blockCapacity() && destinationsRemaining > 0; slot++) {
                     int globalIndex = Math.addExact(range.firstGlobalIndex(), slot);
@@ -542,8 +543,8 @@ public final class TrinityPatternMigrator {
                 batch.abortTarget("Trinity pattern sorter could not resolve every compact destination");
                 return List.of();
             }
-            return sortTargets.entrySet().stream()
-                    .map(entry -> new SortSlotSnapshot(entry.getValue(), entry.getKey()))
+            return sortTargets.int2ObjectEntrySet().stream()
+                    .map(entry -> new SortSlotSnapshot(entry.getValue(), entry.getIntKey()))
                     .toList();
         }
 
@@ -618,7 +619,7 @@ public final class TrinityPatternMigrator {
         private final TrinityPatternCatalog.LayoutSnapshot layout;
         private final MEStorage storage;
         private final AEItemKey blankPatternKey = AEItemKey.of(AEItems.BLANK_PATTERN);
-        private final Set<TrinityPatternSemanticIdentity> seen = new HashSet<>();
+        private final Set<TrinityPatternSemanticIdentity> seen = new ObjectOpenHashSet<>();
         private int movedFromStorage;
         private int movedFromContainers;
         private int invalidRefunded;
@@ -1448,7 +1449,7 @@ public final class TrinityPatternMigrator {
         private final String className;
         private final @Nullable String identityDigest;
         private final int ordinal;
-        private final List<SlotSnapshot> slots = new ArrayList<>();
+        private final List<SlotSnapshot> slots = new ObjectArrayList<>();
         private boolean quarantined;
 
         private ContainerBuilder(PatternContainer container,
@@ -1505,9 +1506,9 @@ public final class TrinityPatternMigrator {
 
         private static SortSegment create(List<SortEntry> entries) {
             List<TargetSlot> targets = entries.stream().map(SortEntry::target).toList();
-            ArrayList<ItemStack> current = new ArrayList<>(entries.size());
+            ObjectArrayList<ItemStack> current = new ObjectArrayList<>(entries.size());
             entries.forEach(entry -> current.add(entry.stack().copy()));
-            ArrayList<SortEntry> ordered = new ArrayList<>(entries);
+            ObjectArrayList<SortEntry> ordered = new ObjectArrayList<>(entries);
             ordered.sort(ORDER);
             List<ItemStack> desired = ordered.stream().map(entry -> entry.stack().copy()).toList();
             return new SortSegment(targets, current, desired);

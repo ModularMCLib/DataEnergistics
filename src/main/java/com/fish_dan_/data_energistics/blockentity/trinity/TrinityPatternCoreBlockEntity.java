@@ -55,9 +55,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -375,7 +376,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
             throw new IllegalStateException("Cannot capture mining drops before Trinity pattern core state is ready");
         }
         HolderLookup.Provider registries = this.level.registryAccess();
-        ArrayList<ItemStack> drops = new ArrayList<>();
+        ObjectArrayList<ItemStack> drops = new ObjectArrayList<>();
         ItemStack coreDrop = new ItemStack(getBlockState().getBlock());
         saveToItem(coreDrop, registries);
         CustomData blockEntityData = coreDrop.get(DataComponents.BLOCK_ENTITY_DATA);
@@ -405,7 +406,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     }
 
     private static List<ItemStack> copyMiningDrops(List<ItemStack> drops) {
-        ArrayList<ItemStack> copies = new ArrayList<>(drops.size());
+        ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(drops.size());
         for (ItemStack drop : drops) {
             copies.add(drop.copy());
         }
@@ -532,7 +533,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     }
 
     @Override
-    public List<Integer> occupiedPatternSlots() {
+    public IntList occupiedPatternSlots() {
         return readyCore().occupiedPatternSlots();
     }
 
@@ -631,12 +632,12 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     }
 
     @Override
-    public List<Integer> pendingOutputSlots(UUID hostId) {
+    public IntList pendingOutputSlots(UUID hostId) {
         return readyCore().pendingOutputSlots(hostId);
     }
 
     @Override
-    public List<Integer> workingSlots(UUID hostId) {
+    public IntList workingSlots(UUID hostId) {
         return readyCore().workingSlots(hostId);
     }
 
@@ -755,7 +756,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
             output.onCraftedBySystem(this.level);
             CraftingEvent.fireAutoCraftingEvent(this.level, pattern, output, container);
             NonNullList<ItemStack> remainingItems = pattern.getRemainingItems(craftingInput);
-            ArrayList<ItemStack> outputs = new ArrayList<>(remainingItems.size() + 1);
+            ObjectArrayList<ItemStack> outputs = new ObjectArrayList<>(remainingItems.size() + 1);
             for (ItemStack remaining : remainingItems) {
                 if (!remaining.isEmpty()) {
                     outputs.add(remaining);

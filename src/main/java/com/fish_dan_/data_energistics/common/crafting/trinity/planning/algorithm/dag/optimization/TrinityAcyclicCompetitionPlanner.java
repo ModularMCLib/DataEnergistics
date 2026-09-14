@@ -19,16 +19,16 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -120,9 +120,9 @@ public final class TrinityAcyclicCompetitionPlanner {
             return Optional.empty();
         }
 
-        LinkedHashMap<TrinityPatternVariant, BigInteger> firings = new LinkedHashMap<>(
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>(
                 preparation.deterministicFirings());
-        LinkedHashMap<AEKey, BigInteger> externalInputs = new LinkedHashMap<>(preparation.reservedInputs());
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> externalInputs = new Object2ObjectLinkedOpenHashMap<>(preparation.reservedInputs());
         TrinityPlanQuality quality = TrinityPlanQuality.PROVED_OPTIMAL;
         int states = 0;
         for (CompetitionRegion region : regions) {
@@ -228,17 +228,17 @@ public final class TrinityAcyclicCompetitionPlanner {
                                        TrinityPlanningInventory available) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finiteInventory = new Object2ObjectLinkedOpenHashMap<>(
                 available.finiteAmounts());
-        LinkedHashMap<AEKey, BigInteger> need = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> need = new Object2ObjectLinkedOpenHashMap<>();
         merge(need, target, requestedAmount);
-        LinkedHashMap<TrinityPatternVariant, BigInteger> deterministicFirings = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> reservedInputs = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, FrontierDemand> frontiers = new LinkedHashMap<>();
-        LinkedHashSet<AEKey> deterministicTouchedKeys = new LinkedHashSet<>();
-        LinkedHashSet<TrinityPatternIdentity> deterministicPatterns = new LinkedHashSet<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> deterministicFirings = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> reservedInputs = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, FrontierDemand> frontiers = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectLinkedOpenHashSet<AEKey> deterministicTouchedKeys = new ObjectLinkedOpenHashSet<>();
+        ObjectLinkedOpenHashSet<TrinityPatternIdentity> deterministicPatterns = new ObjectLinkedOpenHashSet<>();
 
-        List<Integer> componentOrder = topology.topologicalOrder();
+        IntList componentOrder = topology.topologicalOrder();
         for (int position = componentOrder.size() - 1; position >= 0; position--) {
-            TrinityStronglyConnectedComponent component = topology.components().get(componentOrder.get(position));
+            TrinityStronglyConnectedComponent component = topology.components().get(componentOrder.getInt(position));
             for (AEKey key : component.keys()) {
                 BigInteger required = need.getOrDefault(key, BigInteger.ZERO);
                 boolean forceFinalTotalProduction = key.equals(target) &&
@@ -296,11 +296,11 @@ public final class TrinityAcyclicCompetitionPlanner {
     private static List<CompetitionRegion> regions(
                                                    List<FrontierDemand> frontiers,
                                                    Map<AEKey, List<TrinityPatternVariant>> producers) {
-        ArrayList<CompetitionRegion> regions = new ArrayList<>(frontiers.size());
+        ObjectArrayList<CompetitionRegion> regions = new ObjectArrayList<>(frontiers.size());
         for (FrontierDemand frontier : frontiers) {
-            ArrayList<AEKey> pending = new ArrayList<>();
-            LinkedHashSet<AEKey> visitedKeys = new LinkedHashSet<>();
-            LinkedHashSet<TrinityPatternVariant> regionVariants = new LinkedHashSet<>();
+            ObjectArrayList<AEKey> pending = new ObjectArrayList<>();
+            ObjectLinkedOpenHashSet<AEKey> visitedKeys = new ObjectLinkedOpenHashSet<>();
+            ObjectLinkedOpenHashSet<TrinityPatternVariant> regionVariants = new ObjectLinkedOpenHashSet<>();
             pending.add(frontier.key());
             for (int index = 0; index < pending.size(); index++) {
                 AEKey key = pending.get(index);
@@ -313,10 +313,10 @@ public final class TrinityAcyclicCompetitionPlanner {
                     }
                 }
             }
-            ArrayList<TrinityPatternVariant> ordered = new ArrayList<>(regionVariants);
+            ObjectArrayList<TrinityPatternVariant> ordered = new ObjectArrayList<>(regionVariants);
             ordered.sort(Comparator.naturalOrder());
-            LinkedHashSet<AEKey> touchedKeys = new LinkedHashSet<>();
-            LinkedHashSet<TrinityPatternIdentity> patterns = new LinkedHashSet<>();
+            ObjectLinkedOpenHashSet<AEKey> touchedKeys = new ObjectLinkedOpenHashSet<>();
+            ObjectLinkedOpenHashSet<TrinityPatternIdentity> patterns = new ObjectLinkedOpenHashSet<>();
             for (TrinityPatternVariant variant : ordered) {
                 patterns.add(variant.patternIdentity());
                 touchedKeys.addAll(variant.inputs().keySet());
@@ -339,8 +339,8 @@ public final class TrinityAcyclicCompetitionPlanner {
         if (reservedCraftableSuffix) {
             return false;
         }
-        LinkedHashSet<AEKey> occupiedKeys = new LinkedHashSet<>();
-        LinkedHashSet<TrinityPatternIdentity> occupiedPatterns = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> occupiedKeys = new ObjectLinkedOpenHashSet<>();
+        ObjectLinkedOpenHashSet<TrinityPatternIdentity> occupiedPatterns = new ObjectLinkedOpenHashSet<>();
         for (CompetitionRegion region : regions) {
             if (region.variants().isEmpty() ||
                     preparation.reservedInputs().containsKey(region.target()) ||
@@ -371,7 +371,7 @@ public final class TrinityAcyclicCompetitionPlanner {
                                                      Map<AEKey, BigInteger> externalInputs,
                                                      int states,
                                                      TrinityPlanQuality quality) {
-        Set<TrinityPatternVariant> legal = new HashSet<>(legalVariants);
+        Set<TrinityPatternVariant> legal = new ObjectOpenHashSet<>(legalVariants);
         if (firings.isEmpty() || firings.entrySet().stream().anyMatch(
                 entry -> !legal.contains(entry.getKey()) || entry.getValue().signum() <= 0)) {
             return null;
@@ -384,8 +384,8 @@ public final class TrinityAcyclicCompetitionPlanner {
             }
         }
 
-        LinkedHashMap<AEKey, BigInteger> net = aggregateNetChange(firings);
-        LinkedHashSet<AEKey> balanceKeys = new LinkedHashSet<>(net.keySet());
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = aggregateNetChange(firings);
+        ObjectLinkedOpenHashSet<AEKey> balanceKeys = new ObjectLinkedOpenHashSet<>(net.keySet());
         balanceKeys.addAll(externalInputs.keySet());
         for (AEKey key : balanceKeys) {
             if (externalInputs.getOrDefault(key, BigInteger.ZERO)
@@ -402,8 +402,8 @@ public final class TrinityAcyclicCompetitionPlanner {
             return null;
         }
 
-        Map<Integer, Integer> positions = topologicalPositions(topology);
-        ArrayList<TrinityVariantFiring> executionOrder = new ArrayList<>();
+        Int2IntMap positions = topologicalPositions(topology);
+        ObjectArrayList<TrinityVariantFiring> executionOrder = new ObjectArrayList<>();
         firings.entrySet().stream()
                 .sorted(Comparator
                         .comparingInt((Map.Entry<TrinityPatternVariant, BigInteger> entry) -> producerPosition(
@@ -415,7 +415,7 @@ public final class TrinityAcyclicCompetitionPlanner {
         if (!executionPrefixNonNegative(executionOrder, externalInputs)) {
             return null;
         }
-        LinkedHashMap<TrinityPatternVariant, BigInteger> orderedFirings = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> orderedFirings = new Object2ObjectLinkedOpenHashMap<>();
         executionOrder.forEach(firing -> orderedFirings.put(firing.variant(), firing.count()));
         return new TrinityAcyclicPlan(
                 executionOrder,
@@ -435,7 +435,7 @@ public final class TrinityAcyclicCompetitionPlanner {
     private static boolean executionPrefixNonNegative(
                                                       List<TrinityVariantFiring> executionOrder,
                                                       Map<AEKey, BigInteger> externalInputs) {
-        LinkedHashMap<AEKey, BigInteger> balance = new LinkedHashMap<>(externalInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balance = new Object2ObjectLinkedOpenHashMap<>(externalInputs);
         for (TrinityVariantFiring firing : executionOrder) {
             for (Map.Entry<AEKey, BigInteger> input : firing.variant().inputs().entrySet()) {
                 BigInteger required = input.getValue().multiply(firing.count());
@@ -453,30 +453,30 @@ public final class TrinityAcyclicCompetitionPlanner {
         return true;
     }
 
-    private static LinkedHashMap<AEKey, BigInteger> aggregateNetChange(
-                                                                       Map<TrinityPatternVariant, BigInteger> firings) {
-        LinkedHashMap<AEKey, BigInteger> net = new LinkedHashMap<>();
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> aggregateNetChange(
+                                                                                        Map<TrinityPatternVariant, BigInteger> firings) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         return net;
     }
 
-    private static Map<Integer, Integer> topologicalPositions(TrinityCraftingTopology topology) {
-        HashMap<Integer, Integer> positions = new HashMap<>();
+    private static Int2IntMap topologicalPositions(TrinityCraftingTopology topology) {
+        Int2IntOpenHashMap positions = new Int2IntOpenHashMap();
         for (int position = 0; position < topology.topologicalOrder().size(); position++) {
-            positions.put(topology.topologicalOrder().get(position), position);
+            positions.put(topology.topologicalOrder().getInt(position), position);
         }
         return positions;
     }
 
     private static int producerPosition(TrinityCraftingTopology topology,
-                                        Map<Integer, Integer> positions,
+                                        Int2IntMap positions,
                                         TrinityPatternVariant variant) {
         int earliestOutput = Integer.MAX_VALUE;
         for (AEKey output : variant.outputs().keySet()) {
-            Integer component = topology.componentByKey().get(output);
-            if (component != null) {
+            if (topology.componentByKey().containsKey(output)) {
+                int component = topology.componentByKey().getInt(output);
                 earliestOutput = Math.min(earliestOutput, positions.get(component));
             }
         }

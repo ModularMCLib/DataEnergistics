@@ -4,9 +4,9 @@ import appeng.api.stacks.GenericStack;
 
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -80,7 +80,7 @@ public record PatternEncodingMultiblockTransferState(
         if (stacks == null) {
             throw new IllegalArgumentException("Pattern encoding " + role + " cannot be null");
         }
-        List<GenericStack> copies = new ArrayList<>(stacks.size());
+        List<GenericStack> copies = new ObjectArrayList<>(stacks.size());
         for (GenericStack stack : stacks) {
             GenericStack copy = copyStack(role, stack);
             if (copy == null) {

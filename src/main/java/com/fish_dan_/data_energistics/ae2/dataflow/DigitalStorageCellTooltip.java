@@ -11,7 +11,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -45,12 +46,12 @@ public final class DigitalStorageCellTooltip {
             return Optional.empty();
         }
 
-        List<ItemStack> upgrades = new ArrayList<>();
+        List<ItemStack> upgrades = new ObjectArrayList<>();
         if (AEConfig.instance().isTooltipShowCellUpgrades()) {
             inventory.getUpgradesInventory().forEach(upgrades::add);
         }
 
-        List<GenericStack> content = new ArrayList<>();
+        List<GenericStack> content = new ObjectArrayList<>();
         boolean hasMoreContent = false;
         if (AEConfig.instance().isTooltipShowCellContent()) {
             int maxCountShown = AEConfig.instance().getTooltipMaxCellContentShown();

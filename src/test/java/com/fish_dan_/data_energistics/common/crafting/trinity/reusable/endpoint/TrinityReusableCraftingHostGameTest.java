@@ -55,6 +55,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -103,7 +104,7 @@ public final class TrinityReusableCraftingHostGameTest {
         restored.reusableSlot(0).endpoint().close(session, resumed);
         List<Settlement> received = new ObjectArrayList<>();
         restored.reusableSlot(0).endpoint().settle(session, settlement -> received.add(settlement), resumed);
-        helper.assertValueEqual(received.getFirst().returnedAssets(), List.of(new GenericStack(tool(1), 1)),
+        helper.assertValueEqual(received.getFirst().returnedAssetsFast(), List.of(new GenericStack(tool(1), 1)),
                 "Four actual uses return the surviving D1 physical tool");
         helper.succeed();
     }
@@ -132,10 +133,10 @@ public final class TrinityReusableCraftingHostGameTest {
         List<Settlement> received = new ObjectArrayList<>();
         helper.assertTrue(resident.endpoint().settle(session, settlement -> received.add(settlement), movedHost),
                 "Old session settles without requiring the removed pattern to publish again");
-        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssets(), MATERIAL), 1L, "Only actual unused material is returned");
-        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssets(), tool(1)), 1L, "Core movement preserves actual tool damage");
-        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssets(), tool(0)), 0L, "Movement cannot reconstruct the original tool");
-        helper.assertValueEqual(received.getFirst().receipts().getFirst().cancelled(), 1L, "Unexecuted remainder is explicitly cancelled");
+        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssetsFast(), MATERIAL), 1L, "Only actual unused material is returned");
+        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssetsFast(), tool(1)), 1L, "Core movement preserves actual tool damage");
+        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssetsFast(), tool(0)), 0L, "Movement cannot reconstruct the original tool");
+        helper.assertValueEqual(received.getFirst().receiptsFast().getFirst().cancelled(), 1L, "Unexecuted remainder is explicitly cancelled");
         helper.succeed();
     }
 
@@ -175,7 +176,7 @@ public final class TrinityReusableCraftingHostGameTest {
     @GameTest(template = "empty_5x5")
     public static void nativeBatchUsesActualFinalRemainderWithoutMultiplyingTools(GameTestHelper helper) {
         var pattern = new NativePattern();
-        var rule = ReusableInputRule.fixedDamage(RECIPE, 1, tool(0), 1, 3, List.of(new GenericStack(SCRAP, 1)));
+        var rule = ReusableInputRule.fixedDamageFast(RECIPE, 1, tool(0), 1, 3, ObjectList.of(new GenericStack(SCRAP, 1)));
         var identity = new Identity(UUID.randomUUID(), UUID.randomUUID(), "cpu:native-batch", "native-batch", pattern.getDefinition(), Optional.empty());
         var binding = new Binding(identity, TrinityPatternIdentity.capture(TrinityPatternPublicationSignature.capture(pattern), helper.getLevel().registryAccess()),
                 2, List.of(new SlotInput(1, new GenericStack(MATERIAL, 1))),
@@ -208,7 +209,7 @@ public final class TrinityReusableCraftingHostGameTest {
     private static ReusableCraftingRequest request(NativePattern pattern, PatternRoute route, UUID session, long operations,
                                                    long tools, GameTestHelper helper) {
         String target = TrinityReusableSlot.targetIdentity(route.coreId(), route.slot());
-        ReusableInputRule rule = ReusableInputRule.fixedDamage(RECIPE, 1, tool(0), 1, 3, List.of(new GenericStack(SCRAP, 1)));
+        ReusableInputRule rule = ReusableInputRule.fixedDamageFast(RECIPE, 1, tool(0), 1, 3, ObjectList.of(new GenericStack(SCRAP, 1)));
         return new ReusableCraftingRequest(session, UUID.randomUUID(), "cpu:core-host-test", 0,
                 new Target(target, CountedCraftingTarget.route(target), Optional.empty()), new RoutedCraftingPatternDetails(route, pattern),
                 List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, rule, Optional.empty()))),
@@ -222,7 +223,7 @@ public final class TrinityReusableCraftingHostGameTest {
             throw new IllegalStateException("Real core host rejected its native fixture");
         }
         KeyCounter[] delivery = { new KeyCounter(), new KeyCounter() };
-        admission.physicalInputs().forEach(stack -> delivery[stack.slot()].add(stack.stack().what(), stack.stack().amount()));
+        admission.physicalInputsFast().forEach(stack -> delivery[stack.slot()].add(stack.stack().what(), stack.stack().amount()));
         if (!admission.commit(delivery)) {
             throw new IllegalStateException("Real core host failed to accept its physical inputs");
         }

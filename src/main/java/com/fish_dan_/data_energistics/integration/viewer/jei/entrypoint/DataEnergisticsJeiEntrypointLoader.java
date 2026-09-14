@@ -9,15 +9,15 @@ import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.language.ModFileScanData;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -85,7 +85,7 @@ public final class DataEnergisticsJeiEntrypointLoader {
      * Reads marker metadata and canonical owning IDs without resolving an annotated plugin class.
      */
     private static List<EntrypointCandidate> discoverCandidates() {
-        List<EntrypointCandidate> candidates = new ArrayList<>();
+        List<EntrypointCandidate> candidates = new ObjectArrayList<>();
         for (ModFileScanData scanData : ModList.get().getAllScanData()) {
             List<ModFileScanData.AnnotationData> annotations = scanData
                     .getAnnotatedBy(DataEnergisticsJeiEntrypoint.class, ElementType.TYPE)
@@ -142,7 +142,7 @@ public final class DataEnergisticsJeiEntrypointLoader {
             throw new IllegalArgumentException("Data Energistics JEI requiredMods scan value is not an array");
         }
 
-        LinkedHashSet<String> requiredMods = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<String> requiredMods = new ObjectLinkedOpenHashSet<>();
         for (Object value : values) {
             if (!(value instanceof String modId) || modId.isBlank()) {
                 throw new IllegalArgumentException("Data Energistics JEI requiredMods contains an invalid mod ID");

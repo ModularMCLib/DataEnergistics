@@ -20,7 +20,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataRipperScreen extends AEBaseScreen<DataRipperMenu> {
@@ -95,7 +96,7 @@ public class DataRipperScreen extends AEBaseScreen<DataRipperMenu> {
     }
 
     private List<Component> getCompatibleUpgradeTooltip() {
-        var tooltip = new ArrayList<Component>();
+        var tooltip = new ObjectArrayList<Component>();
         tooltip.add(GuiText.CompatibleUpgrades.text());
         tooltip.addAll(Upgrades.getTooltipLinesForMachine(this.menu.getUpgrades().getUpgradableItem()));
         return tooltip;

@@ -31,10 +31,12 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -64,7 +66,7 @@ public final class TrinityTargetPrincipalGameTest {
         job.trinityExecution().recordActualFinalOutput(actual, BigInteger.ONE);
         helper.assertTrue(job.replanDemand(Map.of(target, BigInteger.valueOf(6L))).noProduction(),
                 "Isolated actual output counts toward existing production without entering working inventory");
-        var work = job.trinityExecution().pollDispatchable(1L, Set.of(), ignored -> true, true).orElseThrow();
+        var work = job.trinityExecution().pollDispatchable(1L, IntSet.of(), ignored -> true, true).orElseThrow();
         job.trinityExecution().recordAccepted(work, 3L, 3L);
         job.trinityExecution().sealCompletion(BigInteger.TWO);
         helper.assertValueEqual(job.replanDemand(Map.of(target, BigInteger.valueOf(3L))).requested(), BigInteger.ONE,
@@ -107,10 +109,10 @@ public final class TrinityTargetPrincipalGameTest {
         var firing = new TrinityPlanPatternFiring(identity, output, 0, count, Map.of(input, BigInteger.ONE),
                 Map.of(output, BigInteger.ONE), Map.of(), List.of());
         Map<AEKey, BigInteger> delta = Map.of(input, count.negate(), output, count);
-        var stage = new TrinityPlanStage(0, false, Set.of(), List.of(firing), Map.of(input, count), delta);
+        var stage = new TrinityPlanStage(0, false, IntSet.of(), List.of(firing), Map.of(input, count), delta);
         var plan = TrinityCraftingPlan.builder().finalOutput(new GenericStack(output, 3L)).bytes(BigInteger.ZERO)
                 .catalogRevision(1L).quantityMode(mode).initialExpectedInputs(Map.of(input, count))
-                .patternFirings(Map.of(identity, count)).stages(List.of(stage)).stageOrder(List.of(0)).targetNetChange(delta).build();
+                .patternFirings(Map.of(identity, count)).stages(List.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta).build();
         CraftingLink link = new CraftingLink(CraftingCpuHelper.generateLinkData(UUID.randomUUID(), true, false), cpu);
         return new TrinityDataCoreExecutingCraftingJob(plan, ignored -> {}, link, null, principal);
     }

@@ -6,14 +6,19 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,7 +69,7 @@ public final class TrinityDeterministicCycleSequence {
 
     private static Optional<List<TrinityPatternVariant>> deterministicVariants(
                                                                                TrinityStronglyConnectedComponent component, AEKey target) {
-        LinkedHashSet<TrinityPatternVariant> selected = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<TrinityPatternVariant> selected = new ObjectLinkedOpenHashSet<>();
         Set<AEKey> requiredKeys = new ObjectOpenHashSet<>(component.keys());
         requiredKeys.add(target);
         for (AEKey key : requiredKeys) {
@@ -109,7 +114,7 @@ public final class TrinityDeterministicCycleSequence {
         Arrays.fill(solution, Rational.ZERO);
         solution[freeColumn] = Rational.ONE;
         for (int row = reduction.rank() - 1; row >= 0; row--) {
-            int pivotColumn = reduction.pivotColumns().get(row);
+            int pivotColumn = reduction.pivotColumns().getInt(row);
             Rational sum = Rational.ZERO;
             for (int column = pivotColumn + 1; column < variants.size(); column++) {
                 sum = sum.add(reduction.matrix()[row][column].multiply(solution[column]));
@@ -124,7 +129,7 @@ public final class TrinityDeterministicCycleSequence {
         for (Rational value : solution) {
             denominatorLcm = lcm(denominatorLcm, value.denominator());
         }
-        ArrayList<BigInteger> integers = new ArrayList<>(solution.length);
+        ObjectArrayList<BigInteger> integers = new ObjectArrayList<>(solution.length);
         BigInteger commonDivisor = BigInteger.ZERO;
         for (Rational value : solution) {
             BigInteger integer = value.numerator().multiply(denominatorLcm.divide(value.denominator()));
@@ -145,7 +150,7 @@ public final class TrinityDeterministicCycleSequence {
         for (int row = 0; row < source.length; row++) {
             matrix[row] = Arrays.copyOf(source[row], columns);
         }
-        ArrayList<Integer> pivots = new ArrayList<>();
+        IntArrayList pivots = new IntArrayList();
         int pivotRow = 0;
         for (int column = 0; column < columns && pivotRow < matrix.length; column++) {
             int selectedRow = pivotRow;
@@ -176,11 +181,11 @@ public final class TrinityDeterministicCycleSequence {
             pivots.add(column);
             pivotRow++;
         }
-        return new RowReduction(matrix, List.copyOf(pivots), pivotRow);
+        return new RowReduction(matrix, IntLists.unmodifiable(pivots), pivotRow);
     }
 
-    private static int firstFreeColumn(int columns, List<Integer> pivotColumns) {
-        Set<Integer> pivots = Set.copyOf(pivotColumns);
+    private static int firstFreeColumn(int columns, IntList pivotColumns) {
+        IntSet pivots = new IntOpenHashSet(pivotColumns);
         for (int column = 0; column < columns; column++) {
             if (!pivots.contains(column)) {
                 return column;
@@ -220,12 +225,12 @@ public final class TrinityDeterministicCycleSequence {
                                                           List<BigInteger> ratio,
                                                           Map<AEKey, BigInteger> available,
                                                           Set<AEKey> internalKeys) {
-        ArrayList<TrinityVariantFiring> remaining = new ArrayList<>(variants.size());
+        ObjectArrayList<TrinityVariantFiring> remaining = new ObjectArrayList<>(variants.size());
         for (int index = 0; index < variants.size(); index++) {
             remaining.add(new TrinityVariantFiring(variants.get(index), ratio.get(index)));
         }
-        LinkedHashMap<AEKey, BigInteger> balances = copyAvailable(available);
-        ArrayList<TrinityVariantFiring> ordered = new ArrayList<>(remaining.size());
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = copyAvailable(available);
+        ObjectArrayList<TrinityVariantFiring> ordered = new ObjectArrayList<>(remaining.size());
         while (!remaining.isEmpty()) {
             TrinityVariantFiring selected = remaining.stream()
                     .filter(firing -> hasInputs(balances, requiredAtStart(firing), internalKeys))
@@ -242,7 +247,7 @@ public final class TrinityDeterministicCycleSequence {
     }
 
     private static Map<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
-        LinkedHashMap<AEKey, BigInteger> required = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         firing.variant().inputs().forEach((key, input) -> {
             BigInteger net = firing.variant().netChange().getOrDefault(key, BigInteger.ZERO);
             BigInteger amount = net.signum() < 0 ?
@@ -260,8 +265,8 @@ public final class TrinityDeterministicCycleSequence {
                 .compareTo(entry.getValue()) >= 0);
     }
 
-    private static LinkedHashMap<AEKey, BigInteger> copyAvailable(Map<AEKey, BigInteger> source) {
-        LinkedHashMap<AEKey, BigInteger> copied = new LinkedHashMap<>();
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyAvailable(Map<AEKey, BigInteger> source) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() < 0) {
                 throw new IllegalArgumentException("Trinity deterministic-cycle inventory cannot be negative or null");
@@ -277,7 +282,7 @@ public final class TrinityDeterministicCycleSequence {
         return first.divide(first.gcd(second)).multiply(second);
     }
 
-    private record RowReduction(Rational[][] matrix, List<Integer> pivotColumns, int rank) {}
+    private record RowReduction(Rational[][] matrix, IntList pivotColumns, int rank) {}
 
     /**
      * Canonical exact fraction used only while deriving the primitive cycle basis.

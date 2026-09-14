@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Struc
 
 import net.minecraft.core.BlockPos;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -57,7 +58,7 @@ public interface StructurePreviewSession {
     /**
      * Returns the indexes of repeatable pattern units whose legal range contains more than one value.
      */
-    List<Integer> variableRepeatUnits();
+    IntList variableRepeatUnits();
 
     /**
      * Activates an allowed named structure while retaining every structure-local selection.

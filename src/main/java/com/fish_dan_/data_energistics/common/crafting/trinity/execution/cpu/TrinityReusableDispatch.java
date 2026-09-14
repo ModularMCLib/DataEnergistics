@@ -140,7 +140,7 @@ final class TrinityReusableDispatch {
             var capture = window.tryBeginProviderCapacityCapture();
             if (capture == null) break;
             try (capture) {
-                targets = List.copyOf(adapter.reusableTargets(pattern, owner.cpu().actionSource(), level));
+                targets = List.copyOf(adapter.reusableTargetsFast(pattern, owner.cpu().actionSource(), level));
             } catch (RuntimeException failure) {
                 report(work.patternIdentity().definitionEncoding(), failure);
                 continue;
@@ -182,7 +182,7 @@ final class TrinityReusableDispatch {
                     if (prepared.replay() || prepared.count() <= 0L || prepared.count() > offer.count()) {
                         throw new IllegalStateException("Unexpected reusable admission count or receipt for a new sequence");
                     }
-                    List<SlotStack> physical = List.copyOf(prepared.physicalInputs());
+                    List<SlotStack> physical = List.copyOf(prepared.physicalInputsFast());
                     validatePhysical(recipe, physical, prepared.count(), offer.addedTools(), free);
                     CraftingDispatchTarget route = new CraftingDispatchTarget(target.route().stableIdentity());
                     if (!window.canAttemptCounted(provider, pattern, route)) {
@@ -362,7 +362,7 @@ final class TrinityReusableDispatch {
             observed++;
             var view = located.view();
             Int2ObjectOpenHashMap<BigInteger> bySlot = new Int2ObjectOpenHashMap<>();
-            for (SlotStack tool : view.heldTools()) {
+            for (SlotStack tool : view.heldToolsFast()) {
                 BigInteger amount = BigInteger.valueOf(tool.stack().amount());
                 amounts.merge(tool.stack().what(), amount, BigInteger::add);
                 bySlot.merge(tool.slot(), amount, BigInteger::add);
@@ -377,7 +377,7 @@ final class TrinityReusableDispatch {
             Phase current = switch (view.state()) {
                 case FAULTED -> Phase.RECONCILIATION;
                 case CLOSING, RETURN_PENDING, CLOSED -> Phase.WAITING_RETURN;
-                case OPEN -> session.closing() ? Phase.WAITING_RETURN : view.heldTools().isEmpty() ? Phase.TOOLS_EXHAUSTED :
+                case OPEN -> session.closing() ? Phase.WAITING_RETURN : view.heldToolsFast().isEmpty() ? Phase.TOOLS_EXHAUSTED :
                         view.accepted() == view.completed() + view.cancelled() ? Phase.WAITING_INPUT : Phase.RUNNING;
             };
             if (current.ordinal() > phase.ordinal()) phase = current;
@@ -437,7 +437,7 @@ final class TrinityReusableDispatch {
                 custodyCovered &= census.complete();
                 CensusStamp stamp = new CensusStamp(census.loadedEpoch(), census.revision());
                 if (stamp.equals(checkedCustody.get(id))) continue;
-                for (var claim : census.sessions()) {
+                for (var claim : census.sessionsFast()) {
                     if (!claim.cpuOwner().equals(ledger.ownerIdentity())) {
                         throw new IllegalStateException("Reusable custody census included an unrelated CPU owner");
                     }
@@ -505,8 +505,8 @@ final class TrinityReusableDispatch {
                     old.lifetimeBudget() && !FixedToolIdentity.key(old.reusableRule().initialKey()).equals(FixedToolIdentity.key(next.reusableRule().initialKey())) ||
                     old.reusableRule().damagePerUse() != next.reusableRule().damagePerUse() ||
                     old.reusableRule().breakAtDamage() != next.reusableRule().breakAtDamage() ||
-                    !old.reusableRule().transitions().equals(next.reusableRule().transitions()) ||
-                    !old.reusableRule().exhaustionByproducts().equals(next.reusableRule().exhaustionByproducts()) ||
+                    !old.reusableRule().transitionsFast().equals(next.reusableRule().transitionsFast()) ||
+                    !old.reusableRule().exhaustionByproductsFast().equals(next.reusableRule().exhaustionByproductsFast()) ||
                     !old.consumedAmount().equals(next.consumedAmount()))
                 return false;
         }
@@ -519,7 +519,7 @@ final class TrinityReusableDispatch {
         if (view == null) return free;
         for (var required : recipe.tools()) {
             List<GenericStack> heldTools = new ObjectArrayList<>();
-            for (SlotStack held : view.heldTools()) {
+            for (SlotStack held : view.heldToolsFast()) {
                 if (held.slot() == required.slot() && required.accepts(held.stack().what())) heldTools.add(held.stack());
             }
             long committed = 0L;
@@ -547,7 +547,7 @@ final class TrinityReusableDispatch {
                 if (item.slot() == slot) amounts.mergeLong(item.stack().what(), item.stack().amount(), Math::addExact);
             }
             var input = recipe.inputs().get(slot);
-            for (GenericStack material : input.consumedPerOperation()) {
+            for (GenericStack material : input.consumedPerOperationFast()) {
                 long left = Math.subtractExact(amounts.getLong(material.what()), Math.multiplyExact(material.amount(), count));
                 if (left < 0L) throw new IllegalStateException("Reusable delivery omitted ordinary material");
                 if (left == 0L) amounts.removeLong(material.what());

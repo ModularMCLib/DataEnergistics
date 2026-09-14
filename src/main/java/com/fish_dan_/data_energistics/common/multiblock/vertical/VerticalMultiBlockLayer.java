@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.multiblock.vertical;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /**
@@ -42,7 +43,7 @@ public record VerticalMultiBlockLayer<S>(List<List<VerticalMultiBlockPredicate<S
         }
 
         int width = -1;
-        ArrayList<List<VerticalMultiBlockPredicate<S>>> copied = new ArrayList<>(inputRows.size());
+        ObjectArrayList<List<VerticalMultiBlockPredicate<S>>> copied = new ObjectArrayList<>(inputRows.size());
         for (List<VerticalMultiBlockPredicate<S>> inputRow : inputRows) {
             if (inputRow.isEmpty()) {
                 throw new IllegalArgumentException("Vertical multiblock layer rows must not be empty");
@@ -53,7 +54,7 @@ public record VerticalMultiBlockLayer<S>(List<List<VerticalMultiBlockPredicate<S
                 throw new IllegalArgumentException("Vertical multiblock layer rows must have equal width");
             }
 
-            ArrayList<VerticalMultiBlockPredicate<S>> row = new ArrayList<>(inputRow.size());
+            ObjectArrayList<VerticalMultiBlockPredicate<S>> row = new ObjectArrayList<>(inputRow.size());
             for (VerticalMultiBlockPredicate<S> predicate : inputRow) {
                 row.add(predicate);
             }

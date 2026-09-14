@@ -16,9 +16,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class TeleportAnchorSavedData extends SavedData {
             TeleportAnchorSavedData::new,
             TeleportAnchorSavedData::load);
 
-    private final Map<AnchorKey, AnchorRecord> anchors = new LinkedHashMap<>();
+    private final Map<AnchorKey, AnchorRecord> anchors = new Object2ObjectLinkedOpenHashMap<>();
 
     public static TeleportAnchorSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
@@ -88,7 +89,7 @@ public class TeleportAnchorSavedData extends SavedData {
     }
 
     public Collection<AnchorRecord> getAnchors(ResourceLocation dimensionId) {
-        ArrayList<AnchorRecord> matches = new ArrayList<>();
+        ObjectArrayList<AnchorRecord> matches = new ObjectArrayList<>();
         for (AnchorRecord anchor : this.anchors.values()) {
             if (anchor.dimensionId().equals(dimensionId)) {
                 matches.add(anchor);
@@ -98,7 +99,7 @@ public class TeleportAnchorSavedData extends SavedData {
     }
 
     public int pruneMissingAnchors(MinecraftServer server) {
-        ArrayList<AnchorKey> staleKeys = new ArrayList<>();
+        ObjectArrayList<AnchorKey> staleKeys = new ObjectArrayList<>();
         for (var entry : this.anchors.entrySet()) {
             if (!isAnchorStillPresent(server, entry.getValue())) {
                 staleKeys.add(entry.getKey());

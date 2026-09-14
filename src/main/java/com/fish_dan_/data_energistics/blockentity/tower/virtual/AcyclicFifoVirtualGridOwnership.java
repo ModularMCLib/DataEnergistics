@@ -1,9 +1,10 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,8 +19,8 @@ public final class AcyclicFifoVirtualGridOwnership<G, T> implements VirtualGridO
 
     private static final Comparator<VirtualGridCandidate<?, ?>> CANDIDATE_ORDER = Comparator.comparingLong(VirtualGridCandidate::fifoOrder);
 
-    private final Map<T, VirtualGridTower<G, T>> towers = new HashMap<>();
-    private final Map<CandidateKey<G, T>, VirtualGridCandidate<G, T>> candidates = new HashMap<>();
+    private final Map<T, VirtualGridTower<G, T>> towers = new Object2ObjectOpenHashMap<>();
+    private final Map<CandidateKey<G, T>, VirtualGridCandidate<G, T>> candidates = new Object2ObjectOpenHashMap<>();
 
     /**
      * Creates an empty ownership registry.
@@ -86,12 +87,12 @@ public final class AcyclicFifoVirtualGridOwnership<G, T> implements VirtualGridO
 
     @Override
     public VirtualGridOwnershipSnapshot<G, T> snapshot() {
-        List<VirtualGridCandidate<G, T>> orderedCandidates = new ArrayList<>(this.candidates.values());
+        List<VirtualGridCandidate<G, T>> orderedCandidates = new ObjectArrayList<>(this.candidates.values());
         orderedCandidates.sort(candidateComparator());
 
-        Map<G, VirtualGridOwner<G, T>> ownersByTarget = new HashMap<>();
-        List<VirtualGridOwner<G, T>> owners = new ArrayList<>();
-        List<VirtualGridCandidateStatus<G, T>> statuses = new ArrayList<>(orderedCandidates.size());
+        Map<G, VirtualGridOwner<G, T>> ownersByTarget = new Object2ObjectOpenHashMap<>();
+        List<VirtualGridOwner<G, T>> owners = new ObjectArrayList<>();
+        List<VirtualGridCandidateStatus<G, T>> statuses = new ObjectArrayList<>(orderedCandidates.size());
         for (VirtualGridCandidate<G, T> candidate : orderedCandidates) {
             VirtualGridTower<G, T> tower = requiredTower(candidate.towerKey());
             VirtualGridCandidateState state;
@@ -134,7 +135,7 @@ public final class AcyclicFifoVirtualGridOwnership<G, T> implements VirtualGridO
 
     private static <G, T> boolean createsCycle(G targetGrid, G sourceGrid,
                                                Map<G, VirtualGridOwner<G, T>> ownersByTarget) {
-        Set<G> visited = new HashSet<>();
+        Set<G> visited = new ObjectOpenHashSet<>();
         G current = sourceGrid;
         while (true) {
             if (current.equals(targetGrid)) {

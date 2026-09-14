@@ -1,8 +1,10 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
-import java.util.Set;
 
 /**
  * Supplies one device binding and all capability nodes currently exposed by that device.
@@ -27,8 +29,8 @@ public record VirtualChannelBindingRequest<B, N>(B bindingKey, VirtualChannelBin
             throw new IllegalArgumentException("Virtual channel binding FIFO order must not be negative");
         }
         nodes = List.copyOf(nodes);
-        Set<N> nodeKeys = new HashSet<>();
-        Set<Long> nodeOrders = new HashSet<>();
+        ObjectOpenHashSet<N> nodeKeys = new ObjectOpenHashSet<>();
+        LongSet nodeOrders = new LongOpenHashSet();
         for (VirtualChannelNodeRequest<N> node : nodes) {
             if (!nodeKeys.add(node.nodeKey())) {
                 throw new IllegalArgumentException("Duplicate virtual channel node key: " + node.nodeKey());

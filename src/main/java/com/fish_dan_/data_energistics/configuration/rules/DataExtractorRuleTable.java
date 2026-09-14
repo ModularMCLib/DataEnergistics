@@ -7,9 +7,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class DataExtractorRuleTable {
@@ -102,7 +102,7 @@ public final class DataExtractorRuleTable {
         }
 
         public List<ItemStack> createStacks() {
-            List<ItemStack> stacks = new ArrayList<>();
+            List<ItemStack> stacks = new ObjectArrayList<>();
             for (ConfiguredStack output : outputs) {
                 var item = BuiltInRegistries.ITEM.getOptional(output.itemId()).orElse(Items.AIR);
                 if (item != Items.AIR) {

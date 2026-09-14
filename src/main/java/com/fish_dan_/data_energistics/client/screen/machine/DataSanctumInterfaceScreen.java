@@ -17,13 +17,14 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataSanctumInterfaceScreen extends UpgradeableScreen<DataSanctumInterfaceMenu> {
 
     private final SettingToggleButton<FuzzyMode> fuzzyMode;
-    private final List<Button> amountButtons = new ArrayList<>();
+    private final List<Button> amountButtons = new ObjectArrayList<>();
 
     public DataSanctumInterfaceScreen(DataSanctumInterfaceMenu menu, Inventory playerInventory, Component title,
                                       ScreenStyle style) {

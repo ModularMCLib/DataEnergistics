@@ -13,13 +13,13 @@ import com.lowdragmc.lowdraglib2.gui.util.WindowDragHelper;
 import net.minecraft.world.entity.player.Player;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,12 +59,12 @@ final class OverlayHostUiExtension implements HostUiExtension {
 
     private final UIElement hostRoot;
     private final HostOverlayLayer overlayLayer;
-    private final Map<HostUiKey, HostSubUiProvider> providers = new LinkedHashMap<>();
-    private final Map<HostUiKey, WindowEntry> openWindows = new LinkedHashMap<>();
-    private final List<WindowEntry> bottomToTop = new ArrayList<>();
-    private final Map<HostUiKey, WindowPosition> savedPositions = new LinkedHashMap<>();
+    private final Map<HostUiKey, HostSubUiProvider> providers = new Object2ObjectLinkedOpenHashMap<>();
+    private final Map<HostUiKey, WindowEntry> openWindows = new Object2ObjectLinkedOpenHashMap<>();
+    private final List<WindowEntry> bottomToTop = new ObjectArrayList<>();
+    private final Map<HostUiKey, WindowPosition> savedPositions = new Object2ObjectLinkedOpenHashMap<>();
     private final ReferenceQueue<UIElement> collectedElements = new ReferenceQueue<>();
-    private final Set<WeakElementReference> seenElements = new HashSet<>();
+    private final Set<WeakElementReference> seenElements = new ObjectOpenHashSet<>();
     @Nullable
     private HostUiCoordinator coordinator;
     private ModularUI escapePolicyUi;
@@ -421,7 +421,7 @@ final class OverlayHostUiExtension implements HostUiExtension {
         if (subUi.root() == this.hostRoot) {
             throw violation("provider " + key.id() + " reused the host root");
         }
-        List<UIElement> newElements = new ArrayList<>();
+        List<UIElement> newElements = new ObjectArrayList<>();
         newElements.add(subUi.root());
         newElements.addAll(subUi.root().getFlattenChildren());
         purgeCollectedElements();
@@ -961,8 +961,8 @@ final class OverlayHostUiExtension implements HostUiExtension {
 
         private final HostUiKey key;
         private final long generation;
-        private final List<Runnable> creationRollbackActions = new ArrayList<>();
-        private final List<Runnable> closeActions = new ArrayList<>();
+        private final List<Runnable> creationRollbackActions = new ObjectArrayList<>();
+        private final List<Runnable> closeActions = new ObjectArrayList<>();
         private HostSubUiRoot root;
         private Throwable releaseFailure;
         private boolean elementOwnershipTransferred;

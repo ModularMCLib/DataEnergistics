@@ -7,9 +7,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 
 import dev.emi.emi.api.recipe.handler.EmiRecipeHandler;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ import java.util.Map;
  */
 final class EmiPluginRegistrationAccumulator {
 
-    private final Map<ResourceLocation, EmiRecipeHandlerRegistration<?>> recipeHandlers = new LinkedHashMap<>();
+    private final Map<ResourceLocation, EmiRecipeHandlerRegistration<?>> recipeHandlers = new Object2ObjectLinkedOpenHashMap<>();
     private boolean frozen;
 
     /**
@@ -74,7 +74,7 @@ final class EmiPluginRegistrationAccumulator {
         private final EmiPluginRegistrationAccumulator owner;
         private final String owningModId;
         private final String pluginClassName;
-        private final Map<ResourceLocation, EmiRecipeHandlerRegistration<?>> recipeHandlers = new LinkedHashMap<>();
+        private final Map<ResourceLocation, EmiRecipeHandlerRegistration<?>> recipeHandlers = new Object2ObjectLinkedOpenHashMap<>();
         private State state = State.OPEN;
 
         /**

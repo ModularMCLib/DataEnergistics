@@ -5,8 +5,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +33,7 @@ public final class TrinityTransitionEffectCompactor {
         if (variants == null) {
             throw new IllegalArgumentException("Trinity transition compaction requires variants");
         }
-        LinkedHashMap<TransitionEffect, TrinityPatternVariant> representatives = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TransitionEffect, TrinityPatternVariant> representatives = new Object2ObjectLinkedOpenHashMap<>();
         variants.stream().sorted().forEach(variant -> representatives.putIfAbsent(
                 TransitionEffect.from(variant),
                 variant));

@@ -21,11 +21,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.ObjIntConsumer;
 
@@ -41,7 +41,7 @@ final class PreviewCandidateColumn extends UIElement {
             "data_energistics:textures/guis/autobuild/replaceable_block_column.png")
             .setSprite(0, 0, ENTRY_WIDTH, ENTRY_HEIGHT);
 
-    private final List<CandidateEntry> entries = new ArrayList<>(VISIBLE_ENTRY_COUNT);
+    private final List<CandidateEntry> entries = new ObjectArrayList<>(VISIBLE_ENTRY_COUNT);
     private final ObjIntConsumer<PreviewPredicateKey> candidateSelectionHandler;
     private final ObjIntConsumer<String> tierSelectionHandler;
     @Nullable
@@ -74,7 +74,7 @@ final class PreviewCandidateColumn extends UIElement {
 
     void refresh(@Nullable PreviewCellSnapshot selectedCell,
                  List<PreviewTierDomain> tierDomains,
-                 Map<String, Integer> tierSelections) {
+                 Object2IntMap<String> tierSelections) {
         PreviewPredicateKey nextKey = selectedCell == null ? null : selectedCell.predicate().key();
         if (!Objects.equals(this.predicateKey, nextKey)) {
             this.firstVisibleCandidate = 0;
@@ -164,7 +164,7 @@ final class PreviewCandidateColumn extends UIElement {
 
     private List<CandidateChoice> choices(@Nullable PreviewCellSnapshot selectedCell,
                                           List<PreviewTierDomain> tierDomains,
-                                          Map<String, Integer> tierSelections) {
+                                          Object2IntMap<String> tierSelections) {
         if (selectedCell == null) {
             return List.of();
         }
@@ -187,7 +187,7 @@ final class PreviewCandidateColumn extends UIElement {
             return tierChoices(matchingDomain, tierSelections, selectedBlockId);
         }
 
-        List<CandidateChoice> choices = new ArrayList<>();
+        List<CandidateChoice> choices = new ObjectArrayList<>();
         int selectedIndex = selectedCell.predicate().selectedCandidateIndex();
         for (int candidateIndex = 0; candidateIndex < selectedCell.predicate().candidates().size(); candidateIndex++) {
             if (candidateIndex != selectedIndex) {
@@ -201,10 +201,10 @@ final class PreviewCandidateColumn extends UIElement {
     }
 
     private List<CandidateChoice> tierChoices(PreviewTierDomain domain,
-                                              Map<String, Integer> tierSelections,
+                                              Object2IntMap<String> tierSelections,
                                               ResourceLocation selectedBlockId) {
-        Integer selectedValue = tierSelections.get(domain.id());
-        if (selectedValue == null) {
+        int selectedValue = tierSelections.getInt(domain.id());
+        if (!tierSelections.containsKey(domain.id())) {
             throw new IllegalStateException("Selected preview tier domain is absent from the active selection: " +
                     domain.id());
         }
@@ -212,7 +212,7 @@ final class PreviewCandidateColumn extends UIElement {
             throw new IllegalStateException("Selected preview block does not match tier domain " + domain.id());
         }
 
-        List<CandidateChoice> choices = new ArrayList<>();
+        List<CandidateChoice> choices = new ObjectArrayList<>();
         for (PreviewTierOption option : domain.options()) {
             if (option.value() == selectedValue) {
                 continue;

@@ -6,9 +6,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,14 +45,14 @@ public record TrinityCyclePlan(
         minimumSeed = copyPositiveAmounts(minimumSeed);
         initialInputs = copyPositiveAmounts(initialInputs);
         netChange = copySignedNonZero(netChange);
-        LinkedHashMap<TrinityPatternVariant, BigInteger> expected = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> expected = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : oneCycleOrder) {
             expected.merge(firing.variant(), firing.count().multiply(repetitions), BigInteger::add);
         }
         if (!expected.equals(aggregateFirings) || !schedule.aggregateFirings().equals(aggregateFirings)) {
             throw new IllegalArgumentException("A Trinity cycle schedule must match its compact firing vector");
         }
-        LinkedHashMap<AEKey, BigInteger> calculatedNet = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> calculatedNet = new Object2ObjectLinkedOpenHashMap<>();
         aggregateFirings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> calculatedNet.merge(key, amount.multiply(count), BigInteger::add)));
         calculatedNet.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
@@ -63,7 +64,7 @@ public record TrinityCyclePlan(
                 throw new IllegalArgumentException("A Trinity cycle initial input must include every minimum seed");
             }
         }
-        LinkedHashMap<AEKey, BigInteger> calculatedFinal = new LinkedHashMap<>(initialInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> calculatedFinal = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         netChange.forEach((key, amount) -> calculatedFinal.merge(key, amount, BigInteger::add));
         if (calculatedFinal.values().stream().anyMatch(amount -> amount.signum() < 0)) {
             throw new IllegalArgumentException("A Trinity cycle final balance cannot be negative");
@@ -76,7 +77,7 @@ public record TrinityCyclePlan(
 
     private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
                                                                               Map<TrinityPatternVariant, BigInteger> source) {
-        LinkedHashMap<TrinityPatternVariant, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, count) -> {
             if (count.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity cycle firing count must be positive");
@@ -87,7 +88,7 @@ public record TrinityCyclePlan(
     }
 
     private static Map<AEKey, BigInteger> copyPositiveAmounts(Map<AEKey, BigInteger> source) {
-        LinkedHashMap<AEKey, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity cycle input amount must be positive");
@@ -98,7 +99,7 @@ public record TrinityCyclePlan(
     }
 
     private static Map<AEKey, BigInteger> copySignedNonZero(Map<AEKey, BigInteger> source) {
-        LinkedHashMap<AEKey, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() == 0) {
                 throw new IllegalArgumentException("A Trinity cycle net amount must be non-zero");

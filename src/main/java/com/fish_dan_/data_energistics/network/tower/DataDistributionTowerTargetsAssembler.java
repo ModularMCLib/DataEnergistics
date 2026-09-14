@@ -1,9 +1,10 @@
 package com.fish_dan_.data_energistics.network.tower;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -19,7 +20,7 @@ public final class DataDistributionTowerTargetsAssembler {
     /**
      * Latest assembly state for each container observed by this assembler.
      */
-    private final Map<Integer, Assembly> assemblies = new HashMap<>();
+    private final Int2ObjectMap<Assembly> assemblies = new Int2ObjectOpenHashMap<>();
 
     /**
      * Accepts one batch and publishes only when every batch in its revision is present.
@@ -78,7 +79,7 @@ public final class DataDistributionTowerTargetsAssembler {
         /**
          * Immutable entries indexed by their server batch index.
          */
-        private final Map<Integer, List<DataDistributionTowerTargetEntry>> batches = new HashMap<>();
+        private final Int2ObjectMap<List<DataDistributionTowerTargetEntry>> batches = new Int2ObjectOpenHashMap<>();
         /**
          * Number of entries received so far across unique batches.
          */
@@ -138,7 +139,7 @@ public final class DataDistributionTowerTargetsAssembler {
                 throw new IllegalArgumentException("Tower target batches do not match declared total for revision " + this.revision + ": declared=" + this.totalCount + ", received=" + this.receivedEntryCount);
             }
 
-            ArrayList<DataDistributionTowerTargetEntry> entries = new ArrayList<>(this.totalCount);
+            ObjectArrayList<DataDistributionTowerTargetEntry> entries = new ObjectArrayList<>(this.totalCount);
             for (int batchIndex = 0; batchIndex < this.batchCount; batchIndex++) {
                 List<DataDistributionTowerTargetEntry> batch = this.batches.get(batchIndex);
                 if (batch == null) {

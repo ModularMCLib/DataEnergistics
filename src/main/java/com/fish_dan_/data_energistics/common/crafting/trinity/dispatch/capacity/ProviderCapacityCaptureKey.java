@@ -8,10 +8,12 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
-import java.util.Map;
 
 /**
  * Complete immutable identity for one server-tick provider-capacity capture.
@@ -32,7 +34,7 @@ public record ProviderCapacityCaptureKey(
                                          long capacityEpoch,
                                          List<CraftingProviderId> providerFingerprint,
                                          String patternIdentity,
-                                         List<Map<AEKey, Long>> inputPrototype,
+                                         List<Object2LongMap<AEKey>> inputPrototype,
                                          long requestedMaximum) {
 
     public ProviderCapacityCaptureKey {
@@ -43,7 +45,7 @@ public record ProviderCapacityCaptureKey(
         if (patternIdentity == null || patternIdentity.isBlank()) {
             throw new IllegalArgumentException("Provider capacity cache pattern identity must not be blank");
         }
-        inputPrototype = inputPrototype.stream().map(Map::copyOf).toList();
+        inputPrototype = inputPrototype.stream().map(slot -> Object2LongMaps.unmodifiable(new Object2LongLinkedOpenHashMap<>(slot))).toList();
         if (requestedMaximum <= 0L) {
             throw new IllegalArgumentException("Provider capacity cache maximum must be positive");
         }
@@ -61,18 +63,18 @@ public record ProviderCapacityCaptureKey(
         if (publications == null || pattern == null || prototype == null) {
             throw new IllegalArgumentException("Provider capacity cache capture context must not be null");
         }
-        ArrayList<Map<AEKey, Long>> frozenPrototype = new ArrayList<>(prototype.length);
+        ObjectArrayList<Object2LongMap<AEKey>> frozenPrototype = new ObjectArrayList<>(prototype.length);
         for (KeyCounter counter : prototype) {
             if (counter == null) {
                 throw new IllegalArgumentException("Provider capacity cache prototype slots must not be null");
             }
-            LinkedHashMap<AEKey, Long> slot = new LinkedHashMap<>();
+            Object2LongLinkedOpenHashMap<AEKey> slot = new Object2LongLinkedOpenHashMap<>();
             for (var entry : counter) {
-                if (entry.getLongValue() <= 0L || slot.putIfAbsent(entry.getKey(), entry.getLongValue()) != null) {
+                if (entry.getLongValue() <= 0L || slot.putIfAbsent(entry.getKey(), entry.getLongValue()) != 0L) {
                     throw new IllegalArgumentException("Provider capacity cache prototype must contain unique positive inputs");
                 }
             }
-            frozenPrototype.add(Map.copyOf(slot));
+            frozenPrototype.add(Object2LongMaps.unmodifiable(slot));
         }
         return new ProviderCapacityCaptureKey(
                 publications.publicationScope(),

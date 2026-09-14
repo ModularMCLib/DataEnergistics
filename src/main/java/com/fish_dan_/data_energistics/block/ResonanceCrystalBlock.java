@@ -23,9 +23,9 @@ import net.minecraft.world.level.gameevent.BlockPositionSource;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -98,7 +98,7 @@ public class ResonanceCrystalBlock extends Block {
     }
 
     private static List<BlockPos> collectLoadedTuningForks(ServerLevel level, BlockPos sourcePos) {
-        List<BlockPos> candidates = new ArrayList<>();
+        List<BlockPos> candidates = new ObjectArrayList<>();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int x = -SEARCH_RADIUS; x <= SEARCH_RADIUS; x++) {
             for (int y = -SEARCH_RADIUS; y <= SEARCH_RADIUS; y++) {

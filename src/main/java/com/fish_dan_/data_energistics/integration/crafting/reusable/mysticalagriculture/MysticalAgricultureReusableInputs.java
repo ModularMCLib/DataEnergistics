@@ -19,8 +19,8 @@ import net.minecraft.world.item.enchantment.Enchantments;
 
 import com.blakebr0.mysticalagriculture.item.InfusionCrystalItem;
 import com.blakebr0.mysticalagriculture.item.MasterInfusionCrystalItem;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Exact Cucumber remainder contracts for MA crystals, loaded only when both optional mods are present. */
@@ -70,7 +70,7 @@ public final class MysticalAgricultureReusableInputs implements DataEnergisticsP
             return Optional.empty();
         }
         int exhaustion = Math.addExact(stack.getMaxDamage(), 1);
-        return Optional.of(ReusableInputRule.fixedDamage(ID, 1L, key, 1, exhaustion, List.of()));
+        return Optional.of(ReusableInputRule.fixedDamageFast(ID, 1L, key, 1, exhaustion, ObjectList.of()));
     }
 
     private static boolean isCrystal(Item item) {

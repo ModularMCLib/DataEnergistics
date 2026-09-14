@@ -17,6 +17,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 
 public record ConnectorClipboardPayload(
@@ -54,7 +57,7 @@ public record ConnectorClipboardPayload(
 
     private static void selectAll(Player player, ItemStack stack) {
         var endpoint = resolveSelectedEndpoint(player, stack);
-        if (endpoint == null || endpoint.bindings().isEmpty()) {
+        if (endpoint == null || endpoint.bindingsFast().isEmpty()) {
             player.displayClientMessage(Component.translatable("item.data_energistics.data_distribution_connector.clipboard.no_links"), true);
             return;
         }
@@ -71,7 +74,7 @@ public record ConnectorClipboardPayload(
             return;
         }
         var data = RemoteLinkConnectorItem.readData(stack);
-        var all = endpoint.bindings();
+        var all = endpoint.bindingsFast();
         if (all.isEmpty()) {
             player.displayClientMessage(Component.translatable("item.data_energistics.data_distribution_connector.clipboard.no_links"), true);
             return;
@@ -83,7 +86,7 @@ public record ConnectorClipboardPayload(
         }
         RemoteLinkClipboard.write(stack, data, bindings);
         if (cut) {
-            endpoint.replace(all.stream().filter(link -> !bindings.contains(link)).toList());
+            endpoint.replaceFast(new ObjectArrayList<>(all.stream().filter(link -> !bindings.contains(link)).toList()));
             stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), data.withSelectedBindingIndex(0));
         }
         player.displayClientMessage(Component.translatable(
@@ -119,13 +122,13 @@ public record ConnectorClipboardPayload(
             player.displayClientMessage(Component.translatable("item.data_energistics.data_distribution_connector.clipboard.slot_locked"), true);
             return;
         }
-        int pasted = endpoint.replace(clipboard.bindings());
+        int pasted = endpoint.replaceFast(new ObjectArrayList<>(clipboard.bindings()));
         stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), data.withSelectedBindingIndex(0));
         player.displayClientMessage(Component.translatable(
                 "item.data_energistics.data_distribution_connector.clipboard.pasted", pasted), true);
     }
 
-    private static ConnectorEndpoint resolveSelectedEndpoint(Player player, ItemStack stack) {
+    private static @Nullable ConnectorEndpoint resolveSelectedEndpoint(Player player, ItemStack stack) {
         RemoteLinkConnectorData data = RemoteLinkConnectorItem.readData(stack);
         return RemoteLinkConnectorItem.resolveEndpoint(player.level(), data);
     }

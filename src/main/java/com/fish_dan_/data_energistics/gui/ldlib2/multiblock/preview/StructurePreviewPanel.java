@@ -500,7 +500,7 @@ public final class StructurePreviewPanel extends UIElement {
                     () -> Component.translatable(TRANSLATION_PREFIX + "repeat", unitIndex + 1),
                     () -> Component.translatable(
                             TRANSLATION_PREFIX + "repeat.value",
-                            this.session.selection().activeSelection().repeatCounts().get(unitIndex)),
+                            this.session.selection().activeSelection().repeatCounts().getInt(unitIndex)),
                     () -> changeSelection(() -> this.session.previousRepeat(unitIndex)),
                     () -> nextRepeat(unitIndex),
                     REPEAT_WIDTH);
@@ -540,7 +540,7 @@ public final class StructurePreviewPanel extends UIElement {
 
     private Component tierText() {
         PreviewTierDomain domain = tierDomain();
-        int value = this.session.selection().activeSelection().tierSelections().get(domain.id());
+        int value = this.session.selection().activeSelection().tierSelections().getInt(domain.id());
         return domain.option(value).label();
     }
 

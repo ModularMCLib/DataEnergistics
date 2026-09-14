@@ -9,9 +9,10 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Struc
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +33,7 @@ public record StructurePreviewRenderState(Map<BlockPos, BlockState> blockStates,
         if (blockStates == null || renderedCore == null) {
             throw new IllegalArgumentException("Structure preview render state arguments cannot be null");
         }
-        LinkedHashMap<BlockPos, BlockState> copiedStates = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<BlockPos, BlockState> copiedStates = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<BlockPos, BlockState> entry : blockStates.entrySet()) {
             BlockPos position = entry.getKey();
             BlockState state = entry.getValue();
@@ -44,7 +45,7 @@ public record StructurePreviewRenderState(Map<BlockPos, BlockState> blockStates,
             }
         }
 
-        Set<BlockPos> visiblePositions = new HashSet<>();
+        Set<BlockPos> visiblePositions = new ObjectOpenHashSet<>();
         List<BlockPos> copiedCore = renderedCore.stream().map(position -> {
             if (position == null) {
                 throw new IllegalArgumentException("Structure preview rendered core cannot contain null positions");
@@ -76,8 +77,8 @@ public record StructurePreviewRenderState(Map<BlockPos, BlockState> blockStates,
             throw new IllegalArgumentException("Structure preview render projection arguments cannot be null");
         }
 
-        LinkedHashMap<BlockPos, BlockState> blockStates = new LinkedHashMap<>();
-        Set<BlockPos> occupiedPositions = new HashSet<>();
+        Object2ObjectLinkedOpenHashMap<BlockPos, BlockState> blockStates = new Object2ObjectLinkedOpenHashMap<>();
+        Set<BlockPos> occupiedPositions = new ObjectOpenHashSet<>();
         for (PreviewCellSnapshot cell : snapshot.cells()) {
             BlockPos position = cell.relativePosition().immutable();
             if (!occupiedPositions.add(position)) {

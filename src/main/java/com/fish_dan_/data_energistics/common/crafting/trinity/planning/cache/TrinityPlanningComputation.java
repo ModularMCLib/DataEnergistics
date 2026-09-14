@@ -335,8 +335,11 @@ public final class TrinityPlanningComputation {
                                                                                                   throws InterruptedException, ExecutionException {
         int proofCount = Math.toIntExact(compiled.topology().variantsByOutputKey().entrySet().stream()
                 .filter(indexed -> {
-                    Integer componentIndex = compiled.topology().componentByKey().get(indexed.getKey());
-                    return componentIndex != null && !compiled.topology().components().get(componentIndex).cyclic();
+                    if (!compiled.topology().componentByKey().containsKey(indexed.getKey())) {
+                        return false;
+                    }
+                    int componentIndex = compiled.topology().componentByKey().getInt(indexed.getKey());
+                    return !compiled.topology().components().get(componentIndex).cyclic();
                 })
                 .count());
         proofCount = Math.addExact(proofCount, Math.multiplyExact(Math.toIntExact(compiled.topology().components().stream()
@@ -352,8 +355,11 @@ public final class TrinityPlanningComputation {
         for (Map.Entry<AEKey, List<TrinityPatternVariant>> indexed : compiled.topology()
                 .variantsByOutputKey()
                 .entrySet()) {
-            Integer componentIndex = compiled.topology().componentByKey().get(indexed.getKey());
-            if (componentIndex == null || compiled.topology().components().get(componentIndex).cyclic()) {
+            if (!compiled.topology().componentByKey().containsKey(indexed.getKey())) {
+                continue;
+            }
+            int componentIndex = compiled.topology().componentByKey().getInt(indexed.getKey());
+            if (compiled.topology().components().get(componentIndex).cyclic()) {
                 continue;
             }
             TrinityComputationValue<TrinityAcyclicRouteFamily> family = this.cache.computeInline(

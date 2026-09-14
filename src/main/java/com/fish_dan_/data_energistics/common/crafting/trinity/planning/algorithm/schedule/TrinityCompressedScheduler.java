@@ -10,14 +10,15 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -68,7 +69,7 @@ public final class TrinityCompressedScheduler {
 
         ArrayDeque<SearchNode> pending = new ArrayDeque<>();
         pending.push(new SearchNode(remaining, balances, List.of()));
-        HashSet<StateKey> visited = new HashSet<>();
+        ObjectOpenHashSet<StateKey> visited = new ObjectOpenHashSet<>();
         int statesVisited = 0;
         while (!pending.isEmpty()) {
             if (control.cancellationRequested()) {
@@ -120,7 +121,7 @@ public final class TrinityCompressedScheduler {
                                                List<TrinityPatternVariant> variants,
                                                List<AEKey> keys,
                                                SearchNode node) {
-        ArrayList<SearchNode> successors = new ArrayList<>();
+        ObjectArrayList<SearchNode> successors = new ObjectArrayList<>();
         for (int variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
             BigInteger remaining = node.remaining().get(variantIndex);
             if (remaining.signum() == 0) {
@@ -132,9 +133,9 @@ public final class TrinityCompressedScheduler {
                 continue;
             }
             for (BigInteger batch : batchCandidates(variants, variant, maximum, keys, node.balances())) {
-                ArrayList<BigInteger> nextRemaining = new ArrayList<>(node.remaining());
+                ObjectArrayList<BigInteger> nextRemaining = new ObjectArrayList<>(node.remaining());
                 nextRemaining.set(variantIndex, remaining.subtract(batch));
-                ArrayList<BigInteger> nextBalances = new ArrayList<>(node.balances());
+                ObjectArrayList<BigInteger> nextBalances = new ObjectArrayList<>(node.balances());
                 for (int keyIndex = 0; keyIndex < keys.size(); keyIndex++) {
                     BigInteger delta = variant.netChange().getOrDefault(keys.get(keyIndex), BigInteger.ZERO);
                     BigInteger updated = nextBalances.get(keyIndex).add(delta.multiply(batch));
@@ -143,7 +144,7 @@ public final class TrinityCompressedScheduler {
                     }
                     nextBalances.set(keyIndex, updated);
                 }
-                ArrayList<TrinityVariantFiring> nextBatches = new ArrayList<>(node.batches());
+                ObjectArrayList<TrinityVariantFiring> nextBatches = new ObjectArrayList<>(node.batches());
                 nextBatches.add(new TrinityVariantFiring(variant, batch));
                 successors.add(new SearchNode(
                         List.copyOf(nextRemaining),
@@ -217,7 +218,7 @@ public final class TrinityCompressedScheduler {
     static List<AEKey> relevantKeys(
                                     List<TrinityPatternVariant> variants,
                                     Map<AEKey, BigInteger> initialBalances) {
-        LinkedHashSet<AEKey> keys = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         variants.forEach(variant -> {
             keys.addAll(variant.inputs().keySet());
             keys.addAll(variant.outputs().keySet());
@@ -227,7 +228,7 @@ public final class TrinityCompressedScheduler {
     }
 
     static Map<AEKey, BigInteger> positiveBalances(List<AEKey> keys, List<BigInteger> balances) {
-        LinkedHashMap<AEKey, BigInteger> positive = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < keys.size(); index++) {
             if (balances.get(index).signum() > 0) {
                 positive.put(keys.get(index), balances.get(index));

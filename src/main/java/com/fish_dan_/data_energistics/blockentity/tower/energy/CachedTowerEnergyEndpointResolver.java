@@ -13,12 +13,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +29,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
 
     private final TowerEnergyEndpointResolverContext context;
     private final TowerEnergyEndpointIntegrationRegistry integrations;
-    private final ArrayList<TowerEnergyEndpoint> reusableEndpointFilter = new ArrayList<>();
+    private final ObjectArrayList<TowerEnergyEndpoint> reusableEndpointFilter = new ObjectArrayList<>();
     private List<TowerEnergyEndpointCandidate> cachedTopologyEndpoints = List.of();
     private List<TowerEnergyEndpoint> cachedReceiveEnergyEndpoints = List.of();
     private List<TowerEnergyEndpoint> cachedExtractEnergyEndpoints = List.of();
@@ -140,7 +140,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
 
     private List<TowerEnergyEndpointCandidate> resolveTopologyEndpoints(
                                                                         List<DataDistributionTowerBlockEntity> towers) {
-        LinkedHashMap<TowerEnergyEndpointKey, TowerEnergyEndpointCandidate> endpoints = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TowerEnergyEndpointKey, TowerEnergyEndpointCandidate> endpoints = new Object2ObjectLinkedOpenHashMap<>();
         for (DataDistributionTowerBlockEntity tower : towers) {
             for (BlockPos pos : this.context.cachedEndpointPositions(tower)) {
                 if (!this.context.targetAllowsFe(tower, pos)) {
@@ -166,7 +166,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
             return List.of();
         }
 
-        ArrayList<TowerEnergyEndpointCandidate> endpoints = new ArrayList<>();
+        ObjectArrayList<TowerEnergyEndpointCandidate> endpoints = new ObjectArrayList<>();
         Set<IEnergyStorage> seenStorages = new ReferenceOpenHashSet<>();
         boolean collectAllSides = level.getBlockEntity(pos) instanceof CableBusBlockEntity;
         for (Direction direction : Direction.values()) {
@@ -187,7 +187,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
     }
 
     private List<TowerEnergyEndpoint> resolveDirectionalEndpoints(List<TowerEnergyEndpointCandidate> candidates) {
-        ArrayList<TowerEnergyEndpoint> endpoints = new ArrayList<>();
+        ObjectArrayList<TowerEnergyEndpoint> endpoints = new ObjectArrayList<>();
         Set<BlockPos> selectedSources = new ObjectOpenHashSet<>();
         Set<BlockPos> selectedSinks = new ObjectOpenHashSet<>();
         for (TowerEnergyEndpointCandidate candidate : candidates) {
@@ -246,7 +246,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         if (endpoints.isEmpty()) {
             return endpoints;
         }
-        ArrayList<TowerEnergyEndpoint> filtered = new ArrayList<>(endpoints.size());
+        ObjectArrayList<TowerEnergyEndpoint> filtered = new ObjectArrayList<>(endpoints.size());
         for (TowerEnergyEndpoint endpoint : endpoints) {
             if (forReceive ? endpoint.direction().allowsReceive() : endpoint.direction().allowsExtract()) {
                 filtered.add(endpoint);

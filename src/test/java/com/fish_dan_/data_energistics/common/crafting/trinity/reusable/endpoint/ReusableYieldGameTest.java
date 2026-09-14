@@ -80,9 +80,9 @@ public final class ReusableYieldGameTest {
         helper.assertValueEqual(endpoint.query(owner).orElseThrow().state(), State.RETURN_PENDING, "Busy owner closes at its safe point");
         List<Settlement> received = new ObjectArrayList<>();
         helper.assertTrue(endpoint.settle(owner, settlement -> received.add(settlement), host), "Existing directed settlement handles the yielded assets");
-        helper.assertValueEqual(amount(received.getFirst().returnedAssets(), MATERIAL), 100L,
+        helper.assertValueEqual(amount(received.getFirst().returnedAssetsFast(), MATERIAL), 100L,
                 "Refund contains the 100 actual unexecuted materials from both accepted appends");
-        helper.assertValueEqual(amount(received.getFirst().returnedAssets(), TOOL), 1L, "Yield returns exactly the one resident physical tool");
+        helper.assertValueEqual(amount(received.getFirst().returnedAssetsFast(), TOOL), 1L, "Yield returns exactly the one resident physical tool");
         helper.assertValueEqual(host.executed, 4L, "Only four actual operations ran before yield");
         helper.assertValueEqual(amount(host.outputs, PRODUCT), 4L, "Ordinary outputs remain on the original independent route");
         helper.assertTrue(endpoint.query(contender.sessionId()).isEmpty(), "Yield signal does not admit or take ownership of contender inputs");
@@ -155,7 +155,7 @@ public final class ReusableYieldGameTest {
             throw new IllegalStateException("Yield fixture admission unexpectedly rejected");
         }
         KeyCounter[] inputs = { new KeyCounter(), new KeyCounter() };
-        admission.physicalInputs().forEach(input -> inputs[input.slot()].add(input.stack().what(), input.stack().amount()));
+        admission.physicalInputsFast().forEach(input -> inputs[input.slot()].add(input.stack().what(), input.stack().amount()));
         if (!admission.commit(inputs)) {
             throw new IllegalStateException("Yield fixture delivery unexpectedly rejected");
         }

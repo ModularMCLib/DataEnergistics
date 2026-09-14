@@ -7,7 +7,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /**
@@ -98,7 +99,7 @@ public record DataDistributionTowerTargetsPayload(int containerId,
         List<DataDistributionTowerTargetEntry> immutableEntries = List.copyOf(entries);
         int totalCount = immutableEntries.size();
         int batchCount = totalCount == 0 ? 1 : ((totalCount - 1) / MAX_ENTRIES_PER_BATCH) + 1;
-        ArrayList<DataDistributionTowerTargetsPayload> payloads = new ArrayList<>(batchCount);
+        ObjectArrayList<DataDistributionTowerTargetsPayload> payloads = new ObjectArrayList<>(batchCount);
         for (int batchIndex = 0; batchIndex < batchCount; batchIndex++) {
             int fromIndex = batchIndex * MAX_ENTRIES_PER_BATCH;
             int toIndex = Math.min(totalCount, fromIndex + MAX_ENTRIES_PER_BATCH);
@@ -176,7 +177,7 @@ public record DataDistributionTowerTargetsPayload(int containerId,
         if (entryCount < 0 || entryCount > MAX_ENTRIES_PER_BATCH) {
             throw new IllegalArgumentException("Target payload entry count is outside [0, " + MAX_ENTRIES_PER_BATCH + "]: " + entryCount);
         }
-        ArrayList<DataDistributionTowerTargetEntry> entries = new ArrayList<>(entryCount);
+        ObjectArrayList<DataDistributionTowerTargetEntry> entries = new ObjectArrayList<>(entryCount);
         for (int entryIndex = 0; entryIndex < entryCount; entryIndex++) {
             entries.add(DataDistributionTowerTargetEntry.read(buffer));
         }

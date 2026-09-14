@@ -7,10 +7,10 @@ import net.minecraft.network.codec.StreamCodec;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,7 +50,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
         if (entries.size() > PAGE_SIZE) {
             throw new IllegalArgumentException("Trinity storage view exceeds the synchronized entry limit");
         }
-        List<Entry> sorted = new ArrayList<>(entries);
+        List<Entry> sorted = new ObjectArrayList<>(entries);
         if (sorted.contains(null)) {
             throw new IllegalArgumentException("Trinity storage view must not contain null entries");
         }
@@ -85,7 +85,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
         if (count < 0 || count > PAGE_SIZE) {
             throw new IllegalArgumentException("Invalid synchronized Trinity storage entry count: " + count);
         }
-        List<Entry> entries = new ArrayList<>(count);
+        List<Entry> entries = new ObjectArrayList<>(count);
         for (int index = 0; index < count; index++) {
             entries.add(Entry.STREAM_CODEC.decode(buffer));
         }

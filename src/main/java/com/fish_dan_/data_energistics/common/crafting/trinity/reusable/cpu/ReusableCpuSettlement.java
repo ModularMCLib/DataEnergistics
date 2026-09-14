@@ -34,13 +34,13 @@ public final class ReusableCpuSettlement {
         if (settlement.failure().isPresent()) {
             throw new IllegalStateException("Reusable executor requires recovery: " + settlement.failure().orElseThrow());
         }
-        if (!settlement.releasedMachineTools().isEmpty()) {
+        if (!settlement.releasedMachineToolsFast().isEmpty()) {
             throw new IllegalStateException("CPU-supplied session cannot release machine-owned tools");
         }
         Map<AEKey, BigInteger> expected = new Object2ObjectOpenHashMap<>();
         Map<ReusableInputRule, FixedToolSettlement> lifetimes = new Object2ObjectOpenHashMap<>();
         BigInteger exhausted = BigInteger.ZERO;
-        for (var receipt : settlement.receipts()) {
+        for (var receipt : settlement.receiptsFast()) {
             var submission = session.submission(receipt.sequence());
             var bindings = submission.work().exactBindings();
             for (var delivered : submission.physicalInputs()) {
@@ -75,7 +75,7 @@ public final class ReusableCpuSettlement {
                 }
             }
         }
-        Map<AEKey, BigInteger> remaining = amounts(settlement.returnedAssets());
+        Map<AEKey, BigInteger> remaining = amounts(settlement.returnedAssetsFast());
         for (var entry : expected.entrySet()) {
             if (entry.getValue().signum() < 0 || remaining.getOrDefault(entry.getKey(), BigInteger.ZERO).compareTo(entry.getValue()) < 0) {
                 throw new IllegalStateException("Reusable return omitted expected material or tool units");
@@ -97,9 +97,9 @@ public final class ReusableCpuSettlement {
         root.putString("target", settlement.targetIdentity());
         root.putLong("sequence", settlement.sequence());
         root.putLong("exhausted", settlement.exhaustedTools());
-        root.put("assets", assets(amounts(settlement.returnedAssets()), registries));
+        root.put("assets", assets(amounts(settlement.returnedAssetsFast()), registries));
         CompoundTag released = new CompoundTag();
-        for (var asset : settlement.releasedMachineTools()) {
+        for (var asset : settlement.releasedMachineToolsFast()) {
             String slot = Integer.toString(asset.slot());
             CompoundTag quantities = released.getCompound(slot);
             String key = TrinityCanonicalNbt.encode(asset.stack().what().toTagGeneric(registries));
@@ -109,7 +109,7 @@ public final class ReusableCpuSettlement {
         }
         root.put("released", released);
         CompoundTag receipts = new CompoundTag();
-        for (var receipt : settlement.receipts()) {
+        for (var receipt : settlement.receiptsFast()) {
             String sequence = Long.toString(receipt.sequence());
             if (receipts.contains(sequence)) {
                 throw new IllegalArgumentException("Duplicate reusable settlement receipt");

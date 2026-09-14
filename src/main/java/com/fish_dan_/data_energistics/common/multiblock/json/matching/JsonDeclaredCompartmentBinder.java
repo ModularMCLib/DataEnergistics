@@ -13,11 +13,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.StructureMatchResult;
 import com.modularmc.mdl.api.multiblock.StructureWorldView;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public final class JsonDeclaredCompartmentBinder implements JsonMultiBlockCompar
     /**
      * Runtime-only identities retained until this binder releases the matching structure.
      */
-    private final Map<CompartmentHost, Map<String, Map<CompartmentPart, CompartmentBindingHandle>>> bindingHandles = new IdentityHashMap<>();
+    private final Map<CompartmentHost, Map<String, Map<CompartmentPart, CompartmentBindingHandle>>> bindingHandles = new Reference2ReferenceOpenHashMap<>();
 
     @Nullable
     @Override
@@ -73,25 +74,25 @@ public final class JsonDeclaredCompartmentBinder implements JsonMultiBlockCompar
                             String structureName,
                             CompartmentHost host,
                             Map<BlockPos, CompartmentType> declaredCompartments) {
-        Map<BlockPos, CompartmentPart> currentDeclaredParts = new LinkedHashMap<>();
+        Map<BlockPos, CompartmentPart> currentDeclaredParts = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<BlockPos, CompartmentType> entry : declaredCompartments.entrySet()) {
             currentDeclaredParts.put(entry.getKey(), requireDeclaredPart(world, entry.getKey(), entry.getValue()));
         }
 
-        Map<CompartmentPart, Boolean> registeredParts = new IdentityHashMap<>();
+        ReferenceOpenHashSet<CompartmentPart> registeredParts = new ReferenceOpenHashSet<>();
         for (CompartmentPart registeredPart : List.copyOf(host.compartmentHost$getCompartments(structureName))) {
-            registeredParts.put(registeredPart, Boolean.TRUE);
+            registeredParts.add(registeredPart);
         }
         Map<String, Map<CompartmentPart, CompartmentBindingHandle>> hostBindings = this.bindingHandles.get(host);
         if (hostBindings != null) {
             Map<CompartmentPart, CompartmentBindingHandle> structureBindings = hostBindings.get(structureName);
             if (structureBindings != null) {
                 for (CompartmentPart registeredPart : List.copyOf(structureBindings.keySet())) {
-                    registeredParts.put(registeredPart, Boolean.TRUE);
+                    registeredParts.add(registeredPart);
                 }
             }
         }
-        for (CompartmentPart registeredPart : registeredParts.keySet()) {
+        for (CompartmentPart registeredPart : registeredParts) {
             CompartmentPart currentPart = currentDeclaredParts.get(toBlockPos(registeredPart.compartmentPos()));
             if (registeredPart != currentPart) {
                 unbindPart(structureName, host, registeredPart);
@@ -113,20 +114,20 @@ public final class JsonDeclaredCompartmentBinder implements JsonMultiBlockCompar
 
     @Override
     public void unbind(String structureName, CompartmentHost host) {
-        Map<CompartmentPart, Boolean> partsToUnbind = new IdentityHashMap<>();
+        ReferenceOpenHashSet<CompartmentPart> partsToUnbind = new ReferenceOpenHashSet<>();
         for (CompartmentPart part : List.copyOf(host.compartmentHost$getCompartments(structureName))) {
-            partsToUnbind.put(part, Boolean.TRUE);
+            partsToUnbind.add(part);
         }
         Map<String, Map<CompartmentPart, CompartmentBindingHandle>> hostBindings = this.bindingHandles.get(host);
         if (hostBindings != null) {
             Map<CompartmentPart, CompartmentBindingHandle> structureBindings = hostBindings.get(structureName);
             if (structureBindings != null) {
                 for (CompartmentPart part : List.copyOf(structureBindings.keySet())) {
-                    partsToUnbind.put(part, Boolean.TRUE);
+                    partsToUnbind.add(part);
                 }
             }
         }
-        for (CompartmentPart part : partsToUnbind.keySet()) {
+        for (CompartmentPart part : partsToUnbind) {
             unbindPart(structureName, host, part);
         }
     }
@@ -171,8 +172,8 @@ public final class JsonDeclaredCompartmentBinder implements JsonMultiBlockCompar
             discardBinding(structureName, host, part);
             return;
         }
-        this.bindingHandles.computeIfAbsent(host, ignored -> new LinkedHashMap<>())
-                .computeIfAbsent(structureName, ignored -> new IdentityHashMap<>())
+        this.bindingHandles.computeIfAbsent(host, ignored -> new Object2ObjectLinkedOpenHashMap<>())
+                .computeIfAbsent(structureName, ignored -> new Reference2ReferenceOpenHashMap<>())
                 .put(part, bindingHandle);
     }
 

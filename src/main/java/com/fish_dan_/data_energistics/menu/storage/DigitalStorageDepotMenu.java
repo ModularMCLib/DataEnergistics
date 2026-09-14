@@ -24,7 +24,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DigitalStorageDepotMenu extends UpgradeableMenu<DigitalStorageDepotBlockEntity> {
@@ -223,7 +224,7 @@ public class DigitalStorageDepotMenu extends UpgradeableMenu<DigitalStorageDepot
             case KEYS -> this.keyOutputSidesMask;
         };
 
-        ArrayList<Direction> sides = new ArrayList<>();
+        ObjectArrayList<Direction> sides = new ObjectArrayList<>();
         for (Direction side : Direction.values()) {
             if ((mask & (1 << side.ordinal())) != 0) {
                 sides.add(side);

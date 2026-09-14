@@ -13,8 +13,9 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ final class TrinityAggregatePatternSearchIndex {
     private static final TrinityPatternSearchMatcher MATCHER = new TrinityPatternSearchMatcher();
 
     private final Level level;
-    private final Map<AEItemKey, PatternSearchNames> namesByDefinition = new HashMap<>();
+    private final Map<AEItemKey, PatternSearchNames> namesByDefinition = new Object2ObjectOpenHashMap<>();
 
     TrinityAggregatePatternSearchIndex(Level level) {
         this.level = level;
@@ -57,7 +58,7 @@ final class TrinityAggregatePatternSearchIndex {
                 return PatternSearchNames.EMPTY;
             }
 
-            List<String> inputs = new ArrayList<>();
+            List<String> inputs = new ObjectArrayList<>();
             for (IPatternDetails.IInput input : pattern.getInputs()) {
                 GenericStack[] alternatives = input.getPossibleInputs();
                 if (alternatives.length > 0) {
@@ -65,14 +66,14 @@ final class TrinityAggregatePatternSearchIndex {
                 }
             }
 
-            List<String> outputs = new ArrayList<>();
+            List<String> outputs = new ObjectArrayList<>();
             for (GenericStack output : pattern.getOutputs()) {
                 outputs.add(displayName(output));
             }
 
-            List<String> extraTerms = new ArrayList<>();
+            List<String> extraTerms = new ObjectArrayList<>();
             DataEnergisticsEntrypointLoader.snapshot().trinityPatternSearchTermRegistrations().forEach(
-                    registration -> extraTerms.addAll(registration.contributor().searchTerms(encodedPattern)));
+                    registration -> extraTerms.addAll(registration.contributor().searchTermsFast(encodedPattern)));
             return new PatternSearchNames(inputs, outputs, extraTerms);
         } catch (RuntimeException exception) {
             Data_Energistics.LOGGER.warn(

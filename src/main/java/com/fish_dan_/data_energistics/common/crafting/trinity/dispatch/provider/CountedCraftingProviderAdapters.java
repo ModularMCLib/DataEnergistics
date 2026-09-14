@@ -328,7 +328,7 @@ public final class CountedCraftingProviderAdapters {
     private static List<ProviderCapacitySnapshot> capturePublicCapacity(
                                                                         CountedCraftingProviderAdapter adapter,
                                                                         CapacityCaptureContext context) {
-        List<CountedCraftingCapacity> capacities = List.copyOf(adapter.captureCapacity(
+        List<CountedCraftingCapacity> capacities = List.copyOf(adapter.captureCapacityFast(
                 context.patternDetails(),
                 context.prototype(),
                 context.requestedCrafts()));

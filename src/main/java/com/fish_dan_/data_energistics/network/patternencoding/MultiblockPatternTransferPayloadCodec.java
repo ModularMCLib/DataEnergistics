@@ -8,10 +8,10 @@ import com.fish_dan_.data_energistics.common.multiblock.transfer.MultiblockPatte
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 /**
  * Strict bounded codec for the complete multiblock-to-pattern-terminal request.
@@ -53,33 +53,34 @@ final class MultiblockPatternTransferPayloadCodec {
         int variantIndex = readBoundedInt(buffer, "variant index", 0, MAX_SELECTION_VALUE);
 
         int repeatCount = readCount(buffer, "repeat unit count", MAX_REPEAT_UNITS);
-        List<Integer> repeatCounts = new ArrayList<>(repeatCount);
+        IntList repeatCounts = new IntArrayList(repeatCount);
         for (int index = 0; index < repeatCount; index++) {
             repeatCounts.add(readBoundedInt(buffer, "repeat count", 1, MAX_SELECTION_VALUE));
         }
 
         int tierCount = readCount(buffer, "tier selection count", MAX_TIER_SELECTIONS);
-        Map<String, Integer> tierSelections = new LinkedHashMap<>();
+        Object2IntMap<String> tierSelections = new Object2IntLinkedOpenHashMap<>();
         for (int index = 0; index < tierCount; index++) {
             String domain = buffer.readUtf(MAX_TIER_DOMAIN_LENGTH);
             if (domain.isBlank()) {
                 throw new IllegalArgumentException("Multiblock pattern transfer tier domain cannot be blank");
             }
             int value = readBoundedInt(buffer, "tier value", 1, MAX_SELECTION_VALUE);
-            if (tierSelections.putIfAbsent(domain, value) != null) {
+            if (tierSelections.putIfAbsent(domain, value) != 0) {
                 throw new IllegalArgumentException("Duplicate multiblock pattern transfer tier domain: " + domain);
             }
         }
 
         int candidateCount = readCount(buffer, "candidate selection count", MAX_CANDIDATE_SELECTIONS);
-        Map<PreviewPredicateKey, Integer> candidateSelections = new LinkedHashMap<>();
+        Object2IntMap<PreviewPredicateKey> candidateSelections = new Object2IntLinkedOpenHashMap<>();
+        candidateSelections.defaultReturnValue(-1);
         for (int index = 0; index < candidateCount; index++) {
             PreviewPredicateKey key = new PreviewPredicateKey(
                     readBoundedInt(buffer, "candidate source layer", 0, MAX_SELECTION_VALUE),
                     readBoundedInt(buffer, "candidate y", 0, MAX_SELECTION_VALUE),
                     readBoundedInt(buffer, "candidate x", 0, MAX_SELECTION_VALUE));
             int value = readBoundedInt(buffer, "candidate index", 0, MAX_SELECTION_VALUE);
-            if (candidateSelections.putIfAbsent(key, value) != null) {
+            if (candidateSelections.putIfAbsent(key, value) != -1) {
                 throw new IllegalArgumentException("Duplicate multiblock pattern transfer candidate key: " + key);
             }
         }
@@ -115,17 +116,17 @@ final class MultiblockPatternTransferPayloadCodec {
             buffer.writeVarInt(repeatCount);
         }
         buffer.writeVarInt(fingerprint.tierSelections().size());
-        for (Map.Entry<String, Integer> tier : fingerprint.tierSelections().entrySet()) {
+        for (Object2IntMap.Entry<String> tier : fingerprint.tierSelections().object2IntEntrySet()) {
             buffer.writeUtf(tier.getKey(), MAX_TIER_DOMAIN_LENGTH);
-            buffer.writeVarInt(tier.getValue());
+            buffer.writeVarInt(tier.getIntValue());
         }
         buffer.writeVarInt(fingerprint.candidateSelections().size());
-        for (Map.Entry<PreviewPredicateKey, Integer> candidate : fingerprint.candidateSelections().entrySet()) {
+        for (Object2IntMap.Entry<PreviewPredicateKey> candidate : fingerprint.candidateSelections().object2IntEntrySet()) {
             PreviewPredicateKey key = candidate.getKey();
             buffer.writeVarInt(key.sourceLayer());
             buffer.writeVarInt(key.y());
             buffer.writeVarInt(key.x());
-            buffer.writeVarInt(candidate.getValue());
+            buffer.writeVarInt(candidate.getIntValue());
         }
     }
 
@@ -162,23 +163,23 @@ final class MultiblockPatternTransferPayloadCodec {
             requireRange("repeat count", repeatCount, 1, MAX_SELECTION_VALUE);
         }
         requireRange("tier selection count", fingerprint.tierSelections().size(), 0, MAX_TIER_SELECTIONS);
-        for (Map.Entry<String, Integer> tier : fingerprint.tierSelections().entrySet()) {
+        for (Object2IntMap.Entry<String> tier : fingerprint.tierSelections().object2IntEntrySet()) {
             if (tier.getKey().isBlank() || tier.getKey().length() > MAX_TIER_DOMAIN_LENGTH) {
                 throw new IllegalArgumentException("Invalid multiblock pattern transfer tier domain: " + tier.getKey());
             }
-            requireRange("tier value", tier.getValue(), 1, MAX_SELECTION_VALUE);
+            requireRange("tier value", tier.getIntValue(), 1, MAX_SELECTION_VALUE);
         }
         requireRange(
                 "candidate selection count",
                 fingerprint.candidateSelections().size(),
                 0,
                 MAX_CANDIDATE_SELECTIONS);
-        for (Map.Entry<PreviewPredicateKey, Integer> candidate : fingerprint.candidateSelections().entrySet()) {
+        for (Object2IntMap.Entry<PreviewPredicateKey> candidate : fingerprint.candidateSelections().object2IntEntrySet()) {
             PreviewPredicateKey key = candidate.getKey();
             requireRange("candidate source layer", key.sourceLayer(), 0, MAX_SELECTION_VALUE);
             requireRange("candidate y", key.y(), 0, MAX_SELECTION_VALUE);
             requireRange("candidate x", key.x(), 0, MAX_SELECTION_VALUE);
-            requireRange("candidate index", candidate.getValue(), 0, MAX_SELECTION_VALUE);
+            requireRange("candidate index", candidate.getIntValue(), 0, MAX_SELECTION_VALUE);
         }
     }
 

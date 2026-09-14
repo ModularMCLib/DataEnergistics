@@ -33,6 +33,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -209,12 +210,12 @@ public final class TrinityJointCycleShortageGameTest {
         AEKey fuel = AEItemKey.of(Items.COAL);
         TrinityPatternVariant variant = TrinityPatternVariant.create(
                 new TrinityPatternIdentity("shortage_cycle", "diamond_and_coal_to_two_diamonds"), target, 0,
-                List.of(0, 0), List.of(
+                IntList.of(0, 0), List.of(
                         new TrinityBoundPatternInput(0, 0, new GenericStack(target, 1), 1, null),
                         new TrinityBoundPatternInput(1, 0, new GenericStack(fuel, 1), 1, null)),
                 List.of(new GenericStack(target, 2)));
         TrinityStronglyConnectedComponent component = new TrinityStronglyConnectedComponent(
-                0, List.of(target), true, List.of(variant), List.of(), List.of());
+                0, List.of(target), true, List.of(variant), IntList.of(), IntList.of());
         TrinityCycleDemand demand = new TrinityCycleDemand(
                 Map.of(), Map.of(), Map.of(target, BigInteger.valueOf(requested)), Set.of(target));
         return new CycleFixture(target, fuel, component, demand, Map.of(target, BigInteger.ONE, fuel, BigInteger.TEN));

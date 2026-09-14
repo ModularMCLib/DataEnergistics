@@ -13,9 +13,10 @@ import dev.toma.configuration.config.Configurable;
 import dev.toma.configuration.config.UpdateRestrictions;
 import dev.toma.configuration.config.format.ConfigFormats;
 import it.unimi.dsi.fastutil.objects.Object2DoubleLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMaps;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -564,7 +565,7 @@ public final class DataEnergisticsConfiguration {
         @Configurable.DecimalRange(min = 0.0D, max = 1_000_000.0D)
         public double[] dimensionMultiplierValues = { 1.0D, 2.0D, 0.0D };
 
-        public Map<ResourceLocation, Double> dimensionMultipliers() {
+        public Object2DoubleMap<ResourceLocation> dimensionMultipliers() {
             Object2DoubleLinkedOpenHashMap<ResourceLocation> result = new Object2DoubleLinkedOpenHashMap<>();
             int count = Math.min(this.dimensionIds.length, this.dimensionMultiplierValues.length);
             for (int index = 0; index < count; index++) {
@@ -573,7 +574,7 @@ public final class DataEnergisticsConfiguration {
                     result.put(dimension, this.dimensionMultiplierValues[index]);
                 }
             }
-            return Map.copyOf(result);
+            return Object2DoubleMaps.unmodifiable(result);
         }
     }
 

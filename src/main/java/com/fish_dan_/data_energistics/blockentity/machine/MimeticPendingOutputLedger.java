@@ -8,12 +8,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
-import java.util.Map;
 
 /**
  * Stores generated mimetic items until an external destination has actually accepted them.
@@ -56,14 +56,14 @@ public final class MimeticPendingOutputLedger {
         long accept(AEItemKey key, long amount);
     }
 
-    /** Largest practical number of elements that an {@link ArrayList} can address. */
+    /** Largest practical number of elements that an {@link ObjectArrayList} can address. */
     private static final long MAX_MATERIALIZED_STACKS = Integer.MAX_VALUE - 8L;
 
     /** Component-sensitive authoritative balances in first-seen order. */
-    private final LinkedHashMap<AEItemKey, Long> contents = new LinkedHashMap<>();
+    private final Object2LongLinkedOpenHashMap<AEItemKey> contents = new Object2LongLinkedOpenHashMap<>();
 
     /** Transient round-robin order, advanced without scanning every pending key. */
-    private final Deque<AEItemKey> offerQueue = new ArrayDeque<>();
+    private final ObjectArrayFIFOQueue<AEItemKey> offerQueue = new ObjectArrayFIFOQueue<>();
 
     /** Persists each runtime mutation, especially every successful external consumption. */
     private final Runnable changeListener;
@@ -102,7 +102,7 @@ public final class MimeticPendingOutputLedger {
      * @param stacks generated stacks; empty stacks are ignored
      */
     public void append(List<ItemStack> stacks) {
-        LinkedHashMap<AEItemKey, Long> generated = new LinkedHashMap<>();
+        Object2LongLinkedOpenHashMap<AEItemKey> generated = new Object2LongLinkedOpenHashMap<>();
         for (ItemStack stack : stacks) {
             if (stack.isEmpty()) {
                 continue;
@@ -112,7 +112,7 @@ public final class MimeticPendingOutputLedger {
             if (key == null) {
                 throw new IllegalArgumentException("Non-empty generated stack has no AE item key");
             }
-            generated.merge(key, (long) stack.getCount(), MimeticPendingOutputLedger::addExact);
+            generated.mergeLong(key, (long) stack.getCount(), MimeticPendingOutputLedger::addExact);
         }
         appendAmounts(generated);
     }
@@ -122,24 +122,24 @@ public final class MimeticPendingOutputLedger {
      *
      * @param amounts positive generated balances
      */
-    public void appendAmounts(Map<AEItemKey, Long> amounts) {
+    public void appendAmounts(Object2LongMap<AEItemKey> amounts) {
         if (amounts.isEmpty()) {
             return;
         }
 
-        LinkedHashMap<AEItemKey, Long> updated = new LinkedHashMap<>(amounts.size());
-        for (Map.Entry<AEItemKey, Long> entry : amounts.entrySet()) {
-            if (entry.getValue() <= 0L) {
+        Object2LongLinkedOpenHashMap<AEItemKey> updated = new Object2LongLinkedOpenHashMap<>(amounts.size());
+        for (Object2LongMap.Entry<AEItemKey> entry : amounts.object2LongEntrySet()) {
+            if (entry.getLongValue() <= 0L) {
                 throw new IllegalArgumentException("Mimetic pending-output amounts must be positive");
             }
             long current = this.contents.getOrDefault(entry.getKey(), 0L);
-            updated.put(entry.getKey(), addExact(current, entry.getValue()));
+            updated.put(entry.getKey(), addExact(current, entry.getLongValue()));
         }
-        for (Map.Entry<AEItemKey, Long> entry : updated.entrySet()) {
+        for (Object2LongMap.Entry<AEItemKey> entry : updated.object2LongEntrySet()) {
             if (!this.contents.containsKey(entry.getKey())) {
-                this.offerQueue.addLast(entry.getKey());
+                this.offerQueue.enqueue(entry.getKey());
             }
-            this.contents.put(entry.getKey(), entry.getValue());
+            this.contents.put(entry.getKey(), entry.getLongValue());
         }
         this.changeListener.run();
     }
@@ -166,8 +166,8 @@ public final class MimeticPendingOutputLedger {
         boolean changed = false;
         try {
             for (int offers = 0; offers < offerBudget && !this.offerQueue.isEmpty(); offers++) {
-                AEItemKey key = this.offerQueue.getFirst();
-                long current = this.contents.get(key);
+                AEItemKey key = this.offerQueue.first();
+                long current = this.contents.getLong(key);
                 ItemStack offeredStack = createLegalStack(key, current);
                 int offered = offeredStack.getCount();
                 int accepted = sink.accept(offeredStack);
@@ -176,13 +176,13 @@ public final class MimeticPendingOutputLedger {
                             "Mimetic output sink accepted " + accepted + " items from an offer of " + offered);
                 }
 
-                this.offerQueue.removeFirst();
+                this.offerQueue.dequeue();
                 long remaining = current - accepted;
                 if (remaining > 0L) {
                     this.contents.put(key, remaining);
-                    this.offerQueue.addLast(key);
+                    this.offerQueue.enqueue(key);
                 } else {
-                    this.contents.remove(key);
+                    this.contents.removeLong(key);
                 }
                 if (accepted == 0) {
                     consecutiveRejectedOffers++;
@@ -226,21 +226,21 @@ public final class MimeticPendingOutputLedger {
         boolean changed = false;
         try {
             for (int offers = 0; offers < offerBudget && !this.offerQueue.isEmpty(); offers++) {
-                AEItemKey key = this.offerQueue.getFirst();
-                long current = this.contents.get(key);
+                AEItemKey key = this.offerQueue.first();
+                long current = this.contents.getLong(key);
                 long accepted = sink.accept(key, current);
                 if (accepted < 0L || accepted > current) {
                     throw new IllegalStateException(
                             "Mimetic output sink accepted " + accepted + " items from an offer of " + current);
                 }
 
-                this.offerQueue.removeFirst();
+                this.offerQueue.dequeue();
                 long remaining = current - accepted;
                 if (remaining > 0L) {
                     this.contents.put(key, remaining);
-                    this.offerQueue.addLast(key);
+                    this.offerQueue.enqueue(key);
                 } else {
-                    this.contents.remove(key);
+                    this.contents.removeLong(key);
                 }
                 if (accepted == 0L) {
                     consecutiveRejectedOffers++;
@@ -270,8 +270,8 @@ public final class MimeticPendingOutputLedger {
      */
     public ListTag writeToNbt(HolderLookup.Provider registries) {
         ListTag entries = new ListTag();
-        for (Map.Entry<AEItemKey, Long> entry : this.contents.entrySet()) {
-            entries.add(GenericStack.writeTag(registries, new GenericStack(entry.getKey(), entry.getValue())));
+        for (Object2LongMap.Entry<AEItemKey> entry : this.contents.object2LongEntrySet()) {
+            entries.add(GenericStack.writeTag(registries, new GenericStack(entry.getKey(), entry.getLongValue())));
         }
         return entries;
     }
@@ -283,21 +283,20 @@ public final class MimeticPendingOutputLedger {
      * @param entries    ordered serialized balances
      */
     public void readFromNbt(HolderLookup.Provider registries, ListTag entries) {
-        LinkedHashMap<AEItemKey, Long> restored = new LinkedHashMap<>();
+        Object2LongLinkedOpenHashMap<AEItemKey> restored = new Object2LongLinkedOpenHashMap<>();
         for (int index = 0; index < entries.size(); index++) {
             CompoundTag entryTag = entries.getCompound(index);
             var stack = GenericStack.readTag(registries, entryTag);
             if (stack == null || !(stack.what() instanceof AEItemKey itemKey) || stack.amount() <= 0L) {
                 throw new IllegalArgumentException("Invalid mimetic pending-output entry at index " + index);
             }
-            restored.merge(itemKey, stack.amount(), MimeticPendingOutputLedger::addExact);
+            restored.mergeLong(itemKey, stack.amount(), MimeticPendingOutputLedger::addExact);
         }
 
-        Deque<AEItemKey> restoredOfferQueue = new ArrayDeque<>(restored.keySet());
         this.contents.clear();
         this.contents.putAll(restored);
         this.offerQueue.clear();
-        this.offerQueue.addAll(restoredOfferQueue);
+        restored.keySet().forEach(this.offerQueue::enqueue);
     }
 
     /**
@@ -307,18 +306,18 @@ public final class MimeticPendingOutputLedger {
      */
     public List<ItemStack> toItemStacks() {
         long stackCount = 0L;
-        for (Map.Entry<AEItemKey, Long> entry : this.contents.entrySet()) {
+        for (Object2LongMap.Entry<AEItemKey> entry : this.contents.object2LongEntrySet()) {
             int maximumStackSize = maximumStackSize(entry.getKey());
-            long required = 1L + (entry.getValue() - 1L) / maximumStackSize;
+            long required = 1L + (entry.getLongValue() - 1L) / maximumStackSize;
             if (required > MAX_MATERIALIZED_STACKS - stackCount) {
                 throw new IllegalStateException("Mimetic pending output is too large to materialize as a Java list");
             }
             stackCount += required;
         }
 
-        List<ItemStack> stacks = new ArrayList<>((int) stackCount);
-        for (Map.Entry<AEItemKey, Long> entry : this.contents.entrySet()) {
-            long remaining = entry.getValue();
+        List<ItemStack> stacks = new ObjectArrayList<>((int) stackCount);
+        for (Object2LongMap.Entry<AEItemKey> entry : this.contents.object2LongEntrySet()) {
+            long remaining = entry.getLongValue();
             while (remaining > 0L) {
                 ItemStack stack = createLegalStack(entry.getKey(), remaining);
                 stacks.add(stack);

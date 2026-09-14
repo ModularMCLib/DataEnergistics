@@ -27,9 +27,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageDepotMenu> {
@@ -69,7 +69,7 @@ public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageD
     @Override
     protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         if (this.menu.getCarried().isEmpty() && isEmptyGenericSlot(this.hoveredSlot)) {
-            List<Component> tooltip = new ArrayList<>();
+            List<Component> tooltip = new ObjectArrayList<>();
             int slotIndex = getGenericSlotIndex(this.hoveredSlot);
             if (isFluidSemantic(this.menu.getSlotSemantic(this.hoveredSlot))) {
                 tooltip.add(Component.translatable("screen.data_energistics.data_reassembler.fluid.empty"));
@@ -85,7 +85,7 @@ public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageD
         }
 
         if (this.menu.getCarried().isEmpty() && isFilledGenericSlot(this.hoveredSlot)) {
-            List<Component> tooltip = new ArrayList<>(this.getTooltipFromContainerItem(this.hoveredSlot.getItem()));
+            List<Component> tooltip = new ObjectArrayList<>(this.getTooltipFromContainerItem(this.hoveredSlot.getItem()));
             int slotIndex = getGenericSlotIndex(this.hoveredSlot);
             if (isFluidSemantic(this.menu.getSlotSemantic(this.hoveredSlot))) {
                 tooltip.add(Component.literal(this.menu.getFluidAmount(slotIndex) + " mB / " + this.menu.getFluidCapacity() + " mB")

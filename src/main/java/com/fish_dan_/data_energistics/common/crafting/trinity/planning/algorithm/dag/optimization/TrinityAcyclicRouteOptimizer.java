@@ -1174,7 +1174,7 @@ public final class TrinityAcyclicRouteOptimizer {
         Int2IntMap positions = new Int2IntOpenHashMap();
         positions.defaultReturnValue(-1);
         for (int index = 0; index < topology.topologicalOrder().size(); index++) {
-            positions.put(topology.topologicalOrder().get(index).intValue(), index);
+            positions.put(topology.topologicalOrder().getInt(index), index);
         }
         return positions;
     }

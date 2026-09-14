@@ -19,9 +19,9 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @PrefixGameTestTemplate(false)
@@ -77,9 +77,9 @@ public final class MultiblockPatternTransferPayloadHandlerGameTest {
                 0L,
                 new JsonMultiBlockStructureKey(controllerId, "main"),
                 0,
-                List.of(1),
-                Map.of(),
-                Map.of());
+                IntList.of(1),
+                Object2IntMaps.emptyMap(),
+                Object2IntMaps.emptyMap());
         return new MultiblockPatternTransferPayload(
                 containerId,
                 MultiblockRecipeView.registeredRecipeIdFor(controllerId),

@@ -5,10 +5,14 @@ import appeng.api.networking.crafting.CraftingSubmitErrorCode;
 import appeng.api.networking.crafting.ICraftingSubmitResult;
 import appeng.api.networking.crafting.UnsuitableCpus;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,8 +56,8 @@ public final class CraftingCpuCandidateSelector {
     public CraftingCpuCandidateSelection evaluate(
                                                   List<CraftingCpuCandidate> candidates,
                                                   CraftingCpuSelectionRequest request) {
-        Set<String> identities = new HashSet<>();
-        ArrayList<CraftingCpuCandidate> eligible = new ArrayList<>(candidates.size());
+        Set<String> identities = new ObjectOpenHashSet<>();
+        ObjectArrayList<CraftingCpuCandidate> eligible = new ObjectArrayList<>(candidates.size());
         int offline = 0;
         int busy = 0;
         int tooSmall = 0;
@@ -81,7 +85,7 @@ public final class CraftingCpuCandidateSelector {
             }
             eligible.add(candidate);
         }
-        Map<String, Integer> roundRobinRanks = roundRobinRanks(eligible, request);
+        Object2IntMap<String> roundRobinRanks = roundRobinRanks(eligible, request);
         eligible.sort(order(request, roundRobinRanks));
         return new CraftingCpuCandidateSelection(
                 eligible,
@@ -133,16 +137,16 @@ public final class CraftingCpuCandidateSelector {
         };
     }
 
-    private Map<String, Integer> roundRobinRanks(
-                                                 List<CraftingCpuCandidate> candidates,
-                                                 CraftingCpuSelectionRequest request) {
-        Map<CraftingCpuSelectionGroup, List<CraftingCpuCandidate>> groups = new HashMap<>();
+    private Object2IntMap<String> roundRobinRanks(
+                                                  List<CraftingCpuCandidate> candidates,
+                                                  CraftingCpuSelectionRequest request) {
+        Map<CraftingCpuSelectionGroup, List<CraftingCpuCandidate>> groups = new Object2ObjectOpenHashMap<>();
         for (CraftingCpuCandidate candidate : candidates) {
-            groups.computeIfAbsent(group(candidate, request.playerRequest()), ignored -> new ArrayList<>())
+            groups.computeIfAbsent(group(candidate, request.playerRequest()), ignored -> new ObjectArrayList<>())
                     .add(candidate);
         }
 
-        Map<String, Integer> ranks = new HashMap<>();
+        Object2IntMap<String> ranks = new Object2IntOpenHashMap<>();
         for (Map.Entry<CraftingCpuSelectionGroup, List<CraftingCpuCandidate>> entry : groups.entrySet()) {
             List<CraftingCpuCandidate> groupCandidates = entry.getValue();
             groupCandidates.sort(Comparator.comparing(CraftingCpuCandidate::stableIdentity));
@@ -153,7 +157,7 @@ public final class CraftingCpuCandidateSelector {
                 ranks.put(candidate.stableIdentity(), offset);
             }
         }
-        return Map.copyOf(ranks);
+        return Object2IntMaps.unmodifiable(ranks);
     }
 
     private static int indexOfIdentity(List<CraftingCpuCandidate> candidates, String identity) {
@@ -170,7 +174,7 @@ public final class CraftingCpuCandidateSelector {
 
     private static Comparator<CraftingCpuCandidate> order(
                                                           CraftingCpuSelectionRequest request,
-                                                          Map<String, Integer> roundRobinRanks) {
+                                                          Object2IntMap<String> roundRobinRanks) {
         return (first, second) -> {
             int result = Boolean.compare(
                     preferredFor(second.selectionMode(), request.playerRequest()),
@@ -197,8 +201,8 @@ public final class CraftingCpuCandidateSelector {
                 return result;
             }
             result = Integer.compare(
-                    roundRobinRanks.get(first.stableIdentity()),
-                    roundRobinRanks.get(second.stableIdentity()));
+                    roundRobinRanks.getInt(first.stableIdentity()),
+                    roundRobinRanks.getInt(second.stableIdentity()));
             if (result != 0) {
                 return result;
             }

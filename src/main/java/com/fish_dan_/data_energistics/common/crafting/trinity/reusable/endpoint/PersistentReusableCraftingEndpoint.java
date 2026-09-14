@@ -494,8 +494,8 @@ public final class PersistentReusableCraftingEndpoint {
                 request.pattern().getDefinition(), request.target().mode().map(Object::toString));
         List<SlotInput> materials = new ObjectArrayList<>();
         List<SlotContract> tools = new ObjectArrayList<>();
-        for (var input : request.inputs()) {
-            Object2LongLinkedOpenHashMap<AEKey> quantities = counts(input.consumedPerOperation());
+        for (var input : request.inputsFast()) {
+            Object2LongLinkedOpenHashMap<AEKey> quantities = counts(input.consumedPerOperationFast());
             if (quantities.size() > 1) {
                 throw new IllegalArgumentException("Native crafting needs one exact material key per original input slot");
             }
@@ -504,7 +504,7 @@ public final class PersistentReusableCraftingEndpoint {
         }
         TrinityPatternIdentity publicationIdentity = TrinityPatternIdentity.capture(
                 TrinityPatternPublicationSignature.capture(request.pattern()), request.level().registryAccess());
-        return new Binding(identity, publicationIdentity, request.inputs().size(), materials, tools, request.recipeId().map(Object::toString));
+        return new Binding(identity, publicationIdentity, request.inputsFast().size(), materials, tools, request.recipeId().map(Object::toString));
     }
 
     private static boolean compatibleBinding(Binding frozen, Binding proposed) {
@@ -534,7 +534,7 @@ public final class PersistentReusableCraftingEndpoint {
     private static boolean sameRuleContract(ReusableInputRule frozen, ReusableInputRule proposed) {
         if (!frozen.id().equals(proposed.id()) || frozen.revision() != proposed.revision() || frozen.kind() != proposed.kind() ||
                 frozen.damagePerUse() != proposed.damagePerUse() || frozen.breakAtDamage() != proposed.breakAtDamage() ||
-                !frozen.exhaustionByproducts().equals(proposed.exhaustionByproducts()) || !frozen.transitions().equals(proposed.transitions())) {
+                !frozen.exhaustionByproductsFast().equals(proposed.exhaustionByproductsFast()) || !frozen.transitionsFast().equals(proposed.transitionsFast())) {
             return false;
         }
         try {
@@ -552,9 +552,9 @@ public final class PersistentReusableCraftingEndpoint {
         for (SlotInput input : binding.consumed()) {
             materials.add(new GenericStack(input.stack().what(), Math.multiplyExact(input.stack().amount(), request.requestedCount())));
         }
-        List<ToolDelivery> tools = request.offeredTools().stream().map(tool -> new ToolDelivery(tool.slot(), tool.stack())).toList();
+        List<ToolDelivery> tools = request.offeredToolsFast().stream().map(tool -> new ToolDelivery(tool.slot(), tool.stack())).toList();
         Int2ObjectMap<AEItemKey> states = new Int2ObjectLinkedOpenHashMap<>();
-        for (Input input : request.inputs()) {
+        for (Input input : request.inputsFast()) {
             input.tool().flatMap(Tool::operationState).ifPresent(state -> states.put(input.slot(), state));
         }
         return new Append(request.sequence(), request.requestedCount(), binding.consumed(), materials, tools, states);
@@ -686,6 +686,7 @@ public final class PersistentReusableCraftingEndpoint {
             return append.operations();
         }
 
+        @SuppressWarnings("removal")
         @Override
         public List<SlotStack> physicalInputs() {
             return physical;

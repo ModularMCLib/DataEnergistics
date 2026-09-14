@@ -358,7 +358,7 @@ public final class ReusableInputGraphCaptureService {
                     if (supported == null) {
                         continue;
                     }
-                    for (Target executionTarget : supported.reusableTargets(live, actor, level)) {
+                    for (Target executionTarget : supported.reusableTargetsFast(live, actor, level)) {
                         if (targets.add(executionTarget)) {
                             result.add(new Endpoint(live, supported, executionTarget, recipeId));
                         }

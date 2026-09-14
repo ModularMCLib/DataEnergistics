@@ -45,13 +45,13 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -75,9 +75,9 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     /** Server-issued definition snapshot shared by this menu's client and server hosted windows. */
     @Getter
     private final MultiblockPreviewSpec autoBuildPreviewSpec;
-    private final Map<HostUiKey, ClientHostedActionState> clientHostedActions = new HashMap<>();
-    private final Map<HostUiKey, ServerHostedActionState> serverHostedActions = new HashMap<>();
-    private final ArrayDeque<QueuedPatternQuickMove> queuedPatternQuickMoves = new ArrayDeque<>();
+    private final Map<HostUiKey, ClientHostedActionState> clientHostedActions = new Object2ObjectOpenHashMap<>();
+    private final Map<HostUiKey, ServerHostedActionState> serverHostedActions = new Object2ObjectOpenHashMap<>();
+    private final ObjectArrayFIFOQueue<QueuedPatternQuickMove> queuedPatternQuickMoves = new ObjectArrayFIFOQueue<>();
     /**
      * Double-sided child-window endpoint owned by this menu's mounted LDLib2 root.
      */
@@ -452,7 +452,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     /** Queues one complete Shift-drag selection and emits it when the PATTERN action lane becomes idle. */
     public boolean sendHostedPatternQuickMove(long generation,
                                               long layoutRevision,
-                                              List<Integer> globalSlots) {
+                                              IntList globalSlots) {
         QueuedPatternQuickMove request = new QueuedPatternQuickMove(generation, layoutRevision, globalSlots);
         if (this.hostUiCoordinator.isTerminal() || this.hostUiCoordinator.pendingRequest() != null ||
                 !this.hostUiCoordinator.hostUi().isOpen(TrinityDataCoreHostUiKeys.PATTERN, generation)) {
@@ -468,7 +468,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
         if (state.pending == null && this.queuedPatternQuickMoves.isEmpty()) {
             return dispatchPatternQuickMove(request);
         }
-        this.queuedPatternQuickMoves.addLast(request);
+        this.queuedPatternQuickMoves.enqueue(request);
         return true;
     }
 
@@ -648,7 +648,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     /** Executes one validated ordered Shift-drag batch without catalog-revision self-invalidation. */
     public TrinityHostedActionStatus executeHostedPatternQuickMove(Player player,
                                                                    long layoutRevision,
-                                                                   List<Integer> globalSlots) {
+                                                                   IntList globalSlots) {
         return this.hostedActionExecutor.patternQuickMove(player, layoutRevision, globalSlots);
     }
 
@@ -743,7 +743,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
         if (state.pending != null || this.queuedPatternQuickMoves.isEmpty()) {
             return;
         }
-        QueuedPatternQuickMove next = this.queuedPatternQuickMoves.peekFirst();
+        QueuedPatternQuickMove next = this.queuedPatternQuickMoves.first();
         if (this.hostUiCoordinator.isTerminal() || this.hostUiCoordinator.pendingRequest() != null ||
                 state.generation != next.generation() ||
                 !this.hostUiCoordinator.hostUi().isOpen(TrinityDataCoreHostUiKeys.PATTERN, next.generation())) {
@@ -751,7 +751,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
             return;
         }
         if (dispatchPatternQuickMove(next)) {
-            this.queuedPatternQuickMoves.removeFirst();
+            this.queuedPatternQuickMoves.dequeue();
         } else {
             this.queuedPatternQuickMoves.clear();
         }
@@ -871,7 +871,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
         /** Moves an ordered batch of installed patterns to the requesting player's inventory. */
         TrinityHostedActionStatus patternQuickMove(Player player,
                                                    long layoutRevision,
-                                                   List<Integer> globalSlots);
+                                                   IntList globalSlots);
 
         /**
          * Invokes one complete installed-pattern refund attempt.
@@ -942,7 +942,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
         @Override
         public TrinityHostedActionStatus patternQuickMove(Player player,
                                                           long layoutRevision,
-                                                          List<Integer> globalSlots) {
+                                                          IntList globalSlots) {
             if (this.host == null) {
                 throw new IllegalStateException("Trinity aggregate pattern quick-move requires a data core host");
             }
@@ -1014,22 +1014,22 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     /** Immutable client gesture retained until the PATTERN hosted-action lane can send it. */
     private record QueuedPatternQuickMove(long generation,
                                           long layoutRevision,
-                                          List<Integer> globalSlots) {
+                                          IntList globalSlots) {
 
         private QueuedPatternQuickMove {
             if (generation < 1L || layoutRevision < 0L || globalSlots == null || globalSlots.isEmpty()) {
                 throw new IllegalArgumentException("Invalid queued Trinity pattern quick-move request");
             }
-            LinkedHashSet<Integer> uniqueSlots = new LinkedHashSet<>(globalSlots.size());
-            for (Integer globalSlot : globalSlots) {
-                if (globalSlot == null || globalSlot < 0 || !uniqueSlots.add(globalSlot)) {
+            IntLinkedOpenHashSet uniqueSlots = new IntLinkedOpenHashSet(globalSlots.size());
+            for (int globalSlot : globalSlots) {
+                if (globalSlot < 0 || !uniqueSlots.add(globalSlot)) {
                     throw new IllegalArgumentException("Invalid or duplicate queued Trinity pattern slot: " + globalSlot);
                 }
             }
             if (uniqueSlots.size() > TrinityPatternCatalogView.PAGE_SIZE) {
                 throw new IllegalArgumentException("Queued Trinity pattern quick-move exceeds the viewport size");
             }
-            globalSlots = List.copyOf(uniqueSlots);
+            globalSlots = IntList.of(uniqueSlots.toIntArray());
         }
     }
 }

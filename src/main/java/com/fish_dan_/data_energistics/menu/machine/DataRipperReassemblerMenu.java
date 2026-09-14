@@ -25,7 +25,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassemblerBlockEntity> implements IProgressProvider {
@@ -302,7 +303,7 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
             case FLUIDS -> this.fluidOutputSidesMask;
             case KEYS -> this.keyOutputSidesMask;
         };
-        List<Direction> sides = new ArrayList<>();
+        List<Direction> sides = new ObjectArrayList<>();
         for (Direction side : Direction.values()) {
             if ((mask & (1 << side.ordinal())) != 0) {
                 sides.add(side);

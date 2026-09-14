@@ -1,13 +1,14 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -668,7 +669,7 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
         private final long gridScope;
         private final Object2ObjectLinkedOpenHashMap<ScopedKey, CacheEntry<?>> entries = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectOpenHashMap<ScopedKey, CacheEntry<?>> bypassEntries = new Object2ObjectOpenHashMap<>();
-        private final Map<TrinityComputationNamespace.RevisionDomain, Long> currentRevisions = new EnumMap<>(TrinityComputationNamespace.RevisionDomain.class);
+        private final Object2LongMap<TrinityComputationNamespace.RevisionDomain> currentRevisions = new Object2LongOpenHashMap<>();
 
         private GridPartition(long gridScope) {
             this.gridScope = gridScope;

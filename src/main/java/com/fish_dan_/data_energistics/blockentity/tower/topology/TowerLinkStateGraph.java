@@ -2,10 +2,13 @@ package com.fish_dan_.data_energistics.blockentity.tower.topology;
 
 import net.minecraft.core.BlockPos;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,9 +81,9 @@ public final class TowerLinkStateGraph {
     }
 
     private static final int MAX_RETRY_ATTEMPTS = 30;
-    private final Set<BlockPos> linkedPositions = new LinkedHashSet<>();
-    private final Map<BlockPos, TargetLinkStatus> targetStatuses = new LinkedHashMap<>();
-    private final Map<BlockPos, Integer> retryAttempts = new LinkedHashMap<>();
+    private final Set<BlockPos> linkedPositions = new ObjectLinkedOpenHashSet<>();
+    private final Map<BlockPos, TargetLinkStatus> targetStatuses = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2IntMap<BlockPos> retryAttempts = new Object2IntLinkedOpenHashMap<>();
     private static final TargetLinkStatus INVALID_STATUS = new TargetLinkStatus(
             TargetLinkState.INVALID, TargetLinkFailure.NONE, 0);
 
@@ -126,7 +129,7 @@ public final class TowerLinkStateGraph {
         BlockPos normalizedPos = targetPos.immutable();
         this.linkedPositions.remove(normalizedPos);
         this.targetStatuses.remove(normalizedPos);
-        this.retryAttempts.remove(normalizedPos);
+        this.retryAttempts.removeInt(normalizedPos);
     }
 
     /**
@@ -145,7 +148,7 @@ public final class TowerLinkStateGraph {
      * @return immutable linked position snapshot
      */
     public Set<BlockPos> linkedPositions() {
-        return new LinkedHashSet<>(this.linkedPositions);
+        return new ObjectLinkedOpenHashSet<>(this.linkedPositions);
     }
 
     /**
@@ -176,7 +179,7 @@ public final class TowerLinkStateGraph {
         }
         TargetLinkStatus nextStatus = new TargetLinkStatus(state, failure, retryTicks);
         TargetLinkStatus previousStatus = this.targetStatuses.put(normalizedPos, nextStatus);
-        this.retryAttempts.remove(normalizedPos);
+        this.retryAttempts.removeInt(normalizedPos);
         return !nextStatus.equals(previousStatus);
     }
 
@@ -236,7 +239,7 @@ public final class TowerLinkStateGraph {
             throw new IllegalArgumentException("Target link elapsed ticks must be non-negative: " + elapsedTicks);
         }
 
-        ArrayList<BlockPos> readyTargets = new ArrayList<>();
+        ObjectArrayList<BlockPos> readyTargets = new ObjectArrayList<>();
         for (Map.Entry<BlockPos, TargetLinkStatus> entry : this.targetStatuses.entrySet()) {
             TargetLinkStatus status = entry.getValue();
             if (!status.isRetryable()) {

@@ -17,10 +17,10 @@ import com.modularmc.mdl.api.multiblock.PatternCandidate;
 import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -42,7 +42,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
         if (compartmentTypes.isEmpty()) {
             throw new IllegalArgumentException("Replaceable compartment predicate requires at least one compartment type");
         }
-        compartmentTypes = Collections.unmodifiableSet(new LinkedHashSet<>(compartmentTypes));
+        compartmentTypes = Collections.unmodifiableSet(new ObjectLinkedOpenHashSet<>(compartmentTypes));
     }
 
     public static synchronized void registerType() {
@@ -97,7 +97,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
 
     @Override
     public List<Block> blockCandidates() {
-        ArrayList<Block> candidates = new ArrayList<>(this.delegate.blockCandidates());
+        ObjectArrayList<Block> candidates = new ObjectArrayList<>(this.delegate.blockCandidates());
         for (CompartmentType type : this.compartmentTypes) {
             candidates.add(JsonMultiBlockCompartmentPredicate.blockFor(type));
         }
@@ -106,7 +106,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
 
     @Override
     public List<BlockState> blockStateCandidates() {
-        ArrayList<BlockState> candidates = new ArrayList<>(this.delegate.blockStateCandidates());
+        ObjectArrayList<BlockState> candidates = new ObjectArrayList<>(this.delegate.blockStateCandidates());
         for (CompartmentType type : this.compartmentTypes) {
             candidates.add(JsonMultiBlockCompartmentPredicate.blockFor(type).defaultBlockState());
         }
@@ -115,7 +115,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
 
     @Override
     public List<ItemStack> placementCandidates() {
-        ArrayList<ItemStack> candidates = new ArrayList<>();
+        ObjectArrayList<ItemStack> candidates = new ObjectArrayList<>();
         for (CompartmentType type : this.compartmentTypes) {
             ItemStack stack = JsonMultiBlockCompartmentPredicate.blockFor(type).asItem().getDefaultInstance();
             if (!stack.isEmpty()) {
@@ -128,7 +128,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
 
     @Override
     public List<PatternCandidate> patternCandidates() {
-        ArrayList<PatternCandidate> candidates = new ArrayList<>();
+        ObjectArrayList<PatternCandidate> candidates = new ObjectArrayList<>();
         for (CompartmentType type : this.compartmentTypes) {
             Block block = JsonMultiBlockCompartmentPredicate.blockFor(type);
             ItemStack stack = block.asItem().getDefaultInstance();
@@ -142,7 +142,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
     }
 
     private List<String> expected() {
-        ArrayList<String> values = new ArrayList<>();
+        ObjectArrayList<String> values = new ObjectArrayList<>();
         for (CompartmentType type : this.compartmentTypes) {
             values.add(type.id());
         }
@@ -156,7 +156,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
                     COMPARTMENTS_PROPERTY + "'");
         }
         JsonArray compartments = compartmentsElement.getAsJsonArray();
-        LinkedHashSet<CompartmentType> types = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<CompartmentType> types = new ObjectLinkedOpenHashSet<>();
         for (JsonElement compartmentElement : compartments) {
             if (!compartmentElement.isJsonPrimitive() || !compartmentElement.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("Replaceable compartment type entries must be strings");

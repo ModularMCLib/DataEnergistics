@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan;
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSets;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -12,7 +13,6 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * One dependency-addressable execution stage produced by DAG propagation or compressed cyclic scheduling.
@@ -27,7 +27,7 @@ import java.util.Set;
 public record TrinityPlanStage(
                                int index,
                                boolean cycleStage,
-                               Set<Integer> dependencies,
+                               IntSet dependencies,
                                List<TrinityPlanPatternFiring> firings,
                                Map<AEKey, BigInteger> requiredAtStart,
                                Map<AEKey, BigInteger> netChange) {

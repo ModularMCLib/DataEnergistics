@@ -147,7 +147,7 @@ final class CraftingPlanGraphRecordCodec {
         ids.forEach(buffer::writeVarInt);
     }
 
-    private static List<Integer> ids(RegistryFriendlyByteBuf buffer) {
+    private static IntList ids(RegistryFriendlyByteBuf buffer) {
         int count = count(buffer);
         IntList ids = new IntArrayList(count);
         for (int index = 0; index < count; index++) ids.add(buffer.readVarInt());

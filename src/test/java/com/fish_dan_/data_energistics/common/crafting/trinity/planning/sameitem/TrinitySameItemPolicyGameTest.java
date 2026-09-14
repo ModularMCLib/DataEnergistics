@@ -37,6 +37,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +93,7 @@ public final class TrinitySameItemPolicyGameTest {
                 new TrinityPatternIdentity("definition", "publication"),
                 physicalOutput,
                 0,
-                List.of(0),
+                IntList.of(0),
                 List.of(binding),
                 List.of(new GenericStack(physicalOutput, 2L)));
 
@@ -160,7 +163,7 @@ public final class TrinitySameItemPolicyGameTest {
         TrinityPlanStage stage = new TrinityPlanStage(
                 0,
                 false,
-                Set.of(),
+                IntSet.of(),
                 List.of(firing),
                 Map.of(representative, BigInteger.ONE),
                 Map.of(representative, BigInteger.ONE));
@@ -173,7 +176,7 @@ public final class TrinitySameItemPolicyGameTest {
                 .initialExpectedInputs(Map.of(representative, BigInteger.ONE))
                 .patternFirings(Map.of(identity, BigInteger.ONE))
                 .stages(List.of(stage))
-                .stageOrder(List.of(0))
+                .stageOrder(IntList.of(0))
                 .targetNetChange(Map.of(representative, BigInteger.ONE))
                 .build();
 
@@ -188,7 +191,7 @@ public final class TrinitySameItemPolicyGameTest {
                 "Saved execution must restore its logical same-item domains");
         helper.assertValueEqual(restored.pendingOutputs().get(representative), BigInteger.valueOf(2L),
                 "Pending output accounting must use the logical representative");
-        helper.assertValueEqual(restored.pollDispatchable(20L, Set.of(), ignored -> true, true)
+        helper.assertValueEqual(restored.pollDispatchable(20L, IntSet.of(), ignored -> true, true)
                 .orElseThrow()
                 .primaryOutput(), physicalOutput,
                 "Restored provider lookup must retain the raw primary output");

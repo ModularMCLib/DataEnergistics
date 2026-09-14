@@ -10,9 +10,9 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +38,7 @@ final class IdentityProviderCapacityResolver implements ProviderCapacityResolver
                 captureTick);
         long publicationRevision = captureKey.publicationRevision();
         long capacityRevision = captureKey.capacityRevision();
-        ArrayList<ProviderCapacitySnapshot> snapshots = new ArrayList<>();
+        ObjectArrayList<ProviderCapacitySnapshot> snapshots = new ObjectArrayList<>();
         for (var providerId : captureKey.providerFingerprint()) {
             ICraftingProvider provider = publications.resolveLiveProvider(providerId);
             if (provider == null) {

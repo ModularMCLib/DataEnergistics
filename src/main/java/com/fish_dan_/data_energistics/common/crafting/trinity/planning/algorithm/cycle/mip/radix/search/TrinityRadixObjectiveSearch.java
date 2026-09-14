@@ -14,6 +14,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixInfeasibleException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
 
+import it.unimi.dsi.fastutil.ints.Int2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
@@ -22,7 +24,6 @@ import org.ojalgo.optimisation.integer.NodeKey;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -74,7 +75,7 @@ public final class TrinityRadixObjectiveSearch {
                                                                       TrinityRadixSolverMetrics metrics,
                                                                       TrinityCycleSolveBudget stateBudget) {
         Map<Variable, BigInteger> lastValues = Map.of();
-        Map<Integer, Integer> fixedDigits = new LinkedHashMap<>();
+        Int2IntMap fixedDigits = new Int2IntLinkedOpenHashMap();
         TrinityRadixVariable objective = built.objective();
         BigInteger certifiedValue = built.minimize() ?
                 built.objectiveLowerBound() : built.objectiveUpperBound();
@@ -228,7 +229,7 @@ public final class TrinityRadixObjectiveSearch {
     private TrinityAlgorithmResult<Map<Variable, BigInteger>> optimizeDigit(
                                                                             TrinityRadixBuiltModel built,
                                                                             int digit,
-                                                                            Map<Integer, Integer> fixedDigits,
+                                                                            Int2IntMap fixedDigits,
                                                                             TrinityPlanningControl control,
                                                                             TrinityRadixSolverMetrics metrics,
                                                                             TrinityCycleSolveBudget stateBudget) {
@@ -278,12 +279,12 @@ public final class TrinityRadixObjectiveSearch {
         if (!optimized.successful()) {
             return optimized;
         }
-        for (Map.Entry<Integer, Integer> fixed : fixedDigits.entrySet()) {
-            Variable prefixDigit = built.objective().digits().get(fixed.getKey());
-            if (selectedDigit(optimized.value(), prefixDigit) != fixed.getValue()) {
+        for (Int2IntMap.Entry fixed : fixedDigits.int2IntEntrySet()) {
+            Variable prefixDigit = built.objective().digits().get(fixed.getIntKey());
+            if (selectedDigit(optimized.value(), prefixDigit) != fixed.getIntValue()) {
                 return TrinityRadixDiagnostics.inexact(
                         "radix_objective_prefix",
-                        fixed.getKey() + ":" + selectedDigit(optimized.value(), prefixDigit));
+                        fixed.getIntKey() + ":" + selectedDigit(optimized.value(), prefixDigit));
             }
         }
         int selected = selectedDigit(optimized.value(), objectiveDigit);
@@ -403,7 +404,7 @@ public final class TrinityRadixObjectiveSearch {
     private static int certifiedMinimumDigit(
                                              TrinityRadixBuiltModel built,
                                              int digit,
-                                             Map<Integer, Integer> fixedDigits) {
+                                             Int2IntMap fixedDigits) {
         BigInteger residual = built.objectiveLowerBound().subtract(
                 higherPrefix(built.objective(), digit, fixedDigits));
         BigInteger derived = residual.signum() <= 0 ? BigInteger.ZERO :
@@ -419,7 +420,7 @@ public final class TrinityRadixObjectiveSearch {
     private static int certifiedMaximumDigit(
                                              TrinityRadixBuiltModel built,
                                              int digit,
-                                             Map<Integer, Integer> fixedDigits) {
+                                             Int2IntMap fixedDigits) {
         BigInteger residual = built.objectiveUpperBound().subtract(
                 higherPrefix(built.objective(), digit, fixedDigits));
         if (residual.signum() < 0) {
@@ -438,12 +439,15 @@ public final class TrinityRadixObjectiveSearch {
     private static BigInteger higherPrefix(
                                            TrinityRadixVariable objective,
                                            int digit,
-                                           Map<Integer, Integer> fixedDigits) {
+                                           Int2IntMap fixedDigits) {
         BigInteger prefix = BigInteger.ZERO;
         for (int index = digit + 1; index < objective.digits().size(); index++) {
-            Integer fixed = fixedDigits.get(index);
-            if (fixed == null || fixed < 0 || fixed >= TrinityRadixDigits.BASE) {
+            if (!fixedDigits.containsKey(index)) {
                 throw new IllegalStateException("Higher Trinity radix objective digits must already be fixed");
+            }
+            int fixed = fixedDigits.get(index);
+            if (fixed < 0 || fixed >= TrinityRadixDigits.BASE) {
+                throw new IllegalStateException("Higher Trinity radix objective digits must be valid");
             }
             prefix = prefix.add(BigInteger.valueOf(fixed).multiply(radixPlace(index)));
         }

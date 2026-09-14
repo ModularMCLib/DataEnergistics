@@ -16,6 +16,7 @@ import appeng.api.stacks.GenericStack;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
@@ -114,9 +115,10 @@ public final class TrinityPatternVariantExpander {
                             new GenericStack(rule.initialKey(), binding.template().amount()), binding.multiplier(),
                             transition.successor(), rule, transition.byproducts(), true);
                 }).toList();
+                IntArrayList alternativeOrdinals = new IntArrayList(assignment.size());
+                assignment.forEach(binding -> alternativeOrdinals.add(binding.alternativeIndex()));
                 variants.add(TrinityPatternVariant.create(pattern.identity(), pattern.outputs().getFirst().what(),
-                        ordinal, assignment.stream().map(TrinityBoundPatternInput::alternativeIndex).toList(),
-                        assignment, pattern.outputs(), true, pattern.lifetimeTools()));
+                        ordinal, alternativeOrdinals, assignment, pattern.outputs(), true, pattern.lifetimeTools()));
             }
             return TrinityAlgorithmResult.success(ObjectLists.unmodifiable(variants));
         }
@@ -189,7 +191,7 @@ public final class TrinityPatternVariantExpander {
         for (TrinityPatternBindingEnumerator.Binding enumerated : enumeratedBindings) {
             ObjectArrayList<TrinityBoundPatternInput> bindings = new ObjectArrayList<>(pattern.inputs().size());
             for (int slot = 0; slot < pattern.inputs().size(); slot++) {
-                int alternativeIndex = enumerated.alternativeOrdinals().get(slot);
+                int alternativeIndex = enumerated.alternativeOrdinals().getInt(slot);
                 TrinityPatternPublicationSignature.Input input = pattern.inputs().get(slot);
                 TrinityPatternPublicationSignature.Alternative alternative = input.alternatives().get(alternativeIndex);
                 bindings.add(new TrinityBoundPatternInput(

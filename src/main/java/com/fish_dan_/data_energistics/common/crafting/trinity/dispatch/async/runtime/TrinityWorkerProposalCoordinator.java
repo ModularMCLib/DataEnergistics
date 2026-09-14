@@ -7,7 +7,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.sch
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.schedule.DispatchProposalScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.schedule.DispatchProposalTicket;
 
-import java.util.IdentityHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -123,7 +124,7 @@ public final class TrinityWorkerProposalCoordinator {
     }
 
     private final Supplier<DispatchProposalScheduler> scheduler;
-    private final Map<Object, ProposalSlot> slots = new IdentityHashMap<>();
+    private final Map<Object, ProposalSlot> slots = new Reference2ReferenceOpenHashMap<>();
 
     TrinityWorkerProposalCoordinator(Supplier<DispatchProposalScheduler> scheduler) {
         if (scheduler == null) {

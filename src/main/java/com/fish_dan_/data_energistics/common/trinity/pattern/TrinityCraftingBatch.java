@@ -6,7 +6,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /**
@@ -296,7 +297,7 @@ public final class TrinityCraftingBatch {
     }
 
     private static List<ItemStack> emptyInputs() {
-        ArrayList<ItemStack> inputs = new ArrayList<>(INPUT_SLOT_COUNT);
+        ObjectArrayList<ItemStack> inputs = new ObjectArrayList<>(INPUT_SLOT_COUNT);
         for (int slot = 0; slot < INPUT_SLOT_COUNT; slot++) {
             inputs.add(ItemStack.EMPTY);
         }
@@ -321,7 +322,7 @@ public final class TrinityCraftingBatch {
     }
 
     private static List<ItemStack> copyStacks(List<ItemStack> stacks) {
-        ArrayList<ItemStack> copy = new ArrayList<>(stacks.size());
+        ObjectArrayList<ItemStack> copy = new ObjectArrayList<>(stacks.size());
         for (ItemStack stack : stacks) {
             copy.add(stack.copy());
         }

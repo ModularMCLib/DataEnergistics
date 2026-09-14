@@ -12,9 +12,10 @@ import appeng.menu.AEBaseMenu;
 
 import net.minecraft.world.inventory.Slot;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,8 +29,8 @@ final class LdlibAeMenuBridge implements AeMenuBridge {
 
     private final AEBaseMenu menu;
     private final IModularUIHolderMenu holder;
-    private final Map<Slot, AeItemSlot> wrappersBySlot = new IdentityHashMap<>();
-    private final Set<AeItemSlot> wrappers = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Map<Slot, AeItemSlot> wrappersBySlot = new Reference2ReferenceOpenHashMap<>();
+    private final Set<AeItemSlot> wrappers = new ReferenceOpenHashSet<>();
     private MountState mountState = MountState.NEW;
 
     private LdlibAeMenuBridge(AEBaseMenu menu, IModularUIHolderMenu holder) {
@@ -138,14 +139,14 @@ final class LdlibAeMenuBridge implements AeMenuBridge {
      * Proves that every non-local item element is one of this bridge's wrappers and returns them in menu slot order.
      */
     private List<AeItemSlot> validateUiTree(UIElement root) {
-        Set<UIElement> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-        Set<AeItemSlot> discoveredWrappers = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<UIElement> visited = new ReferenceOpenHashSet<>();
+        Set<AeItemSlot> discoveredWrappers = new ReferenceOpenHashSet<>();
         inspectElement(root, visited, discoveredWrappers);
         if (discoveredWrappers.size() != this.wrappers.size() || !discoveredWrappers.containsAll(this.wrappers)) {
             throw violation("every wrapped slot must occur exactly once in the mounted UI tree");
         }
 
-        List<AeItemSlot> ordered = new ArrayList<>(this.wrappers.size());
+        List<AeItemSlot> ordered = new ObjectArrayList<>(this.wrappers.size());
         for (Slot slot : this.menu.slots) {
             AeItemSlot wrapper = this.wrappersBySlot.get(slot);
             if (wrapper != null) {

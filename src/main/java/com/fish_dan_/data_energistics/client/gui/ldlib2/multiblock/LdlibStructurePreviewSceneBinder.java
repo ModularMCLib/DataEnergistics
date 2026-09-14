@@ -23,11 +23,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -223,7 +223,7 @@ public final class LdlibStructurePreviewSceneBinder implements StructurePreviewS
         private void replaceSnapshot(StructurePreviewRenderState renderState) {
             this.scene.setRenderedCore(List.of(), null, false);
             this.world.clear();
-            Map<BlockPos, BlockInfo> blocks = new LinkedHashMap<>();
+            Map<BlockPos, BlockInfo> blocks = new Object2ObjectLinkedOpenHashMap<>();
             renderState.blockStates().forEach((position, state) -> blocks.put(position, new BlockInfo(state)));
             this.world.addBlocks(blocks);
             List<BlockPos> renderedCore = renderState.renderedCore();

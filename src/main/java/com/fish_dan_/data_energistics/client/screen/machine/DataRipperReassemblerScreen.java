@@ -33,9 +33,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataRipperReassemblerScreen<M extends DataRipperReassemblerMenu> extends UpgradeableScreen<M>
@@ -84,14 +84,14 @@ public class DataRipperReassemblerScreen<M extends DataRipperReassemblerMenu> ex
             SlotSemantic semantic = this.menu.getSlotSemantic(this.hoveredSlot);
             GenericStack stack = getDisplayedGenericStack(this.hoveredSlot);
             if (stack == null) {
-                List<Component> tooltip = new ArrayList<>();
+                List<Component> tooltip = new ObjectArrayList<>();
                 tooltip.add(getEmptySlotTooltip(semantic));
                 tooltip.add(getAmountTooltip(semantic, 0));
                 this.drawTooltip(guiGraphics, mouseX, mouseY, tooltip);
                 return;
             }
 
-            List<Component> tooltip = new ArrayList<>(AEKeyRendering.getTooltip(stack.what()));
+            List<Component> tooltip = new ObjectArrayList<>(AEKeyRendering.getTooltip(stack.what()));
             if (tooltip.isEmpty()) {
                 tooltip.add(stack.what().getDisplayName());
             }

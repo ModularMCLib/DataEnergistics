@@ -21,16 +21,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 public class BlockAndPartUpgradeItem extends Item {
 
-    private final Map<Class<? extends BlockEntity>, BlockUpgradeTarget> blockTargets = new HashMap<>();
-    private final Map<Class<? extends IPart>, Supplier<? extends IPartItem<? extends IPart>>> partTargets = new HashMap<>();
+    private final Map<Class<? extends BlockEntity>, BlockUpgradeTarget> blockTargets = new Object2ObjectOpenHashMap<>();
+    private final Map<Class<? extends IPart>, Supplier<? extends IPartItem<? extends IPart>>> partTargets = new Object2ObjectOpenHashMap<>();
 
     public BlockAndPartUpgradeItem(Properties properties) {
         super(properties);

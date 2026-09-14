@@ -10,8 +10,11 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.storage.MEStorage;
 import appeng.crafting.inv.ListCraftingInventory;
 
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -55,8 +58,8 @@ public final class TrinityBorrowingTransaction {
     private final IActionSource source;
     private final int cpuNumber;
     private final Consumer<AEKey> changeListener;
-    private final Map<AEKey, BigInteger> reservedBefore = new LinkedHashMap<>();
-    private final Map<AEKey, Long> ownedReservations = new LinkedHashMap<>();
+    private final Map<AEKey, BigInteger> reservedBefore = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2LongMap<AEKey> ownedReservations = new Object2LongLinkedOpenHashMap<>();
 
     TrinityBorrowingTransaction(MEStorage network,
                                 TrinityBorrowingLedger ledger,
@@ -110,10 +113,10 @@ public final class TrinityBorrowingTransaction {
         if (count <= 0L) {
             throw new IllegalArgumentException("A committed dynamic borrowing dispatch must be positive");
         }
-        LinkedHashMap<AEKey, Long> consumed = new LinkedHashMap<>();
+        Object2LongLinkedOpenHashMap<AEKey> consumed = new Object2LongLinkedOpenHashMap<>();
         for (GenericStack input : inputsPerCraft) {
             long amount = Math.multiplyExact(input.amount(), count);
-            consumed.merge(input.what(), amount, Math::addExact);
+            consumed.mergeLong(input.what(), amount, Math::addExact);
         }
         consumed.forEach(this::commitBorrowedPortion);
     }
@@ -135,7 +138,7 @@ public final class TrinityBorrowingTransaction {
         long owned = this.ownedReservations.getOrDefault(key, 0L);
         long remaining = Math.subtractExact(owned, ownedCommitted);
         if (remaining == 0L) {
-            this.ownedReservations.remove(key);
+            this.ownedReservations.removeLong(key);
         } else {
             this.ownedReservations.put(key, remaining);
         }
@@ -157,8 +160,8 @@ public final class TrinityBorrowingTransaction {
      * synthesized or discarded from ledger state.
      */
     public void releaseUncommitted() {
-        for (Map.Entry<AEKey, Long> entry : List.copyOf(this.ownedReservations.entrySet())) {
-            release(entry.getKey(), entry.getValue());
+        for (Object2LongMap.Entry<AEKey> entry : new Object2LongLinkedOpenHashMap<>(this.ownedReservations).object2LongEntrySet()) {
+            release(entry.getKey(), entry.getLongValue());
         }
     }
 
@@ -206,7 +209,7 @@ public final class TrinityBorrowingTransaction {
         }
         long retained = owned - inserted;
         if (retained == 0L) {
-            this.ownedReservations.remove(key);
+            this.ownedReservations.removeLong(key);
         } else {
             this.ownedReservations.put(key, retained);
         }

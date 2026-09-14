@@ -11,7 +11,8 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public final class TimeShiftRecipe implements Recipe<TimeShiftRecipeInput> {
@@ -129,7 +130,7 @@ public final class TimeShiftRecipe implements Recipe<TimeShiftRecipeInput> {
     }
 
     private static NonNullList<Ingredient> expandIngredients(List<TimeShiftIngredient> itemInputs) {
-        List<Ingredient> expanded = new ArrayList<>();
+        List<Ingredient> expanded = new ObjectArrayList<>();
         for (TimeShiftIngredient input : itemInputs) {
             for (int i = 0; i < input.count(); i++) {
                 expanded.add(input.ingredient());

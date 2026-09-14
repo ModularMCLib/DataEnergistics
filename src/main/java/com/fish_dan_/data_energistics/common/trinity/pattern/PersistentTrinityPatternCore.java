@@ -28,6 +28,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
@@ -122,7 +123,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     /**
      * Latest immutable occupied-slot index, replaced only with the pattern directory.
      */
-    private List<Integer> occupiedPatternSlotSnapshot = List.of();
+    private IntList occupiedPatternSlotSnapshot = IntList.of();
     @Nullable
     private CoreRefundTransaction activeRefundTransaction;
     private PersistentTrinityPatternCore.@Nullable ReversiblePatternRefundTransaction activePatternRefundTransaction;
@@ -198,7 +199,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     }
 
     @Override
-    public List<Integer> occupiedPatternSlots() {
+    public IntList occupiedPatternSlots() {
         return this.occupiedPatternSlotSnapshot;
     }
 
@@ -252,7 +253,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             return false;
         }
         ensurePersistentRevisionAvailable();
-        return slot(route.slot()).enqueue(route, patternSnapshot, inputs, queuedTick);
+        return slot(route.slot()).enqueue(route, patternSnapshot, new ObjectArrayList<>(inputs), queuedTick);
     }
 
     @Override
@@ -325,7 +326,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
 
             @Override
             public List<SlotStack> physicalInputs() {
-                return prepared.physicalInputs();
+                return prepared.physicalInputsFast();
             }
 
             @Override
@@ -411,7 +412,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     public void appendPendingOutputs(PatternRoute route, List<TrinityItemAmount> outputs) {
         ensureNoActiveRefundTransaction();
         validateOwnedRoute(route);
-        slot(route.slot()).appendPendingOutputs(route, outputs);
+        slot(route.slot()).appendPendingOutputs(route, new ObjectArrayList<>(outputs));
     }
 
     @Override
@@ -422,15 +423,15 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     }
 
     @Override
-    public List<Integer> pendingOutputSlots(UUID hostId) {
+    public IntList pendingOutputSlots(UUID hostId) {
         IntAVLTreeSet slots = this.pendingOutputSlotsByHost.get(hostId);
-        return slots == null ? List.of() : List.copyOf(slots);
+        return slots == null ? IntList.of() : IntList.of(slots.toIntArray());
     }
 
     @Override
-    public List<Integer> workingSlots(UUID hostId) {
+    public IntList workingSlots(UUID hostId) {
         IntAVLTreeSet slots = this.workingSlotsByHost.get(hostId);
-        return slots == null ? List.of() : List.copyOf(slots);
+        return slots == null ? IntList.of() : IntList.of(slots.toIntArray());
     }
 
     @Override
@@ -709,10 +710,10 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             }
         }
 
-        List<Integer> nextOccupiedSlotSnapshot = this.occupiedPatternSlotSnapshot;
+        IntList nextOccupiedSlotSnapshot = this.occupiedPatternSlotSnapshot;
         PatternCacheSnapshot nextPatternCacheSnapshot = this.patternCacheSnapshot;
         if (patternDirectoryChanged) {
-            nextOccupiedSlotSnapshot = List.copyOf(loadedOccupiedSlots);
+            nextOccupiedSlotSnapshot = IntList.of(loadedOccupiedSlots.toIntArray());
             ObjectArrayList<CachedPattern> orderedPatterns = new ObjectArrayList<>(nextOccupiedSlotSnapshot.size());
             for (int slot : nextOccupiedSlotSnapshot) {
                 CachedPattern cached = nextCachedPatterns.get(slot);
@@ -834,7 +835,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
                 }
             }
         }
-        for (Map.Entry<PatternRoute, List<TrinityItemAmount>> entry : work.pendingOutputs().entrySet()) {
+        for (var entry : work.pendingOutputs().object2ObjectEntrySet()) {
             if (hostFilter != null && !hostFilter.equals(entry.getKey().hostId())) {
                 continue;
             }
@@ -1396,7 +1397,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             if (!result.completed()) {
                 break;
             }
-            slot.completeHead(batch, result.countedOutputs());
+            slot.completeHead(batch, new ObjectArrayList<>(result.countedOutputs()));
             completedGroups = Math.incrementExact(completedGroups);
         }
         return completedGroups;
@@ -1515,7 +1516,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     }
 
     private void rebuildPatternCacheSnapshot() {
-        this.occupiedPatternSlotSnapshot = List.copyOf(this.occupiedPatternSlots);
+        this.occupiedPatternSlotSnapshot = IntList.of(this.occupiedPatternSlots.toIntArray());
         ObjectArrayList<CachedPattern> orderedPatterns = new ObjectArrayList<>(this.occupiedPatternSlotSnapshot.size());
         for (int slot : this.occupiedPatternSlotSnapshot) {
             orderedPatterns.add(this.cachedPatterns.get(slot));

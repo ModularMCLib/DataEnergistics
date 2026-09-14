@@ -9,13 +9,14 @@ import net.minecraft.network.chat.Component;
 import com.modularmc.mdl.api.multiblock.PatternLayout;
 import com.modularmc.mdl.api.multiblock.PatternUnit;
 import com.modularmc.mdl.api.multiblock.RepeatRange;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -103,8 +104,8 @@ public final class SubstructurePreviewSpec {
     /**
      * Returns the explicit legal zero-based variant indexes in stable order.
      */
-    public List<Integer> variantIndexes() {
-        return IntStream.range(0, this.variants.size()).boxed().toList();
+    public IntList variantIndexes() {
+        return IntList.of(IntStream.range(0, this.variants.size()).toArray());
     }
 
     /**
@@ -192,10 +193,10 @@ public final class SubstructurePreviewSpec {
                     " repeat counts, got " + selection.repeatCounts().size());
         }
         for (int index = 0; index < repeatRanges.size(); index++) {
-            repeatRanges.get(index).requireValid(selection.repeatCounts().get(index));
+            repeatRanges.get(index).requireValid(selection.repeatCounts().getInt(index));
         }
 
-        Set<String> declaredDomains = new HashSet<>();
+        Set<String> declaredDomains = new ObjectOpenHashSet<>();
         for (PreviewTierDomain domain : this.tierDomains) {
             declaredDomains.add(domain.id());
         }
@@ -203,18 +204,18 @@ public final class SubstructurePreviewSpec {
             throw new IllegalArgumentException("Substructure " + id() +
                     " tier selections must exactly match its declared domains");
         }
-        Map<String, Integer> orderedTiers = new LinkedHashMap<>();
+        Object2IntMap<String> orderedTiers = new Object2IntLinkedOpenHashMap<>();
         for (PreviewTierDomain domain : this.tierDomains) {
-            int value = selection.tierSelections().get(domain.id());
+            int value = selection.tierSelections().getInt(domain.id());
             domain.option(value);
             orderedTiers.put(domain.id(), value);
         }
 
         PatternLayout layout = definition(selection.variantIndex()).pattern().getLayout();
-        for (Map.Entry<PreviewPredicateKey, Integer> entry : selection.candidateSelections().entrySet()) {
+        for (Object2IntMap.Entry<PreviewPredicateKey> entry : selection.candidateSelections().object2IntEntrySet()) {
             PreviewPredicateKey key = entry.getKey();
-            if (entry.getValue() < 0) {
-                throw new IllegalArgumentException("Preview candidate index cannot be negative: " + entry.getValue());
+            if (entry.getIntValue() < 0) {
+                throw new IllegalArgumentException("Preview candidate index cannot be negative: " + entry.getIntValue());
             }
             if (key.sourceLayer() >= layout.sourceDepth() || key.y() >= layout.height() ||
                     key.x() >= layout.width()) {
@@ -230,7 +231,7 @@ public final class SubstructurePreviewSpec {
     }
 
     private static List<JsonMultiBlockDefinition> copyVariants(List<JsonMultiBlockDefinition> variants) {
-        List<JsonMultiBlockDefinition> copy = new ArrayList<>(variants);
+        List<JsonMultiBlockDefinition> copy = new ObjectArrayList<>(variants);
         if (copy.isEmpty()) {
             throw new IllegalArgumentException("Substructure preview spec requires at least one variant");
         }
@@ -258,8 +259,8 @@ public final class SubstructurePreviewSpec {
     }
 
     private static List<PreviewTierDomain> copyTierDomains(List<PreviewTierDomain> tierDomains) {
-        List<PreviewTierDomain> copy = new ArrayList<>(tierDomains);
-        Set<String> ids = new HashSet<>();
+        List<PreviewTierDomain> copy = new ObjectArrayList<>(tierDomains);
+        Set<String> ids = new ObjectOpenHashSet<>();
         for (PreviewTierDomain domain : copy) {
             if (domain == null) {
                 throw new IllegalArgumentException("Substructure tier domains cannot contain null");

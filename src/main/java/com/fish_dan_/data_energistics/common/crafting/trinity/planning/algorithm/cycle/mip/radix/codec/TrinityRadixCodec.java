@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Exact radix operations shared by model construction and post-solve verification.
@@ -26,7 +27,7 @@ public final class TrinityRadixCodec {
      */
     public TrinityRadixDigits encode(BigInteger value) {
         validateNonNegative(value);
-        ArrayList<Integer> digits = new ArrayList<>();
+        IntArrayList digits = new IntArrayList();
         BigInteger remaining = value;
         do {
             BigInteger[] divided = remaining.divideAndRemainder(BASE);
@@ -43,7 +44,7 @@ public final class TrinityRadixCodec {
         if (width <= 0) {
             throw new IllegalArgumentException("A Trinity radix width must be positive");
         }
-        ArrayList<Integer> digits = new ArrayList<>(encode(value).values());
+        IntArrayList digits = new IntArrayList(encode(value).values());
         if (digits.size() > width) {
             throw new ArithmeticException("The Trinity radix value exceeds its fixed width");
         }
@@ -68,7 +69,7 @@ public final class TrinityRadixCodec {
      * {@code [0, BASE - 1]}; the incoming carry and fixed right-hand digit are accounted exactly.
      */
     public TrinitySignedCarryBounds nextCarryBounds(
-                                                    List<Integer> signedDigitCoefficients,
+                                                    IntList signedDigitCoefficients,
                                                     TrinitySignedCarryBounds incomingCarry,
                                                     int rightHandDigit) {
         if (signedDigitCoefficients == null || incomingCarry == null ||
@@ -77,11 +78,11 @@ public final class TrinityRadixCodec {
         }
         BigInteger minimum = incomingCarry.lowerBound().subtract(BigInteger.valueOf(rightHandDigit));
         BigInteger maximum = incomingCarry.upperBound().subtract(BigInteger.valueOf(rightHandDigit));
-        for (Integer coefficient : signedDigitCoefficients) {
-            if (coefficient == null || Math.abs((long) coefficient) >= TrinityRadixDigits.BASE) {
+        for (int coefficient : signedDigitCoefficients) {
+            if (Math.abs((long) coefficient) >= TrinityRadixDigits.BASE) {
                 throw new IllegalArgumentException("A Trinity radix column coefficient must fit one signed digit");
             }
-            BigInteger extent = BigInteger.valueOf(coefficient.longValue()).multiply(MAX_DIGIT);
+            BigInteger extent = BigInteger.valueOf(coefficient).multiply(MAX_DIGIT);
             if (coefficient < 0) {
                 minimum = minimum.add(extent);
             } else {

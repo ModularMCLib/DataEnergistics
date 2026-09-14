@@ -7,9 +7,10 @@ import appeng.api.stacks.AEKey;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -70,7 +71,7 @@ public final class TrinityBorrowingLedger {
         return new TrinityBorrowingLedger();
     }
 
-    private final LinkedHashMap<AEKey, MutableBalances> entries = new LinkedHashMap<>();
+    private final Object2ObjectLinkedOpenHashMap<AEKey, MutableBalances> entries = new Object2ObjectLinkedOpenHashMap<>();
 
     /**
      * Creates an empty ledger. Prefer {@link TrinityBorrowingLedger#create()} at integration boundaries.
@@ -151,7 +152,7 @@ public final class TrinityBorrowingLedger {
      * @return immutable snapshot of all non-empty key balances
      */
     public Map<AEKey, Balances> entries() {
-        LinkedHashMap<AEKey, Balances> snapshot = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, Balances> snapshot = new Object2ObjectLinkedOpenHashMap<>();
         this.entries.forEach((key, balances) -> snapshot.put(key, balances.snapshot()));
         return Collections.unmodifiableMap(snapshot);
     }

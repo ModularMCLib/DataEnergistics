@@ -12,9 +12,11 @@ import com.fish_dan_.data_energistics.configuration.rules.schema.OutputRuleSchem
 
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +40,9 @@ public final class DataExtractorRuleEntries {
         requireLength(source, "carrierRules.progressPerItems", rowCount, schema.progressPerItems.length);
         requireLength(source, "carrierRules.requiredAmounts", rowCount, schema.requiredAmounts.length);
 
-        List<ItemRule> rules = new ArrayList<>(rowCount);
-        Map<CarrierKey, Integer> indexes = new LinkedHashMap<>();
+        List<ItemRule> rules = new ObjectArrayList<>(rowCount);
+        var indexes = new Object2IntLinkedOpenHashMap<CarrierKey>();
+        indexes.defaultReturnValue(-1);
         for (int index = 0; index < rowCount; index++) {
             String path = "carrierRules[" + index + "]";
             Slot slot = requireEnum(source, path + ".slot", schema.slots[index]);
@@ -50,8 +53,8 @@ public final class DataExtractorRuleEntries {
             float required = positive(source, path + ".requiredAmount", schema.requiredAmounts[index]);
 
             CarrierKey key = new CarrierKey(slot, inputItem);
-            Integer previous = indexes.putIfAbsent(key, index);
-            if (previous != null) {
+            int previous = indexes.putIfAbsent(key, index);
+            if (previous != -1) {
                 throw invalid(
                         source,
                         path,
@@ -71,7 +74,7 @@ public final class DataExtractorRuleEntries {
         requireLength(source, "outputRules.items", rowCount, schema.items.length);
         requireLength(source, "outputRules.counts", rowCount, schema.counts.length);
 
-        Map<OutputKey, OutputRows> grouped = new LinkedHashMap<>();
+        Map<OutputKey, OutputRows> grouped = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < rowCount; index++) {
             String path = "outputRules[" + index + "]";
             DataType dataType = requireEnum(source, path + ".dataType", schema.dataTypes[index]);
@@ -90,7 +93,7 @@ public final class DataExtractorRuleEntries {
                     .add(source, path, item, count, index);
         }
 
-        List<OutputRule> rules = new ArrayList<>(grouped.size());
+        List<OutputRule> rules = new ObjectArrayList<>(grouped.size());
         for (Map.Entry<OutputKey, OutputRows> entry : grouped.entrySet()) {
             OutputKey key = entry.getKey();
             rules.add(new OutputRule(key.dataType(), key.recordedItem(), entry.getValue().stacks()));
@@ -154,7 +157,7 @@ public final class DataExtractorRuleEntries {
 
     private static final class OutputRows {
 
-        private final Map<ResourceLocation, IndexedStack> rows = new LinkedHashMap<>();
+        private final Map<ResourceLocation, IndexedStack> rows = new Object2ObjectLinkedOpenHashMap<>();
 
         void add(Path source, String path, ResourceLocation item, int count, int index) throws RuleFormatException {
             IndexedStack previous = this.rows.get(item);

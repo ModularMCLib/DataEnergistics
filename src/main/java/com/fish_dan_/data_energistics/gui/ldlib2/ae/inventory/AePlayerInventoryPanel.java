@@ -13,9 +13,8 @@ import appeng.menu.SlotSemantics;
 import net.minecraft.world.inventory.Slot;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -178,7 +177,7 @@ public final class AePlayerInventoryPanel {
     }
 
     private static void requireDistinctSlots(List<Slot> inventory, List<Slot> hotbar) {
-        Set<Slot> slots = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Slot> slots = new ReferenceOpenHashSet<>();
         for (Slot slot : inventory) {
             if (!slots.add(slot)) {
                 throw invalid("player inventory contains a duplicate slot identity");

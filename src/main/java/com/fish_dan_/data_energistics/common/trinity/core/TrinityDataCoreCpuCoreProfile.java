@@ -4,8 +4,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCp
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuContribution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuProfile;
 
+import it.unimi.dsi.fastutil.ints.IntCollection;
+
 import java.math.BigInteger;
-import java.util.Collection;
 
 /**
  * CPU capability resolved from trinity merged storage core blocks in formed child structures.
@@ -75,7 +76,7 @@ public record TrinityDataCoreCpuCoreProfile(BigInteger storageBytes,
     /**
      * Counts the continuous matched repeated CPU layers starting at the first repeat layer.
      */
-    public static int actualRepeatCount(Collection<Integer> localLayers) {
+    public static int actualRepeatCount(IntCollection localLayers) {
         int repeatCount = 0;
         for (int localY = REPEAT_START_Y; localY <= REPEAT_END_Y; localY++) {
             if (!localLayers.contains(localY)) {

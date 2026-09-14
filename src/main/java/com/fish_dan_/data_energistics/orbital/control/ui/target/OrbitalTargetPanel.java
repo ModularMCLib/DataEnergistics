@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.List;
 
@@ -62,8 +63,8 @@ public final class OrbitalTargetPanel {
         content.addChildren(caption("fire_control.y_mode", 2, 86, 40), targetYMode,
                 caption("fire_control.y", 144, 86, 12), targetYValue);
 
-        List<Integer> radii = radiusOptions(DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
-        radius = OrbitalControlUiTheme.choices("orbital_fire_control_radius", 44, 0, 64, radii, radii.getFirst(),
+        IntList radii = radiusOptions(DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice);
+        radius = OrbitalControlUiTheme.choices("orbital_fire_control_radius", 44, 0, 64, radii, radii.getInt(0),
                 value -> Component.translatable(PREFIX + "fire_control.radius.blocks", value));
         depth = OrbitalControlUiTheme.choices("orbital_fire_control_depth", 150, 0, 72,
                 List.of(OrbitalDirectedEnergyDepth.values()), OrbitalDirectedEnergyDepth.DEPTH_32,
@@ -114,7 +115,7 @@ public final class OrbitalTargetPanel {
         return field;
     }
 
-    private static List<Integer> radiusOptions(DataEnergisticsConfiguration.StellarErasureDeviceSchema settings) {
+    private static IntList radiusOptions(DataEnergisticsConfiguration.StellarErasureDeviceSchema settings) {
         int minimum = settings.directedEnergyMinimumRadius;
         int maximum = settings.directedEnergyMaximumRadius;
         int step = settings.directedEnergyRadiusStep;

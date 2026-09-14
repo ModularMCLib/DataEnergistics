@@ -8,13 +8,13 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -39,7 +39,7 @@ public final class TrinityRadixResultDecoder {
                                                                     List<Variable> variables,
                                                                     List<TrinityRadixColumnEquation> equations,
                                                                     Optimisation.Result result) {
-        ArrayList<BigDecimal> rawValues = new ArrayList<>(variables.size());
+        ObjectArrayList<BigDecimal> rawValues = new ObjectArrayList<>(variables.size());
         if (model.countVariables() != variables.size()) {
             throw new IllegalArgumentException("A Trinity radix result must preserve the encoded variable order");
         }

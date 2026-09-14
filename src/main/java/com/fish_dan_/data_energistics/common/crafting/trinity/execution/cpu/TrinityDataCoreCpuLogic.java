@@ -4076,7 +4076,7 @@ final class TrinityDataCoreCpuLogic {
             ReusableCpuSettlement.verify(session, confirmed);
             if (ownsReusableJob(session.jobId())) {
                 ReusableWithdrawal withdrawal = new ReusableWithdrawal();
-                for (var receipt : confirmed.receipts()) {
+                for (var receipt : confirmed.receiptsFast()) {
                     if (receipt.cancelled() > 0L) {
                         withdrawal.add(session.submission(receipt.sequence()), receipt.cancelled(), true);
                     }
@@ -4084,9 +4084,9 @@ final class TrinityDataCoreCpuLogic {
                 // All sequences must validate before changing any waiting, dynamic-output or time balance.
                 Runnable apply = prepareReusableWithdrawal(this.job, withdrawal);
                 apply.run();
-                if (confirmed.receipts().stream().anyMatch(receipt -> receipt.cancelled() > 0L)) requestReusableReplan(this.job);
+                if (confirmed.receiptsFast().stream().anyMatch(receipt -> receipt.cancelled() > 0L)) requestReusableReplan(this.job);
             }
-            for (GenericStack returned : confirmed.returnedAssets()) {
+            for (GenericStack returned : confirmed.returnedAssetsFast()) {
                 this.exactWorkingInventory.deposit(returned.what(), returned.amount(), this.inventory);
                 wakeReusableTool(returned.what());
             }

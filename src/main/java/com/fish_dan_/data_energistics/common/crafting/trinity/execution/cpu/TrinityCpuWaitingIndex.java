@@ -5,12 +5,12 @@ import appeng.api.stacks.AEKey;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -135,9 +135,9 @@ final class TrinityCpuWaitingIndex {
      * @param what requested AE2 key
      * @return immutable ordered worker-number snapshot
      */
-    public List<Integer> waitingWorkerNumbers(AEKey what) {
+    public IntList waitingWorkerNumbers(AEKey what) {
         WaitingEntry entry = this.entries.get(what);
-        return entry == null ? List.of() : entry.workerNumbers;
+        return entry == null ? IntList.of() : entry.workerNumbers;
     }
 
     /**
@@ -179,7 +179,7 @@ final class TrinityCpuWaitingIndex {
         /**
          * Immutable routing snapshot is replaced only when worker membership changes.
          */
-        private List<Integer> workerNumbers = List.of();
+        private IntList workerNumbers = IntList.of();
 
         /**
          * Rebuilds ordered routing after a worker enters or leaves this key.

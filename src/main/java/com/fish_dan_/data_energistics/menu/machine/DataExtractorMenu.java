@@ -27,7 +27,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataExtractorMenu extends UpgradeableMenu<DataExtractorBlockEntity> implements IProgressProvider {
@@ -169,7 +170,7 @@ public class DataExtractorMenu extends UpgradeableMenu<DataExtractorBlockEntity>
     }
 
     public List<Direction> getOutputSides() {
-        List<Direction> sides = new ArrayList<>();
+        List<Direction> sides = new ObjectArrayList<>();
         for (Direction side : Direction.values()) {
             if ((this.outputSidesMask & (1 << side.ordinal())) != 0) {
                 sides.add(side);

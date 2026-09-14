@@ -5,11 +5,12 @@ import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildD
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -32,7 +33,7 @@ public final class TrinityAutoBuildDefinitionBundleCodec {
             throw new IllegalArgumentException("Trinity auto-build definition bundle requires between 1 and " +
                     TrinityAutoBuildDefinitionBundle.MAX_DEFINITION_COUNT + " sources, got " + definitionCount);
         }
-        Map<ResourceLocation, String> sources = new LinkedHashMap<>();
+        Map<ResourceLocation, String> sources = new Object2ObjectLinkedOpenHashMap<>();
         int totalBytes = 0;
         for (int index = 0; index < definitionCount; index++) {
             ResourceLocation definitionId = buffer.readResourceLocation();

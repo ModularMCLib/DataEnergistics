@@ -9,7 +9,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Dis
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.MachineTargetId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 import java.util.Map;
 import java.util.Optional;
@@ -117,14 +120,14 @@ final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
             long reserved = shard.reservedByProviderRoute.getOrDefault(reservation.routeKey, 0L);
             long remaining = Math.subtractExact(reserved, reservation.logicalCrafts);
             if (remaining == 0L) {
-                shard.reservedByProviderRoute.remove(reservation.routeKey);
+                shard.reservedByProviderRoute.removeLong(reservation.routeKey);
             } else {
                 shard.reservedByProviderRoute.put(reservation.routeKey, remaining);
             }
             int providerProposals = Math.decrementExact(
-                    shard.reservedProposalsByProvider.get(reservation.providerId));
+                    shard.reservedProposalsByProvider.getInt(reservation.providerId));
             if (providerProposals == 0) {
-                shard.reservedProposalsByProvider.remove(reservation.providerId);
+                shard.reservedProposalsByProvider.removeInt(reservation.providerId);
             } else {
                 shard.reservedProposalsByProvider.put(reservation.providerId, providerProposals);
             }
@@ -173,8 +176,8 @@ final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
     private static final class ProviderShard {
 
         private final ReentrantLock lock = new ReentrantLock(true);
-        private final Map<ProviderRouteKey, Long> reservedByProviderRoute = new Object2ObjectOpenHashMap<>();
-        private final Map<CraftingProviderId, Integer> reservedProposalsByProvider = new Object2ObjectOpenHashMap<>();
+        private final Object2LongMap<ProviderRouteKey> reservedByProviderRoute = new Object2LongOpenHashMap<>();
+        private final Object2IntMap<CraftingProviderId> reservedProposalsByProvider = new Object2IntOpenHashMap<>();
     }
 
     /**

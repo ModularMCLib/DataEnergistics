@@ -11,9 +11,11 @@ import appeng.api.networking.IGrid;
 
 import net.minecraft.server.MinecraftServer;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -110,9 +112,9 @@ public final class TowerGridOwnershipRegistry {
     private static final class ServerOwnership {
 
         private final VirtualGridOwnership<IGrid, TowerRuntimeKey> ownership = new AcyclicFifoVirtualGridOwnership<>();
-        private final Map<TowerRuntimeKey, Set<IGrid>> targetsByTower = new HashMap<>();
-        private final Map<CandidateKey, Long> candidateOrders = new HashMap<>();
-        private final Map<TowerRuntimeKey, TowerState> towerStates = new HashMap<>();
+        private final Map<TowerRuntimeKey, Set<IGrid>> targetsByTower = new Object2ObjectOpenHashMap<>();
+        private final Object2LongMap<CandidateKey> candidateOrders = new Object2LongOpenHashMap<>();
+        private final Map<TowerRuntimeKey, TowerState> towerStates = new Object2ObjectOpenHashMap<>();
         private long nextCandidateOrder;
         private long revision;
 
@@ -128,7 +130,7 @@ public final class TowerGridOwnershipRegistry {
             for (IGrid previousTarget : List.copyOf(previousTargets)) {
                 if (!normalizedTargets.contains(previousTarget)) {
                     this.ownership.removeCandidate(previousTarget, towerKey);
-                    this.candidateOrders.remove(new CandidateKey(previousTarget, towerKey));
+                    this.candidateOrders.removeLong(new CandidateKey(previousTarget, towerKey));
                 }
             }
             for (IGrid targetGrid : normalizedTargets) {
@@ -159,7 +161,7 @@ public final class TowerGridOwnershipRegistry {
             TowerState towerState = this.towerStates.remove(towerKey);
             if (targets != null) {
                 for (IGrid target : targets) {
-                    this.candidateOrders.remove(new CandidateKey(target, towerKey));
+                    this.candidateOrders.removeLong(new CandidateKey(target, towerKey));
                 }
             }
             this.ownership.removeTower(towerKey);
@@ -180,7 +182,7 @@ public final class TowerGridOwnershipRegistry {
     }
 
     private static Set<IGrid> identitySet(Set<IGrid> grids) {
-        Set<IGrid> result = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<IGrid> result = new ReferenceOpenHashSet<>();
         result.addAll(grids);
         return result;
     }

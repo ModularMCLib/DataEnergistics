@@ -20,15 +20,18 @@ import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.Trini
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,12 +52,12 @@ public final class TrinityCraftingCycleSummaryProjection {
      * @return cycle headers, material contributions and plan-wide inventory usage percentages
      */
     public static TrinityCraftingCycleSummary create(TrinityCraftingPlan plan, KeyCounter availableInventory) {
-        Map<Integer, TrinityPlanStage> stagesByIndex = indexStages(plan.stages());
-        ArrayList<TrinityCycleRepeatBlock> blocks = new ArrayList<>(plan.cycleRepeatBlocks());
+        Int2ObjectMap<TrinityPlanStage> stagesByIndex = indexStages(plan.stages());
+        ObjectArrayList<TrinityCycleRepeatBlock> blocks = new ObjectArrayList<>(plan.cycleRepeatBlocks());
         blocks.sort(Comparator.comparingInt(TrinityCycleRepeatBlock::index));
 
-        ArrayList<TrinityCraftingCycleHeader> cycles = new ArrayList<>(blocks.size());
-        ArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ArrayList<>();
+        ObjectArrayList<TrinityCraftingCycleHeader> cycles = new ObjectArrayList<>(blocks.size());
+        ObjectArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ObjectArrayList<>();
         for (int index = 0; index < blocks.size(); index++) {
             TrinityCycleRepeatBlock block = blocks.get(index);
             int displayOrdinal = index + 1;
@@ -82,21 +85,21 @@ public final class TrinityCraftingCycleSummaryProjection {
             throw new IllegalArgumentException("An AE2 fallback diagnostic cannot provide Trinity cycle evidence");
         }
         TrinityPlanningDiagnostic diagnostic = plan.diagnostic();
-        ArrayList<TrinityCycleDiagnosticEvidence> evidence = new ArrayList<>(diagnostic.cycleEvidence());
+        ObjectArrayList<TrinityCycleDiagnosticEvidence> evidence = new ObjectArrayList<>(diagnostic.cycleEvidence());
         evidence.sort(Comparator.comparingInt(TrinityCycleDiagnosticEvidence::componentIndex));
-        ArrayList<TrinityCraftingCycleHeader> cycles = new ArrayList<>(evidence.size());
-        ArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ArrayList<>();
+        ObjectArrayList<TrinityCraftingCycleHeader> cycles = new ObjectArrayList<>(evidence.size());
+        ObjectArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ObjectArrayList<>();
         for (int index = 0; index < evidence.size(); index++) {
             BlockProjection projection = projectDiagnosticBlock(evidence.get(index), index + 1);
             cycles.add(projection.cycle());
             contributions.addAll(projection.contributions());
         }
 
-        LinkedHashMap<AEKey, BigInteger> used = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> emitted = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> missing = new LinkedHashMap<>();
-        ArrayList<TrinityCraftingExactShortage> exactShortages = new ArrayList<>();
-        ArrayList<TrinityCraftingUnresolvedDemand> unresolvedDemands = new ArrayList<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> used = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> emitted = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> missing = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectArrayList<TrinityCraftingExactShortage> exactShortages = new ObjectArrayList<>();
+        ObjectArrayList<TrinityCraftingUnresolvedDemand> unresolvedDemands = new ObjectArrayList<>();
         if (diagnostic.inputShortage().isPresent()) {
             TrinityPlanningDiagnostic.InputShortage shortage = diagnostic.inputShortage().orElseThrow();
             if (shortage.available().signum() > 0) {
@@ -146,7 +149,7 @@ public final class TrinityCraftingCycleSummaryProjection {
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>(stored.keySet());
         keys.addAll(missing.keySet());
         keys.addAll(crafting.keySet());
-        ArrayList<TrinityCraftingExactPlanAmounts> rows = new ArrayList<>(keys.size());
+        ObjectArrayList<TrinityCraftingExactPlanAmounts> rows = new ObjectArrayList<>(keys.size());
         keys.forEach(key -> rows.add(new TrinityCraftingExactPlanAmounts(
                 key,
                 missing.getOrDefault(key, BigInteger.ZERO),
@@ -155,9 +158,9 @@ public final class TrinityCraftingCycleSummaryProjection {
         return rows;
     }
 
-    private static Map<AEKey, Integer> projectInventoryUsage(Map<AEKey, BigInteger> inputs,
-                                                             KeyCounter availableInventory) {
-        LinkedHashMap<AEKey, Integer> usage = new LinkedHashMap<>();
+    private static Object2IntMap<AEKey> projectInventoryUsage(Map<AEKey, BigInteger> inputs,
+                                                              KeyCounter availableInventory) {
+        Object2IntLinkedOpenHashMap<AEKey> usage = new Object2IntLinkedOpenHashMap<>();
         inputs.forEach((key, consumed) -> usage.put(
                 key,
                 inventoryUsageBasisPoints(consumed, availableInventory.get(key))));
@@ -178,19 +181,19 @@ public final class TrinityCraftingCycleSummaryProjection {
                 .intValueExact();
     }
 
-    private static Map<Integer, TrinityPlanStage> indexStages(List<TrinityPlanStage> stages) {
-        HashMap<Integer, TrinityPlanStage> stagesByIndex = new HashMap<>();
+    private static Int2ObjectMap<TrinityPlanStage> indexStages(List<TrinityPlanStage> stages) {
+        Int2ObjectOpenHashMap<TrinityPlanStage> stagesByIndex = new Int2ObjectOpenHashMap<>();
         stages.forEach(stage -> stagesByIndex.put(stage.index(), stage));
         return stagesByIndex;
     }
 
     private static BlockProjection projectBlock(TrinityCycleRepeatBlock block,
                                                 int displayOrdinal,
-                                                Map<Integer, TrinityPlanStage> stagesByIndex) {
+                                                Int2ObjectMap<TrinityPlanStage> stagesByIndex) {
         BigInteger patternExecutions = BigInteger.ZERO;
-        Set<TrinityPatternIdentity> patternTypes = new HashSet<>();
-        LinkedHashMap<AEKey, MaterialRoles> materials = new LinkedHashMap<>();
-        for (Integer stageIndex : block.stageOrder()) {
+        Set<TrinityPatternIdentity> patternTypes = new ObjectOpenHashSet<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, MaterialRoles> materials = new Object2ObjectLinkedOpenHashMap<>();
+        for (int stageIndex : block.stageOrder()) {
             TrinityPlanStage stage = stagesByIndex.get(stageIndex);
             for (TrinityPlanPatternFiring firing : stage.firings()) {
                 patternExecutions = patternExecutions.add(firing.count().multiply(block.repetitions()));
@@ -217,7 +220,7 @@ public final class TrinityCraftingCycleSummaryProjection {
                 patternExecutions,
                 block.stageOrder().size(),
                 patternTypes.size());
-        ArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ArrayList<>(materials.size());
+        ObjectArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ObjectArrayList<>(materials.size());
         materials.forEach((key, roles) -> contributions.add(roles.toContribution(
                 block.index(),
                 displayOrdinal,
@@ -229,8 +232,8 @@ public final class TrinityCraftingCycleSummaryProjection {
                                                           TrinityCycleDiagnosticEvidence evidence,
                                                           int displayOrdinal) {
         BigInteger patternExecutions = BigInteger.ZERO;
-        Set<TrinityPatternIdentity> patternTypes = new HashSet<>();
-        LinkedHashMap<AEKey, MaterialRoles> materials = new LinkedHashMap<>();
+        Set<TrinityPatternIdentity> patternTypes = new ObjectOpenHashSet<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, MaterialRoles> materials = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : evidence.localOrder()) {
             patternExecutions = patternExecutions.add(firing.count().multiply(evidence.repetitions()));
             TrinityPatternVariant variant = firing.variant();
@@ -256,7 +259,7 @@ public final class TrinityCraftingCycleSummaryProjection {
                 patternExecutions,
                 evidence.localOrder().size(),
                 patternTypes.size());
-        ArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ArrayList<>(materials.size());
+        ObjectArrayList<TrinityCraftingCycleMaterialContribution> contributions = new ObjectArrayList<>(materials.size());
         materials.forEach((key, roles) -> contributions.add(roles.toContribution(
                 evidence.componentIndex(),
                 displayOrdinal,
@@ -265,8 +268,8 @@ public final class TrinityCraftingCycleSummaryProjection {
     }
 
     private static Map<AEKey, BigInteger> minimumBalances(List<TrinityVariantFiring> order) {
-        LinkedHashMap<AEKey, BigInteger> required = new LinkedHashMap<>();
-        LinkedHashMap<AEKey, BigInteger> balances = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : order) {
             requiredAtStart(firing.variant(), firing.count()).forEach((key, amount) -> {
                 BigInteger deficit = amount.subtract(balances.getOrDefault(key, BigInteger.ZERO));
@@ -286,7 +289,7 @@ public final class TrinityCraftingCycleSummaryProjection {
     private static Map<AEKey, BigInteger> repeatedNetChange(
                                                             List<TrinityVariantFiring> order,
                                                             BigInteger repetitions) {
-        LinkedHashMap<AEKey, BigInteger> netChange = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange = new Object2ObjectLinkedOpenHashMap<>();
         order.forEach(firing -> mergeScaled(
                 netChange,
                 firing.variant().netChange(),
@@ -298,7 +301,7 @@ public final class TrinityCraftingCycleSummaryProjection {
     private static Map<AEKey, BigInteger> requiredAtStart(
                                                           TrinityPatternVariant variant,
                                                           BigInteger count) {
-        LinkedHashMap<AEKey, BigInteger> required = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         variant.inputs().forEach((key, input) -> {
             BigInteger net = variant.netChange().getOrDefault(key, BigInteger.ZERO);
             BigInteger amount = net.signum() < 0 ?

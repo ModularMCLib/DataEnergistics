@@ -13,18 +13,18 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 public final class DataMeteoriteCompassClientCache {
 
     private static final long REFRESH_AFTER_MS = 30_000L;
     private static final long EMPTY_REFRESH_AFTER_MS = 1_000L;
     private static final long EXPIRE_AFTER_MS = 60_000L;
-    private static final Map<Long, CachedResult> REQUESTS = new HashMap<>();
+    private static final Long2ObjectMap<CachedResult> REQUESTS = new Long2ObjectOpenHashMap<>();
 
     private DataMeteoriteCompassClientCache() {}
 
@@ -87,10 +87,10 @@ public final class DataMeteoriteCompassClientCache {
     private static BlockPos findClosestKnownResult(@Nullable ClientLevel level, ChunkPos chunkPos) {
         long closestDistance = Long.MAX_VALUE;
         BlockPos result = null;
-        for (Map.Entry<Long, CachedResult> entry : REQUESTS.entrySet()) {
+        for (Long2ObjectMap.Entry<CachedResult> entry : REQUESTS.long2ObjectEntrySet()) {
             BlockPos closestPos = entry.getValue().closestMeteoritePos();
             if (closestPos != null && isTargetStillPresent(level, closestPos)) {
-                long distance = chunkPos.distanceSquared(entry.getKey());
+                long distance = chunkPos.distanceSquared(entry.getLongKey());
                 if (distance < closestDistance) {
                     closestDistance = distance;
                     result = closestPos;

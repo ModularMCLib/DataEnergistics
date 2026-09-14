@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMap
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,8 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xaero.map.gui.GuiMap;
 import xaero.map.gui.dropdown.rightclick.RightClickOption;
-
-import java.util.ArrayList;
 
 /** Reads the coordinates already calculated by Xaero and delegates without consuming its normal map behavior. */
 @Mixin(value = GuiMap.class, remap = false)
@@ -57,11 +56,11 @@ public abstract class GuiMapMixin implements XaeroOrbitalMapBridge {
 
     @Inject(method = "getRightClickOptions", at = @At("RETURN"), require = 0)
     private void dataEnergistics$appendOrbitalPreview(
-                                                      CallbackInfoReturnable<ArrayList<RightClickOption>> callback) {
+                                                      CallbackInfoReturnable<ObjectArrayList<RightClickOption>> callback) {
         if (this.rightClickDim == null || !XaeroWorldMapOrbitalAdapter.INSTANCE.shouldOfferPreviewAction()) {
             return;
         }
-        ArrayList<RightClickOption> options = callback.getReturnValue();
+        ObjectArrayList<RightClickOption> options = callback.getReturnValue();
         options.add(new XaeroOrbitalRightClickOption(
                 (GuiMap) (Object) this,
                 options.size(),

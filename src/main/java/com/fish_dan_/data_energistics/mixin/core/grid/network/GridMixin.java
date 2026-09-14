@@ -24,6 +24,9 @@ import net.minecraft.world.level.Level;
 import com.google.common.collect.SetMultimap;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,10 +37,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,13 +62,13 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
     private IGrid dataEnergistics$virtualPrimaryGrid;
 
     @Unique
-    private final Set<IGridNode> dataEnergistics$outgoingNodes = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<IGridNode> dataEnergistics$outgoingNodes = new ReferenceOpenHashSet<>();
 
     @Unique
-    private final Set<IGridNode> dataEnergistics$outgoingActiveNodes = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<IGridNode> dataEnergistics$outgoingActiveNodes = new ReferenceOpenHashSet<>();
 
     @Unique
-    private final Map<IGridNode, IGrid> dataEnergistics$incomingNodes = new IdentityHashMap<>();
+    private final Map<IGridNode, IGrid> dataEnergistics$incomingNodes = new Reference2ReferenceOpenHashMap<>();
 
     @Unique
     private int dataEnergistics$localServiceAccessDepth;
@@ -80,7 +81,7 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
 
     @Override
     public Set<IGridNode> incomingVirtualMembers() {
-        Set<IGridNode> snapshot = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<IGridNode> snapshot = new ReferenceOpenHashSet<>();
         snapshot.addAll(this.dataEnergistics$incomingNodes.keySet());
         return Collections.unmodifiableSet(snapshot);
     }
@@ -137,8 +138,8 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
             return;
         }
         this.dataEnergistics$virtualPrimaryGrid = primaryGrid;
-        ArrayList<IGridNode> registeredNodes = new ArrayList<>();
-        ArrayList<IGridNode> removedNodes = new ArrayList<>();
+        ObjectArrayList<IGridNode> registeredNodes = new ObjectArrayList<>();
+        ObjectArrayList<IGridNode> removedNodes = new ObjectArrayList<>();
         try {
             for (IGridNode node : normalizedActive) {
                 if (previousActive.contains(node)) {
@@ -387,7 +388,7 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
 
         this.dataEnergistics$incomingNodes.put(node, sourceGrid);
         this.machines.put(node.getOwner().getClass(), node);
-        ArrayList<IGridServiceProvider> addedProviders = new ArrayList<>();
+        ObjectArrayList<IGridServiceProvider> addedProviders = new ObjectArrayList<>();
         try {
             for (IGridServiceProvider provider : dataEnergistics$bridgedProviders()) {
                 provider.addNode(node, null);
@@ -422,7 +423,7 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
         }
 
         RuntimeException providerFailure = null;
-        ArrayList<IGridServiceProvider> removedProviders = new ArrayList<>();
+        ObjectArrayList<IGridServiceProvider> removedProviders = new ObjectArrayList<>();
         for (IGridServiceProvider provider : dataEnergistics$bridgedProviders()) {
             try {
                 provider.removeNode(node);
@@ -448,8 +449,8 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
 
     @Unique
     private List<IGridServiceProvider> dataEnergistics$bridgedProviders() {
-        ArrayList<IGridServiceProvider> providers = new ArrayList<>();
-        Set<IGridServiceProvider> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        ObjectArrayList<IGridServiceProvider> providers = new ObjectArrayList<>();
+        Set<IGridServiceProvider> seen = new ReferenceOpenHashSet<>();
         for (Map.Entry<Class<?>, IGridServiceProvider> entry : this.services.services().entrySet()) {
             if (entry.getKey() == IPathingService.class || entry.getKey() == TowerNetworkDomain.class || !seen.add(entry.getValue())) {
                 continue;
@@ -461,7 +462,7 @@ public abstract class GridMixin implements VirtualGridBridgeInternal {
 
     @Unique
     private static Set<IGridNode> dataEnergistics$identitySet(Collection<? extends IGridNode> nodes) {
-        Set<IGridNode> result = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<IGridNode> result = new ReferenceOpenHashSet<>();
         result.addAll(nodes);
         return result;
     }

@@ -33,7 +33,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -81,7 +83,7 @@ public final class ReusableInputGraphGameTest {
     @GameTest(template = "empty_5x5")
     public static void indexesExactToolTransitionsAndScaledByproducts(GameTestHelper helper) {
         AEItemKey scrap = AEItemKey.of(Items.STICK);
-        ReusableInputRule rule = ReusableInputRule.transitions(RULE_ID, 1L, tool(0), List.of(
+        ReusableInputRule rule = ReusableInputRule.transitionsFast(RULE_ID, 1L, tool(0), ObjectList.of(
                 new Transition(tool(0), tool(1), List.of(new GenericStack(scrap, 2L))),
                 new Transition(tool(1), null, List.of())));
         var publication = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE),
@@ -106,14 +108,14 @@ public final class ReusableInputGraphGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void compactionKeepsDistinctLifetimeContracts(GameTestHelper helper) {
-        ReusableInputRule finite = ReusableInputRule.transitions(RULE_ID, 1L, tool(0), List.of(
+        ReusableInputRule finite = ReusableInputRule.transitionsFast(RULE_ID, 1L, tool(0), ObjectList.of(
                 new Transition(tool(0), tool(1), List.of()), new Transition(tool(1), null, List.of())));
-        ReusableInputRule cyclic = ReusableInputRule.transitions(RULE_ID, 2L, tool(0), List.of(
+        ReusableInputRule cyclic = ReusableInputRule.transitionsFast(RULE_ID, 2L, tool(0), ObjectList.of(
                 new Transition(tool(0), tool(1), List.of()), new Transition(tool(1), tool(0), List.of())));
         var identity = new TrinityPatternIdentity("tool", "same-first-step");
-        var first = TrinityPatternVariant.create(identity, AEItemKey.of(Items.DIAMOND), 0, List.of(0),
+        var first = TrinityPatternVariant.create(identity, AEItemKey.of(Items.DIAMOND), 0, IntList.of(0),
                 List.of(bound(0, 0, finite, 1L, 1L)), List.of(stack(AEItemKey.of(Items.DIAMOND))), true);
-        var second = TrinityPatternVariant.create(identity, AEItemKey.of(Items.DIAMOND), 1, List.of(1),
+        var second = TrinityPatternVariant.create(identity, AEItemKey.of(Items.DIAMOND), 1, IntList.of(1),
                 List.of(bound(0, 1, cyclic, 1L, 1L)), List.of(stack(AEItemKey.of(Items.DIAMOND))), true);
         helper.assertValueEqual(first.physicalOutputs(), second.physicalOutputs(), "First-use effects intentionally coincide");
         helper.assertValueEqual(TrinityTransitionEffectCompactor.create().compact(List.of(first, second)).size(), 2,
@@ -133,8 +135,8 @@ public final class ReusableInputGraphGameTest {
         try (TrinityComputationCache cache = TrinityComputationCache.create(Runnable::run)) {
             var computation = TrinityPlanningComputation.create(cache, TrinityGraphPlanner.pipeline());
             for (long revision = 1L; revision <= 2L; revision++) {
-                ReusableInputRule rule = ReusableInputRule.transitions(RULE_ID, revision, tool,
-                        List.of(new Transition(tool, null, List.of())));
+                ReusableInputRule rule = ReusableInputRule.transitionsFast(RULE_ID, revision, tool,
+                        ObjectList.of(new Transition(tool, null, List.of())));
                 var pattern = new TrinityCraftingGraphPattern(identity, publication, List.of(List.of(bound(0, 0, rule, 1L, 1L))));
                 var input = new TrinityPlanningInput(1L, new TrinityCraftingGraphSnapshot(1L, List.of(pattern)), output,
                         BigInteger.ONE, CraftingQuantityMode.NET_NEW,
@@ -161,7 +163,7 @@ public final class ReusableInputGraphGameTest {
         AEItemKey fresh = AEItemKey.of(toolStack);
         toolStack.set(DataComponents.DAMAGE, 200);
         AEItemKey worn = AEItemKey.of(toolStack);
-        var rule = ReusableInputRule.fixedDamage(RULE_ID, 1L, fresh, 1, 1000, List.of());
+        var rule = ReusableInputRule.fixedDamageFast(RULE_ID, 1L, fresh, 1, 1000, ObjectList.of());
         var upgrade = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), List.of(
                 new Input(1L, List.of(new Alternative(stack(fresh), rule.advance(fresh, 1).successor()))),
                 new Input(4L, List.of(new Alternative(stack(material), null)))), List.of(stack(output)), false);
@@ -306,8 +308,8 @@ public final class ReusableInputGraphGameTest {
     private static TrinityBoundPatternInput bound(int slot, int alternative, ReusableInputRule rule, long amount, long multiplier) {
         var result = rule.advance(rule.initialKey(), 1L);
         return new TrinityBoundPatternInput(slot, alternative, new GenericStack(rule.initialKey(), amount), multiplier,
-                result.successor(), rule, result.byproducts(),
-                rule.kind() == ReusableInputRule.Kind.FIXED_DAMAGE && rule.exhaustionByproducts().isEmpty());
+                result.successor(), rule, result.byproductsFast(),
+                rule.kind() == ReusableInputRule.Kind.FIXED_DAMAGE && rule.exhaustionByproductsFast().isEmpty());
     }
 
     private static GenericStack stack(AEItemKey key) {

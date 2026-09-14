@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -57,7 +58,7 @@ public record VirtualGridOwnershipSnapshot<G, T>(List<VirtualGridOwner<G, T>> ow
      * @throws IllegalStateException if externally constructed snapshot data contains a cycle
      */
     public G primaryGridOf(G grid) {
-        Set<G> visited = new HashSet<>();
+        Set<G> visited = new ObjectOpenHashSet<>();
         G current = grid;
         while (visited.add(current)) {
             Optional<VirtualGridOwner<G, T>> owner = ownerOf(current);

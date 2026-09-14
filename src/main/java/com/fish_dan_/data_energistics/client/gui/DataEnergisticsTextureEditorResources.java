@@ -188,6 +188,8 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("trinity_cpu_idle", sprite("cpu_idle.png"));
         provider.addResource("trinity_cpu_panel", sprite("cpu_panel.png"));
         provider.addResource("trinity_cpu_task_overlay", sprite("cpu_task_overlay.png"));
+        provider.addResource("trinity_drive", sprite("trinity_drive.png"));
+        provider.addResource("trinity_drive_slot", sprite("trinity_drive_slot.png"));
         provider.addResource("trinity_home", sprite("home.png"));
         provider.addResource("trinity_host_layout_reference", sprite("host_layout_reference.png"));
         provider.addResource("trinity_status_panel", sprite("status_panel.png"));

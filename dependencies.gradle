@@ -1,4 +1,6 @@
 dependencies {
+    implementation "curse.maven:projecte-226410:6611984"
+
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
 

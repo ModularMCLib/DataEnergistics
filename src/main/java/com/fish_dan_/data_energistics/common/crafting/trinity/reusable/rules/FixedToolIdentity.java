@@ -20,7 +20,7 @@ public final class FixedToolIdentity {
     }
 
     public static ReusableInputRule rule(ReusableInputRule source) {
-        return ReusableInputRule.fixedDamage(source.id(), source.revision(), key(source.initialKey()),
+        return ReusableInputRule.fixedDamageFast(source.id(), source.revision(), key(source.initialKey()),
                 source.damagePerUse(), source.breakAtDamage(), source.exhaustionByproductsFast());
     }
 

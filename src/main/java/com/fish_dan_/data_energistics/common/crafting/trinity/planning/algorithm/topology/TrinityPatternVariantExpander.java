@@ -113,7 +113,7 @@ public final class TrinityPatternVariantExpander {
                     var transition = rule.advance(rule.initialKey(), 1L);
                     return new TrinityBoundPatternInput(binding.slotIndex(), 0,
                             new GenericStack(rule.initialKey(), binding.template().amount()), binding.multiplier(),
-                            transition.successor(), rule, transition.byproducts(), true);
+                            transition.successor(), rule, transition.byproductsFast(), true);
                 }).toList();
                 IntArrayList alternativeOrdinals = new IntArrayList(assignment.size());
                 assignment.forEach(binding -> alternativeOrdinals.add(binding.alternativeIndex()));

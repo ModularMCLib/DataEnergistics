@@ -23,6 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
@@ -198,9 +199,8 @@ public final class AdaptiveReusableCraftingState {
                 return prepared.count();
             }
 
-            @SuppressWarnings("removal")
             @Override
-            public List<SlotStack> physicalInputs() {
+            public ObjectList<SlotStack> physicalInputsFast() {
                 return prepared.physicalInputsFast();
             }
 

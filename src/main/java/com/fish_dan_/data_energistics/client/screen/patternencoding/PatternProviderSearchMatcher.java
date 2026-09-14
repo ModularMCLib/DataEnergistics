@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
-import com.fish_dan_.data_energistics.client.util.PinyinUtil;
+import com.fish_dan_.data_energistics.util.TextSearch;
 
 /** Applies one normalized query independently to each provider search field. */
 final class PatternProviderSearchMatcher {
@@ -12,7 +12,7 @@ final class PatternProviderSearchMatcher {
             return true;
         }
         for (String term : terms) {
-            if (PinyinUtil.matchesNormalizedSearch(term, normalizedQuery)) {
+            if (TextSearch.matchesNormalized(term, normalizedQuery)) {
                 return true;
             }
         }

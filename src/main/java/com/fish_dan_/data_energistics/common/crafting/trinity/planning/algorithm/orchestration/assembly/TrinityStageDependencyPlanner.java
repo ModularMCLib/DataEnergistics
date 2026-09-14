@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -55,10 +56,6 @@ final class TrinityStageDependencyPlanner {
                                        List<TrinityPlanStage> stages,
                                        IntList stageOrder,
                                        List<TrinityCycleRepeatBlock> repeatBlocks) {
-        if (initialInputs == null || stages == null || stageOrder == null || repeatBlocks == null) {
-            throw new IllegalArgumentException("Trinity stage dependency planning requires complete plan state");
-        }
-
         Int2ObjectMap<TrinityPlanStage> stagesByIndex = stagesByIndex(stages);
         Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage = repeatByStage(repeatBlocks, stagesByIndex);
         List<ExecutionUnit> units = executionUnits(stageOrder, stagesByIndex, repeatByStage);
@@ -80,7 +77,7 @@ final class TrinityStageDependencyPlanner {
     private static Int2ObjectMap<TrinityPlanStage> stagesByIndex(List<TrinityPlanStage> stages) {
         Int2ObjectLinkedOpenHashMap<TrinityPlanStage> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityPlanStage stage : stages) {
-            if (stage == null || indexed.putIfAbsent(stage.index(), stage) != null) {
+            if (indexed.putIfAbsent(stage.index(), stage) != null) {
                 throw new IllegalArgumentException("Trinity dependency planning requires unique non-null stages");
             }
         }
@@ -92,12 +89,9 @@ final class TrinityStageDependencyPlanner {
                                                                         Int2ObjectMap<TrinityPlanStage> stages) {
         Int2ObjectLinkedOpenHashMap<TrinityCycleRepeatBlock> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityCycleRepeatBlock block : repeatBlocks) {
-            if (block == null) {
-                throw new IllegalArgumentException("Trinity dependency planning cannot contain a null repeat block");
-            }
             for (int stageIndex : block.stageOrder()) {
                 TrinityPlanStage stage = stages.get(stageIndex);
-                if (stage == null || !stage.cycleStage() || indexed.putIfAbsent(stageIndex, block) != null) {
+                if (!stage.cycleStage() || indexed.putIfAbsent(stageIndex, block) != null) {
                     throw new IllegalArgumentException("Trinity dependency planning found an invalid repeat stage");
                 }
             }
@@ -149,7 +143,7 @@ final class TrinityStageDependencyPlanner {
                                                               List<ExecutionUnit> units) {
         Object2ObjectLinkedOpenHashMap<AEKey, ArrayDeque<TokenLot>> balances = new Object2ObjectLinkedOpenHashMap<>();
         initialInputs.forEach((key, amount) -> {
-            if (key == null || amount == null || amount.signum() <= 0) {
+            if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("Trinity dependency initial balances must be positive");
             }
             balances.computeIfAbsent(key, ignored -> new ArrayDeque<>())
@@ -203,7 +197,7 @@ final class TrinityStageDependencyPlanner {
             }
             BigInteger consumed = remaining.min(lot.amount());
             if (lot.sourceStage() != null) {
-                dependencies.add(lot.sourceStage());
+                dependencies.add(lot.sourceStage().intValue());
             }
             BigInteger leftover = lot.amount().subtract(consumed);
             if (leftover.signum() > 0) {
@@ -213,10 +207,10 @@ final class TrinityStageDependencyPlanner {
         }
     }
 
-    private record TokenLot(BigInteger amount, Integer sourceStage) {
+    private record TokenLot(BigInteger amount, @Nullable Integer sourceStage) {
 
         private TokenLot {
-            if (amount == null || amount.signum() <= 0) {
+            if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity dependency token lot must be positive");
             }
         }

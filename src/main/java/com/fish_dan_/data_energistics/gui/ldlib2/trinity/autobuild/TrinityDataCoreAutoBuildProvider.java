@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.autobuild;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildDraft;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildSubmission;
@@ -14,6 +13,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePre
 import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUiFactory;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUiKeys;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayouts;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -74,7 +74,7 @@ final class TrinityDataCoreAutoBuildProvider implements HostSubUiProvider {
                 preview,
                 controls.elements())
                 .geometry(controls.geometry())
-                .materials(windowId + "_material_grid", TrinityAmountFormatter::format)
+                .materials(windowId + "_material_grid", AmountFormatter::format)
                 .build();
 
         new TrinityDataCoreAutoBuildPanel(

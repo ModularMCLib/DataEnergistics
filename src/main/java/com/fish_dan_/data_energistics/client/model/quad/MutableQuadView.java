@@ -15,8 +15,8 @@
  */
 package com.fish_dan_.data_energistics.client.model.quad;
 
-import com.fish_dan_.data_energistics.client.util.TextureHelper;
-import com.fish_dan_.data_energistics.client.util.quad.GeometryHelper;
+import com.fish_dan_.data_energistics.util.QuadGeometry;
+import com.fish_dan_.data_energistics.util.TextureBaker;
 
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -83,7 +83,7 @@ public abstract class MutableQuadView extends QuadView {
 
     /**
      * When enabled, texture coordinates are cycled so that vertex 0's UVs are the smallest.
-     * Pass in bakeFlags parameter to {@link TextureHelper#unbakeSprite(MutableQuadView, TextureAtlasSprite, int)}.
+     * Pass in bakeFlags parameter to {@link TextureBaker#unbake(MutableQuadView, TextureAtlasSprite, int)}.
      */
     public static final int BAKE_DEROTATE_UV = 0b000100;
 
@@ -240,7 +240,7 @@ public abstract class MutableQuadView extends QuadView {
      * Control this behavior by passing additive combinations of the BAKE_ flags defined in this interface.
      */
     public MutableQuadView spriteBake(@Nullable TextureAtlasSprite sprite, int bakeFlags) {
-        TextureHelper.bakeSprite(this, sprite, bakeFlags);
+        TextureBaker.bake(this, sprite, bakeFlags);
         return this;
     }
 
@@ -250,7 +250,7 @@ public abstract class MutableQuadView extends QuadView {
      * Control this behavior by passing additive combinations of the BAKE_ flags defined in this interface.
      */
     public MutableQuadView spriteUnbake(@Nullable TextureAtlasSprite sprite, int bakeFlags) {
-        TextureHelper.unbakeSprite(this, sprite, bakeFlags);
+        TextureBaker.unbake(this, sprite, bakeFlags);
         return this;
     }
 
@@ -296,7 +296,7 @@ public abstract class MutableQuadView extends QuadView {
      */
     public MutableQuadView normal(int vertexIndex, float x, float y, float z) {
         normalFlags(normalFlags() | (1 << vertexIndex));
-        data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL] = GeometryHelper.packNormal(x, y, z, 0);
+        data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL] = QuadGeometry.packNormal(x, y, z, 0);
         return this;
     }
 
@@ -315,7 +315,7 @@ public abstract class MutableQuadView extends QuadView {
         if (normalFlags == 0b1111)
             return;
 
-        final int packedFaceNormal = GeometryHelper.packNormal(faceNormal(), 0);
+        final int packedFaceNormal = QuadGeometry.packNormal(faceNormal(), 0);
 
         for (int v = 0; v < 4; v++) {
             if ((normalFlags & (1 << v)) == 0) {

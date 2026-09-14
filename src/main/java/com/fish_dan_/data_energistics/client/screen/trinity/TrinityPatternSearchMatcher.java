@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.trinity;
 
-import com.fish_dan_.data_energistics.client.util.PinyinUtil;
+import com.fish_dan_.data_energistics.util.TextSearch;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -53,7 +53,7 @@ public final class TrinityPatternSearchMatcher {
         for (String candidate : candidates) {
             String normalizedCandidate = normalizeText(candidate);
             if (containsOrderedTokens(normalizedCandidate, queryTokens) ||
-                    PinyinUtil.matchesNormalizedJech(candidate, normalizedQuery)) {
+                    TextSearch.matchesJech(candidate, normalizedQuery)) {
                 return true;
             }
         }

@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.client.crafting.tree.tooltip;
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmCyclePalette;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRenderer;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Cycle;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.core.localization.GuiText;
@@ -88,33 +88,33 @@ public final class CraftingPlanNodeTooltip {
     private List<Component> details(PlacedNode node) {
         List<Component> lines = new ObjectArrayList<>();
         if (node.viewNode().sourceNode() instanceof Material material) {
-            if (material.stored().signum() > 0) lines.add(GuiText.FromStorage.text(TrinityAmountFormatter.format(material.stored())));
-            if (material.missing().signum() > 0) lines.add(GuiText.Missing.text(TrinityAmountFormatter.format(material.missing())));
-            if (material.crafting().signum() > 0) lines.add(GuiText.ToCraft.text(TrinityAmountFormatter.format(material.crafting())));
+            if (material.stored().signum() > 0) lines.add(GuiText.FromStorage.text(AmountFormatter.format(material.stored())));
+            if (material.missing().signum() > 0) lines.add(GuiText.Missing.text(AmountFormatter.format(material.missing())));
+            if (material.crafting().signum() > 0) lines.add(GuiText.ToCraft.text(AmountFormatter.format(material.crafting())));
             if (material.stored().signum() > 0) {
                 String percentage = material.inventoryUsageBasisPoints() == 0 ? "<0.01%" : BigDecimal.valueOf(material.inventoryUsageBasisPoints(), 2).stripTrailingZeros().toPlainString() + "%";
                 lines.add(cycleText("inventory_usage", percentage).withStyle(ChatFormatting.GRAY));
             }
             if (material.missing().signum() > 0) {
-                lines.add(cycleText("shortage_required", TrinityAmountFormatter.format(material.required())).withStyle(ChatFormatting.RED));
-                lines.add(cycleText("shortage_available", TrinityAmountFormatter.format(material.stored())).withStyle(ChatFormatting.RED));
-                lines.add(cycleText("shortage_missing", TrinityAmountFormatter.format(material.missing())).withStyle(ChatFormatting.RED));
+                lines.add(cycleText("shortage_required", AmountFormatter.format(material.required())).withStyle(ChatFormatting.RED));
+                lines.add(cycleText("shortage_available", AmountFormatter.format(material.stored())).withStyle(ChatFormatting.RED));
+                lines.add(cycleText("shortage_missing", AmountFormatter.format(material.missing())).withStyle(ChatFormatting.RED));
             }
             if (material.unresolved().signum() > 0) {
-                lines.add(cycleText("unresolved_demand", TrinityAmountFormatter.format(material.unresolved())).withStyle(ChatFormatting.YELLOW));
+                lines.add(cycleText("unresolved_demand", AmountFormatter.format(material.unresolved())).withStyle(ChatFormatting.YELLOW));
             }
         }
         @Nullable
         Process process = node.viewNode().sourceNode() instanceof Process value ? value : node.embeddedProcessId() == null ? null : (Process) this.graph.node(node.embeddedProcessId());
         if (process != null) {
             lines.add(text("process_details", process.stageIndex(), process.variantOrdinal()).withStyle(ChatFormatting.GRAY));
-            lines.add(text("executions", TrinityAmountFormatter.format(process.executions())).withStyle(ChatFormatting.GRAY));
+            lines.add(text("executions", AmountFormatter.format(process.executions())).withStyle(ChatFormatting.GRAY));
             for (var edge : this.graph.edges()) {
                 if (edge.source() != process.id() && edge.target() != process.id()) continue;
                 int materialId = edge.source() == process.id() ? edge.target() : edge.source();
                 Material material = (Material) this.graph.node(materialId);
                 lines.add(text("edge_details", text("role." + edge.role().name().toLowerCase(Locale.ROOT)),
-                        material.key().getDisplayName(), TrinityAmountFormatter.format(edge.amount())).withStyle(ChatFormatting.GRAY));
+                        material.key().getDisplayName(), AmountFormatter.format(edge.amount())).withStyle(ChatFormatting.GRAY));
             }
         }
         if (!this.related.isEmpty()) appendCycle(lines, node, this.related.get(this.selectedCycle));
@@ -144,15 +144,15 @@ public final class CraftingPlanNodeTooltip {
                 .withStyle(ChatFormatting.GRAY));
         BigInteger seed = cycle.minimumSeed().getOrDefault(key, BigInteger.ZERO);
         BigInteger net = cycle.netChange().getOrDefault(key, BigInteger.ZERO);
-        if (seed.signum() > 0) lines.add(cycleText("minimum_seed", TrinityAmountFormatter.format(seed)).withStyle(ChatFormatting.GRAY));
+        if (seed.signum() > 0) lines.add(cycleText("minimum_seed", AmountFormatter.format(seed)).withStyle(ChatFormatting.GRAY));
         if (net.signum() != 0) {
-            lines.add(cycleText(net.signum() < 0 ? "net_consumed" : "net_produced", TrinityAmountFormatter.format(net.abs()))
+            lines.add(cycleText(net.signum() < 0 ? "net_consumed" : "net_produced", AmountFormatter.format(net.abs()))
                     .withStyle(ChatFormatting.GRAY));
         } else if (input && output) {
             lines.add(cycleText("reused").withStyle(ChatFormatting.GRAY));
         }
-        lines.add(cycleText("repetitions", TrinityAmountFormatter.format(cycle.repetitions())).withStyle(ChatFormatting.GRAY));
-        lines.add(cycleText("stage_count", TrinityAmountFormatter.format(cycle.stageOrder().size())).withStyle(ChatFormatting.GRAY));
+        lines.add(cycleText("repetitions", AmountFormatter.format(cycle.repetitions())).withStyle(ChatFormatting.GRAY));
+        lines.add(cycleText("stage_count", AmountFormatter.format(cycle.stageOrder().size())).withStyle(ChatFormatting.GRAY));
     }
 
     private static MutableComponent cycleText(String suffix, Object... arguments) {

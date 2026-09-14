@@ -38,7 +38,7 @@ final class InterfaceRemoteTransfer {
         if (!(host.getInterfaceLevel() instanceof ServerLevel level) || !state.isActive() || !state.flushReturn()) {
             return;
         }
-        var links = state.bindings();
+        var links = state.bindingsFast();
         if (links.isEmpty()) {
             return;
         }

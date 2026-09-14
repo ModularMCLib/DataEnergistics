@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.core;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
 import com.fish_dan_.data_energistics.common.multiblock.MultiBlockFailureText;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreHostStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreHostStatus.StructureStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.impl.SupplierDataSource;
@@ -354,6 +354,6 @@ final class TrinityDataCoreStatusPanel {
     }
 
     private static String compact(String value) {
-        return TrinityAmountFormatter.format(value);
+        return AmountFormatter.format(value);
     }
 }

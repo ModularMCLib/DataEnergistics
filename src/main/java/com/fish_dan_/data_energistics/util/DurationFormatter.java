@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.util;
+package com.fish_dan_.data_energistics.util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -6,18 +6,18 @@ import java.math.RoundingMode;
 /**
  * Formats one planning duration with a compact unit selected from microseconds, milliseconds, and seconds.
  */
-public final class TrinityDurationFormatter {
+public final class DurationFormatter {
 
     private static final long NANOS_PER_MILLISECOND = 1_000_000L;
     private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
-    private TrinityDurationFormatter() {}
+    private DurationFormatter() {}
 
     /**
      * @param nanos non-negative duration measured with {@link System#nanoTime()}
      * @return duration rounded to one decimal place with a dynamically selected unit
      */
-    public static String formatNanos(long nanos) {
+    public static String format(long nanos) {
         if (nanos < 0L) {
             throw new IllegalArgumentException("A Trinity duration must not be negative");
         }

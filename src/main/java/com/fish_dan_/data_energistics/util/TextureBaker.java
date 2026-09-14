@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fish_dan_.data_energistics.client.util;
+package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.client.model.quad.MutableQuadView;
 
@@ -27,10 +27,10 @@ import static com.fish_dan_.data_energistics.client.model.quad.MutableQuadView.*
 
 /**
  * Handles most texture-baking use cases for model loaders and model libraries via
- * {@link #bakeSprite(MutableQuadView, TextureAtlasSprite, int)}.
+ * {@link #bake(MutableQuadView, TextureAtlasSprite, int)}.
  */
 @UtilityClass
-public class TextureHelper {
+public class TextureBaker {
 
     public static final float NORMALIZER = 1f / 16f;
     public static final float DENORMALIZER = 16f;
@@ -45,10 +45,10 @@ public class TextureHelper {
      * If {@code sprite == null}, only the UV modifiers will be applied,
      * but they won't be translated to the sprite's atlas coordinates.
      *
-     * @see #unbakeSprite(MutableQuadView, TextureAtlasSprite, int)
+     * @see #unbake(MutableQuadView, TextureAtlasSprite, int)
      * @see MutableQuadView#BAKE_ROTATE_NONE bake flags
      */
-    public static void bakeSprite(MutableQuadView quad, @Nullable TextureAtlasSprite sprite, int bakeFlags) {
+    public static void bake(MutableQuadView quad, @Nullable TextureAtlasSprite sprite, int bakeFlags) {
         if (quad.nominalFace() != null && (BAKE_LOCK_UV & bakeFlags) != 0) {
             // Assigns normalized UV coordinates based on vertex positions
             applyModifier(quad, UV_LOCKERS[quad.nominalFace().get3DDataValue()]);
@@ -99,24 +99,24 @@ public class TextureHelper {
     }
 
     /**
-     * The reverse operation of {@link #bakeSprite}. Undoes the same operations <i>except UV locking</i>.
+     * The reverse operation of {@link #bake}. Undoes the same operations <i>except UV locking</i>.
      * Textures must be already baked.
      *
      * <p>
-     * Note this the function's order of operations is reversed in relation to {@link #bakeSprite}.<br>
+     * Note this the function's order of operations is reversed in relation to {@link #bake}.<br>
      * The {@link MutableQuadView#BAKE_NORMALIZED BAKE_NORMALIZED} flag also works inversely
-     * to the one in {@link #bakeSprite}.
+     * to the one in {@link #bake}.
      *
      * <p>
      * If {@code sprite == null}, only the UV modifiers will be applied,
      * but they won't be translated from the sprite's atlas coordinates to a 0-16 range.
      *
-     * @see #bakeSprite(MutableQuadView, TextureAtlasSprite, int)
+     * @see #bake(MutableQuadView, TextureAtlasSprite, int)
      * @see MutableQuadView#BAKE_ROTATE_NONE bake flags
      */
-    public static void unbakeSprite(MutableQuadView quad, @Nullable TextureAtlasSprite sprite, int bakeFlags) {
+    public static void unbake(MutableQuadView quad, @Nullable TextureAtlasSprite sprite, int bakeFlags) {
         if (sprite != null) {
-            deInterpolate(quad, sprite);
+            deinterpolate(quad, sprite);
         }
 
         if ((BAKE_FLIP_V & bakeFlags) != 0) {
@@ -154,7 +154,7 @@ public class TextureHelper {
      * Faster than sprite method. Sprite computes span and normalizes inputs each call, so we'd have to denormalize
      * before we called, only to have the sprite renormalize immediately.
      */
-    public static void deInterpolate(MutableQuadView q, TextureAtlasSprite sprite) {
+    public static void deinterpolate(MutableQuadView q, TextureAtlasSprite sprite) {
         final float uMin = sprite.getU0();
         final float uSpan = sprite.getU1() - uMin;
         final float vMin = sprite.getV0();

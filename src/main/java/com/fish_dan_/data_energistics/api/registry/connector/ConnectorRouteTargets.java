@@ -15,13 +15,12 @@ public final class ConnectorRouteTargets {
     /** Returns configured links, or normal active sides when no links were configured. */
     public static ObjectList<ConnectorLink> resolve(
                                                     AdaptivePatternProviderDispatchTarget target) {
-        List<ConnectorLink> configured = target.connectorBindings();
+        ObjectList<ConnectorLink> configured = target.connectorBindingsFast();
         if (!configured.isEmpty()) {
-            ObjectArrayList<ConnectorLink> result = new ObjectArrayList<>(configured);
-            return result;
+            return configured;
         }
-        ObjectArrayList<ConnectorLink> active = new ObjectArrayList<>(target.targetSides().size());
-        for (var side : target.targetSides()) {
+        ObjectArrayList<ConnectorLink> active = new ObjectArrayList<>(target.targetSidesFast().size());
+        for (var side : target.targetSidesFast()) {
             active.add(new ConnectorLink(
                     target.providerPos().relative(side), side.getOpposite()));
         }
@@ -32,7 +31,7 @@ public final class ConnectorRouteTargets {
     public static ObjectList<ConnectorLink> resolve(
                                                     AdaptivePatternProviderDispatchTarget target,
                                                     ConnectorMode mode) {
-        List<ConnectorLink> configured = target.connectorBindings();
+        List<ConnectorLink> configured = target.connectorBindingsFast();
         if (!configured.isEmpty()) {
             ObjectArrayList<ConnectorLink> result = new ObjectArrayList<>(configured.size());
             for (ConnectorLink binding : configured) {
@@ -42,8 +41,8 @@ public final class ConnectorRouteTargets {
             }
             return result;
         }
-        ObjectArrayList<ConnectorLink> fallback = new ObjectArrayList<>(target.targetSides().size());
-        for (var side : target.targetSides()) {
+        ObjectArrayList<ConnectorLink> fallback = new ObjectArrayList<>(target.targetSidesFast().size());
+        for (var side : target.targetSidesFast()) {
             fallback.add(new ConnectorLink(
                     target.providerPos().relative(side), side.getOpposite(), mode));
         }

@@ -24,7 +24,9 @@ public interface ReusableCraftingAdmission {
      * @deprecated scheduled for removal in plan 340; use {@link #physicalInputsFast()}
      */
     @Deprecated(forRemoval = true)
-    List<SlotStack> physicalInputs();
+    default List<SlotStack> physicalInputs() {
+        return List.of();
+    }
 
     /** Returns an immutable FastUtil snapshot of physical inputs. */
     default ObjectList<SlotStack> physicalInputsFast() {

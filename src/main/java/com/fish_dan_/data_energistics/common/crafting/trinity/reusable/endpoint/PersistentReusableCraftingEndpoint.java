@@ -37,6 +37,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -688,8 +689,8 @@ public final class PersistentReusableCraftingEndpoint {
 
         @SuppressWarnings("removal")
         @Override
-        public List<SlotStack> physicalInputs() {
-            return physical;
+        public ObjectList<SlotStack> physicalInputsFast() {
+            return new ObjectArrayList<>(physical);
         }
 
         @Override

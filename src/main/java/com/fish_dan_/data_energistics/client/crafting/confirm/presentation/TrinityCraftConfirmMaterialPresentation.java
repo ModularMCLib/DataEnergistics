@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.crafting.confirm.presentation;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.core.localization.GuiText;
@@ -31,7 +31,7 @@ public final class TrinityCraftConfirmMaterialPresentation {
         if (summary != null) {
             summary.unresolvedDemand(entry.getWhat()).ifPresent(unresolved -> lines.add(Component.translatable(
                     "gui.data_energistics.trinity_planning.cycle.unresolved_demand",
-                    TrinityAmountFormatter.format(unresolved.amount())).withStyle(ChatFormatting.YELLOW)));
+                    AmountFormatter.format(unresolved.amount())).withStyle(ChatFormatting.YELLOW)));
         }
         return lines;
     }
@@ -60,13 +60,13 @@ public final class TrinityCraftConfirmMaterialPresentation {
     private static ObjectArrayList<Component> amountLines(DisplayedAmounts amounts) {
         ObjectArrayList<Component> lines = new ObjectArrayList<>(3);
         if (amounts.stored().signum() > 0) {
-            lines.add(GuiText.FromStorage.text(TrinityAmountFormatter.format(amounts.stored())));
+            lines.add(GuiText.FromStorage.text(AmountFormatter.format(amounts.stored())));
         }
         if (amounts.missing().signum() > 0) {
-            lines.add(GuiText.Missing.text(TrinityAmountFormatter.format(amounts.missing())));
+            lines.add(GuiText.Missing.text(AmountFormatter.format(amounts.missing())));
         }
         if (amounts.crafting().signum() > 0) {
-            lines.add(GuiText.ToCraft.text(TrinityAmountFormatter.format(amounts.crafting())));
+            lines.add(GuiText.ToCraft.text(AmountFormatter.format(amounts.crafting())));
         }
         return lines;
     }

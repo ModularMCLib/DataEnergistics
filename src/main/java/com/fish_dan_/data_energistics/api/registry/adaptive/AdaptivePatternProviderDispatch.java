@@ -118,7 +118,7 @@ public interface AdaptivePatternProviderDispatch {
 
     /** Adds registration-owned buffered values through the FastUtil collection API. */
     default void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {
-        addDrops(target, (List<ItemStack>) drops);
+        addDrops(target, drops);
     }
 
     /** Clears registration-owned runtime state when the provider is emptied. */

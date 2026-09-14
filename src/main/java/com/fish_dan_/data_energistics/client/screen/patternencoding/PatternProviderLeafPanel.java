@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.client.screen.patternencoding;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.screen.base.AETextFieldInteraction;
-import com.fish_dan_.data_energistics.client.util.PinyinUtil;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
+import com.fish_dan_.data_energistics.util.TextSearch;
 
 import appeng.client.Point;
 import appeng.client.gui.style.Blitter;
@@ -503,7 +503,7 @@ final class PatternProviderLeafPanel {
         }
     }
 
-    private boolean matchesSearch(LeafRow row, String normalizedQuery) {
+    private boolean matches(LeafRow row, String normalizedQuery) {
         String name = row.leaf().displayName().getString();
         String defaultName = BuiltInRegistries.ITEM.get(row.leaf().iconItemId()).getDescription().getString();
         String iconId = row.leaf().iconItemId().toString();
@@ -715,13 +715,13 @@ final class PatternProviderLeafPanel {
         if (!this.rowsDirty) {
             return false;
         }
-        String query = PinyinUtil.normalizeSearch(this.searchBox.getValue());
+        String query = TextSearch.normalize(this.searchBox.getValue());
         if (query.isEmpty()) {
             this.visibleRows = this.allRows;
         } else {
             ObjectArrayList<LeafRow> filtered = new ObjectArrayList<>();
             this.allRows.forEach(row -> {
-                if (matchesSearch(row, query)) {
+                if (matches(row, query)) {
                     filtered.add(row);
                 }
             });

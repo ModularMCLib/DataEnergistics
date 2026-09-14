@@ -293,7 +293,8 @@ public final class ReusableInputGraphCaptureGameTest {
         @Override
         public AEItemKey getDefinition() {
             ItemStack definition = new ItemStack(Items.CRAFTING_TABLE);
-            EncodedPatternDynamicOutput.apply(definition, aliasMaterial);
+            EncodedPatternDynamicOutput.apply(definition,
+                    aliasMaterial ? 1 << EncodedPatternDynamicOutput.PROCESSING_INPUT_SLOTS : 0);
             return AEItemKey.of(definition);
         }
 

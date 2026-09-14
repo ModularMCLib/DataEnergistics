@@ -105,7 +105,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     @Unique
     private static final String DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE = "dataEnergistics$clearPatternSourceState";
     @Unique
-    private static final String DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM = "dataEnergistics$setProcessingOutputSameItem";
+    private static final String DATA_ENERGISTICS_ACTION_SET_PROCESSING_SAME_ITEM = "dataEnergistics$setProcessingSameItem";
     @GuiSync(795)
     @Unique
     public int dataEnergistics$previewPanelOffsetX;
@@ -207,7 +207,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             return;
         }
         if (this.isClientSide()) {
-            sendClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM,
+            sendClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_SAME_ITEM,
                     inputIndex + ":" + outputIndex + ":" + enabled);
         }
         if (enabled) {
@@ -1055,7 +1055,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                 this::dataEnergistics$setPatternSourceEnabledFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_SET_UPLOAD_ENABLED, Boolean.class,
                 this::dataEnergistics$setUploadEnabledFromClient);
-        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_OUTPUT_SAME_ITEM, String.class,
+        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_SAME_ITEM, String.class,
                 this::dataEnergistics$setProcessingSameItemFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE,
                 this::data_energistics$clearPatternSourceState);

@@ -13,12 +13,4 @@ public interface PatternOutputMatchMenu {
 
     /** Updates one per-pattern processing slot and sends the client action when called client-side. */
     void data_energistics$setProcessingSameItem(int inputIndex, int outputIndex, boolean enabled);
-
-    default boolean data_energistics$isProcessingOutputSameItem() {
-        return data_energistics$isProcessingSameItem(-1, 0);
-    }
-
-    default void data_energistics$setProcessingOutputSameItem(boolean enabled) {
-        data_energistics$setProcessingSameItem(-1, 0, enabled);
-    }
 }

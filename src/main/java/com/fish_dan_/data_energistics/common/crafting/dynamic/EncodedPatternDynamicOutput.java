@@ -34,17 +34,6 @@ public final class EncodedPatternDynamicOutput {
         } else {
             encodedPattern.remove(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS);
         }
-        // Keep the original component readable for patterns saved before per-slot markers existed.
-        if ((markerMask & (1 << PROCESSING_INPUT_SLOTS)) != 0) {
-            encodedPattern.set(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM, true);
-        } else {
-            encodedPattern.remove(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM);
-        }
-    }
-
-    /** Backwards-compatible entry point for integrations that only know the primary output rule. */
-    public static void apply(ItemStack encodedPattern, boolean sameItem) {
-        apply(encodedPattern, sameItem ? 1 << PROCESSING_INPUT_SLOTS : 0);
     }
 
     /**
@@ -57,13 +46,10 @@ public final class EncodedPatternDynamicOutput {
         return markerMask(definition) != 0;
     }
 
-    /** Returns the persisted per-slot marker mask, including the legacy primary-output marker. */
+    /** Returns the persisted per-slot marker mask, or zero when no slots are marked. */
     public static int markerMask(AEItemKey definition) {
         Integer mask = definition.get(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS.get());
-        if (mask != null && mask != 0) {
-            return mask;
-        }
-        return Boolean.TRUE.equals(definition.get(DEDataComponents.PROCESSING_OUTPUT_SAME_ITEM.get())) ? 1 << PROCESSING_INPUT_SLOTS : 0;
+        return mask == null ? 0 : mask;
     }
 
     public static boolean isMarked(AEItemKey definition, int inputIndex, int outputIndex) {

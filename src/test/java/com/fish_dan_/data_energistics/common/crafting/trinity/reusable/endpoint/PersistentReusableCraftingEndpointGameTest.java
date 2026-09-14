@@ -42,6 +42,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
@@ -70,8 +71,8 @@ public final class PersistentReusableCraftingEndpointGameTest {
         UUID sessionId = UUID.randomUUID();
         ReusableCraftingRequest first = request(helper, sessionId, 0, 3, List.of(new SlotStack(0, stack(tool(0), 2))));
         ReusableCraftingAdmission admission = prepare(endpoint, first, 10, host);
-        helper.assertValueEqual(amount(admission.physicalInputs(), 0, tool(0)), 2L, "Two real tools are transferred once");
-        helper.assertValueEqual(amount(admission.physicalInputs(), 1, MATERIAL), 3L, "Ordinary materials are total three-operation quantities");
+        helper.assertValueEqual(amount(admission.physicalInputsFast(), 0, tool(0)), 2L, "Two real tools are transferred once");
+        helper.assertValueEqual(amount(admission.physicalInputsFast(), 1, MATERIAL), 3L, "Ordinary materials are total three-operation quantities");
         helper.assertTrue(endpoint.query(sessionId).isEmpty(), "Read-only preparation does not create an owned session");
         KeyCounter[] delivery = delivery(admission);
         helper.assertTrue(admission.commit(delivery), "The complete exact delivery commits");
@@ -83,7 +84,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
         endpoint = reload(endpoint, helper);
         helper.assertValueEqual(endpoint.tick(12, 1, host), 1, "Restored endpoint executes the third actual tool use");
         ReusableCraftingAdmission second = prepare(endpoint, request(helper, sessionId, 1, 2, List.of()), 12, host);
-        helper.assertValueEqual(amount(second.physicalInputs(), 0, tool(0)), 0L, "Resident spare tool is not transferred again");
+        helper.assertValueEqual(amount(second.physicalInputsFast(), 0, tool(0)), 0L, "Resident spare tool is not transferred again");
         helper.assertTrue(second.commit(delivery(second)), "Second append uses already resident assets");
         helper.assertValueEqual(endpoint.tick(13, 9, host), 2, "Only two further actual operations were accepted");
         helper.assertValueEqual(host.amount(PRODUCT), 5L, "Actual native outputs follow ordinary persistent pending queue");
@@ -91,10 +92,10 @@ public final class PersistentReusableCraftingEndpointGameTest {
         endpoint.close(sessionId, host);
         List<Settlement> received = new ObjectArrayList<>();
         helper.assertTrue(endpoint.settle(sessionId, settlement -> received.add(settlement), host), "Directed final settlement is accepted");
-        helper.assertValueEqual(received.getFirst().returnedAssets(), List.of(stack(tool(2), 1)),
+        helper.assertValueEqual(received.getFirst().returnedAssetsFast(), List.of(stack(tool(2), 1)),
                 "Five uses of two three-use tools return the actual final damaged tool");
         helper.assertValueEqual(received.getFirst().exhaustedTools(), 1L, "Settlement accounts for the physically exhausted tool");
-        helper.assertValueEqual(received.getFirst().receipts().size(), 2, "Both append receipts accompany settlement");
+        helper.assertValueEqual(received.getFirst().receiptsFast().size(), 2, "Both append receipts accompany settlement");
         helper.succeed();
     }
 
@@ -120,7 +121,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
         KeyCounter[] staleDelivery = delivery(stale);
         helper.assertTrue(!stale.commit(staleDelivery), "Competing preparation cannot overwrite the live owner");
         helper.assertValueEqual(staleDelivery[0].get(tool(0)), 1L, "Stale admission takes no tool ownership");
-        List<Input> changed = List.of(request.inputs().getFirst(),
+        List<Input> changed = List.of(request.inputsFast().getFirst(),
                 new Input(1, List.of(stack(AEItemKey.of(Items.GOLD_INGOT), 1)), Optional.empty()));
         ReusableCraftingRequest rebound = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 1, request.target(),
                 request.pattern(), changed, List.of(), 1, request.recipeId(), request.actionSource(), request.level());
@@ -150,7 +151,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
                 "Unreachable receiver leaves empty-asset settlement pending");
         endpoint = reload(endpoint, helper);
         ReusableCraftingAdmission replay = prepare(endpoint, request, 4, host);
-        helper.assertTrue(replay.replay() && replay.physicalInputs().isEmpty(), "Persisted append replay requests no second transfer");
+        helper.assertTrue(replay.replay() && replay.physicalInputsFast().isEmpty(), "Persisted append replay requests no second transfer");
         helper.assertTrue(replay.commit(delivery(replay)), "Empty replay counters acknowledge old ownership");
         helper.assertValueEqual(endpoint.receipt(sessionId, 0).orElseThrow().completed(), 3L, "Replay keeps actual completed receipt");
         helper.assertTrue(endpoint.settle(sessionId, settlement -> {
@@ -164,7 +165,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
             return false;
         }, host),
                 "Duplicate settle is an acknowledged no-op");
-        helper.assertTrue(attempted.getFirst().returnedAssets().isEmpty(), "Exhaustion does not recreate a tool refund");
+        helper.assertTrue(attempted.getFirst().returnedAssetsFast().isEmpty(), "Exhaustion does not recreate a tool refund");
         helper.assertValueEqual(attempted.getFirst().exhaustedTools(), 1L, "Exhausted unit is explicitly included in accounting");
         helper.succeed();
     }
@@ -195,9 +196,9 @@ public final class PersistentReusableCraftingEndpointGameTest {
                 List.of(stack(PRODUCT, 1)), Optional.empty()), host);
         List<Settlement> received = new ObjectArrayList<>();
         endpoint.settle(sessionId, settlement -> received.add(settlement), host);
-        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssets(), tool(1)), 1L, "Reconciliation returns only verified actual successor");
-        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssets(), tool(0)), 0L, "Old tool is not reconstructed");
-        helper.assertValueEqual(received.getFirst().receipts().getFirst().cancelled(), 1L, "Only the remaining operation is cancelled");
+        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssetsFast(), tool(1)), 1L, "Reconciliation returns only verified actual successor");
+        helper.assertValueEqual(assetAmount(received.getFirst().returnedAssetsFast(), tool(0)), 0L, "Old tool is not reconstructed");
+        helper.assertValueEqual(received.getFirst().receiptsFast().getFirst().cancelled(), 1L, "Only the remaining operation is cancelled");
         verifyRecordedResultRecovery(helper);
         helper.succeed();
     }
@@ -225,7 +226,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
         helper.assertValueEqual(endpoint.tick(2, 3, host), 2, "Two actual remaining uses are accepted from non-initial damage");
         endpoint.close(sessionId, host);
         endpoint.settle(sessionId, settlement -> {
-            helper.assertTrue(settlement.returnedAssets().isEmpty(), "Both actual remaining uses exhaust the supplied damaged tool");
+            helper.assertTrue(settlement.returnedAssetsFast().isEmpty(), "Both actual remaining uses exhaust the supplied damaged tool");
             return true;
         }, host);
         helper.succeed();
@@ -239,9 +240,9 @@ public final class PersistentReusableCraftingEndpointGameTest {
         NativeHost host = new NativeHost();
         UUID sessionId = UUID.randomUUID();
         ReusableCraftingRequest request = request(helper, sessionId, 0, 1, List.of(new SlotStack(0, stack(tool(0), 1))));
-        List<Input> machineClaim = List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.MACHINE_OWNED, rule(), Optional.empty()))), request.inputs().get(1));
+        List<Input> machineClaim = List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.MACHINE_OWNED, rule(), Optional.empty()))), request.inputsFast().get(1));
         ReusableCraftingRequest unsupported = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 0, request.target(),
-                request.pattern(), machineClaim, request.offeredTools(), 1, request.recipeId(), request.actionSource(), request.level());
+                request.pattern(), machineClaim, request.offeredToolsFast(), 1, request.recipeId(), request.actionSource(), request.level());
         helper.assertTrue(endpoint.prepare(unsupported, 0, host) == null, "Native endpoint cannot claim a machine inventory it does not have");
         ReusableCraftingAdmission admission = prepare(endpoint, request, 0, host);
         KeyCounter[] physical = delivery(admission);
@@ -268,17 +269,17 @@ public final class PersistentReusableCraftingEndpointGameTest {
         NativeHost host = new NativeHost();
         UUID sessionId = UUID.randomUUID();
         ReusableCraftingRequest base = request(helper, sessionId, 0, 2, List.of(new SlotStack(0, stack(tool(0), 1))));
-        List<Input> mixed = List.of(new Input(0, List.of(stack(tool(0), 1)), base.inputs().getFirst().tool()), base.inputs().get(1));
+        List<Input> mixed = List.of(new Input(0, List.of(stack(tool(0), 1)), base.inputsFast().getFirst().tool()), base.inputsFast().get(1));
         ReusableCraftingRequest request = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 0, base.target(),
-                base.pattern(), mixed, base.offeredTools(), 2, base.recipeId(), base.actionSource(), base.level());
+                base.pattern(), mixed, base.offeredToolsFast(), 2, base.recipeId(), base.actionSource(), base.level());
         ReusableCraftingAdmission admission = prepare(endpoint, request, 0, host);
-        helper.assertValueEqual(amount(admission.physicalInputs(), 0, tool(0)), 3L, "Same-slot total is two consumed plus one held tool");
+        helper.assertValueEqual(amount(admission.physicalInputsFast(), 0, tool(0)), 3L, "Same-slot total is two consumed plus one held tool");
         admission.commit(delivery(admission));
         endpoint.tick(1, 1, host);
         endpoint.close(sessionId, host);
         endpoint.settle(sessionId, settlement -> {
-            helper.assertValueEqual(assetAmount(settlement.returnedAssets(), tool(0)), 1L, "One unused same-key consumed material remains");
-            helper.assertValueEqual(assetAmount(settlement.returnedAssets(), tool(1)), 1L, "Held tool follows its actual native successor");
+            helper.assertValueEqual(assetAmount(settlement.returnedAssetsFast(), tool(0)), 1L, "One unused same-key consumed material remains");
+            helper.assertValueEqual(assetAmount(settlement.returnedAssetsFast(), tool(1)), 1L, "Held tool follows its actual native successor");
             return true;
         }, host);
         CompoundTag missing = ReusableCraftingEndpointNbtCodec.encode(endpoint, helper.getLevel().registryAccess());
@@ -303,28 +304,28 @@ public final class PersistentReusableCraftingEndpointGameTest {
         opened.commit(delivery(opened));
         endpoint.tick(1, 1, host);
         endpoint = reload(endpoint, helper);
-        ReusableInputRule atDamageOne = ReusableInputRule.fixedDamage(RULE_ID, 1, tool(1), 1, 3, List.of(stack(SCRAP, 1)));
+        ReusableInputRule atDamageOne = ReusableInputRule.fixedDamageFast(RULE_ID, 1, tool(1), 1, 3, ObjectList.of(stack(SCRAP, 1)));
         List<Input> continuedInputs = List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, atDamageOne, Optional.empty()))),
-                first.inputs().get(1));
+                first.inputsFast().get(1));
         ReusableCraftingRequest continuation = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 1, first.target(), first.pattern(),
                 continuedInputs, List.of(), 1, first.recipeId(), first.actionSource(), first.level());
         ReusableCraftingAdmission appended = prepare(endpoint, continuation, 1, host);
-        helper.assertValueEqual(amount(appended.physicalInputs(), 0, tool(1)), 0L,
+        helper.assertValueEqual(amount(appended.physicalInputsFast(), 0, tool(1)), 0L,
                 "D1 stage reuses the actual resident successor without another physical transfer");
         helper.assertTrue(appended.commit(delivery(appended)), "D0-opened session accepts the same contract frozen from D1");
         helper.assertValueEqual(endpoint.tick(2, 1, host), 1, "Second native operation advances actual D1 to D2");
-        helper.assertValueEqual(endpoint.query(sessionId).orElseThrow().heldTools(), List.of(new SlotStack(0, stack(tool(2), 1))),
+        helper.assertValueEqual(endpoint.query(sessionId).orElseThrow().heldToolsFast(), List.of(new SlotStack(0, stack(tool(2), 1))),
                 "Continued session retains exactly one D2 tool");
         helper.assertValueEqual(endpoint.snapshot().getFirst().session().slotContracts().getFirst().rule().initialKey(), tool(0),
                 "Continuation never replaces the original D0 rule or resets lifetime");
-        ReusableInputRule changedLoss = ReusableInputRule.fixedDamage(RULE_ID, 1, tool(2), 2, 3, List.of(stack(SCRAP, 1)));
-        List<Input> changedInputs = List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, changedLoss, Optional.empty()))), first.inputs().get(1));
+        ReusableInputRule changedLoss = ReusableInputRule.fixedDamageFast(RULE_ID, 1, tool(2), 2, 3, ObjectList.of(stack(SCRAP, 1)));
+        List<Input> changedInputs = List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, changedLoss, Optional.empty()))), first.inputsFast().get(1));
         ReusableCraftingRequest incompatible = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 2, first.target(), first.pattern(),
                 changedInputs, List.of(), 1, first.recipeId(), first.actionSource(), first.level());
         helper.assertTrue(endpoint.prepare(incompatible, 2, host) == null, "A changed per-use loss is not a continuation of the frozen contract");
         endpoint.close(sessionId, host);
         endpoint.settle(sessionId, settlement -> {
-            helper.assertValueEqual(settlement.returnedAssets(), List.of(stack(tool(2), 1)), "Final refund uses the real D2 successor");
+            helper.assertValueEqual(settlement.returnedAssetsFast(), List.of(stack(tool(2), 1)), "Final refund uses the real D2 successor");
             return true;
         }, host);
         helper.succeed();
@@ -347,7 +348,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
                 "NBT preserves the complete publication encoding");
         IPatternDetails changedPattern = new TestPattern(2);
         ReusableCraftingRequest changed = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 1, first.target(), changedPattern,
-                first.inputs(), List.of(), 1, first.recipeId(), first.actionSource(), first.level());
+                first.inputsFast(), List.of(), 1, first.recipeId(), first.actionSource(), first.level());
         helper.assertTrue(endpoint.prepare(changed, 1, host) == null, "Changed native output semantics reject append despite the same encoded key and recipe ID");
         ReusableCraftingRequest continuation = request(helper, sessionId, 1, 1, List.of());
         ReusableCraftingAdmission prepared = prepare(endpoint, continuation, 1, host);
@@ -398,16 +399,16 @@ public final class PersistentReusableCraftingEndpointGameTest {
         helper.assertTrue(endpoint.prepare(exactRequest(helper, sessionId, 1, 1, tool(0), List.of()), 1, host) == null,
                 "The same D0 units cannot be promised to another pending append");
         endpoint.tick(1, 3, host);
-        helper.assertValueEqual(endpoint.query(sessionId).orElseThrow().heldTools(), List.of(new SlotStack(0, stack(tool(1), 3))),
+        helper.assertValueEqual(endpoint.query(sessionId).orElseThrow().heldToolsFast(), List.of(new SlotStack(0, stack(tool(1), 3))),
                 "Three D0 to D1 firings cannot become one tool's consecutive D0 to D3 execution");
         helper.assertValueEqual(endpoint.reservedToolUses(sessionId, 0, tool(0)), 0L, "Completed exact uses release their reservations");
         ReusableCraftingAdmission next = prepare(endpoint, exactRequest(helper, sessionId, 1, 3, tool(1), List.of()), 2, host);
-        helper.assertValueEqual(amount(next.physicalInputs(), 0, tool(1)), 0L, "The next D1 stage does not transport its resident tools again");
+        helper.assertValueEqual(amount(next.physicalInputsFast(), 0, tool(1)), 0L, "The next D1 stage does not transport its resident tools again");
         helper.assertTrue(next.commit(delivery(next)), "Resident successors are reusable for the next exact stage");
         endpoint.tick(2, 3, host);
         endpoint.close(sessionId, host);
         endpoint.settle(sessionId, settlement -> {
-            helper.assertValueEqual(settlement.returnedAssets(), List.of(stack(tool(2), 3)), "Final return contains all three actual D2 tools");
+            helper.assertValueEqual(settlement.returnedAssetsFast(), List.of(stack(tool(2), 3)), "Final return contains all three actual D2 tools");
             return true;
         }, host);
         helper.assertValueEqual(host.amount(PRODUCT), 6L, "Both exact stages execute their actual six recipe operations");
@@ -418,7 +419,7 @@ public final class PersistentReusableCraftingEndpointGameTest {
                                                         AEItemKey state, List<SlotStack> offeredTools) {
         ReusableCraftingRequest base = request(helper, sessionId, sequence, operations, offeredTools);
         List<Input> inputs = List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, rule(), Optional.of(state)))),
-                base.inputs().get(1));
+                base.inputsFast().get(1));
         return new ReusableCraftingRequest(sessionId, JOB, base.cpuOwner(), sequence, base.target(), base.pattern(), inputs,
                 offeredTools, operations, base.recipeId(), base.actionSource(), base.level());
     }
@@ -443,12 +444,12 @@ public final class PersistentReusableCraftingEndpointGameTest {
 
     private static KeyCounter[] delivery(ReusableCraftingAdmission admission) {
         KeyCounter[] result = { new KeyCounter(), new KeyCounter() };
-        admission.physicalInputs().forEach(input -> result[input.slot()].add(input.stack().what(), input.stack().amount()));
+        admission.physicalInputsFast().forEach(input -> result[input.slot()].add(input.stack().what(), input.stack().amount()));
         return result;
     }
 
     private static ReusableInputRule rule() {
-        return ReusableInputRule.fixedDamage(RULE_ID, 1, tool(0), 1, 3, List.of(stack(SCRAP, 1)));
+        return ReusableInputRule.fixedDamageFast(RULE_ID, 1, tool(0), 1, 3, ObjectList.of(stack(SCRAP, 1)));
     }
 
     private static AEItemKey tool(int damage) {
@@ -501,8 +502,8 @@ public final class PersistentReusableCraftingEndpointGameTest {
         helper.assertValueEqual(host.amount(PRODUCT), 1L, "Repeated ticks cannot replay the cleared result checkpoint");
         List<Settlement> settled = new ObjectArrayList<>();
         endpoint.settle(id, receipt -> settled.add(receipt), host);
-        helper.assertValueEqual(assetAmount(settled.getFirst().returnedAssets(), tool(1)), 1L, "Only the actual post-operation tool is returned");
-        helper.assertValueEqual(assetAmount(settled.getFirst().returnedAssets(), MATERIAL), 1L, "Only the unexecuted suffix material is refunded");
+        helper.assertValueEqual(assetAmount(settled.getFirst().returnedAssetsFast(), tool(1)), 1L, "Only the actual post-operation tool is returned");
+        helper.assertValueEqual(assetAmount(settled.getFirst().returnedAssetsFast(), MATERIAL), 1L, "Only the unexecuted suffix material is refunded");
     }
 
     /** Independent fixed-three-use native fixture; actual damage is produced without calling rule.advance. */

@@ -27,6 +27,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -107,11 +108,11 @@ public final class CraftingPlanGraphLayoutGameTest {
         var diamond = AEItemKey.of(Items.DIAMOND);
         var iron = AEItemKey.of(Items.IRON_INGOT);
         CraftingPlanGraph graph = graph(List.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
-                new Process(2, 0, "shared-pattern", 0, diamond, BigInteger.ONE, false, List.of()),
-                new Process(3, 1, "shared-pattern", 0, diamond, BigInteger.TWO, false, List.of(0)),
-                new Process(4, 2, "return-pattern", 0, iron, BigInteger.TWO, false, List.of(0))),
+                new Process(2, 0, "shared-pattern", 0, diamond, BigInteger.ONE, false, IntList.of()),
+                new Process(3, 1, "shared-pattern", 0, diamond, BigInteger.TWO, false, IntList.of(0)),
+                new Process(4, 2, "return-pattern", 0, iron, BigInteger.TWO, false, IntList.of(0))),
                 new int[][] { { 0, 2 }, { 2, 1 }, { 0, 3 }, { 3, 1 }, { 1, 4 }, { 4, 0 } },
-                List.of(new Cycle(0, 1, List.of(0, 1, 3, 4), List.of(1, 2), BigInteger.TWO,
+                List.of(new Cycle(0, 1, IntList.of(0, 1, 3, 4), IntList.of(1, 2), BigInteger.TWO,
                         Map.of(iron, BigInteger.ONE), Map.of())));
         var projection = new CraftingPlanGraphView(graph);
         var view = projection.visible(Expansion.empty(), false);
@@ -137,10 +138,10 @@ public final class CraftingPlanGraphLayoutGameTest {
         var gold = AEItemKey.of(Items.GOLD_INGOT);
         CraftingPlanGraph graph = graph(List.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
                 material(2, Items.GOLD_INGOT),
-                new Process(3, 0, "loop-input", 0, gold, BigInteger.TWO, false, List.of(0)),
-                new Process(4, 1, "loop-output", 0, diamond, BigInteger.TWO, false, List.of(0))),
+                new Process(3, 0, "loop-input", 0, gold, BigInteger.TWO, false, IntList.of(0)),
+                new Process(4, 1, "loop-output", 0, diamond, BigInteger.TWO, false, IntList.of(0))),
                 new int[][] { { 0, 4 }, { 4, 2 }, { 2, 3 }, { 3, 1 }, { 1, 4 } },
-                List.of(new Cycle(0, 1, List.of(0, 1, 2, 3, 4), List.of(0, 1), BigInteger.TWO,
+                List.of(new Cycle(0, 1, IntList.of(0, 1, 2, 3, 4), IntList.of(0, 1), BigInteger.TWO,
                         Map.of(iron, BigInteger.ONE), Map.of(diamond, BigInteger.TWO))));
         var view = new CraftingPlanGraphView(graph).visible(Expansion.empty(), false);
         Layout layout = CraftingPlanGraphLayout.layout(view, true);
@@ -161,7 +162,7 @@ public final class CraftingPlanGraphLayoutGameTest {
     }
 
     private static Process process(int id, Item output) {
-        return new Process(id, id, "layout/" + id, 0, AEItemKey.of(output), BigInteger.ONE, false, List.of());
+        return new Process(id, id, "layout/" + id, 0, AEItemKey.of(output), BigInteger.ONE, false, IntList.of());
     }
 
     private static CraftingPlanGraph graph(List<Node> nodes, int[][] connections, List<Cycle> cycles) {

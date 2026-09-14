@@ -142,7 +142,7 @@ public final class VanillaRetainedInputRulesGameTest {
         if (admission == null) throw new IllegalStateException("Native retained recipe rejected its batch");
         KeyCounter[] delivery = new KeyCounter[requirements.size()];
         Arrays.setAll(delivery, ignored -> new KeyCounter());
-        admission.physicalInputs().forEach(value -> delivery[value.slot()].add(value.stack().what(), value.stack().amount()));
+        admission.physicalInputsFast().forEach(value -> delivery[value.slot()].add(value.stack().what(), value.stack().amount()));
         helper.assertTrue(admission.commit(delivery), "The core accepts real batch materials and one original");
         var endpoint = core.reusableSlot(0).endpoint();
         helper.assertValueEqual(endpoint.tick(1, 1, host), 1, "One native batch call is enough");
@@ -152,7 +152,7 @@ public final class VanillaRetainedInputRulesGameTest {
                 "All 1000 actual copies enter the existing output queue");
         endpoint.close(session, host);
         helper.assertTrue(endpoint.settle(session, settlement -> {
-            helper.assertValueEqual(settlement.returnedAssets(), List.of(new GenericStack(AEItemKey.of(original), 1)),
+            helper.assertValueEqual(settlement.returnedAssetsFast(), List.of(new GenericStack(AEItemKey.of(original), 1)),
                     "The original is returned once, not multiplied by the batch size");
             return true;
         }, host), "The completed native batch settles normally");

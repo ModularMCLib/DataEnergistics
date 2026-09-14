@@ -75,7 +75,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
@@ -83,7 +86,6 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -400,9 +402,15 @@ public final class TrinityReusableCpuDispatchGameTest {
             return null;
         }
 
+        @Deprecated(forRemoval = true)
         @Override
         public List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
-            return List.of(target);
+            return reusableTargetsFast(pattern, source, level);
+        }
+
+        @Override
+        public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
+            return ObjectList.of(target);
         }
 
         @Override
@@ -431,7 +439,7 @@ public final class TrinityReusableCpuDispatchGameTest {
             long count = Math.min(request.requestedCount(), capacity - queued);
             if (count <= 0L) return null;
             ReusableCraftingRequest partial = new ReusableCraftingRequest(request.sessionId(), request.jobId(), request.cpuOwner(), request.sequence(),
-                    request.target(), request.pattern(), request.inputs(), request.offeredTools(), count, request.recipeId(), request.actionSource(), request.level());
+                    request.target(), request.pattern(), request.inputsFast(), request.offeredToolsFast(), count, request.recipeId(), request.actionSource(), request.level());
             ReusableCraftingAdmission admission = endpoint.prepare(partial, TickHandler.instance().getCurrentTick(), this);
             if (admission == null) return null;
             return new ReusableCraftingAdmission() {
@@ -441,9 +449,15 @@ public final class TrinityReusableCpuDispatchGameTest {
                     return admission.count();
                 }
 
+                @Deprecated(forRemoval = true)
                 @Override
                 public List<ReusableCraftingRequest.SlotStack> physicalInputs() {
-                    return admission.physicalInputs();
+                    return physicalInputsFast();
+                }
+
+                @Override
+                public ObjectList<ReusableCraftingRequest.SlotStack> physicalInputsFast() {
+                    return admission.physicalInputsFast();
                 }
 
                 @Override
@@ -462,7 +476,7 @@ public final class TrinityReusableCpuDispatchGameTest {
                     if (accepted && !admission.replay()) {
                         admissions++;
                         sessions.add(request.sessionId());
-                        for (var input : admission.physicalInputs()) {
+                        for (var input : admission.physicalInputsFast()) {
                             if (input.stack().what().equals(tool())) toolDelivered += input.stack().amount();
                             if (input.stack().what().equals(material())) materialDelivered += input.stack().amount();
                         }
@@ -477,9 +491,9 @@ public final class TrinityReusableCpuDispatchGameTest {
             return endpoint.settle(sessionId, settlement -> {
                 if (!receiver.receive(settlement)) return false;
                 if (settled.add(sessionId)) {
-                    for (GenericStack asset : settlement.returnedAssets()) if (asset.what() instanceof AEItemKey item && item.getItem() == tool().getItem()) toolReturned += asset.amount();
+                    for (GenericStack asset : settlement.returnedAssetsFast()) if (asset.what() instanceof AEItemKey item && item.getItem() == tool().getItem()) toolReturned += asset.amount();
                     exhaustedTools += settlement.exhaustedTools();
-                    long cancelled = settlement.receipts().stream().mapToLong(ReusableCraftingSessionView.AppendReceipt::cancelled).sum();
+                    long cancelled = settlement.receiptsFast().stream().mapToLong(ReusableCraftingSessionView.AppendReceipt::cancelled).sum();
                     if (cancelled > 0L) {
                         helper.assertValueEqual(worker.getWaitingFor(product()), BigInteger.ZERO, "CPU settlement removes only cancelled unexecuted waiting output");
                         CompoundTag job = worker.logic().writeToTag(helper.getLevel().registryAccess()).getCompound("job");
@@ -620,7 +634,7 @@ public final class TrinityReusableCpuDispatchGameTest {
     private record FixturePattern(boolean lifetime) implements IPatternDetails {
 
         ReusableInputRule rule() {
-            return lifetime ? ReusableInputRule.fixedDamage(RULE, 1L, tool(), 1, 100, List.of()) :
+            return lifetime ? ReusableInputRule.fixedDamageFast(RULE, 1L, tool(), 1, 100, ObjectList.of()) :
                     ReusableInputRule.unchanged(RULE, 1L, tool());
         }
 
@@ -676,11 +690,11 @@ public final class TrinityReusableCpuDispatchGameTest {
                 Map.of(product(), BigInteger.ONE), pattern.lifetime() ? Map.of() : Map.of(tool(), BigInteger.ONE), bindings);
         Map<AEKey, BigInteger> initial = Map.of(tool(), pattern.lifetime() ? BigInteger.valueOf(3) : BigInteger.ONE, material(), total);
         Map<AEKey, BigInteger> delta = Map.of(material(), total.negate(), product(), total);
-        var stage = new TrinityPlanStage(0, pattern.lifetime(), Set.of(), List.of(firing), initial, delta);
+        var stage = new TrinityPlanStage(0, pattern.lifetime(), IntSet.of(), List.of(firing), initial, delta);
         var builder = TrinityCraftingPlan.builder().finalOutput(new GenericStack(product(), count)).bytes(BigInteger.valueOf(1024L))
                 .catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW).initialExpectedInputs(initial)
-                .patternFirings(Map.of(identity, total)).stages(List.of(stage)).stageOrder(List.of(0)).targetNetChange(delta);
-        if (pattern.lifetime()) builder.minimumSeed(initial).cycleRepeatBlocks(List.of(new TrinityCycleRepeatBlock(0, List.of(0), BigInteger.ONE, initial, delta)));
+                .patternFirings(Map.of(identity, total)).stages(List.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta);
+        if (pattern.lifetime()) builder.minimumSeed(initial).cycleRepeatBlocks(List.of(new TrinityCycleRepeatBlock(0, IntList.of(0), BigInteger.ONE, initial, delta)));
         return builder.build();
     }
 

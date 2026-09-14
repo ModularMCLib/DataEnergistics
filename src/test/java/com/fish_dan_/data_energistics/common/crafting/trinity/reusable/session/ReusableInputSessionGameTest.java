@@ -31,6 +31,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 
 import java.util.List;
@@ -357,7 +358,7 @@ public final class ReusableInputSessionGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void cyclicStateRuleAdvancesComponentsAcrossAppendAndRestart(GameTestHelper helper) {
-        ReusableInputRule cycle = ReusableInputRule.transitions(RULE_ID, 2, tool(0), List.of(
+        ReusableInputRule cycle = ReusableInputRule.transitionsFast(RULE_ID, 2, tool(0), ObjectList.of(
                 new Transition(tool(0), tool(1), List.of(stack(SCRAP, 1))),
                 new Transition(tool(1), tool(0), List.of())));
         ReusableInputSession session = session(cycle, 1, Ownership.CPU_SUPPLIED);
@@ -422,7 +423,7 @@ public final class ReusableInputSessionGameTest {
     }
 
     private static ReusableInputRule finite() {
-        return ReusableInputRule.fixedDamage(RULE_ID, 1, tool(0), 1, 100, List.of(stack(SCRAP, 2)));
+        return ReusableInputRule.fixedDamageFast(RULE_ID, 1, tool(0), 1, 100, ObjectList.of(stack(SCRAP, 2)));
     }
 
     private static AEItemKey tool(int damage) {

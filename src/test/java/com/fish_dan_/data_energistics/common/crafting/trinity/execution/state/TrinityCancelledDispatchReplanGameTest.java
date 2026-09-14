@@ -25,10 +25,12 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -41,7 +43,7 @@ public final class TrinityCancelledDispatchReplanGameTest {
     @GameTest(template = "empty_5x5")
     public static void invalidatesLeasesAndRestoresCompletedStagePlanning(GameTestHelper helper) {
         TrinityPlanExecution execution = TrinityPlanExecution.create(plan(2L, false), 1L);
-        var first = execution.pollDispatchable(1L, Set.of(), ignored -> true, true).orElseThrow();
+        var first = execution.pollDispatchable(1L, IntSet.of(), ignored -> true, true).orElseThrow();
         var replayed = TrinityPlanExecution.restore(execution.save(helper.getLevel().registryAccess(), 1L),
                 helper.getLevel().registryAccess(), 2L);
         var beforeRecovery = replayed.pendingOutputs();
@@ -54,16 +56,16 @@ public final class TrinityCancelledDispatchReplanGameTest {
         helper.assertValueEqual(replayed.pendingOutputs().get(first.primaryOutput()), BigInteger.ONE,
                 "Only the explicit accounting call deducts the accepted operation");
         execution.recordAccepted(first, 1L, 2L);
-        var outstanding = execution.pollDispatchable(2L, Set.of(), ignored -> true, true).orElseThrow();
+        var outstanding = execution.pollDispatchable(2L, IntSet.of(), ignored -> true, true).orElseThrow();
         var oldPending = execution.pendingOutputs();
         execution.replanAfterCancelledDispatch(2L);
         helper.assertTrue(execution.recoverAcceptedWork(outstanding, 2L).isEmpty(), "Old-generation provider work cannot recover after replanning");
         helper.assertValueEqual(execution.pendingOutputs(), oldPending, "Cancellation must not rewind or invent old firing counts");
-        helper.assertTrue(execution.pollDispatchable(2L, Set.of(), ignored -> true, true).isEmpty(),
+        helper.assertTrue(execution.pollDispatchable(2L, IntSet.of(), ignored -> true, true).isEmpty(),
                 "Replanning suspends all old leased and ready work");
         expectStateFailure(helper, () -> execution.recordAccepted(outstanding, 1L, 1L));
         execution.replaceRemainingPlan(plan(4L, false), 3L);
-        var replacement = execution.pollDispatchable(3L, Set.of(), ignored -> true, true).orElseThrow();
+        var replacement = execution.pollDispatchable(3L, IntSet.of(), ignored -> true, true).orElseThrow();
         helper.assertTrue(replacement.generation() > outstanding.generation(), "Replacement cannot reuse a stale work generation");
         helper.assertValueEqual(replacement.maximumLogicalFirings(), 4L, "Replacement production may exceed remaining target delivery");
         helper.assertValueEqual(execution.deliveryRemaining(), BigInteger.TWO, "More replacement production does not increase user delivery responsibility");
@@ -75,7 +77,7 @@ public final class TrinityCancelledDispatchReplanGameTest {
         helper.assertValueEqual(restored.status(), TrinityPlanExecution.Status.PLANNING,
                 "PLANNING with all old stages completed is a valid durable recovery state");
         helper.assertTrue(restored.productionComplete(), "Restore preserves completed dispatch history rather than reopening it");
-        helper.assertTrue(restored.pollDispatchable(5L, Set.of(), ignored -> true, true).isEmpty(), "Restored recovery cannot dispatch old work");
+        helper.assertTrue(restored.pollDispatchable(5L, IntSet.of(), ignored -> true, true).isEmpty(), "Restored recovery cannot dispatch old work");
         helper.assertValueEqual(restored.deliveryRemaining(), BigInteger.TWO, "Restore retains original delivery responsibility");
         helper.succeed();
     }
@@ -139,13 +141,13 @@ public final class TrinityCancelledDispatchReplanGameTest {
                 Map.of(input, total.negate(), output, total);
         Map<AEKey, BigInteger> net = cycle ? Map.of(output, total) : stageDelta;
         Map<AEKey, BigInteger> initial = Map.of(input, cycle ? BigInteger.ONE : total);
-        var stage = new TrinityPlanStage(0, cycle, Set.of(), List.of(firing), initial, stageDelta);
+        var stage = new TrinityPlanStage(0, cycle, IntSet.of(), List.of(firing), initial, stageDelta);
         var builder = TrinityCraftingPlan.builder().finalOutput(new GenericStack(output, count))
                 .bytes(BigInteger.ZERO).catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW)
                 .initialExpectedInputs(initial).patternFirings(Map.of(identity, total)).stages(List.of(stage))
-                .stageOrder(List.of(0)).targetNetChange(net);
+                .stageOrder(IntList.of(0)).targetNetChange(net);
         if (cycle) {
-            builder.cycleRepeatBlocks(List.of(new TrinityCycleRepeatBlock(0, List.of(0), total, initial, net)))
+            builder.cycleRepeatBlocks(List.of(new TrinityCycleRepeatBlock(0, IntList.of(0), total, initial, net)))
                     .minimumSeed(initial);
         }
         return builder.build();

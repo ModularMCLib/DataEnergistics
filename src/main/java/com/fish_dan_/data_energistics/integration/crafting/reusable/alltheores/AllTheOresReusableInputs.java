@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.integration.crafting.reusable.alltheores;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
-
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
@@ -17,7 +15,8 @@ import appeng.api.stacks.AEItemKey;
 import net.allthemods.alltheores.content.items.OreHammer;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 
 /** ATO 3.2.0 hammers deterministically damage the input once and break when the new damage reaches maxDamage. */

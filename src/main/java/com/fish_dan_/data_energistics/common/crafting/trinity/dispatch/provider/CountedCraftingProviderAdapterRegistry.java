@@ -1,11 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 
 import appeng.api.networking.crafting.ICraftingProvider;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;

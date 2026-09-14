@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.crafting.tree.projection;
 
-import it.unimi.dsi.fastutil.ints.IntList;
-
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Cycle;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Edge;
@@ -106,7 +104,7 @@ public final class CraftingPlanGraphProjection {
             for (TrinityPlanStage stage : plan.stages()) {
                 TrinityCycleRepeatBlock block = blocks.get(stage.index());
                 BigInteger repetitions = block == null ? BigInteger.ONE : block.repetitions();
-                    IntList memberships = block == null ? IntList.of() : IntList.of(block.index());
+                IntList memberships = block == null ? IntList.of() : IntList.of(block.index());
                 for (TrinityPlanPatternFiring firing : stage.firings()) {
                     firing(stage.index(), firing.patternIdentity().publicationEncoding(), firing.variantOrdinal(),
                             firing.primaryOutput(), firing.count().multiply(repetitions), false, memberships,

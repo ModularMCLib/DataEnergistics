@@ -1,8 +1,5 @@
 package com.fish_dan_.data_energistics.common.crafting.tree.model;
 
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 
 import appeng.api.stacks.AEKey;
@@ -12,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;

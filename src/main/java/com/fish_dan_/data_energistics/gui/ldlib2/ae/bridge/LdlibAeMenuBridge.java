@@ -1,9 +1,5 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import com.fish_dan_.data_energistics.Data_Energistics;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
@@ -17,8 +13,9 @@ import appeng.menu.AEBaseMenu;
 import net.minecraft.world.inventory.Slot;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

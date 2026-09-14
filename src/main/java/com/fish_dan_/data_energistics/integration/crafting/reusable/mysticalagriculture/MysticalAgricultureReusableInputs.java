@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.integration.crafting.reusable.mysticalagriculture;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
-
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
@@ -21,8 +19,8 @@ import net.minecraft.world.item.enchantment.Enchantments;
 
 import com.blakebr0.mysticalagriculture.item.InfusionCrystalItem;
 import com.blakebr0.mysticalagriculture.item.MasterInfusionCrystalItem;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Exact Cucumber remainder contracts for MA crystals, loaded only when both optional mods are present. */

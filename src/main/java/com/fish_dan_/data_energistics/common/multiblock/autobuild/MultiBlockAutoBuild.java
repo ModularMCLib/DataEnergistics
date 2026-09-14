@@ -1,10 +1,5 @@
 package com.fish_dan_.data_energistics.common.multiblock.autobuild;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntList;
-
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 
 import appeng.api.networking.IGrid;
@@ -19,6 +14,9 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.modularmc.mdl.api.multiblock.BlockPattern;
 import com.modularmc.mdl.api.multiblock.StructureWorldView;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jspecify.annotations.Nullable;
 

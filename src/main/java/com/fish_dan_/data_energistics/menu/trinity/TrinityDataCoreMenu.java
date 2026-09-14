@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.menu.trinity;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
-
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
@@ -50,10 +48,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;

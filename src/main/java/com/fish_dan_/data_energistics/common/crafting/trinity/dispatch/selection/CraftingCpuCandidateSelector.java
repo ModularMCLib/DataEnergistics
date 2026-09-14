@@ -1,14 +1,13 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.selection;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.networking.crafting.CraftingSubmitErrorCode;
 import appeng.api.networking.crafting.ICraftingSubmitResult;
 import appeng.api.networking.crafting.UnsuitableCpus;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -139,8 +138,8 @@ public final class CraftingCpuCandidateSelector {
     }
 
     private Object2IntMap<String> roundRobinRanks(
-                                                 List<CraftingCpuCandidate> candidates,
-                                                 CraftingCpuSelectionRequest request) {
+                                                  List<CraftingCpuCandidate> candidates,
+                                                  CraftingCpuSelectionRequest request) {
         Map<CraftingCpuSelectionGroup, List<CraftingCpuCandidate>> groups = new Object2ObjectOpenHashMap<>();
         for (CraftingCpuCandidate candidate : candidates) {
             groups.computeIfAbsent(group(candidate, request.playerRequest()), ignored -> new ObjectArrayList<>())

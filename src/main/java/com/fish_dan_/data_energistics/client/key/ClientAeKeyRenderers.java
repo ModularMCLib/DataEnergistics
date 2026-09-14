@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.client.key;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
 import com.fish_dan_.data_energistics.ae2.key.DataKey;
 import com.fish_dan_.data_energistics.ae2.key.DigitalizationKey;
 import com.fish_dan_.data_energistics.ae2.key.DigitalizationKeyType;
@@ -11,6 +9,8 @@ import appeng.api.client.AEKeyRenderHandler;
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import java.util.Map;
 

@@ -1,7 +1,8 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.profile;
 
-import java.util.Map;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+
+import java.util.Map;
 
 /**
  * Mutable collector for named Trinity Data Core CPU contributions.

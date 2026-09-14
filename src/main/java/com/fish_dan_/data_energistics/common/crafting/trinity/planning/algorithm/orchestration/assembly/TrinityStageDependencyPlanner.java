@@ -7,12 +7,11 @@ import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
@@ -20,7 +19,6 @@ import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Derives quantity-proven execution dependencies without turning shared keys or repeat blocks into global barriers.
@@ -90,8 +88,8 @@ final class TrinityStageDependencyPlanner {
     }
 
     private static Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage(
-                                                                       List<TrinityCycleRepeatBlock> repeatBlocks,
-                                                                       Int2ObjectMap<TrinityPlanStage> stages) {
+                                                                        List<TrinityCycleRepeatBlock> repeatBlocks,
+                                                                        Int2ObjectMap<TrinityPlanStage> stages) {
         Int2ObjectLinkedOpenHashMap<TrinityCycleRepeatBlock> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityCycleRepeatBlock block : repeatBlocks) {
             if (block == null) {
@@ -147,8 +145,8 @@ final class TrinityStageDependencyPlanner {
     }
 
     private static Int2ObjectMap<IntSet> allocateDependencies(
-                                                                   Map<AEKey, BigInteger> initialInputs,
-                                                                   List<ExecutionUnit> units) {
+                                                              Map<AEKey, BigInteger> initialInputs,
+                                                              List<ExecutionUnit> units) {
         Object2ObjectLinkedOpenHashMap<AEKey, ArrayDeque<TokenLot>> balances = new Object2ObjectLinkedOpenHashMap<>();
         initialInputs.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() <= 0) {

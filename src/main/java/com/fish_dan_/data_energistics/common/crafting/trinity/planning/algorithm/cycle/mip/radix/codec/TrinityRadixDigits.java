@@ -1,9 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec;
 
-import java.math.BigInteger;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
+
+import java.math.BigInteger;
 
 /**
  * Fixed-width unsigned base-2^8 digits stored least-significant first.

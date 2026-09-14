@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.ae.inventory;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeItemSlot;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeMenuBridge;
@@ -15,8 +13,8 @@ import appeng.menu.SlotSemantics;
 import net.minecraft.world.inventory.Slot;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 

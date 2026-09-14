@@ -1,13 +1,12 @@
 package com.fish_dan_.data_energistics.common.trinity.core;
 
-import it.unimi.dsi.fastutil.ints.IntCollection;
-
 import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCpuStorageCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuContribution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuProfile;
 
+import it.unimi.dsi.fastutil.ints.IntCollection;
+
 import java.math.BigInteger;
-import java.util.Collection;
 
 /**
  * CPU capability resolved from trinity merged storage core blocks in formed child structures.

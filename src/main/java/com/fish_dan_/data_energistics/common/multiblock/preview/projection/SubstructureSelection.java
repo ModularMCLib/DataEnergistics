@@ -1,19 +1,12 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.projection;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 
 /**
  * Immutable variant, repeat, tier, and predicate-candidate choices for one named substructure.
@@ -148,7 +141,7 @@ public record SubstructureSelection(int variantIndex,
     }
 
     private static Object2IntMap<PreviewPredicateKey> immutableCandidateSelections(
-                                                                                  Object2IntMap<PreviewPredicateKey> selections) {
+                                                                                   Object2IntMap<PreviewPredicateKey> selections) {
         Object2IntMap<PreviewPredicateKey> copy = new Object2IntLinkedOpenHashMap<>();
         for (Object2IntMap.Entry<PreviewPredicateKey> entry : selections.object2IntEntrySet()) {
             PreviewPredicateKey predicateKey = entry.getKey();

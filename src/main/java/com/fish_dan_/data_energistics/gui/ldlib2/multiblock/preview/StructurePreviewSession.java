@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview;
 
-import it.unimi.dsi.fastutil.ints.IntList;
-
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewCellSnapshot;
@@ -12,6 +10,7 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Struc
 
 import net.minecraft.core.BlockPos;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;

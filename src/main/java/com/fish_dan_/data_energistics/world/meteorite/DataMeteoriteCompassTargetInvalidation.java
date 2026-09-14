@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.world.meteorite;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
-
 import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassResponsePayload;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEItems;
@@ -22,10 +20,10 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.ArrayDeque;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 
 /**
  * Removes broken data meteorite centers and pushes a fresh compass target after the block is gone.

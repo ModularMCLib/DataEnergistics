@@ -1,14 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
-
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
 import com.fish_dan_.data_energistics.Data_Energistics;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
-import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
 

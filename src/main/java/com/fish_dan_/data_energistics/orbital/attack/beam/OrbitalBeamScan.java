@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.orbital.attack.beam;
 
 import com.fish_dan_.data_energistics.orbital.attack.OrbitalDirectedEnergyStrike;
 
-import it.unimi.dsi.fastutil.ints.IntComparator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;

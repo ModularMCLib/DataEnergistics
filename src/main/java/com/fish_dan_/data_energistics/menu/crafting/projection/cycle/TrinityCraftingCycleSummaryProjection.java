@@ -1,11 +1,5 @@
 package com.fish_dan_.data_energistics.menu.crafting.projection.cycle;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
@@ -26,8 +20,11 @@ import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.Trini
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -162,7 +159,7 @@ public final class TrinityCraftingCycleSummaryProjection {
     }
 
     private static Object2IntMap<AEKey> projectInventoryUsage(Map<AEKey, BigInteger> inputs,
-                                                             KeyCounter availableInventory) {
+                                                              KeyCounter availableInventory) {
         Object2IntLinkedOpenHashMap<AEKey> usage = new Object2IntLinkedOpenHashMap<>();
         inputs.forEach((key, consumed) -> usage.put(
                 key,

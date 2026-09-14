@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.blockentity.tower.network.domain;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerRuntimeKey;
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.AcyclicFifoVirtualGridOwnership;
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridCandidate;
@@ -16,8 +14,8 @@ import net.minecraft.server.MinecraftServer;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

@@ -1,25 +1,18 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.projection;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.Object2IntAVLTreeMap;
-
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSelection;
 
 import net.minecraft.resources.ResourceLocation;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Structured deterministic identity of every selection field that can change an ordinary recipe projection.
@@ -92,7 +85,7 @@ public record ProjectionFingerprint(ResourceLocation controllerId,
     }
 
     private static Object2IntMap<PreviewPredicateKey> sortedCandidates(
-                                                                      Object2IntMap<PreviewPredicateKey> candidates) {
+                                                                       Object2IntMap<PreviewPredicateKey> candidates) {
         Object2IntMap<PreviewPredicateKey> sorted = new Object2IntAVLTreeMap<>(PREDICATE_ORDER);
         sorted.putAll(candidates);
         return Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(sorted));

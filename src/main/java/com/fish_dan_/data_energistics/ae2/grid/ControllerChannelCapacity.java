@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.ae2.grid;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.pathing.ChannelMode;
@@ -12,9 +10,9 @@ import appeng.blockentity.networking.ControllerBlockEntity;
 import net.minecraft.core.BlockPos;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**

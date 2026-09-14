@@ -31,12 +31,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.
 
 import appeng.api.stacks.AEKey;
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;

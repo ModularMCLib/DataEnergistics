@@ -1,11 +1,10 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.model;
 
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.List;

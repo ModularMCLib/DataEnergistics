@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.menu.crafting.tree.session;
 
-import it.unimi.dsi.fastutil.ints.IntList;
-
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 
 import appeng.api.stacks.AEKey;
@@ -9,6 +7,7 @@ import appeng.api.storage.ISubMenuHost;
 import appeng.helpers.ICraftingGridMenu.AutoCraftEntry;
 import appeng.menu.locator.MenuHostLocator;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;

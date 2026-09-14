@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.multiblock.transfer;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalog;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalogSnapshot;
@@ -23,10 +21,10 @@ import appeng.api.stacks.GenericStack;
 import appeng.parts.encoding.EncodingMode;
 import appeng.util.ConfigInventory;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Production transfer using the current atomic preview catalog and the common structure projector.

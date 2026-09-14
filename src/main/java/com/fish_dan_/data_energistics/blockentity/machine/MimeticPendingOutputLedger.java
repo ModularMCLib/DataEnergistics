@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
-
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 
@@ -12,10 +10,9 @@ import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
 
 /**

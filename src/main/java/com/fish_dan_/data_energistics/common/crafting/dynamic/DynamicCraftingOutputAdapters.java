@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.crafting.dynamic;
 
-import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
-
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputMatchMode;
@@ -15,7 +13,7 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

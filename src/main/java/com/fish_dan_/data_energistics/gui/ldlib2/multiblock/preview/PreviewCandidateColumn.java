@@ -1,10 +1,5 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntList;
-
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewCandidate;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewCellSnapshot;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
@@ -26,11 +21,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.ObjIntConsumer;
 

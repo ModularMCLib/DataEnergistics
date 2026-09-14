@@ -1,12 +1,5 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntList;
-
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
@@ -16,9 +9,11 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Subst
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import com.modularmc.mdl.api.multiblock.RepeatRange;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Converts an untrusted revision-bound UI submission into the existing atomic builder request.

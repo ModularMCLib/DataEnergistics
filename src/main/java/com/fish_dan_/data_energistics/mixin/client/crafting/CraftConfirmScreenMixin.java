@@ -5,11 +5,11 @@ import com.fish_dan_.data_energistics.client.crafting.confirm.table.TrinityCraft
 import com.fish_dan_.data_energistics.client.crafting.tree.CraftingPlanTreeEntry;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreenRouter;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
-import com.fish_dan_.data_energistics.client.util.TrinityDurationFormatter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.DurationFormatter;
 
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.AEBaseScreen;
@@ -130,11 +130,11 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
                         "gui.data_energistics.trinity_quantity.final_total");
         TrinityCraftingCycleSummary summary = state.data_energistics$cycleSummary();
         String bytes = summary == null ?
-                TrinityAmountFormatter.format(plan.getUsedBytes()) :
+                AmountFormatter.format(plan.getUsedBytes()) :
                 summary.exactBytes()
-                        .map(TrinityAmountFormatter::format)
-                        .orElseGet(() -> TrinityAmountFormatter.format(plan.getUsedBytes()));
-        String planningTime = TrinityDurationFormatter.formatNanos(state.data_energistics$planningNanos());
+                        .map(AmountFormatter::format)
+                        .orElseGet(() -> AmountFormatter.format(plan.getUsedBytes()));
+        String planningTime = DurationFormatter.format(state.data_energistics$planningNanos());
         if (state.data_energistics$isAe2FallbackEstimate()) {
             this.setTextContent(
                     TEXT_ID_DIALOG_TITLE,

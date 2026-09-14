@@ -6,7 +6,6 @@ import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGr
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphPalette;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRenderer;
 import com.fish_dan_.data_energistics.client.crafting.tree.render.CraftingPlanGraphRouteDrawing;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Bounds;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Layout;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
@@ -22,6 +21,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRo
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import appeng.api.stacks.AEKey;
 
@@ -84,13 +84,13 @@ final class CraftingPlanGraphSvgWriter {
             double badgeWidth = embeddedCount ? Math.floor((node.width() - 18) / 2) : node.width() - 12;
             if (showAmounts) {
                 BigInteger amount = node.id() == graph.rootId() ? graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
-                text(labels, font, (materialNode ? "" : "× ") + TrinityAmountFormatter.format(amount),
+                text(labels, font, (materialNode ? "" : "× ") + AmountFormatter.format(amount),
                         node.x() + 27, node.y() + 15, node.width() - 32,
                         missing ? CraftingPlanGraphPalette.MISSING : CraftingPlanGraphPalette.ACCENT);
             }
             if (embeddedCount) {
                 Process process = (Process) graph.node(node.embeddedProcessId());
-                text(labels, font, "× " + TrinityAmountFormatter.format(process.executions()), node.x() + 6,
+                text(labels, font, "× " + AmountFormatter.format(process.executions()), node.x() + 6,
                         node.y() + node.height() - 9, cycles.isEmpty() ? node.width() - 20 : node.width() - badgeWidth - 18,
                         CraftingPlanGraphPalette.MUTED_TEXT);
             }

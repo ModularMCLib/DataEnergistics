@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.client.crafting;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import appeng.client.Point;
 import appeng.client.gui.style.Blitter;
@@ -132,7 +132,7 @@ public abstract class CPUSelectionListMixin {
         if (dataEnergistics$isTrinityCpu(cpu)) {
             cir.setReturnValue(cpu.storage() == Long.MAX_VALUE ?
                     dataEnergistics$unlimited().getString() :
-                    TrinityAmountFormatter.format(cpu.storage()));
+                    AmountFormatter.format(cpu.storage()));
         }
     }
 

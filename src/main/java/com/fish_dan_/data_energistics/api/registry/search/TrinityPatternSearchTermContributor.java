@@ -17,7 +17,6 @@ import java.util.List;
  * one token from a machine-specific value with another token from a visible input or output.
  * </p>
  */
-@FunctionalInterface
 public interface TrinityPatternSearchTermContributor {
 
     /**
@@ -28,7 +27,9 @@ public interface TrinityPatternSearchTermContributor {
      * @deprecated scheduled for removal in plan 340; use {@link #searchTermsFast(ItemStack)}
      */
     @Deprecated(forRemoval = true)
-    List<String> searchTerms(ItemStack encodedPattern);
+    default List<String> searchTerms(ItemStack encodedPattern) {
+        return List.of();
+    }
 
     /** Returns candidate names as an immutable FastUtil snapshot. */
     default ObjectList<String> searchTermsFast(ItemStack encodedPattern) {

@@ -8,13 +8,13 @@ import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlo
 import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerVirtualDeviceState;
 import com.fish_dan_.data_energistics.client.render.overlay.DataDistributionTowerSelectionHighlighter;
 import com.fish_dan_.data_energistics.client.screen.base.AETextFieldInteraction;
-import com.fish_dan_.data_energistics.client.util.PinyinUtil;
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerConnectionModeButton;
 import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerTextureToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetEntry;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.TextSearch;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;
@@ -136,7 +136,7 @@ public class DataDistributionTowerScreen extends AEBaseScreen<DataDistributionTo
                 this.menu.unlimitedChannels ? "∞" : Long.toString(this.menu.remainingChannels)));
         setTextContent("available_fe", Component.translatable(
                 "screen.data_energistics.network_fe",
-                TrinityAmountFormatter.format(this.menu.availableFe)));
+                AmountFormatter.format(this.menu.availableFe)));
         setTextContent("range", Component.translatable(
                 "screen.data_energistics.range",
                 formatRangeText(this.menu.chunkRadius)));
@@ -259,7 +259,7 @@ public class DataDistributionTowerScreen extends AEBaseScreen<DataDistributionTo
     }
 
     private void applySearchFilter() {
-        String filter = PinyinUtil.normalizeSearch(this.searchQuery);
+        String filter = TextSearch.normalize(this.searchQuery);
         if (filter.isEmpty()) {
             this.cachedRows = this.allRows.stream()
                     .filter(this::matchesDisabledTargetsFilter)
@@ -267,7 +267,7 @@ public class DataDistributionTowerScreen extends AEBaseScreen<DataDistributionTo
         } else {
             this.cachedRows = this.allRows.stream()
                     .filter(this::matchesDisabledTargetsFilter)
-                    .filter(row -> PinyinUtil.matchesSearch(row.displayText(), filter))
+                    .filter(row -> TextSearch.matches(row.displayText(), filter))
                     .toList();
         }
 
@@ -369,7 +369,7 @@ public class DataDistributionTowerScreen extends AEBaseScreen<DataDistributionTo
     }
 
     private String getEmptyStateText() {
-        if (!PinyinUtil.normalizeSearch(this.searchQuery).isEmpty()) {
+        if (!TextSearch.normalize(this.searchQuery).isEmpty()) {
             return Component.translatable(
                     "screen.data_energistics.data_distribution_tower.search_no_match").getString();
         }

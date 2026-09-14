@@ -15,7 +15,7 @@
  */
 package com.fish_dan_.data_energistics.client.model.quad;
 
-import com.fish_dan_.data_energistics.client.util.quad.GeometryHelper;
+import com.fish_dan_.data_energistics.util.QuadGeometry;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -103,7 +103,7 @@ public class QuadView {
         nominalFace = lightFace();
 
         // face normal isn't encoded
-        GeometryHelper.computeFaceNormal(faceNormal, this);
+        QuadGeometry.computeNormal(faceNormal, this);
     }
 
     public int normalFlags() {
@@ -120,10 +120,10 @@ public class QuadView {
         if (isGeometryInvalid) {
             isGeometryInvalid = false;
 
-            GeometryHelper.computeFaceNormal(faceNormal, this);
+            QuadGeometry.computeNormal(faceNormal, this);
 
             // depends on face normal
-            headerFlags = EncodingFormat.lightFace(headerFlags, GeometryHelper.lightFace(this));
+            headerFlags = EncodingFormat.lightFace(headerFlags, QuadGeometry.lightFace(this));
         }
     }
 
@@ -220,9 +220,9 @@ public class QuadView {
             }
 
             final int normal = data[normalIndex(vertexIndex)];
-            target.set(GeometryHelper.getPackedNormalComponent(normal, 0),
-                    GeometryHelper.getPackedNormalComponent(normal, 1),
-                    GeometryHelper.getPackedNormalComponent(normal, 2));
+            target.set(QuadGeometry.normalComponent(normal, 0),
+                    QuadGeometry.normalComponent(normal, 1),
+                    QuadGeometry.normalComponent(normal, 2));
             return target;
         } else {
             return null;
@@ -314,7 +314,7 @@ public class QuadView {
      * Will return {@link Float#NaN} if normal not present.
      */
     public float normalX(int vertexIndex) {
-        return hasNormal(vertexIndex) ? GeometryHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 0) :
+        return hasNormal(vertexIndex) ? QuadGeometry.normalComponent(data[normalIndex(vertexIndex)], 0) :
                 Float.NaN;
     }
 
@@ -322,7 +322,7 @@ public class QuadView {
      * Will return {@link Float#NaN} if normal not present.
      */
     public float normalY(int vertexIndex) {
-        return hasNormal(vertexIndex) ? GeometryHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 1) :
+        return hasNormal(vertexIndex) ? QuadGeometry.normalComponent(data[normalIndex(vertexIndex)], 1) :
                 Float.NaN;
     }
 
@@ -330,7 +330,7 @@ public class QuadView {
      * Will return {@link Float#NaN} if normal not present.
      */
     public float normalZ(int vertexIndex) {
-        return hasNormal(vertexIndex) ? GeometryHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 2) :
+        return hasNormal(vertexIndex) ? QuadGeometry.normalComponent(data[normalIndex(vertexIndex)], 2) :
                 Float.NaN;
     }
 

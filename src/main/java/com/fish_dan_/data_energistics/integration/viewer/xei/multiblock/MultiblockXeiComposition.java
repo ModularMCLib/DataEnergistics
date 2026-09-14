@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.multiblock;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalog;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalogSnapshot;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
@@ -15,6 +14,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.autobuild.AutoBuildC
 import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUiFactory;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayouts;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -84,7 +84,7 @@ public final class MultiblockXeiComposition implements MultiblockRecipeViewSourc
         this.ownerOutputMaterial = this.previewUi.session().recipeView().output();
         this.composition = AutoBuildComposition.builder(this.previewUi, layout.elements())
                 .geometry(layout.geometry())
-                .recipeInputs(idPrefix + MATERIAL_GRID_SUFFIX, TrinityAmountFormatter::format)
+                .recipeInputs(idPrefix + MATERIAL_GRID_SUFFIX, AmountFormatter::format)
                 .build();
         this.composition.bindStructureActions(new AutoBuildComposition.StructureActions(
                 () -> selectRelativeStructure(-1),

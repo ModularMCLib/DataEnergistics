@@ -42,7 +42,7 @@ public record TrinityBoundPatternInput(
         }
         byproducts = List.copyOf(byproducts);
         if (lifetimeBudget && (reusableRule == null || reusableRule.kind() != ReusableInputRule.Kind.FIXED_DAMAGE ||
-                !reusableRule.exhaustionByproducts().isEmpty())) {
+                !reusableRule.exhaustionByproductsFast().isEmpty())) {
             throw new IllegalArgumentException("A continuous fixed-wear binding needs a proved lifetime without side products");
         }
         if (reusableRule == null && !byproducts.isEmpty()) {
@@ -53,7 +53,7 @@ public record TrinityBoundPatternInput(
                 throw new IllegalArgumentException("Reusable binding rule must describe the exact template");
             }
             ReusableInputRule.Result expected = reusableRule.advance(reusableRule.initialKey(), 1L);
-            if (!Objects.equals(remainingKey, expected.successor()) || !byproducts.equals(expected.byproducts())) {
+            if (!Objects.equals(remainingKey, expected.successor()) || !byproducts.equals(expected.byproductsFast())) {
                 throw new IllegalArgumentException("Reusable binding must retain the exact one-use transition");
             }
         }

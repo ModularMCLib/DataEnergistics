@@ -8,13 +8,13 @@ import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Keeps the provider's existing persistence and dispatch API behind the shared connector editing surface. */
 record AdaptiveProviderConnectorEndpoint(AdaptivePatternProviderLogic logic) implements ConnectorEndpoint {
 
     @Override
-    public List<ConnectorLink> bindings() {
+    public ObjectList<ConnectorLink> bindingsFast() {
         return logic.adaptiveConnectorBindings();
     }
 
@@ -44,7 +44,7 @@ record AdaptiveProviderConnectorEndpoint(AdaptivePatternProviderLogic logic) imp
     }
 
     @Override
-    public int replace(List<ConnectorLink> bindings) {
+    public int replaceFast(ObjectList<ConnectorLink> bindings) {
         return logic.replaceConnectorTargets(bindings);
     }
 }

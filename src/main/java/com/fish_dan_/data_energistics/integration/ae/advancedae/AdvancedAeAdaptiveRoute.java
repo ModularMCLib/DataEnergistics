@@ -28,6 +28,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -201,9 +202,8 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
     }
 
     /** Adds buffered directional inputs to provider drops. */
-    @SuppressWarnings("removal")
     @Override
-    public void addDrops(AdaptivePatternProviderDispatchTarget target, List<ItemStack> drops) {
+    public void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {
         State state = target.routeState(State.class, State::new);
         for (var entry : state.sendList.object2LongEntrySet()) {
             if (entry.getKey() != null && entry.getLongValue() > 0) {

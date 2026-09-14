@@ -32,7 +32,9 @@ public interface ReusableCraftingProviderAdapter extends CountedCraftingProvider
      *             {@link #reusableTargetsFast(IPatternDetails, IActionSource, ServerLevel)}
      */
     @Deprecated(forRemoval = true)
-    List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level);
+    default List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
+        return List.of();
+    }
 
     /** Returns concrete targets as an immutable FastUtil snapshot. */
     default ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {

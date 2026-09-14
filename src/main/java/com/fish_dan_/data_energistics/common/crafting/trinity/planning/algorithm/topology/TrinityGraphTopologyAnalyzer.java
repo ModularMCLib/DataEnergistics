@@ -297,9 +297,9 @@ public final class TrinityGraphTopologyAnalyzer {
             }
             for (TrinityPatternVariant variant : variants) {
                 for (AEKey input : variant.inputs().keySet()) {
-                    int inputIndex = indexByKey.get(input);
+                    int inputIndex = indexByKey.getInt(input);
                     for (AEKey output : variant.outputs().keySet()) {
-                        edges.get(inputIndex).add(indexByKey.get(output));
+                        edges.get(inputIndex).add(indexByKey.getInt(output));
                     }
                 }
             }

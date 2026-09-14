@@ -15,7 +15,7 @@
  */
 package com.fish_dan_.data_energistics.client.model.quad;
 
-import com.fish_dan_.data_energistics.client.util.quad.GeometryHelper;
+import com.fish_dan_.data_energistics.util.QuadGeometry;
 
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -47,7 +47,7 @@ public class EncodingFormat {
     /** used for quick clearing of quad buffers. */
     static final int[] EMPTY = new int[QUAD_STRIDE];
 
-    private static final int DIRECTION_MASK = Mth.smallestEncompassingPowerOfTwo(GeometryHelper.NULL_FACE_ID) - 1;
+    private static final int DIRECTION_MASK = Mth.smallestEncompassingPowerOfTwo(QuadGeometry.NULL_FACE_ID) - 1;
     private static final int DIRECTION_BIT_COUNT = Integer.bitCount(DIRECTION_MASK);
     private static final int CULL_SHIFT = 0;
     private static final int CULL_INVERSE_MASK = ~(DIRECTION_MASK << CULL_SHIFT);
@@ -59,19 +59,19 @@ public class EncodingFormat {
     private static final int NORMALS_INVERSE_MASK = ~(NORMALS_MASK << NORMALS_SHIFT);
 
     static @Nullable Direction cullFace(long bits) {
-        return GeometryHelper.faceFromIndex((int) ((bits >> CULL_SHIFT) & DIRECTION_MASK));
+        return QuadGeometry.face((int) ((bits >> CULL_SHIFT) & DIRECTION_MASK));
     }
 
     static long cullFace(long bits, @Nullable Direction face) {
-        return (bits & CULL_INVERSE_MASK) | (GeometryHelper.toFaceIndex(face) << CULL_SHIFT);
+        return (bits & CULL_INVERSE_MASK) | (QuadGeometry.faceIndex(face) << CULL_SHIFT);
     }
 
     static Direction lightFace(long bits) {
-        return GeometryHelper.faceFromIndex((int) ((bits >> LIGHT_SHIFT) & DIRECTION_MASK));
+        return QuadGeometry.face((int) ((bits >> LIGHT_SHIFT) & DIRECTION_MASK));
     }
 
     static long lightFace(long bits, Direction face) {
-        return (bits & LIGHT_INVERSE_MASK) | ((long) GeometryHelper.toFaceIndex(face) << LIGHT_SHIFT);
+        return (bits & LIGHT_INVERSE_MASK) | ((long) QuadGeometry.faceIndex(face) << LIGHT_SHIFT);
     }
 
     /** indicate if vertex normal has been set - bits correspond to vertex ordinals. */

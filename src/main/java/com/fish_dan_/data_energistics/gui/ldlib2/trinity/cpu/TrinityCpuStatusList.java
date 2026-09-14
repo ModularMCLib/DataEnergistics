@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.cpu;
 
-import com.fish_dan_.data_energistics.client.util.TrinityAmountFormatter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuStatus;
+import com.fish_dan_.data_energistics.util.AmountFormatter;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
@@ -463,7 +463,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
         if (storage == Long.MAX_VALUE) {
             return Component.translatable(UNLIMITED_KEY);
         }
-        return Component.literal(TrinityAmountFormatter.format(storage));
+        return Component.literal(AmountFormatter.format(storage));
     }
 
     private static Component formatCoProcessors(int coProcessors) {

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
-import com.fish_dan_.data_energistics.client.util.PinyinUtil;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
+import com.fish_dan_.data_energistics.util.TextSearch;
 
 import net.minecraft.resources.ResourceLocation;
 
@@ -28,7 +28,7 @@ final class PatternProviderDisplayOrder {
                                                                               PatternProviderSearchContext searchContext,
                                                                               Function<ResourceLocation, String> defaultNameResolver,
                                                                               Function<ResourceLocation, ObjectList<String>> recipeTypeNameResolver) {
-        String normalizedQuery = PinyinUtil.normalizeSearch(query);
+        String normalizedQuery = TextSearch.normalize(query);
         if (normalizedQuery.isEmpty() && !searchContext.hasRecipeReference()) {
             return providerState.providers();
         }

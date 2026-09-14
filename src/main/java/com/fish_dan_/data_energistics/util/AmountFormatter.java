@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.util;
+package com.fish_dan_.data_energistics.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -16,7 +16,7 @@ import java.util.Locale;
  * capacities remain representable without falling back to AE2's binary byte units.
  * </p>
  */
-public final class TrinityAmountFormatter {
+public final class AmountFormatter {
 
     private static final BigInteger UNIT_BASE = BigInteger.valueOf(1_000L);
     private static final String[] COMPACT_UNITS = {
@@ -26,7 +26,7 @@ public final class TrinityAmountFormatter {
     };
     private static final BigDecimal SCIENTIFIC_THRESHOLD = new BigDecimal(UNIT_BASE.pow(COMPACT_UNITS.length));
 
-    private TrinityAmountFormatter() {}
+    private AmountFormatter() {}
 
     /**
      * Parses and formats one signed decimal integer.

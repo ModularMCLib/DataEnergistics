@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fish_dan_.data_energistics.client.util.quad;
+package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.client.model.quad.QuadView;
 
@@ -33,9 +33,9 @@ import org.jspecify.annotations.Nullable;
  * Renderers are not required to use these helpers, but they were designed to be usable without the default renderer.
  */
 @UtilityClass
-public class GeometryHelper {
+public class QuadGeometry {
 
-    /** Result from {@link #toFaceIndex(Direction)} for null values. */
+    /** Result from {@link #faceIndex(Direction)} for null values. */
     public static final int NULL_FACE_ID = 6;
     private static final Direction[] DIRECTIONS_WITH_NULL = {
             Direction.DOWN,
@@ -49,17 +49,17 @@ public class GeometryHelper {
 
     /**
      * Convenient way to encode faces that may be null. Null is returned as {@link #NULL_FACE_ID}.
-     * Use {@link #faceFromIndex(int)} to retrieve encoded face.
+     * Use {@link #face(int)} to retrieve encoded face.
      */
-    public static int toFaceIndex(@Nullable Direction face) {
+    public static int faceIndex(@Nullable Direction face) {
         return face == null ? NULL_FACE_ID : face.get3DDataValue();
     }
 
     /**
-     * Use to decode a result from {@link #toFaceIndex(Direction)}. Return value will be null if encoded value was null.
+     * Use to decode a result from {@link #faceIndex(Direction)}. Return value will be null if encoded value was null.
      */
     @Contract("null -> null")
-    public static @Nullable Direction faceFromIndex(int faceIndex) {
+    public static @Nullable Direction face(int faceIndex) {
         return DIRECTIONS_WITH_NULL[faceIndex];
     }
 
@@ -72,7 +72,7 @@ public class GeometryHelper {
      */
     public static Direction lightFace(QuadView quad) {
         final Vector3f normal = quad.faceNormal();
-        return switch (GeometryHelper.longestAxis(normal)) {
+        return switch (QuadGeometry.longestAxis(normal)) {
             case X -> normal.x() > 0 ? Direction.EAST : Direction.WEST;
             case Y -> normal.y() > 0 ? Direction.UP : Direction.DOWN;
             case Z -> normal.z() > 0 ? Direction.SOUTH : Direction.NORTH;
@@ -129,7 +129,7 @@ public class GeometryHelper {
      * <p>
      * Components are x, y, z, w - zero based.
      */
-    public static float getPackedNormalComponent(int packedNormal, int component) {
+    public static float normalComponent(int packedNormal, int component) {
         return ((byte) (packedNormal >> (8 * component))) / 127f;
     }
 
@@ -142,10 +142,10 @@ public class GeometryHelper {
      * Will work with triangles also. Assumes counter-clockwise winding order, which is the norm. Expects convex quads
      * with all points co-planar.
      */
-    public static void computeFaceNormal(Vector3f saveTo, QuadView q) {
+    public static void computeNormal(Vector3f saveTo, QuadView q) {
         final Direction nominalFace = q.nominalFace();
 
-        if (isQuadParallelToFace(nominalFace, q)) {
+        if (isParallelToFace(nominalFace, q)) {
             Vec3i vec = nominalFace.getNormal();
             saveTo.set(vec.getX(), vec.getY(), vec.getZ());
             return;
@@ -190,7 +190,7 @@ public class GeometryHelper {
      * Returns true if quad is parallel to the given face. Does not validate quad winding order. Expects convex quads
      * with all points co-planar.
      */
-    public static boolean isQuadParallelToFace(@Nullable Direction face, QuadView quad) {
+    public static boolean isParallelToFace(@Nullable Direction face, QuadView quad) {
         if (face == null) {
             return false;
         }

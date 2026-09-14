@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.registry;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
+import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerBlockEntity;
@@ -23,6 +24,7 @@ import com.fish_dan_.data_energistics.item.powered.cannon.storage.CannonCellMenu
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumMenuHost;
 import com.fish_dan_.data_energistics.menu.beam.BeamFormerMenu;
 import com.fish_dan_.data_energistics.menu.crafting.tree.CraftingPlanTreeMenu;
+import com.fish_dan_.data_energistics.menu.ioport.DataIoPortMenu;
 import com.fish_dan_.data_energistics.menu.machine.DataAsynchronousProcessingFactoryMenu;
 import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.menu.machine.DataExtractorMenu;
@@ -106,6 +108,10 @@ public final class DEMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<DataIntegratedChargerMenu>> DATA_INTEGRATED_CHARGER = MENUS.register("data_integrated_charger", () -> MenuTypeBuilder
             .create(DataIntegratedChargerMenu::new, DataIntegratedChargerBlockEntity.class)
             .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "data_integrated_charger")));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<DataIoPortMenu>> DATA_IO_PORT = MENUS.register("data_io_port", () -> MenuTypeBuilder
+            .create(DataIoPortMenu::new, DataIoPortBlockEntity.class)
+            .buildUnregistered(Data_Energistics.id("data_io_port")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<TrinityDataCoreMenu>> TRINITY_DATA_CORE = MENUS.register("trinity_data_core", () -> IMenuTypeExtension.create((id, playerInventory, data) -> {
         var pos = data.readBlockPos();

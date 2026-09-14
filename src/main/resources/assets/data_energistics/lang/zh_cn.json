@@ -23,6 +23,7 @@
 	"block.data_energistics.data_extractor": "数据提取仪",
 	"block.data_energistics.data_framework": "数据框架",
 	"block.data_energistics.data_integrated_charger": "数据充压一体机",
+	"block.data_energistics.data_io_port": "数据 IO 端口",
 	"block.data_energistics.data_meteorite_0": "开裂数位化陨石",
 	"block.data_energistics.data_meteorite_1": "裂纹数位化陨石",
 	"block.data_energistics.data_meteorite_2": "碎裂数位化陨石",

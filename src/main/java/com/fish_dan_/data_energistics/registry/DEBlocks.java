@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.block.beam.BeamFormerBlock;
 import com.fish_dan_.data_energistics.block.decor.DollBlock;
 import com.fish_dan_.data_energistics.block.explosive.DataNukeBlock;
 import com.fish_dan_.data_energistics.block.explosive.TntConfigurableBlock;
+import com.fish_dan_.data_energistics.block.ioport.DataIoPortBlock;
 import com.fish_dan_.data_energistics.block.machine.DataAsynchronousProcessingFactoryBlock;
 import com.fish_dan_.data_energistics.block.machine.DataChargerBlock;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock;
@@ -212,6 +213,10 @@ public final class DEBlocks {
             DataIntegratedChargerBlock::new,
             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
                     .noOcclusion());
+
+    public static final DeferredBlock<DataIoPortBlock> DATA_IO_PORT = BLOCKS.registerBlock(
+            "data_io_port", DataIoPortBlock::new,
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK));
 
     public static final DeferredBlock<EnergyCellBlock> DATA_ENERGY_CELL = BLOCKS.registerBlock(
             "data_energy_cell",

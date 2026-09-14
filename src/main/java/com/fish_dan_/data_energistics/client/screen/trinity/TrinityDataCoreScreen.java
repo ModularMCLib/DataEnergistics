@@ -14,15 +14,15 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 /** Vanilla container shell whose complete presentation and interaction tree is owned by LDLib2. */
 public class TrinityDataCoreScreen extends AbstractContainerScreen<TrinityDataCoreMenu> {
 
     private static final double SWEEP_SAMPLE_DISTANCE = 8.0D;
 
-    private final Set<Integer> quickMoveSweepSlots = new LinkedHashSet<>();
+    private final IntSet quickMoveSweepSlots = new IntLinkedOpenHashSet();
     private boolean quickMoveSweepActive;
     private double previousSweepMouseX;
     private double previousSweepMouseY;

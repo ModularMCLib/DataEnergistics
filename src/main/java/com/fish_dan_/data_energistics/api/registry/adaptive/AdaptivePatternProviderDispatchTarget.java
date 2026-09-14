@@ -18,6 +18,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -66,8 +72,20 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Position of the host block or cable bus. */
     BlockPos providerPos();
 
-    /** Returns adjacent sides after filtering same-grid provider connections. */
+    /**
+     * Returns adjacent sides after filtering same-grid provider connections.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #targetSidesFast()}
+     */
+    @Deprecated(forRemoval = true)
     List<Direction> targetSides();
+
+    /** Returns adjacent target sides through the FastUtil collection API. */
+    @SuppressWarnings("unchecked")
+    default ObjectList<Direction> targetSidesFast() {
+        List<Direction> legacy = targetSides();
+        return legacy instanceof ObjectList<?> fast ? (ObjectList<Direction>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
+    }
 
     /** Notifies AE2 of a successful custom dispatch; call once after accepting its inputs. */
     void patternSuccess(IPatternDetails patternDetails);
@@ -89,8 +107,20 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Returns whether AE2 Blocking Mode currently rejects a target. */
     boolean isBlocking();
 
-    /** Returns normalized pattern input keys used by Blocking Mode. */
+    /**
+     * Returns normalized pattern input keys used by Blocking Mode.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #patternInputsFast()}
+     */
+    @Deprecated(forRemoval = true)
     Set<AEKey> patternInputs();
+
+    /** Returns normalized pattern inputs through the FastUtil collection API. */
+    @SuppressWarnings("unchecked")
+    default ObjectSet<AEKey> patternInputsFast() {
+        Set<AEKey> legacy = patternInputs();
+        return legacy instanceof ObjectSet<?> fast ? (ObjectSet<AEKey>) fast : ObjectSets.unmodifiable(new ObjectOpenHashSet<>(legacy));
+    }
 
     /** Resolves a target at an adjacent block while excluding nested providers. */
     @Nullable
@@ -121,11 +151,35 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Returns whether the optional returned-item filter is enabled. */
     boolean isFilteredImportEnabled();
 
-    /** Returns keys currently tracked by the adaptive crafting watcher. */
+    /**
+     * Returns keys currently tracked by the adaptive crafting watcher.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #trackedCraftsFast()}
+     */
+    @Deprecated(forRemoval = true)
     Set<AEKey> trackedCrafts();
 
-    /** Returns decoded pattern outputs used by optional returned-item filters. */
+    /** Returns tracked craft keys through the FastUtil collection API. */
+    @SuppressWarnings("unchecked")
+    default ObjectSet<AEKey> trackedCraftsFast() {
+        Set<AEKey> legacy = trackedCrafts();
+        return legacy instanceof ObjectSet<?> fast ? (ObjectSet<AEKey>) fast : ObjectSets.unmodifiable(new ObjectOpenHashSet<>(legacy));
+    }
+
+    /**
+     * Returns decoded pattern outputs used by optional returned-item filters.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #outputCacheFast()}
+     */
+    @Deprecated(forRemoval = true)
     Set<AEKey> outputCache();
+
+    /** Returns decoded output keys through the FastUtil collection API. */
+    @SuppressWarnings("unchecked")
+    default ObjectSet<AEKey> outputCacheFast() {
+        Set<AEKey> legacy = outputCache();
+        return legacy instanceof ObjectSet<?> fast ? (ObjectSet<AEKey>) fast : ObjectSets.unmodifiable(new ObjectOpenHashSet<>(legacy));
+    }
 
     /** Returns whether one native pattern has an unoccupied reusable slot. */
     boolean hasAvailableNativeSlot(IPatternDetails patternDetails);
@@ -145,8 +199,20 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Returns the installed speed-card count used by a registered reusable route. */
     int installedSpeedCardCount();
 
-    /** Returns the provider-owned connector links in stable configured order. */
+    /**
+     * Returns the provider-owned connector links in stable configured order.
+     *
+     * @deprecated scheduled for removal in plan 340; use {@link #connectorBindingsFast()}
+     */
+    @Deprecated(forRemoval = true)
     List<ConnectorLink> connectorBindings();
+
+    /** Returns configured connector links through the FastUtil collection API. */
+    @SuppressWarnings("unchecked")
+    default ObjectList<ConnectorLink> connectorBindingsFast() {
+        List<ConnectorLink> legacy = connectorBindings();
+        return legacy instanceof ObjectList<?> fast ? (ObjectList<ConnectorLink>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
+    }
 
     /**
      * Returns or creates state owned by the current registration.

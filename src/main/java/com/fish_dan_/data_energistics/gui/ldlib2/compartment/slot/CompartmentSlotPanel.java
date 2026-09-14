@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.compartment.slot;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeItemSlot;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeMenuBridge;
@@ -13,10 +15,9 @@ import appeng.menu.SlotSemantic;
 import net.minecraft.world.inventory.Slot;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -117,9 +118,9 @@ public final class CompartmentSlotPanel {
                 slotTop,
                 panelId,
                 slotIdPrefix);
-        List<Slot> orderedSlots = new ArrayList<>(rowSemantics.size() * columns);
-        Set<SlotSemantic> distinctSemantics = Collections.newSetFromMap(new IdentityHashMap<>());
-        Set<Slot> distinctSlots = Collections.newSetFromMap(new IdentityHashMap<>());
+        List<Slot> orderedSlots = new ObjectArrayList<>(rowSemantics.size() * columns);
+        Set<SlotSemantic> distinctSemantics = new ReferenceOpenHashSet<>();
+        Set<Slot> distinctSlots = new ReferenceOpenHashSet<>();
         for (int row = 0; row < rowSemantics.size(); row++) {
             SlotSemantic semantic = rowSemantics.get(row);
             if (semantic == null || !distinctSemantics.add(semantic)) {
@@ -239,7 +240,7 @@ public final class CompartmentSlotPanel {
     }
 
     private static void validateSlotOrder(List<Slot> slots, SlotSemantic semantic, int firstMenuIndex) {
-        Set<Slot> identities = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Slot> identities = new ReferenceOpenHashSet<>();
         for (int index = 0; index < slots.size(); index++) {
             Slot slot = slots.get(index);
             if (!identities.add(slot)) {

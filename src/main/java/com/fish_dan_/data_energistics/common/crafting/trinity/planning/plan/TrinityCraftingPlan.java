@@ -13,6 +13,9 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
@@ -43,7 +46,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
     private final Map<TrinityPatternIdentity, BigInteger> patternFirings;
     private final Map<AEKey, BigInteger> plannedOutputs;
     private final List<TrinityPlanStage> stages;
-    private final List<Integer> stageOrder;
+    private final IntList stageOrder;
     private final List<TrinityCycleRepeatBlock> cycleRepeatBlocks;
     private final Map<AEKey, BigInteger> minimumSeed;
     private final Map<AEKey, BigInteger> targetNetChange;
@@ -165,7 +168,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
         return Collections.unmodifiableList(source);
     }
 
-    private static List<Integer> validateStageOrder(List<Integer> source, List<TrinityPlanStage> stages) {
+    private static IntList validateStageOrder(IntList source, List<TrinityPlanStage> stages) {
         if (source.size() != stages.size()) {
             throw new IllegalStateException("A Trinity plan stage order must contain every stage");
         }
@@ -181,7 +184,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
                 throw new IllegalArgumentException("A Trinity plan stage order must be complete and topological");
             }
         }
-        return Collections.unmodifiableList(source);
+        return IntLists.unmodifiable(new IntArrayList(source));
     }
 
     private static List<TrinityCycleRepeatBlock> validateRepeatBlocks(
@@ -314,7 +317,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
     private static void validateExecutionBalances(
                                                   Map<AEKey, BigInteger> initialInputs,
                                                   List<TrinityPlanStage> stages,
-                                                  List<Integer> stageOrder,
+                                                  IntList stageOrder,
                                                   List<TrinityCycleRepeatBlock> repeatBlocks) {
         Int2ObjectOpenHashMap<TrinityPlanStage> stagesByIndex = new Int2ObjectOpenHashMap<>();
         stages.forEach(stage -> stagesByIndex.put(stage.index(), stage));
@@ -338,7 +341,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
             if (!completedBlocks.add(block.index())) {
                 continue;
             }
-            if (!block.stageOrder().getFirst().equals(stageIndex)) {
+            if (block.stageOrder().getInt(0) != stageIndex) {
                 throw new IllegalArgumentException(
                         "A Trinity repeat block must first appear in its declared stage order");
             }
@@ -510,7 +513,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
     /**
      * @return deterministic topological stage order
      */
-    public List<Integer> stageOrder() {
+    public IntList stageOrder() {
         return this.stageOrder;
     }
 
@@ -571,7 +574,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
         private Map<AEKey, BigInteger> initialExpectedInputs = Map.of();
         private Map<TrinityPatternIdentity, BigInteger> patternFirings = Map.of();
         private List<TrinityPlanStage> stages = List.of();
-        private List<Integer> stageOrder = List.of();
+        private IntList stageOrder = IntList.of();
         private List<TrinityCycleRepeatBlock> cycleRepeatBlocks = List.of();
         private Map<AEKey, BigInteger> minimumSeed = Map.of();
         private Map<AEKey, BigInteger> targetNetChange = Map.of();
@@ -666,7 +669,7 @@ public final class TrinityCraftingPlan implements TrinityCpuExecutablePlan {
          * @param value deterministic topological stage order
          * @return this builder
          */
-        public Builder stageOrder(List<Integer> value) {
+        public Builder stageOrder(IntList value) {
             this.stageOrder = value;
             return this;
         }

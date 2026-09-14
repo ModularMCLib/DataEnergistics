@@ -7,9 +7,10 @@ import appeng.api.stacks.AEItemKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -108,8 +109,8 @@ public final class MultiblockPreviewSpec {
     private static List<SubstructurePreviewSpec> copySubstructures(
                                                                    ResourceLocation controllerId,
                                                                    List<SubstructurePreviewSpec> substructures) {
-        List<SubstructurePreviewSpec> copy = new ArrayList<>(substructures);
-        Set<String> ids = new HashSet<>();
+        List<SubstructurePreviewSpec> copy = new ObjectArrayList<>(substructures);
+        Set<String> ids = new ObjectOpenHashSet<>();
         for (SubstructurePreviewSpec substructure : copy) {
             if (substructure == null) {
                 throw new IllegalArgumentException("Multiblock preview substructures cannot contain null");

@@ -16,10 +16,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -109,7 +109,7 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
     }
 
     private static List<Component> tooltip(TrinityDataCoreStorageStatus status) {
-        List<Component> lines = new ArrayList<>();
+        List<Component> lines = new ObjectArrayList<>();
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.amount_exact",
                 TrinityAmountFormatter.format(status.totalAmount()),

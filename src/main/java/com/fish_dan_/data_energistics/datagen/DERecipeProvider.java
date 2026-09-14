@@ -21,9 +21,9 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 
 import com.glodblock.github.appflux.common.AFSingletons;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -107,7 +107,7 @@ public class DERecipeProvider extends RecipeProvider {
 
     private static class IntegratedChargerBuilder {
 
-        private final List<DataChargePressIngredient> inputs = new ArrayList<>();
+        private final List<DataChargePressIngredient> inputs = new ObjectArrayList<>();
         private int fluidAmount;
         private ItemStack itemOutput = ItemStack.EMPTY;
 

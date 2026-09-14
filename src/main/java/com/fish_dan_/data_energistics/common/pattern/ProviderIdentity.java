@@ -38,7 +38,7 @@ public sealed interface ProviderIdentity extends PatternProviderIdentity
         if (identity == null) {
             throw new IllegalStateException(role + " returned a null external provider identity");
         }
-        return new External(identity.type(), identity.schemaVersion(), identity.canonicalFields());
+        return new External(identity.type(), identity.schemaVersion(), identity.canonicalFieldsFast());
     }
 
     /**

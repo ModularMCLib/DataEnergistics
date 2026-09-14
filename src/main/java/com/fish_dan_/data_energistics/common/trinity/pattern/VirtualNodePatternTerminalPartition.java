@@ -17,9 +17,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -115,7 +115,7 @@ public final class VirtualNodePatternTerminalPartition implements TrinityPattern
             return List.of();
         }
         PatternContainerGroup sharedGroup = copyGroup(group);
-        ArrayList<TrinityPatternTerminalPartition> partitions = new ArrayList<>();
+        ObjectArrayList<TrinityPatternTerminalPartition> partitions = new ObjectArrayList<>();
         int globalPartitionIndex = 0;
         for (TrinityPatternCatalog.CoreRange range : layout.ranges()) {
             TrinityPatternCatalog.CoreMount mount = range.mount();

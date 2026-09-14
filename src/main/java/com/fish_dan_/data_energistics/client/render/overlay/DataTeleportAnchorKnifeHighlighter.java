@@ -31,9 +31,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -298,7 +298,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
             return cachedAnchorPositions;
         }
 
-        List<BlockPos> anchors = new ArrayList<>();
+        List<BlockPos> anchors = new ObjectArrayList<>();
         for (int chunkX = centerChunkX - chunkRadius; chunkX <= centerChunkX + chunkRadius; chunkX++) {
             for (int chunkZ = centerChunkZ - chunkRadius; chunkZ <= centerChunkZ + chunkRadius; chunkZ++) {
                 if (!level.hasChunk(chunkX, chunkZ)) {

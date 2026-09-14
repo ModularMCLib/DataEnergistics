@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.IServerDataProvider;
@@ -21,7 +22,6 @@ import snownee.jade.api.config.IPluginConfig;
 import snownee.jade.api.ui.IElement;
 import snownee.jade.api.ui.IElementHelper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataChargerJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
@@ -93,7 +93,7 @@ public class DataChargerJadeProvider implements IBlockComponentProvider, IServer
 
     private static List<ItemStack> readStacks(BlockAccessor accessor, CompoundTag serverData) {
         int slotCount = Math.min(serverData.getInt(TAG_SLOT_COUNT), DataChargerBlockEntity.EXTENDED_SLOT_COUNT);
-        List<ItemStack> stacks = new ArrayList<>(slotCount);
+        List<ItemStack> stacks = new ObjectArrayList<>(slotCount);
         for (int slot = 0; slot < slotCount; slot++) {
             Tag stackTag = serverData.get(TAG_STACK_PREFIX + slot);
             ItemStack stack = stackTag == null ? ItemStack.EMPTY : accessor.decodeFromNbt(ItemStack.OPTIONAL_STREAM_CODEC, stackTag).orElse(ItemStack.EMPTY);
@@ -122,7 +122,7 @@ public class DataChargerJadeProvider implements IBlockComponentProvider, IServer
 
     private static void appendStoredItems(ITooltip tooltip, List<ItemStack> stacks) {
         IElementHelper elements = IElementHelper.get();
-        List<IElement> line = new ArrayList<>();
+        List<IElement> line = new ObjectArrayList<>();
         line.add(elements.text(Component.translatable("jade.data_energistics.data_charger.stored_items")));
         for (ItemStack stack : stacks) {
             if (!stack.isEmpty()) {

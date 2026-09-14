@@ -28,9 +28,10 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 public final class MeteoritePlacer {
@@ -46,7 +47,7 @@ public final class MeteoritePlacer {
     private final List<BlockState> certusMotherRocks;
     private final List<BlockState> dataMotherRocks;
     private final List<BlockState> quartzGrowthStages;
-    private final Map<Long, CoreColumnData> coreColumns = new HashMap<>();
+    private final Long2ObjectMap<CoreColumnData> coreColumns = new Long2ObjectOpenHashMap<>();
     private final MeteoriteBlockPutter putter = new MeteoriteBlockPutter();
     private final WorldGenLevel level;
     private final RandomSource random;

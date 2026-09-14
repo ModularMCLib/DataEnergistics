@@ -6,6 +6,9 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
@@ -35,7 +38,7 @@ public record TrinityPatternVariant(
                                     TrinityPatternIdentity patternIdentity,
                                     AEKey primaryOutput,
                                     int ordinal,
-                                    List<Integer> alternativeOrdinals,
+                                    IntList alternativeOrdinals,
                                     List<TrinityBoundPatternInput> bindings,
                                     Map<AEKey, BigInteger> inputs,
                                     Map<AEKey, BigInteger> declaredOutputs,
@@ -54,11 +57,11 @@ public record TrinityPatternVariant(
         if (ordinal < 0 || alternativeOrdinals.size() != bindings.size()) {
             throw new IllegalArgumentException("A Trinity pattern variant requires one legal binding per input slot");
         }
-        alternativeOrdinals = List.copyOf(alternativeOrdinals);
+        alternativeOrdinals = IntLists.unmodifiable(new IntArrayList(alternativeOrdinals));
         bindings = List.copyOf(bindings);
         for (int slot = 0; slot < bindings.size(); slot++) {
             TrinityBoundPatternInput binding = bindings.get(slot);
-            int alternative = alternativeOrdinals.get(slot);
+            int alternative = alternativeOrdinals.getInt(slot);
             if (binding.slotIndex() != slot ||
                     binding.alternativeIndex() != alternative) {
                 throw new IllegalArgumentException("A Trinity pattern variant binding order is inconsistent");
@@ -100,7 +103,7 @@ public record TrinityPatternVariant(
     public static TrinityPatternVariant create(TrinityPatternIdentity patternIdentity,
                                                AEKey primaryOutput,
                                                int ordinal,
-                                               List<Integer> alternativeOrdinals,
+                                               IntList alternativeOrdinals,
                                                List<TrinityBoundPatternInput> bindings,
                                                List<GenericStack> declaredOutputs) {
         return create(patternIdentity, primaryOutput, ordinal, alternativeOrdinals, bindings, declaredOutputs, false);
@@ -110,7 +113,7 @@ public record TrinityPatternVariant(
     public static TrinityPatternVariant create(TrinityPatternIdentity patternIdentity,
                                                AEKey primaryOutput,
                                                int ordinal,
-                                               List<Integer> alternativeOrdinals,
+                                               IntList alternativeOrdinals,
                                                List<TrinityBoundPatternInput> bindings,
                                                List<GenericStack> declaredOutputs,
                                                boolean requiresExactBinding) {
@@ -119,7 +122,7 @@ public record TrinityPatternVariant(
     }
 
     public static TrinityPatternVariant create(TrinityPatternIdentity patternIdentity, AEKey primaryOutput,
-                                               int ordinal, List<Integer> alternativeOrdinals,
+                                               int ordinal, IntList alternativeOrdinals,
                                                List<TrinityBoundPatternInput> bindings, List<GenericStack> declaredOutputs,
                                                boolean requiresExactBinding, Map<AEKey, BigInteger> reservations) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();

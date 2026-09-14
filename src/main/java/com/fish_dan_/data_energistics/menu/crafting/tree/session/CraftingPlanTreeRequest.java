@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.menu.crafting.tree.session;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 
 import appeng.api.stacks.AEKey;
@@ -16,13 +18,13 @@ import java.util.UUID;
 public record CraftingPlanTreeRequest(UUID playerId, AEKey target, long amount,
                                       CraftingQuantityMode quantityMode, MenuHostLocator locator,
                                       ISubMenuHost host, @Nullable List<AutoCraftEntry> queue,
-                                      @Nullable List<Integer> requestedSlots) {
+                                      @Nullable IntList requestedSlots) {
 
     public CraftingPlanTreeRequest {
         if (amount <= 0) {
             throw new IllegalArgumentException("A plan-tree request requires a positive amount");
         }
         queue = queue == null ? null : List.copyOf(queue);
-        requestedSlots = requestedSlots == null ? null : List.copyOf(requestedSlots);
+        requestedSlots = requestedSlots == null ? null : IntList.of(requestedSlots.toIntArray());
     }
 }

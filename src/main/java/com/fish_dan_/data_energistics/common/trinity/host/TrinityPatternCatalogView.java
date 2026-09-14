@@ -6,9 +6,9 @@ import net.minecraft.world.item.ItemStack;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +44,7 @@ public record TrinityPatternCatalogView(long layoutRevision,
         if (patterns.size() > PAGE_SIZE || (long) firstGlobalSlot + patterns.size() > slotCount) {
             throw new IllegalArgumentException("Trinity pattern catalog page exceeds its bounded slot range");
         }
-        List<ItemStack> copies = new ArrayList<>(patterns.size());
+        List<ItemStack> copies = new ObjectArrayList<>(patterns.size());
         for (ItemStack pattern : patterns) {
             copies.add(pattern.copy());
         }
@@ -105,7 +105,7 @@ public record TrinityPatternCatalogView(long layoutRevision,
         if (count < 0 || count > PAGE_SIZE) {
             throw new IllegalArgumentException("Invalid synchronized Trinity pattern count: " + count);
         }
-        List<ItemStack> patterns = new ArrayList<>(count);
+        List<ItemStack> patterns = new ObjectArrayList<>(count);
         for (int index = 0; index < count; index++) {
             patterns.add(ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer));
         }

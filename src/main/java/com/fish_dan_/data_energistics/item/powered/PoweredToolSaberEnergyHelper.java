@@ -14,7 +14,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.Tags;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -38,7 +39,7 @@ public final class PoweredToolSaberEnergyHelper {
     }
 
     public static Set<BlockPos> collectTree(Level level, BlockPos startPos, int maxBlocks) {
-        Set<BlockPos> result = new HashSet<>();
+        Set<BlockPos> result = new ObjectOpenHashSet<>();
         if (!isTreeBlock(level.getBlockState(startPos))) {
             return result;
         }
@@ -47,7 +48,7 @@ public final class PoweredToolSaberEnergyHelper {
     }
 
     public static Set<BlockPos> collectOreVein(Level level, BlockPos startPos, int maxBlocks) {
-        Set<BlockPos> result = new HashSet<>();
+        Set<BlockPos> result = new ObjectOpenHashSet<>();
         BlockState startState = level.getBlockState(startPos);
         if (!isOreBlock(startState)) {
             return result;
@@ -59,7 +60,7 @@ public final class PoweredToolSaberEnergyHelper {
 
     private static void floodFill(Level level, BlockPos startPos, int maxBlocks, Set<BlockPos> result,
                                   Predicate<BlockState> predicate) {
-        Set<BlockPos> frontier = new HashSet<>();
+        Set<BlockPos> frontier = new ObjectOpenHashSet<>();
         frontier.add(startPos.immutable());
 
         while (!frontier.isEmpty() && result.size() < maxBlocks) {

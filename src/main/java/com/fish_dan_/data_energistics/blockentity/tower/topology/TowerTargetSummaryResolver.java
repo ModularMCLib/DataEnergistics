@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.tower.topology;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.BoundTargetSummary;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetKind;
@@ -29,12 +31,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,7 +91,7 @@ public final class TowerTargetSummaryResolver {
             return List.of();
         }
 
-        ArrayList<BoundTargetSummary> results = new ArrayList<>();
+        ObjectArrayList<BoundTargetSummary> results = new ObjectArrayList<>();
         for (DisplayTarget target : collectDisplayTargets()) {
             BlockPos pos = target.pos();
             BlockEntity blockEntity = level.getBlockEntity(pos);
@@ -186,7 +188,7 @@ public final class TowerTargetSummaryResolver {
             }
         }
 
-        ArrayList<CableBusDisplayPart> sideParts = new ArrayList<>();
+        ObjectArrayList<CableBusDisplayPart> sideParts = new ObjectArrayList<>();
         for (Direction direction : Direction.values()) {
             IPart part = cableBus.getPart(direction);
             if (part != null) {
@@ -262,7 +264,7 @@ public final class TowerTargetSummaryResolver {
 
         this.context.cleanupInvalidDisplayTargets();
 
-        LinkedHashMap<BlockPos, TargetKind> positions = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<BlockPos, TargetKind> positions = new Object2ObjectLinkedOpenHashMap<>();
 
         for (BlockPos pos : this.context.trackedPositions()) {
             if (!level.getBlockState(pos).isAir()) {
@@ -321,19 +323,19 @@ public final class TowerTargetSummaryResolver {
 
         collapseAeCraftingDisplayTargets(positions);
 
-        ArrayList<DisplayTarget> results = new ArrayList<>(positions.size());
+        ObjectArrayList<DisplayTarget> results = new ObjectArrayList<>(positions.size());
         positions.forEach((pos, kind) -> results.add(new DisplayTarget(pos, kind)));
         results.sort((left, right) -> compareBlockPos(left.pos(), right.pos()));
         return List.copyOf(results);
     }
 
-    private void collapseAeCraftingDisplayTargets(LinkedHashMap<BlockPos, TargetKind> positions) {
+    private void collapseAeCraftingDisplayTargets(Object2ObjectLinkedOpenHashMap<BlockPos, TargetKind> positions) {
         Level level = this.context.level();
         if (level == null || positions.isEmpty()) {
             return;
         }
 
-        ArrayList<BlockPos> craftingPositions = new ArrayList<>();
+        ObjectArrayList<BlockPos> craftingPositions = new ObjectArrayList<>();
         for (Map.Entry<BlockPos, TargetKind> entry : positions.entrySet()) {
             if (entry.getValue() != TargetKind.AE) {
                 continue;
@@ -352,18 +354,18 @@ public final class TowerTargetSummaryResolver {
             return;
         }
 
-        Set<BlockPos> visited = new HashSet<>();
+        Set<BlockPos> visited = new ObjectOpenHashSet<>();
         for (BlockPos startPos : craftingPositions) {
             if (!visited.add(startPos)) {
                 continue;
             }
 
-            ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-            ArrayList<BlockPos> clusterPositions = new ArrayList<>();
-            queue.add(startPos);
+            ObjectArrayFIFOQueue<BlockPos> queue = new ObjectArrayFIFOQueue<>();
+            ObjectArrayList<BlockPos> clusterPositions = new ObjectArrayList<>();
+            queue.enqueue(startPos);
             BlockPos representative = startPos;
             while (!queue.isEmpty()) {
-                BlockPos currentPos = queue.removeFirst();
+                BlockPos currentPos = queue.dequeue();
                 BlockEntity currentEntity = level.getBlockEntity(currentPos);
                 if (compareAeCraftingDisplayTargets(currentPos, representative) < 0) {
                     representative = currentPos;
@@ -382,7 +384,7 @@ public final class TowerTargetSummaryResolver {
                     if (!isAeCraftingClusterComponent(neighbor) && !this.aeCraftingDisplayBridge.isClusterBridge(neighbor)) {
                         continue;
                     }
-                    queue.addLast(neighborPos);
+                    queue.enqueue(neighborPos);
                 }
             }
 

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.compartment;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -73,7 +74,7 @@ public interface CompartmentHost {
      * Returns pattern buffer compartments that expose pattern-buffer-specific storage roles.
      */
     default Collection<PatternBufferCompartmentPart> compartmentHost$getPatternBuffers(String structureName) {
-        List<PatternBufferCompartmentPart> patternBuffers = new ArrayList<>();
+        List<PatternBufferCompartmentPart> patternBuffers = new ObjectArrayList<>();
         for (CompartmentPart part : compartmentHost$getCompartments(structureName, CompartmentType.PATTERN_BUFFER)) {
             if (part instanceof PatternBufferCompartmentPart patternBuffer) {
                 patternBuffers.add(patternBuffer);

@@ -11,8 +11,9 @@ import appeng.api.stacks.AEKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 
@@ -50,7 +51,7 @@ public final class TrinityCraftConfirmCycleTooltip {
             return original;
         }
 
-        ArrayList<Component> lines = new ArrayList<>(original);
+        ObjectArrayList<Component> lines = new ObjectArrayList<>(original);
         if (inventoryUsage.isPresent()) {
             lines.add(detail("inventory_usage", formatPercentage(inventoryUsage.getAsInt())));
         }

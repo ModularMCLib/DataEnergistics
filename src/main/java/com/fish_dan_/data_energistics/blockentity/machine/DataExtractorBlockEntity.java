@@ -81,11 +81,11 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -1372,7 +1372,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return null;
         }
 
-        Set<AEItemKey> markedItems = new HashSet<>();
+        Set<AEItemKey> markedItems = new ObjectOpenHashSet<>();
         var config = viewCellItem.getConfigInventory(viewCell);
         for (int i = 0; i < config.size(); i++) {
             if (config.getKey(i) instanceof AEItemKey itemKey) {

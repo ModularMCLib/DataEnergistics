@@ -2,7 +2,8 @@ package com.fish_dan_.data_energistics.client.screen.trinity;
 
 import com.fish_dan_.data_energistics.client.util.PinyinUtil;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -77,7 +78,7 @@ public final class TrinityPatternSearchMatcher {
      */
     private static List<String> tokenize(String text) {
         String[] splitTokens = text.split(" ");
-        ArrayList<String> tokens = new ArrayList<>(splitTokens.length);
+        ObjectArrayList<String> tokens = new ObjectArrayList<>(splitTokens.length);
         for (String token : splitTokens) {
             if (!token.isBlank()) {
                 tokens.add(token);

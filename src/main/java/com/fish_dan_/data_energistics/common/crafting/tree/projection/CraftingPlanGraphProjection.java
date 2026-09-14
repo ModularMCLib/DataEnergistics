@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.tree.projection;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Cycle;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Edge;
@@ -100,11 +102,11 @@ public final class CraftingPlanGraphProjection {
         private void exact(TrinityCraftingPlan plan) {
             plan.initialExpectedInputs().forEach((key, amount) -> material(key).stored = amount);
             Int2ObjectMap<TrinityCycleRepeatBlock> blocks = new Int2ObjectOpenHashMap<>();
-            plan.cycleRepeatBlocks().forEach(block -> block.stageOrder().forEach(stage -> blocks.put(stage.intValue(), block)));
+            plan.cycleRepeatBlocks().forEach(block -> block.stageOrder().forEach(stage -> blocks.put(stage, block)));
             for (TrinityPlanStage stage : plan.stages()) {
                 TrinityCycleRepeatBlock block = blocks.get(stage.index());
                 BigInteger repetitions = block == null ? BigInteger.ONE : block.repetitions();
-                List<Integer> memberships = block == null ? List.of() : List.of(block.index());
+                    IntList memberships = block == null ? IntList.of() : IntList.of(block.index());
                 for (TrinityPlanPatternFiring firing : stage.firings()) {
                     firing(stage.index(), firing.patternIdentity().publicationEncoding(), firing.variantOrdinal(),
                             firing.primaryOutput(), firing.count().multiply(repetitions), false, memberships,
@@ -118,7 +120,7 @@ public final class CraftingPlanGraphProjection {
         }
 
         private void firing(int stage, String identity, int variant, AEKey primary, BigInteger count,
-                            boolean estimated, List<Integer> memberships, Map<AEKey, BigInteger> inputs,
+                            boolean estimated, IntList memberships, Map<AEKey, BigInteger> inputs,
                             Map<AEKey, BigInteger> outputs, Map<AEKey, BigInteger> remainders) {
             int processId = this.nextId++;
             this.processes.add(new Process(processId, stage, identity, variant, primary, count, estimated, memberships));
@@ -141,7 +143,7 @@ public final class CraftingPlanGraphProjection {
             });
         }
 
-        private void cycle(int id, int ordinal, List<Integer> stages, BigInteger repetitions,
+        private void cycle(int id, int ordinal, IntList stages, BigInteger repetitions,
                            Map<AEKey, BigInteger> seed, Map<AEKey, BigInteger> net) {
             IntSet ids = new IntLinkedOpenHashSet();
             IntSet processIds = new IntLinkedOpenHashSet();
@@ -157,7 +159,7 @@ public final class CraftingPlanGraphProjection {
             }
             seed.keySet().forEach(key -> ids.add(material(key).id));
             net.keySet().forEach(key -> ids.add(material(key).id));
-            this.cycles.add(new Cycle(id, ordinal, List.copyOf(ids), stages, repetitions, seed, net));
+            this.cycles.add(new Cycle(id, ordinal, IntList.of(ids.toIntArray()), stages, repetitions, seed, net));
         }
 
         private void diagnostic(TrinityPlanningDiagnostic diagnostic) {
@@ -181,21 +183,21 @@ public final class CraftingPlanGraphProjection {
             int stage = 0;
             for (TrinityVariantFiring firing : diagnostic.partialPlan()
                     .map(TrinityPlanningDiagnostic.PartialPlan::selectedFirings).orElse(List.of())) {
-                evidenceFiring(stage++, firing, BigInteger.ONE, List.of());
+                evidenceFiring(stage++, firing, BigInteger.ONE, IntList.of());
             }
             // Proven local cycle schedules may be displayed as evidence, never as an executable complete route.
             for (var evidence : diagnostic.cycleEvidence()) {
                 for (TrinityVariantFiring firing : evidence.prefixOrder()) {
-                    evidenceFiring(stage++, firing, BigInteger.ONE, List.of());
+                    evidenceFiring(stage++, firing, BigInteger.ONE, IntList.of());
                 }
                 IntList stages = new IntArrayList();
                 for (TrinityVariantFiring firing : evidence.localOrder()) {
                     int index = stage++;
                     stages.add(index);
-                    evidenceFiring(index, firing, evidence.repetitions(), List.of(evidence.componentIndex()));
+                    evidenceFiring(index, firing, evidence.repetitions(), IntList.of(evidence.componentIndex()));
                 }
                 for (TrinityVariantFiring firing : evidence.suffixOrder()) {
-                    evidenceFiring(stage++, firing, BigInteger.ONE, List.of());
+                    evidenceFiring(stage++, firing, BigInteger.ONE, IntList.of());
                 }
                 cycle(evidence.componentIndex(), this.cycles.size() + 1, stages, evidence.repetitions(),
                         evidence.minimumSeed(), evidence.netChange());
@@ -210,7 +212,7 @@ public final class CraftingPlanGraphProjection {
             evidenceEdges();
         }
 
-        private void evidenceFiring(int stage, TrinityVariantFiring firing, BigInteger repetitions, List<Integer> memberships) {
+        private void evidenceFiring(int stage, TrinityVariantFiring firing, BigInteger repetitions, IntList memberships) {
             var variant = firing.variant();
             Map<AEKey, BigInteger> remainders = new Object2ObjectLinkedOpenHashMap<>(variant.outputs());
             variant.declaredOutputs().forEach((key, amount) -> remainders.merge(key, amount.negate(), BigInteger::add));
@@ -245,7 +247,7 @@ public final class CraftingPlanGraphProjection {
                     }
                 }
                 firing(stage, "ae2-estimate:" + stage, 0, pattern.getPrimaryOutput().what(), count,
-                        true, List.of(), inputs, outputs, Map.of());
+                        true, IntList.of(), inputs, outputs, Map.of());
                 stage++;
             }
             plan.emittedItems().forEach(entry -> {

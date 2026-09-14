@@ -2,10 +2,10 @@ package com.fish_dan_.data_energistics.common.multiblock.vertical;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,7 +21,7 @@ import java.util.Optional;
 public final class VerticalMultiBlockRegistry<S> {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private final Map<String, VerticalMultiBlockDefinition<S>> definitions = new LinkedHashMap<>();
+    private final Map<String, VerticalMultiBlockDefinition<S>> definitions = new Object2ObjectLinkedOpenHashMap<>();
 
     public void register(VerticalMultiBlockDefinition<S> definition) {
         if (this.definitions.containsKey(definition.id())) {

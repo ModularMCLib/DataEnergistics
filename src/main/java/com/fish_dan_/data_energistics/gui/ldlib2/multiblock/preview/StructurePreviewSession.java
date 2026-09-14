@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewCellSnapshot;
@@ -57,7 +59,7 @@ public interface StructurePreviewSession {
     /**
      * Returns the indexes of repeatable pattern units whose legal range contains more than one value.
      */
-    List<Integer> variableRepeatUnits();
+    IntList variableRepeatUnits();
 
     /**
      * Activates an allowed named structure while retaining every structure-local selection.

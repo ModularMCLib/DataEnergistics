@@ -3,7 +3,8 @@ package com.fish_dan_.data_energistics.client.crafting.confirm.table;
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmCyclePalette;
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ final class TrinityCraftConfirmCycleBarLayout {
         }
 
         if (contributions.size() > pixelWidth) {
-            ArrayList<Segment> segments = new ArrayList<>(pixelWidth);
+            ObjectArrayList<Segment> segments = new ObjectArrayList<>(pixelWidth);
             int visibleMemberships = pixelWidth - 1;
             for (int index = 0; index < visibleMemberships; index++) {
                 segments.add(new Segment(
@@ -38,7 +39,7 @@ final class TrinityCraftConfirmCycleBarLayout {
         }
 
         int segmentCount = contributions.size();
-        ArrayList<Segment> segments = new ArrayList<>(segmentCount);
+        ObjectArrayList<Segment> segments = new ObjectArrayList<>(segmentCount);
         for (int index = 0; index < segmentCount; index++) {
             int start = index * pixelWidth / segmentCount;
             int end = (index + 1) * pixelWidth / segmentCount;

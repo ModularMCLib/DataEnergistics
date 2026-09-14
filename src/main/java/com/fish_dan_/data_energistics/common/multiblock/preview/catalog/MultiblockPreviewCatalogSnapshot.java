@@ -2,8 +2,9 @@ package com.fish_dan_.data_energistics.common.multiblock.preview.catalog;
 
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -23,7 +24,7 @@ public record MultiblockPreviewCatalogSnapshot(
         if (definitionRevision < 0L || specs == null) {
             throw new IllegalArgumentException("Invalid multiblock preview catalog snapshot");
         }
-        LinkedHashMap<ResourceLocation, MultiblockPreviewSpec> copy = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<ResourceLocation, MultiblockPreviewSpec> copy = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<ResourceLocation, MultiblockPreviewSpec> entry : specs.entrySet()) {
             ResourceLocation controllerId = entry.getKey();
             MultiblockPreviewSpec spec = entry.getValue();

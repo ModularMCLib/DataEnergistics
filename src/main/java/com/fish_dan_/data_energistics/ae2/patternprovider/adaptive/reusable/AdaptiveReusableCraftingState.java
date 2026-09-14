@@ -198,9 +198,10 @@ public final class AdaptiveReusableCraftingState {
                 return prepared.count();
             }
 
+            @SuppressWarnings("removal")
             @Override
             public List<SlotStack> physicalInputs() {
-                return prepared.physicalInputs();
+                return prepared.physicalInputsFast();
             }
 
             @Override
@@ -232,7 +233,7 @@ public final class AdaptiveReusableCraftingState {
 
     private static ReusableCraftingRequest bounded(ReusableCraftingRequest request, long count, List<SlotStack> tools) {
         return new ReusableCraftingRequest(request.sessionId(), request.jobId(), request.cpuOwner(), request.sequence(), request.target(),
-                request.pattern(), request.inputs(), tools, count, request.recipeId(), request.actionSource(), request.level());
+                request.pattern(), request.inputsFast(), tools, count, request.recipeId(), request.actionSource(), request.level());
     }
 
     private static List<SlotStack> requiredTools(ReusableCraftingRequest request, PersistentReusableCraftingEndpoint endpoint,
@@ -242,10 +243,10 @@ public final class AdaptiveReusableCraftingState {
         if (current.isPresent()) {
             ReusableCraftingSessionView view = current.orElseThrow();
             reserved = Math.addExact(reserved, view.accepted() - view.completed() - view.cancelled());
-            held = view.heldTools();
+            held = view.heldToolsFast();
         }
         ObjectArrayList<SlotStack> result = new ObjectArrayList<>();
-        for (var input : request.inputs()) {
+        for (var input : request.inputsFast()) {
             if (input.tool().isEmpty()) {
                 continue;
             }
@@ -263,7 +264,7 @@ public final class AdaptiveReusableCraftingState {
                         needed -= Math.min(needed, asset.stack().amount());
                     }
                 }
-                for (SlotStack offered : request.offeredTools()) {
+                for (SlotStack offered : request.offeredToolsFast()) {
                     if (needed == 0) {
                         break;
                     }
@@ -282,7 +283,7 @@ public final class AdaptiveReusableCraftingState {
                     needed = subtractCapacity(needed, asset.stack().amount(), uses);
                 }
             }
-            for (SlotStack offered : request.offeredTools()) {
+            for (SlotStack offered : request.offeredToolsFast()) {
                 if (needed == 0) {
                     break;
                 }

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.reusable.alltheores;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
@@ -60,6 +62,6 @@ public final class AllTheOresReusableInputs implements DataEnergisticsPlugin, Re
         if (stack.getMaxDamage() <= 0 || stack.getDamageValue() >= stack.getMaxDamage()) {
             return Optional.empty();
         }
-        return Optional.of(ReusableInputRule.fixedDamage(ID, 1L, key, 1, stack.getMaxDamage(), List.of()));
+        return Optional.of(ReusableInputRule.fixedDamageFast(ID, 1L, key, 1, stack.getMaxDamage(), ObjectList.of()));
     }
 }

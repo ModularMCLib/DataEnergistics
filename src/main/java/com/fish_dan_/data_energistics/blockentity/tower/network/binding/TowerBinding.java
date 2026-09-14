@@ -5,7 +5,8 @@ import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerDevi
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.Set;
 
 /**
@@ -64,7 +65,7 @@ public record TowerBinding(ResourceLocation dimensionId,
      * @return updated binding
      */
     public TowerBinding withDeviceDisabled(TowerDeviceKey deviceKey, boolean disabled) {
-        HashSet<TowerDeviceKey> nextKeys = new HashSet<>(this.disabledDeviceKeys);
+        ObjectOpenHashSet<TowerDeviceKey> nextKeys = new ObjectOpenHashSet<>(this.disabledDeviceKeys);
         if (disabled) {
             nextKeys.add(deviceKey);
         } else {

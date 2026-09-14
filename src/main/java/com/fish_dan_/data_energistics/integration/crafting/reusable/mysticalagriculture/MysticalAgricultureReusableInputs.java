@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.reusable.mysticalagriculture;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
@@ -70,7 +72,7 @@ public final class MysticalAgricultureReusableInputs implements DataEnergisticsP
             return Optional.empty();
         }
         int exhaustion = Math.addExact(stack.getMaxDamage(), 1);
-        return Optional.of(ReusableInputRule.fixedDamage(ID, 1L, key, 1, exhaustion, List.of()));
+        return Optional.of(ReusableInputRule.fixedDamageFast(ID, 1L, key, 1, exhaustion, ObjectList.of()));
     }
 
     private static boolean isCrystal(Item item) {

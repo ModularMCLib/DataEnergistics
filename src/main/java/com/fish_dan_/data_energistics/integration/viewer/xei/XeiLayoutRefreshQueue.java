@@ -6,7 +6,8 @@ import com.fish_dan_.data_energistics.client.runtime.ClientThreadHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -16,7 +17,7 @@ import java.util.function.BooleanSupplier;
  */
 public final class XeiLayoutRefreshQueue {
 
-    private static final Map<Object, RefreshRequest> PENDING = new LinkedHashMap<>();
+    private static final Map<Object, RefreshRequest> PENDING = new Object2ObjectLinkedOpenHashMap<>();
 
     private XeiLayoutRefreshQueue() {}
 

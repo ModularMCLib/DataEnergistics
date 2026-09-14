@@ -23,7 +23,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataMimeticFieldScreen extends UpgradeableScreen<DataMimeticFieldMenu> {
@@ -93,7 +94,7 @@ public class DataMimeticFieldScreen extends UpgradeableScreen<DataMimeticFieldMe
     @Override
     protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         if (this.menu.getCarried().isEmpty() && isEmptyKeySlot(this.hoveredSlot)) {
-            List<Component> tooltip = new ArrayList<>();
+            List<Component> tooltip = new ObjectArrayList<>();
             tooltip.add(Component.translatable("screen.data_energistics.data_reassembler.key.empty"));
             tooltip.add(Component.literal(this.menu.keyInputAmount + " / " + this.menu.getKeyInputCapacity())
                     .withStyle(Tooltips.NORMAL_TOOLTIP_TEXT));
@@ -102,7 +103,7 @@ public class DataMimeticFieldScreen extends UpgradeableScreen<DataMimeticFieldMe
         }
 
         if (this.menu.getCarried().isEmpty() && isKeySlot(this.hoveredSlot)) {
-            List<Component> tooltip = new ArrayList<>(this.getTooltipFromContainerItem(this.hoveredSlot.getItem()));
+            List<Component> tooltip = new ObjectArrayList<>(this.getTooltipFromContainerItem(this.hoveredSlot.getItem()));
             GenericStack stack = GenericStack.fromItemStack(this.hoveredSlot.getItem());
             long amount = stack != null ? stack.amount() : 0L;
             tooltip.add(Component.literal(amount + " / " + this.menu.getKeyInputCapacity())

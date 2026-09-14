@@ -21,7 +21,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataMimeticFieldMenu extends UpgradeableMenu<DataMimeticFieldBlockEntity> implements IOptionalSlotHost, IProgressProvider {
@@ -120,7 +121,7 @@ public class DataMimeticFieldMenu extends UpgradeableMenu<DataMimeticFieldBlockE
     }
 
     public List<Direction> getOutputSides() {
-        List<Direction> sides = new ArrayList<>();
+        List<Direction> sides = new ObjectArrayList<>();
         for (Direction side : Direction.values()) {
             if ((this.outputSidesMask & (1 << side.ordinal())) != 0) {
                 sides.add(side);

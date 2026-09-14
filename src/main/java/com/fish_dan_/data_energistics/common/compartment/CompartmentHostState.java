@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.common.compartment;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,10 +12,10 @@ import java.util.Map;
  */
 public final class CompartmentHostState {
 
-    private final Map<String, List<CompartmentPart>> compartments = new LinkedHashMap<>();
+    private final Map<String, List<CompartmentPart>> compartments = new Object2ObjectLinkedOpenHashMap<>();
 
     public void addCompartment(String structureName, CompartmentPart part) {
-        List<CompartmentPart> parts = this.compartments.computeIfAbsent(structureName, ignored -> new ArrayList<>());
+        List<CompartmentPart> parts = this.compartments.computeIfAbsent(structureName, ignored -> new ObjectArrayList<>());
         if (!parts.contains(part)) {
             parts.add(part);
         }

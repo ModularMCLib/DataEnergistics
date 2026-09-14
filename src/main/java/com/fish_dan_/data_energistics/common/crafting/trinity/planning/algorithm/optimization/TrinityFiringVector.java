@@ -2,10 +2,11 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,16 +37,16 @@ public final class TrinityFiringVector implements Comparable<TrinityFiringVector
         if (domain == null || domain.isEmpty() || firings == null) {
             throw new IllegalArgumentException("A Trinity firing vector requires a non-empty domain and firing map");
         }
-        List<TrinityPatternVariant> orderedVariants = new ArrayList<>(domain);
+        List<TrinityPatternVariant> orderedVariants = new ObjectArrayList<>(domain);
         if (orderedVariants.stream().anyMatch(variant -> variant == null)) {
             throw new IllegalArgumentException("A Trinity firing vector domain cannot contain null variants");
         }
         Collections.sort(orderedVariants);
-        Set<TrinityPatternVariant> uniqueVariants = new HashSet<>(orderedVariants);
+        Set<TrinityPatternVariant> uniqueVariants = new ObjectOpenHashSet<>(orderedVariants);
         if (uniqueVariants.size() != orderedVariants.size() || !uniqueVariants.containsAll(firings.keySet())) {
             throw new IllegalArgumentException("A Trinity firing vector requires a unique complete variant domain");
         }
-        List<BigInteger> orderedCounts = new ArrayList<>(orderedVariants.size());
+        List<BigInteger> orderedCounts = new ObjectArrayList<>(orderedVariants.size());
         for (TrinityPatternVariant variant : orderedVariants) {
             BigInteger count = firings.getOrDefault(variant, BigInteger.ZERO);
             if (count == null || count.signum() < 0) {

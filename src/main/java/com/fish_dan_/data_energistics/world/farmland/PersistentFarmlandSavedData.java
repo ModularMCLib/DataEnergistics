@@ -12,14 +12,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import java.util.HashSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 
 public class PersistentFarmlandSavedData extends SavedData {
 
     private static final String DATA_NAME = Data_Energistics.MODID + "_persistent_farmland";
     private static final String POSITIONS_TAG = "Positions";
-    private final Set<Long> farmlandPositions = new HashSet<>();
+    private final LongSet farmlandPositions = new LongOpenHashSet();
 
     public static final Factory<PersistentFarmlandSavedData> FACTORY = new Factory<>(
             PersistentFarmlandSavedData::new,
@@ -55,8 +56,8 @@ public class PersistentFarmlandSavedData extends SavedData {
         }
     }
 
-    public Set<Long> getPositions() {
-        return Set.copyOf(this.farmlandPositions);
+    public LongSet getPositions() {
+        return LongSets.unmodifiable(new LongOpenHashSet(this.farmlandPositions));
     }
 
     @Override

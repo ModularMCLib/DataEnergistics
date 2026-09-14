@@ -201,6 +201,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
     }
 
     /** Adds buffered directional inputs to provider drops. */
+    @SuppressWarnings("removal")
     @Override
     public void addDrops(AdaptivePatternProviderDispatchTarget target, List<ItemStack> drops) {
         State state = target.routeState(State.class, State::new);
@@ -223,10 +224,10 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         if (!target.isFilteredImportEnabled()) {
             return true;
         }
-        if (!target.trackedCrafts().isEmpty() && target.trackedCrafts().contains(key)) {
+        if (!target.trackedCraftsFast().isEmpty() && target.trackedCraftsFast().contains(key)) {
             return true;
         }
-        return target.outputCache().contains(key);
+        return target.outputCacheFast().contains(key);
     }
 
     private static boolean pushDirectionalInputs(

@@ -289,7 +289,7 @@ public final class TrinityGraphDemandAggregator {
                         new CompleteAction(completed.value()) :
                         new FailureAction(completed.diagnostic());
             }
-            int componentIndex = this.topology.topologicalOrder().get(cursor.position());
+            int componentIndex = this.topology.topologicalOrder().getInt(cursor.position());
             TrinityStronglyConnectedComponent component = this.topology.components().get(componentIndex);
             if (!component.cyclic()) {
                 return new ContinueAction(new AcyclicKeyCursor(component, 0, cursor.position()));
@@ -810,7 +810,7 @@ public final class TrinityGraphDemandAggregator {
             return this.topology.variantsByOutputKey()
                     .getOrDefault(key, List.of())
                     .stream()
-                    .filter(variant -> !crossBoundaryOnly || variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1).intValue()) < outputPosition))
+                    .filter(variant -> !crossBoundaryOnly || variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1)) < outputPosition))
                     .toList();
         }
 
@@ -823,7 +823,7 @@ public final class TrinityGraphDemandAggregator {
                 boolean hasEarlierProducer = this.topology.variantsByOutputKey()
                         .getOrDefault(key, List.of())
                         .stream()
-                        .anyMatch(variant -> variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1).intValue()) <
+                        .anyMatch(variant -> variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1)) <
                                 cyclePosition));
                 if (hasEarlierProducer) {
                     producible.add(key);
@@ -1303,7 +1303,7 @@ public final class TrinityGraphDemandAggregator {
         Int2IntMap positions = new Int2IntOpenHashMap();
         positions.defaultReturnValue(-1);
         for (int position = 0; position < topology.topologicalOrder().size(); position++) {
-            positions.put(topology.topologicalOrder().get(position).intValue(), position);
+            positions.put(topology.topologicalOrder().getInt(position), position);
         }
         return Int2IntMaps.unmodifiable(positions);
     }

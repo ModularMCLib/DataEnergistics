@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.core.menu.crafting;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.admission.TrinityPlanAdmission;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
@@ -676,7 +678,8 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements Trinit
             var request = new CraftingPlanTreeRequest(getPlayer().getUUID(),
                     this.whatToCraft == null ? this.result.finalOutput().what() : this.whatToCraft,
                     this.dataEnergistics$requestedAmount > 0 ? this.dataEnergistics$requestedAmount : this.result.finalOutput().amount(),
-                    data_energistics$quantityMode(), getLocator(), self.getHost(), this.autoCraftingQueue, this.requestedSlots);
+                    data_energistics$quantityMode(), getLocator(), self.getHost(), this.autoCraftingQueue,
+                    this.requestedSlots == null ? null : new IntArrayList(this.requestedSlots));
             var outcome = CraftingPlanTreeResult.create(this.result, request, grid, getActionSrc());
             this.dataEnergistics$treeSession = new CraftingPlanTreeSession(request, outcome,
                     this.dataEnergistics$planRevision, this, this.selectedCpu);

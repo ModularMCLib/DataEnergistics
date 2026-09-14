@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
@@ -26,16 +28,17 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Executes one server-thread, snapshot-based, best-effort pattern migration into an active Trinity catalog.
@@ -254,7 +257,7 @@ public final class TrinityPatternMigrator {
                 }
             }
             classes.sort(Comparator.comparing(Class::getName));
-            Set<PatternContainer> identities = Collections.newSetFromMap(new IdentityHashMap<>());
+            Set<PatternContainer> identities = new ReferenceOpenHashSet<>();
             int ordinal = 0;
             for (Class<? extends PatternContainer> machineClass : classes) {
                 for (PatternContainer container : current.grid.getMachines(machineClass)) {
@@ -510,8 +513,8 @@ public final class TrinityPatternMigrator {
                 batch.abortTarget("Trinity pattern layout changed before pattern sorting");
                 return List.of();
             }
-            TreeMap<Integer, TargetSlot> occupied = new TreeMap<>();
-            Set<Integer> working = new ObjectOpenHashSet<>();
+            Int2ObjectAVLTreeMap<TargetSlot> occupied = new Int2ObjectAVLTreeMap<>();
+            IntSet working = new IntOpenHashSet();
             for (TrinityPatternCatalog.CoreRange range : batch.layout.ranges()) {
                 TrinityPatternCore core = range.mount().core();
                 for (int slot : core.occupiedPatternSlots()) {
@@ -524,7 +527,7 @@ public final class TrinityPatternMigrator {
                 }
             }
             int destinationsRemaining = occupied.size();
-            TreeMap<Integer, TargetSlot> sortTargets = new TreeMap<>(occupied);
+            Int2ObjectAVLTreeMap<TargetSlot> sortTargets = new Int2ObjectAVLTreeMap<>(occupied);
             for (TrinityPatternCatalog.CoreRange range : batch.layout.ranges()) {
                 for (int slot = 0; slot < range.mount().blockCapacity() && destinationsRemaining > 0; slot++) {
                     int globalIndex = Math.addExact(range.firstGlobalIndex(), slot);
@@ -542,8 +545,8 @@ public final class TrinityPatternMigrator {
                 batch.abortTarget("Trinity pattern sorter could not resolve every compact destination");
                 return List.of();
             }
-            return sortTargets.entrySet().stream()
-                    .map(entry -> new SortSlotSnapshot(entry.getValue(), entry.getKey()))
+            return sortTargets.int2ObjectEntrySet().stream()
+                    .map(entry -> new SortSlotSnapshot(entry.getValue(), entry.getIntKey()))
                     .toList();
         }
 

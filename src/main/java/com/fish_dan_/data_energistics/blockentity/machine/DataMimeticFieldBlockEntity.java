@@ -1437,7 +1437,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         submitGeneratedItems(generated.items());
     }
 
-    private void submitGeneratedItems(Map<AEItemKey, Long> generated) {
+    private void submitGeneratedItems(Object2LongMap<AEItemKey> generated) {
         if (generated.isEmpty()) {
             return;
         }
@@ -1448,7 +1448,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         appendPendingOutput(generated);
     }
 
-    private void submitGeneratedItemsToNetwork(Map<AEItemKey, Long> generated) {
+    private void submitGeneratedItemsToNetwork(Object2LongMap<AEItemKey> generated) {
         MEStorage networkStorage = getConnectedItemNetwork();
         if (networkStorage == null) {
             appendPendingOutput(generated);
@@ -1467,34 +1467,34 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private void appendPendingOutput(Map<AEItemKey, Long> amounts) {
+    private void appendPendingOutput(Object2LongMap<AEItemKey> amounts) {
         this.pendingOutput.appendAmounts(amounts);
         this.pendingOutputFlushCooldown = 0;
     }
 
     private boolean canNetworkAcceptAll(
-                                        Map<AEItemKey, Long> amounts,
+                                        Object2LongMap<AEItemKey> amounts,
                                         MEStorage networkStorage,
                                         IActionSource actionSource) {
-        for (Map.Entry<AEItemKey, Long> entry : amounts.entrySet()) {
+        for (Object2LongMap.Entry<AEItemKey> entry : amounts.object2LongEntrySet()) {
             if (!this.externalIoBudget.tryAcquire()) {
                 return false;
             }
             long accepted;
             try {
                 accepted = requireValidAcceptedAmount(
-                        networkStorage.insert(entry.getKey(), entry.getValue(), Actionable.SIMULATE, actionSource),
-                        entry.getValue(),
+                        networkStorage.insert(entry.getKey(), entry.getLongValue(), Actionable.SIMULATE, actionSource),
+                        entry.getLongValue(),
                         "AE network simulation");
             } catch (RuntimeException exception) {
                 Data_Energistics.LOGGER.error(
                         "Failed to simulate data mimetic field output {} x{} in the connected AE network; retaining the generated batch",
                         entry.getKey(),
-                        entry.getValue(),
+                        entry.getLongValue(),
                         exception);
                 return false;
             }
-            if (accepted < entry.getValue()) {
+            if (accepted < entry.getLongValue()) {
                 return false;
             }
         }
@@ -1502,13 +1502,13 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private Object2LongMap<AEItemKey> getNetworkInsertRemainders(
-                                                                 Map<AEItemKey, Long> amounts,
+                                                                 Object2LongMap<AEItemKey> amounts,
                                                                  MEStorage networkStorage,
                                                                  IActionSource actionSource) {
         Object2LongLinkedOpenHashMap<AEItemKey> remaining = new Object2LongLinkedOpenHashMap<>();
-        for (Map.Entry<AEItemKey, Long> entry : amounts.entrySet()) {
-            long accepted = insertIntoNetwork(entry.getKey(), entry.getValue(), networkStorage, actionSource);
-            long remainder = entry.getValue() - accepted;
+        for (Object2LongMap.Entry<AEItemKey> entry : amounts.object2LongEntrySet()) {
+            long accepted = insertIntoNetwork(entry.getKey(), entry.getLongValue(), networkStorage, actionSource);
+            long remainder = entry.getLongValue() - accepted;
             if (remainder > 0L) {
                 remaining.put(entry.getKey(), remainder);
             }

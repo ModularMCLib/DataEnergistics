@@ -15,13 +15,13 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReassemblerRecipeInput> {
@@ -135,7 +135,7 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
             return false;
         }
 
-        List<ItemStack> remaining = new ArrayList<>(input.items().size());
+        List<ItemStack> remaining = new ObjectArrayList<>(input.items().size());
         for (ItemStack stack : input.items()) {
             remaining.add(stack.copy());
         }
@@ -164,7 +164,7 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
     }
 
     private List<DataRipperReassemblerIngredient> getItemInputsForMatching() {
-        List<DataRipperReassemblerIngredient> matchingOrder = new ArrayList<>(this.itemInputs);
+        List<DataRipperReassemblerIngredient> matchingOrder = new ObjectArrayList<>(this.itemInputs);
         int segmentStart = 0;
         for (int index = 0; index <= matchingOrder.size(); index++) {
             if (index == matchingOrder.size() || getItemIngredientMatchPriority(matchingOrder.get(index).ingredient()) == ItemIngredientMatchPriority.UNKNOWN) {
@@ -254,8 +254,8 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
     }
 
     @Nullable
-    public Map<AEFluidKey, Long> getMergedFluidInputAmounts() {
-        Map<AEFluidKey, Long> merged = new LinkedHashMap<>();
+    public Object2LongMap<AEFluidKey> getMergedFluidInputAmounts() {
+        Object2LongMap<AEFluidKey> merged = new Object2LongLinkedOpenHashMap<>();
         for (GenericStack fluidInput : this.fluidInputs) {
             if (!(fluidInput.what() instanceof AEFluidKey fluidKey) || fluidInput.amount() <= 0) {
                 return null;
@@ -321,21 +321,21 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
     }
 
     private boolean matchesFluidInputs(List<GenericStack> inputFluids) {
-        Map<AEFluidKey, Long> required = getMergedFluidInputAmounts();
+        Object2LongMap<AEFluidKey> required = getMergedFluidInputAmounts();
         if (required == null) {
             return false;
         }
 
-        Map<AEFluidKey, Long> available = new HashMap<>();
+        Object2LongMap<AEFluidKey> available = new Object2LongOpenHashMap<>();
         for (GenericStack fluid : inputFluids) {
             if (!(fluid.what() instanceof AEFluidKey) || fluid.amount() <= 0) {
                 continue;
             }
-            available.merge((AEFluidKey) fluid.what(), fluid.amount(), Long::sum);
+            available.mergeLong((AEFluidKey) fluid.what(), fluid.amount(), Long::sum);
         }
 
-        for (Map.Entry<AEFluidKey, Long> requirement : required.entrySet()) {
-            if (available.getOrDefault(requirement.getKey(), 0L) < requirement.getValue()) {
+        for (Object2LongMap.Entry<AEFluidKey> requirement : required.object2LongEntrySet()) {
+            if (available.getOrDefault(requirement.getKey(), 0L) < requirement.getLongValue()) {
                 return false;
             }
         }

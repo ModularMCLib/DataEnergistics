@@ -172,7 +172,7 @@ final class TrinityReusableRecipe {
         List<SlotStack> added = new ObjectArrayList<>();
         try {
             for (Input input : inputs) {
-                for (GenericStack consumed : input.consumedPerOperation()) {
+                for (GenericStack consumed : input.consumedPerOperationFast()) {
                     needed.mergeLong(consumed.what(), Math.multiplyExact(consumed.amount(), count), Math::addExact);
                 }
             }

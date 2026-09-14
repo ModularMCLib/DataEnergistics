@@ -17,9 +17,9 @@ import com.modularmc.mdl.api.multiblock.MultiblockState;
 import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +55,7 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
     public static JsonMultiBlockStatePropertiesPredicate fromJson(JsonObject object) {
         if (object.has(BLOCK_STATES_PROPERTY)) {
             JsonArray states = readRequiredArray(object, BLOCK_STATES_PROPERTY);
-            List<StatePattern> statePatterns = new ArrayList<>();
+            List<StatePattern> statePatterns = new ObjectArrayList<>();
             for (JsonElement stateElement : states) {
                 statePatterns.add(parseStatePattern(stateElement));
             }
@@ -85,7 +85,7 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
 
     @Override
     public List<Block> blockCandidates() {
-        Set<Block> blocks = new LinkedHashSet<>();
+        Set<Block> blocks = new ObjectLinkedOpenHashSet<>();
         for (StatePattern pattern : this.statePatterns) {
             blocks.add(pattern.block());
         }
@@ -112,7 +112,7 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
         }
         JsonObject object = element.getAsJsonObject();
         Block block = resolveBlock(parseId(readRequiredString(object, BLOCK_PROPERTY), "block"));
-        List<StatePropertyValue<?>> properties = new ArrayList<>();
+        List<StatePropertyValue<?>> properties = new ObjectArrayList<>();
         if (object.has(PROPERTIES_PROPERTY)) {
             JsonObject propertyObject = readRequiredObject(object, PROPERTIES_PROPERTY);
             StateDefinition<Block, BlockState> definition = block.getStateDefinition();

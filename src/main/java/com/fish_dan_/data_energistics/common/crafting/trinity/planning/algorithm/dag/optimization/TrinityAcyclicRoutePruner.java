@@ -5,14 +5,16 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -62,23 +64,23 @@ public final class TrinityAcyclicRoutePruner {
 
         int[] missingInputs = new int[variants.size()];
         boolean[] executable = new boolean[variants.size()];
-        HashMap<AEKey, ArrayList<Integer>> waitingByInput = new HashMap<>();
-        ArrayDeque<Integer> ready = new ArrayDeque<>();
+        Object2ObjectOpenHashMap<AEKey, IntArrayList> waitingByInput = new Object2ObjectOpenHashMap<>();
+        IntArrayFIFOQueue ready = new IntArrayFIFOQueue();
         for (int index = 0; index < variants.size(); index++) {
             TrinityPatternVariant variant = variants.get(index);
             for (AEKey input : variant.inputs().keySet()) {
                 if (!producibleKeys.contains(input)) {
                     missingInputs[index]++;
-                    waitingByInput.computeIfAbsent(input, ignored -> new ArrayList<>()).add(index);
+                    waitingByInput.computeIfAbsent(input, ignored -> new IntArrayList()).add(index);
                 }
             }
             if (missingInputs[index] == 0) {
-                ready.addLast(index);
+                ready.enqueue(index);
             }
         }
 
         while (!ready.isEmpty()) {
-            int index = ready.removeFirst();
+            int index = ready.dequeueInt();
             if (executable[index]) {
                 continue;
             }
@@ -87,20 +89,20 @@ public final class TrinityAcyclicRoutePruner {
                 if (!producibleKeys.add(output)) {
                     continue;
                 }
-                List<Integer> waiting = waitingByInput.remove(output);
+                IntArrayList waiting = waitingByInput.remove(output);
                 if (waiting == null) {
                     continue;
                 }
-                for (Integer consumer : waiting) {
+                for (int consumer : waiting) {
                     missingInputs[consumer]--;
                     if (missingInputs[consumer] == 0) {
-                        ready.addLast(consumer);
+                        ready.enqueue(consumer);
                     }
                 }
             }
         }
 
-        ArrayList<TrinityPatternVariant> retained = new ArrayList<>();
+        ObjectArrayList<TrinityPatternVariant> retained = new ObjectArrayList<>();
         for (int index = 0; index < variants.size(); index++) {
             if (executable[index]) {
                 retained.add(variants.get(index));
@@ -112,7 +114,7 @@ public final class TrinityAcyclicRoutePruner {
     private static List<TrinityPatternVariant> targetReachableVariants(
                                                                        List<TrinityPatternVariant> variants,
                                                                        AEKey target) {
-        ArrayList<TrinityPatternVariant> ordered = new ArrayList<>(variants.size());
+        ObjectArrayList<TrinityPatternVariant> ordered = new ObjectArrayList<>(variants.size());
         for (TrinityPatternVariant variant : variants) {
             if (variant == null) {
                 throw new IllegalArgumentException("A Trinity acyclic graph cannot contain a null variant");
@@ -121,16 +123,16 @@ public final class TrinityAcyclicRoutePruner {
         }
         ordered.sort(Comparator.naturalOrder());
 
-        HashMap<AEKey, ArrayList<TrinityPatternVariant>> producersByOutput = new HashMap<>();
+        Object2ObjectOpenHashMap<AEKey, ObjectArrayList<TrinityPatternVariant>> producersByOutput = new Object2ObjectOpenHashMap<>();
         for (TrinityPatternVariant variant : ordered) {
             variant.outputs().keySet().forEach(output -> producersByOutput
-                    .computeIfAbsent(output, ignored -> new ArrayList<>())
+                    .computeIfAbsent(output, ignored -> new ObjectArrayList<>())
                     .add(variant));
         }
 
         ArrayDeque<AEKey> pending = new ArrayDeque<>();
-        LinkedHashSet<AEKey> visitedKeys = new LinkedHashSet<>();
-        LinkedHashSet<TrinityPatternVariant> reachable = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> visitedKeys = new ObjectLinkedOpenHashSet<>();
+        ObjectLinkedOpenHashSet<TrinityPatternVariant> reachable = new ObjectLinkedOpenHashSet<>();
         pending.add(target);
         while (!pending.isEmpty()) {
             AEKey required = pending.removeFirst();
@@ -147,7 +149,7 @@ public final class TrinityAcyclicRoutePruner {
                 }
             }
         }
-        ArrayList<TrinityPatternVariant> result = new ArrayList<>(reachable);
+        ObjectArrayList<TrinityPatternVariant> result = new ObjectArrayList<>(reachable);
         result.sort(Comparator.naturalOrder());
         return Collections.unmodifiableList(result);
     }

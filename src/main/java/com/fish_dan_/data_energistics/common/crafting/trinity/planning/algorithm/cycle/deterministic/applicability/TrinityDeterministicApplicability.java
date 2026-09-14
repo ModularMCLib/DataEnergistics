@@ -10,10 +10,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public final class TrinityDeterministicApplicability {
         if (primitive.isEmpty()) {
             return TrinityDeterministicApplicabilityResult.skip();
         }
-        LinkedHashMap<TrinityPatternVariant, BigInteger> primitiveFirings = TrinityDeterministicFiringMath.aggregate(primitive.orElseThrow());
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> primitiveFirings = TrinityDeterministicFiringMath.aggregate(primitive.orElseThrow());
         Map<AEKey, BigInteger> primitiveNet = TrinityDeterministicFiringMath.netChange(primitiveFirings);
         if (!isProductiveBasis(component, demand, reservoir, primitiveNet)) {
             return TrinityDeterministicApplicabilityResult.skip();
@@ -85,7 +85,7 @@ public final class TrinityDeterministicApplicability {
             return TrinityDeterministicApplicabilityResult.skip();
         }
         TrinityCycleUnitProof instantiated = unitProof.instantiate(available, component.keys(), producibleInputs);
-        LinkedHashMap<TrinityPatternVariant, BigInteger> firings = TrinityDeterministicFiringMath.aggregate(instantiated.order());
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = TrinityDeterministicFiringMath.aggregate(instantiated.order());
         Map<AEKey, BigInteger> net = TrinityDeterministicFiringMath.netChange(firings);
         if (!firings.equals(instantiated.firings()) || !net.equals(instantiated.netChange()) ||
                 !isProductiveBasis(component, demand, instantiated.reservoir(), net)) {

@@ -1674,7 +1674,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
 
                 @Override
                 public List<SlotStack> physicalInputs() {
-                    return prepared.physicalInputs();
+                    return prepared.physicalInputsFast();
                 }
 
                 @Override

@@ -6,12 +6,14 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,7 +77,7 @@ public final class TrinityFiringComplementOptimizer {
             return Optional.empty();
         }
 
-        LinkedHashMap<TrinityPatternVariant, BigInteger> firings = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             if (!fixedVariants.contains(variant)) {
                 continue;
@@ -95,7 +97,7 @@ public final class TrinityFiringComplementOptimizer {
                 demand,
                 available,
                 producibleInputs);
-        LinkedHashMap<AEKey, BigInteger> net = netChange(firings);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = netChange(firings);
         List<TrinityPatternVariant> executionOrder = order.orElseThrow();
         for (int index = executionOrder.size() - 1; index >= 0; index--) {
             TrinityPatternVariant variant = executionOrder.get(index);
@@ -123,7 +125,7 @@ public final class TrinityFiringComplementOptimizer {
             return Optional.empty();
         }
 
-        LinkedHashMap<TrinityPatternVariant, BigInteger> ordered = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> ordered = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> {
             BigInteger count = firings.getOrDefault(variant, ZERO);
             if (count.signum() > 0) {
@@ -135,7 +137,7 @@ public final class TrinityFiringComplementOptimizer {
 
     private static Optional<Map<AEKey, TrinityPatternVariant>> uniqueProducers(
                                                                                List<TrinityPatternVariant> variants) {
-        LinkedHashMap<AEKey, TrinityPatternVariant> producers = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, TrinityPatternVariant> producers = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             for (AEKey output : variant.outputs().keySet()) {
                 TrinityPatternVariant existing = producers.putIfAbsent(output, variant);
@@ -151,11 +153,11 @@ public final class TrinityFiringComplementOptimizer {
                                                                           List<TrinityPatternVariant> variants,
                                                                           Map<AEKey, TrinityPatternVariant> producerByKey) {
         Set<TrinityPatternVariant> adjustable = Set.copyOf(variants);
-        HashMap<TrinityPatternVariant, Integer> indegrees = new HashMap<>();
-        HashMap<TrinityPatternVariant, LinkedHashSet<TrinityPatternVariant>> successors = new HashMap<>();
+        Object2IntLinkedOpenHashMap<TrinityPatternVariant> indegrees = new Object2IntLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, ObjectLinkedOpenHashSet<TrinityPatternVariant>> successors = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> {
             indegrees.put(variant, 0);
-            successors.put(variant, new LinkedHashSet<>());
+            successors.put(variant, new ObjectLinkedOpenHashSet<>());
         });
         for (TrinityPatternVariant consumer : variants) {
             for (AEKey input : consumer.inputs().keySet()) {
@@ -167,23 +169,23 @@ public final class TrinityFiringComplementOptimizer {
                     return Optional.empty();
                 }
                 if (successors.get(producer).add(consumer)) {
-                    indegrees.merge(consumer, 1, Integer::sum);
+                    indegrees.mergeInt(consumer, 1, Integer::sum);
                 }
             }
         }
-        ArrayList<TrinityPatternVariant> ready = new ArrayList<>();
+        ObjectArrayList<TrinityPatternVariant> ready = new ObjectArrayList<>();
         indegrees.forEach((variant, degree) -> {
             if (degree == 0) {
                 ready.add(variant);
             }
         });
         ready.sort(TrinityPatternVariant::compareTo);
-        ArrayList<TrinityPatternVariant> ordered = new ArrayList<>(variants.size());
+        ObjectArrayList<TrinityPatternVariant> ordered = new ObjectArrayList<>(variants.size());
         while (!ready.isEmpty()) {
             TrinityPatternVariant selected = ready.removeFirst();
             ordered.add(selected);
             for (TrinityPatternVariant successor : successors.get(selected)) {
-                int degree = indegrees.merge(successor, -1, Integer::sum);
+                int degree = indegrees.mergeInt(successor, -1, Integer::sum);
                 if (degree == 0) {
                     ready.add(successor);
                     ready.sort(TrinityPatternVariant::compareTo);
@@ -198,8 +200,8 @@ public final class TrinityFiringComplementOptimizer {
                                                       TrinityCycleDemand demand,
                                                       Map<AEKey, BigInteger> available,
                                                       Set<AEKey> producibleInputs) {
-        LinkedHashMap<AEKey, BigInteger> lower = new LinkedHashMap<>(demand.requiredNetChangeLowerBounds());
-        LinkedHashSet<AEKey> touched = new LinkedHashSet<>(component.keys());
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> lower = new Object2ObjectLinkedOpenHashMap<>(demand.requiredNetChangeLowerBounds());
+        ObjectLinkedOpenHashSet<AEKey> touched = new ObjectLinkedOpenHashSet<>(component.keys());
         component.cycleVariants().forEach(variant -> touched.addAll(variant.netChange().keySet()));
         touched.addAll(demand.finalBalanceLowerBounds().keySet());
         for (AEKey key : touched) {
@@ -214,9 +216,9 @@ public final class TrinityFiringComplementOptimizer {
         return Collections.unmodifiableMap(lower);
     }
 
-    private static LinkedHashMap<AEKey, BigInteger> netChange(
-                                                              Map<TrinityPatternVariant, BigInteger> firings) {
-        LinkedHashMap<AEKey, BigInteger> net = new LinkedHashMap<>();
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange(
+                                                                               Map<TrinityPatternVariant, BigInteger> firings) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach((key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         return net;

@@ -21,7 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
@@ -181,7 +181,7 @@ final class InterfaceRemoteTransfer {
     private static boolean pullStorage(DataSanctumLargeInterfaceHost host, InterfaceRemoteLinks state, int linkIndex,
                                        MEStorage storage, IActionSource actionSource) {
         var keys = new ObjectArrayList<AEKey>();
-        var amounts = new Object2ObjectOpenHashMap<AEKey, Long>();
+        var amounts = new Object2LongOpenHashMap<AEKey>();
         for (var entry : storage.getAvailableStacks()) {
             keys.add(entry.getKey());
             amounts.put(entry.getKey(), entry.getLongValue());

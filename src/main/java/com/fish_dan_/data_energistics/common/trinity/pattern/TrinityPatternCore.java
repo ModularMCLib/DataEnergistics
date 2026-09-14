@@ -12,9 +12,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -219,7 +220,7 @@ public interface TrinityPatternCore {
          * @return completed result
          */
         public static BatchExecutionResult completed(TrinityCraftingBatch batch, List<ItemStack> unitOutputs) {
-            ArrayList<TrinityItemAmount> countedOutputs = new ArrayList<>();
+            ObjectArrayList<TrinityItemAmount> countedOutputs = new ObjectArrayList<>();
             for (ItemStack output : unitOutputs) {
                 if (!output.isEmpty()) {
                     countedOutputs.addAll(TrinityItemAmount.multiply(output, batch.count()));
@@ -298,7 +299,7 @@ public interface TrinityPatternCore {
      *
      * @return immutable ascending slot snapshot
      */
-    List<Integer> occupiedPatternSlots();
+    IntList occupiedPatternSlots();
 
     /**
      * @return fixed-size inventory exposed to menus
@@ -460,7 +461,7 @@ public interface TrinityPatternCore {
      * @param hostId stable host identity whose routed outputs are requested
      * @return immutable ascending slot indexes
      */
-    List<Integer> pendingOutputSlots(UUID hostId);
+    IntList pendingOutputSlots(UUID hostId);
 
     /**
      * Finds physical slots containing queued inputs or pending outputs owned by one host without scanning capacity.
@@ -468,7 +469,7 @@ public interface TrinityPatternCore {
      * @param hostId stable host identity whose active slots are requested
      * @return immutable ascending physical slot indexes
      */
-    List<Integer> workingSlots(UUID hostId);
+    IntList workingSlots(UUID hostId);
 
     /**
      * Tests one exact physical slot against the core's host work index without copying the full sparse slot set.

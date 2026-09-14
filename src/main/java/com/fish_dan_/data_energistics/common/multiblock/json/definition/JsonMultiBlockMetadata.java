@@ -9,8 +9,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.modularmc.mdl.api.multiblock.StructureDir;
 import com.modularmc.mdl.api.multiblock.util.RelativeDirection;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -115,7 +115,7 @@ public final class JsonMultiBlockMetadata {
             throw new IllegalArgumentException("JSON multiblock compartments metadata must be an object: " + resourceId);
         }
         JsonObject compartments = compartmentsElement.getAsJsonObject();
-        LinkedHashMap<String, CompartmentType> types = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<String, CompartmentType> types = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<String, JsonElement> entry : compartments.entrySet()) {
             String symbol = entry.getKey();
             if (symbol == null || symbol.isBlank() || symbol.length() != 1) {
@@ -144,7 +144,7 @@ public final class JsonMultiBlockMetadata {
                     resourceId);
         }
         JsonObject replaceable = replaceableElement.getAsJsonObject();
-        LinkedHashMap<String, Set<CompartmentType>> types = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<String, Set<CompartmentType>> types = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<String, JsonElement> entry : replaceable.entrySet()) {
             String symbol = entry.getKey();
             validateSymbol(symbol, "replaceable compartment", resourceId);
@@ -152,7 +152,7 @@ public final class JsonMultiBlockMetadata {
                 throw new IllegalArgumentException("JSON multiblock replaceable compartment types must be an array for symbol '" +
                         symbol + "': " + resourceId);
             }
-            LinkedHashMap<String, CompartmentType> symbolTypes = new LinkedHashMap<>();
+            Object2ObjectLinkedOpenHashMap<String, CompartmentType> symbolTypes = new Object2ObjectLinkedOpenHashMap<>();
             for (JsonElement typeElement : entry.getValue().getAsJsonArray()) {
                 if (!typeElement.isJsonPrimitive() || !typeElement.getAsJsonPrimitive().isString()) {
                     throw new IllegalArgumentException("JSON multiblock replaceable compartment type must be a string for symbol '" +
@@ -234,7 +234,7 @@ public final class JsonMultiBlockMetadata {
     }
 
     private static Map<String, Set<CompartmentType>> copyReplaceableCompartmentTypes(Map<String, Set<CompartmentType>> source) {
-        LinkedHashMap<String, Set<CompartmentType>> copy = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<String, Set<CompartmentType>> copy = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<String, Set<CompartmentType>> entry : source.entrySet()) {
             copy.put(entry.getKey(), Set.copyOf(entry.getValue()));
         }

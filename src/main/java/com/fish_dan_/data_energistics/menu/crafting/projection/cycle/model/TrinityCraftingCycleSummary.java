@@ -1,17 +1,26 @@
 package com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,7 +42,7 @@ public final class TrinityCraftingCycleSummary {
     /** One hundred percent expressed as hundredths of a percentage point. */
     public static final int MAX_INVENTORY_USAGE_BASIS_POINTS = 10_000;
 
-    private final Map<AEKey, Integer> inventoryUsageBasisPoints;
+    private final Object2IntMap<AEKey> inventoryUsageBasisPoints;
     private final List<TrinityCraftingCycleHeader> cycles;
     private final List<TrinityCraftingCycleMaterialContribution> contributions;
     private final Map<AEKey, List<TrinityCraftingCycleMaterialContribution>> contributionsByKey;
@@ -45,7 +54,7 @@ public final class TrinityCraftingCycleSummary {
     private final Map<AEKey, TrinityCraftingExactPlanAmounts> exactPlanAmountsByKey;
     private final Optional<BigInteger> exactBytes;
 
-    private TrinityCraftingCycleSummary(Map<AEKey, Integer> inventoryUsageBasisPoints,
+    private TrinityCraftingCycleSummary(Object2IntMap<AEKey> inventoryUsageBasisPoints,
                                         List<TrinityCraftingCycleHeader> cycles,
                                         List<TrinityCraftingCycleMaterialContribution> contributions,
                                         List<TrinityCraftingExactShortage> exactShortages,
@@ -73,7 +82,7 @@ public final class TrinityCraftingCycleSummary {
      * @param contributions             material membership records
      * @return validated immutable summary with stable cycle and per-key ordering
      */
-    public static TrinityCraftingCycleSummary create(Map<AEKey, Integer> inventoryUsageBasisPoints,
+    public static TrinityCraftingCycleSummary create(Object2IntMap<AEKey> inventoryUsageBasisPoints,
                                                      List<TrinityCraftingCycleHeader> cycles,
                                                      List<TrinityCraftingCycleMaterialContribution> contributions) {
         return create(
@@ -90,7 +99,7 @@ public final class TrinityCraftingCycleSummary {
      * Rebuilds one complete executable or diagnostic summary from all typed transport families.
      */
     public static TrinityCraftingCycleSummary create(
-                                                     Map<AEKey, Integer> inventoryUsageBasisPoints,
+                                                     Object2IntMap<AEKey> inventoryUsageBasisPoints,
                                                      List<TrinityCraftingCycleHeader> cycles,
                                                      List<TrinityCraftingCycleMaterialContribution> contributions,
                                                      List<TrinityCraftingExactShortage> exactShortages,
@@ -110,7 +119,7 @@ public final class TrinityCraftingCycleSummary {
     /**
      * @return inventory usage percentages keyed by every material withdrawn from ME storage
      */
-    public Map<AEKey, Integer> inventoryUsageBasisPoints() {
+    public Object2IntMap<AEKey> inventoryUsageBasisPoints() {
         return this.inventoryUsageBasisPoints;
     }
 
@@ -170,8 +179,8 @@ public final class TrinityCraftingCycleSummary {
      * @return hundredths of a percentage point capped at 100%, or empty when the material is not withdrawn
      */
     public OptionalInt inventoryUsage(AEKey key) {
-        Integer basisPoints = this.inventoryUsageBasisPoints.get(key);
-        return basisPoints == null ? OptionalInt.empty() : OptionalInt.of(basisPoints);
+        int basisPoints = this.inventoryUsageBasisPoints.getInt(key);
+        return !this.inventoryUsageBasisPoints.containsKey(key) ? OptionalInt.empty() : OptionalInt.of(basisPoints);
     }
 
     /**
@@ -185,22 +194,22 @@ public final class TrinityCraftingCycleSummary {
         return this.contributionsByKey.getOrDefault(key, List.of());
     }
 
-    private static Map<AEKey, Integer> copyInventoryUsage(Map<AEKey, Integer> source) {
-        LinkedHashMap<AEKey, Integer> copied = new LinkedHashMap<>();
+    private static Object2IntMap<AEKey> copyInventoryUsage(Object2IntMap<AEKey> source) {
+        Object2IntLinkedOpenHashMap<AEKey> copied = new Object2IntLinkedOpenHashMap<>();
         source.forEach((key, basisPoints) -> {
             if (basisPoints < 0 || basisPoints > MAX_INVENTORY_USAGE_BASIS_POINTS) {
                 throw new IllegalArgumentException("Trinity inventory usage must remain within [0%, 100%]");
             }
             copied.put(key, basisPoints);
         });
-        return Collections.unmodifiableMap(copied);
+        return Object2IntMaps.unmodifiable(copied);
     }
 
     private static List<TrinityCraftingCycleHeader> copyAndValidateCycles(
                                                                           List<TrinityCraftingCycleHeader> source) {
-        ArrayList<TrinityCraftingCycleHeader> copied = new ArrayList<>(source);
+        ObjectArrayList<TrinityCraftingCycleHeader> copied = new ObjectArrayList<>(source);
         copied.sort(Comparator.comparingInt(TrinityCraftingCycleHeader::blockIndex));
-        Set<Integer> blockIndexes = new HashSet<>();
+        IntSet blockIndexes = new IntOpenHashSet();
         for (int index = 0; index < copied.size(); index++) {
             TrinityCraftingCycleHeader cycle = copied.get(index);
             if (!blockIndexes.add(cycle.blockIndex())) {
@@ -217,10 +226,10 @@ public final class TrinityCraftingCycleSummary {
     private static List<TrinityCraftingCycleMaterialContribution> copyAndValidateContributions(
                                                                                                List<TrinityCraftingCycleMaterialContribution> source,
                                                                                                List<TrinityCraftingCycleHeader> cycles) {
-        Map<Integer, TrinityCraftingCycleHeader> cyclesByBlockIndex = new HashMap<>();
+        Int2ObjectMap<TrinityCraftingCycleHeader> cyclesByBlockIndex = new Int2ObjectOpenHashMap<>();
         cycles.forEach(cycle -> cyclesByBlockIndex.put(cycle.blockIndex(), cycle));
-        ArrayList<TrinityCraftingCycleMaterialContribution> copied = new ArrayList<>(source.size());
-        Set<BlockMaterial> seen = new HashSet<>();
+        ObjectArrayList<TrinityCraftingCycleMaterialContribution> copied = new ObjectArrayList<>(source.size());
+        Set<BlockMaterial> seen = new ObjectOpenHashSet<>();
         for (TrinityCraftingCycleMaterialContribution contribution : source) {
             TrinityCraftingCycleHeader cycle = cyclesByBlockIndex.get(contribution.blockIndex());
             if (cycle == null || cycle.displayOrdinal() != contribution.displayOrdinal()) {
@@ -238,19 +247,19 @@ public final class TrinityCraftingCycleSummary {
 
     private static Map<AEKey, List<TrinityCraftingCycleMaterialContribution>> indexContributions(
                                                                                                  List<TrinityCraftingCycleMaterialContribution> contributions) {
-        LinkedHashMap<AEKey, List<TrinityCraftingCycleMaterialContribution>> mutable = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityCraftingCycleMaterialContribution>> mutable = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityCraftingCycleMaterialContribution contribution : contributions) {
-            mutable.computeIfAbsent(contribution.key(), ignored -> new ArrayList<>()).add(contribution);
+            mutable.computeIfAbsent(contribution.key(), ignored -> new ObjectArrayList<>()).add(contribution);
         }
-        LinkedHashMap<AEKey, List<TrinityCraftingCycleMaterialContribution>> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityCraftingCycleMaterialContribution>> copied = new Object2ObjectLinkedOpenHashMap<>();
         mutable.forEach((key, values) -> copied.put(key, List.copyOf(values)));
         return Collections.unmodifiableMap(copied);
     }
 
     private static List<TrinityCraftingExactShortage> copyExactShortages(
                                                                          List<TrinityCraftingExactShortage> source) {
-        ArrayList<TrinityCraftingExactShortage> copied = new ArrayList<>(source.size());
-        HashSet<AEKey> keys = new HashSet<>();
+        ObjectArrayList<TrinityCraftingExactShortage> copied = new ObjectArrayList<>(source.size());
+        ObjectOpenHashSet<AEKey> keys = new ObjectOpenHashSet<>();
         for (TrinityCraftingExactShortage shortage : source) {
             if (shortage == null || !keys.add(shortage.key())) {
                 throw new IllegalArgumentException("Trinity crafting diagnostics cannot repeat an exact shortage");
@@ -262,7 +271,7 @@ public final class TrinityCraftingCycleSummary {
 
     private static Map<AEKey, TrinityCraftingExactShortage> indexExactShortages(
                                                                                 List<TrinityCraftingExactShortage> shortages) {
-        LinkedHashMap<AEKey, TrinityCraftingExactShortage> indexed = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, TrinityCraftingExactShortage> indexed = new Object2ObjectLinkedOpenHashMap<>();
         shortages.forEach(shortage -> indexed.put(shortage.key(), shortage));
         return Collections.unmodifiableMap(indexed);
     }
@@ -270,8 +279,8 @@ public final class TrinityCraftingCycleSummary {
     private static List<TrinityCraftingUnresolvedDemand> copyUnresolvedDemands(
                                                                                List<TrinityCraftingUnresolvedDemand> source,
                                                                                Set<AEKey> exactShortageKeys) {
-        ArrayList<TrinityCraftingUnresolvedDemand> copied = new ArrayList<>(source.size());
-        HashSet<AEKey> keys = new HashSet<>();
+        ObjectArrayList<TrinityCraftingUnresolvedDemand> copied = new ObjectArrayList<>(source.size());
+        ObjectOpenHashSet<AEKey> keys = new ObjectOpenHashSet<>();
         for (TrinityCraftingUnresolvedDemand unresolved : source) {
             if (unresolved == null || exactShortageKeys.contains(unresolved.key()) || !keys.add(unresolved.key())) {
                 throw new IllegalArgumentException(
@@ -284,15 +293,15 @@ public final class TrinityCraftingCycleSummary {
 
     private static Map<AEKey, TrinityCraftingUnresolvedDemand> indexUnresolvedDemands(
                                                                                       List<TrinityCraftingUnresolvedDemand> unresolvedDemands) {
-        LinkedHashMap<AEKey, TrinityCraftingUnresolvedDemand> indexed = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, TrinityCraftingUnresolvedDemand> indexed = new Object2ObjectLinkedOpenHashMap<>();
         unresolvedDemands.forEach(unresolved -> indexed.put(unresolved.key(), unresolved));
         return Collections.unmodifiableMap(indexed);
     }
 
     private static List<TrinityCraftingExactPlanAmounts> copyExactPlanAmounts(
                                                                               List<TrinityCraftingExactPlanAmounts> source) {
-        ArrayList<TrinityCraftingExactPlanAmounts> copied = new ArrayList<>(source.size());
-        HashSet<AEKey> keys = new HashSet<>();
+        ObjectArrayList<TrinityCraftingExactPlanAmounts> copied = new ObjectArrayList<>(source.size());
+        ObjectOpenHashSet<AEKey> keys = new ObjectOpenHashSet<>();
         for (TrinityCraftingExactPlanAmounts amounts : source) {
             if (!keys.add(amounts.key())) {
                 throw new IllegalArgumentException("Trinity crafting confirmation cannot repeat an exact plan row");
@@ -304,7 +313,7 @@ public final class TrinityCraftingCycleSummary {
 
     private static Map<AEKey, TrinityCraftingExactPlanAmounts> indexExactPlanAmounts(
                                                                                      List<TrinityCraftingExactPlanAmounts> amounts) {
-        LinkedHashMap<AEKey, TrinityCraftingExactPlanAmounts> indexed = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, TrinityCraftingExactPlanAmounts> indexed = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach(entry -> indexed.put(entry.key(), entry));
         return Collections.unmodifiableMap(indexed);
     }

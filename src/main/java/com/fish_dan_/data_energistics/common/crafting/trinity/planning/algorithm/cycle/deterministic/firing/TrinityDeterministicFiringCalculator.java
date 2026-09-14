@@ -12,9 +12,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -99,7 +100,7 @@ public final class TrinityDeterministicFiringCalculator {
             return TrinityDeterministicDiagnostics.unsupported();
         }
 
-        LinkedHashMap<TrinityPatternVariant, BigInteger> baselineFirings = TrinityDeterministicFiringMath.aggregateRepeated(
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> baselineFirings = TrinityDeterministicFiringMath.aggregateRepeated(
                 primitiveFirings,
                 repetitions,
                 residual.firings());
@@ -107,7 +108,7 @@ public final class TrinityDeterministicFiringCalculator {
             return TrinityDeterministicDiagnostics.unsupported();
         }
         Map<TrinityPatternVariant, BigInteger> firings = Collections.unmodifiableMap(
-                new LinkedHashMap<>(baselineFirings));
+                new Object2ObjectLinkedOpenHashMap<>(baselineFirings));
         Map<AEKey, BigInteger> totalNet = TrinityDeterministicFiringMath.netChange(firings);
         if (violatesLowerBounds(totalNet, netLowerBounds)) {
             return TrinityDeterministicDiagnostics.unsupported();
@@ -128,7 +129,7 @@ public final class TrinityDeterministicFiringCalculator {
                                                                  TrinityCycleDemand demand,
                                                                  Map<AEKey, BigInteger> available,
                                                                  Set<AEKey> producibleInputs) {
-        LinkedHashMap<AEKey, BigInteger> lower = new LinkedHashMap<>(demand.requiredNetChangeLowerBounds());
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> lower = new Object2ObjectLinkedOpenHashMap<>(demand.requiredNetChangeLowerBounds());
         for (AEKey key : component.keys()) {
             if (producibleInputs.contains(key)) {
                 continue;

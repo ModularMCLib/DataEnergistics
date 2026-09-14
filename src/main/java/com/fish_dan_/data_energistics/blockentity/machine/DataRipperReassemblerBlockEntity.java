@@ -89,6 +89,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
@@ -97,7 +98,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -1450,7 +1450,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     private @Nullable RecipeInputReservation createRecipeInputReservation(int channel,
                                                                           DataRipperReassemblerRecipe recipe,
                                                                           int patternColor) {
-        Map<AEFluidKey, Long> requiredFluidAmounts = recipe.getMergedFluidInputAmounts();
+        Object2LongMap<AEFluidKey> requiredFluidAmounts = recipe.getMergedFluidInputAmounts();
         if (requiredFluidAmounts == null) {
             return null;
         }
@@ -1489,9 +1489,9 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         }
 
         List<ReservedFluidInput> fluidInputs = new ObjectArrayList<>();
-        for (Map.Entry<AEFluidKey, Long> requirement : requiredFluidAmounts.entrySet()) {
+        for (Object2LongMap.Entry<AEFluidKey> requirement : requiredFluidAmounts.object2LongEntrySet()) {
             AEFluidKey requiredFluid = requirement.getKey();
-            int remaining = requirement.getValue().intValue();
+            int remaining = (int) requirement.getLongValue();
             for (int offset = 0; offset < getFluidInputSlotCountForChannel(channel) && remaining > 0; offset++) {
                 int slot = getFluidInputStartSlotForChannel(channel) + offset;
                 FluidTank tank = this.fluidInputTanks.get(slot);

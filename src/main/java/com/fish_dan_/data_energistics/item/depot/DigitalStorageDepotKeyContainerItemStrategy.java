@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.item.depot;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
 
 import appeng.api.behaviors.ContainerItemStrategies;
@@ -19,7 +21,6 @@ import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 public class DigitalStorageDepotKeyContainerItemStrategy implements ContainerItemStrategy<AEKey, DigitalStorageDepotKeyContainerItemStrategy.Context> {
@@ -145,7 +146,7 @@ public class DigitalStorageDepotKeyContainerItemStrategy implements ContainerIte
                     type,
                     castStrategy(original));
 
-            Map<AEKeyType, ContainerItemStrategy<?, ?>> updated = new IdentityHashMap<>(strategies.map);
+            Map<AEKeyType, ContainerItemStrategy<?, ?>> updated = new Reference2ReferenceOpenHashMap<>(strategies.map);
             updated.put(type, strategy);
             strategies.map = Collections.unmodifiableMap(updated);
         }

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.profile;
 
 import java.util.Map;
-import java.util.TreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
 /**
  * Mutable collector for named Trinity Data Core CPU contributions.
@@ -12,7 +12,7 @@ import java.util.TreeMap;
  */
 public final class TrinityDataCoreCpuProfileBuilder {
 
-    private final Map<String, TrinityDataCoreCpuContribution> contributions = new TreeMap<>();
+    private final Map<String, TrinityDataCoreCpuContribution> contributions = new Object2ObjectAVLTreeMap<>();
 
     /**
      * Adds or replaces the contribution for one structure name.

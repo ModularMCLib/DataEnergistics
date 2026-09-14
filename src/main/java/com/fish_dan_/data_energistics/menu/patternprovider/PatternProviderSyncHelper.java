@@ -688,7 +688,7 @@ public final class PatternProviderSyncHelper {
                 aggregationKey = new PatternProviderAggregationKey.Registered(
                         metadata.registrationId(), metadata.providerIdentity());
                 exactContextMatch = matchesRecipeType(metadata, rankingContext);
-                supportedRecipeTypeIds = metadata.categoryIds();
+                supportedRecipeTypeIds = metadata.categoryIdsFast();
                 matchingWorkstationIds = resolveMatchingWorkstationIds(metadata, rankingContext);
             } else {
                 aggregationKey = PatternProviderAggregationKey.NetworkGroup.from(container.getTerminalGroup());
@@ -969,7 +969,7 @@ public final class PatternProviderSyncHelper {
 
     static boolean matchesRecipeType(PatternProviderMetadata metadata,
                                      @Nullable PatternEncodingRankingContext rankingContext) {
-        return rankingContext != null && metadata.categoryIds().contains(rankingContext.recipeTypeId());
+        return rankingContext != null && metadata.categoryIdsFast().contains(rankingContext.recipeTypeId());
     }
 
     private static List<ResourceLocation> resolveMatchingWorkstationIds(
@@ -978,7 +978,7 @@ public final class PatternProviderSyncHelper {
         if (!matchesRecipeType(metadata, rankingContext)) {
             return List.of();
         }
-        return metadata.workstationIds();
+        return metadata.workstationIdsFast();
     }
 
     @Nullable

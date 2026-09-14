@@ -25,7 +25,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 public class DataIntegratedChargerMenu extends UpgradeableMenu<DataIntegratedChargerBlockEntity> implements IProgressProvider {
@@ -166,7 +167,7 @@ public class DataIntegratedChargerMenu extends UpgradeableMenu<DataIntegratedCha
 
     public List<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
         int sidesMask = outputType == DigitalStorageDepotOutputType.ITEMS ? this.itemOutputSidesMask : 0;
-        List<Direction> sides = new ArrayList<>();
+        List<Direction> sides = new ObjectArrayList<>();
         for (Direction side : Direction.values()) {
             if ((sidesMask & (1 << side.ordinal())) != 0) {
                 sides.add(side);

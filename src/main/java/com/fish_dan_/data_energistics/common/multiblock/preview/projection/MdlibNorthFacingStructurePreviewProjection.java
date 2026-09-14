@@ -34,11 +34,11 @@ import com.modularmc.mdl.api.multiblock.PatternLayout;
 import com.modularmc.mdl.api.multiblock.PatternProjector;
 import com.modularmc.mdl.api.multiblock.PatternRepeatSelection;
 import com.modularmc.mdl.api.multiblock.TraceabilityPredicate;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,12 +78,12 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                 selection.activeSelection().repeatCounts());
         ExpandedPatternSnapshot expanded = PatternProjector.expand(pattern, repeatSelection);
 
-        Map<PreviewPredicateKey, PreviewPredicateSnapshot> predicates = new LinkedHashMap<>();
-        Set<String> appliedTierDomains = new HashSet<>();
-        List<PreviewLayerSnapshot> layers = new ArrayList<>(expanded.layers().size());
-        List<PreviewCellSnapshot> cells = new ArrayList<>(expanded.cells().size());
+        Map<PreviewPredicateKey, PreviewPredicateSnapshot> predicates = new Object2ObjectLinkedOpenHashMap<>();
+        Set<String> appliedTierDomains = new ObjectOpenHashSet<>();
+        List<PreviewLayerSnapshot> layers = new ObjectArrayList<>(expanded.layers().size());
+        List<PreviewCellSnapshot> cells = new ObjectArrayList<>(expanded.cells().size());
         for (PatternLayerSnapshot expandedLayer : expanded.layers()) {
-            List<PreviewCellSnapshot> layerCells = new ArrayList<>(expandedLayer.cells().size());
+            List<PreviewCellSnapshot> layerCells = new ObjectArrayList<>(expandedLayer.cells().size());
             for (PatternCellSnapshot expandedCell : expandedLayer.cells()) {
                 PatternCellSource source = expandedCell.source();
                 PreviewPredicateKey key = new PreviewPredicateKey(source.sourceLayer(), source.y(), source.x());
@@ -126,9 +126,10 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                                                              PatternCellSnapshot cell,
                                                              PreviewPredicateKey key,
                                                              Set<String> appliedTierDomains) {
-        Integer candidateOverride = selection.candidateSelections().get(key);
+        int candidateOverride = selection.candidateSelections().getInt(key);
+        boolean hasCandidateOverride = selection.candidateSelections().containsKey(key);
         if (isController(layout, cell.source())) {
-            if (candidateOverride != null) {
+            if (hasCandidateOverride) {
                 throw projectionFailure(substructure, cell, "Controller anchor does not accept candidate overrides");
             }
             if (!(spec.ownerOutput().getItem() instanceof BlockItem controllerItem)) {
@@ -142,7 +143,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
 
         TraceabilityPredicate predicate = cell.predicate();
         if (predicate.isAny()) {
-            if (candidateOverride != null) {
+            if (hasCandidateOverride) {
                 throw projectionFailure(substructure, cell, "Wildcard cell does not accept candidate overrides");
             }
             return new PreviewPredicateSnapshot(key, PreviewCellRole.WILDCARD, List.of(), -1);
@@ -152,7 +153,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
         boolean allowsAir = predicate.hasAir() || candidateStates.stream().anyMatch(BlockState::isAir);
         List<PreviewCandidate> concreteCandidates = pairedCandidates(predicate, substructure, cell);
         if (concreteCandidates.isEmpty() && allowsAir) {
-            int selectedIndex = candidateOverride == null ? 0 : candidateOverride;
+            int selectedIndex = hasCandidateOverride ? candidateOverride : 0;
             return createPredicateSnapshot(
                     substructure,
                     cell,
@@ -174,12 +175,12 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                 selection,
                 cell,
                 appliedTierDomains);
-        List<PreviewCandidate> candidates = new ArrayList<>(concreteCandidates.size() + (allowsAir ? 1 : 0));
+        List<PreviewCandidate> candidates = new ObjectArrayList<>(concreteCandidates.size() + (allowsAir ? 1 : 0));
         if (allowsAir) {
             candidates.add(PreviewCandidate.empty());
         }
         candidates.addAll(concreteCandidates);
-        int selectedIndex = candidateOverride == null ? 0 : candidateOverride;
+        int selectedIndex = hasCandidateOverride ? candidateOverride : 0;
         return createPredicateSnapshot(
                 substructure,
                 cell,
@@ -198,7 +199,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
         } catch (IllegalArgumentException | IllegalStateException exception) {
             throw projectionFailure(substructure, cell, "Predicate candidate pairing failed", exception);
         }
-        List<PreviewCandidate> result = new ArrayList<>();
+        List<PreviewCandidate> result = new ObjectArrayList<>();
         for (PatternCandidate pair : pairs) {
             BlockState state = pair.previewState();
             if (state.isAir()) {
@@ -295,7 +296,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                                                       Set<String> appliedTierDomains) {
         List<String> expected = substructure.tierDomains().stream().map(PreviewTierDomain::id).toList();
         if (!appliedTierDomains.containsAll(expected)) {
-            Set<String> missing = new LinkedHashSet<>(expected);
+            Set<String> missing = new ObjectLinkedOpenHashSet<>(expected);
             missing.removeAll(appliedTierDomains);
             throw new IllegalStateException("Substructure " + substructure.definition().key() +
                     " does not expose candidates for tier domains " + missing);

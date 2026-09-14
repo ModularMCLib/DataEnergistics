@@ -19,8 +19,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataTeleportAnchorScreen extends AEBaseScreen<DataTeleportAnchorMenu> {
@@ -42,7 +42,7 @@ public class DataTeleportAnchorScreen extends AEBaseScreen<DataTeleportAnchorMen
 
     private final DataExtractorToggleButton redstoneControlButton;
     private final Scrollbar scrollbar;
-    private final List<AnchorEntry> anchorEntries = new ArrayList<>();
+    private final List<AnchorEntry> anchorEntries = new ObjectArrayList<>();
     private final WidgetStyle anchorCardsStyle;
     private final Text anchorCardNameStyle;
     private final Text anchorCardCoordsStyle;
@@ -314,7 +314,7 @@ public class DataTeleportAnchorScreen extends AEBaseScreen<DataTeleportAnchorMen
     }
 
     private List<String> splitEscaped(String raw) {
-        ArrayList<String> parts = new ArrayList<>();
+        ObjectArrayList<String> parts = new ObjectArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean escaping = false;
         for (int i = 0; i < raw.length(); i++) {

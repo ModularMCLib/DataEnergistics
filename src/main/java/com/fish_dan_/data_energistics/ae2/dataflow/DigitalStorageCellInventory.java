@@ -27,13 +27,13 @@ import appeng.util.prioritylist.IPartitionList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -50,7 +50,7 @@ public final class DigitalStorageCellInventory implements StorageCell {
     private final ItemStack stack;
     private final IBasicCellItem cellItem;
     private final @Nullable ISaveProvider container;
-    private final Map<AEKey, Long> storedAmounts;
+    private final Object2LongMap<AEKey> storedAmounts;
     @Getter
     private final ConfigInventory configInventory;
     private final IUpgradeInventory upgrades;
@@ -100,7 +100,7 @@ public final class DigitalStorageCellInventory implements StorageCell {
 
         long inserted = Math.min(amount, getRemainingAmount(what));
         if (mode == Actionable.MODULATE && inserted > 0L) {
-            storedAmounts.merge(what, inserted, Long::sum);
+            storedAmounts.mergeLong(what, inserted, Long::sum);
             saveChanges();
         }
 
@@ -117,7 +117,7 @@ public final class DigitalStorageCellInventory implements StorageCell {
         long extracted = Math.min(amount, stored);
         if (mode == Actionable.MODULATE && extracted > 0L) {
             if (extracted == stored) {
-                storedAmounts.remove(what);
+                storedAmounts.removeLong(what);
             } else {
                 storedAmounts.put(what, stored - extracted);
             }
@@ -128,8 +128,8 @@ public final class DigitalStorageCellInventory implements StorageCell {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        for (Map.Entry<AEKey, Long> entry : storedAmounts.entrySet()) {
-            out.add(entry.getKey(), entry.getValue());
+        for (Object2LongMap.Entry<AEKey> entry : storedAmounts.object2LongEntrySet()) {
+            out.add(entry.getKey(), entry.getLongValue());
         }
     }
 
@@ -173,10 +173,10 @@ public final class DigitalStorageCellInventory implements StorageCell {
             return;
         }
 
-        List<GenericStack> persistedStacks = new ArrayList<>(storedAmounts.size());
-        for (Map.Entry<AEKey, Long> entry : storedAmounts.entrySet()) {
-            if (entry.getValue() > 0L) {
-                persistedStacks.add(new GenericStack(entry.getKey(), entry.getValue()));
+        List<GenericStack> persistedStacks = new ObjectArrayList<>(storedAmounts.size());
+        for (Object2LongMap.Entry<AEKey> entry : storedAmounts.object2LongEntrySet()) {
+            if (entry.getLongValue() > 0L) {
+                persistedStacks.add(new GenericStack(entry.getKey(), entry.getLongValue()));
             }
         }
         if (persistedStacks.isEmpty()) {
@@ -227,8 +227,8 @@ public final class DigitalStorageCellInventory implements StorageCell {
         return upgrades;
     }
 
-    private static Map<AEKey, Long> loadStoredAmounts(ItemStack stack) {
-        Map<AEKey, Long> storedAmounts = new HashMap<>();
+    private static Object2LongMap<AEKey> loadStoredAmounts(ItemStack stack) {
+        Object2LongMap<AEKey> storedAmounts = new Object2LongOpenHashMap<>();
         List<GenericStack> storedStacks = stack.get(AEComponents.STORAGE_CELL_INV);
         if (storedStacks == null) {
             return storedAmounts;
@@ -236,7 +236,7 @@ public final class DigitalStorageCellInventory implements StorageCell {
 
         for (GenericStack stored : storedStacks) {
             if (stored.amount() > 0L) {
-                storedAmounts.merge(stored.what(), stored.amount(), Long::sum);
+                storedAmounts.mergeLong(stored.what(), stored.amount(), Long::sum);
             }
         }
         return storedAmounts;

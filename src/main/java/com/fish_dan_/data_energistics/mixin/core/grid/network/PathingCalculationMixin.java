@@ -6,11 +6,11 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.me.pathfinding.PathingCalculation;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,7 +33,7 @@ public abstract class PathingCalculationMixin {
                        target = "Lappeng/api/networking/IGrid;getMachineNodes(Ljava/lang/Class;)Ljava/lang/Iterable;"),
               require = 2)
     private Iterable<IGridNode> dataEnergistics$physicalMachineNodes(IGrid grid, Class<?> machineClass) {
-        List<IGridNode> physicalNodes = new ArrayList<>();
+        List<IGridNode> physicalNodes = new ObjectArrayList<>();
         for (IGridNode node : grid.getMachineNodes(machineClass)) {
             if (!(node instanceof VirtualGridNode virtualNode) || virtualNode.virtualPrimaryGrid() == null) {
                 physicalNodes.add(node);

@@ -4,7 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -59,7 +60,7 @@ public class Mesh {
         SpriteFinder finder = SpriteFinder.get(Minecraft.getInstance().getModelManager()
                 .getAtlas(TextureAtlas.LOCATION_BLOCKS));
 
-        List<BakedQuad> result = new ArrayList<>();
+        List<BakedQuad> result = new ObjectArrayList<>();
         forEach(qv -> result.add(qv.toBakedQuad(finder.find(qv))));
         return result;
     }

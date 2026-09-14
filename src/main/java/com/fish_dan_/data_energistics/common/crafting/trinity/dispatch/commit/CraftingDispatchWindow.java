@@ -1,5 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.budget.CraftingDispatchExhaustion;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.budget.CraftingDispatchLimits;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.CraftingServerDispatchBudget;
@@ -9,12 +14,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.LongSupplier;
@@ -138,11 +142,11 @@ public final class CraftingDispatchWindow {
     /**
      * Mutable attempt state retained only for providers observed during this window.
      */
-    private final Map<ICraftingProvider, ProviderState> states = new IdentityHashMap<>();
+    private final Map<ICraftingProvider, ProviderState> states = new Reference2ReferenceOpenHashMap<>();
     /**
      * Result counters expose rejection and ownership behavior without leaking mutable provider state.
      */
-    private final Map<CraftingDispatchStatus, Integer> resultCounts = new EnumMap<>(CraftingDispatchStatus.class);
+    private final Object2IntMap<CraftingDispatchStatus> resultCounts = new Object2IntOpenHashMap<>();
     /**
      * Immutable hard limits shared by physical call and measured server-time accounting.
      */
@@ -385,7 +389,7 @@ public final class CraftingDispatchWindow {
             validateTarget(target);
         }
 
-        this.resultCounts.merge(status, 1, Math::addExact);
+        this.resultCounts.mergeInt(status, 1, Math::addExact);
         ProviderState state = this.states.computeIfAbsent(provider, ignored -> new ProviderState());
         switch (status) {
             case BLOCKED, NO_CAPACITY -> state.block(pattern, target);
@@ -717,7 +721,7 @@ public final class CraftingDispatchWindow {
         /**
          * Pattern identity prevents equality-collapsing wrappers from sharing transient routing state.
          */
-        private final Map<IPatternDetails, PatternState> patternStates = new IdentityHashMap<>();
+        private final Map<IPatternDetails, PatternState> patternStates = new Reference2ReferenceOpenHashMap<>();
 
         /**
          * Returns whether neither quota nor provider/pattern/target state blocks another attempt.
@@ -777,7 +781,7 @@ public final class CraftingDispatchWindow {
         /**
          * Stable target identities rejected for Blocking or capacity in this window.
          */
-        private final Set<CraftingDispatchTarget> unavailableTargets = new HashSet<>();
+        private final Set<CraftingDispatchTarget> unavailableTargets = new ObjectOpenHashSet<>();
 
         /**
          * Returns whether the complete pattern and optional exact target remain eligible.

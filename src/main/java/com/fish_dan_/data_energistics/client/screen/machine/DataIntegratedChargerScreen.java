@@ -27,9 +27,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegratedChargerMenu> {
@@ -80,7 +80,7 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
     @Override
     protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         if (this.menu.getCarried().isEmpty() && isFluidTankSlot(this.hoveredSlot)) {
-            List<Component> tooltip = new ArrayList<>();
+            List<Component> tooltip = new ObjectArrayList<>();
             if (getDisplayedFluid(this.hoveredSlot) == null) {
                 tooltip.add(Component.translatable("screen.data_energistics.data_integrated_charger.fluid.empty"));
             } else {

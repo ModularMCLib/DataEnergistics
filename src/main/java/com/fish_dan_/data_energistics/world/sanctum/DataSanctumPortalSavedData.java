@@ -12,8 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ public class DataSanctumPortalSavedData extends SavedData {
             DataSanctumPortalSavedData::new,
             DataSanctumPortalSavedData::load);
 
-    private final Map<BlockPos, PortalRecord> portals = new LinkedHashMap<>();
+    private final Map<BlockPos, PortalRecord> portals = new Object2ObjectLinkedOpenHashMap<>();
 
     public static DataSanctumPortalSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
@@ -82,7 +83,7 @@ public class DataSanctumPortalSavedData extends SavedData {
     }
 
     public List<PortalRecord> getPortalsForSource(ResourceLocation sourceDimensionId, BlockPos sourcePos) {
-        ArrayList<PortalRecord> matches = new ArrayList<>();
+        ObjectArrayList<PortalRecord> matches = new ObjectArrayList<>();
         for (PortalRecord portal : this.portals.values()) {
             if (portal.sourceDimensionId().equals(sourceDimensionId) && portal.sourcePos().equals(sourcePos)) {
                 matches.add(portal);

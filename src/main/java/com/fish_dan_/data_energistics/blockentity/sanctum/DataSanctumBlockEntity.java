@@ -62,9 +62,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
@@ -133,7 +133,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     private int blackHoleBlockCursor;
     private int blackHoleExpansionRadius;
     private int preparedBlackHoleRadius;
-    private final List<BlockPos> pendingBlackHoleBlocks = new ArrayList<>();
+    private final List<BlockPos> pendingBlackHoleBlocks = new ObjectArrayList<>();
 
     public DataSanctumBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_SANCTUM_BLOCK_ENTITY.get(), blockPos, blockState);
@@ -937,7 +937,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     private List<BlockPos> createBlackHoleSurfaceBlocks(Level level, int radius) {
-        ArrayList<BlockOffset> blocks = new ArrayList<>();
+        ObjectArrayList<BlockOffset> blocks = new ObjectArrayList<>();
         int innerRadius = Math.max(0, radius - BLACK_HOLE_SURFACE_INNER_MARGIN);
         int outerRadius = Math.min(BLACK_HOLE_BLOCK_RADIUS, radius + BLACK_HOLE_SURFACE_OUTER_MARGIN);
         double innerRadiusSqr = innerRadius * innerRadius;
@@ -961,7 +961,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
                 .thenComparingDouble(block -> Math.abs(block.offsetY() + 0.5D - BLACK_HOLE_CENTER_Y_OFFSET))
                 .thenComparingDouble(block -> Math.atan2(block.offsetZ(), block.offsetX()))
                 .thenComparingInt(BlockOffset::offsetY));
-        ArrayList<BlockPos> positions = new ArrayList<>(blocks.size());
+        ObjectArrayList<BlockPos> positions = new ObjectArrayList<>(blocks.size());
         for (BlockOffset block : blocks) {
             positions.add(this.worldPosition.offset(block.offsetX(), block.offsetY(), block.offsetZ()));
         }
@@ -1002,7 +1002,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     public static Iterable<BlockPos> iterFootprint(BlockPos mainPos, Direction facing) {
-        List<BlockPos> positions = new ArrayList<>(25);
+        List<BlockPos> positions = new ObjectArrayList<>(25);
         for (int offsetX = -2; offsetX <= 2; offsetX++) {
             for (int offsetZ = -2; offsetZ <= 2; offsetZ++) {
                 positions.add(getPartPos(mainPos, facing, offsetX, offsetZ));

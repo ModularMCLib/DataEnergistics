@@ -2,12 +2,12 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public record TrinityCycleRepeatBlock(
                                       int index,
-                                      List<Integer> stageOrder,
+                                      IntList stageOrder,
                                       BigInteger repetitions,
                                       Map<AEKey, BigInteger> minimumSeed,
                                       Map<AEKey, BigInteger> netChange) {
@@ -33,7 +33,7 @@ public record TrinityCycleRepeatBlock(
         if (index < 0 || stageOrder.isEmpty() || repetitions.signum() <= 0) {
             throw new IllegalArgumentException("A Trinity repeat block requires index, stages and repetitions");
         }
-        stageOrder = Collections.unmodifiableList(stageOrder);
+        stageOrder = IntLists.unmodifiable(stageOrder);
         IntSet seenStages = new IntOpenHashSet();
         for (int stage : stageOrder) {
             if (stage < 0 || !seenStages.add(stage)) {

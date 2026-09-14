@@ -20,8 +20,8 @@ import dev.emi.emi.api.render.EmiRender;
 import dev.emi.emi.api.render.EmiTooltipComponents;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.runtime.EmiDrawContext;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -89,14 +89,14 @@ public final class DataResourceEmiStack extends EmiStack {
 
     @Override
     public List<Component> getTooltipText() {
-        List<Component> tooltip = new ArrayList<>(AEKeyRendering.getTooltip(key.aeKey()));
+        List<Component> tooltip = new ObjectArrayList<>(AEKeyRendering.getTooltip(key.aeKey()));
         tooltip.add(GenericStackDisplayHelper.createAmountTooltip(asGenericStack()));
         return tooltip;
     }
 
     @Override
     public List<ClientTooltipComponent> getTooltip() {
-        List<ClientTooltipComponent> tooltip = new ArrayList<>();
+        List<ClientTooltipComponent> tooltip = new ObjectArrayList<>();
         for (Component line : getTooltipText()) {
             tooltip.add(EmiTooltipComponents.of(line));
         }

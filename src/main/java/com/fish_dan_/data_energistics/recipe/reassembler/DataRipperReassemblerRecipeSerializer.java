@@ -11,8 +11,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -152,7 +152,7 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
 
     private static List<GenericStack> readGenericStackList(RegistryFriendlyByteBuf buffer) {
         int size = ByteBufCodecs.VAR_INT.decode(buffer);
-        List<GenericStack> stacks = new ArrayList<>(size);
+        List<GenericStack> stacks = new ObjectArrayList<>(size);
         for (int index = 0; index < size; index++) {
             stacks.add(Objects.requireNonNull(GenericStack.readBuffer(buffer), "Data reassembler fluid stack"));
         }

@@ -406,7 +406,7 @@ public final class ReusableInputSession {
                         List.of(new GenericStack(result.successor(), delivery.stack().amount()))));
             }
             byproducts.put(delivery.slot(), SessionAssets.merge(byproducts.get(delivery.slot()),
-                    SessionAssets.multiply(result.byproducts(), delivery.stack().amount())));
+                    SessionAssets.multiply(result.byproductsFast(), delivery.stack().amount())));
         }
         List<ToolOutcome> result = new ObjectArrayList<>();
         for (int slot : contracts.keySet()) {

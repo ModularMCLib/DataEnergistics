@@ -12,6 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -19,7 +21,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -63,7 +64,7 @@ public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
             throw new IllegalArgumentException("Trinity auto-build definition bundle requires between 1 and " +
                     MAX_DEFINITION_COUNT + " sources, got " + definitionSources.size());
         }
-        LinkedHashMap<ResourceLocation, String> ordered = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<ResourceLocation, String> ordered = new Object2ObjectLinkedOpenHashMap<>();
         int totalBytes = 0;
         for (Map.Entry<ResourceLocation, String> entry : definitionSources.entrySet()) {
             ResourceLocation definitionId = entry.getKey();
@@ -95,7 +96,7 @@ public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
      */
     public static TrinityAutoBuildDefinitionBundle capture(ResourceManager resourceManager,
                                                            MultiblockPreviewSpec previewSpec) {
-        LinkedHashMap<ResourceLocation, String> sources = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<ResourceLocation, String> sources = new Object2ObjectLinkedOpenHashMap<>();
         int totalBytes = 0;
         for (SubstructurePreviewSpec substructure : previewSpec.substructures()) {
             JsonMultiBlockStructureKey structureKey = substructure.definition().key();

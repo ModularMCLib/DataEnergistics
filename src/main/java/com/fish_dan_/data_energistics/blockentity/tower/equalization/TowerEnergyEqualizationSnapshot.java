@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.tower.equalization;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ public record TowerEnergyEqualizationSnapshot(List<TowerEnergyEndpointSnapshot> 
      */
     public TowerEnergyEqualizationSnapshot {
         endpoints = List.copyOf(endpoints);
-        Set<TowerEnergyEndpointId> identities = new HashSet<>();
+        Set<TowerEnergyEndpointId> identities = new ObjectOpenHashSet<>();
         for (TowerEnergyEndpointSnapshot endpoint : endpoints) {
             if (!identities.add(endpoint.endpoint())) {
                 throw new IllegalArgumentException("Endpoint snapshot contains a duplicate identity: " + endpoint.endpoint());

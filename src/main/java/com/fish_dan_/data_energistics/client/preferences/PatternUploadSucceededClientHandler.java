@@ -17,12 +17,12 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.player.Player;
 
 import com.mojang.serialization.JsonOps;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public final class PatternUploadSucceededClientHandler {
 
-    private static final Set<SuccessEventKey> DELIVERED_EVENTS = new HashSet<>();
+    private static final Set<SuccessEventKey> DELIVERED_EVENTS = new ObjectOpenHashSet<>();
 
     private PatternUploadSucceededClientHandler() {}
 

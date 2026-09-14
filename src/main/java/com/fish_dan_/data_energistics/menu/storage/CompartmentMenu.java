@@ -29,7 +29,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /**
@@ -114,7 +115,7 @@ public class CompartmentMenu extends AEBaseMenu implements IOptionalSlotHost {
     public int unlockedRowCount;
 
     private final CompartmentBlockEntity host;
-    private final List<CapacityGatedSlot> capacityGatedSlots = new ArrayList<>();
+    private final List<CapacityGatedSlot> capacityGatedSlots = new ObjectArrayList<>();
 
     public CompartmentMenu(MenuType<?> menuType, int id, Inventory playerInventory, CompartmentBlockEntity host) {
         super(menuType, id, playerInventory, host);

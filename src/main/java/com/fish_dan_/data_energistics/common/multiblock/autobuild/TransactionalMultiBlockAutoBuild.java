@@ -1,5 +1,10 @@
 package com.fish_dan_.data_energistics.common.multiblock.autobuild;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.multiblock.autobuild.material.AutoBuildMaterialTransaction;
 import com.fish_dan_.data_energistics.common.multiblock.autobuild.material.AutoBuildMaterialTransaction.RefundOutcome;
@@ -38,11 +43,11 @@ import com.modularmc.mdl.api.multiblock.StructureWorldView;
 import com.modularmc.mdl.api.multiblock.TraceabilityPredicate;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -187,8 +192,8 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         PatternCoordinates coordinates = new PatternCoordinates(pattern);
         MultiblockState state = new MultiblockState(context.world(), context.origin(), context.structureName());
         state.clean();
-        ArrayList<PositionPlan> positions = new ArrayList<>();
-        Set<PreviewPredicateKey> appliedCandidateSelections = new LinkedHashSet<>();
+        ObjectArrayList<PositionPlan> positions = new ObjectArrayList<>();
+        Set<PreviewPredicateKey> appliedCandidateSelections = new ObjectLinkedOpenHashSet<>();
         int reused = 0;
         int expandedZ = coordinates.minZ();
 
@@ -215,7 +220,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             }
         }
         if (!appliedCandidateSelections.containsAll(context.candidateSelections().keySet())) {
-            Set<PreviewPredicateKey> unknown = new LinkedHashSet<>(context.candidateSelections().keySet());
+            Set<PreviewPredicateKey> unknown = new ObjectLinkedOpenHashSet<>(context.candidateSelections().keySet());
             unknown.removeAll(appliedCandidateSelections);
             return new PlanOutcome(List.of(), reused, new Failure(
                     FailureType.UNSUPPORTED_CANDIDATE,
@@ -421,7 +426,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     }
 
     private static List<Block> tierCandidateBlocks(TraceabilityPredicate predicate) {
-        LinkedHashSet<Block> candidates = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<Block> candidates = new ObjectLinkedOpenHashSet<>();
         for (ItemStack candidate : predicate.placementCandidates()) {
             if (!candidate.isEmpty() && candidate.getItem() instanceof BlockItem blockItem) {
                 candidates.add(blockItem.getBlock());
@@ -436,7 +441,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     private static List<Candidate> supportedCandidates(TraceabilityPredicate predicate,
                                                        TierSelection tierSelection,
                                                        boolean partsOnly) {
-        ArrayList<Candidate> candidates = new ArrayList<>();
+        ObjectArrayList<Candidate> candidates = new ObjectArrayList<>();
         for (ItemStack candidateStack : predicate.placementCandidates()) {
             if (partsOnly && !(candidateStack.getItem() instanceof IPartItem<?>)) {
                 continue;
@@ -471,7 +476,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                                                                      int candidateIndex,
                                                                      BlockPos target) {
         boolean allowsEmpty = predicate.hasAir() || predicate.blockStateCandidates().stream().anyMatch(BlockState::isAir);
-        ArrayList<Candidate> candidates = new ArrayList<>();
+        ObjectArrayList<Candidate> candidates = new ObjectArrayList<>();
         List<PatternCandidate> patternCandidates;
         try {
             patternCandidates = predicate.patternCandidates();
@@ -623,7 +628,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
 
     private static AllocationOutcome allocateMaterials(Context context, List<PositionPlan> positions,
                                                        AutoBuildMaterialTransaction inventory) {
-        ArrayList<Placement> placements = new ArrayList<>(positions.size());
+        ObjectArrayList<Placement> placements = new ObjectArrayList<>(positions.size());
         int missing = 0;
         for (PositionPlan position : positions) {
             CandidateSelection selection = selectCandidate(context, inventory, position);
@@ -655,8 +660,8 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                                                       AutoBuildMaterialTransaction inventory,
                                                       PositionPlan position) {
         Failure validationFailure = null;
-        List<Candidate> approved = new ArrayList<>();
-        List<PlacementValidation> validations = new ArrayList<>();
+        List<Candidate> approved = new ObjectArrayList<>();
+        List<PlacementValidation> validations = new ObjectArrayList<>();
         for (Candidate candidate : position.candidates()) {
             if (!inventory.hasAvailable(candidate.material())) {
                 continue;
@@ -785,12 +790,12 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             snapshotsByPosition.put(snapshot.position().asLong(), snapshot);
         }
         List<Placement> pending = placements;
-        ArrayList<ReplacementDrop> replacementDrops = new ArrayList<>();
-        ArrayList<StagedBlock> stagedBlocks = new ArrayList<>();
-        ArrayList<DeferredPartPlacement> deferredParts = new ArrayList<>();
+        ObjectArrayList<ReplacementDrop> replacementDrops = new ObjectArrayList<>();
+        ObjectArrayList<StagedBlock> stagedBlocks = new ObjectArrayList<>();
+        ObjectArrayList<DeferredPartPlacement> deferredParts = new ObjectArrayList<>();
         Long2ObjectMap<BlockState> stagedStates = new Long2ObjectLinkedOpenHashMap<>();
         while (!pending.isEmpty()) {
-            ArrayList<Placement> deferred = new ArrayList<>();
+            ObjectArrayList<Placement> deferred = new ObjectArrayList<>();
             boolean madeProgress = false;
             for (Placement placement : pending) {
                 try {
@@ -981,8 +986,8 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                                                  List<Placement> placements,
                                                  StageOutcome stageOutcome) {
         int placed = 0;
-        ArrayList<ReplacementDrop> releasedReplacementDrops = new ArrayList<>();
-        ArrayList<Placement> consumedPlacements = new ArrayList<>();
+        ObjectArrayList<ReplacementDrop> releasedReplacementDrops = new ObjectArrayList<>();
+        ObjectArrayList<Placement> consumedPlacements = new ObjectArrayList<>();
         for (StagedBlock stagedBlock : stageOutcome.stagedBlocks()) {
             if (stagedBlock.physicallyStaged()) {
                 markMaterialConsumed(consumedPlacements, stagedBlock.placement());
@@ -1170,7 +1175,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     }
 
     private static void releaseReplacementDrops(Context context, List<ReplacementDrop> replacementDrops) {
-        ArrayList<ReplacementOverflow> overflows = new ArrayList<>();
+        ObjectArrayList<ReplacementOverflow> overflows = new ObjectArrayList<>();
         for (ReplacementDrop replacementDrop : replacementDrops) {
             for (ItemStack stack : replacementDrop.stacks()) {
                 ItemStack remaining = stack.copy();
@@ -1354,13 +1359,13 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             return this.selectedBlock != null && this.candidateBlocks.contains(block) && this.selectedBlock != block;
         }
 
-        private boolean replacesExisting(Block block, Map<Block, Integer> tierRanks) {
+        private boolean replacesExisting(Block block, Object2IntMap<Block> tierRanks) {
             if (!rejectsExisting(block)) {
                 return false;
             }
-            Integer existingRank = tierRanks.get(block);
-            Integer selectedRank = tierRanks.get(this.selectedBlock);
-            return existingRank != null && selectedRank != null && selectedRank > existingRank;
+            int existingRank = tierRanks.getInt(block);
+            int selectedRank = tierRanks.getInt(this.selectedBlock);
+            return tierRanks.containsKey(block) && tierRanks.containsKey(this.selectedBlock) && selectedRank > existingRank;
         }
     }
 

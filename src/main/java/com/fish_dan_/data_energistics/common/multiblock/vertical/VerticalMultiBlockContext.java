@@ -1,7 +1,8 @@
 package com.fish_dan_.data_energistics.common.multiblock.vertical;
 
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -20,7 +21,7 @@ public final class VerticalMultiBlockContext<S> {
     private final VerticalMultiBlockPos controllerPos;
     private final VerticalMultiBlockDirection direction;
     private final int height;
-    private final LinkedHashSet<VerticalMultiBlockPos> matchedPositions = new LinkedHashSet<>();
+    private final ObjectLinkedOpenHashSet<VerticalMultiBlockPos> matchedPositions = new ObjectLinkedOpenHashSet<>();
     private String error = "";
 
     public VerticalMultiBlockContext(VerticalMultiBlockDefinition<S> definition,
@@ -64,7 +65,7 @@ public final class VerticalMultiBlockContext<S> {
     }
 
     public Set<VerticalMultiBlockPos> matchedPositions() {
-        return Collections.unmodifiableSet(new LinkedHashSet<>(this.matchedPositions));
+        return Collections.unmodifiableSet(new ObjectLinkedOpenHashSet<>(this.matchedPositions));
     }
 
     public String error() {

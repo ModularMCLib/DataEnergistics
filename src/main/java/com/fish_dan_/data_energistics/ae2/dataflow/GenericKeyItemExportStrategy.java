@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.ae2.dataflow;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
 
@@ -29,7 +31,6 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 public class GenericKeyItemExportStrategy implements StackExportStrategy {
@@ -63,7 +64,7 @@ public class GenericKeyItemExportStrategy implements StackExportStrategy {
                 return;
             }
 
-            Map<AEKeyType, StackExportStrategy.Factory> updated = new IdentityHashMap<>(strategies.map);
+            Map<AEKeyType, StackExportStrategy.Factory> updated = new Reference2ReferenceOpenHashMap<>(strategies.map);
             updated.put(type, (level, fromPos, fromSide) -> new GenericKeyItemExportStrategy(type, level, fromPos, fromSide));
             strategies.map = Collections.unmodifiableMap(updated);
         }

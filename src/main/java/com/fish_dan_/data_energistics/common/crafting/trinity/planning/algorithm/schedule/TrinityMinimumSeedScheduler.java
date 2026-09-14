@@ -10,13 +10,14 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -123,7 +124,7 @@ public final class TrinityMinimumSeedScheduler {
         if (!Collections.disjoint(externalKeys, seedableKeys)) {
             throw new IllegalArgumentException("A Trinity input key cannot be both external and internal seed");
         }
-        LinkedHashSet<AEKey> allBalanceKeys = new LinkedHashSet<>(externalKeys);
+        ObjectLinkedOpenHashSet<AEKey> allBalanceKeys = new ObjectLinkedOpenHashSet<>(externalKeys);
         allBalanceKeys.addAll(seedableKeys);
         allBalanceKeys.addAll(minimumInputs.keySet());
         allBalanceKeys.addAll(maximumInputs.keySet());
@@ -165,7 +166,7 @@ public final class TrinityMinimumSeedScheduler {
                 externalUnits,
                 seedUnits,
                 sequence++));
-        HashSet<StateKey> visited = new HashSet<>();
+        ObjectOpenHashSet<StateKey> visited = new ObjectOpenHashSet<>();
         int statesVisited = 0;
         while (!pending.isEmpty()) {
             if (control.cancellationRequested()) {
@@ -297,9 +298,9 @@ public final class TrinityMinimumSeedScheduler {
                 maximum,
                 keys,
                 startingBalances)) {
-            ArrayList<BigInteger> remaining = new ArrayList<>(node.remaining());
+            ObjectArrayList<BigInteger> remaining = new ObjectArrayList<>(node.remaining());
             remaining.set(variantIndex, remaining.get(variantIndex).subtract(batch));
-            ArrayList<BigInteger> balances = new ArrayList<>(startingBalances);
+            ObjectArrayList<BigInteger> balances = new ObjectArrayList<>(startingBalances);
             for (int keyIndex = 0; keyIndex < keys.size(); keyIndex++) {
                 BigInteger delta = variant.netChange().getOrDefault(keys.get(keyIndex), BigInteger.ZERO);
                 BigInteger updated = balances.get(keyIndex).add(delta.multiply(batch));
@@ -308,7 +309,7 @@ public final class TrinityMinimumSeedScheduler {
                 }
                 balances.set(keyIndex, updated);
             }
-            ArrayList<TrinityVariantFiring> batches = new ArrayList<>(node.batches());
+            ObjectArrayList<TrinityVariantFiring> batches = new ObjectArrayList<>(node.batches());
             batches.add(new TrinityVariantFiring(variant, batch));
             pending.add(new SearchNode(
                     List.copyOf(remaining),
@@ -332,9 +333,9 @@ public final class TrinityMinimumSeedScheduler {
                                                              Set<AEKey> externalKeys,
                                                              Set<AEKey> seedableKeys,
                                                              Map<AEKey, BigInteger> maximumInputs) {
-        ArrayList<BigInteger> injectedBalances = new ArrayList<>(balances);
-        ArrayList<BigInteger> injectedExternal = new ArrayList<>(external);
-        ArrayList<BigInteger> injectedSeed = new ArrayList<>(seed);
+        ObjectArrayList<BigInteger> injectedBalances = new ObjectArrayList<>(balances);
+        ObjectArrayList<BigInteger> injectedExternal = new ObjectArrayList<>(external);
+        ObjectArrayList<BigInteger> injectedSeed = new ObjectArrayList<>(seed);
         BigInteger addedExternal = BigInteger.ZERO;
         BigInteger addedSeed = BigInteger.ZERO;
         for (Map.Entry<AEKey, BigInteger> input : variant.inputs().entrySet()) {
@@ -404,7 +405,7 @@ public final class TrinityMinimumSeedScheduler {
     }
 
     private static Map<AEKey, BigInteger> toZeroMap(Set<AEKey> keys) {
-        LinkedHashMap<AEKey, BigInteger> zero = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> zero = new Object2ObjectLinkedOpenHashMap<>();
         keys.forEach(key -> zero.put(key, BigInteger.ZERO));
         return zero;
     }
@@ -421,7 +422,7 @@ public final class TrinityMinimumSeedScheduler {
     }
 
     private static Map<AEKey, BigInteger> positiveVector(List<AEKey> keys, List<BigInteger> values) {
-        LinkedHashMap<AEKey, BigInteger> positive = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < keys.size(); index++) {
             if (values.get(index).signum() > 0) {
                 positive.put(keys.get(index), values.get(index));

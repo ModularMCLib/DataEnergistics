@@ -6,9 +6,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +30,8 @@ public record TrinityGraphDemandSolution(
                                          long mipNanos) {
 
     public TrinityGraphDemandSolution {
-        initialInputs = Collections.unmodifiableMap(new LinkedHashMap<>(initialInputs));
-        acyclicFirings = Collections.unmodifiableMap(new LinkedHashMap<>(acyclicFirings));
+        initialInputs = Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(initialInputs));
+        acyclicFirings = Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(acyclicFirings));
         cycleSolutions = List.copyOf(cycleSolutions);
     }
 

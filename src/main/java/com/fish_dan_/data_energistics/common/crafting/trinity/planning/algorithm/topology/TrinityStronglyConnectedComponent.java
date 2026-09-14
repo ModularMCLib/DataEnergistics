@@ -4,6 +4,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
+
 import java.util.List;
 
 /**
@@ -21,8 +25,8 @@ public record TrinityStronglyConnectedComponent(
                                                 List<AEKey> keys,
                                                 boolean cyclic,
                                                 List<TrinityPatternVariant> cycleVariants,
-                                                List<Integer> predecessorIndexes,
-                                                List<Integer> successorIndexes) {
+                                                IntList predecessorIndexes,
+                                                IntList successorIndexes) {
 
     /**
      * Copies the immutable topology surface and rejects empty or self-referential components.
@@ -38,15 +42,15 @@ public record TrinityStronglyConnectedComponent(
         successorIndexes = copyComponentIndexes(successorIndexes, index);
     }
 
-    private static List<Integer> copyComponentIndexes(List<Integer> source, int ownIndex) {
-        List<Integer> copied = List.copyOf(source);
+    private static IntList copyComponentIndexes(IntList source, int ownIndex) {
+        IntArrayList copied = new IntArrayList(source);
         int previous = -1;
-        for (Integer index : copied) {
-            if (index == null || index < 0 || index == ownIndex || index <= previous) {
+        for (int index : copied) {
+            if (index < 0 || index == ownIndex || index <= previous) {
                 throw new IllegalArgumentException("Trinity condensation edges must be sorted, unique and external");
             }
             previous = index;
         }
-        return copied;
+        return IntLists.unmodifiable(copied);
     }
 }

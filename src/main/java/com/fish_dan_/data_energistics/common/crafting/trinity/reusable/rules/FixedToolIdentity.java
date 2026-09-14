@@ -21,7 +21,7 @@ public final class FixedToolIdentity {
 
     public static ReusableInputRule rule(ReusableInputRule source) {
         return ReusableInputRule.fixedDamage(source.id(), source.revision(), key(source.initialKey()),
-                source.damagePerUse(), source.breakAtDamage(), source.exhaustionByproducts());
+                source.damagePerUse(), source.breakAtDamage(), source.exhaustionByproductsFast());
     }
 
     public static boolean matches(ReusableInputRule rule, AEItemKey state) {

@@ -22,9 +22,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 
@@ -41,7 +41,7 @@ final class TrinityStorageContentsList extends BindableUIElement<TrinityDataCore
     private static final float ICON_SCALE = 0.875F;
     private static final int ICON_DEPTH = 0;
 
-    private final List<StorageRow> rows = new ArrayList<>(VISIBLE_ENTRY_COUNT);
+    private final List<StorageRow> rows = new ObjectArrayList<>(VISIBLE_ENTRY_COUNT);
     private final IntConsumer pageRequest;
     private TrinityDataCoreStorageView value = TrinityDataCoreStorageView.EMPTY;
     private int requestedFirstEntry;
@@ -202,7 +202,7 @@ final class TrinityStorageContentsList extends BindableUIElement<TrinityDataCore
     }
 
     private static List<Component> tooltip(Entry entry) {
-        List<Component> tooltip = new ArrayList<>(AEKeyRendering.getTooltip(entry.key()));
+        List<Component> tooltip = new ObjectArrayList<>(AEKeyRendering.getTooltip(entry.key()));
         if (tooltip.isEmpty()) {
             tooltip.add(entry.key().getDisplayName());
         }

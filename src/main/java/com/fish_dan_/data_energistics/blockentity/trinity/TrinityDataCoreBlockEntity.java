@@ -115,6 +115,7 @@ import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.StructureMatchResult;
 import com.modularmc.mdl.api.multiblock.StructureWorldView;
 import com.modularmc.mdl.api.multiblock.TraceabilityPredicate;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -1244,7 +1245,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     @Override
     public TrinityHostedActionStatus quickMovePatternsToPlayer(Player player,
                                                                long layoutRevision,
-                                                               List<Integer> globalSlots) {
+                                                               IntList globalSlots) {
         if (!this.patternCatalogValid || isPatternMaintenanceActive()) {
             return TrinityHostedActionStatus.STALE_STATE;
         }

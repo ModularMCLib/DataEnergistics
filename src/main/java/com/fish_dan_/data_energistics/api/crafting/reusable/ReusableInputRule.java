@@ -12,6 +12,8 @@ import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
@@ -36,6 +38,30 @@ import java.util.Map;
 public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, AEItemKey initialKey,
                                 int damagePerUse, int breakAtDamage, List<GenericStack> exhaustionByproducts,
                                 List<Transition> transitions) {
+
+    /** @deprecated scheduled for removal in plan 340; use {@link #exhaustionByproductsFast()} */
+    @Deprecated(forRemoval = true)
+    @Override
+    public List<GenericStack> exhaustionByproducts() {
+        return exhaustionByproducts;
+    }
+
+    /** Returns an immutable FastUtil view of exhaustion byproducts. */
+    public ObjectList<GenericStack> exhaustionByproductsFast() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(exhaustionByproducts));
+    }
+
+    /** @deprecated scheduled for removal in plan 340; use {@link #transitionsFast()} */
+    @Deprecated(forRemoval = true)
+    @Override
+    public List<Transition> transitions() {
+        return transitions;
+    }
+
+    /** Returns an immutable FastUtil view of transition rows. */
+    public ObjectList<Transition> transitionsFast() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(transitions));
+    }
 
     public ReusableInputRule {
         if (revision < 0L) {
@@ -89,6 +115,18 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
      */
     public record Transition(AEItemKey input, @Nullable AEItemKey successor, List<GenericStack> byproducts) {
 
+        /** @deprecated scheduled for removal in plan 340; use {@link #byproductsFast()} */
+        @Deprecated(forRemoval = true)
+        @Override
+        public List<GenericStack> byproducts() {
+            return byproducts;
+        }
+
+        /** Returns an immutable FastUtil view of transition byproducts. */
+        public ObjectList<GenericStack> byproductsFast() {
+            return ObjectLists.unmodifiable(new ObjectArrayList<>(byproducts));
+        }
+
         public Transition {
             byproducts = checkedOutputs(byproducts);
         }
@@ -102,6 +140,18 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
      * @param byproducts summed transition outputs, excluding the successor
      */
     public record Result(@Nullable AEItemKey successor, List<GenericStack> byproducts) {
+
+        /** @deprecated scheduled for removal in plan 340; use {@link #byproductsFast()} */
+        @Deprecated(forRemoval = true)
+        @Override
+        public List<GenericStack> byproducts() {
+            return byproducts;
+        }
+
+        /** Returns an immutable FastUtil view of result byproducts. */
+        public ObjectList<GenericStack> byproductsFast() {
+            return ObjectLists.unmodifiable(new ObjectArrayList<>(byproducts));
+        }
 
         public Result {
             byproducts = checkedOutputs(byproducts);
@@ -119,7 +169,10 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
      * maxDamage + 1 is valid for recipes that allow a final use at maxDamage before exhausting the tool.
      *
      * @return fixed-loss rule; throws when the state or thresholds cannot describe a damageable item
+     * @deprecated scheduled for removal in plan 340; use
+     *             {@link #fixedDamageFast(ResourceLocation, long, AEItemKey, int, int, ObjectList)}
      */
+    @Deprecated(forRemoval = true)
     public static ReusableInputRule fixedDamage(ResourceLocation id, long revision, AEItemKey key,
                                                 int damagePerUse, int breakAtDamage,
                                                 List<GenericStack> exhaustionByproducts) {
@@ -127,9 +180,28 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
                 exhaustionByproducts, List.of());
     }
 
-    /** @return complete deterministic graph, rejecting duplicate states and undeclared successors */
+    /** Defines deterministic damage loss through the FastUtil collection API. */
+    public static ReusableInputRule fixedDamageFast(ResourceLocation id, long revision, AEItemKey key,
+                                                    int damagePerUse, int breakAtDamage,
+                                                    ObjectList<GenericStack> exhaustionByproducts) {
+        return new ReusableInputRule(id, revision, Kind.FIXED_DAMAGE, key, damagePerUse, breakAtDamage,
+                exhaustionByproducts, List.of());
+    }
+
+    /**
+     * @return complete deterministic graph, rejecting duplicate states and undeclared successors
+     * @deprecated scheduled for removal in plan 340; use
+     *             {@link #transitionsFast(ResourceLocation, long, AEItemKey, ObjectList)}
+     */
+    @Deprecated(forRemoval = true)
     public static ReusableInputRule transitions(ResourceLocation id, long revision, AEItemKey initialKey,
                                                 List<Transition> transitions) {
+        return new ReusableInputRule(id, revision, Kind.TRANSITIONS, initialKey, 0, 0, List.of(), transitions);
+    }
+
+    /** Defines a deterministic transition graph through the FastUtil collection API. */
+    public static ReusableInputRule transitionsFast(ResourceLocation id, long revision, AEItemKey initialKey,
+                                                    ObjectList<Transition> transitions) {
         return new ReusableInputRule(id, revision, Kind.TRANSITIONS, initialKey, 0, 0, List.of(), transitions);
     }
 

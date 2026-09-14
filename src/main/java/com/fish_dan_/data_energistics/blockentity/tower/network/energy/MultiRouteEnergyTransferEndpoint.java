@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.tower.network.energy;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.TowerEnergyDirection;
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointId;
@@ -9,7 +11,6 @@ import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergy
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -48,7 +49,7 @@ public final class MultiRouteEnergyTransferEndpoint implements TowerEnergyTransf
     /**
      * Routes that performed a real mutation since the latest freeze.
      */
-    private final Set<TowerEnergyTransferEndpoint> mutatedRoutes = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<TowerEnergyTransferEndpoint> mutatedRoutes = new ReferenceOpenHashSet<>();
 
     /**
      * Prevents a persistently unavailable alternative route from logging every server tick.

@@ -2,9 +2,10 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -25,7 +26,7 @@ public record TrinityFiringOptimization(
                 minimumSeedLowerBound.signum() < 0) {
             throw new IllegalArgumentException("A Trinity firing optimization requires an exact non-empty proof");
         }
-        LinkedHashMap<TrinityPatternVariant, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> {
             if (variant == null || count == null || count.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity optimized firing must be positive");

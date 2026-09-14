@@ -1,15 +1,19 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model.CraftingDispatchCursor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityCachedComputation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationNamespace;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -87,17 +91,17 @@ public final class DispatchCapacityPlanner {
                 key.remainingCrafts(),
                 key.physicalCallLimit(),
                 0);
-        Map<ProviderCapacitySnapshot, ArrayDeque<ProviderTargetRotation.Target>> targetsByIdentity = new IdentityHashMap<>();
+        Map<ProviderCapacitySnapshot, ObjectArrayFIFOQueue<ProviderTargetRotation.Target>> targetsByIdentity = new Reference2ReferenceOpenHashMap<>();
         for (ProviderTargetRotation.Target target : rotation.targets()) {
-            targetsByIdentity.computeIfAbsent(target.snapshot(), ignored -> new ArrayDeque<>()).addLast(target);
+            targetsByIdentity.computeIfAbsent(target.snapshot(), ignored -> new ObjectArrayFIFOQueue<>()).enqueue(target);
         }
-        ArrayList<DispatchCapacitySlicePlan.Slice> slices = new ArrayList<>(rawPlan.slices().size());
+        ObjectArrayList<DispatchCapacitySlicePlan.Slice> slices = new ObjectArrayList<>(rawPlan.slices().size());
         for (CapacitySlice rawSlice : rawPlan.slices()) {
-            ArrayDeque<ProviderTargetRotation.Target> matching = targetsByIdentity.get(rawSlice.target());
+            ObjectArrayFIFOQueue<ProviderTargetRotation.Target> matching = targetsByIdentity.get(rawSlice.target());
             if (matching == null || matching.isEmpty()) {
                 throw new IllegalStateException("Capacity slice planner selected a target outside its rotated input");
             }
-            ProviderTargetRotation.Target selected = matching.removeFirst();
+            ProviderTargetRotation.Target selected = matching.dequeue();
             slices.add(new DispatchCapacitySlicePlan.Slice(
                     selected.snapshot(),
                     rawSlice.logicalCrafts(),

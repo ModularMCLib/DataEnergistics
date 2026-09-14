@@ -1,10 +1,17 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.projection;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,9 +24,9 @@ import java.util.Map;
  * @param candidateSelections non-negative candidate indexes keyed by unexpanded predicate coordinate
  */
 public record SubstructureSelection(int variantIndex,
-                                    List<Integer> repeatCounts,
-                                    Map<String, Integer> tierSelections,
-                                    Map<PreviewPredicateKey, Integer> candidateSelections) {
+                                    IntList repeatCounts,
+                                    Object2IntMap<String> tierSelections,
+                                    Object2IntMap<PreviewPredicateKey> candidateSelections) {
 
     /**
      * Copies all collections while validating values that do not require a structure definition.
@@ -31,7 +38,7 @@ public record SubstructureSelection(int variantIndex,
         if (repeatCounts == null || tierSelections == null || candidateSelections == null) {
             throw new IllegalArgumentException("Substructure selection collections cannot be null");
         }
-        repeatCounts = List.copyOf(repeatCounts);
+        repeatCounts = IntList.of(repeatCounts.toIntArray());
         for (int repeatCount : repeatCounts) {
             if (repeatCount < 1) {
                 throw new IllegalArgumentException("Preview repeat counts must be positive: " + repeatCount);
@@ -44,9 +51,9 @@ public record SubstructureSelection(int variantIndex,
     /**
      * Creates a selection for the default single-shape variant.
      */
-    public SubstructureSelection(List<Integer> repeatCounts,
-                                 Map<String, Integer> tierSelections,
-                                 Map<PreviewPredicateKey, Integer> candidateSelections) {
+    public SubstructureSelection(IntList repeatCounts,
+                                 Object2IntMap<String> tierSelections,
+                                 Object2IntMap<PreviewPredicateKey> candidateSelections) {
         this(0, repeatCounts, tierSelections, candidateSelections);
     }
 
@@ -78,7 +85,7 @@ public record SubstructureSelection(int variantIndex,
         if (repeatCount < 1) {
             throw new IllegalArgumentException("Preview repeat counts must be positive: " + repeatCount);
         }
-        List<Integer> updated = new ArrayList<>(this.repeatCounts);
+        IntList updated = new IntArrayList(this.repeatCounts);
         updated.set(unitIndex, repeatCount);
         return new SubstructureSelection(this.variantIndex, updated, this.tierSelections, this.candidateSelections);
     }
@@ -100,7 +107,7 @@ public record SubstructureSelection(int variantIndex,
         if (!this.tierSelections.containsKey(domainId)) {
             throw new IllegalArgumentException("Unknown preview tier domain: " + domainId);
         }
-        Map<String, Integer> updated = new LinkedHashMap<>(this.tierSelections);
+        Object2IntMap<String> updated = new Object2IntLinkedOpenHashMap<>(this.tierSelections);
         updated.put(domainId, value);
         return new SubstructureSelection(this.variantIndex, this.repeatCounts, updated, this.candidateSelections);
     }
@@ -119,41 +126,41 @@ public record SubstructureSelection(int variantIndex,
         if (candidateIndex < 0) {
             throw new IllegalArgumentException("Preview candidate index cannot be negative: " + candidateIndex);
         }
-        Map<PreviewPredicateKey, Integer> updated = new LinkedHashMap<>(this.candidateSelections);
+        Object2IntMap<PreviewPredicateKey> updated = new Object2IntLinkedOpenHashMap<>(this.candidateSelections);
         updated.put(predicateKey, candidateIndex);
         return new SubstructureSelection(this.variantIndex, this.repeatCounts, this.tierSelections, updated);
     }
 
-    private static Map<String, Integer> immutableTierSelections(Map<String, Integer> selections) {
-        Map<String, Integer> copy = new LinkedHashMap<>();
-        for (Map.Entry<String, Integer> entry : selections.entrySet()) {
+    private static Object2IntMap<String> immutableTierSelections(Object2IntMap<String> selections) {
+        Object2IntMap<String> copy = new Object2IntLinkedOpenHashMap<>();
+        for (Object2IntMap.Entry<String> entry : selections.object2IntEntrySet()) {
             String domainId = entry.getKey();
-            Integer value = entry.getValue();
+            int value = entry.getIntValue();
             if (domainId == null || domainId.isBlank()) {
                 throw new IllegalArgumentException("Preview tier domain id cannot be blank");
             }
-            if (value == null || value < 1) {
+            if (value < 1) {
                 throw new IllegalArgumentException("Preview tier values must be positive: " + value);
             }
             copy.put(domainId, value);
         }
-        return Collections.unmodifiableMap(copy);
+        return Object2IntMaps.unmodifiable(copy);
     }
 
-    private static Map<PreviewPredicateKey, Integer> immutableCandidateSelections(
-                                                                                  Map<PreviewPredicateKey, Integer> selections) {
-        Map<PreviewPredicateKey, Integer> copy = new LinkedHashMap<>();
-        for (Map.Entry<PreviewPredicateKey, Integer> entry : selections.entrySet()) {
+    private static Object2IntMap<PreviewPredicateKey> immutableCandidateSelections(
+                                                                                  Object2IntMap<PreviewPredicateKey> selections) {
+        Object2IntMap<PreviewPredicateKey> copy = new Object2IntLinkedOpenHashMap<>();
+        for (Object2IntMap.Entry<PreviewPredicateKey> entry : selections.object2IntEntrySet()) {
             PreviewPredicateKey predicateKey = entry.getKey();
-            Integer candidateIndex = entry.getValue();
+            int candidateIndex = entry.getIntValue();
             if (predicateKey == null) {
                 throw new IllegalArgumentException("Preview candidate selection requires a predicate key");
             }
-            if (candidateIndex == null || candidateIndex < 0) {
+            if (candidateIndex < 0) {
                 throw new IllegalArgumentException("Preview candidate index cannot be negative: " + candidateIndex);
             }
             copy.put(predicateKey, candidateIndex);
         }
-        return Collections.unmodifiableMap(copy);
+        return Object2IntMaps.unmodifiable(copy);
     }
 }

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.world.meteorite;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+
 import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassResponsePayload;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEItems;
@@ -31,7 +33,7 @@ import java.util.Queue;
 public final class DataMeteoriteCompassTargetInvalidation {
 
     private static final int MAX_RETRIES = 3;
-    private final Queue<PendingRefresh> pendingRefreshes = new ArrayDeque<>();
+    private final ObjectArrayFIFOQueue<PendingRefresh> pendingRefreshes = new ObjectArrayFIFOQueue<>();
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockEvent.BreakEvent event) {
@@ -41,7 +43,7 @@ public final class DataMeteoriteCompassTargetInvalidation {
 
         BlockPos pos = event.getPos().immutable();
         if (DataMeteoriteSavedData.get(level).remove(pos)) {
-            this.pendingRefreshes.add(new PendingRefresh(level, pos, MAX_RETRIES));
+            this.pendingRefreshes.enqueue(new PendingRefresh(level, pos, MAX_RETRIES));
         }
     }
 
@@ -64,10 +66,10 @@ public final class DataMeteoriteCompassTargetInvalidation {
     public void onServerTick(ServerTickEvent.Post event) {
         int pendingCount = this.pendingRefreshes.size();
         for (int i = 0; i < pendingCount; i++) {
-            PendingRefresh pending = this.pendingRefreshes.remove();
+            PendingRefresh pending = this.pendingRefreshes.dequeue();
             if (isDataMeteoriteCenter(pending.level().getBlockState(pending.pos()))) {
                 if (pending.retriesRemaining() > 0) {
-                    this.pendingRefreshes.add(pending.retry());
+                    this.pendingRefreshes.enqueue(pending.retry());
                 }
                 continue;
             }

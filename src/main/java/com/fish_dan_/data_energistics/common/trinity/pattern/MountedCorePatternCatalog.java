@@ -1,5 +1,10 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityCraftingBatch.InputSignature;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternCore.CachedPattern;
@@ -13,17 +18,20 @@ import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 
 /**
@@ -35,10 +43,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     private static final LayoutSnapshot EMPTY_LAYOUT = new LayoutSnapshot(0L, false, 0, List.of(), List.of());
 
     private final UUID hostId;
-    private final Map<TrinityPatternCore, CoreRuntime> runtimesByCore = new IdentityHashMap<>();
-    private final Map<PatternRoute, SlotBinding> routeBindings = new HashMap<>();
-    private final Map<TrinityPatternCore, Set<Integer>> dirtySlotsByCore = new IdentityHashMap<>();
-    private final TreeMap<Integer, ActiveSlot> activeSlotsByGlobalIndex = new TreeMap<>();
+    private final Map<TrinityPatternCore, CoreRuntime> runtimesByCore = new Reference2ReferenceOpenHashMap<>();
+    private final Map<PatternRoute, SlotBinding> routeBindings = new Object2ObjectOpenHashMap<>();
+    private final Map<TrinityPatternCore, IntSet> dirtySlotsByCore = new Reference2ReferenceOpenHashMap<>();
+    private final Int2ObjectAVLTreeMap<ActiveSlot> activeSlotsByGlobalIndex = new Int2ObjectAVLTreeMap<>();
 
     private LayoutSnapshot layout = EMPTY_LAYOUT;
     private List<CoreRuntime> orderedRuntimes = List.of();
@@ -134,11 +142,11 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
 
     @Override
     public RebuildResult rebuild(List<CoreMount> mounts) {
-        ArrayList<CoreMount> sorted = new ArrayList<>(mounts);
+        ObjectArrayList<CoreMount> sorted = new ObjectArrayList<>(mounts);
         sorted.sort((left, right) -> left.position().compareTo(right.position()));
 
-        Set<BlockPos> positions = new HashSet<>();
-        Map<UUID, CoreMount> mountsByCoreId = new HashMap<>();
+        Set<BlockPos> positions = new ObjectOpenHashSet<>();
+        Map<UUID, CoreMount> mountsByCoreId = new Object2ObjectOpenHashMap<>();
         for (CoreMount mount : sorted) {
             if (!positions.add(mount.position())) {
                 return rejectScan(mount.position(), "Duplicate Trinity pattern core position " + mount.position());
@@ -165,11 +173,11 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             return new RebuildResult(true, false, null, "");
         }
 
-        Map<TrinityPatternCore, CoreRuntime> nextRuntimesByCore = new IdentityHashMap<>();
-        HashMap<PatternRoute, SlotBinding> nextRouteBindings = new HashMap<>();
-        TreeMap<Integer, ActiveSlot> nextActiveSlots = new TreeMap<>();
-        ArrayList<CoreRuntime> nextRuntimes = new ArrayList<>(nextRanges.size());
-        ArrayList<IPatternDetails> nextPatterns = new ArrayList<>();
+        Map<TrinityPatternCore, CoreRuntime> nextRuntimesByCore = new Reference2ReferenceOpenHashMap<>();
+        Object2ObjectOpenHashMap<PatternRoute, SlotBinding> nextRouteBindings = new Object2ObjectOpenHashMap<>();
+        Int2ObjectAVLTreeMap<ActiveSlot> nextActiveSlots = new Int2ObjectAVLTreeMap<>();
+        ObjectArrayList<CoreRuntime> nextRuntimes = new ObjectArrayList<>(nextRanges.size());
+        ObjectArrayList<IPatternDetails> nextPatterns = new ObjectArrayList<>();
 
         for (CoreRange range : nextRanges) {
             CoreRuntime runtime = new CoreRuntime(range);
@@ -182,7 +190,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             }
             nextPatterns.addAll(publication.patterns());
 
-            List<Integer> workingSlots = range.mount().core().workingSlots(this.hostId);
+            IntList workingSlots = range.mount().core().workingSlots(this.hostId);
             int previousSlot = -1;
             for (int coreSlot : workingSlots) {
                 if (coreSlot <= previousSlot || coreSlot >= range.mount().blockCapacity()) {
@@ -222,10 +230,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             return false;
         }
 
-        Map<TrinityPatternCore, Set<Integer>> changedSlots = new IdentityHashMap<>(this.dirtySlotsByCore);
+        Map<TrinityPatternCore, IntSet> changedSlots = new Reference2ReferenceOpenHashMap<>(this.dirtySlotsByCore);
         this.dirtySlotsByCore.clear();
         boolean publicationChanged = false;
-        for (Map.Entry<TrinityPatternCore, Set<Integer>> changedCore : changedSlots.entrySet()) {
+        for (Map.Entry<TrinityPatternCore, IntSet> changedCore : changedSlots.entrySet()) {
             CoreRuntime runtime = this.runtimesByCore.get(changedCore.getKey());
             if (!runtime.matches(runtime.range.mount())) {
                 Data_Energistics.LOGGER.warn(
@@ -259,7 +267,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
         switch (change.kind()) {
             case CATALOG, RUNTIME_BINDING -> this.dirtySlotsByCore
-                    .computeIfAbsent(core, ignored -> new HashSet<>())
+                    .computeIfAbsent(core, ignored -> new IntOpenHashSet())
                     .add(change.slot());
             case WORK -> updateActiveSlot(runtime, change.slot());
             case PERSISTENT -> throw new IllegalArgumentException(
@@ -371,8 +379,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             return false;
         }
 
-        ArrayList<TrinityPatternCore.RefundTransaction> transactions = new ArrayList<>(capturedLayout.mounts().size());
-        ArrayList<TrinityItemAmount> refundable = new ArrayList<>();
+        ObjectArrayList<TrinityPatternCore.RefundTransaction> transactions = new ObjectArrayList<>(capturedLayout.mounts().size());
+        ObjectArrayList<TrinityItemAmount> refundable = new ObjectArrayList<>();
         List<TrinityItemAmount> offered = List.of();
         List<TrinityItemAmount> undelivered = List.of();
         boolean committed = false;
@@ -475,7 +483,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     private void rebuildAvailablePatterns() {
-        ArrayList<IPatternDetails> patterns = new ArrayList<>();
+        ObjectArrayList<IPatternDetails> patterns = new ObjectArrayList<>();
         for (CoreRuntime runtime : this.orderedRuntimes) {
             patterns.addAll(runtime.patterns);
         }
@@ -509,9 +517,9 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         return true;
     }
 
-    private static List<Integer> capturePatternRefundSlots(CoreRange range) {
-        List<Integer> occupiedSlots = range.mount().core().occupiedPatternSlots();
-        ArrayList<Integer> capturedSlots = new ArrayList<>(occupiedSlots.size());
+    private static IntList capturePatternRefundSlots(CoreRange range) {
+        IntList occupiedSlots = range.mount().core().occupiedPatternSlots();
+        IntArrayList capturedSlots = new IntArrayList(occupiedSlots.size());
         int previousSlot = -1;
         for (int slot : occupiedSlots) {
             if (slot <= previousSlot || slot >= range.mount().blockCapacity()) {
@@ -521,11 +529,11 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             capturedSlots.add(slot);
             previousSlot = slot;
         }
-        return List.copyOf(capturedSlots);
+        return IntList.of(capturedSlots.toIntArray());
     }
 
     private static List<ItemStack> copyPatternStacks(List<ItemStack> patterns) {
-        ArrayList<ItemStack> copies = new ArrayList<>(patterns.size());
+        ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(patterns.size());
         for (ItemStack pattern : patterns) {
             if (pattern.isEmpty()) {
                 throw new IllegalStateException("Trinity pattern refund cannot deliver an empty installed pattern");
@@ -539,7 +547,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         for (PatternRefundCapture capture : captures) {
             if (!capture.slots().isEmpty()) {
                 this.dirtySlotsByCore
-                        .computeIfAbsent(capture.range().mount().core(), ignored -> new HashSet<>())
+                        .computeIfAbsent(capture.range().mount().core(), ignored -> new IntOpenHashSet())
                         .addAll(capture.slots());
             }
         }
@@ -738,7 +746,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     private static List<CoreRange> createRanges(List<CoreMount> mounts) {
-        ArrayList<CoreRange> ranges = new ArrayList<>(mounts.size());
+        ObjectArrayList<CoreRange> ranges = new ObjectArrayList<>(mounts.size());
         int firstGlobalIndex = 0;
         for (CoreMount mount : mounts) {
             int lastGlobalIndexExclusive = Math.addExact(firstGlobalIndex, mount.blockCapacity());
@@ -802,7 +810,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     @Nullable
     private static InputSignature createCraftingGridSnapshot(IMolecularAssemblerSupportedPattern pattern,
                                                              KeyCounter[] workingInputs) {
-        ArrayList<ItemStack> craftingGrid = new ArrayList<>(CRAFTING_GRID_SLOT_COUNT);
+        ObjectArrayList<ItemStack> craftingGrid = new ObjectArrayList<>(CRAFTING_GRID_SLOT_COUNT);
         boolean[] populated = new boolean[CRAFTING_GRID_SLOT_COUNT];
         for (int slot = 0; slot < CRAFTING_GRID_SLOT_COUNT; slot++) {
             craftingGrid.add(ItemStack.EMPTY);
@@ -845,8 +853,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     private final class CoreRuntime {
 
         private final CoreRange range;
-        private final Map<Integer, SlotBinding> bindings = new HashMap<>();
-        private final TreeMap<Integer, SlotBinding> publishedBindingsBySlot = new TreeMap<>();
+        private final Int2ObjectMap<SlotBinding> bindings = new Int2ObjectOpenHashMap<>();
+        private final Int2ObjectAVLTreeMap<SlotBinding> publishedBindingsBySlot = new Int2ObjectAVLTreeMap<>();
         private long directoryRevision;
         private List<IPatternDetails> patterns = List.of();
 
@@ -887,8 +895,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
 
         private PreparedPublication preparePublication(PatternCacheSnapshot snapshot) {
-            ArrayList<SlotBinding> nextBindings = new ArrayList<>(snapshot.patterns().size());
-            ArrayList<IPatternDetails> nextPatterns = new ArrayList<>(snapshot.patterns().size());
+            ObjectArrayList<SlotBinding> nextBindings = new ObjectArrayList<>(snapshot.patterns().size());
+            ObjectArrayList<IPatternDetails> nextPatterns = new ObjectArrayList<>(snapshot.patterns().size());
             for (CachedPattern cachedPattern : snapshot.patterns()) {
                 SlotBinding binding = binding(cachedPattern.slot());
                 binding.cachedPattern = cachedPattern;
@@ -908,9 +916,9 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             return new PreparedPublication(List.copyOf(nextBindings), this.patterns);
         }
 
-        private boolean applyChangedPublication(Set<Integer> dirtySlots) {
-            ArrayList<SlotPublication> changedPublications = new ArrayList<>(dirtySlots.size());
-            for (int slot : new TreeSet<>(dirtySlots)) {
+        private boolean applyChangedPublication(IntSet dirtySlots) {
+            ObjectArrayList<SlotPublication> changedPublications = new ObjectArrayList<>(dirtySlots.size());
+            for (int slot : new IntAVLTreeSet(dirtySlots)) {
                 SlotBinding binding = binding(slot);
                 CachedPattern cachedPattern = core().cachedPattern(slot);
                 RoutedCraftingPatternDetails current = binding.routedDetails;
@@ -970,7 +978,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
 
         private final LayoutSnapshot capturedLayout;
         private final List<PatternRefundCapture> captures;
-        private final List<ItemStack> patterns = new ArrayList<>();
+        private final List<ItemStack> patterns = new ObjectArrayList<>();
         private int rangeIndex;
         private boolean prepared;
         private boolean closed;
@@ -979,7 +987,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
 
         private MountedPatternRefundPreparation(LayoutSnapshot capturedLayout) {
             this.capturedLayout = capturedLayout;
-            this.captures = new ArrayList<>(capturedLayout.ranges().size());
+            this.captures = new ObjectArrayList<>(capturedLayout.ranges().size());
             if (capturedLayout.active() && capturedLayout.mounts().isEmpty()) {
                 finishPreparation(PatternRefundResult.NO_PATTERNS);
             } else if (!isCurrentPatternRefundLayout(capturedLayout)) {
@@ -1019,12 +1027,12 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                     return;
                 }
                 TrinityPatternCore.PatternRefundTransaction transaction = range.mount().core().preparePatternRefund();
-                this.captures.add(new PatternRefundCapture(range, transaction, List.of(), List.of()));
+                this.captures.add(new PatternRefundCapture(range, transaction, IntList.of(), List.of()));
                 if (transaction.isBlockedByWork()) {
                     finishPreparation(PatternRefundResult.BLOCKED_BY_WORK);
                     return;
                 }
-                List<Integer> slots = capturePatternRefundSlots(range);
+                IntList slots = capturePatternRefundSlots(range);
                 List<ItemStack> capturedPatterns = copyPatternStacks(transaction.patterns());
                 if (capturedPatterns.size() < slots.size()) {
                     throw new IllegalStateException(
@@ -1180,11 +1188,11 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
 
     private record PatternRefundCapture(CoreRange range,
                                         TrinityPatternCore.PatternRefundTransaction transaction,
-                                        List<Integer> slots,
+                                        IntList slots,
                                         List<ItemStack> offeredPatterns) {
 
         private PatternRefundCapture {
-            slots = List.copyOf(slots);
+            slots = IntList.of(slots.toIntArray());
             offeredPatterns = copyPatternStacks(offeredPatterns);
         }
     }

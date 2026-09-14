@@ -10,6 +10,9 @@ import appeng.api.networking.security.IActionSource;
 
 import net.minecraft.server.level.ServerLevel;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -23,8 +26,18 @@ import java.util.UUID;
  */
 public interface ReusableCraftingProviderAdapter extends CountedCraftingProviderAdapter {
 
-    /** @return immutable concrete targets; discovery is read-only and must not retain the live query references */
+    /**
+     * @return immutable concrete targets; discovery is read-only and must not retain the live query references
+     * @deprecated scheduled for removal in plan 340; use
+     *             {@link #reusableTargetsFast(IPatternDetails, IActionSource, ServerLevel)}
+     */
+    @Deprecated(forRemoval = true)
     List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level);
+
+    /** Returns concrete targets as an immutable FastUtil snapshot. */
+    default ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(reusableTargets(pattern, source, level)));
+    }
 
     /** @return one read-only prepared open/append admission, or null when the exact contract cannot be accepted */
     @Nullable

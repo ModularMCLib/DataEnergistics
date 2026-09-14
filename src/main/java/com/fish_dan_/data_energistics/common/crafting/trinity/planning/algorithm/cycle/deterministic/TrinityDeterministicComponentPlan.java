@@ -5,9 +5,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -42,7 +43,7 @@ public record TrinityDeterministicComponentPlan(
             throw new IllegalArgumentException("A deterministic Trinity component schedule must match its firing vector");
         }
 
-        LinkedHashMap<AEKey, BigInteger> calculatedNet = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> calculatedNet = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> calculatedNet.merge(key, amount.multiply(count), BigInteger::add)));
         calculatedNet.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
@@ -55,7 +56,7 @@ public record TrinityDeterministicComponentPlan(
             }
         });
 
-        LinkedHashMap<AEKey, BigInteger> finalBalances = new LinkedHashMap<>(initialInputs);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finalBalances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         netChange.forEach((key, amount) -> finalBalances.merge(key, amount, BigInteger::add));
         if (finalBalances.values().stream().anyMatch(amount -> amount.signum() < 0)) {
             throw new IllegalArgumentException("A deterministic Trinity component final balance cannot be negative");
@@ -68,7 +69,7 @@ public record TrinityDeterministicComponentPlan(
 
     private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
                                                                               Map<TrinityPatternVariant, BigInteger> source) {
-        LinkedHashMap<TrinityPatternVariant, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, count) -> {
             if (count.signum() <= 0) {
                 throw new IllegalArgumentException("A deterministic Trinity component firing must be positive");
@@ -79,7 +80,7 @@ public record TrinityDeterministicComponentPlan(
     }
 
     private static Map<AEKey, BigInteger> copyPositiveAmounts(Map<AEKey, BigInteger> source) {
-        LinkedHashMap<AEKey, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("A deterministic Trinity component amount must be positive");
@@ -90,7 +91,7 @@ public record TrinityDeterministicComponentPlan(
     }
 
     private static Map<AEKey, BigInteger> copySignedAmounts(Map<AEKey, BigInteger> source) {
-        LinkedHashMap<AEKey, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() == 0) {
                 throw new IllegalArgumentException("A deterministic Trinity component net amount must be non-zero");

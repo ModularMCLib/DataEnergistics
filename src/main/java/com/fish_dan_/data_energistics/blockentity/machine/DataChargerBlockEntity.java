@@ -44,10 +44,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.Set;
 
 public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implements InternalInventoryHost {
@@ -70,7 +70,7 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
     private final AppEngInternalInventory storage = new AppEngInternalInventory(this, EXTENDED_SLOT_COUNT, 1);
     private final IItemHandler regularExternalItemHandler = this.storage.getSlotInv(0).toItemHandler();
     private final IItemHandler extendedExternalItemHandler = this.storage.toItemHandler();
-    private final LinkedHashMap<RecipeLookupKey, RecipeLookup> recipeLookupCache = new LinkedHashMap<>(RECIPE_LOOKUP_CACHE_LIMIT, 0.75F, true);
+    private final Object2ObjectLinkedOpenHashMap<RecipeLookupKey, RecipeLookup> recipeLookupCache = new Object2ObjectLinkedOpenHashMap<>(RECIPE_LOOKUP_CACHE_LIMIT, 0.75F);
     private long recipeLookupCacheEpoch = Long.MIN_VALUE;
     private long storedDataFlow;
     private boolean working;
@@ -464,6 +464,8 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
         RecipeLookupKey key = new RecipeLookupKey(reloadEpoch, AEItemKey.of(stack));
         RecipeLookup cached = this.recipeLookupCache.get(key);
         if (cached != null) {
+            this.recipeLookupCache.remove(key);
+            this.recipeLookupCache.put(key, cached);
             return cached;
         }
 

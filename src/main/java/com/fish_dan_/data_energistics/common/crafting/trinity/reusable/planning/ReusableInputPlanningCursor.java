@@ -306,8 +306,8 @@ public final class ReusableInputPlanningCursor {
         } else {
             ReusableInputRule.Result transition = rule.advance((AEItemKey) template.what(), 1L);
             captured.add(new TrinityBoundPatternInput(slot, alternative, template, inputs[slot].getMultiplier(),
-                    transition.successor(), rule, transition.byproducts(), damageIndependentInputs &&
-                            rule.kind() == ReusableInputRule.Kind.FIXED_DAMAGE && rule.exhaustionByproducts().isEmpty()));
+                    transition.successor(), rule, transition.byproductsFast(), damageIndependentInputs &&
+                            rule.kind() == ReusableInputRule.Kind.FIXED_DAMAGE && rule.exhaustionByproductsFast().isEmpty()));
             reusable = true;
         }
         slot++;

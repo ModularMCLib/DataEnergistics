@@ -29,10 +29,11 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
     private static final String TARGET_Z_TAG = "target_z";
     private static final int TELEPORT_RADIUS = 1;
     private static final int TELEPORT_HEIGHT = 3;
-    private static final Map<ResourceLocation, Map<BlockPos, DataTeleportAnchorBlockEntity>> LOADED_ANCHORS = new HashMap<>();
+    private static final Map<ResourceLocation, Map<BlockPos, DataTeleportAnchorBlockEntity>> LOADED_ANCHORS = new Object2ObjectOpenHashMap<>();
 
     private boolean redstoneControlled;
     private boolean hasTarget;
@@ -177,7 +178,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
 
         pruneInvalidAnchorsIfNeeded(serverLevel);
         String ownChannel = getChannelId();
-        ArrayList<AnchorSummary> anchors = new ArrayList<>();
+        ObjectArrayList<AnchorSummary> anchors = new ObjectArrayList<>();
         for (var record : TeleportAnchorSavedData.get(serverLevel.getServer()).getAnchors()) {
             if (isSelfAnchor(record.dimensionId(), record.pos())) {
                 continue;
@@ -388,7 +389,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         TeleportAnchorSavedData.get(serverLevel.getServer())
                 .registerAnchor(serverLevel.dimension().location(), this.worldPosition, getAnchorDisplayName(), getChannelId());
         LOADED_ANCHORS
-                .computeIfAbsent(serverLevel.dimension().location(), ignored -> new HashMap<>())
+                .computeIfAbsent(serverLevel.dimension().location(), ignored -> new Object2ObjectOpenHashMap<>())
                 .put(this.worldPosition.immutable(), this);
     }
 
@@ -448,7 +449,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
 
         if (level.getBlockEntity(pos) instanceof DataTeleportAnchorBlockEntity anchor) {
             LOADED_ANCHORS
-                    .computeIfAbsent(level.dimension().location(), ignored -> new HashMap<>())
+                    .computeIfAbsent(level.dimension().location(), ignored -> new Object2ObjectOpenHashMap<>())
                     .put(pos.immutable(), anchor);
             return anchor;
         }

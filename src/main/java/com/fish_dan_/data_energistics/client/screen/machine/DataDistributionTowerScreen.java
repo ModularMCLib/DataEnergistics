@@ -36,10 +36,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -289,7 +289,7 @@ public class DataDistributionTowerScreen extends AEBaseScreen<DataDistributionTo
                     true));
         }
 
-        ArrayList<BoundRow> rows = new ArrayList<>();
+        ObjectArrayList<BoundRow> rows = new ObjectArrayList<>();
         for (DataDistributionTowerTargetEntry entry : this.menu.boundTargetEntries) {
             TargetTransferInfo transferInfo = entry.transferInfo();
             String stateText = Component.translatable(

@@ -19,7 +19,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /** One entry in the data integrated charger's unified recipe viewer category. */
@@ -95,7 +96,7 @@ public sealed interface DataChargePressRecipeView permits DataChargePressRecipeV
      * operations.
      */
     static List<DataChargePressRecipeView> fromRecipeManager(RecipeManager recipeManager) {
-        List<DataChargePressRecipeView> views = new ArrayList<>();
+        List<DataChargePressRecipeView> views = new ObjectArrayList<>();
 
         recipeManager.getAllRecipesFor(AERecipeTypes.CHARGER).stream()
                 .map(ChargerView::new)

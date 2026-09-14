@@ -14,6 +14,9 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
@@ -21,10 +24,7 @@ import org.ojalgo.optimisation.Variable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -96,7 +96,7 @@ public final class TrinityShiftedFiringOptimizer {
                 variants,
                 firingUpperBound);
         Set<AEKey> externalCostKeys = externalReserveKeys(variants, internalKeys, demand);
-        LinkedHashSet<AEKey> finiteExternal = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> finiteExternal = new ObjectLinkedOpenHashSet<>();
         externalCostKeys.stream()
                 .filter(key -> !producibleInputs.contains(key))
                 .forEach(finiteExternal::add);
@@ -173,7 +173,7 @@ public final class TrinityShiftedFiringOptimizer {
             return unsuccessfulAttempt(firing);
         }
         BigInteger optimalReduction = firing.value().reductionTotal();
-        LinkedHashMap<TrinityPatternVariant, BigInteger> fixedReductions = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> fixedReductions = new Object2ObjectLinkedOpenHashMap<>();
         SolvedShift canonical = firing.value();
         for (TrinityPatternVariant variant : variants) {
             TrinityAlgorithmResult<SolvedShift> identity = solve(
@@ -182,7 +182,7 @@ public final class TrinityShiftedFiringOptimizer {
                             optimalExternalSaving,
                             optimalSeed,
                             optimalReduction,
-                            Collections.unmodifiableMap(new LinkedHashMap<>(fixedReductions)),
+                            Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(fixedReductions)),
                             variant),
                     control,
                     ++passes);
@@ -192,7 +192,7 @@ public final class TrinityShiftedFiringOptimizer {
             canonical = identity.value();
             fixedReductions.put(variant, canonical.reductions().getOrDefault(variant, ZERO));
         }
-        LinkedHashMap<TrinityPatternVariant, BigInteger> firings = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             BigInteger firingCount = completeFiringUpperBound.get(variant)
                     .subtract(canonical.reductions().getOrDefault(variant, ZERO));
@@ -248,7 +248,7 @@ public final class TrinityShiftedFiringOptimizer {
                     Map.of("passes", Integer.toString(passNumber), "state", result.getState().name()));
         }
 
-        ArrayList<BigDecimal> rawValues = new ArrayList<>(data.variables().size());
+        ObjectArrayList<BigDecimal> rawValues = new ObjectArrayList<>(data.variables().size());
         for (Variable variable : data.variables()) {
             rawValues.add(result.get(data.model().indexOf(variable)));
         }
@@ -282,8 +282,8 @@ public final class TrinityShiftedFiringOptimizer {
                                          ShiftedContext context,
                                          ShiftedPass pass) {
         ExpressionsBasedModel model = new ExpressionsBasedModel();
-        ArrayList<Variable> variables = new ArrayList<>();
-        LinkedHashMap<TrinityPatternVariant, Variable> reductions = new LinkedHashMap<>();
+        ObjectArrayList<Variable> variables = new ObjectArrayList<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, Variable> reductions = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < context.variants().size(); index++) {
             TrinityPatternVariant variant = context.variants().get(index);
             Variable reduction = model.addVariable("reduction_" + index)
@@ -293,7 +293,7 @@ public final class TrinityShiftedFiringOptimizer {
             reductions.put(variant, reduction);
             variables.add(reduction);
         }
-        LinkedHashMap<AEKey, Variable> seeds = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, Variable> seeds = new Object2ObjectLinkedOpenHashMap<>();
         int seedIndex = 0;
         for (AEKey key : context.internalKeys()) {
             Variable seed = model.addVariable("seed_" + seedIndex++)
@@ -431,7 +431,7 @@ public final class TrinityShiftedFiringOptimizer {
                                                   List<TrinityPatternVariant> variants,
                                                   Set<AEKey> internalKeys,
                                                   TrinityCycleDemand demand) {
-        LinkedHashSet<AEKey> external = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<AEKey> external = new ObjectLinkedOpenHashSet<>();
         variants.forEach(variant -> variant.inputs().keySet().stream()
                 .filter(key -> !internalKeys.contains(key))
                 .forEach(external::add));
@@ -474,7 +474,7 @@ public final class TrinityShiftedFiringOptimizer {
     }
 
     private static Map<AEKey, BigInteger> netChange(Map<TrinityPatternVariant, BigInteger> firings) {
-        LinkedHashMap<AEKey, BigInteger> net = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
@@ -484,7 +484,7 @@ public final class TrinityShiftedFiringOptimizer {
     private static Map<TrinityPatternVariant, BigInteger> completeFiringVector(
                                                                                List<TrinityPatternVariant> variants,
                                                                                Map<TrinityPatternVariant, BigInteger> sparse) {
-        LinkedHashMap<TrinityPatternVariant, BigInteger> complete = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> complete = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> complete.put(variant, sparse.getOrDefault(variant, ZERO)));
         return Collections.unmodifiableMap(complete);
     }
@@ -501,7 +501,7 @@ public final class TrinityShiftedFiringOptimizer {
                                          Map<AEKey, BigInteger> available,
                                          Set<AEKey> internalKeys,
                                          Set<AEKey> externalReserveKeys) {
-        LinkedHashSet<AEKey> bounded = new LinkedHashSet<>(internalKeys);
+        ObjectLinkedOpenHashSet<AEKey> bounded = new ObjectLinkedOpenHashSet<>(internalKeys);
         bounded.addAll(externalReserveKeys);
         return bounded.stream().allMatch(key -> available.getOrDefault(key, ZERO)
                 .add(net.getOrDefault(key, ZERO))
@@ -581,18 +581,18 @@ public final class TrinityShiftedFiringOptimizer {
                              Map<AEKey, Variable> seeds) {
 
         private SolvedShift decode(List<BigInteger> values, ShiftedContext context) {
-            LinkedHashMap<Variable, BigInteger> byVariable = new LinkedHashMap<>();
+            Object2ObjectLinkedOpenHashMap<Variable, BigInteger> byVariable = new Object2ObjectLinkedOpenHashMap<>();
             for (int index = 0; index < this.variables.size(); index++) {
                 byVariable.put(this.variables.get(index), values.get(index));
             }
-            LinkedHashMap<TrinityPatternVariant, BigInteger> decodedReductions = new LinkedHashMap<>();
+            Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> decodedReductions = new Object2ObjectLinkedOpenHashMap<>();
             this.reductions.forEach((variant, variable) -> {
                 BigInteger value = byVariable.get(variable);
                 if (value.signum() > 0) {
                     decodedReductions.put(variant, value);
                 }
             });
-            LinkedHashMap<AEKey, BigInteger> decodedSeeds = new LinkedHashMap<>();
+            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> decodedSeeds = new Object2ObjectLinkedOpenHashMap<>();
             this.seeds.forEach((key, variable) -> {
                 BigInteger value = byVariable.get(variable);
                 if (value.signum() > 0) {

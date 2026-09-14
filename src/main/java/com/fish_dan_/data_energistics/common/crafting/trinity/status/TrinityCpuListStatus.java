@@ -8,8 +8,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public record TrinityCpuListStatus(List<TrinityCpuStatus> cpus) {
         if (cpus.size() > MAX_CPU_COUNT) {
             throw new IllegalArgumentException("Trinity CPU status list exceeds the maximum published CPU count");
         }
-        List<TrinityCpuStatus> sorted = new ArrayList<>(cpus);
+        List<TrinityCpuStatus> sorted = new ObjectArrayList<>(cpus);
         if (sorted.contains(null)) {
             throw new IllegalArgumentException("Trinity CPU status list must not contain null entries");
         }
@@ -74,7 +74,7 @@ public record TrinityCpuListStatus(List<TrinityCpuStatus> cpus) {
         if (count < 0 || count > MAX_CPU_COUNT) {
             throw new IllegalArgumentException("Invalid synchronized Trinity CPU count: " + count);
         }
-        List<TrinityCpuStatus> statuses = new ArrayList<>(count);
+        List<TrinityCpuStatus> statuses = new ObjectArrayList<>(count);
         for (int index = 0; index < count; index++) {
             statuses.add(TrinityCpuStatus.STREAM_CODEC.decode(data));
         }

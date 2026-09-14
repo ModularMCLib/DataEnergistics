@@ -6,9 +6,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +64,7 @@ public final class AdjacentBlockCapabilityCache<T> {
      * @return immutable list of currently exposed capabilities
      */
     public List<T> getAll(Iterable<Direction> sides) {
-        List<T> resolved = new ArrayList<>();
+        List<T> resolved = new ObjectArrayList<>();
         for (Direction side : sides) {
             T value = get(side);
             if (value != null) {

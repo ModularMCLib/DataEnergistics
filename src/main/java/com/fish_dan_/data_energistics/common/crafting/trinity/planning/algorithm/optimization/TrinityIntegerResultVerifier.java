@@ -6,12 +6,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.ojalgo.type.context.NumberContext;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +40,7 @@ public final class TrinityIntegerResultVerifier {
         if (values == null || integralityTolerance == null) {
             throw new IllegalArgumentException("A Trinity integer verification requires values and solver tolerance");
         }
-        ArrayList<BigInteger> integers = new ArrayList<>(values.size());
+        ObjectArrayList<BigInteger> integers = new ObjectArrayList<>(values.size());
         for (int index = 0; index < values.size(); index++) {
             BigDecimal value = values.get(index);
             BigDecimal nearest = value == null ? null : value.setScale(0, RoundingMode.HALF_EVEN);

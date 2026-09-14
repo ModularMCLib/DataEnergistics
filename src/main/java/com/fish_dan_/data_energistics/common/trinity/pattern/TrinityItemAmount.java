@@ -4,7 +4,8 @@ import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
 /** Immutable item identity and positive long amount used by Trinity output and refund state. */
@@ -50,7 +51,7 @@ public record TrinityItemAmount(AEItemKey key, long amount) {
         long unitAmount = stack.getCount();
         long multipliersPerEntry = Long.MAX_VALUE / unitAmount;
         AEItemKey key = AEItemKey.of(stack);
-        ArrayList<TrinityItemAmount> result = new ArrayList<>();
+        ObjectArrayList<TrinityItemAmount> result = new ObjectArrayList<>();
         long remainingMultiplier = multiplier;
         while (remainingMultiplier > 0L) {
             long segmentMultiplier = Math.min(remainingMultiplier, multipliersPerEntry);

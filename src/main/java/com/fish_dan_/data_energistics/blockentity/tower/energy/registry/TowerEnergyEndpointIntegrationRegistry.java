@@ -17,11 +17,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +40,7 @@ public final class TowerEnergyEndpointIntegrationRegistry {
 
     private TowerEnergyEndpointIntegrationRegistry(List<TowerEnergyEndpointIntegration> integrations) {
         this.integrations = List.copyOf(integrations);
-        ArrayList<TowerEnergyEndpointIntegration> lookupOrder = new ArrayList<>(integrations);
+        ObjectArrayList<TowerEnergyEndpointIntegration> lookupOrder = new ObjectArrayList<>(integrations);
         lookupOrder.sort(Comparator.comparingInt(TowerEnergyEndpointIntegration::lookupOrder));
         this.lookupIntegrations = List.copyOf(lookupOrder);
     }
@@ -128,7 +128,7 @@ public final class TowerEnergyEndpointIntegrationRegistry {
      */
     public static final class Builder {
 
-        private final ArrayList<TowerEnergyEndpointIntegration> integrations = new ArrayList<>();
+        private final ObjectArrayList<TowerEnergyEndpointIntegration> integrations = new ObjectArrayList<>();
 
         private Builder() {}
 
@@ -147,7 +147,7 @@ public final class TowerEnergyEndpointIntegrationRegistry {
          * Builds an immutable registry and rejects duplicate registration identifiers.
          */
         public TowerEnergyEndpointIntegrationRegistry build() {
-            Set<String> ids = new HashSet<>();
+            Set<String> ids = new ObjectOpenHashSet<>();
             for (TowerEnergyEndpointIntegration integration : this.integrations) {
                 if (!ids.add(integration.id())) {
                     throw new IllegalStateException("Duplicate tower energy integration id: " + integration.id());

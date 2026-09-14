@@ -8,9 +8,13 @@ import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergy
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.LongSupplier;
@@ -28,10 +32,10 @@ public final class SharedTowerEnergyPort {
     private static final int FAILURE_LOG_INTERVAL_TICKS = 100;
 
     private final LongSupplier gameTime;
-    private final Map<AccessKey, Integer> extractionCursors = new HashMap<>();
-    private final Map<AccessKey, Integer> insertionCursors = new HashMap<>();
-    private final Map<FailureKey, Long> lastFailureLogTicks = new HashMap<>();
-    private final Map<AccessKey, TowerEnergyAccessSnapshot> cachedSnapshots = new HashMap<>();
+    private final Object2IntMap<AccessKey> extractionCursors = new Object2IntOpenHashMap<>();
+    private final Object2IntMap<AccessKey> insertionCursors = new Object2IntOpenHashMap<>();
+    private final Object2LongMap<FailureKey> lastFailureLogTicks = new Object2LongOpenHashMap<>();
+    private final Map<AccessKey, TowerEnergyAccessSnapshot> cachedSnapshots = new Object2ObjectOpenHashMap<>();
     private List<TowerEnergyTransferEndpoint> endpoints = List.of();
     private long snapshotTick = Long.MIN_VALUE;
 
@@ -158,7 +162,7 @@ public final class SharedTowerEnergyPort {
         }
 
         AccessKey accessKey = AccessKey.of(requesterDimension, excludedPosition);
-        Map<AccessKey, Integer> cursors = insertion ? this.insertionCursors : this.extractionCursors;
+        Object2IntMap<AccessKey> cursors = insertion ? this.insertionCursors : this.extractionCursors;
         int endpointCount = this.endpoints.size();
         int startIndex = Math.floorMod(cursors.getOrDefault(accessKey, 0), endpointCount);
         int lastSuccessfulIndex = -1;
@@ -227,8 +231,8 @@ public final class SharedTowerEnergyPort {
     private void logFailure(TowerEnergyTransferEndpoint endpoint, Operation operation, RuntimeException exception) {
         long currentTick = this.gameTime.getAsLong();
         FailureKey failureKey = new FailureKey(endpoint.endpoint(), operation);
-        Long previousTick = this.lastFailureLogTicks.get(failureKey);
-        if (previousTick != null && currentTick - previousTick < FAILURE_LOG_INTERVAL_TICKS) {
+        long previousTick = this.lastFailureLogTicks.getLong(failureKey);
+        if (this.lastFailureLogTicks.containsKey(failureKey) && currentTick - previousTick < FAILURE_LOG_INTERVAL_TICKS) {
             return;
         }
         this.lastFailureLogTicks.put(failureKey, currentTick);

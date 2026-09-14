@@ -1,5 +1,11 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.model;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructurePreviewSpec;
@@ -8,10 +14,10 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.projection.Subst
 import net.minecraft.resources.ResourceLocation;
 
 import com.modularmc.mdl.api.multiblock.RepeatRange;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,7 +53,7 @@ public final class PreviewSelection {
      * @return initial immutable session selection
      */
     public static PreviewSelection initial(MultiblockPreviewSpec spec) {
-        Map<String, SubstructureSelection> selections = new LinkedHashMap<>();
+        Map<String, SubstructureSelection> selections = new Object2ObjectLinkedOpenHashMap<>();
         for (SubstructurePreviewSpec substructure : spec.substructures()) {
             selections.put(substructure.id(), substructure.defaults());
         }
@@ -148,17 +154,17 @@ public final class PreviewSelection {
             return this;
         }
         List<RepeatRange> targetRanges = substructure.repeatRanges(variantIndex);
-        List<Integer> targetRepeats = new ArrayList<>(targetRanges.size());
+        IntList targetRepeats = new IntArrayList(targetRanges.size());
         for (int unitIndex = 0; unitIndex < targetRanges.size(); unitIndex++) {
             RepeatRange range = targetRanges.get(unitIndex);
-            int repeatCount = unitIndex < active.repeatCounts().size() ? active.repeatCounts().get(unitIndex) : range.min();
+            int repeatCount = unitIndex < active.repeatCounts().size() ? active.repeatCounts().getInt(unitIndex) : range.min();
             targetRepeats.add(repeatCount >= range.min() && repeatCount <= range.max() ? repeatCount : range.min());
         }
         SubstructureSelection updated = substructure.validateSelection(new SubstructureSelection(
                 variantIndex,
                 targetRepeats,
                 active.tierSelections(),
-                Map.of()));
+                Object2IntMaps.emptyMap()));
         return withActiveSelection(updated);
     }
 
@@ -268,7 +274,7 @@ public final class PreviewSelection {
     }
 
     private PreviewSelection withActiveSelection(SubstructureSelection selection) {
-        Map<String, SubstructureSelection> updated = new LinkedHashMap<>(this.substructureSelections);
+        Map<String, SubstructureSelection> updated = new Object2ObjectLinkedOpenHashMap<>(this.substructureSelections);
         updated.put(this.activeSubstructureId, selection);
         return new PreviewSelection(
                 this.spec,
@@ -280,7 +286,7 @@ public final class PreviewSelection {
 
     private static Map<String, SubstructureSelection> immutableSelections(
                                                                           Map<String, SubstructureSelection> selections) {
-        Map<String, SubstructureSelection> copy = new LinkedHashMap<>();
+        Map<String, SubstructureSelection> copy = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<String, SubstructureSelection> entry : selections.entrySet()) {
             if (entry.getKey().isBlank()) {
                 throw new IllegalArgumentException("Preview substructure selections cannot contain blank entries");

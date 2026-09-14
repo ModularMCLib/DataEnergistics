@@ -20,9 +20,9 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -101,7 +101,7 @@ public final class EaeCircuitCutterRecipeCatalog {
             return;
         }
 
-        List<CutterRecipe> rebuiltRecipes = new ArrayList<>();
+        List<CutterRecipe> rebuiltRecipes = new ObjectArrayList<>();
         RecipeType<?> recipeType = BuiltInRegistries.RECIPE_TYPE.get(RECIPE_TYPE_ID);
         if (recipeType != null) {
             for (RecipeHolder<?> holder : getRecipes(currentRecipeManager, recipeType)) {

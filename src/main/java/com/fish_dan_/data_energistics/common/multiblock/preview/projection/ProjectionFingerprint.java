@@ -1,14 +1,22 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.projection;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2IntAVLTreeMap;
+
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSelection;
 
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,9 +36,9 @@ public record ProjectionFingerprint(ResourceLocation controllerId,
                                     long definitionRevision,
                                     JsonMultiBlockStructureKey structureKey,
                                     int variantIndex,
-                                    List<Integer> repeatCounts,
-                                    Map<String, Integer> tierSelections,
-                                    Map<PreviewPredicateKey, Integer> candidateSelections) {
+                                    IntList repeatCounts,
+                                    Object2IntMap<String> tierSelections,
+                                    Object2IntMap<PreviewPredicateKey> candidateSelections) {
 
     private static final Comparator<PreviewPredicateKey> PREDICATE_ORDER = Comparator
             .comparingInt(PreviewPredicateKey::sourceLayer)
@@ -79,14 +87,14 @@ public record ProjectionFingerprint(ResourceLocation controllerId,
                 active.candidateSelections());
     }
 
-    private static Map<String, Integer> sortedTiers(Map<String, Integer> tiers) {
-        return Collections.unmodifiableMap(new LinkedHashMap<>(new TreeMap<>(tiers)));
+    private static Object2IntMap<String> sortedTiers(Object2IntMap<String> tiers) {
+        return Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(new Object2IntAVLTreeMap<>(tiers)));
     }
 
-    private static Map<PreviewPredicateKey, Integer> sortedCandidates(
-                                                                      Map<PreviewPredicateKey, Integer> candidates) {
-        Map<PreviewPredicateKey, Integer> sorted = new TreeMap<>(PREDICATE_ORDER);
+    private static Object2IntMap<PreviewPredicateKey> sortedCandidates(
+                                                                      Object2IntMap<PreviewPredicateKey> candidates) {
+        Object2IntMap<PreviewPredicateKey> sorted = new Object2IntAVLTreeMap<>(PREDICATE_ORDER);
         sorted.putAll(candidates);
-        return Collections.unmodifiableMap(new LinkedHashMap<>(sorted));
+        return Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(sorted));
     }
 }

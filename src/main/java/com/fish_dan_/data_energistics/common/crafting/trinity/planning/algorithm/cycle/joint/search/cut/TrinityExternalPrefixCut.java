@@ -6,10 +6,13 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,9 +48,9 @@ public final class TrinityExternalPrefixCut {
             throw new IllegalArgumentException("A Trinity external-prefix cut request is incomplete");
         }
         Map<AEKey, BigInteger> thresholds = externalInputThresholds(box, internalKeys);
-        LinkedHashMap<AEKey, BigInteger> optimisticAmounts = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> optimisticAmounts = new Object2ObjectLinkedOpenHashMap<>();
         thresholds.keySet().forEach(key -> optimisticAmounts.put(key, cap));
-        LinkedHashSet<TrinityPatternVariant> reachable = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<TrinityPatternVariant> reachable = new ObjectLinkedOpenHashSet<>();
 
         boolean changed;
         do {
@@ -69,7 +72,7 @@ public final class TrinityExternalPrefixCut {
             }
         } while (changed);
 
-        ArrayList<Integer> unreachableAxes = new ArrayList<>();
+        IntArrayList unreachableAxes = new IntArrayList();
         for (int index = 0; index < box.variants().size(); index++) {
             if (box.bounds().get(index).permitsPositive() &&
                     !reachable.contains(box.variants().get(index))) {
@@ -81,13 +84,13 @@ public final class TrinityExternalPrefixCut {
 
     private static TrinityExternalPrefixPartition partition(
                                                             TrinityFiringBox box,
-                                                            List<Integer> unreachableAxes) {
-        ArrayList<TrinityFiringBounds> remaining = new ArrayList<>(box.bounds());
-        ArrayList<TrinityFiringBox> aboveCap = new ArrayList<>();
+                                                            IntList unreachableAxes) {
+        ObjectArrayList<TrinityFiringBounds> remaining = new ObjectArrayList<>(box.bounds());
+        ObjectArrayList<TrinityFiringBox> aboveCap = new ObjectArrayList<>();
         boolean zeroBranch = true;
         for (int index : unreachableAxes) {
             TrinityFiringBounds parent = remaining.get(index);
-            ArrayList<TrinityFiringBounds> positive = new ArrayList<>(remaining);
+            ObjectArrayList<TrinityFiringBounds> positive = new ObjectArrayList<>(remaining);
             positive.set(index, new TrinityFiringBounds(
                     parent.lowerInclusive().max(BigInteger.ONE),
                     parent.upperInclusive()));
@@ -106,7 +109,7 @@ public final class TrinityExternalPrefixCut {
     private static Map<AEKey, BigInteger> externalInputThresholds(
                                                                   TrinityFiringBox box,
                                                                   Set<AEKey> internalKeys) {
-        LinkedHashMap<AEKey, BigInteger> thresholds = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> thresholds = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < box.variants().size(); index++) {
             if (!box.bounds().get(index).permitsPositive()) {
                 continue;

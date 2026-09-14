@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.orbital.attack.beam;
 
 import com.fish_dan_.data_energistics.orbital.attack.OrbitalDirectedEnergyStrike;
 
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -103,7 +104,7 @@ public final class OrbitalBeamScan {
         IntArrayList offsets = new IntArrayList(Math.toIntExact(OrbitalDirectedEnergyStrike.scheduledCoordinateCount(radius)));
         // Visit concentric disk coordinates by distance so every unfinished prefix is circular.
         // A spiral prefix grows as an axis-aligned square, which is visible while terrain is being removed.
-        ObjectArrayList<Integer> ordered = new ObjectArrayList<>();
+        IntArrayList ordered = new IntArrayList();
         long radiusSquared = (long) radius * radius;
         for (int z = -radius; z <= radius; z++) {
             for (int x = -radius; x <= radius; x++) {
@@ -119,7 +120,7 @@ public final class OrbitalBeamScan {
             return (long) x * x + (long) z * z;
         }).thenComparingInt(packed -> (packed >>> 10) - 256)
                 .thenComparingInt(packed -> (packed & 1023) - 256));
-        offsets.addElements(0, ordered.stream().mapToInt(Integer::intValue).toArray());
+        offsets.addElements(0, ordered.toIntArray());
         long[] prefix = new long[offsets.size() + 1];
         Layout result = new Layout(offsets.toIntArray(), prefix, key.height(), key.path());
         for (int index = 0; index < offsets.size(); index++) {

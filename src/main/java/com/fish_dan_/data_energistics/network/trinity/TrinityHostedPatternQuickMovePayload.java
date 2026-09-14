@@ -9,7 +9,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import java.util.UUID;
 
 /** C2S ordered batch produced by one Shift-drag over aggregate Trinity pattern slots. */
@@ -19,7 +20,7 @@ public record TrinityHostedPatternQuickMovePayload(int containerId,
                                                    long generation,
                                                    long actionSequence,
                                                    long layoutRevision,
-                                                   List<Integer> globalSlots)
+                                                   IntList globalSlots)
         implements CustomPacketPayload {
 
     public static final Type<TrinityHostedPatternQuickMovePayload> TYPE = new Type<>(

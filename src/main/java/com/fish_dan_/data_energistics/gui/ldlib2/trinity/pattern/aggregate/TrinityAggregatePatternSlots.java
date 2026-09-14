@@ -27,6 +27,7 @@ import net.minecraft.world.level.Level;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
@@ -499,7 +500,7 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
         if (!this.quickMoveSweepActive || event.dragHandler == null || event.dragHandler.dragSource != this) {
             return;
         }
-        List<Integer> selectedSlots = List.copyOf(this.quickMoveSweepSlots);
+        IntList selectedSlots = IntList.of(this.quickMoveSweepSlots.toIntArray());
         long layoutRevision = this.quickMoveSweepLayoutRevision;
         clearQuickMoveSweep();
         if (!this.maintenanceActive && !selectedSlots.isEmpty()) {

@@ -4,8 +4,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.mod
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 
@@ -28,23 +29,23 @@ final class ProviderTargetRotation {
         if (cursor == null) {
             throw new IllegalArgumentException("Provider target rotation requires a fairness cursor");
         }
-        LinkedHashMap<CraftingProviderId, ArrayList<ProviderCapacitySnapshot>> grouped = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<CraftingProviderId, ObjectArrayList<ProviderCapacitySnapshot>> grouped = new Object2ObjectLinkedOpenHashMap<>();
         for (ProviderCapacitySnapshot snapshot : stableSnapshots) {
-            grouped.computeIfAbsent(snapshot.providerId(), ignored -> new ArrayList<>()).add(snapshot);
+            grouped.computeIfAbsent(snapshot.providerId(), ignored -> new ObjectArrayList<>()).add(snapshot);
         }
         if (grouped.isEmpty()) {
             return new ProviderTargetRotation(List.of());
         }
 
-        List<Map.Entry<CraftingProviderId, ArrayList<ProviderCapacitySnapshot>>> providers = List.copyOf(grouped.entrySet());
+        List<Map.Entry<CraftingProviderId, ObjectArrayList<ProviderCapacitySnapshot>>> providers = List.copyOf(grouped.entrySet());
         int providerCount = providers.size();
         int providerStart = Math.floorMod(cursor.provider(), providerCount);
         int maximumTargets = providers.stream().mapToInt(entry -> entry.getValue().size()).max().orElseThrow();
-        ArrayList<ArrayList<Target>> rounds = new ArrayList<>(maximumTargets);
+        ObjectArrayList<ObjectArrayList<Target>> rounds = new ObjectArrayList<>(maximumTargets);
         for (int targetRound = 0; targetRound < maximumTargets; targetRound++) {
-            rounds.add(new ArrayList<>());
+            rounds.add(new ObjectArrayList<>());
         }
-        ArrayList<Target> rotated = new ArrayList<>(stableSnapshots.size());
+        ObjectArrayList<Target> rotated = new ObjectArrayList<>(stableSnapshots.size());
         for (int providerOffset = 0; providerOffset < providerCount; providerOffset++) {
             int providerIndex = Math.floorMod(providerStart + providerOffset, providerCount);
             List<ProviderCapacitySnapshot> providerTargets = providers.get(providerIndex).getValue();

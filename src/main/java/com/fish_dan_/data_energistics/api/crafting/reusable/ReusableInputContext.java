@@ -10,6 +10,9 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import lombok.Builder;
 
 import java.util.List;
@@ -37,6 +40,20 @@ public record ReusableInputContext(IPatternDetails pattern, GenericStack actualI
                                    Ownership ownership, IActionSource actionSource, ServerLevel level,
                                    Optional<ResourceLocation> recipeId, Optional<ResourceLocation> machineMode,
                                    CountedCraftingTarget target) {
+
+    /**
+     * @deprecated scheduled for removal in plan 340; use {@link #exactInputsFast()}
+     */
+    @Deprecated(forRemoval = true)
+    @Override
+    public List<GenericStack> exactInputs() {
+        return exactInputs;
+    }
+
+    /** Returns an immutable FastUtil view of the complete input snapshot. */
+    public ObjectList<GenericStack> exactInputsFast() {
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(exactInputs));
+    }
 
     public ReusableInputContext {
         exactInputs = List.copyOf(exactInputs);

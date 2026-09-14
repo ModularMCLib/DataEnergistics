@@ -127,7 +127,7 @@ public final class NativeReusableCrafting {
                                     ServerLevel level, ResourceLocation recipeId) {
         boolean unchanged = binding.tools().stream().allMatch(tool -> tool.rule().kind() == ReusableInputRule.Kind.UNCHANGED);
         if (binding.tools().stream().anyMatch(tool -> tool.rule().kind() == ReusableInputRule.Kind.TRANSITIONS ||
-                !tool.rule().exhaustionByproducts().isEmpty()))
+                !tool.rule().exhaustionByproductsFast().isEmpty()))
             return 1L;
         var recipe = level.getRecipeManager().byKey(recipeId).orElse(null);
         boolean retainedVanilla = unchanged && usesNativeRecipeValidation(pattern, Optional.of(recipeId)) && recipe != null &&
@@ -205,7 +205,7 @@ public final class NativeReusableCrafting {
                 if (actual.amount() > 1) {
                     byproducts.get(owner).add(new GenericStack(actual.what(), actual.amount() - 1));
                 }
-            } else if (prediction.byproducts().stream().anyMatch(product -> product.what().equals(actual.what()))) {
+            } else if (prediction.byproductsFast().stream().anyMatch(product -> product.what().equals(actual.what()))) {
                 byproducts.get(owner).add(actual);
             } else {
                 // Unexpected actual state is retained so fault settlement cannot reconstruct the old tool.

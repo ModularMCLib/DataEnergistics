@@ -7,9 +7,9 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public record UniversalTerminalStateSyncPayload(List<String> installedTerminalNames,
@@ -45,7 +45,7 @@ public record UniversalTerminalStateSyncPayload(List<String> installedTerminalNa
 
     private static List<String> readInstalledTerminalNames(RegistryFriendlyByteBuf buf) {
         int size = buf.readVarInt();
-        ArrayList<String> names = new ArrayList<>(size);
+        ObjectArrayList<String> names = new ObjectArrayList<>(size);
         for (int i = 0; i < size; i++) {
             names.add(buf.readUtf());
         }

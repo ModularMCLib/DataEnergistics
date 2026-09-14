@@ -7,6 +7,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +35,7 @@ public record TrinityGraphPlanAssembly(
                                        Map<AEKey, BigInteger> initialInputs,
                                        Map<TrinityPatternIdentity, BigInteger> patternFirings,
                                        List<TrinityPlanStage> stages,
-                                       List<Integer> stageOrder,
+                                       IntList stageOrder,
                                        List<TrinityCycleRepeatBlock> repeatBlocks,
                                        Map<AEKey, BigInteger> minimumSeed,
                                        Map<AEKey, BigInteger> netChange,

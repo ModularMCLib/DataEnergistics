@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.blockentity.tower.network.domain;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.grid.ControllerChannelCapacity;
 import com.fish_dan_.data_energistics.ae2.grid.TowerChannelCapacity;
@@ -61,15 +65,16 @@ import net.minecraft.world.Nameable;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -94,12 +99,12 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             .thenComparingInt(TowerEnergyEndpointId::storageIdentity);
 
     private final IGrid grid;
-    private final Map<IGridNode, Long> registrationOrders = new IdentityHashMap<>();
-    private final Map<TowerRuntimeKey, TowerNetworkParticipant> towers = new LinkedHashMap<>();
-    private final Map<TowerRuntimeKey, TowerNetworkTowerSnapshot> towerSnapshots = new HashMap<>();
-    private final Set<IGrid> attachedTargets = Collections.newSetFromMap(new IdentityHashMap<>());
-    private final Map<IGrid, TowerRuntimeKey> attachedOwners = new IdentityHashMap<>();
-    private final Map<IGrid, Long> lastBridgeFailureLogTicks = new IdentityHashMap<>();
+    private final Reference2LongMap<IGridNode> registrationOrders = new Reference2LongOpenHashMap<>();
+    private final Map<TowerRuntimeKey, TowerNetworkParticipant> towers = new Object2ObjectLinkedOpenHashMap<>();
+    private final Map<TowerRuntimeKey, TowerNetworkTowerSnapshot> towerSnapshots = new Object2ObjectOpenHashMap<>();
+    private final Set<IGrid> attachedTargets = new ReferenceOpenHashSet<>();
+    private final Map<IGrid, TowerRuntimeKey> attachedOwners = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2LongMap<IGrid> lastBridgeFailureLogTicks = new Reference2LongOpenHashMap<>();
     private final CapabilityExposedTowerAeTargetResolver targetResolver = new CapabilityExposedTowerAeTargetResolver();
     private final TowerEnergyEndpointIntegrationRegistry energyIntegrations;
     private final CapabilityTowerDomainEnergyResolver energyResolver;
@@ -155,8 +160,8 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         if (this.localNodesCacheValid) {
             return this.cachedLocalNodes;
         }
-        ArrayList<Map.Entry<IGridNode, Long>> entries = new ArrayList<>(this.registrationOrders.entrySet());
-        entries.sort(Map.Entry.comparingByValue());
+        ObjectArrayList<Reference2LongMap.Entry<IGridNode>> entries = new ObjectArrayList<>(this.registrationOrders.reference2LongEntrySet());
+        entries.sort(Comparator.comparingLong(Reference2LongMap.Entry::getLongValue));
         this.cachedLocalNodes = entries.stream().map(Map.Entry::getKey).toList();
         this.localNodesCacheValid = true;
         return this.cachedLocalNodes;
@@ -164,8 +169,8 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
 
     @Override
     public long registrationOrder(IGridNode node) {
-        Long order = this.registrationOrders.get(node);
-        if (order == null) {
+        long order = this.registrationOrders.getLong(node);
+        if (!this.registrationOrders.containsKey(node)) {
             throw new IllegalArgumentException("Grid node is not registered in this tower domain");
         }
         return order;
@@ -246,7 +251,8 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
 
     @Override
     public void removeNode(IGridNode gridNode) {
-        if (this.registrationOrders.remove(gridNode) != null) {
+        if (this.registrationOrders.containsKey(gridNode)) {
+            this.registrationOrders.removeLong(gridNode);
             this.localNodesCacheValid = false;
             invalidate(TowerNetworkDomainChange.PHYSICAL_NODE);
         }
@@ -289,7 +295,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         MinecraftServer server = this.grid.getPivot().getLevel().getServer();
         List<TowerWork> towerWorks = dataEnergistics$resolveTowers();
         for (TowerWork towerWork : towerWorks) {
-            Set<IGrid> candidateTargets = Collections.newSetFromMap(new IdentityHashMap<>());
+            Set<IGrid> candidateTargets = new ReferenceOpenHashSet<>();
             candidateTargets.addAll(towerWork.bindingByTarget().keySet());
             TowerGridOwnershipRegistry.replaceTowerCandidates(
                     server,
@@ -302,11 +308,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         VirtualGridOwnershipSnapshot<IGrid, TowerRuntimeKey> ownership = TowerGridOwnershipRegistry.snapshot(server);
         dataEnergistics$releaseStaleGlobalAttachments(ownership);
 
-        Map<TowerRuntimeKey, TowerWork> worksByTower = new HashMap<>();
+        Map<TowerRuntimeKey, TowerWork> worksByTower = new Object2ObjectOpenHashMap<>();
         for (TowerWork towerWork : towerWorks) {
             worksByTower.put(towerWork.participant().towerKey(), towerWork);
         }
-        Map<IGrid, OwnedGridWork> ownedTargets = new IdentityHashMap<>();
+        Map<IGrid, OwnedGridWork> ownedTargets = new Reference2ReferenceOpenHashMap<>();
         for (VirtualGridOwner<IGrid, TowerRuntimeKey> owner : ownership.owners()) {
             if (owner.sourceGrid() != this.grid) {
                 continue;
@@ -336,7 +342,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         List<DeviceWork> orderedDevices = dataEnergistics$orderedDevices(ownedTargets);
         VirtualChannelLedger<DeviceLeaseKey, IGridNode> ledger = new FifoVirtualChannelLedger<>(capacity);
         ledger.setPhysicalChannelUsage(physicalUsage);
-        Map<DeviceLeaseKey, DeviceWork> devicesByLease = new LinkedHashMap<>();
+        Map<DeviceLeaseKey, DeviceWork> devicesByLease = new Object2ObjectLinkedOpenHashMap<>();
         long manualOrder = 0;
         long automaticOrder = 0;
         for (DeviceWork deviceWork : orderedDevices) {
@@ -359,21 +365,21 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         }
         VirtualChannelLedgerSnapshot<DeviceLeaseKey, IGridNode> channelSnapshot = ledger.snapshot();
 
-        Map<DeviceLeaseKey, VirtualChannelNodeAllocation<IGridNode>> allocations = new LinkedHashMap<>();
+        Map<DeviceLeaseKey, VirtualChannelNodeAllocation<IGridNode>> allocations = new Object2ObjectLinkedOpenHashMap<>();
         for (VirtualChannelBindingAllocation<DeviceLeaseKey, IGridNode> binding : channelSnapshot.bindings()) {
             allocations.put(binding.bindingKey(), binding.nodes().getFirst());
         }
-        Map<IGrid, ArrayList<IGridNode>> activeNodesByTarget = new IdentityHashMap<>();
+        Map<IGrid, ObjectArrayList<IGridNode>> activeNodesByTarget = new Reference2ReferenceOpenHashMap<>();
         for (Map.Entry<DeviceLeaseKey, DeviceWork> entry : devicesByLease.entrySet()) {
             VirtualChannelNodeState state = allocations.get(entry.getKey()).state();
             if (state != VirtualChannelNodeState.LEASED && state != VirtualChannelNodeState.AVAILABLE_WITHOUT_CHANNEL) {
                 continue;
             }
             DeviceWork deviceWork = entry.getValue();
-            activeNodesByTarget.computeIfAbsent(deviceWork.targetGrid(), ignored -> new ArrayList<>())
+            activeNodesByTarget.computeIfAbsent(deviceWork.targetGrid(), ignored -> new ObjectArrayList<>())
                     .add(deviceWork.device().node());
         }
-        Set<IGrid> bridgeFailures = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<IGrid> bridgeFailures = new ReferenceOpenHashSet<>();
         for (Map.Entry<IGrid, OwnedGridWork> entry : ownedTargets.entrySet()) {
             IGrid targetGrid = entry.getKey();
             List<IGridNode> allNodes = entry.getValue().resolvedGrid().devices().stream()
@@ -387,7 +393,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                 ((VirtualGridBridge) targetGrid).replaceVirtualMembers(this.grid, allNodes, activeNodes);
                 this.attachedTargets.add(targetGrid);
                 this.attachedOwners.put(targetGrid, entry.getValue().towerWork().participant().towerKey());
-                this.lastBridgeFailureLogTicks.remove(targetGrid);
+                this.lastBridgeFailureLogTicks.removeLong(targetGrid);
             } catch (VirtualGridBridgeException exception) {
                 bridgeFailures.add(targetGrid);
                 try {
@@ -435,7 +441,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                                                                                   Map<DeviceLeaseKey, DeviceWork> devicesByLease,
                                                                                   Map<DeviceLeaseKey, VirtualChannelNodeAllocation<IGridNode>> allocations,
                                                                                   Set<IGrid> bridgeFailures) {
-        Map<EnergyLocationKey, TowerEnergyLocation> locations = new LinkedHashMap<>();
+        Map<EnergyLocationKey, TowerEnergyLocation> locations = new Object2ObjectLinkedOpenHashMap<>();
         for (TowerWork towerWork : towerWorks) {
             TowerNetworkParticipant participant = towerWork.participant();
             if (!participant.isTowerNetworkActive() || !participant.towerAllowsFe()) {
@@ -465,10 +471,10 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             locations.putIfAbsent(key, new TowerEnergyLocation(nodeLevel, position));
         }
 
-        ArrayList<Map.Entry<EnergyLocationKey, TowerEnergyLocation>> orderedLocations = new ArrayList<>(locations.entrySet());
+        ObjectArrayList<Map.Entry<EnergyLocationKey, TowerEnergyLocation>> orderedLocations = new ObjectArrayList<>(locations.entrySet());
         orderedLocations.sort(Map.Entry.comparingByKey());
-        IdentityHashMap<Object, ArrayList<TowerEnergyTransferEndpoint>> routesByStorage = new IdentityHashMap<>();
-        ArrayList<ArrayList<TowerEnergyTransferEndpoint>> orderedRouteGroups = new ArrayList<>();
+        Reference2ReferenceOpenHashMap<Object, ObjectArrayList<TowerEnergyTransferEndpoint>> routesByStorage = new Reference2ReferenceOpenHashMap<>();
+        ObjectArrayList<ObjectArrayList<TowerEnergyTransferEndpoint>> orderedRouteGroups = new ObjectArrayList<>();
         for (Map.Entry<EnergyLocationKey, TowerEnergyLocation> entry : orderedLocations) {
             for (TowerDomainEnergyEndpoint endpoint : this.energyResolver.resolve(entry.getValue())) {
                 dataEnergistics$addEnergyRoute(
@@ -504,7 +510,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                                 participant.towerEnergyHost()));
             }
         }
-        ArrayList<TowerEnergyTransferEndpoint> endpoints = new ArrayList<>(orderedRouteGroups.size());
+        ObjectArrayList<TowerEnergyTransferEndpoint> endpoints = new ObjectArrayList<>(orderedRouteGroups.size());
         for (List<TowerEnergyTransferEndpoint> routes : orderedRouteGroups) {
             endpoints.add(routes.size() == 1 ? routes.getFirst() : new MultiRouteEnergyTransferEndpoint(routes));
         }
@@ -516,13 +522,13 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
      * Adds one context-sensitive access route without duplicating its physical backing in the planner.
      */
     private static void dataEnergistics$addEnergyRoute(
-                                                       IdentityHashMap<Object, ArrayList<TowerEnergyTransferEndpoint>> routesByStorage,
-                                                       List<ArrayList<TowerEnergyTransferEndpoint>> orderedRouteGroups,
+                                                       Reference2ReferenceOpenHashMap<Object, ObjectArrayList<TowerEnergyTransferEndpoint>> routesByStorage,
+                                                       List<ObjectArrayList<TowerEnergyTransferEndpoint>> orderedRouteGroups,
                                                        Object storageIdentity,
                                                        TowerEnergyTransferEndpoint route) {
-        ArrayList<TowerEnergyTransferEndpoint> routes = routesByStorage.get(storageIdentity);
+        ObjectArrayList<TowerEnergyTransferEndpoint> routes = routesByStorage.get(storageIdentity);
         if (routes == null) {
-            routes = new ArrayList<>();
+            routes = new ObjectArrayList<>();
             routesByStorage.put(storageIdentity, routes);
             orderedRouteGroups.add(routes);
         }
@@ -563,7 +569,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
      * Stores unrecoverable compensation energy in the first stable active tower's existing isolation buffer.
      */
     private void dataEnergistics$quarantineEnergy(long amount) {
-        ArrayList<TowerNetworkParticipant> orderedTowers = new ArrayList<>(this.towers.values());
+        ObjectArrayList<TowerNetworkParticipant> orderedTowers = new ObjectArrayList<>(this.towers.values());
         orderedTowers.sort(Comparator.comparing(TowerNetworkParticipant::towerKey));
         for (TowerNetworkParticipant tower : orderedTowers) {
             if (!tower.isTowerNetworkActive()) {
@@ -587,25 +593,25 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     }
 
     private List<TowerWork> dataEnergistics$resolveTowers() {
-        ArrayList<TowerNetworkParticipant> orderedTowers = new ArrayList<>(this.towers.values());
+        ObjectArrayList<TowerNetworkParticipant> orderedTowers = new ObjectArrayList<>(this.towers.values());
         orderedTowers.sort(Comparator.comparing(TowerNetworkParticipant::towerKey));
-        ArrayList<TowerWork> result = new ArrayList<>(orderedTowers.size());
-        Map<TargetResolutionKey, TowerTargetResolution> resolutionCache = new HashMap<>();
+        ObjectArrayList<TowerWork> result = new ObjectArrayList<>(orderedTowers.size());
+        Map<TargetResolutionKey, TowerTargetResolution> resolutionCache = new Object2ObjectOpenHashMap<>();
         CapabilityExposedTowerAeTargetResolver.ResolutionRound resolutionRound = this.targetResolver.beginResolutionRound();
         for (TowerNetworkParticipant participant : orderedTowers) {
-            Set<EnergyLocationKey> energyLocations = new HashSet<>();
+            Set<EnergyLocationKey> energyLocations = new ObjectOpenHashSet<>();
             if (participant.towerAllowsFe()) {
                 for (TowerEnergyLocation location : participant.towerEnergyLocations()) {
                     energyLocations.add(new EnergyLocationKey(
                             location.level().dimension().location(), location.position()));
                 }
             }
-            ArrayList<TowerBinding> orderedBindings = new ArrayList<>(participant.towerBindings());
+            ObjectArrayList<TowerBinding> orderedBindings = new ObjectArrayList<>(participant.towerBindings());
             orderedBindings.sort(Comparator
                     .comparingInt((TowerBinding binding) -> binding.source() == TowerBindingSource.MANUAL ? 0 : 1)
                     .thenComparingLong(TowerBinding::fifoSequence));
-            ArrayList<BindingWork> bindingWorks = new ArrayList<>(orderedBindings.size());
-            Map<IGrid, BindingTargetWork> bindingByTarget = new IdentityHashMap<>();
+            ObjectArrayList<BindingWork> bindingWorks = new ObjectArrayList<>(orderedBindings.size());
+            Map<IGrid, BindingTargetWork> bindingByTarget = new Reference2ReferenceOpenHashMap<>();
             for (TowerBinding binding : orderedBindings) {
                 TowerTargetResolution resolution;
                 if (!participant.towerAllowsAe() || !participant.towerLevel().dimension().location().equals(binding.dimensionId()) || !participant.towerLevel().isLoaded(binding.anchor())) {
@@ -640,8 +646,8 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     }
 
     private static List<DeviceWork> dataEnergistics$orderedDevices(Map<IGrid, OwnedGridWork> ownedTargets) {
-        Set<IGridNode> seenNodes = Collections.newSetFromMap(new IdentityHashMap<>());
-        ArrayList<DeviceWork> devices = new ArrayList<>();
+        Set<IGridNode> seenNodes = new ReferenceOpenHashSet<>();
+        ObjectArrayList<DeviceWork> devices = new ObjectArrayList<>();
         for (Map.Entry<IGrid, OwnedGridWork> entry : ownedTargets.entrySet()) {
             OwnedGridWork ownedGrid = entry.getValue();
             for (TowerResolvedDevice device : ownedGrid.resolvedGrid().devices()) {
@@ -668,7 +674,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                                                   TowerChannelOverview overview,
                                                   List<TowerEnergyEndpointSnapshot> energySnapshots) {
         Map<EnergyLocationKey, EnergySnapshotSummary> energyByLocation = dataEnergistics$aggregateEnergySnapshots(energySnapshots);
-        Map<BindingIdentity, ArrayList<TowerVirtualDeviceSnapshot>> deviceSnapshots = new HashMap<>();
+        Map<BindingIdentity, ObjectArrayList<TowerVirtualDeviceSnapshot>> deviceSnapshots = new Object2ObjectOpenHashMap<>();
         for (Map.Entry<DeviceLeaseKey, DeviceWork> entry : devicesByLease.entrySet()) {
             DeviceWork deviceWork = entry.getValue();
             VirtualChannelNodeAllocation<IGridNode> allocation = allocations.get(entry.getKey());
@@ -688,7 +694,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             BindingIdentity bindingIdentity = new BindingIdentity(
                     deviceWork.towerWork().participant().towerKey(), deviceWork.bindingWork().binding().fifoSequence());
             DeviceDisplay deviceDisplay = dataEnergistics$deviceDisplay(deviceWork.device().node());
-            deviceSnapshots.computeIfAbsent(bindingIdentity, ignored -> new ArrayList<>()).add(
+            deviceSnapshots.computeIfAbsent(bindingIdentity, ignored -> new ObjectArrayList<>()).add(
                     new TowerVirtualDeviceSnapshot(
                             deviceWork.bindingWork().binding().anchor(),
                             deviceWork.device().key(),
@@ -705,12 +711,12 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         }
 
         for (TowerWork towerWork : towerWorks) {
-            ArrayList<TowerBindingRuntimeSnapshot> bindingSnapshots = new ArrayList<>();
+            ObjectArrayList<TowerBindingRuntimeSnapshot> bindingSnapshots = new ObjectArrayList<>();
             for (BindingWork bindingWork : towerWork.bindings()) {
                 BindingIdentity identity = new BindingIdentity(
                         towerWork.participant().towerKey(), bindingWork.binding().fifoSequence());
                 List<TowerVirtualDeviceSnapshot> devices = List.copyOf(
-                        deviceSnapshots.getOrDefault(identity, new ArrayList<>()));
+                        deviceSnapshots.getOrDefault(identity, new ObjectArrayList<>()));
                 BindingState bindingState = dataEnergistics$bindingState(
                         towerWork, bindingWork, ownership, devices, bridgeFailures);
                 long requested = devices.stream().mapToLong(TowerVirtualDeviceSnapshot::requestedChannels).sum();
@@ -743,7 +749,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
      */
     private static Map<EnergyLocationKey, EnergySnapshotSummary> dataEnergistics$aggregateEnergySnapshots(
                                                                                                           List<TowerEnergyEndpointSnapshot> snapshots) {
-        Map<EnergyLocationKey, EnergySnapshotSummary> result = new HashMap<>();
+        Map<EnergyLocationKey, EnergySnapshotSummary> result = new Object2ObjectOpenHashMap<>();
         for (TowerEnergyEndpointSnapshot snapshot : snapshots) {
             EnergyLocationKey key = new EnergyLocationKey(
                     snapshot.endpoint().dimensionId(), snapshot.endpoint().pos());
@@ -768,7 +774,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             }
             return new BindingState(TowerVirtualDeviceState.WAITING_TARGET, "TARGET_UNAVAILABLE");
         }
-        ArrayList<String> failures = new ArrayList<>();
+        ObjectArrayList<String> failures = new ObjectArrayList<>();
         int usableGridCount = 0;
         boolean bridgeFailed = false;
         for (TowerResolvedGrid gridResult : bindingWork.resolution().grids()) {
@@ -843,7 +849,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
 
     private void dataEnergistics$releaseStaleGlobalAttachments(
                                                                VirtualGridOwnershipSnapshot<IGrid, TowerRuntimeKey> ownership) {
-        Set<IGrid> checkedTargets = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<IGrid> checkedTargets = new ReferenceOpenHashSet<>();
         for (VirtualGridCandidateStatus<IGrid, TowerRuntimeKey> candidate : ownership.candidates()) {
             IGrid targetGrid = candidate.targetGrid();
             if (!checkedTargets.add(targetGrid)) {
@@ -882,7 +888,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         if (detached) {
             this.attachedTargets.remove(targetGrid);
             this.attachedOwners.remove(targetGrid);
-            this.lastBridgeFailureLogTicks.remove(targetGrid);
+            this.lastBridgeFailureLogTicks.removeLong(targetGrid);
         }
     }
 
@@ -891,8 +897,8 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
      */
     private void dataEnergistics$logBridgeFailure(
                                                   IGrid targetGrid, long gameTime, String operation, VirtualGridBridgeException exception) {
-        Long lastLogTick = this.lastBridgeFailureLogTicks.get(targetGrid);
-        if (lastLogTick != null && gameTime - lastLogTick < BRIDGE_FAILURE_LOG_INTERVAL_TICKS) {
+        long lastLogTick = this.lastBridgeFailureLogTicks.getLong(targetGrid);
+        if (this.lastBridgeFailureLogTicks.containsKey(targetGrid) && gameTime - lastLogTick < BRIDGE_FAILURE_LOG_INTERVAL_TICKS) {
             return;
         }
         this.lastBridgeFailureLogTicks.put(targetGrid, gameTime);

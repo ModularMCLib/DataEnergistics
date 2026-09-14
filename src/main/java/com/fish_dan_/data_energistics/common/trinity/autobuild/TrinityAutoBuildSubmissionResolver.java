@@ -1,5 +1,12 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
@@ -56,16 +63,16 @@ public final class TrinityAutoBuildSubmissionResolver {
                     structureName);
         }
         for (int unitIndex = 0; unitIndex < fingerprint.repeatCounts().size(); unitIndex++) {
-            selection = selection.withRepeat(unitIndex, fingerprint.repeatCounts().get(unitIndex));
+            selection = selection.withRepeat(unitIndex, fingerprint.repeatCounts().getInt(unitIndex));
         }
         if (fingerprint.tierSelections().size() != structure.tierDomains().size()) {
             throw new IllegalArgumentException("Trinity auto-build tier selections do not match " + structureName);
         }
-        for (Map.Entry<String, Integer> tier : fingerprint.tierSelections().entrySet()) {
-            selection = selection.withTier(tier.getKey(), tier.getValue());
+        for (Object2IntMap.Entry<String> tier : fingerprint.tierSelections().object2IntEntrySet()) {
+            selection = selection.withTier(tier.getKey(), tier.getIntValue());
         }
-        for (Map.Entry<PreviewPredicateKey, Integer> candidate : fingerprint.candidateSelections().entrySet()) {
-            selection = selection.withCandidate(candidate.getKey(), candidate.getValue());
+        for (Object2IntMap.Entry<PreviewPredicateKey> candidate : fingerprint.candidateSelections().object2IntEntrySet()) {
+            selection = selection.withCandidate(candidate.getKey(), candidate.getIntValue());
         }
         ProjectionFingerprint rebuilt = ProjectionFingerprint.from(selection);
         if (!rebuilt.equals(fingerprint)) {
@@ -84,13 +91,13 @@ public final class TrinityAutoBuildSubmissionResolver {
                 new TrinityAutoBuildOptions(
                         submission.buildRequested(),
                         repeatCount,
-                        Map.of(tierCategory, fingerprint.tierSelections().get(tierCategory)),
+                        Object2IntMaps.singleton(tierCategory, fingerprint.tierSelections().getInt(tierCategory)),
                         fingerprint.candidateSelections()));
     }
 
     private static int resolveBuilderRepeat(String structureName,
                                             List<RepeatRange> ranges,
-                                            List<Integer> repeats) {
+                                            IntList repeats) {
         int variableUnit = -1;
         for (int unitIndex = 0; unitIndex < ranges.size(); unitIndex++) {
             RepeatRange range = ranges.get(unitIndex);
@@ -117,7 +124,7 @@ public final class TrinityAutoBuildSubmissionResolver {
             throw new IllegalArgumentException("Trinity child auto-build structure requires one variable unit: " +
                     structureName);
         }
-        return repeats.get(variableUnit);
+        return repeats.getInt(variableUnit);
     }
 
     private static int structureIndex(String structureName) {

@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.mixin.core.crafting;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.grid.VirtualGridBridge;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
@@ -97,7 +101,9 @@ import net.minecraft.world.level.Level;
 import com.google.common.collect.ImmutableSet;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
@@ -112,10 +118,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -161,7 +163,7 @@ public abstract class CraftingServiceMixin
      * Transient per-hardware cursors balance successful auto-submissions without coupling unrelated CPU groups.
      */
     @Unique
-    private final Map<CraftingCpuSelectionGroup, String> dataEnergistics$nextCpuSubmitByGroup = new HashMap<>();
+    private final Map<CraftingCpuSelectionGroup, String> dataEnergistics$nextCpuSubmitByGroup = new Object2ObjectOpenHashMap<>();
 
     /**
      * Runtime-derived Governor is rebuilt only when the live dispatch schema changes.
@@ -451,12 +453,12 @@ public abstract class CraftingServiceMixin
      */
     @Unique
     private boolean dataEnergistics$requiresTrinityDynamicOutputFromProviders(AEKey target) {
-        ArrayDeque<AEKey> pending = new ArrayDeque<>();
-        Set<AEKey> visitedKeys = new HashSet<>();
-        Set<AEKey> visitedPatterns = new HashSet<>();
-        pending.add(target);
+        ObjectArrayFIFOQueue<AEKey> pending = new ObjectArrayFIFOQueue<>();
+        Set<AEKey> visitedKeys = new ObjectOpenHashSet<>();
+        Set<AEKey> visitedPatterns = new ObjectOpenHashSet<>();
+        pending.enqueue(target);
         while (!pending.isEmpty()) {
-            AEKey required = pending.removeFirst();
+            AEKey required = pending.dequeue();
             if (!visitedKeys.add(required)) {
                 continue;
             }
@@ -470,7 +472,7 @@ public abstract class CraftingServiceMixin
                 TrinityPatternPublicationSignature publication = TrinityPatternPublicationSignature.capture(pattern);
                 for (TrinityPatternPublicationSignature.Input input : publication.inputs()) {
                     for (TrinityPatternPublicationSignature.Alternative alternative : input.alternatives()) {
-                        pending.addLast(alternative.stack().what());
+                        pending.enqueue(alternative.stack().what());
                     }
                 }
             }
@@ -626,7 +628,7 @@ public abstract class CraftingServiceMixin
 
     @Inject(method = "updateCPUClusters", at = @At("RETURN"))
     private void dataEnergistics$updateTrinityDataCoreCpuClusters(CallbackInfo ci) {
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> scannedRuntimes = new IdentityHashMap<>();
+        Map<IGridNode, TrinityDataCoreCraftingRuntime> scannedRuntimes = new Reference2ReferenceOpenHashMap<>();
         for (IGridNode node : this.grid.getMachineNodes(TrinityInformationExchangeDepotBlockEntity.class)) {
             TrinityInformationExchangeDepotBlockEntity hatch = (TrinityInformationExchangeDepotBlockEntity) node.getOwner();
             TrinityDataCoreCraftingRuntime runtime = hatch.boundCraftingRuntime();
@@ -1053,7 +1055,7 @@ public abstract class CraftingServiceMixin
                                                                              boolean includeNativeCpus,
                                                                              boolean delegateFirstNativeAttempt,
                                                                              Operation<ICraftingSubmitResult> original) {
-        Map<String, ICraftingCPU> submissionHandles = new HashMap<>();
+        Map<String, ICraftingCPU> submissionHandles = new Object2ObjectOpenHashMap<>();
         CraftingCpuCandidateSelection selection = dataEnergistics$findSuitableCpuCandidates(
                 job,
                 prioritizePower,
@@ -1118,7 +1120,7 @@ public abstract class CraftingServiceMixin
                                                                                     IActionSource source,
                                                                                     boolean includeNativeCpus,
                                                                                     Map<String, ICraftingCPU> submissionHandles) {
-        ArrayList<CraftingCpuCandidate> candidateFacts = new ArrayList<>();
+        ObjectArrayList<CraftingCpuCandidate> candidateFacts = new ObjectArrayList<>();
         if (includeNativeCpus) {
             dataEnergistics$collectNativeCpuCandidates(candidateFacts, submissionHandles);
         }
@@ -1328,7 +1330,7 @@ public abstract class CraftingServiceMixin
                                                        List<CraftingCpuCandidate> selectedCandidates,
                                                        boolean playerRequest) {
         CraftingCpuSelectionGroup successfulGroup = DATA_ENERGISTICS_CPU_SELECTOR.group(successfulCandidate, playerRequest);
-        ArrayList<String> groupIdentities = new ArrayList<>();
+        ObjectArrayList<String> groupIdentities = new ObjectArrayList<>();
         for (CraftingCpuCandidate candidate : selectedCandidates) {
             if (successfulGroup.equals(DATA_ENERGISTICS_CPU_SELECTOR.group(candidate, playerRequest))) {
                 groupIdentities.add(candidate.stableIdentity());

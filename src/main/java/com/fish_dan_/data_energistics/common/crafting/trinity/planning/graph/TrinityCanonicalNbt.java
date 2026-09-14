@@ -8,11 +8,12 @@ import net.minecraft.nbt.LongArrayTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.Tag;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
 
 /**
@@ -61,7 +62,7 @@ public final class TrinityCanonicalNbt {
     }
 
     private static void writeCompound(DataOutputStream output, CompoundTag tag) throws IOException {
-        ArrayList<String> keys = new ArrayList<>(tag.getAllKeys());
+        ObjectArrayList<String> keys = new ObjectArrayList<>(tag.getAllKeys());
         keys.sort(String::compareTo);
         output.writeInt(keys.size());
         for (String key : keys) {

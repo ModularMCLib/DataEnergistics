@@ -33,9 +33,9 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DataSanctumInterfaceBlock extends AEBaseBlock implements EntityBlock {
@@ -120,7 +120,7 @@ public class DataSanctumInterfaceBlock extends AEBaseBlock implements EntityBloc
             return;
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new ObjectArrayList<>();
         blockEntity.addAdditionalDrops(level, pos, drops);
         blockEntity.clearContent();
         for (ItemStack drop : drops) {

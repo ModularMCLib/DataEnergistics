@@ -12,7 +12,8 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -76,7 +77,7 @@ public final class DataIntegratedChargerRecipe implements Recipe<DataIntegratedC
 
     /** Finds distinct input slots and their required consumption counts in recipe order. */
     public List<InputSlot> findMatchingInputSlots(List<ItemStack> availableInputs) {
-        List<InputSlot> matches = new ArrayList<>(this.inputs.size());
+        List<InputSlot> matches = new ObjectArrayList<>(this.inputs.size());
         if (findMatchingInputSlots(availableInputs, 0, new boolean[availableInputs.size()], matches)) {
             return List.copyOf(matches);
         }

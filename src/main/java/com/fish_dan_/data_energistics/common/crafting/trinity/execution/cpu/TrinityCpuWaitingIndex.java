@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
@@ -135,9 +137,9 @@ final class TrinityCpuWaitingIndex {
      * @param what requested AE2 key
      * @return immutable ordered worker-number snapshot
      */
-    public List<Integer> waitingWorkerNumbers(AEKey what) {
+    public IntList waitingWorkerNumbers(AEKey what) {
         WaitingEntry entry = this.entries.get(what);
-        return entry == null ? List.of() : entry.workerNumbers;
+        return entry == null ? IntList.of() : entry.workerNumbers;
     }
 
     /**
@@ -179,7 +181,7 @@ final class TrinityCpuWaitingIndex {
         /**
          * Immutable routing snapshot is replaced only when worker membership changes.
          */
-        private List<Integer> workerNumbers = List.of();
+        private IntList workerNumbers = IntList.of();
 
         /**
          * Rebuilds ordered routing after a worker enters or leaves this key.

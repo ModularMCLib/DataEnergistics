@@ -3,17 +3,19 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixInfeasibleException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +34,9 @@ public final class TrinityRadixLinearEncoder {
 
     private final TrinityRadixCodec codec;
     private final ExpressionsBasedModel model = new ExpressionsBasedModel();
-    private final ArrayList<Variable> variables = new ArrayList<>();
-    private final ArrayList<TrinityRadixColumnEquation> columnEquations = new ArrayList<>();
-    private final ArrayList<TrinityRadixLogicalEquation> proofEquations = new ArrayList<>();
+    private final ObjectArrayList<Variable> variables = new ObjectArrayList<>();
+    private final ObjectArrayList<TrinityRadixColumnEquation> columnEquations = new ObjectArrayList<>();
+    private final ObjectArrayList<TrinityRadixLogicalEquation> proofEquations = new ObjectArrayList<>();
     private int expressionCount;
     private int carryIndex;
 
@@ -82,7 +84,7 @@ public final class TrinityRadixLinearEncoder {
                 .map(TrinityRadixVariable::upperBound)
                 .reduce(BigInteger.ZERO, BigInteger::add);
         TrinityRadixVariable total = addUnsigned(name, this.codec.encode(upper).values().size(), upper);
-        LinkedHashMap<TrinityRadixVariable, BigInteger> equality = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> equality = new Object2ObjectLinkedOpenHashMap<>();
         terms.forEach(variable -> equality.merge(variable, BigInteger.ONE, BigInteger::add));
         equality.put(total, BigInteger.ONE.negate());
         addEquality(name + "_sum", equality, BigInteger.ZERO, true);
@@ -104,7 +106,7 @@ public final class TrinityRadixLinearEncoder {
                 name + "_slack",
                 this.codec.encode(maximum.subtract(lowerBound)).values().size(),
                 maximum.subtract(lowerBound));
-        LinkedHashMap<TrinityRadixVariable, BigInteger> equality = new LinkedHashMap<>(terms);
+        Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> equality = new Object2ObjectLinkedOpenHashMap<>(terms);
         equality.put(slack, BigInteger.ONE.negate());
         addEquality(name, equality, lowerBound, true);
     }
@@ -134,7 +136,7 @@ public final class TrinityRadixLinearEncoder {
         if (this.proofEquations.isEmpty()) {
             throw new IllegalStateException("A Trinity radix proof requires normalized logical equations");
         }
-        LinkedHashSet<TrinityRadixVariable> proofVariables = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<TrinityRadixVariable> proofVariables = new ObjectLinkedOpenHashSet<>();
         BigInteger maximumMagnitude = BigInteger.ONE;
         for (TrinityRadixLogicalEquation equation : this.proofEquations) {
             proofVariables.addAll(equation.terms().keySet());
@@ -172,7 +174,7 @@ public final class TrinityRadixLinearEncoder {
     }
 
     private TrinityRadixVariable addUnsigned(String name, int width, BigInteger upperBound) {
-        ArrayList<Variable> digits = new ArrayList<>(width);
+        ObjectArrayList<Variable> digits = new ObjectArrayList<>(width);
         for (int digit = 0; digit < width; digit++) {
             Variable variable = addVariable(name + "_d" + digit)
                     .lower(BigInteger.ZERO)
@@ -188,7 +190,7 @@ public final class TrinityRadixLinearEncoder {
                              Map<TrinityRadixVariable, BigInteger> sourceTerms,
                              BigInteger rightHandSide,
                              boolean includeInProof) {
-        LinkedHashMap<TrinityRadixVariable, BigInteger> terms = normalizedTerms(sourceTerms);
+        Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> terms = normalizedTerms(sourceTerms);
         if (rightHandSide == null || rightHandSide.signum() < 0) {
             throw new IllegalArgumentException("A Trinity radix equality RHS cannot be negative");
         }
@@ -204,11 +206,11 @@ public final class TrinityRadixLinearEncoder {
         }
         if (includeInProof) {
             this.proofEquations.add(new TrinityRadixLogicalEquation(
-                    Collections.unmodifiableMap(new LinkedHashMap<>(terms)),
+                    Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(terms)),
                     rightHandSide));
         }
         int columns = this.codec.encode(rightHandSide).values().size();
-        LinkedHashMap<TrinityRadixVariable, TrinitySignedRadixDigits> coefficients = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, TrinitySignedRadixDigits> coefficients = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<TrinityRadixVariable, BigInteger> term : terms.entrySet()) {
             TrinitySignedRadixDigits encoded = this.codec.encodeSigned(term.getValue());
             coefficients.put(term.getKey(), encoded);
@@ -221,8 +223,8 @@ public final class TrinityRadixLinearEncoder {
         Variable incomingCarry = null;
         TrinitySignedCarryBounds incomingBounds = new TrinitySignedCarryBounds(BigInteger.ZERO, BigInteger.ZERO);
         for (int column = 0; column < columns; column++) {
-            LinkedHashMap<Variable, BigInteger> columnTerms = new LinkedHashMap<>();
-            ArrayList<Integer> convolutionCoefficients = new ArrayList<>();
+            Object2ObjectLinkedOpenHashMap<Variable, BigInteger> columnTerms = new Object2ObjectLinkedOpenHashMap<>();
+            IntArrayList convolutionCoefficients = new IntArrayList();
             addConvolutionTerms(column, coefficients, columnTerms, convolutionCoefficients);
             if (incomingCarry != null) {
                 mergeCoefficient(columnTerms, incomingCarry, BigInteger.ONE);
@@ -248,9 +250,9 @@ public final class TrinityRadixLinearEncoder {
         }
     }
 
-    private static LinkedHashMap<TrinityRadixVariable, BigInteger> normalizedTerms(
-                                                                                   Map<TrinityRadixVariable, BigInteger> source) {
-        LinkedHashMap<TrinityRadixVariable, BigInteger> terms = new LinkedHashMap<>();
+    private static Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> normalizedTerms(
+                                                                                                    Map<TrinityRadixVariable, BigInteger> source) {
+        Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> terms = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variable, coefficient) -> {
             if (variable == null || coefficient == null) {
                 throw new IllegalArgumentException("A Trinity radix equality term cannot be null");
@@ -267,7 +269,7 @@ public final class TrinityRadixLinearEncoder {
                                             int column,
                                             Map<TrinityRadixVariable, TrinitySignedRadixDigits> coefficients,
                                             Map<Variable, BigInteger> columnTerms,
-                                            List<Integer> convolutionCoefficients) {
+                                            IntList convolutionCoefficients) {
         for (Map.Entry<TrinityRadixVariable, TrinitySignedRadixDigits> term : coefficients.entrySet()) {
             TrinityRadixVariable variable = term.getKey();
             TrinitySignedRadixDigits coefficient = term.getValue();
@@ -309,7 +311,7 @@ public final class TrinityRadixLinearEncoder {
         terms.forEach(expression::set);
         expression.level(rightHandDigit);
         this.columnEquations.add(new TrinityRadixColumnEquation(
-                Collections.unmodifiableMap(new LinkedHashMap<>(terms)),
+                Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(terms)),
                 BigInteger.valueOf(rightHandDigit)));
     }
 

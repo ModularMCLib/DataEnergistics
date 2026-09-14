@@ -2,9 +2,10 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -31,7 +32,7 @@ public record TrinityMinimumSeedSchedule(
     }
 
     private static Map<AEKey, BigInteger> copyPositive(Map<AEKey, BigInteger> source, String role) {
-        LinkedHashMap<AEKey, BigInteger> copied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity " + role + " must contain positive amounts");

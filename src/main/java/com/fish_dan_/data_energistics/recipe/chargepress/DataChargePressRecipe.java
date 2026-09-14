@@ -14,7 +14,8 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -97,7 +98,7 @@ public final class DataChargePressRecipe implements Recipe<DataChargePressRecipe
 
     /** Finds distinct input slots and their required consumption counts in recipe order. */
     public List<InputSlot> findMatchingInputSlots(List<ItemStack> inputs) {
-        List<InputSlot> matches = new ArrayList<>(this.inputs.size());
+        List<InputSlot> matches = new ObjectArrayList<>(this.inputs.size());
         if (findMatchingInputSlots(inputs, 0, new boolean[inputs.size()], matches)) {
             return List.copyOf(matches);
         }

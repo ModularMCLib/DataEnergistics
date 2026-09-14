@@ -33,9 +33,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
@@ -414,7 +414,7 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
     }
 
     private static List<Component> tooltip(TrinityCpuStatus cpu) {
-        List<Component> lines = new ArrayList<>();
+        List<Component> lines = new ObjectArrayList<>();
         lines.add(displayName(cpu));
         if (cpu.coProcessors() > 0) {
             String key = cpu.coProcessors() == 1 ?

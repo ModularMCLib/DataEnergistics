@@ -107,8 +107,19 @@ public interface AdaptivePatternProviderDispatch {
                            CompoundTag tag,
                            HolderLookup.Provider registries) {}
 
-    /** Adds registration-owned buffered values to a provider's drops. */
+    /**
+     * Adds registration-owned buffered values to a provider's drops.
+     *
+     * @deprecated scheduled for removal in plan 340; use
+     *             {@link #addDropsFast(AdaptivePatternProviderDispatchTarget, ObjectList)}
+     */
+    @Deprecated(forRemoval = true)
     default void addDrops(AdaptivePatternProviderDispatchTarget target, List<ItemStack> drops) {}
+
+    /** Adds registration-owned buffered values through the FastUtil collection API. */
+    default void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {
+        addDrops(target, (List<ItemStack>) drops);
+    }
 
     /** Clears registration-owned runtime state when the provider is emptied. */
     default void clearState(AdaptivePatternProviderDispatchTarget target) {}
@@ -139,8 +150,20 @@ public interface AdaptivePatternProviderDispatch {
         return 0.0D;
     }
 
-    /** Receives outputs produced by the reusable native-pattern route. */
+    /**
+     * Receives outputs produced by the reusable native-pattern route.
+     *
+     * @deprecated scheduled for removal in plan 340; use
+     *             {@link #acceptReusableOutputsFast(AdaptivePatternProviderDispatchTarget, ObjectList)}
+     */
+    @Deprecated(forRemoval = true)
     default void acceptReusableOutputs(
                                        AdaptivePatternProviderDispatchTarget target,
                                        List<GenericStack> outputs) {}
+
+    /** Receives outputs through the FastUtil collection API. */
+    default void acceptReusableOutputsFast(
+                                           AdaptivePatternProviderDispatchTarget target, ObjectList<GenericStack> outputs) {
+        acceptReusableOutputs(target, (List<GenericStack>) outputs);
+    }
 }

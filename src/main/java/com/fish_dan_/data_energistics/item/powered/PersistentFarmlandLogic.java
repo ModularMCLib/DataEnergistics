@@ -12,14 +12,15 @@ import net.neoforged.neoforge.common.FarmlandWaterManager;
 import net.neoforged.neoforge.common.ticket.AABBTicket;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class PersistentFarmlandLogic {
 
-    private final Map<ServerLevel, Map<Long, AABBTicket>> waterTickets = new WeakHashMap<>();
+    private final Map<ServerLevel, Long2ObjectMap<AABBTicket>> waterTickets = new WeakHashMap<>();
 
     @SubscribeEvent
     public void onLevelTick(LevelTickEvent.Post event) {
@@ -28,7 +29,7 @@ public final class PersistentFarmlandLogic {
         }
 
         PersistentFarmlandSavedData data = PersistentFarmlandSavedData.get(level);
-        Map<Long, AABBTicket> levelTickets = this.waterTickets.computeIfAbsent(level, ignored -> new HashMap<>());
+        Long2ObjectMap<AABBTicket> levelTickets = this.waterTickets.computeIfAbsent(level, ignored -> new Long2ObjectOpenHashMap<>());
 
         for (long packedPos : data.getPositions()) {
             BlockPos pos = BlockPos.of(packedPos);
@@ -55,10 +56,10 @@ public final class PersistentFarmlandLogic {
             }
         }
 
-        Iterator<Map.Entry<Long, AABBTicket>> iterator = levelTickets.entrySet().iterator();
+        var iterator = levelTickets.long2ObjectEntrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Long, AABBTicket> entry = iterator.next();
-            if (data.getPositions().contains(entry.getKey())) {
+            Long2ObjectMap.Entry<AABBTicket> entry = iterator.next();
+            if (data.getPositions().contains(entry.getLongKey())) {
                 continue;
             }
             entry.getValue().invalidate();

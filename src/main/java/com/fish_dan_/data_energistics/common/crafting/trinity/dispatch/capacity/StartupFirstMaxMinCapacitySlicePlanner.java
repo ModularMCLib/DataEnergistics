@@ -1,11 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongComparators;
+
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -46,7 +50,7 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
             return new CapacitySlicePlan(List.of(), start);
         }
 
-        ArrayList<TargetCapacity> eligible = new ArrayList<>(targetCount);
+        ObjectArrayList<TargetCapacity> eligible = new ObjectArrayList<>(targetCount);
         for (int offset = 0; offset < targetCount; offset++) {
             int snapshotIndex = Math.floorMod((long) start + offset, targetCount);
             ProviderCapacitySnapshot snapshot = stableSnapshots.get(snapshotIndex);
@@ -68,7 +72,7 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
                 selected,
                 remainingCrafts.subtract(BigInteger.valueOf(selectionLimit)));
 
-        ArrayList<CapacitySlice> slices = new ArrayList<>(selectionLimit);
+        ObjectArrayList<CapacitySlice> slices = new ObjectArrayList<>(selectionLimit);
         for (int index = 0; index < selectionLimit; index++) {
             slices.add(new CapacitySlice(selected.get(index).snapshot(), allocations[index]));
         }
@@ -120,18 +124,18 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
      */
     private static long[] fairAllocations(List<TargetCapacity> selected, BigInteger remainingCrafts) {
         int selectedCount = selected.size();
-        ArrayList<Long> residualCapacities = new ArrayList<>(selectedCount);
+        LongArrayList residualCapacities = new LongArrayList(selectedCount);
         for (TargetCapacity target : selected) {
             residualCapacities.add(Math.subtractExact(target.capacity(), 1L));
         }
-        residualCapacities.sort(Comparator.naturalOrder());
+        residualCapacities.sort(LongComparators.NATURAL_COMPARATOR);
 
         long waterLevel = 0L;
         int activeTargets = selectedCount;
         int sortedIndex = 0;
         int remainder = 0;
         while (sortedIndex < selectedCount && remainingCrafts.signum() > 0) {
-            long nextLevel = residualCapacities.get(sortedIndex);
+            long nextLevel = residualCapacities.getLong(sortedIndex);
             long levelIncrease = Math.subtractExact(nextLevel, waterLevel);
             BigInteger required = BigInteger.valueOf(levelIncrease)
                     .multiply(BigInteger.valueOf(activeTargets));
@@ -144,7 +148,7 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
 
             waterLevel = nextLevel;
             remainingCrafts = remainingCrafts.subtract(required);
-            while (sortedIndex < selectedCount && residualCapacities.get(sortedIndex) == waterLevel) {
+            while (sortedIndex < selectedCount && residualCapacities.getLong(sortedIndex) == waterLevel) {
                 sortedIndex++;
                 activeTargets--;
             }

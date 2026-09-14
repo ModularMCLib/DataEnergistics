@@ -4,8 +4,8 @@ import net.minecraft.resources.ResourceLocation;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -105,7 +105,7 @@ public final class JsonMultiBlockAutoBuildStagingMetadata {
             throw new IllegalArgumentException("JSON multiblock auto_build_staging." + property +
                     " must be an array: " + resourceId);
         }
-        LinkedHashSet<String> symbols = new LinkedHashSet<>();
+        ObjectLinkedOpenHashSet<String> symbols = new ObjectLinkedOpenHashSet<>();
         for (JsonElement symbolElement : symbolsElement.getAsJsonArray()) {
             if (!symbolElement.isJsonPrimitive() || !symbolElement.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("JSON multiblock auto-build staging symbols must be strings: " +

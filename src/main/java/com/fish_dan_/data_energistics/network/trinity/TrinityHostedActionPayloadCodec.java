@@ -1,5 +1,11 @@
 package com.fish_dan_.data_energistics.network.trinity;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
@@ -16,9 +22,11 @@ import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHos
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -91,25 +99,25 @@ final class TrinityHostedActionPayloadCodec {
     }
 
     /** Reads one non-empty ordered set of aggregate slots selected by a single Shift-drag gesture. */
-    static List<Integer> readPatternQuickMoveSlots(RegistryFriendlyByteBuf buffer) {
+    static IntList readPatternQuickMoveSlots(RegistryFriendlyByteBuf buffer) {
         int count = readBoundedInt(
                 buffer,
                 "pattern quick-move slot count",
                 1,
                 TrinityPatternCatalogView.PAGE_SIZE);
-        LinkedHashSet<Integer> slots = new LinkedHashSet<>(count);
+        IntLinkedOpenHashSet slots = new IntLinkedOpenHashSet(count);
         for (int index = 0; index < count; index++) {
             int globalSlot = readBoundedInt(buffer, "pattern quick-move global slot", 0, Integer.MAX_VALUE);
             if (!slots.add(globalSlot)) {
                 throw new IllegalArgumentException("Duplicate Trinity pattern quick-move global slot: " + globalSlot);
             }
         }
-        return List.copyOf(slots);
+        return IntList.of(slots.toIntArray());
     }
 
     /** Writes one previously validated ordered set of aggregate slots. */
-    static void writePatternQuickMoveSlots(RegistryFriendlyByteBuf buffer, List<Integer> globalSlots) {
-        List<Integer> slots = requirePatternQuickMoveSlots(globalSlots);
+    static void writePatternQuickMoveSlots(RegistryFriendlyByteBuf buffer, IntList globalSlots) {
+        IntList slots = requirePatternQuickMoveSlots(globalSlots);
         writeCount(buffer, "pattern quick-move slot count", slots.size(), TrinityPatternCatalogView.PAGE_SIZE);
         for (int globalSlot : slots) {
             buffer.writeVarInt(globalSlot);
@@ -117,20 +125,20 @@ final class TrinityHostedActionPayloadCodec {
     }
 
     /** Freezes and validates one client gesture before it enters the hosted-action queue. */
-    static List<Integer> requirePatternQuickMoveSlots(List<Integer> globalSlots) {
+    static IntList requirePatternQuickMoveSlots(IntList globalSlots) {
         if (globalSlots == null || globalSlots.isEmpty() ||
                 globalSlots.size() > TrinityPatternCatalogView.PAGE_SIZE) {
             throw new IllegalArgumentException("Trinity pattern quick-move requires 1.." +
                     TrinityPatternCatalogView.PAGE_SIZE + " global slots");
         }
-        LinkedHashSet<Integer> slots = new LinkedHashSet<>(globalSlots.size());
-        for (Integer globalSlot : globalSlots) {
-            if (globalSlot == null || globalSlot < 0 || !slots.add(globalSlot)) {
+        IntLinkedOpenHashSet slots = new IntLinkedOpenHashSet(globalSlots.size());
+        for (int globalSlot : globalSlots) {
+            if (globalSlot < 0 || !slots.add(globalSlot)) {
                 throw new IllegalArgumentException("Invalid or duplicate Trinity pattern quick-move global slot: " +
                         globalSlot);
             }
         }
-        return List.copyOf(slots);
+        return IntList.of(slots.toIntArray());
     }
 
     /** Reads and validates one of the two independently hosted priority window identities. */
@@ -242,33 +250,34 @@ final class TrinityHostedActionPayloadCodec {
         int variantIndex = readBoundedInt(buffer, "variant index", 0, MAX_SELECTION_VALUE);
 
         int repeatCount = readCount(buffer, "repeat unit count", MAX_REPEAT_UNITS);
-        List<Integer> repeats = new ArrayList<>(repeatCount);
+        IntList repeats = new IntArrayList(repeatCount);
         for (int index = 0; index < repeatCount; index++) {
             repeats.add(readBoundedInt(buffer, "repeat count", 1, MAX_SELECTION_VALUE));
         }
 
         int tierCount = readCount(buffer, "tier selection count", MAX_TIER_SELECTIONS);
-        Map<String, Integer> tiers = new LinkedHashMap<>();
+        Object2IntMap<String> tiers = new Object2IntLinkedOpenHashMap<>();
         for (int index = 0; index < tierCount; index++) {
             String domain = buffer.readUtf(MAX_TIER_DOMAIN_LENGTH);
             if (domain.isBlank()) {
                 throw new IllegalArgumentException("Trinity hosted tier domain cannot be blank");
             }
             int value = readBoundedInt(buffer, "tier value", 1, MAX_SELECTION_VALUE);
-            if (tiers.putIfAbsent(domain, value) != null) {
+            if (tiers.putIfAbsent(domain, value) != 0) {
                 throw new IllegalArgumentException("Duplicate Trinity hosted tier domain: " + domain);
             }
         }
 
         int candidateCount = readCount(buffer, "candidate selection count", MAX_CANDIDATE_SELECTIONS);
-        Map<PreviewPredicateKey, Integer> candidates = new LinkedHashMap<>();
+        Object2IntMap<PreviewPredicateKey> candidates = new Object2IntLinkedOpenHashMap<>();
+        candidates.defaultReturnValue(-1);
         for (int index = 0; index < candidateCount; index++) {
             PreviewPredicateKey key = new PreviewPredicateKey(
                     readBoundedInt(buffer, "candidate source layer", 0, MAX_SELECTION_VALUE),
                     readBoundedInt(buffer, "candidate y", 0, MAX_SELECTION_VALUE),
                     readBoundedInt(buffer, "candidate x", 0, MAX_SELECTION_VALUE));
             int value = readBoundedInt(buffer, "candidate index", 0, MAX_SELECTION_VALUE);
-            if (candidates.putIfAbsent(key, value) != null) {
+            if (candidates.putIfAbsent(key, value) != -1) {
                 throw new IllegalArgumentException("Duplicate Trinity hosted candidate key: " + key);
             }
         }
@@ -304,29 +313,29 @@ final class TrinityHostedActionPayloadCodec {
             buffer.writeVarInt(repeat);
         }
         writeCount(buffer, "tier selection count", fingerprint.tierSelections().size(), MAX_TIER_SELECTIONS);
-        for (Map.Entry<String, Integer> tier : fingerprint.tierSelections().entrySet()) {
+        for (Object2IntMap.Entry<String> tier : fingerprint.tierSelections().object2IntEntrySet()) {
             if (tier.getKey().isBlank() || tier.getKey().length() > MAX_TIER_DOMAIN_LENGTH) {
                 throw new IllegalArgumentException("Invalid Trinity hosted tier domain: " + tier.getKey());
             }
             buffer.writeUtf(tier.getKey(), MAX_TIER_DOMAIN_LENGTH);
-            requireRange("tier value", tier.getValue(), 1, MAX_SELECTION_VALUE);
-            buffer.writeVarInt(tier.getValue());
+            requireRange("tier value", tier.getIntValue(), 1, MAX_SELECTION_VALUE);
+            buffer.writeVarInt(tier.getIntValue());
         }
         writeCount(
                 buffer,
                 "candidate selection count",
                 fingerprint.candidateSelections().size(),
                 MAX_CANDIDATE_SELECTIONS);
-        for (Map.Entry<PreviewPredicateKey, Integer> candidate : fingerprint.candidateSelections().entrySet()) {
+        for (Object2IntMap.Entry<PreviewPredicateKey> candidate : fingerprint.candidateSelections().object2IntEntrySet()) {
             PreviewPredicateKey key = candidate.getKey();
             requireRange("candidate source layer", key.sourceLayer(), 0, MAX_SELECTION_VALUE);
             requireRange("candidate y", key.y(), 0, MAX_SELECTION_VALUE);
             requireRange("candidate x", key.x(), 0, MAX_SELECTION_VALUE);
-            requireRange("candidate index", candidate.getValue(), 0, MAX_SELECTION_VALUE);
+            requireRange("candidate index", candidate.getIntValue(), 0, MAX_SELECTION_VALUE);
             buffer.writeVarInt(key.sourceLayer());
             buffer.writeVarInt(key.y());
             buffer.writeVarInt(key.x());
-            buffer.writeVarInt(candidate.getValue());
+            buffer.writeVarInt(candidate.getIntValue());
         }
         buffer.writeBoolean(submission.buildRequested());
     }

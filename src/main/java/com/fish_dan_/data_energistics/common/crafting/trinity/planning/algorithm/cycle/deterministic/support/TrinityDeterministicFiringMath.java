@@ -5,9 +5,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,17 +21,17 @@ public final class TrinityDeterministicFiringMath {
 
     private TrinityDeterministicFiringMath() {}
 
-    public static LinkedHashMap<TrinityPatternVariant, BigInteger> aggregate(List<TrinityVariantFiring> order) {
-        LinkedHashMap<TrinityPatternVariant, BigInteger> aggregate = new LinkedHashMap<>();
+    public static Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate(List<TrinityVariantFiring> order) {
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate = new Object2ObjectLinkedOpenHashMap<>();
         order.forEach(firing -> aggregate.merge(firing.variant(), firing.count(), BigInteger::add));
         return aggregate;
     }
 
-    public static LinkedHashMap<TrinityPatternVariant, BigInteger> aggregateRepeated(
-                                                                                     Map<TrinityPatternVariant, BigInteger> primitive,
-                                                                                     BigInteger repetitions,
-                                                                                     Map<TrinityPatternVariant, BigInteger> residual) {
-        LinkedHashMap<TrinityPatternVariant, BigInteger> aggregate = new LinkedHashMap<>();
+    public static Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregateRepeated(
+                                                                                                      Map<TrinityPatternVariant, BigInteger> primitive,
+                                                                                                      BigInteger repetitions,
+                                                                                                      Map<TrinityPatternVariant, BigInteger> residual) {
+        Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate = new Object2ObjectLinkedOpenHashMap<>();
         primitive.forEach((variant, count) -> {
             BigInteger repeated = count.multiply(repetitions);
             if (repeated.signum() > 0) {
@@ -42,7 +43,7 @@ public final class TrinityDeterministicFiringMath {
     }
 
     public static Map<AEKey, BigInteger> netChange(Map<TrinityPatternVariant, BigInteger> firings) {
-        LinkedHashMap<AEKey, BigInteger> net = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
@@ -52,7 +53,7 @@ public final class TrinityDeterministicFiringMath {
     public static Map<AEKey, BigInteger> multiplySigned(
                                                         Map<AEKey, BigInteger> amounts,
                                                         BigInteger multiplier) {
-        LinkedHashMap<AEKey, BigInteger> multiplied = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> multiplied = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             BigInteger result = amount.multiply(multiplier);
             if (result.signum() != 0) {
@@ -65,7 +66,7 @@ public final class TrinityDeterministicFiringMath {
     public static Map<AEKey, BigInteger> addSigned(
                                                    Map<AEKey, BigInteger> first,
                                                    Map<AEKey, BigInteger> second) {
-        LinkedHashMap<AEKey, BigInteger> result = new LinkedHashMap<>(first);
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(first);
         second.forEach((key, amount) -> result.merge(key, amount, BigInteger::add));
         result.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         return Collections.unmodifiableMap(result);

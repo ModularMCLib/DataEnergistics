@@ -33,15 +33,15 @@ import com.modularmc.mdl.api.multiblock.json.StructurePatternResolver;
 import com.modularmc.mdl.api.multiblock.json.StructurePatternResolver.StringArrayDefinition;
 import com.modularmc.mdl.api.multiblock.json.StructurePatternResolver.Unit;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,8 +73,8 @@ public final class MdlibJsonMultiBlockDefinitionLoader implements JsonMultiBlock
 
     @Override
     public Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> load(ResourceManager resourceManager) {
-        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions = new LinkedHashMap<>();
-        Map<JsonMultiBlockStructureKey, ResourceLocation> sources = new LinkedHashMap<>();
+        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions = new Object2ObjectLinkedOpenHashMap<>();
+        Map<JsonMultiBlockStructureKey, ResourceLocation> sources = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<ResourceLocation, Resource> entry : FILE_TO_ID.listMatchingResources(resourceManager).entrySet()) {
             ResourceLocation resourceId = FILE_TO_ID.fileToId(entry.getKey());
             try (Reader reader = entry.getValue().openAsReader()) {
@@ -94,8 +94,8 @@ public final class MdlibJsonMultiBlockDefinitionLoader implements JsonMultiBlock
 
     @Override
     public Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> load(Map<ResourceLocation, String> resources) {
-        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions = new LinkedHashMap<>();
-        Map<JsonMultiBlockStructureKey, ResourceLocation> sources = new LinkedHashMap<>();
+        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions = new Object2ObjectLinkedOpenHashMap<>();
+        Map<JsonMultiBlockStructureKey, ResourceLocation> sources = new Object2ObjectLinkedOpenHashMap<>();
         for (Map.Entry<ResourceLocation, String> entry : resources.entrySet()) {
             ResourceLocation resourceId = entry.getKey();
             String json = entry.getValue();
@@ -418,7 +418,7 @@ public final class MdlibJsonMultiBlockDefinitionLoader implements JsonMultiBlock
     }
 
     private static void validateCompartmentSymbols(JsonReader reader, ResourceLocation resourceId) throws IOException {
-        Set<String> symbols = new HashSet<>();
+        Set<String> symbols = new ObjectOpenHashSet<>();
         reader.beginObject();
         while (reader.hasNext()) {
             String symbol = reader.nextName();
@@ -524,7 +524,7 @@ public final class MdlibJsonMultiBlockDefinitionLoader implements JsonMultiBlock
     }
 
     private static List<String> missingBlockIds(JsonObject predicate) {
-        List<String> missingBlockIds = new ArrayList<>();
+        List<String> missingBlockIds = new ObjectArrayList<>();
         for (String blockId : blockIds(predicate)) {
             ResourceLocation id = ResourceLocation.tryParse(blockId);
             if (id == null || !blockExists(id)) {
@@ -540,7 +540,7 @@ public final class MdlibJsonMultiBlockDefinitionLoader implements JsonMultiBlock
             if (!blockStatesElement.isJsonArray()) {
                 return List.of();
             }
-            List<String> blockIds = new ArrayList<>();
+            List<String> blockIds = new ObjectArrayList<>();
             JsonArray blockStates = blockStatesElement.getAsJsonArray();
             for (JsonElement blockStateElement : blockStates) {
                 if (!blockStateElement.isJsonObject()) {
@@ -555,7 +555,7 @@ public final class MdlibJsonMultiBlockDefinitionLoader implements JsonMultiBlock
             if (!blocksElement.isJsonArray()) {
                 return List.of();
             }
-            List<String> blockIds = new ArrayList<>();
+            List<String> blockIds = new ObjectArrayList<>();
             JsonArray blocks = blocksElement.getAsJsonArray();
             for (JsonElement blockElement : blocks) {
                 if (blockElement.isJsonPrimitive() && blockElement.getAsJsonPrimitive().isString()) {

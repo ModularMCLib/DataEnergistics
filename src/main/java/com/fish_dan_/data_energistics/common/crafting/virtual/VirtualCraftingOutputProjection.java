@@ -6,10 +6,11 @@ import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompl
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +57,7 @@ public final class VirtualCraftingOutputProjection {
         if (acceptedLogicalCrafts <= 0L) {
             throw new IllegalArgumentException("Accepted virtual crafting count must be positive");
         }
-        LinkedHashMap<CompletionIdentity, BigInteger> scaled = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<CompletionIdentity, BigInteger> scaled = new Object2ObjectLinkedOpenHashMap<>();
         BigInteger count = BigInteger.valueOf(acceptedLogicalCrafts);
         for (VirtualCraftingCompletion completion : this.virtualCompletionsPerCraft) {
             GenericStack output = completion.stack();
@@ -65,7 +66,7 @@ public final class VirtualCraftingOutputProjection {
                     BigInteger.valueOf(output.amount()).multiply(count),
                     BigInteger::add);
         }
-        ArrayList<VirtualCraftingCompletion> completions = new ArrayList<>(scaled.size());
+        ObjectArrayList<VirtualCraftingCompletion> completions = new ObjectArrayList<>(scaled.size());
         scaled.forEach((identity, amount) -> {
             long exactAmount = amount.longValueExact();
             if (exactAmount <= 0L) {
@@ -79,7 +80,7 @@ public final class VirtualCraftingOutputProjection {
     }
 
     static List<GenericStack> immutableStacks(Map<AEKey, BigInteger> amounts) {
-        ArrayList<GenericStack> stacks = new ArrayList<>(amounts.size());
+        ObjectArrayList<GenericStack> stacks = new ObjectArrayList<>(amounts.size());
         amounts.forEach((key, amount) -> {
             long exactAmount = amount.longValueExact();
             if (exactAmount <= 0L) {

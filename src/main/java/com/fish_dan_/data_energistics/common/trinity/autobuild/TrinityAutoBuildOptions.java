@@ -1,5 +1,11 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewPredicateKey;
 
 import java.util.Map;
@@ -14,8 +20,8 @@ import java.util.Map;
  */
 public record TrinityAutoBuildOptions(boolean buildRequested,
                                       int repeatCount,
-                                      Map<String, Integer> tierSelections,
-                                      Map<PreviewPredicateKey, Integer> candidateSelections) {
+                                      Object2IntMap<String> tierSelections,
+                                      Object2IntMap<PreviewPredicateKey> candidateSelections) {
 
     /**
      * Lowest repeat count accepted by the current CPU and crafting child structure definitions.
@@ -34,9 +40,9 @@ public record TrinityAutoBuildOptions(boolean buildRequested,
             throw new IllegalArgumentException("Trinity auto-build repeat count must be between " + MIN_REPEAT_COUNT +
                     " and " + MAX_REPEAT_COUNT + ": " + repeatCount);
         }
-        tierSelections = Map.copyOf(tierSelections);
+        tierSelections = Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(tierSelections));
         TrinityAutoBuildBlockMap.validateTierSelections(tierSelections);
-        candidateSelections = Map.copyOf(candidateSelections);
+        candidateSelections = Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(candidateSelections));
         for (int candidateIndex : candidateSelections.values()) {
             if (candidateIndex < 0) {
                 throw new IllegalArgumentException(
@@ -50,7 +56,7 @@ public record TrinityAutoBuildOptions(boolean buildRequested,
      */
     public TrinityAutoBuildOptions(boolean buildRequested,
                                    int repeatCount,
-                                   Map<String, Integer> tierSelections) {
-        this(buildRequested, repeatCount, tierSelections, Map.of());
+                                   Object2IntMap<String> tierSelections) {
+        this(buildRequested, repeatCount, tierSelections, Object2IntMaps.emptyMap());
     }
 }

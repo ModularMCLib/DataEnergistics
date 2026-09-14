@@ -1,11 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 
 import appeng.api.networking.IGridNode;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +71,7 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
     /**
      * Exact access-node publications; node equality must never merge distinct AE2 nodes.
      */
-    private final Map<IGridNode, TrinityDataCoreCraftingRuntime> registrations = new IdentityHashMap<>();
+    private final Map<IGridNode, TrinityDataCoreCraftingRuntime> registrations = new Reference2ReferenceOpenHashMap<>();
 
     /**
      * Immutable service-visible runtime membership replaced only after a complete mutation succeeds.
@@ -89,7 +93,7 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
             throw new IllegalStateException("A different Trinity crafting runtime is already published for this node");
         }
 
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new IdentityHashMap<>(this.registrations);
+        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>(this.registrations);
         replacements.put(node, runtime);
         commitRegistrations(replacements);
         return true;
@@ -100,7 +104,7 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
         if (!this.registrations.containsKey(node)) {
             return false;
         }
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new IdentityHashMap<>(this.registrations);
+        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>(this.registrations);
         replacements.remove(node);
         commitRegistrations(replacements);
         return true;
@@ -114,7 +118,7 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
     @Override
     public synchronized List<TrinityDataCoreCraftingRuntime> reconcile(
                                                                        Map<IGridNode, TrinityDataCoreCraftingRuntime> scannedRegistrations) {
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new IdentityHashMap<>();
+        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>();
         replacements.putAll(scannedRegistrations);
         return commitRegistrations(replacements);
     }
@@ -134,21 +138,21 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
     private static List<TrinityDataCoreCraftingRuntime> createSnapshot(
                                                                        Iterable<TrinityDataCoreCraftingRuntime> registrations,
                                                                        List<TrinityDataCoreCraftingRuntime> previousSnapshot) {
-        Map<TrinityDataCoreCraftingRuntime, Boolean> present = new IdentityHashMap<>();
+        ReferenceOpenHashSet<TrinityDataCoreCraftingRuntime> present = new ReferenceOpenHashSet<>();
         for (TrinityDataCoreCraftingRuntime runtime : registrations) {
-            present.put(runtime, Boolean.TRUE);
+            present.add(runtime);
         }
-        Map<TrinityDataCoreCraftingRuntime, Boolean> seen = new IdentityHashMap<>();
-        List<TrinityDataCoreCraftingRuntime> runtimes = new ArrayList<>();
+        ReferenceOpenHashSet<TrinityDataCoreCraftingRuntime> seen = new ReferenceOpenHashSet<>();
+        List<TrinityDataCoreCraftingRuntime> runtimes = new ObjectArrayList<>();
         for (TrinityDataCoreCraftingRuntime runtime : previousSnapshot) {
-            if (present.containsKey(runtime)) {
-                seen.put(runtime, Boolean.TRUE);
+            if (present.contains(runtime)) {
+                seen.add(runtime);
                 runtimes.add(runtime);
             }
         }
         for (TrinityDataCoreCraftingRuntime runtime : registrations) {
-            if (!seen.containsKey(runtime)) {
-                seen.put(runtime, Boolean.TRUE);
+            if (!seen.contains(runtime)) {
+                seen.add(runtime);
                 runtimes.add(runtime);
             }
         }

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.multiblock.transfer;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalog;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalogSnapshot;
@@ -21,7 +23,8 @@ import appeng.api.stacks.GenericStack;
 import appeng.parts.encoding.EncodingMode;
 import appeng.util.ConfigInventory;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 import java.util.Map;
 
@@ -87,7 +90,7 @@ public final class CatalogValidatedPatternEncodingTransfer implements PatternEnc
                     structureName);
         }
         for (int unitIndex = 0; unitIndex < fingerprint.repeatCounts().size(); unitIndex++) {
-            selection = selection.withRepeat(unitIndex, fingerprint.repeatCounts().get(unitIndex));
+            selection = selection.withRepeat(unitIndex, fingerprint.repeatCounts().getInt(unitIndex));
         }
 
         List<String> tierDomains = substructure.tierDomains().stream()
@@ -98,11 +101,11 @@ public final class CatalogValidatedPatternEncodingTransfer implements PatternEnc
             throw new IllegalArgumentException("Multiblock pattern transfer tier selections do not match " +
                     structureName);
         }
-        for (Map.Entry<String, Integer> tier : fingerprint.tierSelections().entrySet()) {
-            selection = selection.withTier(tier.getKey(), tier.getValue());
+        for (Object2IntMap.Entry<String> tier : fingerprint.tierSelections().object2IntEntrySet()) {
+            selection = selection.withTier(tier.getKey(), tier.getIntValue());
         }
-        for (Map.Entry<PreviewPredicateKey, Integer> candidate : fingerprint.candidateSelections().entrySet()) {
-            selection = selection.withCandidate(candidate.getKey(), candidate.getValue());
+        for (Object2IntMap.Entry<PreviewPredicateKey> candidate : fingerprint.candidateSelections().object2IntEntrySet()) {
+            selection = selection.withCandidate(candidate.getKey(), candidate.getIntValue());
         }
 
         StructurePreviewSnapshot projected = this.projection.project(spec, selection);
@@ -274,7 +277,7 @@ public final class CatalogValidatedPatternEncodingTransfer implements PatternEnc
                                     boolean outputBatchOpen,
                                     boolean publicationAttempted,
                                     Throwable primaryFailure) {
-        List<Throwable> rollbackFailures = new ArrayList<>();
+        List<Throwable> rollbackFailures = new ObjectArrayList<>();
         boolean inputRollbackBatch = ensureRollbackBatch(inputInventory, inputBatchOpen, rollbackFailures);
         boolean outputRollbackBatch = ensureRollbackBatch(outputInventory, outputBatchOpen, rollbackFailures);
 

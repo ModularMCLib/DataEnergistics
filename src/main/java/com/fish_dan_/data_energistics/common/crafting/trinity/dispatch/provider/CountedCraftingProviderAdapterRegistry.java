@@ -1,12 +1,13 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 
 import appeng.api.networking.crafting.ICraftingProvider;
 
 import org.jspecify.annotations.Nullable;
 
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
@@ -21,7 +22,7 @@ import java.util.Map;
  */
 final class CountedCraftingProviderAdapterRegistry {
 
-    private final Map<ICraftingProvider, CountedCraftingProviderAdapter> registrations = new IdentityHashMap<>();
+    private final Map<ICraftingProvider, CountedCraftingProviderAdapter> registrations = new Reference2ReferenceOpenHashMap<>();
     private long mutationRevision;
 
     /**

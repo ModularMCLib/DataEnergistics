@@ -10,8 +10,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationNamespace;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationValue;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BooleanSupplier;
@@ -61,7 +62,7 @@ final class CachedDispatchProposalCandidatePlanner implements DispatchProposalCa
     private static DispatchProposalCandidatePlan calculate(CandidateKey key) {
         long maximumCount = key.remainingCrafts().min(MAX_PHYSICAL_CRAFTS).longValueExact();
         ProviderTargetRotation rotation = ProviderTargetRotation.create(key.snapshots(), key.cursor());
-        ArrayList<DispatchProposalCandidatePlan.Candidate> candidates = new ArrayList<>(rotation.targets().size());
+        ObjectArrayList<DispatchProposalCandidatePlan.Candidate> candidates = new ObjectArrayList<>(rotation.targets().size());
         for (ProviderTargetRotation.Target target : rotation.targets()) {
             long offered = offeredCount(target.snapshot(), maximumCount);
             if (offered > 0L) {

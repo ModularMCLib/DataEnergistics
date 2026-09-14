@@ -22,7 +22,7 @@ public final class ReusableCustodyAggregation {
         boolean noEntries = true;
         for (ReusableCraftingCustodyCensus source : sources) {
             covered &= source.complete();
-            noEntries &= source.sessions().isEmpty();
+            noEntries &= source.sessionsFast().isEmpty();
         }
         Cached previous = owners.get(cpuOwner);
         if (previous == null && noEntries) return covered ? empty : unavailable;
@@ -31,7 +31,7 @@ public final class ReusableCustodyAggregation {
         }
         Object2ObjectLinkedOpenHashMap<UUID, Entry> entries = new Object2ObjectLinkedOpenHashMap<>();
         for (ReusableCraftingCustodyCensus source : sources) {
-            for (Entry entry : source.sessions()) {
+            for (Entry entry : source.sessionsFast()) {
                 if (!cpuOwner.equals(entry.cpuOwner())) {
                     throw new IllegalArgumentException("Custody source returned another CPU owner");
                 }

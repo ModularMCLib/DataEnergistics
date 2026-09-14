@@ -4,10 +4,11 @@ import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+
 import java.util.List;
-import java.util.Map;
 
 /**
  * Component-sensitive mimetic output kept as counts instead of expanded item-stack copies.
@@ -20,23 +21,23 @@ import java.util.Map;
  * @param items      generated item counts keyed by item and data components
  * @param experience generated experience count
  */
-public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience) {
+public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long experience) {
 
-    private static final MimeticGeneratedOutput EMPTY = new MimeticGeneratedOutput(Map.of(), 0L);
+    private static final MimeticGeneratedOutput EMPTY = new MimeticGeneratedOutput(Object2LongMaps.emptyMap(), 0L);
 
     public MimeticGeneratedOutput {
-        LinkedHashMap<AEItemKey, Long> copy = new LinkedHashMap<>(items.size());
-        for (Map.Entry<AEItemKey, Long> entry : items.entrySet()) {
-            long amount = entry.getValue();
+        Object2LongLinkedOpenHashMap<AEItemKey> copy = new Object2LongLinkedOpenHashMap<>(items.size());
+        for (Object2LongMap.Entry<AEItemKey> entry : items.object2LongEntrySet()) {
+            long amount = entry.getLongValue();
             if (amount <= 0L) {
                 throw new IllegalArgumentException("Mimetic generated-item amounts must be positive");
             }
-            copy.merge(entry.getKey(), amount, Math::addExact);
+            copy.mergeLong(entry.getKey(), amount, Math::addExact);
         }
         if (experience < 0L) {
             throw new IllegalArgumentException("Mimetic generated experience cannot be negative");
         }
-        items = Collections.unmodifiableMap(copy);
+        items = Object2LongMaps.unmodifiable(copy);
     }
 
     /**
@@ -92,8 +93,8 @@ public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience
             return other;
         }
 
-        LinkedHashMap<AEItemKey, Long> merged = new LinkedHashMap<>(this.items);
-        other.items.forEach((key, amount) -> merged.merge(key, amount, Math::addExact));
+        Object2LongLinkedOpenHashMap<AEItemKey> merged = new Object2LongLinkedOpenHashMap<>(this.items);
+        other.items.forEach((key, amount) -> merged.mergeLong(key, amount, Math::addExact));
         return new MimeticGeneratedOutput(merged, saturatedAdd(this.experience, other.experience));
     }
 
@@ -114,7 +115,7 @@ public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience
             return this;
         }
 
-        LinkedHashMap<AEItemKey, Long> repeated = new LinkedHashMap<>(this.items.size());
+        Object2LongLinkedOpenHashMap<AEItemKey> repeated = new Object2LongLinkedOpenHashMap<>(this.items.size());
         this.items.forEach((key, amount) -> repeated.put(key, Math.multiplyExact(amount, repetitions)));
         return new MimeticGeneratedOutput(repeated, saturatedMultiply(this.experience, repetitions));
     }
@@ -146,7 +147,7 @@ public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience
      */
     public static final class Accumulator {
 
-        private final LinkedHashMap<AEItemKey, Long> items = new LinkedHashMap<>();
+        private final Object2LongLinkedOpenHashMap<AEItemKey> items = new Object2LongLinkedOpenHashMap<>();
         private long experience;
 
         /**
@@ -183,7 +184,7 @@ public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience
                     throw new IllegalArgumentException("Non-empty mimetic output stack has no AE item key");
                 }
                 long amount = Math.multiplyExact((long) stack.getCount(), repetitions);
-                this.items.merge(key, amount, Math::addExact);
+                this.items.mergeLong(key, amount, Math::addExact);
             }
             return this;
         }
@@ -195,7 +196,7 @@ public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience
          * @return this accumulator
          */
         public Accumulator add(MimeticGeneratedOutput output) {
-            output.items.forEach((key, amount) -> this.items.merge(key, amount, Math::addExact));
+            output.items.forEach((key, amount) -> this.items.mergeLong(key, amount, Math::addExact));
             this.experience = saturatedAdd(this.experience, output.experience);
             return this;
         }
@@ -214,7 +215,7 @@ public record MimeticGeneratedOutput(Map<AEItemKey, Long> items, long experience
             if (repetitions == 0 || output.isEmpty()) {
                 return this;
             }
-            output.items.forEach((key, amount) -> this.items.merge(
+            output.items.forEach((key, amount) -> this.items.mergeLong(
                     key,
                     Math.multiplyExact(amount, repetitions),
                     Math::addExact));

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityPlanExecution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityExecutionSnapshot.Firing;
@@ -389,8 +391,8 @@ public final class TrinityExecutionNbtCodec {
         return Collections.unmodifiableMap(recovered);
     }
 
-    private static List<Integer> readStageOrder(CompoundTag root) {
-        List<Integer> order = readIndexes(root, STAGE_ORDER_TAG, "stage order");
+    private static IntList readStageOrder(CompoundTag root) {
+        IntList order = readIndexes(root, STAGE_ORDER_TAG, "stage order");
         return order;
     }
 
@@ -556,7 +558,7 @@ public final class TrinityExecutionNbtCodec {
         return target;
     }
 
-    private static List<Integer> readIndexes(CompoundTag tag, String field, String role) {
+    private static IntList readIndexes(CompoundTag tag, String field, String role) {
         requireType(tag, field, Tag.TAG_INT_ARRAY, role + " indexes");
         IntArrayList indexes = new IntArrayList();
         IntOpenHashSet seen = new IntOpenHashSet();

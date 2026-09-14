@@ -28,9 +28,9 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +45,7 @@ public final class PersistentWorldBoxRenderer {
 
     private static final int RESCAN_INTERVAL_TICKS = 20;
     private static final double TOWER_RANGE_LINE_INSET = 0.03125D;
-    private static final Map<BlockPos, BlockEntity> LOADED_BLOCK_ENTITIES = new HashMap<>();
+    private static final Map<BlockPos, BlockEntity> LOADED_BLOCK_ENTITIES = new Object2ObjectOpenHashMap<>();
 
     @Nullable
     private static ClientLevel trackedLevel;

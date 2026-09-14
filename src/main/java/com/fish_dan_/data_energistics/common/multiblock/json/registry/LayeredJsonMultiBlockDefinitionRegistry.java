@@ -4,11 +4,11 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockDefinition;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,7 +34,7 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
         }
 
         long nextRevision = nextRevision("register built-in " + definition.key());
-        LinkedHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> nextBuiltins = new LinkedHashMap<>(this.builtins);
+        Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> nextBuiltins = new Object2ObjectLinkedOpenHashMap<>(this.builtins);
         nextBuiltins.put(definition.key(), definition);
         Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableBuiltins = immutableCopy(nextBuiltins);
         JsonMultiBlockDefinitionRegistrySnapshot nextSnapshot = new JsonMultiBlockDefinitionRegistrySnapshot(
@@ -51,7 +51,7 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
         if (definitions == null) {
             throw new IllegalArgumentException("JSON multiblock reload definitions cannot be null");
         }
-        LinkedHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> nextJsonDefinitions = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> nextJsonDefinitions = new Object2ObjectLinkedOpenHashMap<>();
         for (JsonMultiBlockDefinition definition : definitions) {
             if (definition == null || definition.key() == null) {
                 throw new IllegalArgumentException("JSON multiblock reload cannot contain a null definition or key");
@@ -95,13 +95,13 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
     private static Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> merge(
                                                                                    Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> builtins,
                                                                                    Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> jsonDefinitions) {
-        LinkedHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> merged = new LinkedHashMap<>(builtins);
+        Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> merged = new Object2ObjectLinkedOpenHashMap<>(builtins);
         merged.putAll(jsonDefinitions);
         return immutableCopy(merged);
     }
 
     private static Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableCopy(
                                                                                            Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions) {
-        return Collections.unmodifiableMap(new LinkedHashMap<>(definitions));
+        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(definitions));
     }
 }

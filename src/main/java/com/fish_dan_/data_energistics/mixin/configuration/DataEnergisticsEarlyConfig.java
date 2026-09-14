@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.configuration;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -75,7 +75,7 @@ public final class DataEnergisticsEarlyConfig {
     }
 
     private static void appendMissingOptions(Properties properties) throws IOException {
-        List<Option> missingOptions = new ArrayList<>();
+        List<Option> missingOptions = new ObjectArrayList<>();
         for (Option option : Option.values()) {
             if (!properties.containsKey(option.key())) {
                 missingOptions.add(option);

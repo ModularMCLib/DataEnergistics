@@ -5,15 +5,22 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Derives quantity-proven execution dependencies without turning shared keys or repeat blocks into global barriers.
@@ -48,23 +55,23 @@ final class TrinityStageDependencyPlanner {
     static List<TrinityPlanStage> plan(
                                        Map<AEKey, BigInteger> initialInputs,
                                        List<TrinityPlanStage> stages,
-                                       List<Integer> stageOrder,
+                                       IntList stageOrder,
                                        List<TrinityCycleRepeatBlock> repeatBlocks) {
         if (initialInputs == null || stages == null || stageOrder == null || repeatBlocks == null) {
             throw new IllegalArgumentException("Trinity stage dependency planning requires complete plan state");
         }
 
-        Map<Integer, TrinityPlanStage> stagesByIndex = stagesByIndex(stages);
-        Map<Integer, TrinityCycleRepeatBlock> repeatByStage = repeatByStage(repeatBlocks, stagesByIndex);
+        Int2ObjectMap<TrinityPlanStage> stagesByIndex = stagesByIndex(stages);
+        Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage = repeatByStage(repeatBlocks, stagesByIndex);
         List<ExecutionUnit> units = executionUnits(stageOrder, stagesByIndex, repeatByStage);
-        Map<Integer, Set<Integer>> dependenciesByEntry = allocateDependencies(initialInputs, units);
+        Int2ObjectMap<IntSet> dependenciesByEntry = allocateDependencies(initialInputs, units);
 
-        ArrayList<TrinityPlanStage> planned = new ArrayList<>(stages.size());
+        ObjectArrayList<TrinityPlanStage> planned = new ObjectArrayList<>(stages.size());
         for (TrinityPlanStage stage : stages) {
             planned.add(new TrinityPlanStage(
                     stage.index(),
                     stage.cycleStage(),
-                    dependenciesByEntry.getOrDefault(stage.index(), Set.of()),
+                    dependenciesByEntry.getOrDefault(stage.index(), IntSets.emptySet()),
                     stage.firings(),
                     stage.requiredAtStart(),
                     stage.netChange()));
@@ -72,8 +79,8 @@ final class TrinityStageDependencyPlanner {
         return List.copyOf(planned);
     }
 
-    private static Map<Integer, TrinityPlanStage> stagesByIndex(List<TrinityPlanStage> stages) {
-        LinkedHashMap<Integer, TrinityPlanStage> indexed = new LinkedHashMap<>();
+    private static Int2ObjectMap<TrinityPlanStage> stagesByIndex(List<TrinityPlanStage> stages) {
+        Int2ObjectLinkedOpenHashMap<TrinityPlanStage> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityPlanStage stage : stages) {
             if (stage == null || indexed.putIfAbsent(stage.index(), stage) != null) {
                 throw new IllegalArgumentException("Trinity dependency planning requires unique non-null stages");
@@ -82,15 +89,15 @@ final class TrinityStageDependencyPlanner {
         return indexed;
     }
 
-    private static Map<Integer, TrinityCycleRepeatBlock> repeatByStage(
+    private static Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage(
                                                                        List<TrinityCycleRepeatBlock> repeatBlocks,
-                                                                       Map<Integer, TrinityPlanStage> stages) {
-        HashMap<Integer, TrinityCycleRepeatBlock> indexed = new HashMap<>();
+                                                                       Int2ObjectMap<TrinityPlanStage> stages) {
+        Int2ObjectLinkedOpenHashMap<TrinityCycleRepeatBlock> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityCycleRepeatBlock block : repeatBlocks) {
             if (block == null) {
                 throw new IllegalArgumentException("Trinity dependency planning cannot contain a null repeat block");
             }
-            for (Integer stageIndex : block.stageOrder()) {
+            for (int stageIndex : block.stageOrder()) {
                 TrinityPlanStage stage = stages.get(stageIndex);
                 if (stage == null || !stage.cycleStage() || indexed.putIfAbsent(stageIndex, block) != null) {
                     throw new IllegalArgumentException("Trinity dependency planning found an invalid repeat stage");
@@ -106,16 +113,17 @@ final class TrinityStageDependencyPlanner {
     }
 
     private static List<ExecutionUnit> executionUnits(
-                                                      List<Integer> stageOrder,
-                                                      Map<Integer, TrinityPlanStage> stages,
-                                                      Map<Integer, TrinityCycleRepeatBlock> repeatByStage) {
-        if (stageOrder.size() != stages.size() || !new LinkedHashSet<>(stageOrder).equals(stages.keySet())) {
+                                                      IntList stageOrder,
+                                                      Int2ObjectMap<TrinityPlanStage> stages,
+                                                      Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage) {
+        IntSet orderSet = new IntOpenHashSet(stageOrder);
+        if (stageOrder.size() != stages.size() || !orderSet.equals(stages.keySet())) {
             throw new IllegalArgumentException("Trinity dependency planning requires one complete stage order");
         }
-        ArrayList<ExecutionUnit> units = new ArrayList<>();
+        ObjectArrayList<ExecutionUnit> units = new ObjectArrayList<>();
         int position = 0;
         while (position < stageOrder.size()) {
-            int stageIndex = stageOrder.get(position);
+            int stageIndex = stageOrder.getInt(position);
             TrinityPlanStage stage = stages.get(stageIndex);
             if (!stage.cycleStage()) {
                 units.add(ExecutionUnit.forStage(stage));
@@ -124,11 +132,11 @@ final class TrinityStageDependencyPlanner {
             }
 
             TrinityCycleRepeatBlock block = repeatByStage.get(stageIndex);
-            if (!block.stageOrder().getFirst().equals(stageIndex)) {
+            if (block.stageOrder().getInt(0) != stageIndex) {
                 throw new IllegalArgumentException("A Trinity repeat block must begin at its first ordered stage");
             }
-            for (Integer blockStage : block.stageOrder()) {
-                if (position >= stageOrder.size() || !stageOrder.get(position).equals(blockStage)) {
+            for (int blockStage : block.stageOrder()) {
+                if (position >= stageOrder.size() || stageOrder.getInt(position) != blockStage) {
                     throw new IllegalArgumentException("A Trinity repeat block must be contiguous in execution order");
                 }
                 position++;
@@ -138,10 +146,10 @@ final class TrinityStageDependencyPlanner {
         return List.copyOf(units);
     }
 
-    private static Map<Integer, Set<Integer>> allocateDependencies(
+    private static Int2ObjectMap<IntSet> allocateDependencies(
                                                                    Map<AEKey, BigInteger> initialInputs,
                                                                    List<ExecutionUnit> units) {
-        LinkedHashMap<AEKey, ArrayDeque<TokenLot>> balances = new LinkedHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, ArrayDeque<TokenLot>> balances = new Object2ObjectLinkedOpenHashMap<>();
         initialInputs.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() <= 0) {
                 throw new IllegalArgumentException("Trinity dependency initial balances must be positive");
@@ -150,11 +158,11 @@ final class TrinityStageDependencyPlanner {
                     .addLast(new TokenLot(amount, null));
         });
 
-        LinkedHashMap<Integer, Set<Integer>> dependencies = new LinkedHashMap<>();
+        Int2ObjectLinkedOpenHashMap<IntSet> dependencies = new Int2ObjectLinkedOpenHashMap<>();
         for (ExecutionUnit unit : units) {
-            LinkedHashSet<Integer> unitDependencies = new LinkedHashSet<>();
-            LinkedHashMap<AEKey, BigInteger> requirements = reservationRequirements(unit);
-            LinkedHashSet<AEKey> touchedKeys = new LinkedHashSet<>(requirements.keySet());
+            IntOpenHashSet unitDependencies = new IntOpenHashSet();
+            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requirements = reservationRequirements(unit);
+            ObjectLinkedOpenHashSet<AEKey> touchedKeys = new ObjectLinkedOpenHashSet<>(requirements.keySet());
             touchedKeys.addAll(unit.netChange().keySet());
             for (AEKey key : touchedKeys) {
                 BigInteger required = requirements.getOrDefault(key, BigInteger.ZERO);
@@ -168,13 +176,13 @@ final class TrinityStageDependencyPlanner {
                             .addLast(new TokenLot(returned, unit.completionStage()));
                 }
             }
-            dependencies.put(unit.entryStage(), Set.copyOf(unitDependencies));
+            dependencies.put(unit.entryStage(), IntSets.unmodifiable(unitDependencies));
         }
         return dependencies;
     }
 
-    private static LinkedHashMap<AEKey, BigInteger> reservationRequirements(ExecutionUnit unit) {
-        LinkedHashMap<AEKey, BigInteger> requirements = new LinkedHashMap<>(unit.requiredAtStart());
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> reservationRequirements(ExecutionUnit unit) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> requirements = new Object2ObjectLinkedOpenHashMap<>(unit.requiredAtStart());
         unit.netChange().forEach((key, change) -> {
             if (change.signum() < 0) {
                 requirements.merge(key, change.negate(), BigInteger::max);
@@ -187,7 +195,7 @@ final class TrinityStageDependencyPlanner {
                                     Map<AEKey, ArrayDeque<TokenLot>> balances,
                                     AEKey key,
                                     BigInteger required,
-                                    Set<Integer> dependencies) {
+                                    IntSet dependencies) {
         BigInteger remaining = required;
         ArrayDeque<TokenLot> lots = balances.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         while (remaining.signum() > 0) {
@@ -237,8 +245,8 @@ final class TrinityStageDependencyPlanner {
 
         private static ExecutionUnit forRepeat(TrinityCycleRepeatBlock block) {
             return new ExecutionUnit(
-                    block.stageOrder().getFirst(),
-                    block.stageOrder().getLast(),
+                    block.stageOrder().getInt(0),
+                    block.stageOrder().getInt(block.stageOrder().size() - 1),
                     block.minimumSeed(),
                     block.netChange());
         }

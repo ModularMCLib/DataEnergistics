@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityExecutionNbtCodec;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityExecutionSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityExecutionSnapshot.Firing;
@@ -387,7 +389,7 @@ public final class TrinityPlanExecution {
      */
     public Optional<Work> pollDispatchable(
                                            long currentTick,
-                                           Set<Integer> inspectedStages,
+                                           IntSet inspectedStages,
                                            Predicate<Work> workDispatchable,
                                            boolean allowNewLease) {
         requireTick(currentTick);
@@ -484,7 +486,7 @@ public final class TrinityPlanExecution {
         return false;
     }
 
-    private Optional<Work> dequeueEligibleWork(Set<Integer> excludedStages) {
+    private Optional<Work> dequeueEligibleWork(IntSet excludedStages) {
         int candidates = this.readyQueue.size();
         while (candidates-- > 0 && !this.readyQueue.isEmpty()) {
             int stageIndex = this.readyQueue.removeFirstInt();
@@ -1847,7 +1849,7 @@ public final class TrinityPlanExecution {
      * schema while retaining the resource contract required to start a newly restored cycle wave.
      * </p>
      */
-    private static Map<AEKey, BigInteger> reconstructMinimumSeed(List<Integer> stageOrder,
+    private static Map<AEKey, BigInteger> reconstructMinimumSeed(IntList stageOrder,
                                                                  Int2ObjectMap<StageState> stages) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> seed = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>();
@@ -2044,7 +2046,7 @@ public final class TrinityPlanExecution {
 
         private StageState(int index,
                            boolean cycle,
-                           Set<Integer> dependencies,
+                           IntSet dependencies,
                            List<FiringState> firings,
                            Map<AEKey, BigInteger> requiredAtStart,
                            Map<AEKey, BigInteger> netChange) {
@@ -2113,7 +2115,7 @@ public final class TrinityPlanExecution {
             return new Stage(
                     this.index,
                     this.cycle,
-                    List.copyOf(this.dependencies),
+                    IntList.of(this.dependencies.toIntArray()),
                     this.currentFiring,
                     this.completed,
                     this.inputKeys,
@@ -2152,7 +2154,7 @@ public final class TrinityPlanExecution {
         private BigInteger waveCount;
 
         private RepeatState(int index,
-                            List<Integer> stageOrder,
+                            IntList stageOrder,
                             Map<AEKey, BigInteger> minimumSeed,
                             BigInteger remainingRepetitions,
                             int cursor,

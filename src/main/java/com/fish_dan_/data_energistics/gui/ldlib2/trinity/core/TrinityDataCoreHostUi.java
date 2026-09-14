@@ -31,8 +31,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
@@ -236,7 +236,7 @@ public final class TrinityDataCoreHostUi {
     }
 
     private static List<ItemSlot> orderedPlayerSlots(InventorySlots inventorySlots) {
-        List<ItemSlot> slots = new ArrayList<>(36);
+        List<ItemSlot> slots = new ObjectArrayList<>(36);
         for (InventorySlots.Row row : inventorySlots.rows) {
             slots.addAll(List.of(row.slots));
         }

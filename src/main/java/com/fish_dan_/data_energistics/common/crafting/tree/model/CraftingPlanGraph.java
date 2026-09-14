@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.common.crafting.tree.model;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 
 import appeng.api.stacks.AEKey;
@@ -194,7 +197,7 @@ public final class CraftingPlanGraph {
     }
 
     public record Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput,
-                          BigInteger executions, boolean estimated, List<Integer> cycleIds)
+                          BigInteger executions, boolean estimated, IntList cycleIds)
             implements Node {
 
         public Process {
@@ -217,7 +220,7 @@ public final class CraftingPlanGraph {
         }
     }
 
-    public record Cycle(int id, int ordinal, List<Integer> nodeIds, List<Integer> stageOrder,
+    public record Cycle(int id, int ordinal, IntList nodeIds, IntList stageOrder,
                         BigInteger repetitions, Map<AEKey, BigInteger> minimumSeed, Map<AEKey, BigInteger> netChange) {
 
         public Cycle {
@@ -238,8 +241,8 @@ public final class CraftingPlanGraph {
 
     private record ProcessIdentity(int stage, String pattern, int variant) {}
 
-    private static List<Integer> uniqueIds(List<Integer> values) {
-        List<Integer> result = List.copyOf(values);
+    private static IntList uniqueIds(IntList values) {
+        IntList result = IntList.of(values.toIntArray());
         result.forEach(CraftingPlanGraph::checkId);
         if (new IntOpenHashSet(result).size() != result.size()) throw new IllegalArgumentException("Duplicate id");
         return result;

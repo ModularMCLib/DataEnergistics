@@ -67,6 +67,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
@@ -82,7 +83,6 @@ import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -232,7 +232,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
         registration.addRecipes(RecipeTypes.CRAFTING, buildUniversalTerminalRecipes());
         var level = Minecraft.getInstance().level;
         if (level != null) {
-            List<WorldInteractionJeiRecipe> worldInteractionRecipes = new ArrayList<>();
+            List<WorldInteractionJeiRecipe> worldInteractionRecipes = new ObjectArrayList<>();
             worldInteractionRecipes.addAll(level.getRecipeManager().getAllRecipesFor(DERecipes.TIME_SHIFT_TYPE.get()).stream()
                     .map(WorldInteractionJeiRecipe.TimeShiftView::new)
                     .toList());

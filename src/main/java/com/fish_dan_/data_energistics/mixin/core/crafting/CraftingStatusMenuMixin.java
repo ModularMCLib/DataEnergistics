@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.core.crafting;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
@@ -17,6 +20,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 
 import com.google.common.collect.ImmutableSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,8 +33,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -202,30 +205,30 @@ public abstract class CraftingStatusMenuMixin extends CraftingCPUMenu
             return;
         }
 
-        Map<Integer, Integer> trinityNumbersBySerial = new HashMap<>();
+        Int2IntMap trinityNumbersBySerial = new Int2IntOpenHashMap();
         for (Map.Entry<ICraftingCPU, Integer> entry : this.cpuSerialMap.entrySet()) {
             if (entry.getKey() instanceof TrinityDataCoreVirtualCpu cpu) {
-                trinityNumbersBySerial.put(entry.getValue(), cpu.number());
+                trinityNumbersBySerial.put(entry.getValue().intValue(), cpu.number());
             }
         }
         if (trinityNumbersBySerial.isEmpty()) {
             return;
         }
 
-        ArrayList<CraftingStatusMenu.CraftingCpuListEntry> sorted = new ArrayList<>(current.cpus());
+        ObjectArrayList<CraftingStatusMenu.CraftingCpuListEntry> sorted = new ObjectArrayList<>(current.cpus());
         sorted.sort((left, right) -> compareCpuEntries(left, right, trinityNumbersBySerial));
         cir.setReturnValue(new CraftingStatusMenu.CraftingCpuList(List.copyOf(sorted)));
     }
 
     private static int compareCpuEntries(CraftingStatusMenu.CraftingCpuListEntry left,
                                          CraftingStatusMenu.CraftingCpuListEntry right,
-                                         Map<Integer, Integer> trinityNumbersBySerial) {
-        Integer leftNumber = trinityNumbersBySerial.get(left.serial());
-        Integer rightNumber = trinityNumbersBySerial.get(right.serial());
-        if (leftNumber == null) {
-            return rightNumber == null ? 0 : 1;
+                                         Int2IntMap trinityNumbersBySerial) {
+        int leftNumber = trinityNumbersBySerial.get(left.serial());
+        int rightNumber = trinityNumbersBySerial.get(right.serial());
+        if (!trinityNumbersBySerial.containsKey(left.serial())) {
+            return !trinityNumbersBySerial.containsKey(right.serial()) ? 0 : 1;
         }
-        if (rightNumber == null) {
+        if (!trinityNumbersBySerial.containsKey(right.serial())) {
             return -1;
         }
         return Integer.compare(leftNumber, rightNumber);

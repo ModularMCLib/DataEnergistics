@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.configuration.schema;
 
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMaps;
+
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackGeometry;
@@ -564,7 +567,7 @@ public final class DataEnergisticsConfiguration {
         @Configurable.DecimalRange(min = 0.0D, max = 1_000_000.0D)
         public double[] dimensionMultiplierValues = { 1.0D, 2.0D, 0.0D };
 
-        public Map<ResourceLocation, Double> dimensionMultipliers() {
+        public Object2DoubleMap<ResourceLocation> dimensionMultipliers() {
             Object2DoubleLinkedOpenHashMap<ResourceLocation> result = new Object2DoubleLinkedOpenHashMap<>();
             int count = Math.min(this.dimensionIds.length, this.dimensionMultiplierValues.length);
             for (int index = 0; index < count; index++) {
@@ -573,7 +576,7 @@ public final class DataEnergisticsConfiguration {
                     result.put(dimension, this.dimensionMultiplierValues[index]);
                 }
             }
-            return Map.copyOf(result);
+            return Object2DoubleMaps.unmodifiable(result);
         }
     }
 

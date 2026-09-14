@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Immutable request-local equivalence policy for explicitly authorised processing-output item domains.
+ * Immutable request-local equivalence policy for explicitly authorised processing input/output item domains.
  *
  * <p>
  * The policy never rewrites an {@link AEItemKey} or its backing {@code ItemStack}. It selects one existing exact key
@@ -65,11 +65,19 @@ public final class TrinitySameItemPolicy {
     public static TrinitySameItemPolicy fromGraph(TrinityCraftingGraphSnapshot graph, AEKey target) {
         Object2ObjectLinkedOpenHashMap<Item, AEItemKey> representatives = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityCraftingGraphPattern pattern : graph.patterns()) {
-            if (!EncodedPatternDynamicOutput.isMarked(pattern.definition()) ||
-                    !(pattern.outputs().getFirst().what() instanceof AEItemKey primaryOutput)) {
-                continue;
+            int markerMask = EncodedPatternDynamicOutput.markerMask(pattern.definition());
+            if (markerMask != 0 &&
+                    pattern.outputs().getFirst().what() instanceof AEItemKey primaryOutput) {
+                representatives.putIfAbsent(primaryOutput.getItem(), primaryOutput);
             }
-            representatives.putIfAbsent(primaryOutput.getItem(), primaryOutput);
+            for (int inputIndex = 0; inputIndex < pattern.inputs().size(); inputIndex++) {
+                if ((markerMask & (1 << inputIndex)) == 0) continue;
+                for (var alternative : pattern.inputs().get(inputIndex).alternatives()) {
+                    if (alternative.stack().what() instanceof AEItemKey inputKey) {
+                        representatives.putIfAbsent(inputKey.getItem(), inputKey);
+                    }
+                }
+            }
         }
         if (target instanceof AEItemKey targetItem && representatives.containsKey(targetItem.getItem())) {
             representatives.put(targetItem.getItem(), targetItem);

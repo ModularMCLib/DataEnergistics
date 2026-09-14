@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Adds the encoded pattern's output-matching switch to the correct middle-click amount window. */
+/** Adds the encoded pattern's per-slot matching switch to the correct middle-click amount window. */
 @Mixin(SetProcessingPatternAmountScreen.class)
 public abstract class SetProcessingPatternAmountScreenMixin
                                                             extends AESubScreen<PatternEncodingTermMenu, PatternEncodingTermScreen<PatternEncodingTermMenu>> {
@@ -43,8 +43,9 @@ public abstract class SetProcessingPatternAmountScreenMixin
                                                       Consumer<GenericStack> setter,
                                                       CallbackInfo ci) {
         ProcessingPatternAmountContext context = (ProcessingPatternAmountContext) parentScreen;
-        if (!context.data_energistics$isProcessingOutputAmountTarget() ||
-                !(currentStack.what() instanceof AEItemKey)) {
+        int inputIndex = context.data_energistics$getProcessingInputAmountTarget();
+        int outputIndex = context.data_energistics$getProcessingOutputAmountTarget();
+        if ((inputIndex < 0 && outputIndex < 0) || !(currentStack.what() instanceof AEItemKey)) {
             return;
         }
 
@@ -53,15 +54,16 @@ public abstract class SetProcessingPatternAmountScreenMixin
                 Icon.FUZZY_IGNORE,
                 Icon.FUZZY_PERCENT_99,
                 enabled -> {
-                    state.data_energistics$setProcessingOutputSameItem(enabled);
+                    state.data_energistics$setProcessingSameItem(inputIndex, outputIndex, enabled);
                     this.dataEnergistics$outputMatchButton.setState(
-                            state.data_energistics$isProcessingOutputSameItem());
+                            state.data_energistics$isProcessingSameItem(inputIndex, outputIndex));
                 });
         this.dataEnergistics$outputMatchButton.setTooltipOn(List.of(
                 Component.translatable("gui.data_energistics.processing_output_match.same_item")));
         this.dataEnergistics$outputMatchButton.setTooltipOff(List.of(
                 Component.translatable("gui.data_energistics.processing_output_match.exact")));
-        this.dataEnergistics$outputMatchButton.setState(state.data_energistics$isProcessingOutputSameItem());
+        this.dataEnergistics$outputMatchButton.setState(
+                state.data_energistics$isProcessingSameItem(inputIndex, outputIndex));
         this.addToLeftToolbar(this.dataEnergistics$outputMatchButton);
     }
 }

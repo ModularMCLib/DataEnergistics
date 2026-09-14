@@ -432,8 +432,8 @@ public abstract class CraftingServiceMixin
     }
 
     /**
-     * Detects player-marked output semantics before selecting the native planner. Native AE2 plans and CPUs do not
-     * understand this encoded-pattern component, so any reachable marked transition makes fallback unsafe.
+     * Detects player-marked processing-slot semantics before selecting the native planner. Native AE2 plans and CPUs
+     * do not understand this encoded-pattern component, so any reachable marked transition makes fallback unsafe.
      */
     @Unique
     private static boolean dataEnergistics$requiresTrinityDynamicOutput(
@@ -447,7 +447,7 @@ public abstract class CraftingServiceMixin
 
     /**
      * Covers the short publication window before a current immutable graph is available. The live provider index is
-     * read only on this server-thread entry point and traversed by exact primary-output dependencies.
+     * read only on this server-thread entry point and traversed by exact processing-input dependencies.
      */
     @Unique
     private boolean dataEnergistics$requiresTrinityDynamicOutputFromProviders(AEKey target) {

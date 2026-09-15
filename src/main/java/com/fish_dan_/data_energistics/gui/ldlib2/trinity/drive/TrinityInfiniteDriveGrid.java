@@ -77,7 +77,7 @@ public final class TrinityInfiniteDriveGrid extends UIElement {
             addDriveSlot(inventory, index);
         }
 
-        scrollbar.layout(layout -> layout.top(0));
+        scrollbar.layout(layout -> layout.top(1));
         configureScrollbar();
         addEventListener(UIEvents.MOUSE_WHEEL, event -> {
             if (event.deltaY != 0 && this.maximumFirstRow > 0) {

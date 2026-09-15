@@ -252,7 +252,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                         "Tier domain " + domain.id() + " does not cover every predicate block candidate");
             }
         }
-        int selectedValue = selection.tierSelections().get(domain.id());
+        int selectedValue = selection.tierSelections().getInt(domain.id());
         ResourceLocation selectedBlock = domain.option(selectedValue).blockId();
         List<PreviewCandidate> selected = candidates.stream()
                 .filter(candidate -> blockId(candidate.state().orElseThrow()).equals(selectedBlock))

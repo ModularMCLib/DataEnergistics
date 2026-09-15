@@ -153,9 +153,9 @@ public final class TrinityGraphTopologyAnalyzer {
             IntSet inputComponents = new IntLinkedOpenHashSet();
             IntSet outputComponents = new IntLinkedOpenHashSet();
             variant.inputs().keySet().forEach(key -> inputComponents.add(
-                    componentByNode[graph.indexByKey().get(key)]));
+                    componentByNode[graph.indexByKey().getInt(key)]));
             variant.outputs().keySet().forEach(key -> outputComponents.add(
-                    componentByNode[graph.indexByKey().get(key)]));
+                    componentByNode[graph.indexByKey().getInt(key)]));
             for (int outputComponent : outputComponents) {
                 outputVariants.get(outputComponent).add(variant);
                 if (inputComponents.contains(outputComponent)) {

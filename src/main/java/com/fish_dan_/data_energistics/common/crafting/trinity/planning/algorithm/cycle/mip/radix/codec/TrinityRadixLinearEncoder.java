@@ -59,7 +59,7 @@ public final class TrinityRadixLinearEncoder {
         TrinityRadixVariable value = addUnsigned(name, width, upperBound);
         boolean lowerDigitsAreFull = encodedUpper.values()
                 .subList(0, Math.max(0, width - 1))
-                .stream()
+                .intStream()
                 .allMatch(digit -> digit == TrinityRadixDigits.BASE - 1);
         if (!mathematicalUpperBound && lowerDigitsAreFull) {
             value.digits().get(width - 1).upper(encodedUpper.digit(width - 1));

@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -139,8 +140,13 @@ public final class RemoteLinkRenderer {
         if (!(level.getBlockEntity(data.getTowerPos()) instanceof DataDistributionTowerBlockEntity tower)) {
             return;
         }
-        List<TowerBindingRuntimeSnapshot> snapshots = tower.towerNetworkSnapshot().bindings();
-        List<TowerBinding> bindings = snapshots.stream().map(TowerBindingRuntimeSnapshot::binding).toList();
+        List<TowerBinding> bindings = tower.towerBindings();
+        if (bindings.isEmpty()) {
+            bindings = tower.towerNetworkSnapshot().bindings().stream()
+                    .map(TowerBindingRuntimeSnapshot::binding)
+                    .filter(binding -> binding.kind() == TowerBindingKind.TARGET)
+                    .toList();
+        }
         if (bindings.isEmpty()) {
             return;
         }
@@ -159,11 +165,17 @@ public final class RemoteLinkRenderer {
                 if (binding.kind() != TowerBindingKind.TARGET) {
                     continue;
                 }
-                Vec3 target = new Vec3(binding.anchor().getX() - data.getTowerPos().getX() + 0.5D,
-                        binding.anchor().getY() - data.getTowerPos().getY() + 0.5D,
-                        binding.anchor().getZ() - data.getTowerPos().getZ() + 0.5D);
+                var face = ConnectorLinkGeometry.face(binding.anchor().subtract(data.getTowerPos()), Direction.UP);
                 Color color = energyColor(binding.energyDirection(), binding.enabled() && (data.allLinksSelected() || index == selected));
-                line(pose, lines, origin, target, color);
+                line(pose, lines, origin, face.approach(), color);
+                line(pose, lines, face.approach(), face.center(), color);
+                for (int corner = 0; corner < face.corners().size(); corner++) {
+                    line(pose, lines, face.corners().get(corner), face.corners().get((corner + 1) % 4), color);
+                }
+                if (data.allLinksSelected() || index == selected) {
+                    line(pose, lines, face.corners().get(0), face.corners().get(2), color);
+                    line(pose, lines, face.corners().get(1), face.corners().get(3), color);
+                }
             }
         } finally {
             buffers.endBatch(LINK_LINES);

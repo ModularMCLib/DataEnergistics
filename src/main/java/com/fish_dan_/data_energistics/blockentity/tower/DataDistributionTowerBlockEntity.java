@@ -39,10 +39,10 @@ import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.ae.appflux.AE2FluxIntegration;
+import com.fish_dan_.data_energistics.integration.ae.crafting.AeCraftingDisplayBridge;
+import com.fish_dan_.data_energistics.integration.ae.neoecoae.NeoEcoAeTowerBridge;
 import com.fish_dan_.data_energistics.integration.curios.CuriosDataDistributionConnectorAccess;
-import com.fish_dan_.data_energistics.integration.tower.crafting.AeCraftingDisplayBridge;
-import com.fish_dan_.data_energistics.integration.tower.energy.appflux.AE2FluxIntegration;
-import com.fish_dan_.data_energistics.integration.tower.energy.neoecoae.NeoEcoAeTowerBridge;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;

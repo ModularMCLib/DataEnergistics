@@ -54,7 +54,6 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
         setFittedText("dialog_title", DigitizedWeaponName.fullName(mode), 160);
         for (MatterConvergingCrossbowMode row : MatterConvergingCrossbowMode.values()) {
             String rowId = "mode_label_" + row.nameKey();
-            setFittedText(rowId + "_prefix", DigitizedWeaponName.prefix(), 34);
             setFittedText(rowId, DigitizedWeaponName.modeName(row), 34);
         }
         modeButtons.forEach((row, button) -> button.setState(row == mode));

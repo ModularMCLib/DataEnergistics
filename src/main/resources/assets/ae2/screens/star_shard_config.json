@@ -7,7 +7,8 @@
 		"srcRect": [0, 0, 176, 222]
 	},
 	"palette": {
-		"SELECTION_COLOR": "#268D97"
+		"SELECTION_COLOR": "#268D97",
+		"MUTED_TEXT_COLOR": "#252A3A"
 	},
 	"slots": {
 		"CANNON_CELL_GRENADE": { "left": 70, "top": 39 },
@@ -53,34 +54,19 @@
 			"align": "CENTER",
 			"scale": 0.6
 		},
-		"mode_label_star_shard_prefix": {
-			"text": { "text": "" },
-			"position": { "left": 47, "top": 38 },
-			"align": "CENTER"
-		},
 		"mode_label_star_shard": {
 			"text": { "text": "" },
-			"position": { "left": 47, "top": 48 },
-			"align": "CENTER"
-		},
-		"mode_label_crystal_rift_crusher_prefix": {
-			"text": { "text": "" },
-			"position": { "left": 47, "top": 67 },
+			"position": { "left": 47, "top": 43 },
 			"align": "CENTER"
 		},
 		"mode_label_crystal_rift_crusher": {
 			"text": { "text": "" },
-			"position": { "left": 47, "top": 77 },
-			"align": "CENTER"
-		},
-		"mode_label_entropy_thread_bow_prefix": {
-			"text": { "text": "" },
-			"position": { "left": 47, "top": 96 },
+			"position": { "left": 47, "top": 72 },
 			"align": "CENTER"
 		},
 		"mode_label_entropy_thread_bow": {
 			"text": { "text": "" },
-			"position": { "left": 47, "top": 106 },
+			"position": { "left": 47, "top": 101 },
 			"align": "CENTER"
 		},
 		"player_inventory_title": {

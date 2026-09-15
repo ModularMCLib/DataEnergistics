@@ -4,7 +4,12 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
+import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBinding;
+import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingKind;
 import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
+import com.fish_dan_.data_energistics.item.connector.ConnectorHostType;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 
@@ -72,7 +77,15 @@ public final class RemoteLinkRenderer {
             return;
         }
         RemoteLinkConnectorData data = RemoteLinkConnectorItem.readData(stack);
-        if (!data.hasSelection() || data.providerSide() != -1 || !(data.isAdaptiveProvider() || data.isInterface()) || !level.dimension().location().toString().equals(data.providerDimensionId())) {
+        if (!data.hasSelection()) {
+            return;
+        }
+
+        if (data.targetType() == ConnectorHostType.TOWER) {
+            renderTowerLinks(event, minecraft, level, data);
+            return;
+        }
+        if (data.providerSide() != -1 || !(data.isAdaptiveProvider() || data.isInterface()) || !level.dimension().location().toString().equals(data.providerDimensionId())) {
             return;
         }
 
@@ -115,6 +128,52 @@ public final class RemoteLinkRenderer {
             buffers.endBatch(LINK_LINES);
             pose.popPose();
         }
+    }
+
+    private static void renderTowerLinks(RenderLevelStageEvent event, Minecraft minecraft, ClientLevel level,
+                                         RemoteLinkConnectorData data) {
+        if (!level.dimension().location().toString().equals(data.dimensionId()) || !level.isLoaded(data.getTowerPos())) {
+            return;
+        }
+        if (!(level.getBlockEntity(data.getTowerPos()) instanceof DataDistributionTowerBlockEntity tower)) {
+            return;
+        }
+        List<TowerBinding> bindings = tower.towerBindings();
+        if (bindings.isEmpty()) {
+            return;
+        }
+        Vec3 camera = event.getCamera().getPosition();
+        PoseStack pose = event.getPoseStack();
+        var buffers = minecraft.renderBuffers().bufferSource();
+        VertexConsumer lines = buffers.getBuffer(LINK_LINES);
+        pose.pushPose();
+        try {
+            pose.translate(data.getTowerPos().getX() - camera.x, data.getTowerPos().getY() - camera.y,
+                    data.getTowerPos().getZ() - camera.z);
+            Vec3 origin = new Vec3(0.5D, 0.5D, 0.5D);
+            int selected = Math.floorMod(data.selectedBindingIndex(), bindings.size());
+            for (int index = 0; index < bindings.size(); index++) {
+                TowerBinding binding = bindings.get(index);
+                if (binding.kind() != TowerBindingKind.TARGET) {
+                    continue;
+                }
+                Vec3 target = new Vec3(binding.anchor().getX() - data.getTowerPos().getX() + 0.5D,
+                        binding.anchor().getY() - data.getTowerPos().getY() + 0.5D,
+                        binding.anchor().getZ() - data.getTowerPos().getZ() + 0.5D);
+                Color color = energyColor(binding.energyDirection(), binding.enabled() && (data.allLinksSelected() || index == selected));
+                line(pose, lines, origin, target, color);
+            }
+        } finally {
+            buffers.endBatch(LINK_LINES);
+            pose.popPose();
+        }
+    }
+
+    private static Color energyColor(EnergyTransferDirection direction, boolean selected) {
+        if (direction == EnergyTransferDirection.INPUT) {
+            return selected ? new Color(0.2F, 1.0F, 0.45F, 1.0F) : new Color(0.15F, 0.72F, 0.34F, 0.85F);
+        }
+        return selected ? new Color(1.0F, 0.55F, 0.2F, 1.0F) : new Color(0.82F, 0.38F, 0.12F, 0.85F);
     }
 
     private static void line(PoseStack pose, VertexConsumer vertices, Vec3 from, Vec3 to, Color color) {

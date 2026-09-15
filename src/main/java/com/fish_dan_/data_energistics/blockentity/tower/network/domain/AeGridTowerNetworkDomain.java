@@ -5,6 +5,9 @@ import com.fish_dan_.data_energistics.ae2.grid.ControllerChannelCapacity;
 import com.fish_dan_.data_energistics.ae2.grid.TowerChannelCapacity;
 import com.fish_dan_.data_energistics.ae2.grid.VirtualGridBridge;
 import com.fish_dan_.data_energistics.ae2.grid.VirtualGridBridgeException;
+import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
+import com.fish_dan_.data_energistics.blockentity.tower.energy.TowerEnergyDirection;
+import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingKind;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegrationRegistry;
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointId;
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
@@ -474,11 +477,12 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         ObjectArrayList<ObjectArrayList<TowerEnergyTransferEndpoint>> orderedRouteGroups = new ObjectArrayList<>();
         for (Map.Entry<EnergyLocationKey, TowerEnergyLocation> entry : orderedLocations) {
             for (TowerDomainEnergyEndpoint endpoint : this.energyResolver.resolve(entry.getValue())) {
+                TowerDomainEnergyEndpoint directedEndpoint = applyConnectorDirection(endpoint, towerWorks);
                 dataEnergistics$addEnergyRoute(
                         routesByStorage,
                         orderedRouteGroups,
                         endpoint.storageIdentity(),
-                        new CapabilityEnergyTransferEndpoint(endpoint, this.energyIntegrations));
+                        new CapabilityEnergyTransferEndpoint(directedEndpoint, this.energyIntegrations));
             }
         }
 
@@ -513,6 +517,22 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         }
         endpoints.sort(Comparator.comparing(TowerEnergyTransferEndpoint::endpoint, ENERGY_ENDPOINT_ORDER));
         return List.copyOf(endpoints);
+    }
+
+    private static TowerDomainEnergyEndpoint applyConnectorDirection(
+                                                                     TowerDomainEnergyEndpoint endpoint, List<TowerWork> towerWorks) {
+        for (TowerWork work : towerWorks) {
+            for (BindingWork binding : work.bindings()) {
+                if (!binding.binding().anchor().equals(endpoint.location().position()) || !binding.binding().dimensionId().equals(endpoint.location().level().dimension().location()) || binding.binding().kind() != TowerBindingKind.TARGET) {
+                    continue;
+                }
+                EnergyTransferDirection selected = binding.binding().energyDirection();
+                TowerEnergyDirection direction = selected == EnergyTransferDirection.INPUT ? endpoint.direction().allowsReceive() ? TowerEnergyDirection.SINK : null : endpoint.direction().allowsExtract() ? TowerEnergyDirection.SOURCE : null;
+                return direction == null ? endpoint : new TowerDomainEnergyEndpoint(
+                        endpoint.location(), endpoint.endpoint(), endpoint.storage(), endpoint.storageIdentity(), direction);
+            }
+        }
+        return endpoint;
     }
 
     /**

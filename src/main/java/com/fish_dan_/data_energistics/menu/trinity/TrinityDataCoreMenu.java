@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.Multiblo
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildDefinitionBundle;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildRequest;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildSubmission;
+import com.fish_dan_.data_energistics.common.trinity.drive.TrinityInfiniteDriveInventory;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionResult;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionTicket;
@@ -37,10 +38,13 @@ import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -75,6 +79,11 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     /** Server-issued definition snapshot shared by this menu's client and server hosted windows. */
     @Getter
     private final MultiblockPreviewSpec autoBuildPreviewSpec;
+    /** Fixed physical inventory shared by the native drive slots on both logical menu sides. */
+    @Getter
+    private final Container infiniteDriveInventory;
+    /** Server-synchronized usable prefix of {@link #infiniteDriveInventory}. */
+    private int infiniteDriveSlotCount;
     private final Map<HostUiKey, ClientHostedActionState> clientHostedActions = new Object2ObjectOpenHashMap<>();
     private final Map<HostUiKey, ServerHostedActionState> serverHostedActions = new Object2ObjectOpenHashMap<>();
     private final ObjectArrayFIFOQueue<QueuedPatternQuickMove> queuedPatternQuickMoves = new ObjectArrayFIFOQueue<>();
@@ -88,10 +97,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
      * Opens the native Trinity menu for one exact live controller and transmits only its block position.
      */
     public static boolean open(ServerPlayer player, TrinityDataCoreBlockEntity host) {
-        if (player == null || host == null) {
-            Data_Energistics.LOGGER.error("Cannot open the Trinity Data Core menu without a player and host");
-            throw new IllegalArgumentException("Trinity Data Core menu player and host cannot be null");
-        }
         if (!isLiveHost(player, host)) {
             Data_Energistics.LOGGER.warn(
                     "Cannot open a stale or out-of-range Trinity Data Core menu: player={}, host={}, position={}",
@@ -181,47 +186,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     }
 
     /**
-     * Creates a menu with injectable hosted business and transport boundaries for direct protocol tests.
-     */
-    TrinityDataCoreMenu(int id,
-                        Inventory playerInventory,
-                        @Nullable TrinityDataCoreMenuHost host,
-                        Consumer<CustomPacketPayload> hostedActionSink,
-                        TrinityHostedActionExecutor hostedActionExecutor) {
-        this(
-                id,
-                playerInventory,
-                host,
-                currentAutoBuildPreviewSpec(),
-                host == null ? UUID.randomUUID() : host.getHostId(),
-                UUID.randomUUID(),
-                hostedActionSink,
-                hostedActionExecutor,
-                null);
-    }
-
-    /**
-     * Creates a direct-test menu that can register real hosted providers before the coordinator seals their order.
-     */
-    TrinityDataCoreMenu(int id,
-                        Inventory playerInventory,
-                        @Nullable TrinityDataCoreMenuHost host,
-                        Consumer<CustomPacketPayload> hostedActionSink,
-                        TrinityHostedActionExecutor hostedActionExecutor,
-                        @Nullable Consumer<HostUiExtension> additionalProviderRegistrar) {
-        this(
-                id,
-                playerInventory,
-                host,
-                currentAutoBuildPreviewSpec(),
-                host == null ? UUID.randomUUID() : host.getHostId(),
-                UUID.randomUUID(),
-                hostedActionSink,
-                hostedActionExecutor,
-                additionalProviderRegistrar);
-    }
-
-    /**
      * Creates one menu bound to the exact server-issued host and opening session identities.
      */
     TrinityDataCoreMenu(int id,
@@ -234,10 +198,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
                         TrinityHostedActionExecutor hostedActionExecutor,
                         @Nullable Consumer<HostUiExtension> additionalProviderRegistrar) {
         super(DEMenus.TRINITY_DATA_CORE.get(), id);
-        if (playerInventory == null || hostId == null || menuSessionId == null || hostedActionSink == null ||
-                hostedActionExecutor == null) {
-            throw new IllegalArgumentException("Trinity menu identities and hosted action collaborators cannot be null");
-        }
         this.playerInventory = playerInventory;
         this.host = host;
         this.hostId = hostId;
@@ -245,6 +205,25 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
         this.autoBuildPreviewSpec = autoBuildPreviewSpec;
         this.hostedActionSink = hostedActionSink;
         this.hostedActionExecutor = hostedActionExecutor;
+        this.infiniteDriveInventory = host instanceof TrinityDataCoreBlockEntity dataCore ?
+                dataCore.getInfiniteDriveInventory() : new SimpleContainer(TrinityInfiniteDriveInventory.MAXIMUM_SLOT_COUNT);
+        this.infiniteDriveSlotCount = host instanceof TrinityDataCoreBlockEntity dataCore ?
+                dataCore.getInfiniteDriveSlotCount() : 0;
+        addDataSlot(new DataSlot() {
+
+            @Override
+            public int get() {
+                return TrinityDataCoreMenu.this.getInfiniteDriveSlotCount();
+            }
+
+            @Override
+            public void set(int value) {
+                TrinityDataCoreMenu.this.infiniteDriveSlotCount = Math.clamp(
+                        value,
+                        0,
+                        TrinityInfiniteDriveInventory.MAXIMUM_SLOT_COUNT);
+            }
+        });
         this.hostUiCoordinator = TrinityDataCoreHostUi.mount(this, hostUi -> playerInventory.player.level().isClientSide ?
                 createClientCoordinator(hostUi, playerInventory, additionalProviderRegistrar) :
                 createServerCoordinator(hostUi, playerInventory, additionalProviderRegistrar));
@@ -257,19 +236,60 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
         return this.playerInventory.player;
     }
 
-    /** Moves one player-inventory pattern into the first available aggregate pattern slot. */
+    /**
+     * Returns the currently usable prefix of the fixed-layout infinite-drive inventory.
+     *
+     * <p>
+     * The server reads the live storage profile; the client reads the synchronized menu value.
+     * </p>
+     */
+    public int getInfiniteDriveSlotCount() {
+        if (this.playerInventory.player.level().isClientSide()) {
+            return this.infiniteDriveSlotCount;
+        }
+        return this.host instanceof TrinityDataCoreBlockEntity dataCore ?
+                dataCore.getInfiniteDriveSlotCount() : 0;
+    }
+
+    /**
+     * Shift-clicks between infinite drives and the player inventory before preserving the existing aggregate-pattern
+     * shortcut for all remaining player stacks.
+     */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        if (this.host == null || this.host.isPatternMaintenanceActive() ||
-                !this.hostUiCoordinator.hostUi().isOpen(TrinityDataCoreHostUiKeys.PATTERN) ||
-                index < 0 || index >= this.slots.size()) {
+        if (index < 0 || index >= this.slots.size()) {
             return ItemStack.EMPTY;
         }
         Slot sourceSlot = this.slots.get(index);
-        if (!sourceSlot.hasItem() || !sourceSlot.mayPickup(player)) {
+        if (!sourceSlot.isActive() || !sourceSlot.hasItem() || !sourceSlot.mayPickup(player)) {
             return ItemStack.EMPTY;
         }
         ItemStack sourceBefore = sourceSlot.getItem().copy();
+
+        if (index < TrinityInfiniteDriveInventory.MAXIMUM_SLOT_COUNT) {
+            if (moveItemStackTo(
+                    sourceSlot.getItem(),
+                    TrinityInfiniteDriveInventory.MAXIMUM_SLOT_COUNT,
+                    this.slots.size(),
+                    false)) {
+                sourceSlot.setChanged();
+                return sourceBefore;
+            }
+            return ItemStack.EMPTY;
+        }
+        if (TrinityInfiniteDriveInventory.accepts(sourceSlot.getItem()) && moveItemStackTo(
+                sourceSlot.getItem(),
+                0,
+                getInfiniteDriveSlotCount(),
+                false)) {
+            sourceSlot.setChanged();
+            return sourceBefore;
+        }
+
+        if (this.host == null || this.host.isPatternMaintenanceActive() ||
+                !this.hostUiCoordinator.hostUi().isOpen(TrinityDataCoreHostUiKeys.PATTERN)) {
+            return ItemStack.EMPTY;
+        }
         ItemStack extracted = sourceSlot.remove(1);
         if (extracted.isEmpty()) {
             return ItemStack.EMPTY;
@@ -357,9 +377,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
      * Sends one stable CPU selection with the host identity received with the menu opening data.
      */
     public boolean sendOpenCpuStatus(UUID syncedHostId, int cpuNumber) {
-        if (syncedHostId == null) {
-            throw new IllegalArgumentException("Synchronized Trinity host ID is required");
-        }
         if (this.host == null || !getPlayer().level().isClientSide() || getPlayer().containerMenu != this ||
                 !stillValid(getPlayer())) {
             return false;
@@ -390,9 +407,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
      * @return whether a new action ticket was emitted
      */
     public boolean sendHostedAutoBuild(long generation, TrinityAutoBuildSubmission submission) {
-        if (submission == null) {
-            throw new IllegalArgumentException("Trinity hosted auto-build submission cannot be null");
-        }
         return sendHostedAction(
                 TrinityDataCoreHostUiKeys.AUTO_BUILD,
                 generation,
@@ -545,9 +559,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
      * Accepts an ACK only when it exactly matches the currently pending client ticket.
      */
     public boolean handleHostedActionResponse(TrinityHostedActionResult result) {
-        if (result == null) {
-            throw new IllegalArgumentException("Trinity hosted action response cannot be null");
-        }
         ClientHostedActionState state = this.clientHostedActions.get(result.key());
         if (state == null || state.pending == null || !state.pending.equals(result.ticket())) {
             return false;
@@ -571,9 +582,6 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     public boolean handleHostedActionResponse(UUID hostId,
                                               UUID menuSessionId,
                                               TrinityHostedActionResult result) {
-        if (hostId == null || menuSessionId == null) {
-            throw new IllegalArgumentException("Trinity hosted action response identities cannot be null");
-        }
         return matchesHostedActionEnvelope(hostId, menuSessionId) && handleHostedActionResponse(result);
     }
 
@@ -1017,7 +1025,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
                                           IntList globalSlots) {
 
         private QueuedPatternQuickMove {
-            if (generation < 1L || layoutRevision < 0L || globalSlots == null || globalSlots.isEmpty()) {
+            if (generation < 1L || layoutRevision < 0L || globalSlots.isEmpty()) {
                 throw new IllegalArgumentException("Invalid queued Trinity pattern quick-move request");
             }
             IntLinkedOpenHashSet uniqueSlots = new IntLinkedOpenHashSet(globalSlots.size());

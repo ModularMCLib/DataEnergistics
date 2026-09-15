@@ -54,9 +54,9 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
     private static final int VIEWPORT_RIGHT = 1;
     public static final int ROW_WIDTH = ROW_SPRITE_WIDTH;
     public static final int ROW_HEIGHT = 22;
-    public static final int VISIBLE_ROW_COUNT = 10;
+    public static final int VISIBLE_ROW_COUNT = 6;
     public static final int DEFAULT_WIDTH = VIEWPORT_LEFT + ROW_WIDTH + VIEWPORT_RIGHT;
-    public static final int DEFAULT_HEIGHT = 234;
+    public static final int DEFAULT_HEIGHT = 148;
     public static final String ELEMENT_ID = "trinity_data_core_cpu_entries";
     public static final String SCROLLER_ID = "trinity_data_core_cpu_list";
 
@@ -231,7 +231,6 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
         if (this.scrollbar == null) {
             return;
         }
-        int cpuCount = this.value.cpus().size();
         int maxFirstVisibleIndex = maxFirstVisibleIndex();
         this.overflowing = maxFirstVisibleIndex > 0;
         this.firstVisibleIndex = Math.min(this.firstVisibleIndex, maxFirstVisibleIndex);
@@ -239,18 +238,13 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
         float normalizedValue = maxFirstVisibleIndex == 0 ?
                 0.0F : (float) this.firstVisibleIndex / maxFirstVisibleIndex;
         float scrollDelta = maxFirstVisibleIndex == 0 ? 1.0F : 1.0F / maxFirstVisibleIndex;
-        float naturalThumbPercent = cpuCount == 0 ?
-                100.0F : Math.min(100.0F, VISIBLE_ROW_COUNT * 100.0F / cpuCount);
-        float thumbPercent = TrinityCpuListGeometry.thumbPercent(
-                naturalThumbPercent,
-                this.scrollbar.scrollContainer.getContentHeight(),
-                this.overflowing);
 
         this.scrollbar.scrollerStyle(style -> style.scrollDelta(scrollDelta));
         this.scrollbar.setNormalizedValue(normalizedValue, false);
-        this.scrollbar.setScrollBarSize(thumbPercent);
+        this.scrollbar.setDisplay(true);
+        this.scrollbar.setActive(true);
         this.scrollbar.selfAndAllChildren()
-                .forEach(element -> element.setAllowHitTest(this.overflowing));
+                .forEach(element -> element.setAllowHitTest(true));
     }
 
     private int maxFirstVisibleIndex() {
@@ -515,9 +509,6 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
         private final AEKey target;
 
         private CpuTargetIcon(AEKey target) {
-            if (target == null) {
-                throw new IllegalArgumentException("Trinity CPU target key is required");
-            }
             this.target = target;
             setAllowHitTest(false);
         }

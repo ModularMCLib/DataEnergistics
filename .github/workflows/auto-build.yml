@@ -38,7 +38,7 @@ jobs:
       - name: Build
         run: ./gradlew build
       - name: Publish to Maven
-        if: ${{ github.repository_owner == 'fish1145' && env.PUBLISH == 'true' }}
+        if: ${{ github.repository_owner == 'ModularMCLib' && env.PUBLISH == 'true' }}
         run: ./gradlew publish
       - name: Rename Jars
         if: ${{ env.PUBLISH == 'true' }}
@@ -69,6 +69,6 @@ jobs:
           prerelease: true
           body: |
             The latest build of Data Energistics for Minecraft ${{ github.ref_name }}.
-            Please report any [issues](https://github.com/fish1145/DataEnergistics/issues).
+            Please report any [issues](https://github.com/ModularMCLib/DataEnergistics/issues).
             ${{ steps.changelog.outputs.changelog }}
           files: build/libs/*.jar

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.client.screen.powered;
 
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.item.powered.cannon.presentation.DigitizedWeaponName;
 import com.fish_dan_.data_energistics.menu.powered.MatterConvergingCrossbowConfigMenu;
 
 import appeng.client.gui.AEBaseScreen;
@@ -36,8 +37,9 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
         selectionColor = style.getColor(PaletteColor.SELECTION_COLOR).toARGB();
         widgets.add("upgrades", new UpgradesPanel(menu.getSlots(SlotSemantics.UPGRADE), menu.getHost()));
         for (MatterConvergingCrossbowMode mode : MatterConvergingCrossbowMode.values()) {
-            ToggleButton button = new ToggleButton(Icon.VALID, Icon.ARROW_RIGHT, selected -> menu.sendSetMode(mode));
-            Component name = Component.translatable("item.data_energistics.star_shard.mode." + mode.nameKey());
+            ToggleButton button = new ToggleButton(Icon.AUTO_EXPORT_ON, Icon.AUTO_EXPORT_OFF, selected -> menu.sendSetMode(mode));
+            button.setDisableBackground(true);
+            Component name = DigitizedWeaponName.fullName(mode);
             button.setTooltipOn(List.of(name, Component.translatable("screen.data_energistics.cannon.hint.selected")));
             button.setTooltipOff(List.of(name, Component.translatable("screen.data_energistics.cannon.hint.select_mode")));
             widgets.add("mode_" + mode.nameKey(), button);
@@ -49,32 +51,31 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
     protected void updateBeforeRender() {
         super.updateBeforeRender();
         MatterConvergingCrossbowMode mode = MatterConvergingCrossbowMode.fromId(menu.activeMode);
-        setTextContent("dialog_title", Component.translatable(
-                "item.data_energistics.star_shard.mode." + mode.nameKey()));
+        setFittedText("dialog_title", DigitizedWeaponName.fullName(mode), 160);
+        for (MatterConvergingCrossbowMode row : MatterConvergingCrossbowMode.values()) {
+            String rowId = "mode_label_" + row.nameKey();
+            setFittedText(rowId + "_prefix", DigitizedWeaponName.prefix(), 34);
+            setFittedText(rowId, DigitizedWeaponName.modeName(row), 34);
+        }
         modeButtons.forEach((row, button) -> button.setState(row == mode));
+    }
+
+    private void setFittedText(String id, Component text, int width) {
+        setTextContent(id, text);
+        getStyle().getText().get(id).setScale(Math.min(1.0F, (float) width / Math.max(1, font.width(text))));
     }
 
     @Override
     public void drawBG(GuiGraphics graphics, int offsetX, int offsetY, int mouseX, int mouseY, float partialTicks) {
         super.drawBG(graphics, offsetX, offsetY, mouseX, mouseY, partialTicks);
-        // A dark title strip keeps the existing colored mode names readable on AE's light background.
-        graphics.fill(offsetX + 8, offsetY + 6, offsetX + imageWidth - 8, offsetY + 23, 0xF0202730);
         for (MatterConvergingCrossbowMode mode : MatterConvergingCrossbowMode.values()) {
             Slot cell = menu.cellSlot(mode);
-            int top = offsetY + cell.y - 6;
+            int top = offsetY + cell.y - 2;
             boolean selected = mode.id() == menu.activeMode;
             int color = selected ? (selectionColor & 0xFFFFFF) | 0x30000000 : 0x126A707A;
-            graphics.fill(offsetX + 8, top, offsetX + imageWidth - 8, top + 28, color);
-            if (selected) graphics.fill(offsetX + 8, top, offsetX + 11, top + 28, selectionColor);
+            graphics.fill(offsetX + 30, top, offsetX + 150, top + 20, color);
+            if (selected) graphics.fill(offsetX + 27, top, offsetX + 29, top + 20, selectionColor);
         }
-        // The generated AE background has no baked slot outlines, so use AE's slot sprite for real inventory slots.
-        for (Slot slot : menu.slots) {
-            if (menu.getSlotSemantic(slot) != SlotSemantics.UPGRADE) {
-                Icon.SLOT_BACKGROUND.getBlitter().dest(offsetX + slot.x - 1, offsetY + slot.y - 1).blit(graphics);
-            }
-        }
-        int divider = offsetY + menu.getSlots(SlotSemantics.PLAYER_INVENTORY).getFirst().y - 19;
-        graphics.fill(offsetX + 12, divider, offsetX + imageWidth - 12, divider + 1, 0xFF969BA4);
     }
 
     @Override

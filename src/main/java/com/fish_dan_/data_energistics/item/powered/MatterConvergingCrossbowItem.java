@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.item.powered.cannon.CannonBallistics;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
 import com.fish_dan_.data_energistics.item.powered.cannon.bow.BowShotPattern;
+import com.fish_dan_.data_energistics.item.powered.cannon.presentation.DigitizedWeaponName;
 import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.CannonCellMenuHost;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
@@ -347,7 +348,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     @Override
     public Component getName(ItemStack stack) {
-        return Component.translatable("item.data_energistics.star_shard.mode." + mode(stack).nameKey());
+        return DigitizedWeaponName.fullName(mode(stack));
     }
 
     @Override

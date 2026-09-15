@@ -31,13 +31,13 @@
 				"count": 17
 			},
 			{
-				"item": "data_energistics:data_storage_component_16m",
+				"item": "data_energistics:data_storage_component_16k",
 				"count": 4
 			}
 		],
 		"resource": {
 			"key_type": "data_energistics:manifest_binary",
-			"amount": 114
+			"amount": 57
 		}
 	},
 	"outputs": {

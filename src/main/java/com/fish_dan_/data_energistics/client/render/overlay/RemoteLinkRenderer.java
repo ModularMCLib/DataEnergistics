@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirec
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBinding;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingKind;
+import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingRuntimeSnapshot;
 import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
 import com.fish_dan_.data_energistics.item.connector.ConnectorHostType;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
@@ -138,7 +139,8 @@ public final class RemoteLinkRenderer {
         if (!(level.getBlockEntity(data.getTowerPos()) instanceof DataDistributionTowerBlockEntity tower)) {
             return;
         }
-        List<TowerBinding> bindings = tower.towerBindings();
+        List<TowerBindingRuntimeSnapshot> snapshots = tower.towerNetworkSnapshot().bindings();
+        List<TowerBinding> bindings = snapshots.stream().map(TowerBindingRuntimeSnapshot::binding).toList();
         if (bindings.isEmpty()) {
             return;
         }

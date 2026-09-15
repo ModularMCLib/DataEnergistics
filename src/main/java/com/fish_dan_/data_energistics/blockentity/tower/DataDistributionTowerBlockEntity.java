@@ -1836,6 +1836,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         this.markForClientUpdate();
     }
 
+    public TowerNetworkTowerSnapshot towerNetworkSnapshot() {
+        return this.towerNetworkSnapshot;
+    }
+
     private void syncTowerDomainRegistration() {
         if (!(this.level instanceof ServerLevel)) {
             return;

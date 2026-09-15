@@ -2,217 +2,131 @@
 	"$schema": "schema.json",
 	"includes": ["common/common.json", "common/player_inventory.json"],
 	"helpTopic": "data_energistics:items-blocks-machines/7.3_star_shard.md",
-	"generatedBackground": {
-		"width": 220,
-		"height": 232
+	"background": {
+		"texture": "data_energistics:textures/guis/star_shard_config.png",
+		"srcRect": [0, 0, 176, 222]
 	},
 	"palette": {
-		"SELECTION_COLOR": "#268D97"
+		"SELECTION_COLOR": "#268D97",
+		"MUTED_TEXT_COLOR": "#252A3A"
 	},
 	"slots": {
-		"CANNON_CELL_GRENADE": {
-			"left": 100,
-			"top": 46
-		},
-		"CANNON_CELL_RAIL": {
-			"left": 100,
-			"top": 76
-		},
-		"CANNON_CELL_CROSSBOW": {
-			"left": 100,
-			"top": 106
-		},
-		"CANNON_AMMO_GRENADE": {
-			"left": 178,
-			"top": 46
-		},
-		"CANNON_AMMO_RAIL": {
-			"left": 178,
-			"top": 76
-		},
-		"CANNON_AMMO_CROSSBOW": {
-			"left": 178,
-			"top": 106
-		},
-		"UPGRADE": {
-			"left": 224,
-			"top": 14,
-			"grid": "VERTICAL"
-		},
-		"PLAYER_INVENTORY": {
-			"left": 29,
-			"top": 151,
-			"grid": "BREAK_AFTER_9COLS"
-		},
-		"PLAYER_HOTBAR": {
-			"left": 29,
-			"top": 209,
-			"grid": "HORIZONTAL"
-		}
+		"CANNON_CELL_GRENADE": { "left": 70, "top": 39 },
+		"CANNON_CELL_RAIL": { "left": 70, "top": 68 },
+		"CANNON_CELL_CROSSBOW": { "left": 70, "top": 97 },
+		"CANNON_AMMO_GRENADE": { "left": 134, "top": 39 },
+		"CANNON_AMMO_RAIL": { "left": 134, "top": 68 },
+		"CANNON_AMMO_CROSSBOW": { "left": 134, "top": 97 },
+		"UPGRADE": { "left": 180, "top": 14, "grid": "VERTICAL" },
+		"PLAYER_INVENTORY": { "left": 8, "top": 138, "grid": "BREAK_AFTER_9COLS" },
+		"PLAYER_HOTBAR": { "left": 8, "top": 196, "grid": "HORIZONTAL" }
 	},
 	"text": {
 		"dialog_title": {
-			"text": {
-				"text": ""
-			},
-			"position": {
-				"left": 12,
-				"top": 10
-			},
-			"maxWidth": 196
+			"text": { "text": "" },
+			"position": { "left": 8, "top": 6 }
 		},
 		"mode_heading": {
-			"text": {
-				"translate": "screen.data_energistics.cannon.column.mode"
-			},
-			"position": {
-				"left": 14,
-				"top": 29
-			},
-			"color": "MUTED_TEXT_COLOR"
+			"text": { "translate": "screen.data_energistics.cannon.column.mode" },
+			"position": { "left": 46, "top": 21 },
+			"color": "MUTED_TEXT_COLOR",
+			"align": "CENTER",
+			"scale": 0.75
 		},
 		"cell_heading": {
-			"text": {
-				"translate": "screen.data_energistics.cannon.column.cell"
-			},
-			"position": {
-				"left": 108,
-				"top": 29
-			},
+			"text": { "translate": "screen.data_energistics.cannon.column.cell" },
+			"position": { "left": 78, "top": 21 },
 			"color": "MUTED_TEXT_COLOR",
-			"align": "CENTER"
+			"align": "CENTER",
+			"scale": 0.75
+		},
+		"select_heading": {
+			"text": { "translate": "screen.data_energistics.cannon.column.select" },
+			"position": { "left": 111, "top": 21 },
+			"color": "MUTED_TEXT_COLOR",
+			"align": "CENTER",
+			"scale": 0.75
 		},
 		"ammo_heading": {
-			"text": {
-				"translate": "screen.data_energistics.cannon.column.ammo"
-			},
-			"position": {
-				"left": 186,
-				"top": 29
-			},
+			"text": { "translate": "screen.data_energistics.cannon.column.ammo" },
+			"position": { "left": 142, "top": 21 },
 			"color": "MUTED_TEXT_COLOR",
+			"align": "CENTER",
+			"scale": 0.6
+		},
+		"mode_label_star_shard": {
+			"text": { "text": "" },
+			"position": { "left": 47, "top": 43 },
 			"align": "CENTER"
 		},
-		"grenade": {
-			"text": {
-				"translate": "screen.data_energistics.cannon.mode.grenade"
-			},
-			"position": {
-				"left": 14,
-				"top": 50
-			}
+		"mode_label_crystal_rift_crusher": {
+			"text": { "text": "" },
+			"position": { "left": 47, "top": 72 },
+			"align": "CENTER"
 		},
-		"rail": {
-			"text": {
-				"translate": "screen.data_energistics.cannon.mode.rail"
-			},
-			"position": {
-				"left": 14,
-				"top": 80
-			}
-		},
-		"crossbow": {
-			"text": {
-				"translate": "screen.data_energistics.cannon.mode.crossbow"
-			},
-			"position": {
-				"left": 14,
-				"top": 110
-			}
+		"mode_label_entropy_thread_bow": {
+			"text": { "text": "" },
+			"position": { "left": 47, "top": 101 },
+			"align": "CENTER"
 		},
 		"player_inventory_title": {
-			"text": {
-				"translate": "container.inventory"
-			},
-			"position": {
-				"left": 29,
-				"top": 139
-			}
+			"text": { "translate": "container.inventory" },
+			"position": { "left": 8, "top": 126 }
 		}
 	},
 	"widgets": {
-		"upgrades": {
-			"left": 218,
-			"top": 8
-		},
-		"mode_star_shard": {
-			"left": 139,
-			"top": 44
-		},
-		"mode_crystal_rift_crusher": {
-			"left": 139,
-			"top": 74
-		},
-		"mode_entropy_thread_bow": {
-			"left": 139,
-			"top": 104
-		}
+		"upgrades": { "left": 174, "top": 8 },
+		"mode_star_shard": { "left": 103, "top": 37 },
+		"mode_crystal_rift_crusher": { "left": 103, "top": 66 },
+		"mode_entropy_thread_bow": { "left": 103, "top": 95 }
 	},
 	"tooltips": {
 		"cell_grenade": {
-			"left": 100,
-			"top": 46,
+			"left": 70,
+			"top": 39,
 			"width": 16,
 			"height": 16,
-			"tooltip": [
-				{
-					"translate": "screen.data_energistics.cannon.hint.cell"
-				}
-			]
-		},
-		"ammo_grenade": {
-			"left": 178,
-			"top": 46,
-			"width": 16,
-			"height": 16,
-			"tooltip": [
-				{
-					"translate": "screen.data_energistics.cannon.hint.cycle_ammo"
-				}
-			]
+			"tooltip": [{ "translate": "screen.data_energistics.cannon.hint.cell" }]
 		},
 		"cell_rail": {
-			"left": 100,
-			"top": 76,
+			"left": 70,
+			"top": 68,
+			"width": 16,
+			"height": 16,
+			"tooltip": [{ "translate": "screen.data_energistics.cannon.hint.cell" }]
+		},
+		"cell_crossbow": {
+			"left": 70,
+			"top": 97,
+			"width": 16,
+			"height": 16,
+			"tooltip": [{ "translate": "screen.data_energistics.cannon.hint.cell" }]
+		},
+		"ammo_grenade": {
+			"left": 134,
+			"top": 39,
 			"width": 16,
 			"height": 16,
 			"tooltip": [
-				{
-					"translate": "screen.data_energistics.cannon.hint.cell"
-				}
+				{ "translate": "screen.data_energistics.cannon.hint.cycle_ammo" }
 			]
 		},
 		"ammo_rail": {
-			"left": 178,
-			"top": 76,
+			"left": 134,
+			"top": 68,
 			"width": 16,
 			"height": 16,
 			"tooltip": [
-				{
-					"translate": "screen.data_energistics.cannon.hint.cycle_ammo"
-				}
-			]
-		},
-		"cell_crossbow": {
-			"left": 100,
-			"top": 106,
-			"width": 16,
-			"height": 16,
-			"tooltip": [
-				{
-					"translate": "screen.data_energistics.cannon.hint.cell"
-				}
+				{ "translate": "screen.data_energistics.cannon.hint.cycle_ammo" }
 			]
 		},
 		"ammo_crossbow": {
-			"left": 178,
-			"top": 106,
+			"left": 134,
+			"top": 97,
 			"width": 16,
 			"height": 16,
 			"tooltip": [
-				{
-					"translate": "screen.data_energistics.cannon.hint.cycle_ammo"
-				}
+				{ "translate": "screen.data_energistics.cannon.hint.cycle_ammo" }
 			]
 		}
 	}

@@ -80,7 +80,7 @@ public final class TrinityUiXmlLayouts {
      * Retrieves exactly one element by its stable layout id and validates its expected LDLib2 type.
      */
     public static <T extends UIElement> T require(UIElement root, String id, Class<T> type) {
-        if (root == null || id == null || id.isBlank() || type == null) {
+        if (id.isBlank()) {
             throw new IllegalArgumentException("Trinity XML element lookup arguments must not be null or blank");
         }
         T element = root.selectId(id, type).findFirst().orElse(null);
@@ -96,9 +96,6 @@ public final class TrinityUiXmlLayouts {
      * Moves every XML child into a runtime subclass while preserving the parsed declarative tree.
      */
     public static void moveChildren(UIElement source, UIElement target) {
-        if (source == null || target == null) {
-            throw new IllegalArgumentException("Trinity XML child transfer requires source and target");
-        }
         for (UIElement child : source.getSafeChildren()) {
             if (!source.removeChild(child)) {
                 throw new IllegalStateException("Trinity XML child disappeared during transfer: " + child.getId());

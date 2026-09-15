@@ -45,6 +45,8 @@ import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreKind;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityDataCoreCpuCoreProfile;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityDataCoreCraftingCoreProfile;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityDataCoreStorageProfile;
+import com.fish_dan_.data_energistics.common.trinity.drive.TrinityInfiniteDriveInventory;
+import com.fish_dan_.data_energistics.common.trinity.drive.TrinityInfiniteDriveMounts;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionStatus;
@@ -86,6 +88,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.MEStorage;
 import appeng.api.util.AECableType;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
@@ -97,6 +100,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -170,13 +174,14 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private static final String CPU_RECOVERY_QUARANTINED_TAG = "trinity_cpu_recovery_quarantined";
     private static final String STORAGE_PRIORITY_TAG = "trinity_data_core_storage_priority";
     private static final String PATTERN_PRIORITY_TAG = "trinity_data_core_pattern_priority";
+    private static final String INFINITE_DRIVE_INVENTORY_TAG = "trinity_infinite_drive_inventory";
     private static final String ACCESS_LEASE_HATCH_POSITION_TAG = "trinity_access_lease_hatch_position";
     private static final String ACCESS_LEASE_EPOCH_TAG = "trinity_access_lease_epoch";
     private static final String NO_FAILURE = "";
     private static final String MAIN_STRUCTURE_NOT_FORMED = "Main structure is not formed";
     private static final String CPU_STRUCTURE_NAME = DEVerticalMultiBlocks.TRINITY_DATA_CORE_CPU_STRUCTURE_NAME;
     private static final String CRAFTING_STRUCTURE_NAME = DEVerticalMultiBlocks.TRINITY_DATA_CORE_CRAFTING_STRUCTURE_NAME;
-    private static final int MAIN_STORAGE_CORE_SLOT_COUNT = 1_176;
+    private static final int MAIN_STORAGE_CORE_SLOT_COUNT = TrinityDataCoreStorageProfile.FULL_CORE_COUNT;
     private static final int PATTERN_MAINTENANCE_WORK_UNITS_PER_TICK = 64;
     private static final long PATTERN_MAINTENANCE_TIME_BUDGET_NANOS = 2_000_000L;
     private static final long PATTERN_MAINTENANCE_TERMINAL_TICKS = 40L;
@@ -223,6 +228,15 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     @Getter
     private List<BlockPos> matchedPositions = List.of();
     private TrinityDataCoreStorageProfile storageProfile = TrinityDataCoreStorageProfile.EMPTY;
+    /** Returns the fixed-layout persistent inventory shown by the Trinity Data Core's infinite-drive panel. */
+    @Getter
+    private final TrinityInfiniteDriveInventory infiniteDriveInventory;
+    private final TrinityInfiniteDriveMounts infiniteDriveMounts;
+    /**
+     * Valid cells displaced by a storage-capacity downgrade or rejected while restoring external NBT. They are dropped
+     * at the controller on the next authoritative server tick rather than silently discarded.
+     */
+    private final List<ItemStack> pendingInfiniteDriveRefunds = new ObjectArrayList<>();
     private String lastFailureReason = NO_FAILURE;
     @Nullable
     private BlockPos lastFailurePosition;
@@ -253,11 +267,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private boolean structureRecheckInProgress;
     private final CompartmentHostState compartmentHostState = new CompartmentHostState();
     private final JsonMultiBlockCompartmentBinder compartmentBinder = new JsonDeclaredCompartmentBinder();
-    /**
-     * -- GETTER --
-     *
-     * @return crafting runtime used by AE2 CraftingService mixins
-     */
     @Getter
     private final TrinityDataCoreCraftingRuntime craftingRuntime = new TrinityDataCoreCraftingRuntime(this);
     @Nullable
@@ -377,10 +386,25 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         super(DEBlockEntities.TRINITY_DATA_CORE_BLOCK_ENTITY.get(), blockPos, blockState);
         this.structureValidation = structureValidation;
         this.structureWorldViews = structureWorldViews;
+        this.infiniteDriveInventory = new TrinityInfiniteDriveInventory(this::onInfiniteDriveInventoryChanged);
+        this.infiniteDriveMounts = new TrinityInfiniteDriveMounts(this.infiniteDriveInventory, this::setChanged);
         this.getMainNode()
                 .setVisualRepresentation(DEBlocks.TRINITY_DATA_CORE.get())
                 .setExposedOnSides(Set.of())
                 .setIdlePowerUsage(0.0D);
+    }
+
+    private void onInfiniteDriveInventoryChanged() {
+        this.infiniteDriveMounts.invalidate();
+        setChanged();
+        if (this.level instanceof ServerLevel) {
+            notifyTrinityStorageChanged();
+        }
+    }
+
+    /** Called only by the elected depot after it validates the storage lease and mounts internal UUID storage. */
+    void mountInfiniteDriveInventories(IStorageMounts storageMounts) {
+        this.infiniteDriveMounts.mount(storageMounts, getInfiniteDriveSlotCount(), this.storagePriority);
     }
 
     @Override
@@ -422,6 +446,9 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         long tickStartedAtNanos = System.nanoTime();
         try {
             tickServerState();
+            if (currentLevel instanceof ServerLevel serverLevel) {
+                refundPendingInfiniteDrives(serverLevel);
+            }
             updateOnlineState(currentLevel);
         } catch (RuntimeException exception) {
             this.craftingRuntime.setPaused(true);
@@ -1036,7 +1063,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                                     orientation.flipped()));
                             if (!target.equals(origin)) {
                                 TraceabilityPredicate previous = predicates.putIfAbsent(target.asLong(), predicate);
-                                if (previous != null && previous != predicate) {
+                                if (previous != predicate) {
                                     throw new IllegalStateException(
                                             "Trinity auto-build pattern resolves conflicting predicates at " + target);
                                 }
@@ -1072,6 +1099,13 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
 
     public TrinityDataCoreStorageProfile storageProfile() {
         return this.storageProfile;
+    }
+
+    /**
+     * Returns the currently usable prefix length of the fixed 80-slot infinite-drive inventory.
+     */
+    public int getInfiniteDriveSlotCount() {
+        return TrinityInfiniteDriveInventory.availableSlotCount(this.storageProfile);
     }
 
     /**
@@ -1116,6 +1150,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             this.patternPriority = restoredPatternPriority;
             setChanged();
         }
+        restoreInfiniteDriveInventory(itemData, this.level.registryAccess());
         if (itemData.hasUUID(CPU_REMOVAL_TOKEN_TAG)) {
             restoreDetachedCpuRuntime(itemData.getUUID(CPU_REMOVAL_TOKEN_TAG));
         }
@@ -1126,6 +1161,14 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
      * Saves the storage and crafting identities as one typed-component pair on a moved host item.
      */
     public void saveIdentityToItem(ItemStack stack) {
+        saveIdentityToItem(stack, this.level.registryAccess());
+    }
+
+    /**
+     * Saves identity, priority, and installed infinite drive cells on a moved host item with an explicit registry
+     * context.
+     */
+    public void saveIdentityToItem(ItemStack stack, HolderLookup.Provider registries) {
         stack.set(DEDataComponents.TRINITY_DATA_CORE_STORAGE_ID, this.storageId);
         stack.set(DEDataComponents.TRINITY_DATA_CORE_HOST_ID, this.hostId);
         stack.set(DEDataComponents.TRINITY_DATA_CORE_STORAGE_PRIORITY, this.storagePriority);
@@ -1133,7 +1176,46 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         CustomData previous = stack.get(DataComponents.CUSTOM_DATA);
         CompoundTag custom = previous == null ? new CompoundTag() : previous.copyTag();
         custom.putUUID(CPU_REMOVAL_TOKEN_TAG, cpuRemovalToken());
+        custom.put(INFINITE_DRIVE_INVENTORY_TAG, this.infiniteDriveInventory.createTag(registries));
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(custom));
+    }
+
+    /**
+     * Restores the local drive inventory from a block or item tag and queues any valid but unavailable contents for a
+     * world refund instead of allowing malformed external data to destroy items.
+     */
+    private void restoreInfiniteDriveInventory(CompoundTag data, HolderLookup.Provider registries) {
+        ListTag inventoryTag = data.contains(INFINITE_DRIVE_INVENTORY_TAG, Tag.TAG_LIST) ?
+                data.getList(INFINITE_DRIVE_INVENTORY_TAG, Tag.TAG_COMPOUND) : new ListTag();
+        List<ItemStack> rejected = this.infiniteDriveInventory.readFromTag(inventoryTag, registries);
+        if (this.level instanceof ServerLevel) {
+            queueInfiniteDriveRefunds(rejected);
+        }
+    }
+
+    /**
+     * Defers forced drive returns until the block entity has a live server level at which to spawn them.
+     */
+    private void queueInfiniteDriveRefunds(List<ItemStack> drives) {
+        for (ItemStack drive : drives) {
+            if (!drive.isEmpty()) {
+                this.pendingInfiniteDriveRefunds.add(drive.copy());
+            }
+        }
+    }
+
+    /**
+     * Returns previously installed cells that no longer fit after a capacity downgrade or external-data validation.
+     */
+    private void refundPendingInfiniteDrives(ServerLevel level) {
+        if (this.pendingInfiniteDriveRefunds.isEmpty()) {
+            return;
+        }
+        for (ItemStack drive : this.pendingInfiniteDriveRefunds) {
+            Block.popResource(level, this.worldPosition, drive);
+        }
+        this.pendingInfiniteDriveRefunds.clear();
+        setChanged();
     }
 
     private UUID cpuRemovalToken() {
@@ -2259,6 +2341,8 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     @Override
     public void loadTag(CompoundTag data, HolderLookup.Provider registries) {
         invalidateCraftingAdmissions();
+        this.infiniteDriveInventory.clearContent();
+        this.pendingInfiniteDriveRefunds.clear();
         super.loadTag(data, registries);
         this.structureValidation.reset();
         if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
@@ -2320,6 +2404,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             this.craftingLastFailurePosition = null;
         }
         this.craftingRuntime.setMainStructureFormed(this.formed);
+        restoreInfiniteDriveInventory(data, registries);
         if (data.contains(CRAFTING_RUNTIME_TAG, Tag.TAG_COMPOUND)) {
             this.craftingRuntime.readFromTag(data.getCompound(CRAFTING_RUNTIME_TAG), registries);
         } else {
@@ -2353,6 +2438,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         data.putBoolean(CPU_RECOVERY_QUARANTINED_TAG, this.cpuRecoveryQuarantined);
         data.putInt(STORAGE_PRIORITY_TAG, this.storagePriority);
         data.putInt(PATTERN_PRIORITY_TAG, this.patternPriority);
+        data.put(INFINITE_DRIVE_INVENTORY_TAG, this.infiniteDriveInventory.createTag(registries));
         data.putBoolean(FORMED_TAG, this.formed);
         data.putString(LAST_FAILURE_REASON_TAG, this.lastFailureReason);
         if (this.lastFailurePosition != null) {
@@ -2439,6 +2525,8 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.formed = false;
         this.matchedPositions = List.of();
         this.storageProfile = TrinityDataCoreStorageProfile.EMPTY;
+        this.infiniteDriveInventory.clearContent();
+        this.pendingInfiniteDriveRefunds.clear();
         this.lastFailureReason = NO_FAILURE;
         this.lastFailurePosition = null;
         this.cpuStructureContribution = null;
@@ -2866,6 +2954,9 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.formed = true;
         this.matchedPositions = nextPositions;
         this.storageProfile = nextStorageProfile;
+        if (storageChanged) {
+            queueInfiniteDriveRefunds(this.infiniteDriveInventory.removeAtOrAfter(getInfiniteDriveSlotCount()));
+        }
         this.lastFailureReason = NO_FAILURE;
         this.lastFailurePosition = null;
         this.structureValidation.markValid(Structure.MAIN);
@@ -3002,6 +3093,9 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             nextFailureReason = diagnostic.message();
             nextFailurePosition = diagnostic.position();
         }
+        boolean storageStateChanged = this.formed ||
+                !this.storageProfile.equals(TrinityDataCoreStorageProfile.EMPTY) ||
+                !this.infiniteDriveInventory.isEmpty();
         if (!this.formed && this.matchedPositions.isEmpty() && Objects.equals(this.lastFailureReason, nextFailureReason) &&
                 Objects.equals(this.lastFailurePosition, nextFailurePosition) &&
                 !this.cpuStructureFormed &&
@@ -3009,6 +3103,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                 !this.craftingStructureFormed &&
                 this.craftingStructureMatchedBlockCount == 0 &&
                 Objects.equals(this.craftingLastFailureReason, MAIN_STRUCTURE_NOT_FORMED) &&
+                !storageStateChanged &&
                 this.craftingLastFailurePosition == null) {
             return;
         }
@@ -3023,12 +3118,19 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         clearCompartmentBindings(structureName);
         clearCpuStructureStatus();
         clearCraftingStructureStatus();
+        if (storageStateChanged) {
+            queueInfiniteDriveRefunds(this.infiniteDriveInventory.removeAtOrAfter(0));
+            this.storageProfile = TrinityDataCoreStorageProfile.EMPTY;
+        }
         this.formed = false;
         this.matchedPositions = List.of();
         this.lastFailureReason = nextFailureReason;
         this.lastFailurePosition = nextFailurePosition;
         this.craftingRuntime.setMainStructureFormed(false);
         this.craftingRuntime.setPaused(true);
+        if (storageStateChanged) {
+            notifyTrinityStorageChanged();
+        }
         setChanged();
     }
 

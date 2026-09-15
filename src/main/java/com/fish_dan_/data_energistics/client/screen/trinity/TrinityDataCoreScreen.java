@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,6 +17,7 @@ import net.minecraft.world.inventory.Slot;
 
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jspecify.annotations.Nullable;
 
 /** Vanilla container shell whose complete presentation and interaction tree is owned by LDLib2. */
 public class TrinityDataCoreScreen extends AbstractContainerScreen<TrinityDataCoreMenu> {
@@ -105,9 +107,9 @@ public class TrinityDataCoreScreen extends AbstractContainerScreen<TrinityDataCo
         }
     }
 
-    private Slot nativePlayerSlotAt(double mouseX, double mouseY) {
-        var hit = modularUI().ui.rootElement.hitTest(mouseX, mouseY);
-        if (hit == null || !(hit.getA() instanceof ItemSlot itemSlot)) {
+    private @Nullable Slot nativePlayerSlotAt(double mouseX, double mouseY) {
+        UIElement hit = modularUI().hitTestAtScreen((float) mouseX, (float) mouseY);
+        if (!(hit instanceof ItemSlot itemSlot)) {
             return null;
         }
         Slot slot = itemSlot.getSlot();

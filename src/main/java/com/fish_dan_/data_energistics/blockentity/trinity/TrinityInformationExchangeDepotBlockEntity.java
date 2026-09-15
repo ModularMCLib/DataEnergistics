@@ -1597,6 +1597,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                     host.isLeaseOwner(TrinityInformationExchangeDepotBlockEntity.this) &&
                     host.isStorageAvailable()) {
                 storageMounts.mount(networkStorage, host.getStoragePriority());
+                host.mountInfiniteDriveInventories(storageMounts);
             }
         }
     }

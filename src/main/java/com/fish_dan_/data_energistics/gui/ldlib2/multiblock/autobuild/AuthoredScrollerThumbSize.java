@@ -3,14 +3,14 @@ package com.fish_dan_.data_energistics.gui.ldlib2.multiblock.autobuild;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
-/** Keeps LDLib2's logical travel calculation aligned with the fixed thumb length authored in NBT. */
-final class AuthoredScrollerThumbSize {
+/** Keeps LDLib2's logical travel calculation aligned with a fixed thumb length authored in NBT. */
+public final class AuthoredScrollerThumbSize {
 
     private static final float SIZE_EPSILON = 0.0001F;
 
     private AuthoredScrollerThumbSize() {}
 
-    static void bind(Scroller.Vertical scroller) {
+    public static void bind(Scroller.Vertical scroller) {
         collapseStepButtons(scroller);
         var authoredTrack = scroller.scrollBar.getParent();
         if (authoredTrack == null || authoredTrack.getParent() != scroller.scrollContainer) {
@@ -22,9 +22,10 @@ final class AuthoredScrollerThumbSize {
                         scroller,
                         scroller.scrollBar.getSizeHeight(),
                         authoredTrack.getContentHeight()));
+        synchronize(scroller, scroller.scrollBar.getSizeHeight(), authoredTrack.getContentHeight());
     }
 
-    static void bind(Scroller.Horizontal scroller, AutoBuildComposition.HorizontalSpan track) {
+    public static void bind(Scroller.Horizontal scroller, AutoBuildComposition.HorizontalSpan track) {
         collapseStepButtons(scroller);
         var authoredTrack = scroller.scrollBar.getParent();
         if (authoredTrack == null || authoredTrack.getParent() != scroller.scrollContainer) {
@@ -43,6 +44,7 @@ final class AuthoredScrollerThumbSize {
                         scroller,
                         scroller.scrollBar.getSizeWidth(),
                         authoredTrack.getContentWidth()));
+        synchronize(scroller, scroller.scrollBar.getSizeWidth(), authoredTrack.getContentWidth());
     }
 
     /** Removes LDLib2's default five-pixel step-button reservations from arrowless authored rails. */

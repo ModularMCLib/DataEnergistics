@@ -12,9 +12,16 @@ public record TrinityDataCoreStorageProfile(BigInteger totalCapacity,
                                             boolean unlimited) {
 
     public static final BigInteger AMOUNT_PER_M = BigInteger.valueOf(1_048_576L);
+    /** Number of storage-core positions declared by the complete Trinity Data Core structure. */
+    public static final int FULL_CORE_COUNT = 1_176;
     /** Exact amount capacity contributed by the maximum supported storage-core tier. */
     private static final BigInteger MAXIMUM_CORE_CAPACITY = BigInteger.valueOf(
             TrinityCoreTier.SIZE_256M.byteCapacity());
+    /**
+     * Exact finite byte capacity of a fully populated Trinity Data Core: every declared storage-core position holds
+     * one 256M core.
+     */
+    public static final BigInteger FULL_CAPACITY = MAXIMUM_CORE_CAPACITY.multiply(BigInteger.valueOf(FULL_CORE_COUNT));
     public static final TrinityDataCoreStorageProfile EMPTY = new TrinityDataCoreStorageProfile(BigInteger.ZERO, 0, 0, 0, false);
     public static final TrinityDataCoreStorageProfile UNLIMITED = new TrinityDataCoreStorageProfile(BigInteger.ZERO, Integer.MAX_VALUE, 0, 0, true);
 

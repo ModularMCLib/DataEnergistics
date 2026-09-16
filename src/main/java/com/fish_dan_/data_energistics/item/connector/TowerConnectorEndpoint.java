@@ -20,9 +20,10 @@ record TowerConnectorEndpoint(DataDistributionTowerBlockEntity tower, RemoteLink
     @Override
     public ObjectList<ConnectorLink> bindingsFast() {
         ObjectArrayList<ConnectorLink> links = new ObjectArrayList<>();
-        for (TowerBinding binding : this.tower.towerBindings()) {
+        for (TowerBinding binding : this.tower.allConnectorBindings()) {
             BlockPos relative = binding.anchor().subtract(this.tower.getBlockPos());
-            links.add(new ConnectorLink(binding.anchor(), facingTower(relative),
+            Direction side = binding.targetSide() >= 0 ? Direction.from3DDataValue(binding.targetSide()) : facingTower(relative);
+            links.add(new ConnectorLink(binding.anchor(), side,
                     binding.energyDirection() == EnergyTransferDirection.INPUT ? ConnectorMode.INPUT : ConnectorMode.PULL));
         }
         return links;

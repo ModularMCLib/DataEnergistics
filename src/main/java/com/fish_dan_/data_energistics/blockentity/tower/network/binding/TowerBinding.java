@@ -29,13 +29,20 @@ public record TowerBinding(ResourceLocation dimensionId,
                            long fifoSequence,
                            boolean enabled,
                            Set<TowerDeviceKey> disabledDeviceKeys,
-                           EnergyTransferDirection energyDirection) {
+                           EnergyTransferDirection energyDirection,
+                           int targetSide) {
 
     public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingKind kind,
                         TowerBindingSource source, long fifoSequence, boolean enabled,
                         Set<TowerDeviceKey> disabledDeviceKeys) {
         this(dimensionId, anchor, kind, source, fifoSequence, enabled, disabledDeviceKeys,
-                EnergyTransferDirection.INPUT);
+                EnergyTransferDirection.INPUT, -1);
+    }
+
+    public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingKind kind,
+                        TowerBindingSource source, long fifoSequence, boolean enabled,
+                        Set<TowerDeviceKey> disabledDeviceKeys, EnergyTransferDirection energyDirection) {
+        this(dimensionId, anchor, kind, source, fifoSequence, enabled, disabledDeviceKeys, energyDirection, -1);
     }
 
     /**
@@ -65,7 +72,7 @@ public record TowerBinding(ResourceLocation dimensionId,
                 this.fifoSequence,
                 nextEnabled,
                 this.disabledDeviceKeys,
-                this.energyDirection);
+                this.energyDirection, this.targetSide);
     }
 
     /**
@@ -90,7 +97,7 @@ public record TowerBinding(ResourceLocation dimensionId,
                 this.fifoSequence,
                 this.enabled,
                 nextKeys,
-                this.energyDirection);
+                this.energyDirection, this.targetSide);
     }
 
     /**
@@ -108,11 +115,16 @@ public record TowerBinding(ResourceLocation dimensionId,
                 this.fifoSequence,
                 this.enabled,
                 this.disabledDeviceKeys,
-                this.energyDirection);
+                this.energyDirection, this.targetSide);
     }
 
     public TowerBinding withEnergyDirection(EnergyTransferDirection direction) {
         return new TowerBinding(this.dimensionId, this.anchor, this.kind, this.source, this.fifoSequence,
-                this.enabled, this.disabledDeviceKeys, direction);
+                this.enabled, this.disabledDeviceKeys, direction, this.targetSide);
+    }
+
+    public TowerBinding withTargetSide(int side) {
+        return new TowerBinding(this.dimensionId, this.anchor, this.kind, this.source, this.fifoSequence,
+                this.enabled, this.disabledDeviceKeys, this.energyDirection, side);
     }
 }

@@ -759,6 +759,8 @@
 	"item.data_energistics.data_distribution_connector.bound_target": "Bound target: %s, face: %s",
 	"item.data_energistics.data_distribution_connector.unbound_target": "Unbound target: %s, face: %s",
 	"item.data_energistics.data_distribution_connector.mode_changed": "Connector mode: %s",
+	"item.data_energistics.data_distribution_connector.energy_direction.input": "Tower to target (input)",
+	"item.data_energistics.data_distribution_connector.energy_direction.output": "Target to tower (output)",
 	"item.data_energistics.data_distribution_connector.mode.input": "Input",
 	"item.data_energistics.data_distribution_connector.mode.pull": "Pull",
 	"item.data_energistics.data_distribution_connector.mode.both": "Input and Output",

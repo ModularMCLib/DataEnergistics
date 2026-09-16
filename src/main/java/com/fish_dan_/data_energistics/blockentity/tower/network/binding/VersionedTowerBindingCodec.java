@@ -67,6 +67,7 @@ public final class VersionedTowerBindingCodec {
             bindingTag.putLong("fifo", binding.fifoSequence());
             bindingTag.putBoolean("enabled", binding.enabled());
             bindingTag.putString("energy_direction", binding.energyDirection().name());
+            bindingTag.putInt("target_side", binding.targetSide());
 
             ObjectArrayList<TowerDeviceKey> orderedDeviceKeys = new ObjectArrayList<>(binding.disabledDeviceKeys());
             orderedDeviceKeys.sort(Comparator.naturalOrder());
@@ -115,8 +116,9 @@ public final class VersionedTowerBindingCodec {
             boolean enabled = !bindingTag.contains("enabled") || bindingTag.getBoolean("enabled");
             Set<TowerDeviceKey> disabledDeviceKeys = readDeviceKeys(bindingTag);
             EnergyTransferDirection direction = readEnergyDirection(bindingTag);
+            int targetSide = bindingTag.contains("target_side") ? bindingTag.getInt("target_side") : -1;
             bindings.add(new TowerBinding(
-                    dimensionId, anchor, kind, source, fifoSequence, enabled, disabledDeviceKeys, direction));
+                    dimensionId, anchor, kind, source, fifoSequence, enabled, disabledDeviceKeys, direction, targetSide));
         }
         bindings.sort(Comparator.comparingLong(TowerBinding::fifoSequence));
         return List.copyOf(bindings);

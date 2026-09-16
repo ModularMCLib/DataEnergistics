@@ -284,7 +284,7 @@ public class RemoteLinkConnectorItem extends Item {
         }
 
         DataDistributionTowerBlockEntity.ConnectorBindResult result = tower.bindTargetFromConnector(
-                clickedPos, data.energyDirection());
+                clickedPos, data.energyDirection(), clickedFace.get3DDataValue());
         if (!result.success()) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(switch (result.failure()) {
@@ -418,7 +418,8 @@ public class RemoteLinkConnectorItem extends Item {
 
     public static @Nullable ConnectorEndpoint resolveEndpoint(Level level, RemoteLinkConnectorData data) {
         if (data.targetType() == ConnectorHostType.TOWER) {
-            return resolveSelectedTower(level, data) == null ? null : new TowerConnectorEndpoint(resolveSelectedTower(level, data), data);
+            DataDistributionTowerBlockEntity tower = resolveSelectedTower(level, data);
+            return tower == null ? null : new TowerConnectorEndpoint(tower, data);
         }
         if (!data.hasSelection() || data.providerSide() != -1 || !level.dimension().location().toString().equals(data.providerDimensionId()) ||
                 !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(data.getProviderPos().getX()), SectionPos.blockToSectionCoord(data.getProviderPos().getZ()))) {

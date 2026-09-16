@@ -24,6 +24,7 @@ import appeng.api.upgrades.UpgradeInventories;
 import appeng.api.upgrades.Upgrades;
 import appeng.api.util.IConfigurableObject;
 import appeng.core.localization.Tooltips;
+import appeng.helpers.externalstorage.GenericStackInv;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantic;
@@ -49,6 +50,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.shorts.ShortSet;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderMenuAccessor, AdaptivePatternProviderToolbarMenu {
 
@@ -531,13 +533,31 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
             return;
         }
 
-        ConfigMenuInventory returnInv = this.logic.getReturnInv().createMenuWrapper();
+        ConfigMenuInventory returnInv = new ReturnMenuInventory(this.logic.getReturnInv());
         for (int i = 0; i < Math.min(DEFAULT_RETURN_SLOTS, returnInv.size()); i++) {
             this.addSlot(new AppEngSlot(returnInv, i), SlotSemantics.STORAGE);
         }
 
         for (int i = DEFAULT_RETURN_SLOTS; i < Math.min(EXPANDED_RETURN_SLOTS, returnInv.size()); i++) {
             this.addSlot(new AppEngSlot(returnInv, i), STORAGE_ROW_2);
+        }
+    }
+
+    private static final class ReturnMenuInventory extends ConfigMenuInventory {
+
+        private ReturnMenuInventory(GenericStackInv inventory) {
+            super(inventory);
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return GenericStack.wrapInItemStack(getDelegate().getStack(slot));
+        }
+
+        @Override
+        public @Nullable GenericStack convertToSuitableStack(ItemStack stack) {
+            GenericStack wrapped = GenericStack.unwrapItemStack(stack);
+            return wrapped != null ? wrapped : super.convertToSuitableStack(stack);
         }
     }
 

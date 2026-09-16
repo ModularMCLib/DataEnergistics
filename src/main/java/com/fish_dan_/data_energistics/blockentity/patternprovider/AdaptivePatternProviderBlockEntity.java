@@ -37,7 +37,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -47,7 +46,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -65,7 +63,6 @@ import java.util.function.Supplier;
 public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEntity implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
     protected static final String ADAPTIVE_PATTERN_PROVIDER_KEY = "adaptive_pattern_provider";
-    private static final ResourceLocation APPFLUX_INDUCTION_CARD_ID = ResourceLocation.fromNamespaceAndPath("appflux", "induction_card");
     private static final String TERMINAL_GROUP_LOCKED_SUFFIX_SUFFIX = ".terminal_hidden_slots";
     private static final String REDSTONE_TUNING_TAG = "data_energistics_redstone_tuning_mode";
     private static final int REDSTONE_PULSE_TICKS = 1;
@@ -136,10 +133,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         return this.upgrades;
     }
 
-    public boolean supportsAppliedFluxUpgradeSlot() {
-        return !this.upgrades.isEmpty();
-    }
-
     @Override
     public int getPatternSlotCountForMenu() {
         return getConfiguredPatternSlotCount();
@@ -179,7 +172,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     @Override
     public @Nullable PatternContainerGroup getPrimaryAttachedMachineGroup() {
         var groups = getAdjacentMachineGroups();
-        return groups.size() == 1 ? groups.iterator().next() : null;
+        return groups.size() == 1 ? groups.getFirst() : null;
     }
 
     @Override
@@ -685,12 +678,6 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         }
     }
 
-    @Nullable
-    public static Item getAppliedFluxInductionCard() {
-        Item item = BuiltInRegistries.ITEM.get(APPFLUX_INDUCTION_CARD_ID);
-        return item == Items.AIR ? null : item;
-    }
-
     private PatternContainerGroup buildAdaptiveTerminalGroup() {
         if (this.hasCustomName()) {
             return new PatternContainerGroup(
@@ -718,7 +705,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     @Nullable
     private PatternContainerGroup getSingleAdjacentMachineGroup() {
         var groups = getAdjacentMachineGroups();
-        return groups.size() == 1 ? groups.iterator().next() : null;
+        return groups.size() == 1 ? groups.getFirst() : null;
     }
 
     private ObjectLinkedOpenHashSet<PatternContainerGroup> getAdjacentMachineGroups() {

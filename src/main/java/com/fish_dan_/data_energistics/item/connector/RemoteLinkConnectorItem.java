@@ -15,8 +15,8 @@ import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.AECapabilities;
-import appeng.api.behaviors.GenericInternalInventory;
 import appeng.blockentity.networking.CableBusBlockEntity;
+import appeng.parts.automation.StackWorldBehaviors;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,6 +25,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -36,9 +37,6 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.IItemHandler;
 
 import org.jspecify.annotations.Nullable;
 
@@ -349,9 +347,8 @@ public class RemoteLinkConnectorItem extends Item {
             }
             return InteractionResult.FAIL;
         }
-        Direction targetSide = clickedFace;
-        boolean wasBound = logic.hasConnectorTarget(clickedPos, targetSide);
-        boolean changed = wasBound ? logic.unbindConnectorTarget(clickedPos, targetSide) : logic.bindConnectorTarget(clickedPos, targetSide);
+        boolean wasBound = logic.hasConnectorTarget(clickedPos, clickedFace);
+        boolean changed = wasBound ? logic.unbindConnectorTarget(clickedPos, clickedFace) : logic.bindConnectorTarget(clickedPos, clickedFace);
         if (!changed) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
@@ -361,27 +358,18 @@ public class RemoteLinkConnectorItem extends Item {
         player.displayClientMessage(Component.translatable(
                 KEY_PREFIX + (wasBound ? ".unbound_target" : ".bound_target"),
                 clickedPos.getX() + ", " + clickedPos.getY() + ", " + clickedPos.getZ(),
-                Component.translatable(KEY_PREFIX + ".face." + targetSide.getName())), true);
+                Component.translatable(KEY_PREFIX + ".face." + clickedFace.getName())), true);
         return InteractionResult.SUCCESS;
     }
 
     private static boolean hasTargetCapability(Level level, BlockPos position, Direction side) {
         BlockState state = level.getBlockState(position);
         BlockEntity blockEntity = level.getBlockEntity(position);
-        if (level.getCapability(AECapabilities.ME_STORAGE, position, state, blockEntity, side) != null) {
+        if (level.getCapability(AECapabilities.ME_STORAGE, position, state, blockEntity, side) != null ||
+                level.getCapability(AECapabilities.GENERIC_INTERNAL_INV, position, state, blockEntity, side) != null) {
             return true;
         }
-        GenericInternalInventory generic = level.getCapability(
-                AECapabilities.GENERIC_INTERNAL_INV, position, state, blockEntity, side);
-        if (generic != null) {
-            return true;
-        }
-        IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, position, state, blockEntity, side);
-        if (items != null) {
-            return true;
-        }
-        IFluidHandler fluids = level.getCapability(Capabilities.FluidHandler.BLOCK, position, state, blockEntity, side);
-        return fluids != null;
+        return level instanceof ServerLevel serverLevel && !StackWorldBehaviors.createExternalStorageStrategies(serverLevel, position, side).isEmpty();
     }
 
     @Nullable

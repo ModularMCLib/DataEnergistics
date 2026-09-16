@@ -66,6 +66,10 @@ public class RemoteLinkConnectorItem extends Item {
             return InteractionResultHolder.success(stack);
         }
         if (data.targetType() == ConnectorHostType.TOWER && !player.isShiftKeyDown()) {
+            DataDistributionTowerBlockEntity tower = resolveSelectedTower(level, data);
+            if (tower == null || !tower.connectionMode().allowsFeTargets()) {
+                return InteractionResultHolder.pass(stack);
+            }
             EnergyTransferDirection next = data.energyDirection().opposite();
             stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), data.withEnergyDirection(next));
             player.displayClientMessage(Component.translatable(KEY_PREFIX + ".energy_direction." + next.name().toLowerCase(Locale.ROOT)), true);

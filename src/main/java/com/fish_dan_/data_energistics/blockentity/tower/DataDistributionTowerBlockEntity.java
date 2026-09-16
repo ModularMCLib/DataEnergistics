@@ -646,6 +646,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         this.markForClientUpdate();
     }
 
+    public ConnectionMode connectionMode() {
+        return this.connectionMode;
+    }
+
     public void setRangeAdjustmentMode(@Nullable RangeAdjustmentMode rangeAdjustmentMode) {
         RangeAdjustmentMode normalizedMode = rangeAdjustmentMode == null ? RangeAdjustmentMode.POINT : rangeAdjustmentMode;
         if (this.rangeAdjustmentMode == normalizedMode) {

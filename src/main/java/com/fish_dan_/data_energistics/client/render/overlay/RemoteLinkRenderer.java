@@ -4,11 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
-import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBinding;
-import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingKind;
-import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingRuntimeSnapshot;
 import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
 import com.fish_dan_.data_energistics.item.connector.ConnectorHostType;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
@@ -20,7 +15,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -83,15 +77,11 @@ public final class RemoteLinkRenderer {
             return;
         }
 
-        if (data.targetType() == ConnectorHostType.TOWER) {
-            renderTowerLinks(event, minecraft, level, data);
-            return;
-        }
-        if (data.providerSide() != -1 || !(data.isAdaptiveProvider() || data.isInterface()) || !level.dimension().location().toString().equals(data.providerDimensionId())) {
+        if (data.providerSide() != -1 || !(data.targetType() == ConnectorHostType.TOWER || data.isAdaptiveProvider() || data.isInterface()) || !level.dimension().location().toString().equals(data.targetType() == ConnectorHostType.TOWER ? data.dimensionId() : data.providerDimensionId())) {
             return;
         }
 
-        BlockPos provider = data.getProviderPos();
+        BlockPos provider = data.targetType() == ConnectorHostType.TOWER ? data.getTowerPos() : data.getProviderPos();
         ConnectorEndpoint endpoint = RemoteLinkConnectorItem.resolveEndpoint(level, data);
         Vec3 source = new Vec3(0.5D, 0.5D, 0.5D);
         Vec3 camera = event.getCamera().getPosition();
@@ -130,78 +120,6 @@ public final class RemoteLinkRenderer {
             buffers.endBatch(LINK_LINES);
             pose.popPose();
         }
-    }
-
-    private static void renderTowerLinks(RenderLevelStageEvent event, Minecraft minecraft, ClientLevel level,
-                                         RemoteLinkConnectorData data) {
-        if (!level.dimension().location().toString().equals(data.dimensionId()) || !level.isLoaded(data.getTowerPos())) {
-            return;
-        }
-        if (!(level.getBlockEntity(data.getTowerPos()) instanceof DataDistributionTowerBlockEntity tower)) {
-            return;
-        }
-        List<TowerBinding> bindings = tower.towerBindings();
-        if (bindings.isEmpty()) {
-            bindings = tower.towerNetworkSnapshot().bindings().stream()
-                    .map(TowerBindingRuntimeSnapshot::binding)
-                    .filter(binding -> binding.kind() == TowerBindingKind.TARGET)
-                    .toList();
-        }
-        if (bindings.isEmpty()) {
-            return;
-        }
-        Vec3 camera = event.getCamera().getPosition();
-        PoseStack pose = event.getPoseStack();
-        var buffers = minecraft.renderBuffers().bufferSource();
-        VertexConsumer lines = buffers.getBuffer(LINK_LINES);
-        pose.pushPose();
-        try {
-            pose.translate(data.getTowerPos().getX() - camera.x, data.getTowerPos().getY() - camera.y,
-                    data.getTowerPos().getZ() - camera.z);
-            Vec3 origin = new Vec3(0.5D, 0.5D, 0.5D);
-            int selected = Math.floorMod(data.selectedBindingIndex(), bindings.size());
-            for (int index = 0; index < bindings.size(); index++) {
-                TowerBinding binding = bindings.get(index);
-                if (binding.kind() != TowerBindingKind.TARGET) {
-                    continue;
-                }
-                BlockPos relativeTarget = binding.anchor().subtract(data.getTowerPos());
-                var face = ConnectorLinkGeometry.face(relativeTarget, facingTower(relativeTarget));
-                Color color = energyColor(binding.energyDirection(), binding.enabled() && (data.allLinksSelected() || index == selected));
-                line(pose, lines, origin, face.approach(), color);
-                line(pose, lines, face.approach(), face.center(), color);
-                for (int corner = 0; corner < face.corners().size(); corner++) {
-                    line(pose, lines, face.corners().get(corner), face.corners().get((corner + 1) % 4), color);
-                }
-                if (data.allLinksSelected() || index == selected) {
-                    line(pose, lines, face.corners().get(0), face.corners().get(2), color);
-                    line(pose, lines, face.corners().get(1), face.corners().get(3), color);
-                }
-            }
-        } finally {
-            buffers.endBatch(LINK_LINES);
-            pose.popPose();
-        }
-    }
-
-    private static Color energyColor(EnergyTransferDirection direction, boolean selected) {
-        if (direction == EnergyTransferDirection.INPUT) {
-            return selected ? new Color(0.2F, 1.0F, 0.45F, 1.0F) : new Color(0.15F, 0.72F, 0.34F, 0.85F);
-        }
-        return selected ? new Color(1.0F, 0.55F, 0.2F, 1.0F) : new Color(0.82F, 0.38F, 0.12F, 0.85F);
-    }
-
-    private static Direction facingTower(BlockPos relativeTarget) {
-        int x = Math.abs(relativeTarget.getX());
-        int y = Math.abs(relativeTarget.getY());
-        int z = Math.abs(relativeTarget.getZ());
-        if (x >= y && x >= z) {
-            return relativeTarget.getX() >= 0 ? Direction.WEST : Direction.EAST;
-        }
-        if (y >= z) {
-            return relativeTarget.getY() >= 0 ? Direction.DOWN : Direction.UP;
-        }
-        return relativeTarget.getZ() >= 0 ? Direction.NORTH : Direction.SOUTH;
     }
 
     private static void line(PoseStack pose, VertexConsumer vertices, Vec3 from, Vec3 to, Color color) {

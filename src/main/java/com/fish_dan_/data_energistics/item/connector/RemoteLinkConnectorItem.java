@@ -417,6 +417,9 @@ public class RemoteLinkConnectorItem extends Item {
     }
 
     public static @Nullable ConnectorEndpoint resolveEndpoint(Level level, RemoteLinkConnectorData data) {
+        if (data.targetType() == ConnectorHostType.TOWER) {
+            return resolveSelectedTower(level, data) == null ? null : new TowerConnectorEndpoint(resolveSelectedTower(level, data), data);
+        }
         if (!data.hasSelection() || data.providerSide() != -1 || !level.dimension().location().toString().equals(data.providerDimensionId()) ||
                 !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(data.getProviderPos().getX()), SectionPos.blockToSectionCoord(data.getProviderPos().getZ()))) {
             return null;

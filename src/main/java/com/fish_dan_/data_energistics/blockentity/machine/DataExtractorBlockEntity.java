@@ -82,6 +82,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
@@ -92,7 +93,6 @@ import java.util.Set;
 public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                                       implements IActionHost, IUpgradeableObject, InternalInventoryHost {
 
-    public static final int BASE_WORK_INTERVAL_SECONDS = 5;
     public static final int MIN_WORK_INTERVAL_SECONDS = 1;
     public static final int DROP_COLLECTION_INTERVAL_TICKS = 5;
     public static final int TARGET_SCAN_INTERVAL_TICKS = 5;
@@ -150,6 +150,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                     return isCarrierInteractionAllowed() && slot == CARRIER_SLOT && isCompletedCarrier(inv.getStackInSlot(slot));
                 }
             });
+    @Getter
     private final IItemHandler externalItemHandler = new IItemHandler() {
 
         private final IItemHandler delegate = DataExtractorBlockEntity.this.externalInventory.toItemHandler();
@@ -184,8 +185,10 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return this.delegate.isItemValid(slot, stack);
         }
     };
+    @Getter
     private boolean redstoneControlled;
     private boolean showRange;
+    @Getter
     private DataExtractorAutoExportMode autoExportMode = DataExtractorAutoExportMode.OFF;
     private int syncedCapacityCardCount;
     private int workTicks;
@@ -385,10 +388,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.pendingDataFlow == 0;
     }
 
-    public IItemHandler getExternalItemHandler() {
-        return this.externalItemHandler;
-    }
-
     @Override
     public InternalInventory getInternalInventory() {
         return this.storage;
@@ -463,10 +462,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return computeWorkIntervalSeconds(getCachedSpeedCardCount());
     }
 
-    public int getDataFlowPerCycle() {
-        return getDataFlowPerCycle(getTargetCount());
-    }
-
     public int getDataFlowPerCycle(int targetCount) {
         if (targetCount <= 0) {
             return 0;
@@ -483,10 +478,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     public int getTargetLimit() {
         DataExtractorSchema settings = extractorSettings();
         return settings.baseTargetLimit + getCapacityCardCount() * settings.targetLimitPerCapacityCard;
-    }
-
-    public boolean isRedstoneControlled() {
-        return this.redstoneControlled;
     }
 
     public int getCapacityCardCount() {
@@ -559,15 +550,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return Math.max(0, upgrades.getInstalledUpgrades(AEItems.ENERGY_CARD));
     }
 
-    public static int computeDataFlowPerCycle(IUpgradeInventory upgrades) {
-        DataExtractorSchema settings = extractorSettings();
-        return computeBaseDataFlowPerCycle(upgrades, settings.baseDamage, settings);
-    }
-
-    public static int computeBaseDataFlowPerCycle(IUpgradeInventory upgrades, int damagePerCycle) {
-        return computeBaseDataFlowPerCycle(upgrades, damagePerCycle, extractorSettings());
-    }
-
     public static int computeDataFlowPerCycle(IUpgradeInventory upgrades, int damagePerCycle, int targetCount) {
         if (targetCount <= 0) {
             return 0;
@@ -581,14 +563,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
     public static int computeEnergyCacheCapacity(IUpgradeInventory upgrades) {
         return ENERGY_CACHE_CAPACITY + computeEnergyCardCount(upgrades) * AE_CACHE_PER_ENERGY_CARD;
-    }
-
-    public static int computeWorkIntervalTicks(IUpgradeInventory upgrades) {
-        return computeWorkIntervalSeconds(upgrades) * 20;
-    }
-
-    public static int computeWorkIntervalSeconds(IUpgradeInventory upgrades) {
-        return computeWorkIntervalSeconds(upgrades.getInstalledUpgrades(AEItems.SPEED_CARD));
     }
 
     public static int computeWorkIntervalSeconds(int speedCardCount) {
@@ -609,10 +583,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.redstoneControlled;
     }
 
-    public boolean toggleRangeDisplay() {
-        return setRangeDisplayEnabled(!this.showRange);
-    }
-
     public boolean setRangeDisplayEnabled(boolean enabled) {
         if (this.showRange != enabled) {
             this.showRange = enabled;
@@ -624,14 +594,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
     public boolean isRangeDisplayEnabled() {
         return this.showRange;
-    }
-
-    public boolean isAutoExportEnabled() {
-        return this.autoExportMode != DataExtractorAutoExportMode.OFF;
-    }
-
-    public DataExtractorAutoExportMode getAutoExportMode() {
-        return this.autoExportMode;
     }
 
     public DataExtractorAutoExportMode setAutoExportMode(DataExtractorAutoExportMode mode) {
@@ -699,15 +661,14 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         int capacityCardCount = getCapacityCardCount();
-        int horizontalExpansion = capacityCardCount;
         int verticalRange = BASE_VERTICAL_RANGE + capacityCardCount * RANGE_PER_CAPACITY_CARD;
 
-        int minX = this.worldPosition.getX() - BASE_HORIZONTAL_RANGE - horizontalExpansion;
+        int minX = this.worldPosition.getX() - BASE_HORIZONTAL_RANGE - capacityCardCount;
         int minY = this.worldPosition.getY() + 1;
-        int minZ = this.worldPosition.getZ() - BASE_HORIZONTAL_RANGE - horizontalExpansion;
-        int maxX = this.worldPosition.getX() + BASE_HORIZONTAL_RANGE + horizontalExpansion + 1;
+        int minZ = this.worldPosition.getZ() - BASE_HORIZONTAL_RANGE - capacityCardCount;
+        int maxX = this.worldPosition.getX() + BASE_HORIZONTAL_RANGE + capacityCardCount + 1;
         int maxY = this.worldPosition.getY() + verticalRange + 1;
-        int maxZ = this.worldPosition.getZ() + BASE_HORIZONTAL_RANGE + horizontalExpansion + 1;
+        int maxZ = this.worldPosition.getZ() + BASE_HORIZONTAL_RANGE + capacityCardCount + 1;
 
         if (this.level == null) {
             this.cachedCoverageAabb = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
@@ -1658,7 +1619,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         float healthBefore = target.getHealth();
         boolean damaged = totalDamage > 0.0F && target.hurt(damageSource, totalDamage);
 
-        boolean hurtEnemy = false;
+        boolean hurtEnemy;
         if (damaged && !sword.isEmpty()) {
             hurtEnemy = sword.hurtEnemy(target, fakePlayer);
             EnchantmentHelper.doPostAttackEffects(level, target, damageSource);

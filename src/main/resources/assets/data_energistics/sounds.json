@@ -1,7 +1,9 @@
 {
-  "star_shard_charge": {"sounds": ["data_energistics:star_shard_charge"]},
-  "star_shard_rail_shot": {"sounds": ["data_energistics:rail_shot"]},
-  "star_shard_grenade_shot": {"sounds": ["data_energistics:grenade_shot"]},
-  "star_shard_cooldown": {"sounds": ["data_energistics:star_shard_cooldown"]},
-  "heavy_hammer_core_cooldown": {"sounds": ["data_energistics:heavy_hammer_core_cooldown"]}
+	"star_shard_charge": { "sounds": ["data_energistics:star_shard_charge"] },
+	"star_shard_rail_shot": { "sounds": ["data_energistics:rail_shot"] },
+	"star_shard_grenade_shot": { "sounds": ["data_energistics:grenade_shot"] },
+	"star_shard_cooldown": { "sounds": ["data_energistics:star_shard_cooldown"] },
+	"heavy_hammer_core_cooldown": {
+		"sounds": ["data_energistics:heavy_hammer_core_cooldown"]
+	}
 }

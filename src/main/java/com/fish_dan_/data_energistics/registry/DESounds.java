@@ -9,6 +9,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class DESounds {
+
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(Registries.SOUND_EVENT, Data_Energistics.MODID);
     public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_CHARGE = register("star_shard_charge");
     public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_RAIL_SHOT = register("star_shard_rail_shot");

@@ -759,6 +759,8 @@
 	"item.data_energistics.data_distribution_connector.bound_target": "已绑定目标：%s 面：%s",
 	"item.data_energistics.data_distribution_connector.unbound_target": "已解绑目标：%s 面：%s",
 	"item.data_energistics.data_distribution_connector.mode_changed": "连接器模式：%s",
+	"item.data_energistics.data_distribution_connector.energy_direction.input": "均分塔→目标（输入）",
+	"item.data_energistics.data_distribution_connector.energy_direction.output": "目标→均分塔（输出）",
 	"item.data_energistics.data_distribution_connector.mode.input": "输入",
 	"item.data_energistics.data_distribution_connector.mode.pull": "抽回",
 	"item.data_energistics.data_distribution_connector.mode.both": "同时输入输出",

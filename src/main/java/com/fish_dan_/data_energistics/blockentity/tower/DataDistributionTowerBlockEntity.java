@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.blockentity.tower;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.grid.TowerMountedGridNodeHost;
+import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.CachedTowerEnergyEndpointResolver;
@@ -39,10 +40,10 @@ import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.ae.appflux.AE2FluxIntegration;
+import com.fish_dan_.data_energistics.integration.ae.crafting.AeCraftingDisplayBridge;
+import com.fish_dan_.data_energistics.integration.ae.neoecoae.NeoEcoAeTowerBridge;
 import com.fish_dan_.data_energistics.integration.curios.CuriosDataDistributionConnectorAccess;
-import com.fish_dan_.data_energistics.integration.tower.crafting.AeCraftingDisplayBridge;
-import com.fish_dan_.data_energistics.integration.tower.energy.appflux.AE2FluxIntegration;
-import com.fish_dan_.data_energistics.integration.tower.energy.neoecoae.NeoEcoAeTowerBridge;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -384,6 +385,21 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag data = super.getUpdateTag(registries);
+        TOWER_BINDING_PERSISTENCE.write(data, allConnectorBindings());
+        return data;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag data, HolderLookup.Provider registries) {
+        super.handleUpdateTag(data, registries);
+        this.towerBindings.clear();
+        this.linkGraph.clear();
+        readTowerBindings(data);
+    }
+
+    @Override
     public void exportSettings(SettingsFrom mode, DataComponentMap.Builder builder, @Nullable Player player) {
         super.exportSettings(mode, builder, player);
         if (mode == SettingsFrom.DISMANTLE_ITEM) {
@@ -645,6 +661,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         this.markForClientUpdate();
     }
 
+    public ConnectionMode connectionMode() {
+        return this.connectionMode;
+    }
+
     public void setRangeAdjustmentMode(@Nullable RangeAdjustmentMode rangeAdjustmentMode) {
         RangeAdjustmentMode normalizedMode = rangeAdjustmentMode == null ? RangeAdjustmentMode.POINT : rangeAdjustmentMode;
         if (this.rangeAdjustmentMode == normalizedMode) {
@@ -663,6 +683,14 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     public ConnectorBindResult bindTargetFromConnector(BlockPos targetPos) {
+        return bindTargetFromConnector(targetPos, EnergyTransferDirection.INPUT);
+    }
+
+    public ConnectorBindResult bindTargetFromConnector(BlockPos targetPos, EnergyTransferDirection energyDirection) {
+        return bindTargetFromConnector(targetPos, energyDirection, -1);
+    }
+
+    public ConnectorBindResult bindTargetFromConnector(BlockPos targetPos, EnergyTransferDirection energyDirection, int targetSide) {
         if (this.level == null || this.level.isClientSide()) {
             return ConnectorBindResult.fail(ConnectorBindFailure.UNSUPPORTED);
         }
@@ -671,12 +699,22 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         if (this.worldPosition.equals(normalizedPos)) {
             return ConnectorBindResult.fail(ConnectorBindFailure.SELF_TARGET);
         }
-        if (!isWithinTowerCoverage(normalizedPos)) {
-            return ConnectorBindResult.fail(ConnectorBindFailure.OUT_OF_RANGE);
+        if (!isPointToPointMode()) {
+            return ConnectorBindResult.fail(ConnectorBindFailure.NOT_POINT_MODE);
+        }
+
+        TowerBinding existingBinding = this.towerBindings.get(normalizedPos);
+        if (existingBinding != null && existingBinding.kind() == TowerBindingKind.TARGET && existingBinding.energyDirection() != energyDirection) {
+            this.towerBindings.put(normalizedPos, existingBinding.withEnergyDirection(energyDirection));
+            this.invalidateEndpointCache();
+            this.invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
+            this.setChanged();
+            this.markForClientUpdate();
+            return ConnectorBindResult.success(hasExposedAeNode(normalizedPos), hasAnyEnergyCapability(normalizedPos));
         }
 
         if (isLoadedTowerTarget(normalizedPos)) {
-            addTowerBinding(normalizedPos, TowerBindingSource.MANUAL);
+            addTowerBinding(normalizedPos, TowerBindingSource.MANUAL, energyDirection);
             transitionTargetState(normalizedPos, TargetLinkState.BOUND, TargetLinkFailure.NONE, 0);
             invalidateEndpointCache();
             invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
@@ -685,9 +723,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return ConnectorBindResult.success(true, false);
         }
 
-        if (!isPointToPointMode()) {
-            return ConnectorBindResult.fail(ConnectorBindFailure.NOT_POINT_MODE);
-        }
+        // Point-to-point links are explicit and may target any distance. Scope mode
+        // keeps its range-limited automatic allocation in the scan paths.
 
         boolean aeSupported = hasExposedAeNode(normalizedPos);
         boolean feSupported = hasAnyEnergyCapability(normalizedPos);
@@ -706,7 +743,11 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             setConnectionMode(desiredMode);
         }
 
-        addTowerBinding(normalizedPos, TowerBindingSource.MANUAL);
+        addTowerBinding(normalizedPos, TowerBindingSource.MANUAL, energyDirection);
+        TowerBinding bound = this.towerBindings.get(normalizedPos);
+        if (bound != null && targetSide >= 0 && targetSide <= 5) {
+            this.towerBindings.put(normalizedPos, bound.withTargetSide(targetSide));
+        }
         if (getTargetTransferMode(normalizedPos) == TargetTransferMode.DISABLED) {
             this.linkGraph.transition(
                     normalizedPos, TargetLinkState.DISABLED, TargetLinkFailure.NONE, 0);
@@ -724,6 +765,19 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         this.setChanged();
         this.markForClientUpdate();
         return ConnectorBindResult.success(aeSupported, feSupported);
+    }
+
+    public boolean removeTargetFromConnector(BlockPos targetPos) {
+        if (this.level == null || this.level.isClientSide()) {
+            return false;
+        }
+        BlockPos normalizedPos = normalizeTargetPos(targetPos);
+        if (!this.towerBindings.containsKey(normalizedPos)) {
+            return false;
+        }
+        removeTarget(normalizedPos);
+        this.markForClientUpdate();
+        return true;
     }
 
     private void applyMemoryCardSettings(CompoundTag settings) {
@@ -1754,6 +1808,15 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 .toList();
     }
 
+    /**
+     * Returns every connector target, including targets currently loaded in the world.
+     * Network topology intentionally excludes loaded targets from {@link #towerBindings()},
+     * while the held connector renderer must still draw those targets.
+     */
+    public List<TowerBinding> allConnectorBindings() {
+        return this.towerBindings.values().stream().toList();
+    }
+
     @Override
     public List<TowerEnergyLocation> towerEnergyLocations() {
         ServerLevel level = towerLevel();
@@ -1806,6 +1869,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         }
         incrementTargetDisplayStateRevision();
         this.markForClientUpdate();
+    }
+
+    public TowerNetworkTowerSnapshot towerNetworkSnapshot() {
+        return this.towerNetworkSnapshot;
     }
 
     private void syncTowerDomainRegistration() {
@@ -2602,6 +2669,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private void addTowerBinding(BlockPos targetPos, TowerBindingSource source) {
+        addTowerBinding(targetPos, source, EnergyTransferDirection.INPUT);
+    }
+
+    private void addTowerBinding(BlockPos targetPos, TowerBindingSource source, EnergyTransferDirection energyDirection) {
         if (this.level == null) {
             throw new IllegalStateException("Cannot bind a tower target without a level");
         }
@@ -2630,7 +2701,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 source,
                 this.nextBindingFifoSequence,
                 enabled,
-                disabledDevices);
+                disabledDevices,
+                energyDirection);
         this.nextBindingFifoSequence = Math.incrementExact(this.nextBindingFifoSequence);
         this.towerBindings.put(normalizedPos, binding);
         this.linkGraph.addLinked(normalizedPos);

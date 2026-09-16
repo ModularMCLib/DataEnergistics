@@ -165,7 +165,8 @@ public final class RemoteLinkRenderer {
                 if (binding.kind() != TowerBindingKind.TARGET) {
                     continue;
                 }
-                var face = ConnectorLinkGeometry.face(binding.anchor().subtract(data.getTowerPos()), Direction.UP);
+                BlockPos relativeTarget = binding.anchor().subtract(data.getTowerPos());
+                var face = ConnectorLinkGeometry.face(relativeTarget, facingTower(relativeTarget));
                 Color color = energyColor(binding.energyDirection(), binding.enabled() && (data.allLinksSelected() || index == selected));
                 line(pose, lines, origin, face.approach(), color);
                 line(pose, lines, face.approach(), face.center(), color);
@@ -188,6 +189,19 @@ public final class RemoteLinkRenderer {
             return selected ? new Color(0.2F, 1.0F, 0.45F, 1.0F) : new Color(0.15F, 0.72F, 0.34F, 0.85F);
         }
         return selected ? new Color(1.0F, 0.55F, 0.2F, 1.0F) : new Color(0.82F, 0.38F, 0.12F, 0.85F);
+    }
+
+    private static Direction facingTower(BlockPos relativeTarget) {
+        int x = Math.abs(relativeTarget.getX());
+        int y = Math.abs(relativeTarget.getY());
+        int z = Math.abs(relativeTarget.getZ());
+        if (x >= y && x >= z) {
+            return relativeTarget.getX() >= 0 ? Direction.WEST : Direction.EAST;
+        }
+        if (y >= z) {
+            return relativeTarget.getY() >= 0 ? Direction.DOWN : Direction.UP;
+        }
+        return relativeTarget.getZ() >= 0 ? Direction.NORTH : Direction.SOUTH;
     }
 
     private static void line(PoseStack pose, VertexConsumer vertices, Vec3 from, Vec3 to, Color color) {

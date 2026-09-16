@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.bootstrap.common;
 
 import com.fish_dan_.data_energistics.block.sanctum.DataSanctumBlock;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
+import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
@@ -19,6 +21,7 @@ import appeng.api.parts.RegisterPartCapabilitiesEvent;
 import appeng.blockentity.grid.AENetworkedPoweredBlockEntity;
 import appeng.blockentity.networking.CableBusBlockEntity;
 import appeng.blockentity.networking.ControllerBlockEntity;
+import appeng.blockentity.powersink.AEBasePoweredBlockEntity;
 import appeng.core.definitions.AEBlockEntities;
 
 import net.minecraft.core.BlockPos;
@@ -56,7 +59,7 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_CHARGER_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(),
@@ -64,7 +67,7 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.DATA_IO_PORT.get(),
                 (blockEntity, context) -> blockEntity);
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, DEBlockEntities.DATA_IO_PORT.get(),
-                (blockEntity, context) -> blockEntity.getExposedItemHandler(context));
+                DataIoPortBlockEntity::getExposedItemHandler);
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_ENERGY_CELL_BLOCK_ENTITY.get(),
@@ -80,27 +83,27 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_EXTRACTOR_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_RIPPER_REASSEMBLER_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_ASYNCHRONOUS_PROCESSING_FACTORY_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_MIMETIC_FIELD_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_TELEPORT_ANCHOR_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 DEBlockEntities.DATA_SANCTUM_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getEnergyStorage(context));
+                AEBasePoweredBlockEntity::getEnergyStorage);
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DIGITAL_STORAGE_DEPOT_BLOCK_ENTITY.get(),
@@ -294,18 +297,15 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
                 DEBlockEntities.ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getExternalReturnItemHandler(context));
+                AdaptivePatternProviderBlockEntity::getExternalReturnItemHandler);
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
                 DEBlockEntities.ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY.get(),
-                (blockEntity, context) -> blockEntity.getExternalReturnFluidHandler(context));
+                AdaptivePatternProviderBlockEntity::getExternalReturnFluidHandler);
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
                 AEBlockEntities.CABLE_BUS.get(),
                 (CableBusBlockEntity blockEntity, Direction context) -> {
-                    if (context == null) {
-                        return null;
-                    }
 
                     var part = blockEntity.getPart(context);
                     if (part instanceof AdaptivePatternProviderPart adaptivePart) {
@@ -318,9 +318,6 @@ final class CommonCapabilityRegistrar {
                 Capabilities.FluidHandler.BLOCK,
                 AEBlockEntities.CABLE_BUS.get(),
                 (CableBusBlockEntity blockEntity, Direction context) -> {
-                    if (context == null) {
-                        return null;
-                    }
 
                     var part = blockEntity.getPart(context);
                     if (part instanceof AdaptivePatternProviderPart adaptivePart) {
@@ -332,7 +329,7 @@ final class CommonCapabilityRegistrar {
         event.registerBlockEntity(
                 AECapabilities.CRANKABLE,
                 AEBlockEntities.CONTROLLER.get(),
-                (ControllerBlockEntity blockEntity, Direction context) -> context != null ? ((AENetworkedPoweredBlockEntity) blockEntity).new Crankable() : null);
+                (ControllerBlockEntity blockEntity, Direction context) -> ((AENetworkedPoweredBlockEntity) blockEntity).new Crankable());
         event.registerBlock(
                 Capabilities.EnergyStorage.BLOCK,
                 (level, pos, state, blockEntity, context) -> {

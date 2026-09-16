@@ -68,6 +68,7 @@ import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
@@ -110,6 +111,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -124,7 +126,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     private static final int EXPANDED_RETURN_SLOTS = 18;
     private static final int CONNECTOR_PULL_KEYS_PER_TICK = 32;
-    private static final long CONNECTOR_PULL_AMOUNT_PER_KEY = 4096L;
+    private static final long CONNECTOR_PULL_AMOUNT_PER_KEY = Long.MAX_VALUE;
     private static final String NBT_PATTERN_SLOT_OVERFLOW = "adaptive_pattern_slot_overflow";
     private static final String NBT_RECONCILED_PATTERN_SLOT_COUNT = "adaptive_reconciled_pattern_slot_count";
     private static final String NBT_CONNECTOR_MODE = "connector_mode";
@@ -145,7 +147,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private int connectorPullSlotCursor;
     private final ObjectArrayList<ConnectorTarget> connectorTargets = new ObjectArrayList<>();
     private final ObjectArrayList<ItemStack> patternSlotOverflow = new ObjectArrayList<>();
+    @Getter
     private final ObjectSet<AEKey> trackedCrafts = new ObjectOpenHashSet<>();
+    @Getter
     private final ObjectSet<AEKey> outputCache = new ObjectOpenHashSet<>();
     private @Nullable IStackWatcher craftingWatcher;
     private int reusableWorkCount;
@@ -249,7 +253,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         super.readFromNBT(tag, registries);
 
         this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, ConnectorMode.INPUT);
-        this.connectorPolicy = readConnectorPolicy(tag, NBT_CONNECTOR_POLICY, ConnectorPolicy.ROUND_ROBIN);
+        this.connectorPolicy = readConnectorPolicy(tag);
         this.connectorCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_CURSOR));
         this.connectorPullCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_PULL_CURSOR));
         this.connectorPullSlotCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_PULL_SLOT_CURSOR));
@@ -290,10 +294,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorPolicy;
     }
 
-    public int connectorCursor() {
-        return this.connectorCursor;
-    }
-
     public void setConnectorMode(ConnectorMode mode) {
         this.connectorMode = mode;
         onConnectorChanged();
@@ -302,16 +302,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     public void setConnectorPolicy(ConnectorPolicy policy) {
         this.connectorPolicy = policy;
         onConnectorChanged();
-    }
-
-    public void advanceConnectorCursor(int routeCount) {
-        if (routeCount > 0) {
-            this.connectorCursor = Math.floorMod(this.connectorCursor + 1, routeCount);
-        }
-    }
-
-    public List<ConnectorTarget> connectorTargets() {
-        return List.copyOf(this.connectorTargets);
     }
 
     /** Writes only connector display data into the host's normal client update, in binding order. */
@@ -345,10 +335,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             adaptiveHost.markForClientUpdate();
         }
         adaptiveAlertDevice();
-    }
-
-    public BlockPos hostPosition() {
-        return this.host.getBlockEntity().getBlockPos();
     }
 
     public boolean hasConnectorBindings() {
@@ -412,18 +398,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorTargets.size();
     }
 
-    /** Clears every provider-owned link without changing the connector's current default mode. */
-    public void clearConnectorTargets() {
-        if (this.connectorTargets.isEmpty()) {
-            return;
-        }
-        this.connectorTargets.clear();
-        this.connectorCursor = 0;
-        this.connectorPullCursor = 0;
-        this.connectorPullSlotCursor = 0;
-        onConnectorChanged();
-    }
-
     private void normalizeConnectorCursors() {
         if (this.connectorTargets.isEmpty()) {
             this.connectorCursor = 0;
@@ -453,10 +427,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     private static ConnectorPolicy readConnectorPolicy(
-                                                       CompoundTag tag, String key, ConnectorPolicy fallback) {
-        String readKey = tag.contains(key) ? key : "adaptive_" + key;
+                                                       CompoundTag tag) {
+        String readKey = tag.contains(AdaptivePatternProviderLogic.NBT_CONNECTOR_POLICY) ? AdaptivePatternProviderLogic.NBT_CONNECTOR_POLICY : "adaptive_" + AdaptivePatternProviderLogic.NBT_CONNECTOR_POLICY;
         if (!tag.contains(readKey)) {
-            return fallback;
+            return ConnectorPolicy.ROUND_ROBIN;
         }
         try {
             return ConnectorPolicy.valueOf(tag.getString(readKey));
@@ -895,7 +869,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 return prepared.count();
             }
 
-            @SuppressWarnings("removal")
             @Override
             public ObjectList<SlotStack> physicalInputsFast() {
                 return prepared.physicalInputsFast();
@@ -1225,9 +1198,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             if (!binding.mode().supportsPull()) {
                 continue;
             }
-            if (scanned >= CONNECTOR_PULL_KEYS_PER_TICK) {
-                break;
-            }
             BlockPos position = binding.position();
             if (!currentLevel.isLoaded(position)) {
                 continue;
@@ -1257,7 +1227,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                     currentLevel.getBlockEntity(position),
                     binding.side());
             if (source != null && source.canExtract()) {
-                changed |= pullGenericInventory(source);
+                changed = pullGenericInventory(source);
                 if (changed) {
                     advanceConnectorPullCursor(offset + 1);
                     break;
@@ -1268,7 +1238,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                     Capabilities.ItemHandler.BLOCK,
                     position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
             if (itemHandler != null) {
-                changed |= pullItemHandler(itemHandler);
+                changed = pullItemHandler(itemHandler);
                 if (changed) {
                     advanceConnectorPullCursor(offset + 1);
                     break;
@@ -1279,13 +1249,12 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                     Capabilities.FluidHandler.BLOCK,
                     position, currentLevel.getBlockState(position), currentLevel.getBlockEntity(position), binding.side());
             if (fluidHandler != null) {
-                changed |= pullFluidHandler(fluidHandler);
+                changed = pullFluidHandler(fluidHandler);
                 if (changed) {
                     advanceConnectorPullCursor(offset + 1);
                     break;
                 }
             }
-            continue;
         }
         if (changed) {
             this.host.saveChanges();
@@ -1306,9 +1275,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         for (int offset = 0; offset < size; offset++) {
             int slot = (start + offset) % size;
             AEKey key = source.getKey(slot);
-            long available = source.getAmount(slot);
-            if (key == null || available <= 0L) continue;
-            long requested = Math.min(available, CONNECTOR_PULL_AMOUNT_PER_KEY);
+            long requested = source.getAmount(slot);
+            if (key == null || requested <= 0L) continue;
             long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
             if (accepted <= 0L) continue;
             long extracted = source.extract(slot, key, accepted, Actionable.MODULATE);
@@ -1332,7 +1300,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             ItemStack available = source.getStackInSlot(slot);
             AEItemKey key = AEItemKey.of(available);
             if (key == null || available.isEmpty()) continue;
-            int requested = (int) Math.min(available.getCount(), CONNECTOR_PULL_AMOUNT_PER_KEY);
+            long requested = Math.min(available.getCount(), CONNECTOR_PULL_AMOUNT_PER_KEY);
             long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
             if (accepted <= 0L) continue;
             ItemStack extracted = source.extractItem(slot, (int) accepted, false);
@@ -1395,11 +1363,10 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             inspected++;
             this.connectorPullSlotCursor = (start + inspected) % availableKeyCount;
             AEKey key = stack.getKey();
-            long available = stack.getLongValue();
-            if (available <= 0) {
+            long requested = stack.getLongValue();
+            if (requested <= 0) {
                 continue;
             }
-            long requested = Math.min(available, CONNECTOR_PULL_AMOUNT_PER_KEY);
             long accepted = this.returnInv.insert(key, requested, Actionable.SIMULATE, this.actionSource);
             if (accepted <= 0) {
                 continue;
@@ -1535,7 +1502,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.actionSource;
     }
 
-    PatternProviderReturnInventory adaptiveReturnInventory() {
+    public PatternProviderReturnInventory adaptiveReturnInventory() {
         return getReturnInv();
     }
 
@@ -1704,14 +1671,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.connectorPullSlotCursor = 0;
     }
 
-    public ObjectSet<AEKey> getTrackedCrafts() {
-        return this.trackedCrafts;
-    }
-
-    public ObjectSet<AEKey> getOutputCache() {
-        return this.outputCache;
-    }
-
     private void rebuildPatternsForConfiguredSlots() {
         this.patterns.clear();
         this.patternInputs.clear();
@@ -1767,10 +1726,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     private boolean invokeBaseDoWork() {
         return super.doWork();
-    }
-
-    private boolean invokeBaseIsBusy() {
-        return super.isBusy();
     }
 
     private boolean invokeBaseHasWorkToDo() {
@@ -1900,32 +1855,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return ItemStack.EMPTY;
         }
 
-        return itemKey.toStack((int) Math.min(Integer.MAX_VALUE, stack.amount()));
-    }
-
-    public ItemStack insertReturnInventoryItem(int slot, ItemStack stack, boolean simulate) {
-        if (stack.isEmpty() || slot < 0 || slot >= getReturnInv().size()) {
-            return stack;
-        }
-
-        AEItemKey itemKey = AEItemKey.of(stack);
-        if (itemKey == null) {
-            return stack;
-        }
-
-        long inserted = getReturnInv().insert(slot, itemKey, stack.getCount(),
-                simulate ? Actionable.SIMULATE : Actionable.MODULATE);
-        if (inserted <= 0) {
-            return stack;
-        }
-
-        if (inserted >= stack.getCount()) {
-            return ItemStack.EMPTY;
-        }
-
-        ItemStack remainder = stack.copy();
-        remainder.shrink((int) inserted);
-        return remainder;
+        ItemStack result = itemKey.toStack(1);
+        result.setCount((int) Math.min(Integer.MAX_VALUE, stack.amount()));
+        return result;
     }
 
     public long insertReturnInventoryStack(int slot, GenericStack stack, boolean simulate) {
@@ -1933,12 +1865,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return 0;
         }
 
-        long inserted = getReturnInv().insert(
+        return getReturnInv().insert(
                 slot,
                 stack.what(),
                 stack.amount(),
                 simulate ? Actionable.SIMULATE : Actionable.MODULATE);
-        return inserted;
     }
 
     public long insertReturnInventoryKey(AEKey key, long amount, boolean simulate) {
@@ -1946,12 +1877,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return 0;
         }
 
-        long inserted = getReturnInv().insert(
+        return getReturnInv().insert(
                 key,
                 amount,
                 simulate ? Actionable.SIMULATE : Actionable.MODULATE,
                 this.actionSource);
-        return inserted;
     }
 
     private void installExpandedReturnInventory() {
@@ -2025,10 +1955,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
         @Override
         public void onRequestChange(AEKey what) {
-            if (what == null) {
-                return;
-            }
-
             if (trackedCrafts.contains(what)) {
                 trackedCrafts.remove(what);
             } else {
@@ -2055,6 +1981,16 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 PatternProviderReturnInventory.NUMBER_OF_SLOTS = previous;
             }
             PREVIOUS_SLOT_COUNT.remove();
+        }
+
+        @Override
+        public long getMaxAmount(AEKey key) {
+            return Long.MAX_VALUE;
+        }
+
+        @Override
+        public long getCapacity(AEKeyType space) {
+            return Long.MAX_VALUE;
         }
 
         private boolean isAllowed(int slot, AEKey key) {

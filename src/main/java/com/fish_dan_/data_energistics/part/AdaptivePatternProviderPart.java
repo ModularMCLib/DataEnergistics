@@ -540,9 +540,6 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     }
 
     private int getExtraProviderSlotsFromCapacityCards() {
-        if (this.upgrades == null) {
-            return 0;
-        }
         return Math.max(0, this.upgrades.getInstalledUpgrades(AEItems.CAPACITY_CARD)) * AdaptivePatternProviderState.EXTRA_PROVIDER_SLOTS_PER_CAPACITY_CARD;
     }
 
@@ -642,8 +639,8 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         if (!this.redstoneInputPulsePending || !this.dataEnergistics$hasRedstoneTuningCard() || this.redstoneTuningMode != RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE) {
             return;
         }
-        Object logic = this.getLogic();
-        if (logic instanceof PatternProviderLogicAccessor accessor && accessor.dataEnergistics$forcePulseUnlock()) {
+        PatternProviderLogicAccessor accessor = this.getLogic();
+        if (accessor.dataEnergistics$forcePulseUnlock()) {
             this.redstoneInputPulsePending = false;
         }
     }

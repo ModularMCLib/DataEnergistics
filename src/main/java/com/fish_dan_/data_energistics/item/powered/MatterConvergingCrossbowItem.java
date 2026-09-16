@@ -15,7 +15,9 @@ import com.fish_dan_.data_energistics.item.powered.cannon.storage.CannonCellMenu
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.registry.DESounds;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.registry.DESounds;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -194,8 +196,16 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         stack.set(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), stack.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0) + 1);
         player.getCooldowns().addCooldown(this, 3);
         player.awardStat(Stats.ITEM_USED.get(this));
-        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 1.0F,
+        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, shotSound(charge.mode()), SoundSource.PLAYERS, 1.0F,
                 charge.mode() == MatterConvergingCrossbowMode.RAIL ? 1.4F : 0.7F);
+    }
+
+    private static net.minecraft.sounds.SoundEvent shotSound(MatterConvergingCrossbowMode mode) {
+        return switch (mode) {
+            case RAIL -> DESounds.STAR_SHARD_RAIL_SHOT.get();
+            case GRENADE -> DESounds.STAR_SHARD_GRENADE_SHOT.get();
+            case CROSSBOW -> DESounds.STAR_SHARD_GRENADE_SHOT.get();
+        };
     }
 
     /** Shared with the preview; loading uses the same next/previously charged ammunition. */
@@ -294,7 +304,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         int usedTicks = this.getUseDuration(stack, entity) - timeLeft;
         float progress = getPowerForTime(usedTicks, stack, entity);
         if (progress >= 1.0F && !isCharged(stack) && this.tryLoadProjectile(entity, stack)) {
-            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.CROSSBOW_LOADING_END,
+            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), DESounds.STAR_SHARD_CHARGE.get(),
                     entity.getSoundSource(), 1.0F, 1.0F / (level.getRandom().nextFloat() * 0.5F + 1.0F) + 0.2F);
         }
     }
@@ -319,13 +329,13 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             if (progress >= 0.2F && !this.startSoundPlayed) {
                 this.startSoundPlayed = true;
                 level.playSound(null, livingEntity.getX(), livingEntity.getY(), livingEntity.getZ(),
-                        SoundEvents.CROSSBOW_LOADING_START, SoundSource.PLAYERS, 0.5F, 1.0F);
+                        DESounds.STAR_SHARD_CHARGE.get(), SoundSource.PLAYERS, 0.5F, 1.0F);
             }
 
             if (progress >= 0.5F && !this.midLoadSoundPlayed) {
                 this.midLoadSoundPlayed = true;
                 level.playSound(null, livingEntity.getX(), livingEntity.getY(), livingEntity.getZ(),
-                        SoundEvents.CROSSBOW_LOADING_MIDDLE, SoundSource.PLAYERS, 0.5F, 1.0F);
+                        DESounds.STAR_SHARD_CHARGE.get(), SoundSource.PLAYERS, 0.5F, 1.0F);
             }
         }
     }
@@ -421,7 +431,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             projectile.shoot(direction.x, direction.y, direction.z, projectileSpeed, inaccuracy);
             serverLevel.addFreshEntity(projectile);
             float pitch = index == 0 ? 1 : 1 / (shooter.getRandom().nextFloat() * 0.5F + 1.8F) + ((index & 1) == 1 ? 0.63F : 0.43F);
-            level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEvents.CROSSBOW_SHOOT, shooter.getSoundSource(), 1, pitch);
+            level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), shotSound(mode(stack)), shooter.getSoundSource(), 1, pitch);
         }
         if (shooter instanceof Player player) {
             player.awardStat(Stats.ITEM_USED.get(this));

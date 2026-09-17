@@ -8,15 +8,15 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Tracks ownership-preserving dynamic material borrowing independently from execution scheduling.
  * <p>
- * Map-backed borrowing ledger whose only legal transitions originate in {@link State#RESERVED}.
+ * Object2ObjectMap-backed borrowing ledger whose only legal transitions originate in {@link State#RESERVED}.
  */
 public final class TrinityBorrowingLedger {
 
@@ -78,7 +78,7 @@ public final class TrinityBorrowingLedger {
      */
     public TrinityBorrowingLedger() {}
 
-    TrinityBorrowingLedger(Map<AEKey, Balances> entries) {
+    TrinityBorrowingLedger(Object2ObjectMap<AEKey, Balances> entries) {
         entries.forEach((key, balances) -> this.entries.put(key, new MutableBalances(balances)));
     }
 
@@ -90,7 +90,8 @@ public final class TrinityBorrowingLedger {
      * @return restored ledger
      */
     public static TrinityBorrowingLedger restore(CompoundTag tag, HolderLookup.Provider registries) {
-        return new TrinityBorrowingLedger(TrinityBorrowingLedgerNbtCodec.decode(tag, registries));
+        return new TrinityBorrowingLedger(new Object2ObjectLinkedOpenHashMap<>(
+                TrinityBorrowingLedgerNbtCodec.decode(tag, registries)));
     }
 
     /**
@@ -112,10 +113,17 @@ public final class TrinityBorrowingLedger {
      * @param amount positive amount accepted by a provider
      */
     public void commit(AEKey key, long amount) {
+        commit(key, BigInteger.valueOf(amount));
+    }
+
+    /**
+     * Transfers an exact positive amount from CPU ownership on the server thread. The key and amount are non-null;
+     * insufficient reservations reject the transition before any balance changes.
+     */
+    public void commit(AEKey key, BigInteger amount) {
         MutableBalances balances = requireReserved(key, amount);
-        BigInteger transferred = BigInteger.valueOf(amount);
-        balances.reserved = balances.reserved.subtract(transferred);
-        balances.committed = balances.committed.add(transferred);
+        balances.reserved = balances.reserved.subtract(amount);
+        balances.committed = balances.committed.add(amount);
     }
 
     /**
@@ -151,10 +159,10 @@ public final class TrinityBorrowingLedger {
     /**
      * @return immutable snapshot of all non-empty key balances
      */
-    public Map<AEKey, Balances> entries() {
+    public Object2ObjectMap<AEKey, Balances> entries() {
         Object2ObjectLinkedOpenHashMap<AEKey, Balances> snapshot = new Object2ObjectLinkedOpenHashMap<>();
         this.entries.forEach((key, balances) -> snapshot.put(key, balances.snapshot()));
-        return Collections.unmodifiableMap(snapshot);
+        return Object2ObjectMaps.unmodifiable(snapshot);
     }
 
     /**
@@ -174,9 +182,15 @@ public final class TrinityBorrowingLedger {
     }
 
     private MutableBalances requireReserved(AEKey key, long amount) {
-        requireTransfer(key, amount);
+        return requireReserved(key, BigInteger.valueOf(amount));
+    }
+
+    private MutableBalances requireReserved(AEKey key, BigInteger amount) {
+        if (key == null || amount == null || amount.signum() <= 0) {
+            throw new IllegalArgumentException("A Trinity borrowing transition requires a key and positive amount");
+        }
         MutableBalances balances = this.entries.get(key);
-        if (balances == null || balances.reserved.compareTo(BigInteger.valueOf(amount)) < 0) {
+        if (balances == null || balances.reserved.compareTo(amount) < 0) {
             throw new IllegalStateException("A Trinity borrowing transition cannot exceed CPU-owned reservations");
         }
         return balances;

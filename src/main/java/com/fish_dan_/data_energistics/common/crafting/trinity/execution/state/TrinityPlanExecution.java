@@ -32,20 +32,24 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -116,13 +120,13 @@ public final class TrinityPlanExecution {
                        int plannedVariantOrdinal,
                        long maximumLogicalFirings,
                        boolean cycle,
-                       List<TrinityBoundPatternInput> exactBindings) {
+                       ObjectList<TrinityBoundPatternInput> exactBindings) {
 
         /**
          * Rejects incomplete or non-dispatchable offers before provider code receives them.
          */
         public Work {
-            exactBindings = List.copyOf(exactBindings);
+            exactBindings = new ObjectImmutableList<>(exactBindings);
             if (generation < 0L || stageIndex < 0 || firingIndex < 0 ||
                     plannedVariantOrdinal < 0 ||
                     maximumLogicalFirings <= 0L) {
@@ -137,7 +141,7 @@ public final class TrinityPlanExecution {
      * @param maximumLogicalFirings safe provider offer count; zero means the wave cannot start yet
      * @param observedKeys          repeat minimum-seed keys whose changes may make the wave startable
      */
-    public record CycleWaveLimit(long maximumLogicalFirings, Set<AEKey> observedKeys) {
+    public record CycleWaveLimit(long maximumLogicalFirings, ObjectSet<AEKey> observedKeys) {
 
         /**
          * Validates the non-negative limit and isolates the wake-key set from callers.
@@ -146,7 +150,7 @@ public final class TrinityPlanExecution {
             if (maximumLogicalFirings < 0L) {
                 throw new IllegalArgumentException("A Trinity cycle wave limit requires a non-negative count and key set");
             }
-            observedKeys = Set.copyOf(observedKeys);
+            observedKeys = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(observedKeys));
         }
     }
 
@@ -235,7 +239,7 @@ public final class TrinityPlanExecution {
         TrinityPlanExecution restored = new TrinityPlanExecution(
                 snapshot.targetKey(),
                 snapshot.targetAmount(),
-                new TrinityBorrowingLedger(snapshot.borrowingEntries()));
+                new TrinityBorrowingLedger(new Object2ObjectLinkedOpenHashMap<>(snapshot.borrowingEntries())));
         restored.catalogRevision = snapshot.catalogRevision();
         restored.quantityMode = snapshot.quantityMode();
         restored.sameItemPolicy = snapshot.sameItemPolicy();
@@ -522,9 +526,9 @@ public final class TrinityPlanExecution {
      * @param stageIndex stable stage index
      * @param keys       legal material keys relevant to that stage
      */
-    public void registerInputKeys(int stageIndex, Set<AEKey> keys) {
+    public void registerInputKeys(int stageIndex, ObjectSet<AEKey> keys) {
         StageState stage = requireStage(stageIndex);
-        Set<AEKey> copied = normalizeObservedKeys(keys);
+        ObjectSet<AEKey> copied = normalizeObservedKeys(keys);
         boolean changed = false;
         for (AEKey key : copied) {
             if (stage.inputKeys.add(key)) {
@@ -571,8 +575,8 @@ public final class TrinityPlanExecution {
      * @param work current leased work
      * @param keys material keys that can satisfy the wait
      */
-    public void deferInput(Work work, Set<AEKey> keys) {
-        Set<AEKey> copied = normalizeNonEmptyObservedKeys(keys, "input wait");
+    public void deferInput(Work work, ObjectSet<AEKey> keys) {
+        ObjectSet<AEKey> copied = normalizeNonEmptyObservedKeys(keys, "input wait");
         StageState stage = releaseCurrentWork(work);
         registerInputKeys(stage.index, copied);
         beginWait(stage, WaitKind.INPUT, copied, -1L);
@@ -587,10 +591,10 @@ public final class TrinityPlanExecution {
      * @param currentTick   current server tick
      * @param maxRetryTicks inclusive retry delay cap
      */
-    public void deferDynamicInput(Work work, Set<AEKey> keys, long currentTick, int maxRetryTicks) {
+    public void deferDynamicInput(Work work, ObjectSet<AEKey> keys, long currentTick, int maxRetryTicks) {
         requireTick(currentTick);
         requireRetryCap(maxRetryTicks);
-        Set<AEKey> copied = normalizeNonEmptyObservedKeys(keys, "dynamic input wait");
+        ObjectSet<AEKey> copied = normalizeNonEmptyObservedKeys(keys, "dynamic input wait");
         StageState stage = requireCurrentWork(work);
         if (!stage.cycle) {
             throw new IllegalStateException("Only a Trinity cycle stage may wait for dynamic material selection");
@@ -616,7 +620,7 @@ public final class TrinityPlanExecution {
         requireRetryCap(maxRetryTicks);
         StageState stage = releaseCurrentWork(work);
         int delay = stage.nextProviderDelay;
-        beginWait(stage, WaitKind.PROVIDER, Set.of(), Math.addExact(currentTick, delay));
+        beginWait(stage, WaitKind.PROVIDER, ObjectSet.of(), Math.addExact(currentTick, delay));
         stage.nextProviderDelay = nextDelay(delay, maxRetryTicks);
         scheduleRetry(stage);
         markDurableMutation();
@@ -720,17 +724,25 @@ public final class TrinityPlanExecution {
      * @param offeredLogicalFirings logical offer that established an unstarted cycle wave
      */
     public void recordAccepted(Work work, long acceptedCount, long offeredLogicalFirings) {
-        if (acceptedCount <= 0L) {
-            throw new IllegalArgumentException("A Trinity provider acceptance must be positive");
-        }
-        if (offeredLogicalFirings <= 0L) {
-            throw new IllegalArgumentException("A Trinity provider logical offer must be positive");
-        }
-        StageState stage = requireCurrentWork(work);
         if (offeredLogicalFirings > work.maximumLogicalFirings()) {
             throw new IllegalArgumentException("A Trinity logical offer exceeds the leased work bound");
         }
-        if (acceptedCount > offeredLogicalFirings) {
+        recordAccepted(work, BigInteger.valueOf(acceptedCount), BigInteger.valueOf(offeredLogicalFirings));
+    }
+
+    /** Accounts an exact provider batch against the same live lease and cycle-wave state as long dispatch. */
+    public void recordAccepted(Work work, BigInteger acceptedCount, BigInteger offeredLogicalFirings) {
+        if (acceptedCount.signum() <= 0) {
+            throw new IllegalArgumentException("A Trinity provider acceptance must be positive");
+        }
+        if (offeredLogicalFirings.signum() <= 0) {
+            throw new IllegalArgumentException("A Trinity provider logical offer must be positive");
+        }
+        StageState stage = requireCurrentWork(work);
+        if (offeredLogicalFirings.compareTo(maximumExactLogicalFirings(work)) > 0) {
+            throw new IllegalArgumentException("A Trinity logical offer exceeds the leased work bound");
+        }
+        if (acceptedCount.compareTo(offeredLogicalFirings) > 0) {
             throw new IllegalArgumentException("A Trinity provider accepted more than the offered logical firing count");
         }
         FiringState firing = stage.firings.get(stage.currentFiring);
@@ -740,7 +752,7 @@ public final class TrinityPlanExecution {
                 throw new IllegalStateException("A Trinity cycle wave must begin at its first stage and firing");
             }
             repeat.waveCount = repeat.remainingRepetitions.min(ceilDiv(
-                    BigInteger.valueOf(offeredLogicalFirings),
+                    offeredLogicalFirings,
                     firing.plannedCount));
             if (repeat.waveCount.signum() <= 0) {
                 throw new IllegalStateException("A Trinity cycle wave offer cannot establish an empty wave");
@@ -748,7 +760,7 @@ public final class TrinityPlanExecution {
             firing.remainingCount = firing.plannedCount.multiply(repeat.waveCount);
             firing.initialized = true;
         }
-        BigInteger accepted = BigInteger.valueOf(acceptedCount);
+        BigInteger accepted = acceptedCount;
         if (!firing.initialized || firing.remainingCount.compareTo(accepted) < 0) {
             throw new IllegalStateException("A Trinity firing cursor cannot consume beyond its initialized wave");
         }
@@ -840,8 +852,8 @@ public final class TrinityPlanExecution {
     /**
      * @return immutable exact seed reserve captured from the current plan
      */
-    public Map<AEKey, BigInteger> seedReserve() {
-        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(this.seedReserve));
+    public Object2ObjectMap<AEKey, BigInteger> seedReserve() {
+        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(this.seedReserve));
     }
 
     /**
@@ -861,13 +873,20 @@ public final class TrinityPlanExecution {
     public CycleWaveLimit maximumCycleLogicalFirings(
                                                      Work work,
                                                      BiFunction<AEKey, BigInteger, BigInteger> availableAmount) {
+        return new CycleWaveLimit(physicalWindow(maximumExactCycleLogicalFirings(work, availableAmount)),
+                requireRepeat(work.stageIndex()).minimumSeed.keySet());
+    }
+
+    /** Exact seed-safe cycle offer; no long projection is applied until a legacy provider is selected. */
+    public BigInteger maximumExactCycleLogicalFirings(Work work,
+                                                      BiFunction<AEKey, BigInteger, BigInteger> availableAmount) {
         StageState stage = requireCurrentWork(work);
         if (!stage.cycle) {
             throw new IllegalArgumentException("Only Trinity cycle work has a seed-limited wave");
         }
         RepeatState repeat = requireRepeat(stage.index);
         if (repeat.waveCount.signum() > 0) {
-            return new CycleWaveLimit(work.maximumLogicalFirings(), repeat.minimumSeed.keySet());
+            return maximumExactLogicalFirings(work);
         }
         if (repeat.cursor != 0 || repeat.stageOrder.getFirst() != stage.index || stage.currentFiring != 0) {
             throw new IllegalStateException("An unstarted Trinity cycle wave must begin at its first stage and firing");
@@ -875,7 +894,7 @@ public final class TrinityPlanExecution {
 
         FiringState firing = stage.firings.get(stage.currentFiring);
         BigInteger repetitions = repeat.remainingRepetitions;
-        for (Map.Entry<AEKey, BigInteger> seed : repeat.minimumSeed.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> seed : repeat.minimumSeed.object2ObjectEntrySet()) {
             BigInteger usefulUpper = seed.getValue().multiply(repetitions);
             BigInteger available = availableAmount.apply(seed.getKey(), usefulUpper);
             if (available.signum() < 0) {
@@ -883,9 +902,18 @@ public final class TrinityPlanExecution {
             }
             repetitions = repetitions.min(available.divide(seed.getValue()));
         }
-        return new CycleWaveLimit(
-                physicalWindow(firing.plannedCount.multiply(repetitions)),
-                repeat.minimumSeed.keySet());
+        return firing.plannedCount.multiply(repetitions);
+    }
+
+    /** Returns the exact remaining bound of the currently leased firing; stale leases are rejected. */
+    public BigInteger maximumExactLogicalFirings(Work work) {
+        StageState stage = requireCurrentWork(work);
+        FiringState firing = stage.firings.get(stage.currentFiring);
+        if (stage.cycle) {
+            RepeatState repeat = requireRepeat(stage.index);
+            if (repeat.waveCount.signum() == 0) return firing.plannedCount.multiply(repeat.remainingRepetitions);
+        }
+        return firing.remainingCount;
     }
 
     /**
@@ -893,7 +921,7 @@ public final class TrinityPlanExecution {
      *
      * @return immutable pending-output projection for AE2's crafting CPU status table
      */
-    public Map<AEKey, BigInteger> pendingOutputs() {
+    public Object2ObjectMap<AEKey, BigInteger> pendingOutputs() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> outputs = new Object2ObjectLinkedOpenHashMap<>();
         for (StageState stage : this.stages.values()) {
             if (!stage.cycle) {
@@ -903,10 +931,10 @@ public final class TrinityPlanExecution {
         for (RepeatState repeat : this.repeatBlocks.values()) {
             addCyclePendingOutputs(outputs, repeat);
         }
-        return Collections.unmodifiableMap(outputs);
+        return Object2ObjectMaps.unmodifiable(outputs);
     }
 
-    private void addDagPendingOutputs(Map<AEKey, BigInteger> outputs, StageState stage) {
+    private void addDagPendingOutputs(Object2ObjectMap<AEKey, BigInteger> outputs, StageState stage) {
         if (stage.completed) {
             return;
         }
@@ -919,7 +947,7 @@ public final class TrinityPlanExecution {
         }
     }
 
-    private void addCyclePendingOutputs(Map<AEKey, BigInteger> outputs, RepeatState repeat) {
+    private void addCyclePendingOutputs(Object2ObjectMap<AEKey, BigInteger> outputs, RepeatState repeat) {
         if (repeat.remainingRepetitions.signum() == 0) {
             return;
         }
@@ -953,7 +981,7 @@ public final class TrinityPlanExecution {
         return activeCount.add(laterCount);
     }
 
-    private void mergePendingOutputs(Map<AEKey, BigInteger> outputs,
+    private void mergePendingOutputs(Object2ObjectMap<AEKey, BigInteger> outputs,
                                      FiringState firing,
                                      BigInteger firingCount) {
         if (firingCount.signum() == 0) {
@@ -1096,7 +1124,7 @@ public final class TrinityPlanExecution {
      *
      * @return released stack, or empty when the buffer contains nothing
      */
-    public Map<AEKey, BigInteger> releaseCompletionForStandalone() {
+    public Object2ObjectMap<AEKey, BigInteger> releaseCompletionForStandalone() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> released = new Object2ObjectLinkedOpenHashMap<>(this.actualFinalOutputs);
         BigInteger actualAmount = actualFinalOutputAmount();
         if (this.completionSealed) {
@@ -1111,7 +1139,7 @@ public final class TrinityPlanExecution {
             this.actualFinalOutputs.clear();
             markDurableMutation();
         }
-        return Collections.unmodifiableMap(released);
+        return Object2ObjectMaps.unmodifiable(released);
     }
 
     /**
@@ -1131,7 +1159,7 @@ public final class TrinityPlanExecution {
     /**
      * @return immutable keyed contents currently isolated from ordinary working inventory
      */
-    public Map<AEKey, BigInteger> completionContents() {
+    public Object2ObjectMap<AEKey, BigInteger> completionContents() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> contents = new Object2ObjectLinkedOpenHashMap<>(this.actualFinalOutputs);
         if (this.completionSealed) {
             BigInteger exactAmount = this.completionBuffer.subtract(actualFinalOutputAmount());
@@ -1139,7 +1167,7 @@ public final class TrinityPlanExecution {
                 contents.merge(this.targetKey, exactAmount, BigInteger::add);
             }
         }
-        return Collections.unmodifiableMap(contents);
+        return Object2ObjectMaps.unmodifiable(contents);
     }
 
     /**
@@ -1280,7 +1308,7 @@ public final class TrinityPlanExecution {
         }
     }
 
-    private boolean normalizedKeys(Iterable<AEKey> keys) {
+    private boolean normalizedKeys(ObjectIterable<AEKey> keys) {
         for (AEKey key : keys) {
             if (!this.sameItemPolicy.normalizeKey(key).equals(key)) {
                 return false;
@@ -1723,7 +1751,7 @@ public final class TrinityPlanExecution {
         this.leasedWorks.remove(stage.index);
     }
 
-    private void beginWait(StageState stage, WaitKind kind, Set<AEKey> keys, long retryAt) {
+    private void beginWait(StageState stage, WaitKind kind, ObjectSet<AEKey> keys, long retryAt) {
         if (stage.waitKind != WaitKind.NONE || !stage.waitingKeys.isEmpty() || stage.retryAt != -1L) {
             throw new IllegalStateException("A Trinity stage cannot begin a second wait before the first is released");
         }
@@ -1788,14 +1816,14 @@ public final class TrinityPlanExecution {
         return repeat;
     }
 
-    private Set<AEKey> normalizeObservedKeys(Set<AEKey> keys) {
+    private ObjectSet<AEKey> normalizeObservedKeys(ObjectSet<AEKey> keys) {
         ObjectLinkedOpenHashSet<AEKey> normalized = new ObjectLinkedOpenHashSet<>();
         keys.forEach(key -> normalized.add(this.sameItemPolicy.normalizeKey(key)));
-        return Collections.unmodifiableSet(normalized);
+        return ObjectSets.unmodifiable(normalized);
     }
 
-    private Set<AEKey> normalizeNonEmptyObservedKeys(Set<AEKey> keys, String role) {
-        Set<AEKey> normalized = normalizeObservedKeys(keys);
+    private ObjectSet<AEKey> normalizeNonEmptyObservedKeys(ObjectSet<AEKey> keys, String role) {
+        ObjectSet<AEKey> normalized = normalizeObservedKeys(keys);
         if (normalized.isEmpty()) {
             throw new IllegalArgumentException("A Trinity " + role + " requires at least one key");
         }
@@ -1848,8 +1876,8 @@ public final class TrinityPlanExecution {
      * schema while retaining the resource contract required to start a newly restored cycle wave.
      * </p>
      */
-    private static Map<AEKey, BigInteger> reconstructMinimumSeed(IntList stageOrder,
-                                                                 Int2ObjectMap<StageState> stages) {
+    private static Object2ObjectMap<AEKey, BigInteger> reconstructMinimumSeed(IntList stageOrder,
+                                                                              Int2ObjectMap<StageState> stages) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> seed = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>();
         for (int stageIndex : stageOrder) {
@@ -1857,7 +1885,7 @@ public final class TrinityPlanExecution {
             if (stage == null || !stage.cycle) {
                 throw new IllegalArgumentException("A Trinity repeat block references an invalid cycle stage");
             }
-            for (Map.Entry<AEKey, BigInteger> required : stage.requiredAtStart.entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> required : stage.requiredAtStart.object2ObjectEntrySet()) {
                 BigInteger balance = balances.getOrDefault(required.getKey(), BigInteger.ZERO);
                 if (balance.compareTo(required.getValue()) >= 0) {
                     continue;
@@ -1866,7 +1894,7 @@ public final class TrinityPlanExecution {
                 seed.merge(required.getKey(), deficit, BigInteger::add);
                 balances.put(required.getKey(), balance.add(deficit));
             }
-            for (Map.Entry<AEKey, BigInteger> change : stage.netChange.entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> change : stage.netChange.object2ObjectEntrySet()) {
                 BigInteger updated = balances.getOrDefault(change.getKey(), BigInteger.ZERO).add(change.getValue());
                 if (updated.signum() < 0) {
                     throw new IllegalArgumentException("A Trinity repeat block has an impossible negative stage balance");
@@ -1878,14 +1906,14 @@ public final class TrinityPlanExecution {
                 }
             }
         }
-        return Collections.unmodifiableMap(seed);
+        return Object2ObjectMaps.unmodifiable(seed);
     }
 
     private record RetryEntry(long retryAt, int stageIndex, long version, WaitKind waitKind) {}
 
     private record ExecutionFootprint(
-                                      Set<AEKey> inputs,
-                                      Set<AEKey> positiveNetOutputs) {
+                                      ObjectSet<AEKey> inputs,
+                                      ObjectSet<AEKey> positiveNetOutputs) {
 
         private static ExecutionFootprint fromStage(StageState stage) {
             ObjectLinkedOpenHashSet<AEKey> inputs = new ObjectLinkedOpenHashSet<>(stage.requiredAtStart.keySet());
@@ -1897,8 +1925,8 @@ public final class TrinityPlanExecution {
                 }
             });
             return new ExecutionFootprint(
-                    Set.copyOf(inputs),
-                    Set.copyOf(positiveNetOutputs));
+                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(inputs)),
+                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(positiveNetOutputs)));
         }
 
         private static ExecutionFootprint fromRepeat(
@@ -1923,8 +1951,8 @@ public final class TrinityPlanExecution {
                 }
             });
             return new ExecutionFootprint(
-                    Set.copyOf(inputs),
-                    Set.copyOf(positiveNetOutputs));
+                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(inputs)),
+                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(positiveNetOutputs)));
         }
 
         private boolean requiresOrderingBefore(ExecutionFootprint stage) {
@@ -1932,7 +1960,7 @@ public final class TrinityPlanExecution {
                     intersects(this.positiveNetOutputs, stage.inputs);
         }
 
-        private static boolean intersects(Set<AEKey> left, Set<AEKey> right) {
+        private static boolean intersects(ObjectSet<AEKey> left, ObjectSet<AEKey> right) {
             for (AEKey key : left) {
                 if (right.contains(key)) {
                     return true;
@@ -1949,7 +1977,7 @@ public final class TrinityPlanExecution {
         private final int variantOrdinal;
         private final BigInteger plannedCount;
         private final Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> outputs;
-        private final List<TrinityBoundPatternInput> exactBindings;
+        private final ObjectList<TrinityBoundPatternInput> exactBindings;
         private BigInteger remainingCount;
         private boolean initialized;
 
@@ -1957,10 +1985,10 @@ public final class TrinityPlanExecution {
                             AEKey primaryOutput,
                             int variantOrdinal,
                             BigInteger plannedCount,
-                            Map<AEKey, BigInteger> outputs,
+                            Object2ObjectMap<AEKey, BigInteger> outputs,
                             BigInteger remainingCount,
                             boolean initialized,
-                            List<TrinityBoundPatternInput> exactBindings) {
+                            ObjectList<TrinityBoundPatternInput> exactBindings) {
             if (variantOrdinal < 0 || plannedCount.signum() <= 0 || remainingCount.signum() < 0 ||
                     (!initialized && remainingCount.signum() != 0)) {
                 throw new IllegalArgumentException("A Trinity firing state contains an invalid signature or cursor");
@@ -1972,7 +2000,7 @@ public final class TrinityPlanExecution {
             this.outputs = copyOutputs(outputs);
             this.remainingCount = remainingCount;
             this.initialized = initialized;
-            this.exactBindings = List.copyOf(exactBindings);
+            this.exactBindings = new ObjectImmutableList<>(exactBindings);
         }
 
         private static FiringState fromPlan(TrinityPlanPatternFiring firing, boolean cycle) {
@@ -1982,10 +2010,10 @@ public final class TrinityPlanExecution {
                     firing.primaryOutput(),
                     firing.variantOrdinal(),
                     count,
-                    firing.outputs(),
+                    new Object2ObjectLinkedOpenHashMap<>(firing.outputs()),
                     cycle ? BigInteger.ZERO : count,
                     !cycle,
-                    firing.exactBindings());
+                    new ObjectImmutableList<>(firing.exactBindings()));
         }
 
         private static FiringState fromSnapshot(Firing snapshot) {
@@ -1994,10 +2022,10 @@ public final class TrinityPlanExecution {
                     snapshot.primaryOutput(),
                     snapshot.variantOrdinal(),
                     snapshot.plannedCount(),
-                    snapshot.outputs(),
+                    new Object2ObjectLinkedOpenHashMap<>(snapshot.outputs()),
                     snapshot.remainingCount(),
                     snapshot.initialized(),
-                    snapshot.exactBindings());
+                    new ObjectImmutableList<>(snapshot.exactBindings()));
         }
 
         private Firing snapshot() {
@@ -2012,7 +2040,7 @@ public final class TrinityPlanExecution {
                     this.exactBindings);
         }
 
-        private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyOutputs(Map<AEKey, BigInteger> source) {
+        private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyOutputs(Object2ObjectMap<AEKey, BigInteger> source) {
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> outputs = new Object2ObjectLinkedOpenHashMap<>();
             source.forEach((key, amount) -> {
                 if (amount.signum() <= 0) {
@@ -2046,9 +2074,9 @@ public final class TrinityPlanExecution {
         private StageState(int index,
                            boolean cycle,
                            IntSet dependencies,
-                           List<FiringState> firings,
-                           Map<AEKey, BigInteger> requiredAtStart,
-                           Map<AEKey, BigInteger> netChange) {
+                           ObjectList<FiringState> firings,
+                           Object2ObjectMap<AEKey, BigInteger> requiredAtStart,
+                           Object2ObjectMap<AEKey, BigInteger> netChange) {
             if (index < 0 || firings.isEmpty()) {
                 throw new IllegalArgumentException("A Trinity stage state requires index, dependencies and firings");
             }
@@ -2068,8 +2096,8 @@ public final class TrinityPlanExecution {
                     stage.cycleStage(),
                     stage.dependencies(),
                     firings,
-                    stage.requiredAtStart(),
-                    stage.netChange());
+                    new Object2ObjectLinkedOpenHashMap<>(stage.requiredAtStart()),
+                    new Object2ObjectLinkedOpenHashMap<>(stage.netChange()));
         }
 
         private static StageState fromSnapshot(Stage snapshot, long savedAtTick, long currentTick) {
@@ -2080,8 +2108,8 @@ public final class TrinityPlanExecution {
                     snapshot.cycle(),
                     new IntLinkedOpenHashSet(snapshot.dependencies()),
                     firings,
-                    snapshot.requiredAtStart(),
-                    snapshot.netChange());
+                    new Object2ObjectLinkedOpenHashMap<>(snapshot.requiredAtStart()),
+                    new Object2ObjectLinkedOpenHashMap<>(snapshot.netChange()));
             restored.currentFiring = snapshot.currentFiring();
             restored.completed = snapshot.completed();
             restored.inputKeys.addAll(snapshot.inputKeys());
@@ -2129,7 +2157,7 @@ public final class TrinityPlanExecution {
                     this.netChange);
         }
 
-        private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyAmounts(Map<AEKey, BigInteger> source,
+        private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyAmounts(Object2ObjectMap<AEKey, BigInteger> source,
                                                                                      boolean signed,
                                                                                      String role) {
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
@@ -2147,14 +2175,14 @@ public final class TrinityPlanExecution {
 
         private final int index;
         private final IntArrayList stageOrder;
-        private final Map<AEKey, BigInteger> minimumSeed;
+        private final Object2ObjectMap<AEKey, BigInteger> minimumSeed;
         private BigInteger remainingRepetitions;
         private int cursor;
         private BigInteger waveCount;
 
         private RepeatState(int index,
                             IntList stageOrder,
-                            Map<AEKey, BigInteger> minimumSeed,
+                            Object2ObjectMap<AEKey, BigInteger> minimumSeed,
                             BigInteger remainingRepetitions,
                             int cursor,
                             BigInteger waveCount) {
@@ -2181,7 +2209,7 @@ public final class TrinityPlanExecution {
             return new RepeatState(
                     block.index(),
                     block.stageOrder(),
-                    block.minimumSeed(),
+                    new Object2ObjectLinkedOpenHashMap<>(block.minimumSeed()),
                     block.repetitions(),
                     0,
                     BigInteger.ZERO);
@@ -2206,7 +2234,7 @@ public final class TrinityPlanExecution {
                     this.waveCount);
         }
 
-        private static Map<AEKey, BigInteger> copyMinimumSeed(Map<AEKey, BigInteger> source) {
+        private static Object2ObjectMap<AEKey, BigInteger> copyMinimumSeed(Object2ObjectMap<AEKey, BigInteger> source) {
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
             source.forEach((key, amount) -> {
                 if (amount.signum() <= 0) {
@@ -2214,7 +2242,7 @@ public final class TrinityPlanExecution {
                 }
                 copied.put(key, amount);
             });
-            return Collections.unmodifiableMap(copied);
+            return Object2ObjectMaps.unmodifiable(copied);
         }
     }
 }

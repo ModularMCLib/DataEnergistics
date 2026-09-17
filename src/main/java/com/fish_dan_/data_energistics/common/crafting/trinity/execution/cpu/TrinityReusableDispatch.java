@@ -43,18 +43,19 @@ import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /** Server-thread physical handoff and directed recovery. The owning CPU ledger is the only persistent truth here. */
@@ -74,7 +75,7 @@ final class TrinityReusableDispatch {
     private final Object2ObjectOpenHashMap<CraftingProviderId, CensusStamp> checkedCustody = new Object2ObjectOpenHashMap<>();
     private @Nullable UUID ledgerOwner;
     private boolean custodyCovered = true;
-    private Map<AEKey, BigInteger> residentAmounts = Map.of();
+    private Object2ObjectMap<AEKey, BigInteger> residentAmounts = Object2ObjectMaps.emptyMap();
     private TrinityReusableStatus status = TrinityReusableStatus.EMPTY;
 
     TrinityReusableDispatch(TrinityDataCoreCpuLogic owner) {
@@ -89,18 +90,18 @@ final class TrinityReusableDispatch {
         return status;
     }
 
-    Map<AEKey, BigInteger> residentAmounts() {
+    Object2ObjectMap<AEKey, BigInteger> residentAmounts() {
         return residentAmounts;
     }
 
     void resetObservation() {
-        Set<AEKey> previousKeys = residentAmounts.keySet();
+        ObjectSet<AEKey> previousKeys = residentAmounts.keySet();
         locations.clear();
         reported.clear();
         checkedCustody.clear();
         ledgerOwner = null;
         custodyCovered = false;
-        residentAmounts = Map.of();
+        residentAmounts = Object2ObjectMaps.emptyMap();
         status = TrinityReusableStatus.EMPTY;
         owner.residentObservationChanged(previousKeys);
     }
@@ -136,11 +137,11 @@ final class TrinityReusableDispatch {
                 continue;
             }
             if (!window.canAttempt(provider, pattern)) continue;
-            List<Target> targets;
+            ObjectList<Target> targets;
             var capture = window.tryBeginProviderCapacityCapture();
             if (capture == null) break;
             try (capture) {
-                targets = List.copyOf(adapter.reusableTargetsFast(pattern, owner.cpu().actionSource(), level));
+                targets = new ObjectImmutableList<>(adapter.reusableTargetsFast(pattern, owner.cpu().actionSource(), level));
             } catch (RuntimeException failure) {
                 report(work.patternIdentity().definitionEncoding(), failure);
                 continue;
@@ -182,7 +183,7 @@ final class TrinityReusableDispatch {
                     if (prepared.replay() || prepared.count() <= 0L || prepared.count() > offer.count()) {
                         throw new IllegalStateException("Unexpected reusable admission count or receipt for a new sequence");
                     }
-                    List<SlotStack> physical = List.copyOf(prepared.physicalInputsFast());
+                    ObjectList<SlotStack> physical = new ObjectImmutableList<>(prepared.physicalInputsFast());
                     validatePhysical(recipe, physical, prepared.count(), offer.addedTools(), free);
                     CraftingDispatchTarget route = new CraftingDispatchTarget(target.route().stableIdentity());
                     if (!window.canAttemptCounted(provider, pattern, route)) {
@@ -212,7 +213,7 @@ final class TrinityReusableDispatch {
 
     private boolean commit(TrinityDataCoreExecutingCraftingJob job, Work work, TrinityReusableRecipe recipe,
                            ReusableCpuSessionLedger.OutputContract outputs, ReusableCraftingRequest request,
-                           ReusableCraftingAdmission admission, List<SlotStack> physical, double unitPower,
+                           ReusableCraftingAdmission admission, ObjectList<SlotStack> physical, double unitPower,
                            IEnergyService energy, long tick) {
         ReusableCpuSessionLedger ledger = owner.reusableLedger();
         UUID id = request.sessionId();
@@ -220,7 +221,7 @@ final class TrinityReusableDispatch {
         owner.beginReusableMutation();
         try {
             Optional<TrinityBorrowingTransaction> borrowing = owner.borrowReusableInputs(physical.stream()
-                    .filter(input -> !work.exactBindings().get(input.slot()).lifetimeBudget()).toList());
+                    .filter(input -> !work.exactBindings().get(input.slot()).lifetimeBudget()).collect(ObjectImmutableList.toList()));
             if (borrowing.isEmpty()) {
                 return false;
             }
@@ -291,10 +292,10 @@ final class TrinityReusableDispatch {
         }
         checkVisibleCustody(index, ledger);
         if (ledger.hasRemoteEvidence()) {
-            publishStatus(List.of());
+            publishStatus(ObjectList.of());
             return;
         }
-        List<Located> found = new ObjectArrayList<>();
+        ObjectList<Located> found = new ObjectArrayList<>();
         for (Session session : ledger.sessions()) {
             if (session.settled()) continue;
             try {
@@ -346,11 +347,11 @@ final class TrinityReusableDispatch {
         publishStatus(found);
     }
 
-    private void publishStatus(List<Located> found) {
+    private void publishStatus(ObjectList<Located> found) {
         ReusableCpuSessionLedger ledger = owner.reusableLedger();
         int sessions = 0;
         for (Session session : ledger.sessions()) if (!session.settled()) sessions++;
-        Map<AEKey, BigInteger> amounts = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<AEKey, BigInteger> amounts = new Object2ObjectOpenHashMap<>();
         BigInteger held = BigInteger.ZERO;
         BigInteger spares = BigInteger.ZERO;
         Phase phase = Phase.NONE;
@@ -394,9 +395,9 @@ final class TrinityReusableDispatch {
         TrinityReusableStatus next = new TrinityReusableStatus(phase, sessions, held, spares, diagnostic);
         status = next;
         if (!residentAmounts.equals(amounts)) {
-            Set<AEKey> changed = new ObjectOpenHashSet<>(residentAmounts.keySet());
+            ObjectSet<AEKey> changed = new ObjectOpenHashSet<>(residentAmounts.keySet());
             changed.addAll(amounts.keySet());
-            residentAmounts = Collections.unmodifiableMap(amounts);
+            residentAmounts = Object2ObjectMaps.unmodifiable(amounts);
             owner.residentObservationChanged(changed);
         }
     }
@@ -422,7 +423,7 @@ final class TrinityReusableDispatch {
     /** Covers current visible providers, not forgotten or unloaded sources outside this Grid's publication set. */
     private void checkVisibleCustody(CraftingProviderPublicationIndex index, ReusableCpuSessionLedger ledger) {
         custodyCovered = true;
-        List<CraftingProviderId> current = index.providerIds();
+        ObjectList<CraftingProviderId> current = new ObjectImmutableList<>(index.providerIds());
         checkedCustody.keySet().retainAll(current);
         for (CraftingProviderId id : current) {
             ICraftingProvider provider = index.resolveLiveProvider(id);
@@ -462,7 +463,7 @@ final class TrinityReusableDispatch {
     }
 
     /** A blocked incompatible firing may need a real tool held by this job, not additional network material. */
-    void releaseToolsFor(TrinityDataCoreExecutingCraftingJob job, Work work, Set<AEKey> missing) {
+    void releaseToolsFor(TrinityDataCoreExecutingCraftingJob job, Work work, ObjectSet<AEKey> missing) {
         ReusableCpuSessionLedger ledger = owner.reusableLedger();
         for (Session session : ledger.sessions()) {
             if (session.settled() || session.closing() || !session.jobId().equals(job.link.getCraftingID()) ||
@@ -518,7 +519,7 @@ final class TrinityReusableDispatch {
         free.defaultReturnValue(ResidentTools.EMPTY);
         if (view == null) return free;
         for (var required : recipe.tools()) {
-            List<GenericStack> heldTools = new ObjectArrayList<>();
+            ObjectList<GenericStack> heldTools = new ObjectArrayList<>();
             for (SlotStack held : view.heldToolsFast()) {
                 if (held.slot() == required.slot() && required.accepts(held.stack().what())) heldTools.add(held.stack());
             }
@@ -533,13 +534,13 @@ final class TrinityReusableDispatch {
                     }
                 }
             }
-            free.put(required.slot(), new ResidentTools(List.copyOf(heldTools), committed));
+            free.put(required.slot(), new ResidentTools(new ObjectImmutableList<>(heldTools), committed));
         }
         return free;
     }
 
-    private static void validatePhysical(TrinityReusableRecipe recipe, List<SlotStack> physical, long count,
-                                         List<SlotStack> offered, Int2ObjectOpenHashMap<ResidentTools> resident) {
+    private static void validatePhysical(TrinityReusableRecipe recipe, ObjectList<SlotStack> physical, long count,
+                                         ObjectList<SlotStack> offered, Int2ObjectOpenHashMap<ResidentTools> resident) {
         for (int slot = 0; slot < recipe.inputs().size(); slot++) {
             Object2LongLinkedOpenHashMap<AEKey> amounts = new Object2LongLinkedOpenHashMap<>();
             for (SlotStack item : physical) {
@@ -557,7 +558,7 @@ final class TrinityReusableDispatch {
                 int toolSlot = slot;
                 var tool = recipe.tools().stream().filter(value -> value.slot() == toolSlot).findFirst().orElseThrow();
                 var held = resident.get(slot);
-                List<GenericStack> total = new ObjectArrayList<>(held.tools());
+                ObjectList<GenericStack> total = new ObjectArrayList<>(held.tools());
                 for (var supplied : amounts.object2LongEntrySet()) {
                     long offeredCount = 0L;
                     for (SlotStack item : offered) if (item.slot() == slot && item.stack().what().equals(supplied.getKey())) {
@@ -577,16 +578,16 @@ final class TrinityReusableDispatch {
         }
     }
 
-    static List<GenericStack> totals(List<SlotStack> physical) {
+    static ObjectList<GenericStack> totals(ObjectList<SlotStack> physical) {
         Object2LongLinkedOpenHashMap<AEKey> counts = new Object2LongLinkedOpenHashMap<>();
         physical.forEach(value -> counts.mergeLong(value.stack().what(), value.stack().amount(), Math::addExact));
-        return counts.object2LongEntrySet().stream().map(entry -> new GenericStack(entry.getKey(), entry.getLongValue())).toList();
+        return counts.object2LongEntrySet().stream().map(entry -> new GenericStack(entry.getKey(), entry.getLongValue())).collect(ObjectImmutableList.toList());
     }
 
-    private static boolean sameDelivery(KeyCounter[] counters, List<SlotStack> physical) {
+    private static boolean sameDelivery(KeyCounter[] counters, ObjectList<SlotStack> physical) {
         KeyCounter remaining = new KeyCounter();
         for (KeyCounter counter : counters) remaining.addAll(counter);
-        List<GenericStack> expected = totals(physical);
+        ObjectList<GenericStack> expected = totals(physical);
         return remaining.size() == expected.size() && expected.stream().allMatch(stack -> remaining.get(stack.what()) == stack.amount());
     }
 

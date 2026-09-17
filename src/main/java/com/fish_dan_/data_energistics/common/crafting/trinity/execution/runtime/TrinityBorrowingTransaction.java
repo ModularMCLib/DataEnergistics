@@ -13,10 +13,10 @@ import appeng.crafting.inv.ListCraftingInventory;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -58,7 +58,7 @@ public final class TrinityBorrowingTransaction {
     private final IActionSource source;
     private final int cpuNumber;
     private final Consumer<AEKey> changeListener;
-    private final Map<AEKey, BigInteger> reservedBefore = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<AEKey, BigInteger> reservedBefore = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2LongMap<AEKey> ownedReservations = new Object2LongLinkedOpenHashMap<>();
 
     TrinityBorrowingTransaction(MEStorage network,
@@ -109,34 +109,48 @@ public final class TrinityBorrowingTransaction {
      * @param inputsPerCraft exact bound inputs for one logical firing
      * @param count          accepted firing count
      */
-    public void commitConsumed(List<GenericStack> inputsPerCraft, long count) {
-        if (count <= 0L) {
+    public void commitConsumed(ObjectList<GenericStack> inputsPerCraft, long count) {
+        commitConsumed(inputsPerCraft, BigInteger.valueOf(count));
+    }
+
+    /**
+     * Commits exact bound consumption after provider ownership; only this transaction's physically borrowed portion
+     * is long-sized. Retained reservations from earlier dispatches keep their full precision.
+     */
+    public void commitConsumed(ObjectList<GenericStack> inputsPerCraft, BigInteger count) {
+        if (count.signum() <= 0) {
             throw new IllegalArgumentException("A committed dynamic borrowing dispatch must be positive");
         }
-        Object2LongLinkedOpenHashMap<AEKey> consumed = new Object2LongLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> consumed = new Object2ObjectLinkedOpenHashMap<>();
         for (GenericStack input : inputsPerCraft) {
-            long amount = Math.multiplyExact(input.amount(), count);
-            consumed.mergeLong(input.what(), amount, Math::addExact);
+            BigInteger amount = BigInteger.valueOf(input.amount()).multiply(count);
+            consumed.merge(input.what(), amount, BigInteger::add);
         }
         consumed.forEach(this::commitBorrowedPortion);
     }
 
-    private void commitBorrowedPortion(AEKey key, long consumed) {
+    private void commitBorrowedPortion(AEKey key, BigInteger consumed) {
         BigInteger reserved = this.ledger.amount(key, TrinityBorrowingLedger.State.RESERVED);
-        long committed = reserved.min(BigInteger.valueOf(consumed)).longValueExact();
-        if (committed == 0L) {
+        BigInteger committed = reserved.min(consumed);
+        if (committed.signum() == 0) {
             return;
         }
-        this.ledger.commit(key, committed);
         BigInteger earlierReservation = this.reservedBefore.getOrDefault(key, reserved);
-        long ownedCommitted = BigInteger.valueOf(committed)
-                .subtract(earlierReservation.min(BigInteger.valueOf(committed)))
+        long ownedCommitted = committed
+                .subtract(earlierReservation.min(committed))
                 .longValueExact();
+        long owned = this.ownedReservations.getOrDefault(key, 0L);
+        if (ownedCommitted > owned) {
+            throw new IllegalStateException("A committed borrowing amount exceeds this transaction's ownership");
+        }
+        long remaining = Math.subtractExact(owned, ownedCommitted);
+        this.ledger.commit(key, committed);
+        if (this.reservedBefore.containsKey(key)) {
+            this.reservedBefore.put(key, earlierReservation.subtract(earlierReservation.min(committed)));
+        }
         if (ownedCommitted == 0L) {
             return;
         }
-        long owned = this.ownedReservations.getOrDefault(key, 0L);
-        long remaining = Math.subtractExact(owned, ownedCommitted);
         if (remaining == 0L) {
             this.ownedReservations.removeLong(key);
         } else {

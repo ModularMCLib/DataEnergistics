@@ -7,12 +7,12 @@ import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /** Moves final delivery out of a completed job's working inventory without changing physical components. */
 public final class TrinityCompletionInputExtractor {
@@ -20,8 +20,8 @@ public final class TrinityCompletionInputExtractor {
     private TrinityCompletionInputExtractor() {}
 
     /** Returns the exact delivery slices, or leaves inventory untouched when the whole delivery is unavailable. */
-    public static @Nullable Map<AEKey, BigInteger> extract(TrinitySameItemPolicy policy, AEKey target, BigInteger amount,
-                                                           ListCraftingInventory inventory, TrinityExactWorkingInventory exactInventory) {
+    public static @Nullable Object2ObjectMap<AEKey, BigInteger> extract(TrinitySameItemPolicy policy, AEKey target, BigInteger amount,
+                                                                        ListCraftingInventory inventory, TrinityExactWorkingInventory exactInventory) {
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("A completion extraction amount must not be negative");
         }
@@ -55,6 +55,6 @@ public final class TrinityCompletionInputExtractor {
             return null;
         }
         slices.forEach((key, quantity) -> exactInventory.discard(key, quantity, inventory));
-        return Collections.unmodifiableMap(slices);
+        return Object2ObjectMaps.unmodifiable(slices);
     }
 }

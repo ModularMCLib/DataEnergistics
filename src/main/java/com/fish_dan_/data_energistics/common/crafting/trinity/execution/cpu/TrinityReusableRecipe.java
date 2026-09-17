@@ -25,11 +25,12 @@ import net.minecraft.server.level.ServerLevel;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -48,41 +49,41 @@ final class TrinityReusableRecipe {
         }
     }
 
-    record ResidentTools(List<GenericStack> tools, long committed) {
+    record ResidentTools(ObjectList<GenericStack> tools, long committed) {
 
-        static final ResidentTools EMPTY = new ResidentTools(List.of(), 0L);
+        static final ResidentTools EMPTY = new ResidentTools(ObjectList.of(), 0L);
     }
 
-    record Offer(long count, List<SlotStack> addedTools) {}
+    record Offer(long count, ObjectList<SlotStack> addedTools) {}
 
     private final IPatternDetails pattern;
-    private final List<TrinityBoundPatternInput> bindings;
-    private final List<GenericStack> exactInputs;
-    private final List<Input> inputs;
-    private final List<ToolSlot> tools;
-    private final List<GenericStack> ordinaryRemainders;
+    private final ObjectList<TrinityBoundPatternInput> bindings;
+    private final ObjectList<GenericStack> exactInputs;
+    private final ObjectList<Input> inputs;
+    private final ObjectList<ToolSlot> tools;
+    private final ObjectList<GenericStack> ordinaryRemainders;
     private final Optional<ResourceLocation> recipeId;
 
-    TrinityReusableRecipe(IPatternDetails pattern, List<TrinityBoundPatternInput> bindings, Optional<ResourceLocation> recipeId) {
+    TrinityReusableRecipe(IPatternDetails pattern, ObjectList<TrinityBoundPatternInput> bindings, Optional<ResourceLocation> recipeId) {
         this.pattern = pattern;
-        this.bindings = List.copyOf(bindings);
+        this.bindings = new ObjectImmutableList<>(bindings);
         this.recipeId = recipeId;
-        List<GenericStack> exact = new ObjectArrayList<>();
-        List<Input> requirements = new ObjectArrayList<>();
-        List<ToolSlot> held = new ObjectArrayList<>();
-        List<GenericStack> remainders = new ObjectArrayList<>();
+        ObjectList<GenericStack> exact = new ObjectArrayList<>();
+        ObjectList<Input> requirements = new ObjectArrayList<>();
+        ObjectList<ToolSlot> held = new ObjectArrayList<>();
+        ObjectList<GenericStack> remainders = new ObjectArrayList<>();
         for (TrinityBoundPatternInput binding : bindings) {
             long amount = binding.consumedAmount().longValueExact();
             GenericStack input = new GenericStack(binding.template().what(), amount);
             exact.add(input);
             if (binding.reusableRule() == null) {
-                requirements.add(new Input(binding.slotIndex(), List.of(input), Optional.empty()));
+                requirements.add(new Input(binding.slotIndex(), ObjectList.of(input), Optional.empty()));
                 if (binding.remainingKey() != null) {
                     remainders.add(new GenericStack(binding.remainingKey(), binding.remainingAmount().longValueExact()));
                 }
             } else {
                 AEItemKey state = (AEItemKey) input.what();
-                requirements.add(new Input(binding.slotIndex(), List.of(), Optional.of(
+                requirements.add(new Input(binding.slotIndex(), ObjectList.of(), Optional.of(
                         new Tool(amount, Ownership.CPU_SUPPLIED, binding.reusableRule(), binding.lifetimeBudget() ? Optional.empty() : Optional.of(state)))));
                 held.add(new ToolSlot(binding.slotIndex(), state, amount,
                         state.equals(binding.reusableRule().advance(state, 1L).successor()), binding.reusableRule(), binding.lifetimeBudget()));
@@ -91,10 +92,10 @@ final class TrinityReusableRecipe {
                 }
             }
         }
-        this.exactInputs = List.copyOf(exact);
-        this.inputs = List.copyOf(requirements);
-        this.tools = List.copyOf(held);
-        this.ordinaryRemainders = List.copyOf(remainders);
+        this.exactInputs = new ObjectImmutableList<>(exact);
+        this.inputs = new ObjectImmutableList<>(requirements);
+        this.tools = new ObjectImmutableList<>(held);
+        this.ordinaryRemainders = new ObjectImmutableList<>(remainders);
     }
 
     boolean matches(Target target, IActionSource source, ServerLevel level, ReusableInputRules rules) {
@@ -120,19 +121,19 @@ final class TrinityReusableRecipe {
         return NativeReusableCrafting.matches(pattern, exactInputs, reusable, recipeId, level);
     }
 
-    List<Input> inputs() {
+    ObjectList<Input> inputs() {
         return inputs;
     }
 
-    List<ToolSlot> tools() {
+    ObjectList<ToolSlot> tools() {
         return tools;
     }
 
-    List<GenericStack> ordinaryRemainders() {
+    ObjectList<GenericStack> ordinaryRemainders() {
         return ordinaryRemainders;
     }
 
-    List<GenericStack> exactInputs() {
+    ObjectList<GenericStack> exactInputs() {
         return exactInputs;
     }
 
@@ -150,10 +151,10 @@ final class TrinityReusableRecipe {
     Offer offer(long maximum, KeyCounter available, Function<ToolSlot, ResidentTools> residentTools) {
         long lower = 0L;
         long upper = maximum;
-        List<SlotStack> selected = List.of();
+        ObjectList<SlotStack> selected = ObjectList.of();
         while (lower < upper) {
             long count = lower + ((upper - lower) >>> 1) + 1L;
-            List<SlotStack> candidate = toolsFor(count, available, residentTools);
+            ObjectList<SlotStack> candidate = toolsFor(count, available, residentTools);
             if (candidate != null) {
                 lower = count;
                 selected = candidate;
@@ -162,14 +163,14 @@ final class TrinityReusableRecipe {
             }
         }
         if (lower == 0L) {
-            return new Offer(0L, List.of());
+            return new Offer(0L, ObjectList.of());
         }
-        return new Offer(lower, List.copyOf(selected));
+        return new Offer(lower, new ObjectImmutableList<>(selected));
     }
 
-    private @Nullable List<SlotStack> toolsFor(long count, KeyCounter available, Function<ToolSlot, ResidentTools> residentTools) {
+    private @Nullable ObjectList<SlotStack> toolsFor(long count, KeyCounter available, Function<ToolSlot, ResidentTools> residentTools) {
         Object2LongLinkedOpenHashMap<AEKey> needed = new Object2LongLinkedOpenHashMap<>();
-        List<SlotStack> added = new ObjectArrayList<>();
+        ObjectList<SlotStack> added = new ObjectArrayList<>();
         try {
             for (Input input : inputs) {
                 for (GenericStack consumed : input.consumedPerOperationFast()) {
@@ -181,7 +182,7 @@ final class TrinityReusableRecipe {
                 BigInteger operations = BigInteger.valueOf(count).add(BigInteger.valueOf(resident.committed()));
                 BigInteger missing = remainingCapacity(tool, resident.tools(), operations);
                 if (missing.signum() <= 0) continue;
-                List<GenericStack> candidates = new ObjectArrayList<>();
+                ObjectList<GenericStack> candidates = new ObjectArrayList<>();
                 for (var entry : available) {
                     if (tool.accepts(entry.getKey())) {
                         long free = entry.getLongValue() - Math.min(entry.getLongValue(), needed.getLong(entry.getKey()));
@@ -211,7 +212,7 @@ final class TrinityReusableRecipe {
         return added;
     }
 
-    static BigInteger remainingCapacity(ToolSlot tool, List<GenericStack> tools, BigInteger operations) {
+    static BigInteger remainingCapacity(ToolSlot tool, ObjectList<GenericStack> tools, BigInteger operations) {
         BigInteger missing = operations.multiply(BigInteger.valueOf(tool.held()));
         for (GenericStack held : tools) {
             if (tool.accepts(held.what())) {

@@ -5,6 +5,8 @@ import com.fish_dan_.data_energistics.ae2.grid.ExactExtractableStorage;
 import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess.FiniteTransferResult;
 import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess.FiniteTransferTarget;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.BigIntegerCraftingAdmission;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.BigIntegerCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
@@ -32,6 +34,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTargetAvailability;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.MachineTargetId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityCraftingRuntimeRegistry;
@@ -99,21 +102,21 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -138,14 +141,14 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
     private final IStorageWatcherNode transferWatcherNode = new TransferWatcherNode();
     private final IActionSource transferActionSource = new MachineSource(this);
     private final ObjectArrayFIFOQueue<AEKey> transferQueue = new ObjectArrayFIFOQueue<>();
-    private final Set<AEKey> queuedTransferKeys = new ObjectOpenHashSet<>();
+    private final ObjectSet<AEKey> queuedTransferKeys = new ObjectOpenHashSet<>();
     private final ConfigManager craftingStatusConfig = new ConfigManager(this::saveChanges);
-    private final Set<PatternContainer> managedTerminalPartitions = new ReferenceOpenHashSet<>();
+    private final ReferenceSet<PatternContainer> managedTerminalPartitions = new ReferenceOpenHashSet<>();
     @Nullable
     private TrinityInformationExchangeDepotBindingState compartmentBindingState;
     @Nullable
     private String lastUnavailableReason;
-    private List<TrinityPatternTerminalPartition> terminalPartitions = List.of();
+    private ObjectList<TrinityPatternTerminalPartition> terminalPartitions = ObjectList.of();
     private boolean terminalPartitionsDirty = true;
     private boolean terminalPartitionAttachmentCheckRequested = true;
     private boolean gridBootReevaluationPending;
@@ -183,14 +186,14 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                 .addService(ICraftingProvider.class, this.craftingProvider)
                 .addService(IStorageWatcherNode.class, this.transferWatcherNode)
                 .setFlags(GridFlags.REQUIRE_CHANNEL)
-                .setExposedOnSides(EnumSet.allOf(Direction.class))
+                .setExposedOnSides(new ObjectOpenHashSet<>(Direction.values()))
                 .setVisualRepresentation(DEBlocks.TRINITY_INFORMATION_EXCHANGE_DEPOT.get())
                 .setIdlePowerUsage(0.0D);
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return EnumSet.allOf(Direction.class);
+    public ObjectSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
+        return new ObjectOpenHashSet<>(Direction.values());
     }
 
     @Override
@@ -402,7 +405,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
      */
     private void discardShutdownPublications() {
         this.terminalPartitionsDirty = false;
-        this.terminalPartitions = List.of();
+        this.terminalPartitions = ObjectList.of();
         this.managedTerminalPartitions.clear();
         this.terminalPartitionHostId = null;
         this.terminalPartitionGrid = null;
@@ -962,7 +965,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
     /**
      * Returns the immutable set of terminal partitions currently owned by this hatch.
      */
-    public List<TrinityPatternTerminalPartition> terminalPartitions() {
+    public ObjectList<TrinityPatternTerminalPartition> terminalPartitions() {
         return this.terminalPartitions;
     }
 
@@ -1182,15 +1185,15 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                 return;
             }
         }
-        List<TrinityPatternTerminalPartition> desired = TrinityPatternTerminalPartition.createLayout(
+        ObjectList<TrinityPatternTerminalPartition> desired = TrinityPatternTerminalPartition.createLayout(
                 host.getPatternCatalog(),
                 terminalGroup());
-        Map<TrinityPatternTerminalPartition.PartitionKey, TrinityPatternTerminalPartition> existingByKey = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<TrinityPatternTerminalPartition.PartitionKey, TrinityPatternTerminalPartition> existingByKey = new Object2ObjectOpenHashMap<>();
         for (TrinityPatternTerminalPartition existing : this.terminalPartitions) {
             existingByKey.put(existing.key(), existing);
         }
 
-        List<TrinityPatternTerminalPartition> reconciled = desired.stream().map(next -> {
+        ObjectList<TrinityPatternTerminalPartition> reconciled = desired.stream().map(next -> {
             TrinityPatternTerminalPartition existing = existingByKey.remove(next.key());
             if (existing != null && existing.hasSameLayout(next)) {
                 return existing;
@@ -1199,12 +1202,12 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                 existing.detach();
             }
             return next;
-        }).toList();
+        }).collect(ObjectImmutableList.toList());
         for (TrinityPatternTerminalPartition removed : existingByKey.values()) {
             removed.detach();
         }
 
-        this.terminalPartitions = List.copyOf(reconciled);
+        this.terminalPartitions = new ObjectImmutableList<>(reconciled);
         this.managedTerminalPartitions.clear();
         this.managedTerminalPartitions.addAll(this.terminalPartitions);
         for (TrinityPatternTerminalPartition partition : this.terminalPartitions) {
@@ -1230,14 +1233,14 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
 
     private PatternContainerGroup terminalGroup() {
         AEItemKey icon = AEItemKey.of(DEBlocks.TRINITY_DATA_CORE.get());
-        return new PatternContainerGroup(icon, DEBlocks.TRINITY_DATA_CORE.get().getName(), List.of());
+        return new PatternContainerGroup(icon, DEBlocks.TRINITY_DATA_CORE.get().getName(), ObjectList.of());
     }
 
     private void detachTerminalPartitions() {
         for (TrinityPatternTerminalPartition partition : this.terminalPartitions) {
             partition.detach();
         }
-        this.terminalPartitions = List.of();
+        this.terminalPartitions = ObjectList.of();
         this.managedTerminalPartitions.clear();
         this.terminalPartitionHostId = null;
         this.terminalPartitionGrid = null;
@@ -1633,7 +1636,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         }
     }
 
-    private final class HatchCraftingProvider implements TargetedCountedCraftingProvider, ReusableCraftingProviderAdapter {
+    private final class HatchCraftingProvider implements TargetedCountedCraftingProvider, BigIntegerCraftingProviderAdapter, ReusableCraftingProviderAdapter {
 
         private final ReusableCustodyAggregation custodyCoverage = new ReusableCustodyAggregation();
 
@@ -1717,11 +1720,11 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
             TrinityDataCoreBlockEntity host = boundHost(false);
             if (host == null || !host.isLeaseOwner(TrinityInformationExchangeDepotBlockEntity.this)) {
                 // Standby hatches own no execution scope; the elected hatch reports the mounted cores.
-                return this.custodyCoverage.census(cpuOwner, true, List.of());
+                return this.custodyCoverage.census(cpuOwner, true, ObjectList.of());
             }
             var catalog = host.getPatternCatalog();
             boolean complete = catalog.layoutSnapshot().active();
-            List<ReusableCraftingCustodyCensus> sources = new ObjectArrayList<>();
+            ObjectList<ReusableCraftingCustodyCensus> sources = new ObjectArrayList<>();
             for (var mount : catalog.mountedCores()) {
                 if (mount.core() instanceof TrinityPatternCoreBlockEntity core && level.isLoaded(core.getBlockPos()) &&
                         level.getBlockEntity(core.getBlockPos()) == core) {
@@ -1787,9 +1790,9 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         private record ReusableLocation(TrinityPatternCoreBlockEntity core, TrinityReusableSlot slot) {}
 
         @Override
-        public List<IPatternDetails> getAvailablePatterns() {
+        public ObjectList<IPatternDetails> getAvailablePatterns() {
             TrinityDataCoreBlockEntity host = patternProviderHost();
-            return host == null ? List.of() : host.getPatternCatalog().getAvailablePatterns();
+            return host == null ? ObjectList.of() : host.getPatternCatalog().getAvailablePatterns();
         }
 
         @Override
@@ -1864,24 +1867,24 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         }
 
         @Override
-        public List<ProviderCapacitySnapshot> snapshotCapacity(
-                                                               CraftingProviderId providerId,
-                                                               IPatternDetails patternDetails,
-                                                               KeyCounter[] prototype,
-                                                               long requestedCrafts,
-                                                               String patternIdentity,
-                                                               long publicationRevision,
-                                                               long capacityRevision,
-                                                               long captureTick) {
+        public ObjectList<ProviderCapacitySnapshot> snapshotCapacity(
+                                                                     CraftingProviderId providerId,
+                                                                     IPatternDetails patternDetails,
+                                                                     KeyCounter[] prototype,
+                                                                     long requestedCrafts,
+                                                                     String patternIdentity,
+                                                                     long publicationRevision,
+                                                                     long capacityRevision,
+                                                                     long captureTick) {
             TrinityDataCoreBlockEntity host = patternProviderHost();
             if (host == null || level == null || level.isClientSide() ||
                     !host.getPatternCatalog().getAvailablePatterns().contains(patternDetails)) {
-                return List.of();
+                return ObjectList.of();
             }
-            return List.of(new ProviderCapacitySnapshot(
+            return ObjectList.of(new ProviderCapacitySnapshot(
                     providerId,
                     CRAFTING_CATALOG_TARGET,
-                    Optional.empty(),
+                    Optional.of(MachineTargetId.forBlockEntity(level.dimension(), host.getBlockPos())),
                     patternIdentity,
                     publicationRevision,
                     capacityRevision,
@@ -1905,6 +1908,22 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         }
 
         @Override
+        public @Nullable BigIntegerCraftingAdmission prepareBigIntegerBatch(IPatternDetails patternDetails,
+                                                                            KeyCounter[] prototype,
+                                                                            BigInteger requestedCount,
+                                                                            CountedCraftingTarget target) {
+            TrinityDataCoreBlockEntity host = patternProviderHost();
+            if (host == null || level == null || level.isClientSide() ||
+                    !target.equals(CountedCraftingTarget.machine(CRAFTING_CATALOG_TARGET.stableIdentity(),
+                            MachineTargetId.forBlockEntity(level.dimension(), host.getBlockPos()).stableIdentity()))) {
+                return null;
+            }
+            CraftingAdmissionToken token = host.issueCraftingAdmission(
+                    TrinityInformationExchangeDepotBlockEntity.this, patternDetails, level.getGameTime(), requestedCount);
+            return token == null ? null : new HatchCraftingAdmission(host, token, prototype);
+        }
+
+        @Override
         public boolean isBusy() {
             return false;
         }
@@ -1913,7 +1932,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
     /**
      * Commits the full logical batch to the exact Trinity catalog selected during admission.
      */
-    private static final class HatchCraftingAdmission implements CountedCraftingAdmission {
+    private static final class HatchCraftingAdmission implements BigIntegerCraftingAdmission {
 
         private final TrinityDataCoreBlockEntity host;
         private final CraftingAdmissionToken token;
@@ -1929,8 +1948,8 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         }
 
         @Override
-        public long count() {
-            return this.token.count();
+        public BigInteger exactCount() {
+            return this.token.exactCount();
         }
 
         @Override

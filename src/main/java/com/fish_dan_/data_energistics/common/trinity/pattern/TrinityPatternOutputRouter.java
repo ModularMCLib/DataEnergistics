@@ -5,10 +5,14 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;
 
+import java.math.BigInteger;
+
 /**
  * Routes ordered Trinity crafting output batches without allowing CPU-reserved items to leak into general storage.
  */
 public final class TrinityPatternOutputRouter {
+
+    private static final BigInteger PHYSICAL_CHUNK = BigInteger.valueOf(Long.MAX_VALUE);
 
     /**
      * Describes the externally visible effects committed during one routing pass.
@@ -78,7 +82,8 @@ public final class TrinityPatternOutputRouter {
      * Routes each pending entry to waiting CPUs first and only offers its non-requested portion to main storage.
      * Pending order is significant: when an entry retains a CPU-requested amount, the router ends the pass without
      * advancing the cursor. The current entry's non-requested portion may still enter main storage before that barrier.
-     * A remainder caused only by main-storage capacity does not block later entries.
+     * A remainder caused only by main-storage capacity does not block later entries. Each pass offers at most one
+     * long-sized chunk from each existing entry; any exact tail remains in its authoritative entry.
      *
      * @param pending         exclusive cursor over authoritative route-owned outputs
      * @param requestedAmount lease-grid CPU request lookup
@@ -95,7 +100,7 @@ public final class TrinityPatternOutputRouter {
         while (pending.advance()) {
             TrinityItemAmount output = pending.current();
             AEItemKey key = output.key();
-            long amount = output.amount();
+            long amount = output.exactAmount().min(PHYSICAL_CHUNK).longValueExact();
             long requestedBefore = checkedRequestedAmount(requestedAmount.get(key));
             long cpuOffer = Math.min(amount, requestedBefore);
             long insertedIntoCpu = insertTwoPhase(cpuSink, key, cpuOffer, "crafting CPU");
@@ -113,6 +118,11 @@ public final class TrinityPatternOutputRouter {
                 storageChanged = true;
             }
             if (requestedRemainder > 0L) {
+                return new RouteResult(progressed, storageChanged);
+            }
+            if (requestedBefore == Long.MAX_VALUE && output.exactAmount().compareTo(PHYSICAL_CHUNK) > 0) {
+                // A saturated AE request cannot describe the exact reserved tail. Re-query it on the next pass before
+                // advancing to another entry or deciding that any part of that tail belongs to main storage.
                 return new RouteResult(progressed, storageChanged);
             }
         }

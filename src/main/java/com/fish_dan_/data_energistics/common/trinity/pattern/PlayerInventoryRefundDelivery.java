@@ -12,19 +12,24 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.math.BigInteger;
 
 /** Default AE-network, player-inventory, then world-drop implementation of {@link TrinityRefundDelivery}. */
 public final class PlayerInventoryRefundDelivery implements TrinityRefundDelivery {
+
+    private static final BigInteger PHYSICAL_CHUNK = BigInteger.valueOf(Long.MAX_VALUE);
+    private static final int MAX_STACK_DELIVERIES = 64;
 
     private final Player player;
     @Nullable
     private final MEStorage networkStorage;
     @Nullable
     private final IActionSource actionSource;
-    private List<TrinityItemAmount> preparedItems = List.of();
+    private ObjectList<TrinityItemAmount> preparedItems = ObjectList.of();
     private boolean prepared;
     private boolean delivered;
 
@@ -44,50 +49,54 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
     }
 
     @Override
-    public boolean prepare(List<TrinityItemAmount> items) {
+    public boolean prepare(ObjectList<TrinityItemAmount> items) {
         if (this.prepared || this.player.level().isClientSide() || items.isEmpty()) {
             return false;
         }
-        this.preparedItems = List.copyOf(items);
+        this.preparedItems = new ObjectImmutableList<>(items);
         this.prepared = true;
         return true;
     }
 
     @Override
-    public List<TrinityItemAmount> deliver(List<TrinityItemAmount> items) {
+    public ObjectList<TrinityItemAmount> deliver(ObjectList<TrinityItemAmount> items) {
         if (!this.prepared || this.delivered || !this.preparedItems.equals(items)) {
             throw new IllegalStateException("Trinity refund delivery was not prepared for this aggregate");
         }
         this.delivered = true;
         for (int index = 0; index < items.size(); index++) {
             TrinityItemAmount item = items.get(index);
-            long remaining = deliverItem(item);
-            if (remaining > 0L) {
+            BigInteger remaining = deliverItem(item);
+            if (remaining.signum() > 0) {
                 ObjectArrayList<TrinityItemAmount> undelivered = new ObjectArrayList<>(items.size() - index);
                 undelivered.add(item.withAmount(remaining));
                 undelivered.addAll(items.subList(index + 1, items.size()));
-                return List.copyOf(undelivered);
+                return new ObjectImmutableList<>(undelivered);
             }
         }
-        return List.of();
+        return ObjectList.of();
     }
 
-    private long deliverItem(TrinityItemAmount item) {
-        long remaining = insertIntoNetwork(item);
-        if (remaining > 0L) {
-            remaining = insertIntoPlayerInventory(item.key(), remaining);
+    private BigInteger deliverItem(TrinityItemAmount item) {
+        BigInteger remaining = insertIntoNetwork(item);
+        if (remaining.signum() > 0) {
+            long offered = remaining.min(PHYSICAL_CHUNK).longValueExact();
+            long undelivered = insertIntoPlayerInventory(item.key(), offered);
+            remaining = remaining.subtract(BigInteger.valueOf(offered - undelivered));
         }
-        if (remaining > 0L) {
-            remaining = dropRemainder(item.key(), remaining);
+        if (remaining.signum() > 0) {
+            long offered = remaining.min(PHYSICAL_CHUNK).longValueExact();
+            long undelivered = dropRemainder(item.key(), offered);
+            remaining = remaining.subtract(BigInteger.valueOf(offered - undelivered));
         }
         return remaining;
     }
 
-    private long insertIntoNetwork(TrinityItemAmount item) {
+    private BigInteger insertIntoNetwork(TrinityItemAmount item) {
         if (this.networkStorage == null || this.actionSource == null) {
-            return item.amount();
+            return item.exactAmount();
         }
-        long offered = item.amount();
+        long offered = item.exactAmount().min(PHYSICAL_CHUNK).longValueExact();
         long inserted;
         try {
             inserted = this.networkStorage.insert(
@@ -100,13 +109,13 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
                     "Failed to insert Trinity refund item {} into the selected AE network; trying player inventory",
                     item,
                     exception);
-            return item.amount();
+            return item.exactAmount();
         }
         if (inserted < 0L || inserted > offered) {
             throw new IllegalStateException("AE storage accepted invalid Trinity refund amount " + inserted +
                     " for offer " + offered);
         }
-        return offered - inserted;
+        return item.exactAmount().subtract(BigInteger.valueOf(inserted));
     }
 
     private long insertIntoPlayerInventory(AEItemKey key, long amount) {
@@ -115,7 +124,8 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
         }
         int maximumStackSize = key.toStack(1).getMaxStackSize();
         long remaining = amount;
-        while (remaining > 0L) {
+        int stacks = 0;
+        while (remaining > 0L && stacks++ < MAX_STACK_DELIVERIES) {
             int offered = (int) Math.min(remaining, maximumStackSize);
             ItemStack stack = key.toStack(offered);
             try {
@@ -134,19 +144,20 @@ public final class PlayerInventoryRefundDelivery implements TrinityRefundDeliver
                 return remaining;
             }
         }
-        return 0L;
+        return remaining;
     }
 
     private long dropRemainder(AEItemKey key, long amount) {
         long remaining = amount;
-        while (remaining > 0L) {
+        int stacks = 0;
+        while (remaining > 0L && stacks++ < MAX_STACK_DELIVERIES) {
             int count = (int) Math.min(remaining, Integer.MAX_VALUE);
             if (!dropStack(key.toStack(count))) {
                 return remaining;
             }
             remaining -= count;
         }
-        return 0L;
+        return remaining;
     }
 
     private boolean dropStack(ItemStack stack) {

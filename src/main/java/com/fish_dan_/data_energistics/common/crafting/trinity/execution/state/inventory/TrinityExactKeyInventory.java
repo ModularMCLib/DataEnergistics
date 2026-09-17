@@ -11,11 +11,11 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -36,8 +36,8 @@ public final class TrinityExactKeyInventory {
     }
 
     /** Returns a stable read-only copy whose entries cannot mutate the live ledger. */
-    public Map<AEKey, BigInteger> snapshot() {
-        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(this.amounts));
+    public Object2ObjectMap<AEKey, BigInteger> snapshot() {
+        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(this.amounts));
     }
 
     public boolean isEmpty() {

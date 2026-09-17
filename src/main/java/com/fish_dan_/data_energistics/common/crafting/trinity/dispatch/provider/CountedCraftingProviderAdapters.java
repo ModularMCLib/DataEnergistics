@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.BigIntegerCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingCapacity;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
@@ -24,9 +25,10 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -38,6 +40,13 @@ public final class CountedCraftingProviderAdapters {
     private static final CountedCraftingProviderAdapterRegistry REGISTRY = new CountedCraftingProviderAdapterRegistry();
 
     private CountedCraftingProviderAdapters() {}
+
+    /** Resolves the exact-count extension with the same registered-adapter precedence as ordinary dispatch. */
+    public static @Nullable BigIntegerCraftingProviderAdapter exactAdapter(ICraftingProvider provider) {
+        CountedCraftingProviderAdapter registered = REGISTRY.find(provider);
+        if (registered != null) return registered instanceof BigIntegerCraftingProviderAdapter exact ? exact : null;
+        return provider instanceof BigIntegerCraftingProviderAdapter exact ? exact : null;
+    }
 
     /**
      * Registers one external adapter selected by the frozen provider plugin registry.
@@ -74,16 +83,16 @@ public final class CountedCraftingProviderAdapters {
      * @param captureTick         server tick at which capacity was observed
      * @return immutable capacity snapshots; an empty list means no currently usable route
      */
-    public static List<ProviderCapacitySnapshot> captureCapacity(
-                                                                 ICraftingProvider provider,
-                                                                 CraftingProviderId providerId,
-                                                                 IPatternDetails patternDetails,
-                                                                 KeyCounter[] prototype,
-                                                                 long requestedCrafts,
-                                                                 String patternIdentity,
-                                                                 long publicationRevision,
-                                                                 long capacityRevision,
-                                                                 long captureTick) {
+    public static ObjectList<ProviderCapacitySnapshot> captureCapacity(
+                                                                       ICraftingProvider provider,
+                                                                       CraftingProviderId providerId,
+                                                                       IPatternDetails patternDetails,
+                                                                       KeyCounter[] prototype,
+                                                                       long requestedCrafts,
+                                                                       String patternIdentity,
+                                                                       long publicationRevision,
+                                                                       long capacityRevision,
+                                                                       long captureTick) {
         if (requestedCrafts <= 0L) {
             throw new IllegalArgumentException("Requested counted crafting capacity must be positive");
         }
@@ -96,7 +105,7 @@ public final class CountedCraftingProviderAdapters {
                 publicationRevision,
                 capacityRevision,
                 captureTick);
-        return List.copyOf(resolve(provider).capture().capture(context));
+        return new ObjectImmutableList<>(resolve(provider).capture().capture(context));
     }
 
     /**
@@ -297,7 +306,7 @@ public final class CountedCraftingProviderAdapters {
                     context -> preparePublicTarget(countedProvider, context));
         }
         return new ResolvedProviderAdapter(
-                context -> List.of(genericCapacity(context)),
+                context -> ObjectList.of(genericCapacity(context)),
                 context -> prepareGeneric(provider, context));
     }
 
@@ -316,7 +325,7 @@ public final class CountedCraftingProviderAdapters {
                                 "Registered counted crafting adapter for provider {} threw while capturing capacity; isolating that provider",
                                 provider,
                                 exception);
-                        return List.of();
+                        return ObjectList.of();
                     }
                 },
                 context -> preparePublicTarget(adapter, context));
@@ -325,10 +334,10 @@ public final class CountedCraftingProviderAdapters {
     /**
      * Converts a plugin-owned capacity observation to the immutable internal planning form.
      */
-    private static List<ProviderCapacitySnapshot> capturePublicCapacity(
-                                                                        CountedCraftingProviderAdapter adapter,
-                                                                        CapacityCaptureContext context) {
-        List<CountedCraftingCapacity> capacities = List.copyOf(adapter.captureCapacityFast(
+    private static ObjectList<ProviderCapacitySnapshot> capturePublicCapacity(
+                                                                              CountedCraftingProviderAdapter adapter,
+                                                                              CapacityCaptureContext context) {
+        ObjectList<CountedCraftingCapacity> capacities = new ObjectImmutableList<>(adapter.captureCapacityFast(
                 context.patternDetails(),
                 context.prototype(),
                 context.requestedCrafts()));
@@ -344,16 +353,16 @@ public final class CountedCraftingProviderAdapters {
                         toInternalRoutingMode(capacity.routingMode()),
                         toInternalCapacity(capacity.logicalCrafts()),
                         toInternalCapacity(capacity.maximumSingleBatch())))
-                .toList();
+                .collect(ObjectImmutableList.toList());
     }
 
     /**
      * Preserves existing provider-owned target capture as a compatibility bridge.
      */
-    private static List<ProviderCapacitySnapshot> captureLegacyCapacity(
-                                                                        ProviderCapacityView capacityView,
-                                                                        CapacityCaptureContext context) {
-        return List.copyOf(capacityView.snapshotCapacity(
+    private static ObjectList<ProviderCapacitySnapshot> captureLegacyCapacity(
+                                                                              ProviderCapacityView capacityView,
+                                                                              CapacityCaptureContext context) {
+        return new ObjectImmutableList<>(capacityView.snapshotCapacity(
                 context.providerId(),
                 context.patternDetails(),
                 context.prototype(),
@@ -559,7 +568,7 @@ public final class CountedCraftingProviderAdapters {
     @FunctionalInterface
     private interface CapacityCapture {
 
-        List<ProviderCapacitySnapshot> capture(CapacityCaptureContext context);
+        ObjectList<ProviderCapacitySnapshot> capture(CapacityCaptureContext context);
     }
 
     /**

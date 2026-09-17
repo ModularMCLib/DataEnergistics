@@ -14,9 +14,11 @@ import net.minecraft.world.item.ItemStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -151,13 +153,13 @@ public interface TrinityPatternCore {
      * @param patterns occupied entries in ascending slot order, including retained patterns that are temporarily
      *                 unavailable at runtime
      */
-    record PatternCacheSnapshot(long revision, List<CachedPattern> patterns) {
+    record PatternCacheSnapshot(long revision, ObjectList<CachedPattern> patterns) {
 
         public PatternCacheSnapshot {
             if (revision < 0L) {
                 throw new IllegalArgumentException("Trinity pattern cache revision must not be negative");
             }
-            patterns = List.copyOf(patterns);
+            patterns = new ObjectImmutableList<>(patterns);
             int previousSlot = -1;
             for (CachedPattern pattern : patterns) {
                 if (pattern.slot() <= previousSlot) {
@@ -202,14 +204,14 @@ public interface TrinityPatternCore {
      */
     final class BatchExecutionResult {
 
-        private static final BatchExecutionResult PAUSED = new BatchExecutionResult(false, List.of());
+        private static final BatchExecutionResult PAUSED = new BatchExecutionResult(false, ObjectList.of());
 
         private final boolean completed;
-        private final List<TrinityItemAmount> countedOutputs;
+        private final ObjectList<TrinityItemAmount> countedOutputs;
 
-        private BatchExecutionResult(boolean completed, List<TrinityItemAmount> countedOutputs) {
+        private BatchExecutionResult(boolean completed, ObjectList<TrinityItemAmount> countedOutputs) {
             this.completed = completed;
-            this.countedOutputs = List.copyOf(countedOutputs);
+            this.countedOutputs = new ObjectImmutableList<>(countedOutputs);
         }
 
         /**
@@ -219,11 +221,11 @@ public interface TrinityPatternCore {
          * @param unitOutputs one-craft output and container remainders
          * @return completed result
          */
-        public static BatchExecutionResult completed(TrinityCraftingBatch batch, List<ItemStack> unitOutputs) {
+        public static BatchExecutionResult completed(TrinityCraftingBatch batch, ObjectList<ItemStack> unitOutputs) {
             ObjectArrayList<TrinityItemAmount> countedOutputs = new ObjectArrayList<>();
             for (ItemStack output : unitOutputs) {
                 if (!output.isEmpty()) {
-                    countedOutputs.addAll(TrinityItemAmount.multiply(output, batch.count()));
+                    countedOutputs.addAll(TrinityItemAmount.multiply(output, batch.exactCount()));
                 }
             }
             return new BatchExecutionResult(true, countedOutputs);
@@ -246,7 +248,7 @@ public interface TrinityPatternCore {
         /**
          * @return immutable counted outputs to append when execution completed
          */
-        public List<TrinityItemAmount> countedOutputs() {
+        public ObjectList<TrinityItemAmount> countedOutputs() {
             return this.countedOutputs;
         }
     }
@@ -375,7 +377,7 @@ public interface TrinityPatternCore {
      * @param queuedTick      current server tick; execution starts only on a later tick
      * @return true when the snapshot matched the current slot and was queued
      */
-    boolean enqueueBatch(PatternRoute route, ItemStack patternSnapshot, List<ItemStack> inputs, long queuedTick);
+    boolean enqueueBatch(PatternRoute route, ItemStack patternSnapshot, ObjectList<ItemStack> inputs, long queuedTick);
 
     /**
      * Atomically appends one counted input signature through a cache token captured by the host route binding.
@@ -396,10 +398,28 @@ public interface TrinityPatternCore {
                          long count);
 
     /**
+     * Appends an exact logical batch on the server thread using the same route and cache-token contract.
+     * Existing implementations accept long-sized counts through their historical entry point and reject larger values
+     * before taking ownership. Implementations supporting exact batches override this method.
+     *
+     * @param count positive complete logical count; never null
+     * @return whether the complete group was accepted
+     * @throws ArithmeticException when this core only supports long-sized batches and the count exceeds that range
+     */
+    default boolean enqueueBatch(PatternRoute route,
+                                 CachedPattern expectedPattern,
+                                 long expectedRuntimeBindingRevision,
+                                 TrinityCraftingBatch.InputSignature inputs,
+                                 long queuedTick,
+                                 BigInteger count) {
+        return enqueueBatch(route, expectedPattern, expectedRuntimeBindingRevision, inputs, queuedTick, count.longValueExact());
+    }
+
+    /**
      * @param slot pattern slot index
      * @return immutable defensive snapshot of that slot's FIFO
      */
-    List<TrinityCraftingBatch> queuedBatches(int slot);
+    ObjectList<TrinityCraftingBatch> queuedBatches(int slot);
 
     /**
      * @param slot pattern slot index
@@ -437,7 +457,7 @@ public interface TrinityPatternCore {
      * @param route exact owner route to query
      * @return immutable defensive snapshot of counted outputs still awaiting host routing
      */
-    List<TrinityItemAmount> pendingOutputs(PatternRoute route);
+    ObjectList<TrinityItemAmount> pendingOutputs(PatternRoute route);
 
     /**
      * Appends crafted output or container remainders to a slot's persistent output queue.
@@ -445,7 +465,7 @@ public interface TrinityPatternCore {
      * @param route   exact host/core/slot route that owns these outputs
      * @param outputs positive counted outputs to append
      */
-    void appendPendingOutputs(PatternRoute route, List<TrinityItemAmount> outputs);
+    void appendPendingOutputs(PatternRoute route, ObjectList<TrinityItemAmount> outputs);
 
     /**
      * Opens the authoritative exclusive cursor used to checkpoint every successful external insertion in place.
@@ -533,7 +553,7 @@ public interface TrinityPatternCore {
         /**
          * @return immutable slot-ordered installed pattern stacks captured by this transaction
          */
-        List<ItemStack> patterns();
+        ObjectList<ItemStack> patterns();
 
         /**
          * @return whether every slot was empty when this transaction was prepared
@@ -555,7 +575,7 @@ public interface TrinityPatternCore {
          *
          * @param undeliveredPatterns exact suffix not accepted by any external destination
          */
-        void complete(List<ItemStack> undeliveredPatterns);
+        void complete(ObjectList<ItemStack> undeliveredPatterns);
 
         /**
          * Restores committed patterns, or releases an uncommitted capture.
@@ -578,7 +598,7 @@ public interface TrinityPatternCore {
         /**
          * @return immutable counted entries for every queued input and pending output in the capture
          */
-        List<TrinityItemAmount> refundableItems();
+        ObjectList<TrinityItemAmount> refundableItems();
 
         /**
          * Clears the captured core state when it is still current.
@@ -598,7 +618,7 @@ public interface TrinityPatternCore {
          *
          * @param undeliveredItems exact suffix not accepted by any external destination
          */
-        void complete(List<TrinityItemAmount> undeliveredItems);
+        void complete(ObjectList<TrinityItemAmount> undeliveredItems);
 
         /**
          * Restores the captured state after a successful commit, or abandons an uncommitted capture.

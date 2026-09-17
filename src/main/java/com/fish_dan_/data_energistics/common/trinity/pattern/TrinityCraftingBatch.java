@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
+import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
+
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -7,8 +9,10 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
+import java.math.BigInteger;
 
 /**
  * Immutable group of adjacent identical crafting dispatches accepted by one Trinity pattern slot.
@@ -34,7 +38,7 @@ public final class TrinityCraftingBatch {
     private static final String SLOT_TAG = "slot";
     private static final String STACK_TAG = "stack";
 
-    private final long count;
+    private final BigInteger count;
     private final TrinityPatternDefinition definition;
     private final InputSignature inputs;
     private final boolean mergeable;
@@ -52,18 +56,19 @@ public final class TrinityCraftingBatch {
      * @param mergeable  whether later identical dispatches may extend this group
      */
     private TrinityCraftingBatch(long queuedTick, PatternRoute route, TrinityPatternDefinition definition,
-                                 List<ItemStack> inputs, long count, boolean mergeable) {
+                                 ObjectList<ItemStack> inputs, BigInteger count, boolean mergeable) {
         this(queuedTick, route, definition, InputSignature.copyOf(inputs), count, mergeable);
     }
 
     private TrinityCraftingBatch(long queuedTick, PatternRoute route, TrinityPatternDefinition definition,
-                                 InputSignature inputs, long count, boolean mergeable) {
+                                 InputSignature inputs, BigInteger count, boolean mergeable) {
         if (queuedTick < 0L) {
             throw new IllegalArgumentException("Queued tick must not be negative: " + queuedTick);
         }
-        if (count <= 0L) {
+        if (count.signum() <= 0) {
             throw new IllegalArgumentException("Queued crafting count must be positive: " + count);
         }
+        TrinityBigIntegerEncoding.encode(count, "queued crafting count");
         this.queuedTick = queuedTick;
         this.route = route;
         this.definition = definition;
@@ -84,8 +89,15 @@ public final class TrinityCraftingBatch {
      * @return resolved counted group
      */
     public static TrinityCraftingBatch resolved(long queuedTick, PatternRoute route,
-                                                TrinityPatternDefinition definition, List<ItemStack> inputs,
+                                                TrinityPatternDefinition definition, ObjectList<ItemStack> inputs,
                                                 long count, boolean mergeable) {
+        return resolved(queuedTick, route, definition, inputs, BigInteger.valueOf(count), mergeable);
+    }
+
+    /** Creates one exact queue group without splitting its logical count into long-sized groups. */
+    public static TrinityCraftingBatch resolved(long queuedTick, PatternRoute route,
+                                                TrinityPatternDefinition definition, ObjectList<ItemStack> inputs,
+                                                BigInteger count, boolean mergeable) {
         return new TrinityCraftingBatch(queuedTick, route, definition, inputs, count, mergeable);
     }
 
@@ -95,13 +107,28 @@ public final class TrinityCraftingBatch {
                                          InputSignature inputs,
                                          long count,
                                          boolean mergeable) {
+        return resolved(queuedTick, route, definition, inputs, BigInteger.valueOf(count), mergeable);
+    }
+
+    static TrinityCraftingBatch resolved(long queuedTick,
+                                         PatternRoute route,
+                                         TrinityPatternDefinition definition,
+                                         InputSignature inputs,
+                                         BigInteger count,
+                                         boolean mergeable) {
         return new TrinityCraftingBatch(queuedTick, route, definition, inputs, count, mergeable);
     }
 
     /**
-     * @return positive number of identical logical crafts represented by this group
+     * @return positive logical craft count as a long
+     * @throws ArithmeticException when the group requires {@link #exactCount()}
      */
     public long count() {
+        return this.count.longValueExact();
+    }
+
+    /** @return the complete positive logical craft count, including quantities beyond long */
+    public BigInteger exactCount() {
         return this.count;
     }
 
@@ -122,7 +149,7 @@ public final class TrinityCraftingBatch {
     /**
      * @return defensive copies of all nine row-major crafting inputs
      */
-    public List<ItemStack> inputs() {
+    public ObjectList<ItemStack> inputs() {
         return this.inputs.copyStacks();
     }
 
@@ -175,32 +202,41 @@ public final class TrinityCraftingBatch {
     }
 
     /**
-     * Calculates how much of a compatible later group can fill this queue tail without overflowing.
+     * Projects a compatible later group's transferable count into one legacy long-sized request.
      *
      * @param later later adjacent group candidate
-     * @return positive transferable count, or zero when the merge key differs or this tail is full
+     * @return transferable legacy chunk, or zero when the merge key differs
      */
     long mergeableCount(TrinityCraftingBatch later) {
-        if (!this.mergeable || !later.mergeable || this.count == Long.MAX_VALUE ||
+        return exactMergeableCount(later).min(BigInteger.valueOf(Long.MAX_VALUE)).longValueExact();
+    }
+
+    BigInteger exactMergeableCount(TrinityCraftingBatch later) {
+        if (!this.mergeable || !later.mergeable ||
                 this.queuedTick != later.queuedTick || !this.route.equals(later.route) ||
-                this.definition != later.definition) {
-            return 0L;
+                this.definition != later.definition ||
+                this.count.add(later.count).bitLength() >= TrinityBigIntegerEncoding.MAX_BYTES * Byte.SIZE) {
+            return BigInteger.ZERO;
         }
-        return this.inputs.matches(later.inputs) ? Math.min(later.count, Long.MAX_VALUE - this.count) : 0L;
+        return this.inputs.matches(later.inputs) ? later.count : BigInteger.ZERO;
     }
 
     /**
-     * Combines part or all of a compatible later group without overflowing the retained tail.
+     * Combines a long-sized portion of a compatible later group into the exact retained tail.
      *
      * @param later      adjacent later group
      * @param laterCount positive count to transfer from the later group
      * @return one group containing the transferred logical count
      */
     TrinityCraftingBatch mergedWith(TrinityCraftingBatch later, long laterCount) {
-        if (laterCount <= 0L || laterCount > mergeableCount(later)) {
+        return mergedWith(later, BigInteger.valueOf(laterCount));
+    }
+
+    TrinityCraftingBatch mergedWith(TrinityCraftingBatch later, BigInteger laterCount) {
+        if (laterCount.signum() <= 0 || laterCount.compareTo(exactMergeableCount(later)) > 0) {
             throw new IllegalArgumentException("Trinity crafting groups cannot merge count " + laterCount);
         }
-        return withCount(Math.addExact(this.count, laterCount));
+        return withCount(this.count.add(laterCount));
     }
 
     /**
@@ -208,6 +244,10 @@ public final class TrinityCraftingBatch {
      * @return copy of this exact group with the replacement count
      */
     TrinityCraftingBatch withCount(long count) {
+        return withCount(BigInteger.valueOf(count));
+    }
+
+    TrinityCraftingBatch withCount(BigInteger count) {
         return new TrinityCraftingBatch(
                 this.queuedTick,
                 this.route,
@@ -227,7 +267,7 @@ public final class TrinityCraftingBatch {
 
     CompoundTag writeToTag(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
-        data.putLong(COUNT_TAG, this.count);
+        data.putByteArray(COUNT_TAG, TrinityBigIntegerEncoding.encode(this.count, "queued crafting count"));
         data.putLong(DEFINITION_ID_TAG, this.definition.id());
         data.putBoolean(MERGEABLE_TAG, this.mergeable);
         data.putLong(QUEUED_TICK_TAG, this.queuedTick);
@@ -238,7 +278,7 @@ public final class TrinityCraftingBatch {
 
     static TrinityCraftingBatch readFromTag(CompoundTag data, TrinityPatternDefinition definition,
                                             HolderLookup.Provider registries) {
-        if (!data.contains(COUNT_TAG, Tag.TAG_LONG) || !data.contains(DEFINITION_ID_TAG, Tag.TAG_LONG) ||
+        if (!data.contains(DEFINITION_ID_TAG, Tag.TAG_LONG) ||
                 !data.contains(MERGEABLE_TAG, Tag.TAG_BYTE) || !data.contains(QUEUED_TICK_TAG, Tag.TAG_LONG) ||
                 !data.contains(ROUTE_TAG, Tag.TAG_COMPOUND) || !data.contains(INPUTS_TAG, Tag.TAG_LIST)) {
             throw new IllegalArgumentException("Queued crafting group is incomplete");
@@ -251,7 +291,7 @@ public final class TrinityCraftingBatch {
                 PatternRoute.readFromTag(data.getCompound(ROUTE_TAG)),
                 definition,
                 readInputs(data.getList(INPUTS_TAG, Tag.TAG_COMPOUND), registries),
-                data.getLong(COUNT_TAG),
+                TrinityBigIntegerEncoding.readTag(data, COUNT_TAG, "queued crafting count"),
                 data.getBoolean(MERGEABLE_TAG));
     }
 
@@ -270,8 +310,8 @@ public final class TrinityCraftingBatch {
         return inputList;
     }
 
-    private static List<ItemStack> readInputs(ListTag inputList, HolderLookup.Provider registries) {
-        List<ItemStack> inputs = emptyInputs();
+    private static ObjectList<ItemStack> readInputs(ListTag inputList, HolderLookup.Provider registries) {
+        ObjectList<ItemStack> inputs = emptyInputs();
         boolean[] populatedSlots = new boolean[INPUT_SLOT_COUNT];
         for (int index = 0; index < inputList.size(); index++) {
             CompoundTag entry = inputList.getCompound(index);
@@ -296,7 +336,7 @@ public final class TrinityCraftingBatch {
         return inputs;
     }
 
-    private static List<ItemStack> emptyInputs() {
+    private static ObjectList<ItemStack> emptyInputs() {
         ObjectArrayList<ItemStack> inputs = new ObjectArrayList<>(INPUT_SLOT_COUNT);
         for (int slot = 0; slot < INPUT_SLOT_COUNT; slot++) {
             inputs.add(ItemStack.EMPTY);
@@ -304,7 +344,7 @@ public final class TrinityCraftingBatch {
         return inputs;
     }
 
-    private static void validateInputs(List<ItemStack> inputs) {
+    private static void validateInputs(ObjectList<ItemStack> inputs) {
         if (inputs.size() != INPUT_SLOT_COUNT) {
             throw new IllegalArgumentException(
                     "A queued crafting group requires exactly " + INPUT_SLOT_COUNT + " inputs, got " + inputs.size());
@@ -321,15 +361,15 @@ public final class TrinityCraftingBatch {
         }
     }
 
-    private static List<ItemStack> copyStacks(List<ItemStack> stacks) {
+    private static ObjectList<ItemStack> copyStacks(ObjectList<ItemStack> stacks) {
         ObjectArrayList<ItemStack> copy = new ObjectArrayList<>(stacks.size());
         for (ItemStack stack : stacks) {
             copy.add(stack.copy());
         }
-        return List.copyOf(copy);
+        return new ObjectImmutableList<>(copy);
     }
 
-    private static boolean stackListsMatch(List<ItemStack> first, List<ItemStack> second) {
+    private static boolean stackListsMatch(ObjectList<ItemStack> first, ObjectList<ItemStack> second) {
         for (int slot = 0; slot < INPUT_SLOT_COUNT; slot++) {
             if (!ItemStack.matches(first.get(slot), second.get(slot))) {
                 return false;
@@ -348,11 +388,11 @@ public final class TrinityCraftingBatch {
      */
     public static final class InputSignature {
 
-        private final List<ItemStack> stacks;
+        private final ObjectList<ItemStack> stacks;
 
-        private InputSignature(List<ItemStack> stacks, boolean copyStacks) {
+        private InputSignature(ObjectList<ItemStack> stacks, boolean copyStacks) {
             validateInputs(stacks);
-            this.stacks = copyStacks ? TrinityCraftingBatch.copyStacks(stacks) : List.copyOf(stacks);
+            this.stacks = copyStacks ? TrinityCraftingBatch.copyStacks(stacks) : new ObjectImmutableList<>(stacks);
         }
 
         /**
@@ -361,12 +401,12 @@ public final class TrinityCraftingBatch {
          * @param stacks exactly nine row-major inputs
          * @return immutable exact input signature
          */
-        public static InputSignature copyOf(List<ItemStack> stacks) {
+        public static InputSignature copyOf(ObjectList<ItemStack> stacks) {
             return new InputSignature(stacks, true);
         }
 
         /** Captures the catalog's already-isolated stack copies without copying every stack a second time. */
-        static InputSignature takeOwnership(List<ItemStack> stacks) {
+        static InputSignature takeOwnership(ObjectList<ItemStack> stacks) {
             return new InputSignature(stacks, false);
         }
 
@@ -378,7 +418,7 @@ public final class TrinityCraftingBatch {
             return this.stacks.get(slot);
         }
 
-        private List<ItemStack> copyStacks() {
+        ObjectList<ItemStack> copyStacks() {
             return TrinityCraftingBatch.copyStacks(this.stacks);
         }
 

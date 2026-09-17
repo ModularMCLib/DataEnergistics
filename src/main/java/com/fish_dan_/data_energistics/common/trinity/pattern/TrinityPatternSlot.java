@@ -2,7 +2,11 @@ package com.fish_dan_.data_energistics.common.trinity.pattern;
 
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdLookup;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolution;
+import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 
 import net.minecraft.core.HolderLookup;
@@ -11,6 +15,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -22,15 +27,15 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.List;
-import java.util.ListIterator;
+import java.math.BigInteger;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -101,7 +106,8 @@ public final class TrinityPatternSlot {
     private final TrinityPatternRecipeIdLookup recipeIdResolvers;
     private final ChangeListener changeListener;
     private Long2ObjectLinkedOpenHashMap<TrinityPatternDefinition> definitions = new Long2ObjectLinkedOpenHashMap<>();
-    private ArrayDeque<TrinityCraftingBatch> queue = new ArrayDeque<>();
+    // Every enqueue creates a fresh immutable batch identity; linked reference order supplies constant-time FIFO ends.
+    private ReferenceLinkedOpenHashSet<TrinityCraftingBatch> queue = new ReferenceLinkedOpenHashSet<>();
     private Object2ObjectLinkedOpenHashMap<PatternRoute, ObjectArrayList<TrinityItemAmount>> pendingOutputs = new Object2ObjectLinkedOpenHashMap<>();
     /**
      * Counts queued groups per host so ordinary mutations never rescan the FIFO.
@@ -292,6 +298,15 @@ public final class TrinityPatternSlot {
                            ObjectList<ItemStack> inputs,
                            long queuedTick,
                            long count) {
+        return enqueue(route, patternSnapshot, inputs, queuedTick, BigInteger.valueOf(count));
+    }
+
+    /** Appends one exact homogeneous dispatch while retaining the physical input prototype. */
+    public boolean enqueue(PatternRoute route,
+                           ItemStack patternSnapshot,
+                           ObjectList<ItemStack> inputs,
+                           long queuedTick,
+                           BigInteger count) {
         validateCount(count);
         ItemStack normalized = normalizePattern(patternSnapshot);
         if (this.pattern.isEmpty() || this.decodedPattern == null || this.installedDefinition == null ||
@@ -311,6 +326,14 @@ public final class TrinityPatternSlot {
                           TrinityCraftingBatch.InputSignature inputs,
                           long queuedTick,
                           long count) {
+        return enqueueCached(route, expectedDefinition, inputs, queuedTick, BigInteger.valueOf(count));
+    }
+
+    boolean enqueueCached(PatternRoute route,
+                          TrinityPatternDefinition expectedDefinition,
+                          TrinityCraftingBatch.InputSignature inputs,
+                          long queuedTick,
+                          BigInteger count) {
         validateCount(count);
         if (this.decodedPattern == null || this.installedDefinition != expectedDefinition) {
             return false;
@@ -322,7 +345,8 @@ public final class TrinityPatternSlot {
                                     TrinityPatternDefinition definition,
                                     TrinityCraftingBatch.InputSignature inputs,
                                     long queuedTick,
-                                    long count) {
+                                    BigInteger count) {
+        BigInteger maximumPersistentCount = validateBatchAmounts(inputs, count);
         TrinityCraftingBatch incoming = TrinityCraftingBatch.resolved(
                 queuedTick,
                 route,
@@ -331,13 +355,17 @@ public final class TrinityPatternSlot {
                 count,
                 true);
         WorkMembership previousWork = this.workMembership;
-        long mergeCount = this.queue.isEmpty() ? 0L : this.queue.getLast().mergeableCount(incoming);
-        long remainingCount = count - mergeCount;
-        TrinityCraftingBatch mergedTail = mergeCount > 0L ?
-                this.queue.getLast().mergedWith(incoming, mergeCount) : null;
-        TrinityCraftingBatch remainingBatch = remainingCount > 0L && mergeCount > 0L ?
+        BigInteger mergeCount = this.queue.isEmpty() ? BigInteger.ZERO : this.queue.last().exactMergeableCount(incoming);
+        if (mergeCount.signum() > 0 &&
+                this.queue.last().exactCount().add(mergeCount).compareTo(maximumPersistentCount) > 0) {
+            mergeCount = BigInteger.ZERO;
+        }
+        BigInteger remainingCount = count.subtract(mergeCount);
+        TrinityCraftingBatch mergedTail = mergeCount.signum() > 0 ?
+                this.queue.last().mergedWith(incoming, mergeCount) : null;
+        TrinityCraftingBatch remainingBatch = remainingCount.signum() > 0 && mergeCount.signum() > 0 ?
                 incoming.withCount(remainingCount) : null;
-        boolean addsQueueGroup = mergeCount == 0L || remainingBatch != null;
+        boolean addsQueueGroup = mergeCount.signum() == 0 || remainingBatch != null;
         int currentHostGroups = this.queuedGroupsByHost.getInt(route.hostId());
         if (addsQueueGroup && this.queuedGroupsByHost.containsKey(route.hostId()) && currentHostGroups == Integer.MAX_VALUE) {
             throw new ArithmeticException("Trinity queued host-group count overflow");
@@ -348,15 +376,15 @@ public final class TrinityPatternSlot {
         }
 
         boolean membershipChanged = false;
-        if (mergeCount > 0L) {
+        if (mergeCount.signum() > 0) {
             this.queue.removeLast();
-            this.queue.addLast(mergedTail);
+            this.queue.add(mergedTail);
             if (remainingBatch != null) {
-                this.queue.addLast(remainingBatch);
+                this.queue.add(remainingBatch);
                 membershipChanged = incrementHostCount(this.queuedGroupsByHost, route.hostId());
             }
         } else {
-            this.queue.addLast(incoming);
+            this.queue.add(incoming);
             membershipChanged = incrementHostCount(this.queuedGroupsByHost, route.hostId());
         }
         if (membershipChanged) {
@@ -367,10 +395,47 @@ public final class TrinityPatternSlot {
         return true;
     }
 
-    private static void validateCount(long count) {
-        if (count <= 0L) {
+    private static void validateCount(BigInteger count) {
+        if (count.signum() <= 0) {
             throw new IllegalArgumentException("Queued crafting count must be positive: " + count);
         }
+    }
+
+    /** Checks every refundable input and declared product before the caller transfers its prototype ownership. */
+    private BigInteger validateBatchAmounts(TrinityCraftingBatch.InputSignature inputs, BigInteger count) {
+        IMolecularAssemblerSupportedPattern pattern = this.decodedPattern;
+        if (pattern == null) {
+            throw new IllegalStateException("A Trinity queue admission requires its resolved pattern");
+        }
+        Object2ObjectMap<AEKey, BigInteger> inputAmounts = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectList<ItemStack> stacks = inputs.copyStacks();
+        for (ItemStack input : stacks) {
+            if (!input.isEmpty()) {
+                inputAmounts.merge(AEItemKey.of(input), BigInteger.valueOf(input.getCount()), BigInteger::add);
+            }
+        }
+        Object2ObjectMap<AEKey, BigInteger> outputAmounts = new Object2ObjectLinkedOpenHashMap<>();
+        for (GenericStack output : pattern.getOutputs()) {
+            outputAmounts.merge(output.what(), BigInteger.valueOf(output.amount()), BigInteger::add);
+        }
+        CraftingInput craftingInput = CraftingInput.ofPositioned(3, 3, stacks).input();
+        for (ItemStack remainder : pattern.getRemainingItems(craftingInput)) {
+            if (!remainder.isEmpty()) {
+                outputAmounts.merge(AEItemKey.of(remainder), BigInteger.valueOf(remainder.getCount()), BigInteger::add);
+            }
+        }
+        BigInteger maximumAmount = BigInteger.ONE.shiftLeft(TrinityBigIntegerEncoding.MAX_BYTES * Byte.SIZE - 1)
+                .subtract(BigInteger.ONE);
+        BigInteger maximumCount = maximumAmount;
+        for (BigInteger amount : inputAmounts.values()) {
+            TrinityBigIntegerEncoding.encode(amount.multiply(count), "queued crafting refund");
+            maximumCount = maximumCount.min(maximumAmount.divide(amount));
+        }
+        for (BigInteger amount : outputAmounts.values()) {
+            TrinityBigIntegerEncoding.encode(amount.multiply(count), "queued crafting output");
+            maximumCount = maximumCount.min(maximumAmount.divide(amount));
+        }
+        return maximumCount;
     }
 
     /** @return immutable defensive FIFO snapshot of counted groups */
@@ -476,7 +541,7 @@ public final class TrinityPatternSlot {
         if (this.queue.isEmpty()) {
             return null;
         }
-        TrinityCraftingBatch head = this.queue.getFirst();
+        TrinityCraftingBatch head = this.queue.first();
         if (head.queuedTick() >= currentTick || this.decodedPattern == null ||
                 this.installedDefinition == null || !head.matchesDefinition(this.installedDefinition)) {
             return null;
@@ -495,7 +560,7 @@ public final class TrinityPatternSlot {
      * @param outputs   counted outputs produced by the complete group
      */
     public void completeHead(TrinityCraftingBatch completed, ObjectList<TrinityItemAmount> outputs) {
-        if (this.queue.isEmpty() || this.queue.getFirst() != completed) {
+        if (this.queue.isEmpty() || this.queue.first() != completed) {
             throw new IllegalStateException("Completed Trinity crafting group is no longer the FIFO head");
         }
         ensureNoPendingOutputCursor();
@@ -530,7 +595,7 @@ public final class TrinityPatternSlot {
      * @param completed group previously returned by {@link #readyHead(long)}
      */
     public void removeCompletedHead(TrinityCraftingBatch completed) {
-        if (this.queue.isEmpty() || this.queue.getFirst() != completed) {
+        if (this.queue.isEmpty() || this.queue.first() != completed) {
             throw new IllegalStateException("Completed Trinity crafting group is no longer the FIFO head");
         }
         WorkMembership previousWork = this.workMembership;
@@ -585,7 +650,7 @@ public final class TrinityPatternSlot {
         this.queue.clear();
         for (TrinityCraftingBatch batch : batches) {
             retainDefinition(batch.definition());
-            this.queue.addLast(batch.copy());
+            this.queue.add(batch.copy());
         }
         rebuildQueuedHostCounts();
         collectUnusedDefinitions();
@@ -708,7 +773,7 @@ public final class TrinityPatternSlot {
                 throw new IllegalArgumentException("Queued crafting group is missing its definition reference");
             }
             TrinityPatternDefinition definition = slot.requiredDefinition(batchData.getLong(DEFINITION_ID_TAG));
-            slot.queue.addLast(TrinityCraftingBatch.readFromTag(batchData, definition, registries));
+            slot.queue.add(TrinityCraftingBatch.readFromTag(batchData, definition, registries));
         }
         slot.readPendingOutputs(compoundList(data, PENDING_OUTPUTS_TAG), registries);
         slot.validateDefinitionReferences();
@@ -798,7 +863,7 @@ public final class TrinityPatternSlot {
         this.queue.clear();
         for (TrinityCraftingBatch batch : state.batches()) {
             retainDefinition(batch.definition());
-            this.queue.addLast(batch.copy());
+            this.queue.add(batch.copy());
         }
         this.pendingOutputs.clear();
         this.pendingOutputs.putAll(copyPendingOutputs(state.pendingOutputs()));
@@ -903,7 +968,8 @@ public final class TrinityPatternSlot {
             for (TrinityItemAmount output : group.getValue()) {
                 CompoundTag outputData = new CompoundTag();
                 outputData.put(PROTOTYPE_TAG, output.key().toStack(1).saveOptional(registries));
-                outputData.putLong(AMOUNT_TAG, output.amount());
+                outputData.putByteArray(AMOUNT_TAG,
+                        TrinityBigIntegerEncoding.encode(output.exactAmount(), "pending crafting output"));
                 outputs.add(outputData);
             }
             groupData.put(OUTPUTS_TAG, outputs);
@@ -931,8 +997,7 @@ public final class TrinityPatternSlot {
             ObjectArrayList<TrinityItemAmount> outputs = new ObjectArrayList<>(outputEntries.size());
             for (int outputIndex = 0; outputIndex < outputEntries.size(); outputIndex++) {
                 CompoundTag outputData = outputEntries.getCompound(outputIndex);
-                if (!outputData.contains(PROTOTYPE_TAG, Tag.TAG_COMPOUND) ||
-                        !outputData.contains(AMOUNT_TAG, Tag.TAG_LONG)) {
+                if (!outputData.contains(PROTOTYPE_TAG, Tag.TAG_COMPOUND)) {
                     throw new IllegalArgumentException("Trinity pending-output entry is incomplete");
                 }
                 ItemStack prototype = ItemStack.parseOptional(registries, outputData.getCompound(PROTOTYPE_TAG));
@@ -940,7 +1005,8 @@ public final class TrinityPatternSlot {
                     throw new IllegalArgumentException(
                             "Trinity pending-output prototype must contain exactly one item");
                 }
-                outputs.add(TrinityItemAmount.of(prototype).withAmount(outputData.getLong(AMOUNT_TAG)));
+                outputs.add(TrinityItemAmount.of(prototype).withAmount(
+                        TrinityBigIntegerEncoding.readTag(outputData, AMOUNT_TAG, "pending crafting output")));
             }
             this.pendingOutputs.put(route, outputs);
         }
@@ -1027,18 +1093,17 @@ public final class TrinityPatternSlot {
     }
 
     private static void appendCountedOutput(ObjectArrayList<TrinityItemAmount> outputs, TrinityItemAmount output) {
-        long remaining = output.amount();
         if (!outputs.isEmpty()) {
             TrinityItemAmount previous = outputs.getLast();
-            if (previous.key().equals(output.key()) && previous.amount() < Long.MAX_VALUE) {
-                long merged = Math.min(remaining, Long.MAX_VALUE - previous.amount());
-                outputs.set(outputs.size() - 1, previous.withAmount(previous.amount() + merged));
-                remaining -= merged;
+            if (previous.key().equals(output.key())) {
+                BigInteger merged = previous.exactAmount().add(output.exactAmount());
+                if (merged.bitLength() < TrinityBigIntegerEncoding.MAX_BYTES * Byte.SIZE) {
+                    outputs.set(outputs.size() - 1, previous.withAmount(merged));
+                    return;
+                }
             }
         }
-        if (remaining > 0L) {
-            outputs.add(output.withAmount(remaining));
-        }
+        outputs.add(output);
     }
 
     private static Object2ObjectLinkedOpenHashMap<PatternRoute, ObjectArrayList<TrinityItemAmount>> copyPendingOutputs(
@@ -1060,7 +1125,7 @@ public final class TrinityPatternSlot {
         for (int index = 0; index < currentBatches.size(); index++) {
             TrinityCraftingBatch left = currentBatches.get(index);
             TrinityCraftingBatch right = captured.get(index);
-            if (left.count() != right.count() || left.definitionId() != right.definitionId() ||
+            if (!left.exactCount().equals(right.exactCount()) || left.definitionId() != right.definitionId() ||
                     left.mergeable() != right.mergeable() || left.queuedTick() != right.queuedTick() ||
                     !left.route().equals(right.route()) || !stackListsMatch(left.inputs(), right.inputs())) {
                 return false;
@@ -1106,7 +1171,7 @@ public final class TrinityPatternSlot {
         return entries;
     }
 
-    private static boolean stackListsMatch(List<ItemStack> first, List<ItemStack> second) {
+    private static boolean stackListsMatch(ObjectList<ItemStack> first, ObjectList<ItemStack> second) {
         if (first.size() != second.size()) {
             return false;
         }
@@ -1153,7 +1218,7 @@ public final class TrinityPatternSlot {
         @Nullable
         private final ObjectArrayList<TrinityItemAmount> outputs;
         @Nullable
-        private final ListIterator<TrinityItemAmount> iterator;
+        private final ObjectListIterator<TrinityItemAmount> iterator;
         @Nullable
         private TrinityItemAmount current;
         private boolean currentSelected;
@@ -1187,13 +1252,14 @@ public final class TrinityPatternSlot {
         @Override
         public void consumeCurrent(long amount) {
             ensureCurrent();
-            if (amount <= 0L || amount > this.current.amount()) {
+            BigInteger consumed = BigInteger.valueOf(amount);
+            if (amount <= 0L || consumed.compareTo(this.current.exactAmount()) > 0) {
                 throw new IllegalArgumentException(
-                        "Consumed Trinity pending-output amount must be between one and " + this.current.amount());
+                        "Consumed Trinity pending-output amount must be between one and " + this.current.exactAmount());
             }
             boolean removedRoute = false;
             WorkMembership previousWork = TrinityPatternSlot.this.workMembership;
-            if (amount == this.current.amount()) {
+            if (consumed.equals(this.current.exactAmount())) {
                 this.iterator.remove();
                 this.current = null;
                 this.currentSelected = false;
@@ -1209,7 +1275,7 @@ public final class TrinityPatternSlot {
                     }
                 }
             } else {
-                this.current = this.current.withAmount(this.current.amount() - amount);
+                this.current = this.current.withAmount(this.current.exactAmount().subtract(consumed));
                 this.iterator.set(this.current);
             }
             changed(ChangeKind.PERSISTENT);

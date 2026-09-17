@@ -2,7 +2,8 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable capacity epoch containing its complete semantic cache identity and provider observations.
@@ -12,13 +13,13 @@ import java.util.List;
  */
 public record ProviderCapacityCapture(
                                       ProviderCapacityCaptureKey key,
-                                      List<ProviderCapacitySnapshot> snapshots) {
+                                      ObjectList<ProviderCapacitySnapshot> snapshots) {
 
     public ProviderCapacityCapture {
         if (key == null) {
             throw new IllegalArgumentException("Provider capacity capture requires an immutable key");
         }
-        snapshots = List.copyOf(snapshots);
+        snapshots = new ObjectImmutableList<>(snapshots);
         for (ProviderCapacitySnapshot snapshot : snapshots) {
             if (snapshot.providerId().publicationScope() != key.gridScope() ||
                     snapshot.publicationRevision() != key.publicationRevision() ||

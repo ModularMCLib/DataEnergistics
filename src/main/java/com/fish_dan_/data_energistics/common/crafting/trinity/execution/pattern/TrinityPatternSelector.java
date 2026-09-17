@@ -15,7 +15,11 @@ import net.minecraft.world.level.Level;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -52,29 +56,29 @@ public final class TrinityPatternSelector {
     public record Selected(IPatternDetails extractionPattern,
                            int variantOrdinal,
                            long maximumCrafts,
-                           List<GenericStack> inputsPerCraft,
-                           Set<AEKey> observedKeys)
+                           ObjectList<GenericStack> inputsPerCraft,
+                           ObjectSet<AEKey> observedKeys)
             implements Result {
 
         /**
          * Isolates collections returned by the selector from callers.
          */
         public Selected {
-            inputsPerCraft = List.copyOf(inputsPerCraft);
-            observedKeys = Set.copyOf(observedKeys);
+            inputsPerCraft = new ObjectImmutableList<>(inputsPerCraft);
+            observedKeys = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(observedKeys));
         }
     }
 
     /**
      * @param observedKeys keys that should wake this stage when material availability changes
      */
-    public record Unavailable(Set<AEKey> observedKeys) implements Result {
+    public record Unavailable(ObjectSet<AEKey> observedKeys) implements Result {
 
         /**
          * Isolates the wake set from mutable callers.
          */
         public Unavailable {
-            observedKeys = Set.copyOf(observedKeys);
+            observedKeys = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(observedKeys));
         }
     }
 
@@ -120,7 +124,7 @@ public final class TrinityPatternSelector {
                 }
                 long amount = binding.consumedAmount().longValueExact();
                 totals.mergeLong(key, amount, Math::addExact);
-                slots.add(new SlotBinding(originals[slot], binding.template(), List.of(new GenericStack(key, amount))));
+                slots.add(new SlotBinding(originals[slot], binding.template(), ObjectList.of(new GenericStack(key, amount))));
             }
             long maximum = remainingCrafts;
             ObjectArrayList<GenericStack> perCraft = new ObjectArrayList<>(totals.size());
@@ -171,7 +175,7 @@ public final class TrinityPatternSelector {
         List<TrinityPatternBindingEnumerator.Binding> bindings;
         if (dynamic) {
             TrinityPatternBindingEnumerator.Result enumeration = this.bindingEnumerator.enumerate(
-                    inputs.stream().map(RuntimeInput::signature).toList(),
+                    inputs.stream().map(RuntimeInput::signature).collect(ObjectImmutableList.toList()),
                     maxVariants);
             switch (enumeration) {
                 case TrinityPatternBindingEnumerator.LimitExceeded(var required, var limit) -> {
@@ -187,7 +191,7 @@ public final class TrinityPatternSelector {
             if (alternatives == null) {
                 return new Unavailable(observedKeys);
             }
-            bindings = List.of(new TrinityPatternBindingEnumerator.Binding(plannedOrdinal, alternatives));
+            bindings = ObjectList.of(new TrinityPatternBindingEnumerator.Binding(plannedOrdinal, alternatives));
         }
 
         Candidate best = null;
@@ -229,7 +233,7 @@ public final class TrinityPatternSelector {
         for (IPatternDetails.IInput input : inputs) {
             captured.add(new RuntimeInput(input, TrinityPatternPublicationSignature.Input.capture(input)));
         }
-        return List.copyOf(captured);
+        return new ObjectImmutableList<>(captured);
     }
 
     private static ObjectLinkedOpenHashSet<AEKey> allAlternativeKeys(List<RuntimeInput> inputs) {
@@ -302,7 +306,7 @@ public final class TrinityPatternSelector {
                 }
             }
             if (remaining[slot] > 0L) {
-                return new Candidate(ordinal, 0L, 0L, List.of(), List.of());
+                return new Candidate(ordinal, 0L, 0L, ObjectList.of(), ObjectList.of());
             }
         }
         ObjectArrayList<SlotBinding> selected = new ObjectArrayList<>(inputs.size());
@@ -338,8 +342,8 @@ public final class TrinityPatternSelector {
                 ordinal,
                 maximumCrafts,
                 networkBorrow,
-                List.copyOf(selected),
-                List.copyOf(exactInputs));
+                new ObjectImmutableList<>(selected),
+                new ObjectImmutableList<>(exactInputs));
     }
 
     private static void captureAvailability(AEKey key, ToLongFunction<AEKey> cpuAvailability,
@@ -392,7 +396,7 @@ public final class TrinityPatternSelector {
                              long maximumCrafts,
                              long networkBorrow,
                              List<SlotBinding> selectedInputs,
-                             List<GenericStack> aggregatedInputs) {
+                             ObjectList<GenericStack> aggregatedInputs) {
 
         private boolean isBetterThan(Candidate other) {
             if (this.maximumCrafts != other.maximumCrafts) {

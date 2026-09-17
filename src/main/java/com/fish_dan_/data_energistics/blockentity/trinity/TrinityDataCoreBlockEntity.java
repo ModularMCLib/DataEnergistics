@@ -126,16 +126,20 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import lombok.Getter;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -226,7 +230,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private boolean loaded;
     private boolean formed;
     @Getter
-    private List<BlockPos> matchedPositions = List.of();
+    private ObjectList<BlockPos> matchedPositions = ObjectList.of();
     private TrinityDataCoreStorageProfile storageProfile = TrinityDataCoreStorageProfile.EMPTY;
     /** Returns the fixed-layout persistent inventory shown by the Trinity Data Core's infinite-drive panel. */
     @Getter
@@ -236,7 +240,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
      * Valid cells displaced by a storage-capacity downgrade or rejected while restoring external NBT. They are dropped
      * at the controller on the next authoritative server tick rather than silently discarded.
      */
-    private final List<ItemStack> pendingInfiniteDriveRefunds = new ObjectArrayList<>();
+    private final ObjectList<ItemStack> pendingInfiniteDriveRefunds = new ObjectArrayList<>();
     private String lastFailureReason = NO_FAILURE;
     @Nullable
     private BlockPos lastFailurePosition;
@@ -277,7 +281,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     /**
      * Runtime-only authorization records for one-tick information-exchange-depot crafting dispatches.
      */
-    private final Map<CraftingAdmissionToken, CraftingAdmissionState> craftingAdmissions = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceMap<CraftingAdmissionToken, CraftingAdmissionState> craftingAdmissions = new Reference2ReferenceOpenHashMap<>();
     /**
      * Invalidates every issued admission when any host-owned routing boundary changes.
      */
@@ -306,9 +310,9 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     static final class CraftingAdmissionToken {
 
         private final long identifier;
-        private final long count;
+        private final BigInteger count;
 
-        private CraftingAdmissionToken(long identifier, long count) {
+        private CraftingAdmissionToken(long identifier, BigInteger count) {
             this.identifier = identifier;
             this.count = count;
         }
@@ -318,6 +322,10 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         }
 
         long count() {
+            return this.count.longValueExact();
+        }
+
+        BigInteger exactCount() {
             return this.count;
         }
     }
@@ -336,7 +344,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         private final long publicationRevision;
         private final RoutedCraftingPatternDetails patternDetails;
         private final PatternRoute route;
-        private final long count;
+        private final BigInteger count;
         private final long issuedTick;
         private final long generation;
         private boolean committing;
@@ -349,7 +357,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                                        long layoutRevision,
                                        long publicationRevision,
                                        RoutedCraftingPatternDetails patternDetails,
-                                       long count,
+                                       BigInteger count,
                                        long issuedTick,
                                        long generation) {
             this.hostId = hostId;
@@ -390,7 +398,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.infiniteDriveMounts = new TrinityInfiniteDriveMounts(this.infiniteDriveInventory, this::setChanged);
         this.getMainNode()
                 .setVisualRepresentation(DEBlocks.TRINITY_DATA_CORE.get())
-                .setExposedOnSides(Set.of())
+                .setExposedOnSides(ObjectSet.of())
                 .setIdlePowerUsage(0.0D);
     }
 
@@ -1281,7 +1289,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         TrinityPatternCatalog.LayoutSnapshot layout = this.patternCatalog.layoutSnapshot();
         int first = TrinityPatternCatalogView.normalizeFirstGlobalSlot(firstGlobalSlot, layout.slotCount());
         int count = Math.min(TrinityPatternCatalogView.PAGE_SIZE, layout.slotCount() - first);
-        List<ItemStack> patterns = new ObjectArrayList<>(count);
+        ObjectList<ItemStack> patterns = new ObjectArrayList<>(count);
         for (int offset = 0; offset < count; offset++) {
             TrinityPatternCatalog.GlobalSlot slot = this.patternCatalog.resolveGlobalSlot(
                     layout.revision(),
@@ -1340,7 +1348,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             return TrinityHostedActionStatus.STALE_STATE;
         }
         IntSet uniqueSlots = new IntOpenHashSet(globalSlots.size());
-        List<TrinityPatternCatalog.GlobalSlot> resolvedSlots = new ObjectArrayList<>(globalSlots.size());
+        ObjectList<TrinityPatternCatalog.GlobalSlot> resolvedSlots = new ObjectArrayList<>(globalSlots.size());
         for (int globalSlot : globalSlots) {
             if (!uniqueSlots.add(globalSlot)) {
                 throw new IllegalArgumentException("Duplicate Trinity pattern quick-move global slot: " + globalSlot);
@@ -1901,7 +1909,15 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                                                   IPatternDetails patternDetails,
                                                   long queuedTick,
                                                   long count) {
-        if (count <= 0L) {
+        return issueCraftingAdmission(hatch, patternDetails, queuedTick, BigInteger.valueOf(count));
+    }
+
+    @Nullable
+    CraftingAdmissionToken issueCraftingAdmission(TrinityInformationExchangeDepotBlockEntity hatch,
+                                                  IPatternDetails patternDetails,
+                                                  long queuedTick,
+                                                  BigInteger count) {
+        if (count.signum() <= 0) {
             throw new IllegalArgumentException("Trinity crafting admission count must be positive");
         }
         if (!(patternDetails instanceof RoutedCraftingPatternDetails routedDetails)) {
@@ -2001,7 +2017,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private boolean isCurrentCraftingAdmission(CraftingAdmissionToken token, CraftingAdmissionState admission) {
         Level level = this.level;
         if (level == null || level.isClientSide() || !this.loaded || level.getGameTime() != admission.issuedTick ||
-                token.count() != admission.count || admission.generation != this.craftingAdmissionGeneration ||
+                !token.exactCount().equals(admission.count) || admission.generation != this.craftingAdmissionGeneration ||
                 !this.hostId.equals(admission.hostId) || !this.patternCatalog.hostId().equals(admission.hostId) ||
                 !isPatternProviderAvailable()) {
             return false;
@@ -2062,12 +2078,12 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             return;
         }
         boolean leaseLocked = hasPendingTrinityWork() || hasUnresolvedStructureValidation();
-        List<TrinityInformationExchangeDepotBlockEntity> candidates = isStorageAvailable() ? compartmentHost$getCompartments(mainDefinitionKey().structureName()).stream()
+        ObjectList<TrinityInformationExchangeDepotBlockEntity> candidates = isStorageAvailable() ? compartmentHost$getCompartments(mainDefinitionKey().structureName()).stream()
                 .filter(TrinityInformationExchangeDepotBlockEntity.class::isInstance)
                 .map(TrinityInformationExchangeDepotBlockEntity.class::cast)
                 .filter(TrinityInformationExchangeDepotBlockEntity::isCandidateOnline)
                 .sorted((left, right) -> left.getBlockPos().compareTo(right.getBlockPos()))
-                .toList() : List.of();
+                .collect(ObjectImmutableList.toList()) : ObjectList.of();
 
         if (this.accessLease != null) {
             TrinityInformationExchangeDepotBlockEntity electedHatch = candidates.stream()
@@ -2379,7 +2395,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.patternCatalog = new MountedCorePatternCatalog(this.hostId);
         this.patternCatalogValid = false;
         this.formed = data.getBoolean(FORMED_TAG);
-        this.matchedPositions = List.of();
+        this.matchedPositions = ObjectList.of();
         this.lastFailureReason = data.getString(LAST_FAILURE_REASON_TAG);
         if (data.contains(LAST_FAILURE_POSITION_TAG)) {
             this.lastFailurePosition = BlockPos.of(data.getLong(LAST_FAILURE_POSITION_TAG));
@@ -2523,7 +2539,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.patternCatalog = new MountedCorePatternCatalog(this.hostId);
         this.patternCatalogValid = false;
         this.formed = false;
-        this.matchedPositions = List.of();
+        this.matchedPositions = ObjectList.of();
         this.storageProfile = TrinityDataCoreStorageProfile.EMPTY;
         this.infiniteDriveInventory.clearContent();
         this.pendingInfiniteDriveRefunds.clear();
@@ -2931,7 +2947,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                             List<BlockPos> positions,
                             Map<BlockPos, CompartmentType> declaredCompartments,
                             String structureName) {
-        List<BlockPos> nextPositions = List.copyOf(positions);
+        ObjectList<BlockPos> nextPositions = new ObjectImmutableList<>(positions);
         TrinityDataCoreStorageProfile nextStorageProfile = buildStorageProfile(world, nextPositions);
         boolean validationChanged = !this.structureValidation.isValid(Structure.MAIN);
         if (this.formed &&
@@ -3123,7 +3139,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             this.storageProfile = TrinityDataCoreStorageProfile.EMPTY;
         }
         this.formed = false;
-        this.matchedPositions = List.of();
+        this.matchedPositions = ObjectList.of();
         this.lastFailureReason = nextFailureReason;
         this.lastFailurePosition = nextFailurePosition;
         this.craftingRuntime.setMainStructureFormed(false);
@@ -3889,16 +3905,16 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     }
 
     private record PatternCatalogScanResult(boolean valid,
-                                            List<TrinityPatternCatalog.CoreMount> mounts,
+                                            ObjectList<TrinityPatternCatalog.CoreMount> mounts,
                                             @Nullable BlockPos failurePosition,
                                             String failureReason) {
 
-        private static PatternCatalogScanResult success(List<TrinityPatternCatalog.CoreMount> mounts) {
-            return new PatternCatalogScanResult(true, List.copyOf(mounts), null, "");
+        private static PatternCatalogScanResult success(ObjectList<TrinityPatternCatalog.CoreMount> mounts) {
+            return new PatternCatalogScanResult(true, new ObjectImmutableList<>(mounts), null, "");
         }
 
         private static PatternCatalogScanResult failure(BlockPos position, String reason) {
-            return new PatternCatalogScanResult(false, List.of(), position.immutable(), reason);
+            return new PatternCatalogScanResult(false, ObjectList.of(), position.immutable(), reason);
         }
     }
 

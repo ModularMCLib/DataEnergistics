@@ -43,6 +43,8 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
     private static final int SLOT_SIZE = 18;
     private static final int VIEW_TOP = 6;
     private static final int VIEW_HEIGHT = TrinityPatternCatalogView.ROW_COUNT * SLOT_SIZE;
+    private static final int SCROLL_TRACK_HEIGHT = 150;
+    private static final int SCROLL_THUMB_HEIGHT = 15;
     private static final float SEARCH_FONT_SIZE = 8F;
     private static final IGuiTexture PATTERN_ROW_BACKGROUND = SpriteTexture.of("data_energistics:textures/guis/model/model.png");
     private static final IGuiTexture OCCUPIED_PATTERN_SLOT_OVERLAY = SpriteTexture.of(
@@ -146,10 +148,11 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
         // home.png's rail spans y=2..152, beyond the inset pattern rows; hidden arrows must not reserve space.
         scrollbar.headButton.setDisplay(false);
         scrollbar.tailButton.setDisplay(false);
-        scrollbar.layout(layout -> layout.top(2).height(150).gapRow(0));
+        scrollbar.layout(layout -> layout.top(2).height(SCROLL_TRACK_HEIGHT).gapRow(0));
         scrollbar.scrollContainer.layout(layout -> layout.heightPercent(100));
-        // LDLib2 computes travel from the thumb percentage, so the authored 15px cap must not shorten it.
-        scrollbar.scrollBar.layout(layout -> layout.maxHeightPercent(100));
+        // Match LDLib2's travel calculation to the fixed authored thumb, regardless of catalog or search size.
+        scrollbar.scrollBar.layout(layout -> layout.maxHeight(SCROLL_THUMB_HEIGHT));
+        scrollbar.setScrollBarSize(100.0F * SCROLL_THUMB_HEIGHT / SCROLL_TRACK_HEIGHT);
         scrollbar.setRange(0.0F, 1.0F);
         scrollbar.setOnValueChanged(this::setNormalizedPosition);
         scrollbar.addEventListener(UIEvents.MOUSE_WHEEL, this::onMouseWheel, true);
@@ -420,8 +423,6 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
         this.scrollbar.scrollerStyle(style -> style.scrollDelta(scrollable ? 1.0F / maximumRow : 1.0F));
         // The thumb follows the pointer while dragging; quantized rows and delayed page replies do not pull it back.
         if (!this.scrollbar.isDragging()) {
-            int totalRows = maximumRow + TrinityPatternCatalogView.ROW_COUNT;
-            this.scrollbar.setScrollBarSize(Math.max(8.0F, 100.0F * TrinityPatternCatalogView.ROW_COUNT / totalRows));
             this.scrollbar.setNormalizedValue(scrollable ?
                     (float) (position / TrinityPatternCatalogView.COLUMN_COUNT) / maximumRow : 0.0F, false);
         }

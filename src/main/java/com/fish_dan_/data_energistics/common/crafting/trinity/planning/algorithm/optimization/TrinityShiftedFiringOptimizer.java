@@ -233,7 +233,7 @@ public final class TrinityShiftedFiringOptimizer {
                     Map.of("passes", Integer.toString(passNumber - 1)));
         }
         ModelData data = createModel(context, pass);
-        configureDeadline(data.model(), control);
+        configureSolve(data.model(), control);
         Optimisation.Result result = data.model().minimise();
         if (!result.getState().isOptimal()) {
             if (control.deadlineExceeded() || result.getState().isFeasible()) {
@@ -265,7 +265,8 @@ public final class TrinityShiftedFiringOptimizer {
         return TrinityAlgorithmResult.success(solved);
     }
 
-    private static void configureDeadline(ExpressionsBasedModel model, TrinityPlanningControl control) {
+    private static void configureSolve(ExpressionsBasedModel model, TrinityPlanningControl control) {
+        TrinityLinearRelaxationPolicy.configure(model);
         if (!control.deadlineConfigured()) {
             return;
         }

@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.dag.TrinityAcyclicPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityLinearRelaxationPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -540,7 +541,7 @@ public final class TrinityAcyclicRouteOptimizer {
         }
 
         ModelData data = modelTemplate.forPass(request.pass());
-        configureDeadline(data.model(), control);
+        configureSolve(data.model(), control);
         long startedNanos = System.nanoTime();
         Optimisation.Result result = request.pass() instanceof IdentityPass ?
                 data.model().maximise() :
@@ -645,7 +646,7 @@ public final class TrinityAcyclicRouteOptimizer {
 
         control.recordSolverModel();
         DiagnosticModelData data = createDiagnosticModel(request);
-        configureDeadline(data.model(), control);
+        configureSolve(data.model(), control);
         long startedNanos = System.nanoTime();
         Optimisation.Result result = data.model().minimise();
         control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
@@ -802,7 +803,8 @@ public final class TrinityAcyclicRouteOptimizer {
         return exact;
     }
 
-    private static void configureDeadline(ExpressionsBasedModel model, TrinityPlanningControl control) {
+    private static void configureSolve(ExpressionsBasedModel model, TrinityPlanningControl control) {
+        TrinityLinearRelaxationPolicy.configure(model);
         if (!control.deadlineConfigured()) {
             return;
         }

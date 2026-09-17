@@ -12,12 +12,12 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.LongSupplier;
 
 /**
@@ -139,7 +139,7 @@ public final class CraftingDispatchWindow {
     /**
      * Mutable attempt state retained only for providers observed during this window.
      */
-    private final Map<ICraftingProvider, ProviderState> states = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceMap<ICraftingProvider, ProviderState> states = new Reference2ReferenceOpenHashMap<>();
     /**
      * Result counters expose rejection and ownership behavior without leaking mutable provider state.
      */
@@ -423,10 +423,15 @@ public final class CraftingDispatchWindow {
      * @param logicalCrafts positive committed logical firing count
      */
     public void recordCommittedLogicalCrafts(long logicalCrafts) {
-        if (logicalCrafts <= 0L) {
+        recordCommittedLogicalCrafts(BigInteger.valueOf(logicalCrafts));
+    }
+
+    /** Records one exact batch while physical attempt/time budgets remain unchanged. */
+    public void recordCommittedLogicalCrafts(BigInteger logicalCrafts) {
+        if (logicalCrafts.signum() <= 0) {
             throw new IllegalArgumentException("Committed logical craft count must be positive");
         }
-        this.committedLogicalCrafts = this.committedLogicalCrafts.add(BigInteger.valueOf(logicalCrafts));
+        this.committedLogicalCrafts = this.committedLogicalCrafts.add(logicalCrafts);
     }
 
     /**
@@ -718,7 +723,7 @@ public final class CraftingDispatchWindow {
         /**
          * Pattern identity prevents equality-collapsing wrappers from sharing transient routing state.
          */
-        private final Map<IPatternDetails, PatternState> patternStates = new Reference2ReferenceOpenHashMap<>();
+        private final Reference2ReferenceMap<IPatternDetails, PatternState> patternStates = new Reference2ReferenceOpenHashMap<>();
 
         /**
          * Returns whether neither quota nor provider/pattern/target state blocks another attempt.
@@ -778,7 +783,7 @@ public final class CraftingDispatchWindow {
         /**
          * Stable target identities rejected for Blocking or capacity in this window.
          */
-        private final Set<CraftingDispatchTarget> unavailableTargets = new ObjectOpenHashSet<>();
+        private final ObjectSet<CraftingDispatchTarget> unavailableTargets = new ObjectOpenHashSet<>();
 
         /**
          * Returns whether the complete pattern and optional exact target remain eligible.

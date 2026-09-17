@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.TrinityCycleDemand;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.opportunity.TrinityPlanningAttempt;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.complement.TrinityFiringComplementOptimizer;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 
@@ -233,8 +234,9 @@ public final class TrinityShiftedFiringOptimizer {
                     Map.of("passes", Integer.toString(passNumber - 1)));
         }
         ModelData data = createModel(context, pass);
-        configureSolve(data.model(), control);
-        Optimisation.Result result = data.model().minimise();
+        configureDeadline(data.model(), control);
+        Optimisation.Result result = TrinitySolverFailureCapture.solve(
+                data.model(), Optimisation.Sense.MIN, "shifted_" + pass.getClass().getSimpleName());
         if (!result.getState().isOptimal()) {
             if (control.deadlineExceeded() || result.getState().isFeasible()) {
                 return failure(
@@ -265,8 +267,7 @@ public final class TrinityShiftedFiringOptimizer {
         return TrinityAlgorithmResult.success(solved);
     }
 
-    private static void configureSolve(ExpressionsBasedModel model, TrinityPlanningControl control) {
-        TrinityLinearRelaxationPolicy.configure(model);
+    private static void configureDeadline(ExpressionsBasedModel model, TrinityPlanningControl control) {
         if (!control.deadlineConfigured()) {
             return;
         }

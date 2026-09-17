@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixBuiltModel;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixInfeasibleException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 
 import it.unimi.dsi.fastutil.ints.Int2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -364,7 +365,8 @@ public final class TrinityRadixObjectiveSearch {
                                                                         TrinityRadixSolverMetrics metrics) {
         long started = System.nanoTime();
         try {
-            return TrinityAlgorithmResult.success(model.minimise());
+            return TrinityAlgorithmResult.success(TrinitySolverFailureCapture.solve(
+                    model, Optimisation.Sense.MIN, "radix"));
         } catch (RuntimeException exception) {
             if (!causedByStackOverflow(exception)) {
                 throw exception;

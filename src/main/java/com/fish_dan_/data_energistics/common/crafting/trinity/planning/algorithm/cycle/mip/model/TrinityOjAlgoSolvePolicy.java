@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityLinearRelaxationPolicy;
 
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 
@@ -19,7 +18,6 @@ public final class TrinityOjAlgoSolvePolicy {
                                  ExpressionsBasedModel model,
                                  TrinityPlanningControl control,
                                  boolean firstFeasible) {
-        TrinityLinearRelaxationPolicy.configure(model);
         long abortMillis = MAX_CALL_MILLIS;
         if (control.deadlineConfigured()) {
             long remainingNanos = control.remainingNanos();

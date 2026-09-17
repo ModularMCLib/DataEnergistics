@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.dag.TrinityAcyclicPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityLinearRelaxationPolicy;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
@@ -541,11 +541,12 @@ public final class TrinityAcyclicRouteOptimizer {
         }
 
         ModelData data = modelTemplate.forPass(request.pass());
-        configureSolve(data.model(), control);
+        configureDeadline(data.model(), control);
         long startedNanos = System.nanoTime();
-        Optimisation.Result result = request.pass() instanceof IdentityPass ?
-                data.model().maximise() :
-                data.model().minimise();
+        Optimisation.Result result = TrinitySolverFailureCapture.solve(
+                data.model(),
+                request.pass() instanceof IdentityPass ? Optimisation.Sense.MAX : Optimisation.Sense.MIN,
+                "acyclic_" + request.pass().getClass().getSimpleName());
         control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
 
         if (control.cancellationRequested()) {
@@ -646,9 +647,10 @@ public final class TrinityAcyclicRouteOptimizer {
 
         control.recordSolverModel();
         DiagnosticModelData data = createDiagnosticModel(request);
-        configureSolve(data.model(), control);
+        configureDeadline(data.model(), control);
         long startedNanos = System.nanoTime();
-        Optimisation.Result result = data.model().minimise();
+        Optimisation.Result result = TrinitySolverFailureCapture.solve(
+                data.model(), Optimisation.Sense.MIN, "acyclic_shortage");
         control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
         if (control.cancellationRequested()) {
             return failure(
@@ -803,8 +805,7 @@ public final class TrinityAcyclicRouteOptimizer {
         return exact;
     }
 
-    private static void configureSolve(ExpressionsBasedModel model, TrinityPlanningControl control) {
-        TrinityLinearRelaxationPolicy.configure(model);
+    private static void configureDeadline(ExpressionsBasedModel model, TrinityPlanningControl control) {
         if (!control.deadlineConfigured()) {
             return;
         }

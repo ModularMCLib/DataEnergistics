@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.template.TrinityMipCoefficientTemplate.Coefficient;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 
@@ -286,7 +287,8 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
         TrinityOjAlgoSolvePolicy.configure(data.model(), control, pass == FeasibilityPass.INSTANCE);
         long started = System.nanoTime();
-        Optimisation.Result result = data.model().minimise();
+        Optimisation.Result result = TrinitySolverFailureCapture.solve(
+                data.model(), Optimisation.Sense.MIN, "ordinary_" + pass.getClass().getSimpleName());
         long elapsedNanos = Math.max(0L, System.nanoTime() - started);
         metrics.addPass(elapsedNanos);
         control.recordSolverPass(elapsedNanos);
@@ -353,7 +355,8 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         TrinityOjAlgoSolvePolicy.configure(data.model(), control, true);
         data.model().options.time_abort = Math.min(data.model().options.time_abort, CORRECTION_CALL_MILLIS);
         long started = System.nanoTime();
-        Optimisation.Result result = data.model().minimise();
+        Optimisation.Result result = TrinitySolverFailureCapture.solve(
+                data.model(), Optimisation.Sense.MIN, "ordinary_correction_" + pass.getClass().getSimpleName());
         long elapsed = Math.max(0L, System.nanoTime() - started);
         metrics.addPass(elapsed);
         control.recordSolverPass(elapsed);

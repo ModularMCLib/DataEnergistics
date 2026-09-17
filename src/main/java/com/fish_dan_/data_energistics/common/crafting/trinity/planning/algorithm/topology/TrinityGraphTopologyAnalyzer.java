@@ -180,8 +180,8 @@ public final class TrinityGraphTopologyAnalyzer {
                     keys,
                     nodes.size() > 1 || selfEdges[componentIndex],
                     cycleVariants.get(componentIndex),
-                    IntLists.unmodifiable(new IntArrayList(predecessors.get(componentIndex))),
-                    IntLists.unmodifiable(new IntArrayList(successors.get(componentIndex)))));
+                    sortedComponentIndexes(predecessors.get(componentIndex)),
+                    sortedComponentIndexes(successors.get(componentIndex))));
         }
         Int2ObjectLinkedOpenHashMap<List<TrinityPatternVariant>> variantsByOutputComponent = new Int2ObjectLinkedOpenHashMap<>();
         for (int componentIndex = 0; componentIndex < outputVariants.size(); componentIndex++) {
@@ -221,6 +221,13 @@ public final class TrinityGraphTopologyAnalyzer {
                 variantsByOutputComponent,
                 variantsByOutputKey,
                 cyclicOwnerByVariant);
+    }
+
+    /** Condensation edges must be numerically ordered independently of graph traversal and insertion order. */
+    private static IntList sortedComponentIndexes(IntSet indexes) {
+        IntArrayList sorted = new IntArrayList(indexes);
+        IntArrays.quickSort(sorted.elements(), 0, sorted.size());
+        return IntLists.unmodifiable(sorted);
     }
 
     private static IntList topologicalOrder(

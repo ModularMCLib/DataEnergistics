@@ -22,7 +22,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,7 +80,7 @@ public final class ReusableCpuSessionLedgerGameTest {
         ledger = ReusableCpuSessionLedgerNbtCodec.decode(ReusableCpuSessionLedgerNbtCodec.encode(ledger,
                 helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
         Settlement settlement = new Settlement(SESSION, JOB, OWNER.toString(), TARGET.persistentIdentity(), 0L,
-                List.of(), List.of(), 0L, List.of(new AppendReceipt(sequence, 1L, 1L, 0L)), Optional.empty());
+                ObjectList.of(), ObjectList.of(), 0L, ObjectList.of(new AppendReceipt(sequence, 1L, 1L, 0L)), Optional.empty());
         AtomicInteger receives = new AtomicInteger();
 
         helper.assertTrue(ledger.settle(settlement, "transferred-receipt", ignored -> receives.incrementAndGet()),
@@ -92,19 +93,19 @@ public final class ReusableCpuSessionLedgerGameTest {
 
     private static ReusableCpuSessionLedger openLedger() {
         ReusableCpuSessionLedger ledger = new ReusableCpuSessionLedger(OWNER);
-        ledger.open(SESSION, JOB, TARGET, PATTERN, PUBLICATION, List.of());
+        ledger.open(SESSION, JOB, TARGET, PATTERN, PUBLICATION, ObjectList.of());
         return ledger;
     }
 
     private static Submission localSubmission() {
-        Work work = new Work(0L, 0, 0, PUBLICATION, OUTPUT, 0, 1L, false, List.of());
-        return new Submission(work, 1L, 1L, 0D, new OutputContract(List.of(new GenericStack(OUTPUT, 1L)), List.of(), List.of(), List.of()),
-                List.of(new SlotStack(0, new GenericStack(AEItemKey.of(Items.WOODEN_AXE), 1L))), false, false, false, 0L);
+        Work work = new Work(0L, 0, 0, PUBLICATION, OUTPUT, 0, 1L, false, ObjectList.of());
+        return new Submission(work, 1L, 1L, 0D, new OutputContract(ObjectList.of(new GenericStack(OUTPUT, 1L)), ObjectList.of(), ObjectList.of(), ObjectList.of()),
+                ObjectList.of(new SlotStack(0, new GenericStack(AEItemKey.of(Items.WOODEN_AXE), 1L))), false, false, false, 0L);
     }
 
     private static Settlement emptySettlement() {
         return new Settlement(SESSION, JOB, OWNER.toString(), TARGET.persistentIdentity(), 0L,
-                List.of(), List.of(), 0L, List.of(), Optional.empty());
+                ObjectList.of(), ObjectList.of(), 0L, ObjectList.of(), Optional.empty());
     }
 
     private static void expectState(GameTestHelper helper, Runnable action, String message) {

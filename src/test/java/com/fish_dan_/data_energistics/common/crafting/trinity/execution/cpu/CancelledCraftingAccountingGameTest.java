@@ -23,8 +23,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -43,7 +44,7 @@ public final class CancelledCraftingAccountingGameTest {
         ResourceLocation first = Data_Energistics.id("cancel_first");
         ResourceLocation second = Data_Energistics.id("cancel_second");
         DynamicCraftingOutputLedger ledger = new DynamicCraftingOutputLedger();
-        ledger.register(List.of(new Registration(key, BigInteger.valueOf(5L), Route.INVENTORY, first),
+        ledger.register(ObjectList.of(new Registration(key, BigInteger.valueOf(5L), Route.INVENTORY, first),
                 new Registration(key, BigInteger.valueOf(7L), Route.INVENTORY, second)));
         ledger.consume(new Match(key, 2L, Route.INVENTORY, first), 2L);
         ItemStack received = new ItemStack(Items.PAPER);
@@ -51,28 +52,28 @@ public final class CancelledCraftingAccountingGameTest {
         AEItemKey actual = AEItemKey.of(received);
         ledger.recordInputAlias(actual, 2L);
 
-        assertRejectedAtomically(helper, () -> ledger.prepareWithdrawal(List.of(
+        assertRejectedAtomically(helper, () -> ledger.prepareWithdrawal(ObjectList.of(
                 new Registration(key, BigInteger.ONE, Route.INVENTORY, first),
                 new Registration(key, BigInteger.ONE, Route.FINAL_OUTPUT, second))), () -> ledger.writeToTag(registries));
-        assertRejectedAtomically(helper, () -> ledger.prepareWithdrawal(List.of(
+        assertRejectedAtomically(helper, () -> ledger.prepareWithdrawal(ObjectList.of(
                 new Registration(key, BigInteger.TWO, Route.INVENTORY, first),
                 new Registration(key, BigInteger.TWO, Route.INVENTORY, first))), () -> ledger.writeToTag(registries));
-        assertRejectedAtomically(helper, () -> ledger.prepareWithdrawal(List.of(
+        assertRejectedAtomically(helper, () -> ledger.prepareWithdrawal(ObjectList.of(
                 new Registration(key, BigInteger.ONE, Route.INVENTORY, Data_Energistics.id("unknown_source")))), () -> ledger.writeToTag(registries));
 
         CompoundTag beforePrepared = ledger.writeToTag(registries);
-        Runnable withdrawal = ledger.prepareWithdrawal(List.of(new Registration(key, BigInteger.ONE, Route.INVENTORY, first),
+        Runnable withdrawal = ledger.prepareWithdrawal(ObjectList.of(new Registration(key, BigInteger.ONE, Route.INVENTORY, first),
                 new Registration(key, BigInteger.TWO, Route.INVENTORY, first)));
         helper.assertValueEqual(ledger.writeToTag(registries), beforePrepared, "Preparing a valid withdrawal must not mutate the ledger");
         withdrawal.run();
         assertRejectedAtomically(helper, withdrawal, () -> ledger.writeToTag(registries));
         DynamicCraftingOutputLedger expected = new DynamicCraftingOutputLedger();
-        expected.register(List.of(new Registration(key, BigInteger.valueOf(7L), Route.INVENTORY, second)));
+        expected.register(ObjectList.of(new Registration(key, BigInteger.valueOf(7L), Route.INVENTORY, second)));
         expected.recordInputAlias(actual, 2L);
         helper.assertValueEqual(ledger.writeToTag(registries), expected.writeToTag(registries),
                 "Cancelling the uncompleted prefix must leave the other source and received physical alias untouched");
         var restored = DynamicCraftingOutputLedger.readFromTag(ledger.writeToTag(registries), registries);
-        restored.prepareWithdrawal(List.of(new Registration(key, BigInteger.valueOf(7L), Route.INVENTORY, second))).run();
+        restored.prepareWithdrawal(ObjectList.of(new Registration(key, BigInteger.valueOf(7L), Route.INVENTORY, second))).run();
         helper.assertTrue(restored.isEmpty() && restored.isInputAlias(actual),
                 "After reload, withdrawing the last expectation still must not erase received inventory ownership");
         helper.succeed();

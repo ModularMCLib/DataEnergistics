@@ -24,7 +24,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ public final class TrinityReusableCpuPersistenceGameTest {
         ReusableCpuSessionLedger ledger = new ReusableCpuSessionLedger(UUID.randomUUID());
         ledger.open(UUID.randomUUID(), UUID.randomUUID(),
                 new Target("persistent-executor", CountedCraftingTarget.route("route"), Optional.empty()),
-                AEItemKey.of(Items.CRAFTING_TABLE), new TrinityPatternIdentity("definition", "publication"), List.of());
+                AEItemKey.of(Items.CRAFTING_TABLE), new TrinityPatternIdentity("definition", "publication"), ObjectList.of());
         CompoundTag saved = cpu.logic().writeToTag(helper.getLevel().registryAccess());
         saved.put("reusable_sessions", ReusableCpuSessionLedgerNbtCodec.encode(ledger, helper.getLevel().registryAccess()));
         cpu.logic().readFromTag(saved, helper.getLevel().registryAccess());

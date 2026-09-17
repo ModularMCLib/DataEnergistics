@@ -43,7 +43,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -68,13 +67,13 @@ public final class TrinityReusableDispatchContractGameTest {
     @GameTest(template = "empty_5x5")
     public static void externalRecipesKeepFluidMaterialValidation(GameTestHelper helper) {
         AEFluidKey water = AEFluidKey.of(Fluids.WATER);
-        List<TrinityBoundPatternInput> bindings = List.of(toolBinding(0, unchanged(), 1),
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(toolBinding(0, unchanged(), 1),
                 new TrinityBoundPatternInput(1, 0, new GenericStack(water, 1000), 1, null));
         TestPattern pattern = new TestPattern(bindings);
-        helper.assertTrue(NativeReusableCrafting.matches(pattern, List.of(stack(tool(0), 1), new GenericStack(water, 1000)),
+        helper.assertTrue(NativeReusableCrafting.matches(pattern, ObjectList.of(stack(tool(0), 1), new GenericStack(water, 1000)),
                 IntSet.of(0), Optional.empty(), helper.getLevel()), "External reusable providers may consume their validated fluid keys");
         helper.assertTrue(!NativeReusableCrafting.matches(pattern,
-                List.of(stack(tool(0), 1), new GenericStack(AEFluidKey.of(Fluids.LAVA), 1000)), IntSet.of(0), Optional.empty(), helper.getLevel()),
+                ObjectList.of(stack(tool(0), 1), new GenericStack(AEFluidKey.of(Fluids.LAVA), 1000)), IntSet.of(0), Optional.empty(), helper.getLevel()),
                 "Reusable authorization cannot bypass the ordinary fluid input validator");
         helper.succeed();
     }
@@ -83,17 +82,17 @@ public final class TrinityReusableDispatchContractGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void offerSharesOneBalanceForConsumedAndHeldIdenticalKeys(GameTestHelper helper) {
-        List<TrinityBoundPatternInput> bindings = List.of(toolBinding(0, unchanged(), 1), ordinary(1, tool(0), 1));
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(toolBinding(0, unchanged(), 1), ordinary(1, tool(0), 1));
         TrinityReusableRecipe recipe = recipe(bindings);
         KeyCounter available = inventory(tool(0), 1000);
         var offered = recipe.offer(1000, available, ignored -> ResidentTools.EMPTY);
         helper.assertValueEqual(offered.count(), 999L, "One physical tool leaves only 999 same-key material units");
         helper.assertValueEqual(amount(offered.addedTools(), tool(0)), 1L, "The shared balance reserves exactly one held unit");
         helper.assertValueEqual(available.get(tool(0)), 1000L, "Read-only offer calculation cannot consume real CPU inventory");
-        var resident = recipe.offer(1000, available, ignored -> new ResidentTools(List.of(stack(tool(0), 1)), 0));
+        var resident = recipe.offer(1000, available, ignored -> new ResidentTools(ObjectList.of(stack(tool(0), 1)), 0));
         helper.assertValueEqual(resident.count(), 1000L, "A separately resident tool permits all 1000 material units to be consumed");
         helper.assertTrue(resident.addedTools().isEmpty(), "Resident amount is not transferred again");
-        helper.assertValueEqual(recipe.offer(1, new KeyCounter(), ignored -> new ResidentTools(List.of(stack(tool(0), 1)), 0)).count(), 0L,
+        helper.assertValueEqual(recipe.offer(1, new KeyCounter(), ignored -> new ResidentTools(ObjectList.of(stack(tool(0), 1)), 0)).count(), 0L,
                 "A resident tool cannot also pay for a missing ordinary same-key material");
         helper.succeed();
     }
@@ -102,11 +101,11 @@ public final class TrinityReusableDispatchContractGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void unchangedOfferUsesOneToolForOneThousandOperations(GameTestHelper helper) {
-        TrinityReusableRecipe recipe = recipe(List.of(toolBinding(0, unchanged(), 1)));
+        TrinityReusableRecipe recipe = recipe(ObjectList.of(toolBinding(0, unchanged(), 1)));
         var offered = recipe.offer(1000, inventory(tool(0), 1), ignored -> ResidentTools.EMPTY);
         helper.assertValueEqual(offered.count(), 1000L, "One unchanged physical tool covers the complete 1000-operation offer");
-        helper.assertValueEqual(offered.addedTools(), List.of(slot(0, tool(0), 1)), "Offer transfers one tool rather than count times the sample");
-        var continuation = recipe.offer(1000, new KeyCounter(), ignored -> new ResidentTools(List.of(stack(tool(0), 1)), 0));
+        helper.assertValueEqual(offered.addedTools(), ObjectList.of(slot(0, tool(0), 1)), "Offer transfers one tool rather than count times the sample");
+        var continuation = recipe.offer(1000, new KeyCounter(), ignored -> new ResidentTools(ObjectList.of(stack(tool(0), 1)), 0));
         helper.assertValueEqual(continuation.count(), 1000L, "Resident unchanged tool remains reusable across the next offer");
         helper.assertTrue(continuation.addedTools().isEmpty(), "Continuation does not claim a second CPU-owned tool");
         helper.assertValueEqual(recipe.offer(1000, new KeyCounter(), ignored -> ResidentTools.EMPTY).count(), 0L, "Missing actual startup tool rejects the offer");
@@ -117,17 +116,17 @@ public final class TrinityReusableDispatchContractGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void changingOfferUsesUncommittedDurabilityCapacity(GameTestHelper helper) {
-        TrinityReusableRecipe recipe = recipe(List.of(toolBinding(0, damageRule(0, 100), 1)));
+        TrinityReusableRecipe recipe = recipe(ObjectList.of(toolBinding(0, damageRule(0, 100), 1)));
         KeyCounter available = inventory(tool(0), 3);
         var offered = recipe.offer(250, available, ignored -> ResidentTools.EMPTY);
         helper.assertValueEqual(offered.count(), 250L, "Three 100-use tools cover 250 real operations");
         helper.assertValueEqual(amount(offered.addedTools(), tool(0)), 3L, "Only three real tools are delivered");
         helper.assertTrue(recipe.inputs().getFirst().tool().orElseThrow().operationState().isEmpty(),
                 "A lifetime append must not pin all operations to Damage 0");
-        var resident = recipe.offer(1000, new KeyCounter(), ignored -> new ResidentTools(List.of(stack(tool(40), 1)), 50));
+        var resident = recipe.offer(1000, new KeyCounter(), ignored -> new ResidentTools(ObjectList.of(stack(tool(40), 1)), 50));
         helper.assertValueEqual(resident.count(), 10L, "The 50 committed uses cannot be offered again from 60 remaining uses");
         helper.assertTrue(resident.addedTools().isEmpty(), "Resident tools are not extracted again");
-        var paired = recipe(List.of(toolBinding(0, damageRule(0, 100), 2)));
+        var paired = recipe(ObjectList.of(toolBinding(0, damageRule(0, 100), 2)));
         KeyCounter uneven = inventory(tool(0), 1);
         uneven.add(tool(99), 1);
         helper.assertValueEqual(paired.offer(1000, uneven, ignored -> ResidentTools.EMPTY).count(), 1L,
@@ -141,7 +140,7 @@ public final class TrinityReusableDispatchContractGameTest {
     @GameTest(template = "empty_5x5")
     public static void accountingAndSettlementFollowResidentSuccessorsBetweenFirings(GameTestHelper helper) {
         Chain chain = chainedFirings(helper);
-        Settlement settlement = chainSettlement(List.of(stack(tool(6), 1), stack(MATERIAL, 2)), false);
+        Settlement settlement = chainSettlement(ObjectList.of(stack(tool(6), 1), stack(MATERIAL, 2)), false);
         KeyCounter returned = new KeyCounter();
         helper.assertTrue(chain.ledger().settle(settlement, ReusableCpuSettlement.fingerprint(settlement, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(chain.ledger().session(SESSION), actual);
@@ -160,12 +159,12 @@ public final class TrinityReusableDispatchContractGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void settlementExhaustionAndCancelledMaterialsConserveActualAssets(GameTestHelper helper) {
-        List<TrinityBoundPatternInput> bindings = List.of(toolBinding(0, damageRule(0, 1), 1), ordinary(1, MATERIAL, 1));
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(toolBinding(0, damageRule(0, 1), 1), ordinary(1, MATERIAL, 1));
         ReusableCpuSessionLedger ledger = ledger(bindings);
         Accounting accounting = new Accounting();
         book(ledger, bindings, 2, inventoryWithMaterial(tool(0), 2, 2), ResidentTools.EMPTY, 1, accounting, helper);
-        Settlement settlement = settlement(List.of(stack(tool(0), 1), stack(MATERIAL, 1)), 1,
-                List.of(new AppendReceipt(0, 2, 1, 1)));
+        Settlement settlement = settlement(ObjectList.of(stack(tool(0), 1), stack(MATERIAL, 1)), 1,
+                ObjectList.of(new AppendReceipt(0, 2, 1, 1)));
         KeyCounter returned = new KeyCounter();
         helper.assertTrue(ledger.settle(settlement, ReusableCpuSettlement.fingerprint(settlement, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(ledger.session(SESSION), actual);
@@ -181,21 +180,21 @@ public final class TrinityReusableDispatchContractGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void invalidComponentsOrExhaustionCannotDepositAssets(GameTestHelper helper) {
-        List<TrinityBoundPatternInput> bindings = List.of(toolBinding(0, damageRule(0, 2), 1), ordinary(1, MATERIAL, 1));
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(toolBinding(0, damageRule(0, 2), 1), ordinary(1, MATERIAL, 1));
         ReusableCpuSessionLedger ledger = ledger(bindings);
         book(ledger, bindings, 2, inventoryWithMaterial(tool(0), 2, 2), ResidentTools.EMPTY, 1, new Accounting(), helper);
         var before = ledger.snapshot();
         ItemStack renamed = tool(1).toStack();
         renamed.set(DataComponents.CUSTOM_NAME, Component.literal("different actual component"));
-        Settlement wrongComponents = settlement(List.of(stack(tool(0), 1), stack(AEItemKey.of(renamed), 1), stack(MATERIAL, 1)), 0,
-                List.of(new AppendReceipt(0, 2, 1, 1)));
+        Settlement wrongComponents = settlement(ObjectList.of(stack(tool(0), 1), stack(AEItemKey.of(renamed), 1), stack(MATERIAL, 1)), 0,
+                ObjectList.of(new AppendReceipt(0, 2, 1, 1)));
         KeyCounter deposited = new KeyCounter();
         expectState(helper, () -> ledger.settle(wrongComponents, ReusableCpuSettlement.fingerprint(wrongComponents, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(ledger.session(SESSION), actual);
             actual.returnedAssetsFast().forEach(asset -> deposited.add(asset.what(), asset.amount()));
         }), "A successor with altered components must fail asset conservation");
-        Settlement inventedExhaustion = settlement(List.of(stack(tool(0), 1), stack(tool(1), 1), stack(MATERIAL, 1)), 1,
-                List.of(new AppendReceipt(0, 2, 1, 1)));
+        Settlement inventedExhaustion = settlement(ObjectList.of(stack(tool(0), 1), stack(tool(1), 1), stack(MATERIAL, 1)), 1,
+                ObjectList.of(new AppendReceipt(0, 2, 1, 1)));
         expectState(helper, () -> ledger.settle(inventedExhaustion, ReusableCpuSettlement.fingerprint(inventedExhaustion, helper.getLevel().registryAccess()), actual -> {
             ReusableCpuSettlement.verify(ledger.session(SESSION), actual);
             actual.returnedAssetsFast().forEach(asset -> deposited.add(asset.what(), asset.amount()));
@@ -209,13 +208,13 @@ public final class TrinityReusableDispatchContractGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void duplicateReceiptCannotExhaustOnePhysicalToolTwice(GameTestHelper helper) {
-        List<TrinityBoundPatternInput> bindings = List.of(toolBinding(0, damageRule(0, 1), 1));
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(toolBinding(0, damageRule(0, 1), 1));
         ReusableCpuSessionLedger ledger = ledger(bindings);
         book(ledger, bindings, 1, inventory(tool(0), 1), ResidentTools.EMPTY, 1, new Accounting(), helper);
         AppendReceipt receipt = new AppendReceipt(0, 1, 1, 0);
-        Settlement valid = settlement(List.of(), 1, List.of(receipt));
+        Settlement valid = settlement(ObjectList.of(), 1, ObjectList.of(receipt));
         String fingerprint = ReusableCpuSettlement.fingerprint(valid, helper.getLevel().registryAccess());
-        Settlement duplicate = settlement(List.of(), 2, List.of(receipt, receipt));
+        Settlement duplicate = settlement(ObjectList.of(), 2, ObjectList.of(receipt, receipt));
         int[] verificationCalls = { 0 };
         var before = ledger.snapshot();
         expectState(helper, () -> ledger.settle(duplicate, fingerprint, actual -> {
@@ -232,8 +231,8 @@ public final class TrinityReusableDispatchContractGameTest {
     @GameTest(template = "empty_5x5")
     public static void settlementFingerprintIsSplitAndOrderIndependentForReplay(GameTestHelper helper) {
         Chain chain = chainedFirings(helper);
-        Settlement aggregated = chainSettlement(List.of(stack(tool(6), 1), stack(MATERIAL, 2)), false);
-        Settlement split = chainSettlement(List.of(stack(MATERIAL, 1), stack(tool(6), 1), stack(MATERIAL, 1)), true);
+        Settlement aggregated = chainSettlement(ObjectList.of(stack(tool(6), 1), stack(MATERIAL, 2)), false);
+        Settlement split = chainSettlement(ObjectList.of(stack(MATERIAL, 1), stack(tool(6), 1), stack(MATERIAL, 1)), true);
         String first = ReusableCpuSettlement.fingerprint(aggregated, helper.getLevel().registryAccess());
         String second = ReusableCpuSettlement.fingerprint(split, helper.getLevel().registryAccess());
         helper.assertValueEqual(second, first, "Stack splitting, asset order and receipt order do not change replay identity");
@@ -255,30 +254,30 @@ public final class TrinityReusableDispatchContractGameTest {
     }
 
     private static Chain chainedFirings(GameTestHelper helper) {
-        List<TrinityBoundPatternInput> initial = List.of(toolBinding(0, damageRule(0, 100), 1), ordinary(1, MATERIAL, 1));
+        ObjectList<TrinityBoundPatternInput> initial = ObjectList.of(toolBinding(0, damageRule(0, 100), 1), ordinary(1, MATERIAL, 1));
         ReusableCpuSessionLedger ledger = ledger(initial);
         Accounting accounting = new Accounting();
         book(ledger, initial, 4, inventoryWithMaterial(tool(0), 1, 4), ResidentTools.EMPTY, 4, accounting, helper);
-        long sequence = book(ledger, initial, 4, inventory(MATERIAL, 4), new ResidentTools(List.of(stack(tool(4), 1)), 0), 2, accounting, helper);
+        long sequence = book(ledger, initial, 4, inventory(MATERIAL, 4), new ResidentTools(ObjectList.of(stack(tool(4), 1)), 0), 2, accounting, helper);
         helper.assertTrue(ledger.session(SESSION).submission(sequence).physicalInputs().stream().noneMatch(input -> input.slot() == 0),
                 "Second firing batch registers only new materials, preserving the resident tool provenance");
         return new Chain(ledger, accounting);
     }
 
-    private static long book(ReusableCpuSessionLedger ledger, List<TrinityBoundPatternInput> bindings, long count,
+    private static long book(ReusableCpuSessionLedger ledger, ObjectList<TrinityBoundPatternInput> bindings, long count,
                              KeyCounter available, ResidentTools residentTools, long completed, Accounting accounting, GameTestHelper helper) {
         TrinityReusableRecipe recipe = recipe(bindings);
         var offer = recipe.offer(count, available, ignored -> residentTools);
         helper.assertValueEqual(offer.count(), count, "Fixture's real offer must cover the requested exact firing count");
-        List<SlotStack> physical = new ObjectArrayList<>(offer.addedTools());
+        ObjectList<SlotStack> physical = new ObjectArrayList<>(offer.addedTools());
         for (var input : recipe.inputs()) {
             for (GenericStack material : input.consumedPerOperationFast()) {
                 physical.add(slot(input.slot(), material.what(), Math.multiplyExact(material.amount(), count)));
             }
         }
         Work work = new Work(0, 0, 0, PUBLICATION, PRODUCT, 0, count, false, bindings);
-        Submission submission = new Submission(work, count, count, 0, new OutputContract(List.of(stack(PRODUCT, 1)),
-                recipe.ordinaryRemainders(), List.of(), List.of()), physical, false, false, false, 0);
+        Submission submission = new Submission(work, count, count, 0, new OutputContract(ObjectList.of(stack(PRODUCT, 1)),
+                recipe.ordinaryRemainders(), ObjectList.of(), ObjectList.of()), physical, false, false, false, 0);
         long sequence = ledger.prepare(SESSION, submission);
         ledger.registerWaiting(SESSION, sequence, registered -> accounting.waiting += registered.count());
         ledger.registerWaiting(SESSION, sequence, registered -> accounting.waiting += registered.count());
@@ -290,23 +289,23 @@ public final class TrinityReusableDispatchContractGameTest {
         return sequence;
     }
 
-    private static ReusableCpuSessionLedger ledger(List<TrinityBoundPatternInput> bindings) {
+    private static ReusableCpuSessionLedger ledger(ObjectList<TrinityBoundPatternInput> bindings) {
         ReusableCpuSessionLedger ledger = new ReusableCpuSessionLedger(OWNER);
         ledger.open(SESSION, JOB, TARGET, PATTERN, PUBLICATION, bindings);
         return ledger;
     }
 
-    private static Settlement chainSettlement(List<GenericStack> returned, boolean reverseReceipts) {
+    private static Settlement chainSettlement(ObjectList<GenericStack> returned, boolean reverseReceipts) {
         AppendReceipt first = new AppendReceipt(0, 4, 4, 0);
         AppendReceipt second = new AppendReceipt(1, 4, 2, 2);
-        return settlement(returned, 0, reverseReceipts ? List.of(second, first) : List.of(first, second));
+        return settlement(returned, 0, reverseReceipts ? ObjectList.of(second, first) : ObjectList.of(first, second));
     }
 
-    private static Settlement settlement(List<GenericStack> returned, long exhausted, List<AppendReceipt> receipts) {
-        return new Settlement(SESSION, JOB, OWNER.toString(), TARGET.persistentIdentity(), 0, returned, List.of(), exhausted, receipts, Optional.empty());
+    private static Settlement settlement(ObjectList<GenericStack> returned, long exhausted, ObjectList<AppendReceipt> receipts) {
+        return new Settlement(SESSION, JOB, OWNER.toString(), TARGET.persistentIdentity(), 0, returned, ObjectList.of(), exhausted, receipts, Optional.empty());
     }
 
-    private static TrinityReusableRecipe recipe(List<TrinityBoundPatternInput> bindings) {
+    private static TrinityReusableRecipe recipe(ObjectList<TrinityBoundPatternInput> bindings) {
         return new TrinityReusableRecipe(new TestPattern(bindings), bindings, Optional.empty());
     }
 
@@ -354,7 +353,7 @@ public final class TrinityReusableDispatchContractGameTest {
         return inventory;
     }
 
-    private static long amount(List<SlotStack> assets, AEKey key) {
+    private static long amount(ObjectList<SlotStack> assets, AEKey key) {
         return assets.stream().filter(asset -> asset.stack().what().equals(key)).mapToLong(asset -> asset.stack().amount()).sum();
     }
 
@@ -376,7 +375,7 @@ public final class TrinityReusableDispatchContractGameTest {
 
     private record Chain(ReusableCpuSessionLedger ledger, Accounting accounting) {}
 
-    private record TestPattern(List<TrinityBoundPatternInput> bindings) implements IPatternDetails {
+    private record TestPattern(ObjectList<TrinityBoundPatternInput> bindings) implements IPatternDetails {
 
         @Override
         public AEItemKey getDefinition() {
@@ -389,8 +388,8 @@ public final class TrinityReusableDispatchContractGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(stack(PRODUCT, 1));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(stack(PRODUCT, 1));
         }
     }
 

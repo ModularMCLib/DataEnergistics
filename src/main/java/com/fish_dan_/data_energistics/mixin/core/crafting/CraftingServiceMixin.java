@@ -341,9 +341,10 @@ public abstract class CraftingServiceMixin
                 .orElse(publications.publicationRevision());
         if (DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging) {
             Data_Energistics.LOGGER.info(
-                    "Trinity planning inventory captured request={} target={} revision={} finiteKeys={} unlimitedKeys={} inventorySentinelProbes={}",
+                    "Trinity planning inventory captured request={} target={} requestedAmount={} revision={} finiteKeys={} unlimitedKeys={} inventorySentinelProbes={}",
                     requestId,
                     what,
+                    amount,
                     graphRevision,
                     inventory.finiteAmounts().size(),
                     inventory.unlimitedKeys().size(),

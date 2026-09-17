@@ -650,7 +650,7 @@ public final class TrinityAcyclicRouteOptimizer {
         configureDeadline(data.model(), control);
         long startedNanos = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(), Optimisation.Sense.MIN, "acyclic_shortage");
+                data.model(), Optimisation.Sense.MIN, "acyclic_shortage", true);
         control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
         if (control.cancellationRequested()) {
             return failure(
@@ -667,9 +667,12 @@ public final class TrinityAcyclicRouteOptimizer {
             }
             if (result.getState() == Optimisation.State.INFEASIBLE) {
                 return failure(
-                        TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
-                        INSUFFICIENT_INPUT_KEY,
-                        Map.of("state", result.getState().name()));
+                        TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
+                        "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
+                        Map.of(
+                                "state", result.getState().name(),
+                                "phase", "acyclic_shortage",
+                                "requestedAmount", request.requestedAmount().toString()));
             }
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,

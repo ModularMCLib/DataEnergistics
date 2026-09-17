@@ -35,15 +35,33 @@ public final class TrinitySolverFailureCapture {
      * @return the unmodified ojAlgo result
      */
     public static Optimisation.Result solve(ExpressionsBasedModel model, Optimisation.Sense sense, String phase) {
+        return solve(model, sense, phase, false);
+    }
+
+    /**
+     * Also captures a normally returned INFEASIBLE state when the caller needs the original model to
+     * diagnose it. Enable only at a terminal diagnostic boundary, not for expected search probes.
+     * Uses the same request ownership, exception propagation and process-wide capture limit as {@link #solve}.
+     */
+    public static Optimisation.Result solve(
+                                            ExpressionsBasedModel model,
+                                            Optimisation.Sense sense,
+                                            String phase,
+                                            boolean captureInfeasible) {
         if (CAPTURE_ATTEMPTED.get()) {
             return optimise(model, sense);
         }
         ExpressionsBasedModel original = model.copy();
         try {
-            return optimise(model, sense);
+            Optimisation.Result result = optimise(model, sense);
+            if (captureInfeasible && result.getState() == Optimisation.State.INFEASIBLE &&
+                    CAPTURE_ATTEMPTED.compareAndSet(false, true)) {
+                capture(original, sense, phase, result.getState().name());
+            }
+            return result;
         } catch (StackOverflowError | RuntimeException failure) {
             if (CAPTURE_ATTEMPTED.compareAndSet(false, true)) {
-                capture(original, sense, phase, failure);
+                capture(original, sense, phase, failure.getClass().getName());
             }
             throw failure;
         } finally {
@@ -59,7 +77,7 @@ public final class TrinitySolverFailureCapture {
                                 ExpressionsBasedModel model,
                                 Optimisation.Sense sense,
                                 String phase,
-                                Throwable failure) {
+                                String failure) {
         try {
             Path directory = FMLPaths.GAMEDIR.get().resolve("logs").resolve("data_energistics").resolve("trinity");
             Files.createDirectories(directory);
@@ -69,7 +87,7 @@ public final class TrinitySolverFailureCapture {
             StringBuilder metadata = new StringBuilder()
                     .append("phase=").append(phase).append('\n')
                     .append("sense=").append(sense).append('\n')
-                    .append("failure=").append(failure.getClass().getName()).append('\n')
+                    .append("failure=").append(failure).append('\n')
                     .append("variables=").append(model.countVariables()).append('\n')
                     .append("expressions=").append(model.countExpressions()).append('\n')
                     .append("has_integer_variables=").append(model.isAnyVariableInteger()).append('\n')
@@ -98,9 +116,9 @@ public final class TrinitySolverFailureCapture {
             metadata.append("unbounded_or_outside_int_domains=").append(unsafeDomains).append('\n');
             Files.writeString(metadataFile, metadata, StandardCharsets.UTF_8);
             Data_Energistics.LOGGER.error(
-                    "Trinity solver failure captured phase={} sense={} variables={} expressions={} " +
+                    "Trinity solver failure captured phase={} sense={} failure={} variables={} expressions={} " +
                             "unboundedOrOutsideIntDomains={} model={} metadata={}",
-                    phase, sense, model.countVariables(), model.countExpressions(), unsafeDomains,
+                    phase, sense, failure, model.countVariables(), model.countExpressions(), unsafeDomains,
                     modelFile.toAbsolutePath(), metadataFile.toAbsolutePath());
         } catch (IOException | RuntimeException captureFailure) {
             Data_Energistics.LOGGER.error("Could not capture Trinity solver failure model for phase={}",

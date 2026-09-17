@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
+import com.fish_dan_.data_energistics.client.sound.crossbow.CrossbowSounds;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
@@ -27,7 +28,7 @@ public final class CrossbowAnimationStates {
     /** Registers a rendered hand and reads its pose without advancing the animation. */
     public static CrossbowAnimation.Pose pose(LivingEntity entity, InteractionHand hand, float partialTick) {
         var hands = ANIMATIONS.computeIfAbsent(entity, ignored -> new EnumMap<>(InteractionHand.class));
-        var tracked = hands.computeIfAbsent(hand, ignored -> new HandAnimation(slot(entity, hand), new CrossbowAnimation(),
+        var tracked = hands.computeIfAbsent(hand, ignored -> new HandAnimation(slot(entity, hand), new CrossbowAnimation(), new CrossbowSounds(),
                 entity.getItemInHand(hand).getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0)));
         return tracked.animation().pose(partialTick);
     }
@@ -35,12 +36,23 @@ public final class CrossbowAnimationStates {
     /** Observes actual held state once per client tick; paused worlds do not advance. */
     public static void tick(Minecraft minecraft) {
         if (minecraft.level == null) {
+            ANIMATIONS.values().forEach(hands -> hands.values().forEach(tracked -> tracked.sounds().stop(minecraft.getSoundManager())));
             ANIMATIONS.clear();
             return;
         }
-        ANIMATIONS.keySet().removeIf(entity -> entity.isRemoved() || entity.level() != minecraft.level);
+        ANIMATIONS.entrySet().removeIf(entry -> {
+            if (!entry.getKey().isRemoved() && entry.getKey().level() == minecraft.level) return false;
+            entry.getValue().values().forEach(tracked -> tracked.sounds().stop(minecraft.getSoundManager()));
+            return true;
+        });
         if (minecraft.isPaused()) {
             return;
+        }
+        // Audio must also observe players outside the camera's view and with the HUD hidden.
+        for (var player : minecraft.level.players()) {
+            for (var hand : InteractionHand.values()) {
+                if (player.getItemInHand(hand).getItem() instanceof MatterConvergingCrossbowItem) pose(player, hand, 0);
+            }
         }
         for (var entry : ANIMATIONS.entrySet()) {
             LivingEntity entity = entry.getKey();
@@ -53,7 +65,8 @@ public final class CrossbowAnimationStates {
                         stack.getOrDefault(DEDataComponents.MATTER_CONVERGING_CROSSBOW_MODE.get(), MatterConvergingCrossbowMode.GRENADE.id())) : MatterConvergingCrossbowMode.GRENADE;
                 int slot = slot(entity, hand);
                 if (tracked.slot() != slot) {
-                    tracked = new HandAnimation(slot, held ? new CrossbowAnimation() : tracked.animation(), stack.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0));
+                    tracked.sounds().stop(minecraft.getSoundManager());
+                    tracked = new HandAnimation(slot, held ? new CrossbowAnimation() : tracked.animation(), new CrossbowSounds(), stack.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0));
                     handEntry.setValue(tracked);
                 }
                 boolean using = held && entity.isUsingItem() && entity.getUsedItemHand() == hand;
@@ -69,10 +82,12 @@ public final class CrossbowAnimationStates {
                 int duration = stack.getOrDefault(DEDataComponents.RAIL_COOLDOWN_DURATION.get(), CrossbowRailRecoil.DURATION_TICKS);
                 long remaining = stack.getOrDefault(DEDataComponents.RAIL_COOLDOWN_END.get(), 0L) - minecraft.level.getGameTime();
                 int elapsed = remaining > 0 ? duration - (int) Math.min(duration, remaining) : -1;
-                tracked.animation().tick(held, using, charged, progress, mode, shot != 0 && shot != tracked.shot(), duration, elapsed,
+                boolean fired = held && tracked.animation().held() && mode == tracked.animation().mode() && shot != tracked.shot();
+                tracked.animation().tick(held, using, charged, progress, mode, fired, duration, elapsed,
                         stack.getOrDefault(DEDataComponents.RAIL_RECOIL_START.get(), 0.0F));
+                tracked.sounds().tick(minecraft.getSoundManager(), entity, tracked.animation(), using, progress, fired, duration);
                 CannonModelAnchors.particles(entity, hand, tracked.animation().exhaustStrength());
-                handEntry.setValue(new HandAnimation(slot, tracked.animation(), shot));
+                handEntry.setValue(new HandAnimation(slot, tracked.animation(), tracked.sounds(), shot));
             }
         }
     }
@@ -81,5 +96,5 @@ public final class CrossbowAnimationStates {
         return hand == InteractionHand.MAIN_HAND && entity instanceof Player player ? player.getInventory().selected : -1;
     }
 
-    private record HandAnimation(int slot, CrossbowAnimation animation, int shot) {}
+    private record HandAnimation(int slot, CrossbowAnimation animation, CrossbowSounds sounds, int shot) {}
 }

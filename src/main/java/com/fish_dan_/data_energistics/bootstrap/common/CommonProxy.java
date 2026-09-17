@@ -35,6 +35,7 @@ import com.fish_dan_.data_energistics.registry.DEMenus;
 import com.fish_dan_.data_energistics.registry.DEMobEffects;
 import com.fish_dan_.data_energistics.registry.DEParticles;
 import com.fish_dan_.data_energistics.registry.DERecipes;
+import com.fish_dan_.data_energistics.registry.DESounds;
 import com.fish_dan_.data_energistics.registry.DEStructures;
 import com.fish_dan_.data_energistics.registry.DEUpgrades;
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
@@ -65,6 +66,7 @@ public class CommonProxy {
         DECreativeTabs.register(modEventBus);
         DEMenus.register(modEventBus);
         DERecipes.register(modEventBus);
+        DESounds.register(modEventBus);
         DEStructures.register(modEventBus);
         DEChunkGenerators.register(modEventBus);
         DEVerticalMultiBlocks.init();

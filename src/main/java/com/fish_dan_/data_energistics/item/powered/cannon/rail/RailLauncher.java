@@ -12,13 +12,13 @@ import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCel
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
 import com.fish_dan_.data_energistics.registry.DEMobEffects;
+import com.fish_dan_.data_energistics.registry.DESounds;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -92,6 +92,6 @@ public final class RailLauncher {
         weapon.set(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), weapon.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0) + 1);
         player.getCooldowns().addCooldown(item, ammo == RailAmmunition.HEAVY ? ammo.cooldownTicks() : RailRecovery.brakeTicks(ammo.cooldownTicks()));
         player.awardStat(Stats.ITEM_USED.get(item));
-        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 1, 0.75F);
+        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, DESounds.STAR_SHARD_RAIL_SHOT.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 }

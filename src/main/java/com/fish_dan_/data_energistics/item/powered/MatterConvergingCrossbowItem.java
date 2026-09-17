@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCel
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.registry.DESounds;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -43,7 +44,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
@@ -98,9 +99,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     private static final double SPECIAL_LIGHT_SABER_ENERGY = 20_000.0D;
     private static final long MAX_STORED_DATA = 512L;
     private static final String TAG_STORED_DATA = "StoredData";
-
-    private boolean startSoundPlayed = false;
-    private boolean midLoadSoundPlayed = false;
 
     public MatterConvergingCrossbowItem(Item.Properties properties) {
         super(properties.stacksTo(1));
@@ -194,8 +192,16 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         stack.set(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), stack.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0) + 1);
         player.getCooldowns().addCooldown(this, 3);
         player.awardStat(Stats.ITEM_USED.get(this));
-        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 1.0F,
+        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, shotSound(charge.mode()), SoundSource.PLAYERS, 1.0F,
                 charge.mode() == MatterConvergingCrossbowMode.RAIL ? 1.4F : 0.7F);
+    }
+
+    private static SoundEvent shotSound(MatterConvergingCrossbowMode mode) {
+        return switch (mode) {
+            case RAIL -> DESounds.STAR_SHARD_RAIL_SHOT.get();
+            case GRENADE -> DESounds.STAR_SHARD_GRENADE_SHOT.get();
+            case CROSSBOW -> DESounds.STAR_SHARD_CROSSBOW_SHOT.get();
+        };
     }
 
     /** Shared with the preview; loading uses the same next/previously charged ammunition. */
@@ -276,8 +282,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
         ItemStack nextAmmo = this.peekAmmo(stack);
         if (this.hasAmmo(stack) && this.getAECurrentPower(stack) >= this.getEnergyPerShot(stack, nextAmmo)) {
-            this.startSoundPlayed = false;
-            this.midLoadSoundPlayed = false;
             player.startUsingItem(hand);
             return InteractionResultHolder.consume(stack);
         }
@@ -293,10 +297,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         }
         int usedTicks = this.getUseDuration(stack, entity) - timeLeft;
         float progress = getPowerForTime(usedTicks, stack, entity);
-        if (progress >= 1.0F && !isCharged(stack) && this.tryLoadProjectile(entity, stack)) {
-            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.CROSSBOW_LOADING_END,
-                    entity.getSoundSource(), 1.0F, 1.0F / (level.getRandom().nextFloat() * 0.5F + 1.0F) + 0.2F);
-        }
+        if (progress >= 1.0F && !isCharged(stack)) this.tryLoadProjectile(entity, stack);
     }
 
     @Override
@@ -310,22 +311,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
                         this.getProjectileSpeed(stack, loadedAmmo), 1.0F, null);
                 livingEntity.stopUsingItem();
                 return;
-            }
-            if (progress < 0.2F) {
-                this.startSoundPlayed = false;
-                this.midLoadSoundPlayed = false;
-            }
-
-            if (progress >= 0.2F && !this.startSoundPlayed) {
-                this.startSoundPlayed = true;
-                level.playSound(null, livingEntity.getX(), livingEntity.getY(), livingEntity.getZ(),
-                        SoundEvents.CROSSBOW_LOADING_START, SoundSource.PLAYERS, 0.5F, 1.0F);
-            }
-
-            if (progress >= 0.5F && !this.midLoadSoundPlayed) {
-                this.midLoadSoundPlayed = true;
-                level.playSound(null, livingEntity.getX(), livingEntity.getY(), livingEntity.getZ(),
-                        SoundEvents.CROSSBOW_LOADING_MIDDLE, SoundSource.PLAYERS, 0.5F, 1.0F);
             }
         }
     }
@@ -412,6 +397,8 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             return;
         }
 
+        stack.set(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), stack.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0) + 1);
+
         float projectileSpeed = this.getProjectileSpeed(stack, charged.getItems().getFirst());
         float spread = EnchantmentHelper.processProjectileSpread(serverLevel, stack, shooter, 0);
         List<ItemStack> ammunition = charged.getItems();
@@ -421,7 +408,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             projectile.shoot(direction.x, direction.y, direction.z, projectileSpeed, inaccuracy);
             serverLevel.addFreshEntity(projectile);
             float pitch = index == 0 ? 1 : 1 / (shooter.getRandom().nextFloat() * 0.5F + 1.8F) + ((index & 1) == 1 ? 0.63F : 0.43F);
-            level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEvents.CROSSBOW_SHOOT, shooter.getSoundSource(), 1, pitch);
+            level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), shotSound(mode(stack)), shooter.getSoundSource(), 1, pitch);
         }
         if (shooter instanceof Player player) {
             player.awardStat(Stats.ITEM_USED.get(this));

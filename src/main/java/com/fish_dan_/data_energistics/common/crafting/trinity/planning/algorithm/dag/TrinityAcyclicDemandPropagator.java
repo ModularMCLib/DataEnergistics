@@ -157,6 +157,19 @@ public final class TrinityAcyclicDemandPropagator {
         Map<AEKey, List<TrinityPatternVariant>> producers = indexProducers(planningVariants, routeFamilies);
         Set<TrinityPatternIdentity> routeHint = routeHintIdentities(routeFamilies, routeHints);
         if (requiresGlobalRouteOptimization(topology, reachableComponents, producers)) {
+            if (mode == TrinityPlanningMode.FIRST_FEASIBLE) {
+                TrinityAlgorithmResult<TrinityAcyclicPlan> constructed = propagateSelectedRoutes(
+                        topology, producers, target, requestedAmount, quantityMode, inventory, control);
+                if (constructed.successful() && executableCandidate(
+                        constructed.value(), target, requestedAmount, quantityMode, inventory)) {
+                    return TrinityAlgorithmResult.success(
+                            constructed.value().withQuality(TrinityPlanQuality.VERIFIED_FEASIBLE));
+                }
+                StopState state = stopState(control);
+                if (state != StopState.RUNNING) {
+                    return stopped(state);
+                }
+            }
             Optional<Attempt> competition = this.competitionPlanner.plan(
                     topology,
                     planningVariants,
@@ -195,6 +208,18 @@ public final class TrinityAcyclicDemandPropagator {
                     control);
         }
 
+        return propagateSelectedRoutes(topology, producers, target, requestedAmount, quantityMode, inventory, control);
+    }
+
+    /** Builds one aggregate candidate in graph order; competing routes still require exact execution replay. */
+    private static TrinityAlgorithmResult<TrinityAcyclicPlan> propagateSelectedRoutes(
+                                                                                      TrinityCraftingTopology topology,
+                                                                                      Map<AEKey, List<TrinityPatternVariant>> producers,
+                                                                                      AEKey target,
+                                                                                      BigInteger requestedAmount,
+                                                                                      CraftingQuantityMode quantityMode,
+                                                                                      TrinityPlanningInventory inventory,
+                                                                                      TrinityPlanningControl control) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finiteInventory = new Object2ObjectLinkedOpenHashMap<>(
                 inventory.finiteAmounts());
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> need = new Object2ObjectLinkedOpenHashMap<>();
@@ -296,6 +321,33 @@ public final class TrinityAcyclicDemandPropagator {
                 net,
                 states,
                 TrinityPlanQuality.PROVED_OPTIMAL));
+    }
+
+    /** A greedy choice is only a candidate: replay every complete batch before accepting it as feasible. */
+    private static boolean executableCandidate(
+                                               TrinityAcyclicPlan plan,
+                                               AEKey target,
+                                               BigInteger requestedAmount,
+                                               CraftingQuantityMode quantityMode,
+                                               TrinityPlanningInventory inventory) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balance = new Object2ObjectLinkedOpenHashMap<>(plan.externalInputs());
+        for (Map.Entry<AEKey, BigInteger> input : plan.externalInputs().entrySet()) {
+            if (!inventory.covers(input.getKey(), input.getValue())) return false;
+        }
+        for (TrinityVariantFiring firing : plan.executionOrder()) {
+            for (Map.Entry<AEKey, BigInteger> input : firing.variant().inputs().entrySet()) {
+                BigInteger required = input.getValue().multiply(firing.count());
+                BigInteger available = balance.getOrDefault(input.getKey(), BigInteger.ZERO);
+                if (available.compareTo(required) < 0) return false;
+                balance.put(input.getKey(), available.subtract(required));
+            }
+            firing.variant().outputs().forEach((key, amount) -> balance.merge(
+                    key, amount.multiply(firing.count()), BigInteger::add));
+        }
+        if (balance.getOrDefault(target, BigInteger.ZERO).compareTo(requestedAmount) < 0) return false;
+        BigInteger requiredNet = quantityMode == CraftingQuantityMode.NET_NEW ? requestedAmount :
+                requestedAmount.subtract(inventory.availableUpTo(target, requestedAmount)).max(BigInteger.ONE);
+        return plan.netChange().getOrDefault(target, BigInteger.ZERO).compareTo(requiredNet) >= 0;
     }
 
     private TrinityAlgorithmResult<TrinityAcyclicPlan> optimizeWholeGraph(

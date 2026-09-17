@@ -30,6 +30,7 @@
 		"core.entity.OrbitalDeathNotificationMixin",
 		"core.entity.OrbitalLivingRecoveryMixin",
 		"core.entity.OrbitalPlayerDeathMixin",
+		"core.crafting.AECraftingPatternComponentCacheMixin",
 		"core.crafting.AEProcessingPatternVirtualOutputMixin",
 		"core.crafting.CraftingCPUMenuMixin",
 		"core.crafting.CraftingCalculationTimingMixin",

@@ -68,8 +68,18 @@ public final class ReusableInputGraphCaptureGameTest {
         ReusableInputGraphCaptureService service = new ReusableInputGraphCaptureService(source, clock::getAndIncrement);
         var limits = new TrinityPlanningLimits(16, 8, 64, 1000);
         var actor = new BaseActionSource();
-        var skipped = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), List.of(), limits);
-        helper.assertTrue(skipped.isDone(), "No registered rules must retain the immediate legacy path");
+        var withoutRules = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), List.of(), limits);
+        helper.assertFalse(withoutRules.isDone(), "Requests without reusable rules must still await server capture");
+        for (int tick = 0; tick < 5000 && !withoutRules.isDone(); tick++) {
+            service.advance(8L);
+        }
+        helper.assertTrue(withoutRules.isDone(), "Capture without reusable rules must finish across tick slices");
+        var unchanged = withoutRules.get();
+        helper.assertTrue(unchanged.successful(), "Capture without reusable rules must succeed");
+        helper.assertValueEqual(unchanged.value().revision(), source.graph.revision(), "Capture must preserve the publication revision");
+        helper.assertValueEqual(unchanged.value().patterns(), source.graph.patterns(), "An ineligible recipe must retain its original pattern semantics");
+        helper.assertTrue(unchanged.value().reusableInputFallbacks().isEmpty(), "Unchanged capture must not report a fallback");
+        helper.assertValueEqual(source.callbacks, 0, "Disabled reusable rules must not receive capture callbacks");
         source.enabled = true;
         var capture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), List.of(tool(1)), limits);
         AtomicInteger planningStarts = new AtomicInteger();

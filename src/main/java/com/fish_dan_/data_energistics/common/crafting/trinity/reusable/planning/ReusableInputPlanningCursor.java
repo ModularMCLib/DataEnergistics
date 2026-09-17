@@ -40,6 +40,7 @@ public final class ReusableInputPlanningCursor {
         COPY_INVENTORY,
         BEGIN_SLOT,
         ORIGINAL_OPTIONS,
+        RECIPE_OPTIONS,
         INVENTORY_OPTIONS,
         SEED_CARTESIAN,
         BEGIN_BINDING,
@@ -50,6 +51,7 @@ public final class ReusableInputPlanningCursor {
 
     private final ReusableInputContext context;
     private final List<AEItemKey> inventory;
+    private final List<List<TrinityBoundPatternInput>> recipeBindings;
     private final ReusableInputRules rules;
     private final int limit;
     private final TrinityPlanningControl control;
@@ -70,6 +72,7 @@ public final class ReusableInputPlanningCursor {
     private Iterator<AEItemKey> sortedIterator = List.<AEItemKey>of().iterator();
     private int slot;
     private int templateIndex;
+    private int recipeBindingIndex;
     private GenericStack[] templates = new GenericStack[0];
     private List<GenericStack> encodedOptions = List.of();
     private int[] selected = new int[0];
@@ -82,11 +85,19 @@ public final class ReusableInputPlanningCursor {
 
     public ReusableInputPlanningCursor(ReusableInputContext context, List<AEItemKey> inventory,
                                        ReusableInputRules rules, int limit, TrinityPlanningControl control) {
+        this(context, inventory, rules, limit, control, List.of());
+    }
+
+    /** Retains server-validated ordinary component variants while capturing reusable tool transitions. */
+    ReusableInputPlanningCursor(ReusableInputContext context, List<AEItemKey> inventory,
+                                ReusableInputRules rules, int limit, TrinityPlanningControl control,
+                                List<List<TrinityBoundPatternInput>> recipeBindings) {
         if (limit <= 0) {
             throw new IllegalArgumentException("Reusable input capture requires a positive binding limit");
         }
         this.context = context;
         this.inventory = List.copyOf(inventory);
+        this.recipeBindings = recipeBindings;
         this.rules = rules;
         this.limit = limit;
         this.control = control;
@@ -158,6 +169,7 @@ public final class ReusableInputPlanningCursor {
             }
             case BEGIN_SLOT -> beginSlot();
             case ORIGINAL_OPTIONS -> captureOriginalOption();
+            case RECIPE_OPTIONS -> captureRecipeOption();
             case INVENTORY_OPTIONS -> captureInventoryOption();
             case SEED_CARTESIAN -> seedCartesian();
             case BEGIN_BINDING -> beginBinding();
@@ -181,21 +193,34 @@ public final class ReusableInputPlanningCursor {
         original.add(new ObjectLinkedOpenHashSet<>());
         ordinals.add(new Object2IntLinkedOpenHashMap<>());
         templateIndex = 0;
+        recipeBindingIndex = 0;
         phase = Phase.ORIGINAL_OPTIONS;
     }
 
     private void captureOriginalOption() {
         if (templateIndex == templates.length) {
-            encodedOptions = List.copyOf(original.get(slot));
-            templateIndex = 0;
-            inventoryIndex = 0;
-            phase = Phase.INVENTORY_OPTIONS;
+            phase = Phase.RECIPE_OPTIONS;
             return;
         }
         GenericStack template = templates[templateIndex++];
         if (template.amount() <= 0L || inputs[slot].getMultiplier() <= 0L) {
             throw new IllegalArgumentException("Reusable input capture requires positive pattern quantities");
         }
+        if (inputs[slot].isValid(template.what(), context.level())) {
+            original.get(slot).add(template);
+            candidate(template);
+        }
+    }
+
+    private void captureRecipeOption() {
+        if (recipeBindingIndex == recipeBindings.size()) {
+            encodedOptions = List.copyOf(original.get(slot));
+            templateIndex = 0;
+            inventoryIndex = 0;
+            phase = Phase.INVENTORY_OPTIONS;
+            return;
+        }
+        GenericStack template = recipeBindings.get(recipeBindingIndex++).get(slot).template();
         if (inputs[slot].isValid(template.what(), context.level())) {
             original.get(slot).add(template);
             candidate(template);

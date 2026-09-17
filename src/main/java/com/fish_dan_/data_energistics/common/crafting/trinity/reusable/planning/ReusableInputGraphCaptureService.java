@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture.TrinityRecipeInputCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
@@ -97,10 +98,6 @@ public final class ReusableInputGraphCaptureService {
     public CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>> submit(
                                                                                           ServerLevel level, IActionSource actor, AEKey target, List<AEItemKey> additionalStates,
                                                                                           TrinityPlanningLimits limits) {
-        Optional<TrinityCraftingGraphSnapshot> graph = source.graph();
-        if (!source.hasRules() && graph.isPresent()) {
-            return CompletableFuture.completedFuture(TrinityAlgorithmResult.success(graph.orElseThrow()));
-        }
         Task task = new Task(level, actor, target, additionalStates, limits);
         pending.enqueue(task);
         return task.future;
@@ -151,6 +148,8 @@ public final class ReusableInputGraphCaptureService {
         private long epoch;
         private List<AEItemKey> inventory = List.of();
         private boolean inventoryCaptured;
+        private boolean recipeInputsCaptured;
+        private @Nullable TrinityRecipeInputCapture recipeInputCursor;
         private final List<TrinityCraftingGraphPattern> completed = new ObjectArrayList<>();
         private final List<List<Endpoint>> completedEndpoints = new ObjectArrayList<>();
         private final Map<TrinityPatternIdentity, TrinityPlanningDiagnostic> fallbacks = new Object2ObjectLinkedOpenHashMap<>();
@@ -206,6 +205,30 @@ public final class ReusableInputGraphCaptureService {
             if (base == null || base.revision() != current.orElseThrow().revision() || epoch != source.modelEpoch() || rules != source.rules()) {
                 restart(current.orElseThrow());
             }
+            if (!recipeInputsCaptured) {
+                if (!inventoryCaptured) {
+                    ObjectLinkedOpenHashSet<AEItemKey> states = new ObjectLinkedOpenHashSet<>(source.visibleItemKeys());
+                    states.addAll(additionalStates);
+                    inventory = List.copyOf(states);
+                    inventoryCaptured = true;
+                }
+                if (recipeInputCursor == null) {
+                    recipeInputCursor = new TrinityRecipeInputCapture(base, inventory, level,
+                            source::patternsFor, source::recipeId, limits.maxBindingVariants(), control);
+                }
+                var captured = recipeInputCursor.advance(slice, nanoClock);
+                if (captured != null) {
+                    if (!captured.successful()) {
+                        future.complete(captured);
+                    } else {
+                        base = captured.value();
+                        fallbacks.putAll(base.reusableInputFallbacks());
+                        recipeInputsCaptured = true;
+                        recipeInputCursor = null;
+                    }
+                }
+                return;
+            }
             if (!source.hasRules()) {
                 future.complete(TrinityAlgorithmResult.success(base));
                 return;
@@ -231,13 +254,6 @@ public final class ReusableInputGraphCaptureService {
                 return;
             }
             if (endpointIndex < endpoints.size()) {
-                if (!inventoryCaptured) {
-                    ObjectLinkedOpenHashSet<AEItemKey> states = new ObjectLinkedOpenHashSet<>(source.visibleItemKeys());
-                    states.addAll(additionalStates);
-                    inventory = List.copyOf(states);
-                    inventoryCaptured = true;
-                    return;
-                }
                 Endpoint endpoint = endpoints.get(endpointIndex);
                 List<GenericStack> actual = new ObjectArrayList<>(pattern.inputs().size());
                 int firstItem = -1;
@@ -257,7 +273,7 @@ public final class ReusableInputGraphCaptureService {
                         .pattern(endpoint.pattern()).actualInput(actual.get(firstItem)).exactInputs(actual).inputSlot(firstItem)
                         .ownership(ReusableInputContext.Ownership.CPU_SUPPLIED).actionSource(actor).level(level)
                         .recipeId(endpoint.recipeId()).machineMode(endpoint.target().mode()).target(endpoint.target().route()).build(),
-                        inventory, rules, limits.maxBindingVariants(), control);
+                        inventory, rules, limits.maxBindingVariants(), control, pattern.reusableBindings());
                 return;
             }
             if (endpoints.isEmpty() && endpointIndex == 0) {
@@ -276,8 +292,8 @@ public final class ReusableInputGraphCaptureService {
                 fallbacks.put(pattern.identity(), patternFallback);
             }
             expandedCount += merged.size();
-            completed.add(patternFallback != null ? new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication()) :
-                    merged.isEmpty() ? pattern : new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), List.copyOf(merged)));
+            completed.add(patternFallback != null || merged.isEmpty() ? pattern :
+                    new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), List.copyOf(merged)));
             completedEndpoints.add(endpoints);
             patternIndex++;
             endpoints = List.of();
@@ -292,6 +308,8 @@ public final class ReusableInputGraphCaptureService {
             epoch = source.modelEpoch();
             inventory = List.of();
             inventoryCaptured = false;
+            recipeInputsCaptured = false;
+            recipeInputCursor = null;
             completed.clear();
             completedEndpoints.clear();
             fallbacks.clear();

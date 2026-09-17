@@ -14,8 +14,13 @@ public final class DESounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_CHARGE = register("star_shard_charge");
     public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_RAIL_SHOT = register("star_shard_rail_shot");
     public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_GRENADE_SHOT = register("star_shard_grenade_shot");
-    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_COOLDOWN = register("star_shard_cooldown");
-    public static final DeferredHolder<SoundEvent, SoundEvent> HEAVY_HAMMER_CORE_COOLDOWN = register("heavy_hammer_core_cooldown");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_CROSSBOW_SHOT = register("star_shard_crossbow_shot");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_EXHAUST = register("star_shard_exhaust");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_SHARD_EQUIP = register("star_shard_equip");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HEAVY_RAIL_EXHAUST = register("heavy_rail_exhaust");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HEAVY_RAIL_EQUIP = register("heavy_rail_equip");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROSSBOW_EXHAUST = register("crossbow_exhaust");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROSSBOW_EQUIP = register("crossbow_equip");
 
     private DESounds() {}
 

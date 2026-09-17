@@ -75,7 +75,7 @@ public final class CrossbowAnimation {
             this.releaseTicks = Math.min(RELEASE_TICKS, this.releaseTicks + 1);
             this.draw = this.releaseDraw * (1.0F - smooth(this.releaseTicks / (float) RELEASE_TICKS));
         }
-        if (fired && held && mode == MatterConvergingCrossbowMode.RAIL) this.recoilTicks = 0;
+        if (fired && held && (mode == MatterConvergingCrossbowMode.RAIL || mode == MatterConvergingCrossbowMode.CROSSBOW)) this.recoilTicks = 0;
         if (held && mode == MatterConvergingCrossbowMode.RAIL && elapsed >= 0) this.recoilTicks = elapsed;
         this.recoil = mode == MatterConvergingCrossbowMode.RAIL ? RailRecovery.retraction(this.recoilTicks, this.recoilDuration, recoilStart) : CrossbowRailRecoil.bowRetraction(this.recoilTicks);
         this.held = held;
@@ -89,6 +89,24 @@ public final class CrossbowAnimation {
         float phase = this.recoilTicks * (float) CrossbowRailRecoil.DURATION_TICKS / this.recoilDuration;
         if (this.mode != MatterConvergingCrossbowMode.RAIL || !this.held || phase < 2 || phase > 8) return 0;
         return phase <= 4 ? 1 : (9 - phase) / 5.0F;
+    }
+
+    public boolean held() {
+        return this.held;
+    }
+
+    public MatterConvergingCrossbowMode mode() {
+        return this.mode;
+    }
+
+    public boolean recoilActive() {
+        return this.held && (this.mode == MatterConvergingCrossbowMode.RAIL || this.mode == MatterConvergingCrossbowMode.CROSSBOW) && this.recoilTicks < this.recoilDuration;
+    }
+
+    /** True once the brake stroke has ended and the return phase has started. */
+    public boolean recoilReturnStarted() {
+        int brakeTicks = this.mode == MatterConvergingCrossbowMode.RAIL ? RailRecovery.brakeTicks(this.recoilDuration) : 5;
+        return this.held && (this.mode == MatterConvergingCrossbowMode.RAIL || this.mode == MatterConvergingCrossbowMode.CROSSBOW) && this.recoilTicks >= brakeTicks && this.recoilTicks < this.recoilDuration;
     }
 
     /** Read-only frame sampling; all renders of a hand share the same tick state. */

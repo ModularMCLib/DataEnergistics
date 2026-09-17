@@ -92,6 +92,6 @@ public final class RailLauncher {
         weapon.set(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), weapon.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0) + 1);
         player.getCooldowns().addCooldown(item, ammo == RailAmmunition.HEAVY ? ammo.cooldownTicks() : RailRecovery.brakeTicks(ammo.cooldownTicks()));
         player.awardStat(Stats.ITEM_USED.get(item));
-        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, ammo == RailAmmunition.HEAVY ? DESounds.HEAVY_HAMMER_CORE_COOLDOWN.get() : DESounds.STAR_SHARD_COOLDOWN.get(), SoundSource.PLAYERS, 1, 0.75F);
+        level.playSound(null, muzzle.x, muzzle.y, muzzle.z, DESounds.STAR_SHARD_RAIL_SHOT.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 }

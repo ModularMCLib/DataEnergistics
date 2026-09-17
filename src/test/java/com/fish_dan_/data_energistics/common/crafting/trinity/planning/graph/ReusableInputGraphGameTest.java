@@ -57,13 +57,13 @@ public final class ReusableInputGraphGameTest {
         var publication = publication();
         var identity = TrinityPatternIdentity.capture(publication, helper.getLevel().registryAccess());
         ReusableInputRule rule = ReusableInputRule.unchanged(RULE_ID, 1L, tool(1));
-        List<TrinityBoundPatternInput> first = List.of(
+        List<TrinityBoundPatternInput> first = ObjectList.of(
                 new TrinityBoundPatternInput(0, 0, stack(tool(0)), 1L, null),
                 new TrinityBoundPatternInput(1, 0, stack(AEItemKey.of(Items.REDSTONE)), 1L, null));
-        List<TrinityBoundPatternInput> second = List.of(
+        List<TrinityBoundPatternInput> second = ObjectList.of(
                 bound(0, 1, rule, 1L, 1L),
                 new TrinityBoundPatternInput(1, 1, stack(AEItemKey.of(Items.COAL)), 1L, null));
-        var pattern = new TrinityCraftingGraphPattern(identity, publication, List.of(first, second));
+        var pattern = new TrinityCraftingGraphPattern(identity, publication, ObjectList.of(first, second));
         var expander = TrinityPatternVariantExpander.create();
         var expanded = expander.expandPattern(pattern, 2, TrinityPlanningControl.unbounded());
         helper.assertTrue(expanded.successful(), "Complete assignments fit exactly into a two-binding limit");
@@ -84,20 +84,20 @@ public final class ReusableInputGraphGameTest {
     public static void indexesExactToolTransitionsAndScaledByproducts(GameTestHelper helper) {
         AEItemKey scrap = AEItemKey.of(Items.STICK);
         ReusableInputRule rule = ReusableInputRule.transitionsFast(RULE_ID, 1L, tool(0), ObjectList.of(
-                new Transition(tool(0), tool(1), List.of(new GenericStack(scrap, 2L))),
-                new Transition(tool(1), null, List.of())));
+                new Transition(tool(0), tool(1), ObjectList.of(new GenericStack(scrap, 2L))),
+                new Transition(tool(1), null, ObjectList.of())));
         var publication = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE),
-                List.of(new Input(3L, List.of(new Alternative(stack(tool(0)), null)))),
-                List.of(stack(AEItemKey.of(Items.DIAMOND))), false);
+                ObjectList.of(new Input(3L, ObjectList.of(new Alternative(stack(tool(0)), null)))),
+                ObjectList.of(stack(AEItemKey.of(Items.DIAMOND))), false);
         var pattern = new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(publication, helper.getLevel().registryAccess()),
-                publication, List.of(List.of(bound(0, 0, rule, 2L, 3L))));
-        var graph = new TrinityCraftingGraphSnapshot(1L, List.of(pattern));
+                publication, ObjectList.of(ObjectList.of(bound(0, 0, rule, 2L, 3L))));
+        var graph = new TrinityCraftingGraphSnapshot(1L, ObjectList.of(pattern));
         var variant = TrinityPatternVariantExpander.create().expand(graph, 1).value().getFirst();
         helper.assertValueEqual(variant.outputs().get(tool(1)), BigInteger.valueOf(6L), "Each physical tool unit has one successor");
         helper.assertValueEqual(variant.outputs().get(scrap), BigInteger.valueOf(12L), "Byproducts scale by tool units, not templates");
         helper.assertTrue(graph.keys().contains(tool(1)) && graph.keys().contains(scrap), "Graph includes new state and byproduct keys");
-        helper.assertValueEqual(graph.reachableSubgraph(scrap).patterns(), List.of(pattern), "Byproduct targets retain their producer");
-        var normalized = variant.normalized(TrinitySameItemPolicy.ofRepresentatives(List.of(tool(0))));
+        helper.assertValueEqual(graph.reachableSubgraph(scrap).patterns(), ObjectList.of(pattern), "Byproduct targets retain their producer");
+        var normalized = variant.normalized(TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(tool(0))));
         helper.assertValueEqual(normalized.netChange().get(tool(0)), BigInteger.valueOf(-6L), "Damage input must remain a consumed exact state");
         helper.assertValueEqual(normalized.netChange().get(tool(1)), BigInteger.valueOf(6L), "Damage successor cannot collapse into a zero-net catalyst");
         helper.assertTrue(normalized.requiresExactBinding(), "Normalization preserves execution binding metadata");
@@ -109,16 +109,16 @@ public final class ReusableInputGraphGameTest {
     @GameTest(template = "empty_5x5")
     public static void compactionKeepsDistinctLifetimeContracts(GameTestHelper helper) {
         ReusableInputRule finite = ReusableInputRule.transitionsFast(RULE_ID, 1L, tool(0), ObjectList.of(
-                new Transition(tool(0), tool(1), List.of()), new Transition(tool(1), null, List.of())));
+                new Transition(tool(0), tool(1), ObjectList.of()), new Transition(tool(1), null, ObjectList.of())));
         ReusableInputRule cyclic = ReusableInputRule.transitionsFast(RULE_ID, 2L, tool(0), ObjectList.of(
-                new Transition(tool(0), tool(1), List.of()), new Transition(tool(1), tool(0), List.of())));
+                new Transition(tool(0), tool(1), ObjectList.of()), new Transition(tool(1), tool(0), ObjectList.of())));
         var identity = new TrinityPatternIdentity("tool", "same-first-step");
         var first = TrinityPatternVariant.create(identity, AEItemKey.of(Items.DIAMOND), 0, IntList.of(0),
-                List.of(bound(0, 0, finite, 1L, 1L)), List.of(stack(AEItemKey.of(Items.DIAMOND))), true);
+                ObjectList.of(bound(0, 0, finite, 1L, 1L)), ObjectList.of(stack(AEItemKey.of(Items.DIAMOND))), true);
         var second = TrinityPatternVariant.create(identity, AEItemKey.of(Items.DIAMOND), 1, IntList.of(1),
-                List.of(bound(0, 1, cyclic, 1L, 1L)), List.of(stack(AEItemKey.of(Items.DIAMOND))), true);
+                ObjectList.of(bound(0, 1, cyclic, 1L, 1L)), ObjectList.of(stack(AEItemKey.of(Items.DIAMOND))), true);
         helper.assertValueEqual(first.physicalOutputs(), second.physicalOutputs(), "First-use effects intentionally coincide");
-        helper.assertValueEqual(TrinityTransitionEffectCompactor.create().compact(List.of(first, second)).size(), 2,
+        helper.assertValueEqual(TrinityTransitionEffectCompactor.create().compact(ObjectList.of(first, second)).size(), 2,
                 "Equal one-step amounts do not make different frozen lifetimes interchangeable");
         helper.succeed();
     }
@@ -130,15 +130,15 @@ public final class ReusableInputGraphGameTest {
         AEItemKey tool = tool(0);
         AEItemKey output = AEItemKey.of(Items.DIAMOND);
         var publication = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE),
-                List.of(new Input(1L, List.of(new Alternative(stack(tool), null)))), List.of(stack(output)), false);
+                ObjectList.of(new Input(1L, ObjectList.of(new Alternative(stack(tool), null)))), ObjectList.of(stack(output)), false);
         var identity = TrinityPatternIdentity.capture(publication, helper.getLevel().registryAccess());
         try (TrinityComputationCache cache = TrinityComputationCache.create(Runnable::run)) {
             var computation = TrinityPlanningComputation.create(cache, TrinityGraphPlanner.pipeline());
             for (long revision = 1L; revision <= 2L; revision++) {
                 ReusableInputRule rule = ReusableInputRule.transitionsFast(RULE_ID, revision, tool,
-                        ObjectList.of(new Transition(tool, null, List.of())));
-                var pattern = new TrinityCraftingGraphPattern(identity, publication, List.of(List.of(bound(0, 0, rule, 1L, 1L))));
-                var input = new TrinityPlanningInput(1L, new TrinityCraftingGraphSnapshot(1L, List.of(pattern)), output,
+                        ObjectList.of(new Transition(tool, null, ObjectList.of())));
+                var pattern = new TrinityCraftingGraphPattern(identity, publication, ObjectList.of(ObjectList.of(bound(0, 0, rule, 1L, 1L))));
+                var input = new TrinityPlanningInput(1L, new TrinityCraftingGraphSnapshot(1L, ObjectList.of(pattern)), output,
                         BigInteger.ONE, CraftingQuantityMode.NET_NEW,
                         TrinityPlanningInventory.finite(Map.of(tool, BigInteger.ONE)),
                         new TrinityPlanningLimits(16, 16, 128, 1000));
@@ -164,17 +164,17 @@ public final class ReusableInputGraphGameTest {
         toolStack.set(DataComponents.DAMAGE, 200);
         AEItemKey worn = AEItemKey.of(toolStack);
         var rule = ReusableInputRule.fixedDamageFast(RULE_ID, 1L, fresh, 1, 1000, ObjectList.of());
-        var upgrade = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), List.of(
-                new Input(1L, List.of(new Alternative(stack(fresh), rule.advance(fresh, 1).successor()))),
-                new Input(4L, List.of(new Alternative(stack(material), null)))), List.of(stack(output)), false);
+        var upgrade = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), ObjectList.of(
+                new Input(1L, ObjectList.of(new Alternative(stack(fresh), rule.advance(fresh, 1).successor()))),
+                new Input(4L, ObjectList.of(new Alternative(stack(material), null)))), ObjectList.of(stack(output)), false);
         var reverse = new TrinityPatternPublicationSignature(AEItemKey.of(Items.FURNACE),
-                List.of(new Input(1L, List.of(new Alternative(stack(output), null)))), List.of(new GenericStack(material, 4)), false);
+                ObjectList.of(new Input(1L, ObjectList.of(new Alternative(stack(output), null)))), ObjectList.of(new GenericStack(material, 4)), false);
         var toolRecipe = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CHEST),
-                List.of(new Input(8L, List.of(new Alternative(stack(shard), null)))), List.of(stack(fresh)), false);
+                ObjectList.of(new Input(8L, ObjectList.of(new Alternative(stack(shard), null)))), ObjectList.of(stack(fresh)), false);
         var upgradePattern = new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(upgrade, helper.getLevel().registryAccess()), upgrade,
-                List.of(List.of(bound(0, 0, rule, 1, 1), new TrinityBoundPatternInput(1, 0, stack(material), 4, null))));
+                ObjectList.of(ObjectList.of(bound(0, 0, rule, 1, 1), new TrinityBoundPatternInput(1, 0, stack(material), 4, null))));
         var factory = new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(toolRecipe, helper.getLevel().registryAccess()), toolRecipe);
-        var graph = new TrinityCraftingGraphSnapshot(1L, List.of(upgradePattern,
+        var graph = new TrinityCraftingGraphSnapshot(1L, ObjectList.of(upgradePattern,
                 new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(reverse, helper.getLevel().registryAccess()), reverse), factory));
         var expanded = TrinityPatternVariantExpander.create().expand(graph, 16);
         helper.assertTrue(expanded.successful(), "A thousand-use tool must fit in the small original recipe graph");
@@ -197,21 +197,21 @@ public final class ReusableInputGraphGameTest {
             helper.assertValueEqual(larger.result().value().initialExpectedInputs().get(shard), BigInteger.valueOf(16),
                     "An unlimited raw material remains available and is charged for two tool crafts only");
 
-            var tiers = List.of(material, AEItemKey.of(Items.IRON_INGOT), AEItemKey.of(Items.GOLD_INGOT),
+            var tiers = ObjectList.of(material, AEItemKey.of(Items.IRON_INGOT), AEItemKey.of(Items.GOLD_INGOT),
                     AEItemKey.of(Items.EMERALD), output);
             var tierPatterns = new ObjectArrayList<TrinityCraftingGraphPattern>();
             tierPatterns.add(factory);
             for (int tier = 1; tier < tiers.size(); tier++) {
                 AEItemKey lower = tiers.get(tier - 1);
                 AEItemKey higher = tiers.get(tier);
-                var upgradeTier = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), List.of(
-                        new Input(1L, List.of(new Alternative(stack(fresh), rule.advance(fresh, 1).successor()))),
-                        new Input(4L, List.of(new Alternative(stack(lower), null)))), List.of(stack(higher)), false);
+                var upgradeTier = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), ObjectList.of(
+                        new Input(1L, ObjectList.of(new Alternative(stack(fresh), rule.advance(fresh, 1).successor()))),
+                        new Input(4L, ObjectList.of(new Alternative(stack(lower), null)))), ObjectList.of(stack(higher)), false);
                 tierPatterns.add(new TrinityCraftingGraphPattern(
                         TrinityPatternIdentity.capture(upgradeTier, helper.getLevel().registryAccess()), upgradeTier,
-                        List.of(List.of(bound(0, 0, rule, 1, 1), new TrinityBoundPatternInput(1, 0, stack(lower), 4, null)))));
+                        ObjectList.of(ObjectList.of(bound(0, 0, rule, 1, 1), new TrinityBoundPatternInput(1, 0, stack(lower), 4, null)))));
                 var reverseTier = new TrinityPatternPublicationSignature(AEItemKey.of(Items.FURNACE),
-                        List.of(new Input(1L, List.of(new Alternative(stack(higher), null)))), List.of(new GenericStack(lower, 4)), false);
+                        ObjectList.of(new Input(1L, ObjectList.of(new Alternative(stack(higher), null)))), ObjectList.of(new GenericStack(lower, 4)), false);
                 tierPatterns.add(new TrinityCraftingGraphPattern(
                         TrinityPatternIdentity.capture(reverseTier, helper.getLevel().registryAccess()), reverseTier));
             }
@@ -227,9 +227,9 @@ public final class ReusableInputGraphGameTest {
             helper.assertValueEqual(tiered.result().value().initialExpectedInputs().get(material), BigInteger.valueOf(256000),
                     "All four tiers still consume their full raw material requirement");
 
-            var forwardGraph = new TrinityCraftingGraphSnapshot(3L, List.of(factory,
+            var forwardGraph = new TrinityCraftingGraphSnapshot(3L, ObjectList.of(factory,
                     tierPatterns.get(1), tierPatterns.get(3), tierPatterns.get(5), tierPatterns.get(7)));
-            for (BigInteger amount : List.of(BigInteger.valueOf(1000), BigInteger.TEN.pow(18))) {
+            for (BigInteger amount : ObjectList.of(BigInteger.valueOf(1000), BigInteger.TEN.pow(18))) {
                 var forward = computation.calculate(new TrinityPlanningInput(1L, forwardGraph, output, amount,
                         CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(Map.of(), Set.of(material, shard)), request.limits()),
                         TrinityPlanningProgressReporter.none());
@@ -249,7 +249,7 @@ public final class ReusableInputGraphGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5", timeoutTicks = 400)
     public static void retainedToolIsNotAnAdditionalProducerInItsOwnRecipeCycle(GameTestHelper helper) throws Exception {
-        var tiers = List.of(AEItemKey.of(Items.REDSTONE), AEItemKey.of(Items.IRON_INGOT), AEItemKey.of(Items.GOLD_INGOT),
+        var tiers = ObjectList.of(AEItemKey.of(Items.REDSTONE), AEItemKey.of(Items.IRON_INGOT), AEItemKey.of(Items.GOLD_INGOT),
                 AEItemKey.of(Items.EMERALD), AEItemKey.of(Items.DIAMOND));
         AEItemKey tool = tool(0);
         AEItemKey rawGem = AEItemKey.of(Items.PRISMARINE_SHARD);
@@ -258,20 +258,20 @@ public final class ReusableInputGraphGameTest {
         var patterns = new ObjectArrayList<TrinityCraftingGraphPattern>();
         var rule = ReusableInputRule.unchanged(RULE_ID, 1, tool);
         for (int tier = 1; tier < tiers.size(); tier++) {
-            var publication = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), List.of(
-                    new Input(4, List.of(new Alternative(stack(tiers.get(tier - 1)), null))),
-                    new Input(1, List.of(new Alternative(stack(tool), tool)))), List.of(stack(tiers.get(tier))), false);
+            var publication = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), ObjectList.of(
+                    new Input(4, ObjectList.of(new Alternative(stack(tiers.get(tier - 1)), null))),
+                    new Input(1, ObjectList.of(new Alternative(stack(tool), tool)))), ObjectList.of(stack(tiers.get(tier))), false);
             patterns.add(new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(publication, helper.getLevel().registryAccess()), publication,
-                    List.of(List.of(new TrinityBoundPatternInput(0, 0, stack(tiers.get(tier - 1)), 4, null), bound(1, 0, rule, 1, 1)))));
+                    ObjectList.of(ObjectList.of(new TrinityBoundPatternInput(0, 0, stack(tiers.get(tier - 1)), 4, null), bound(1, 0, rule, 1, 1)))));
         }
-        var gemRecipe = new TrinityPatternPublicationSignature(AEItemKey.of(Items.FURNACE), List.of(
-                new Input(2, List.of(new Alternative(stack(tiers.getLast()), null))),
-                new Input(1, List.of(new Alternative(stack(rawGem), null)))), List.of(stack(upgradedGem)), false);
+        var gemRecipe = new TrinityPatternPublicationSignature(AEItemKey.of(Items.FURNACE), ObjectList.of(
+                new Input(2, ObjectList.of(new Alternative(stack(tiers.getLast()), null))),
+                new Input(1, ObjectList.of(new Alternative(stack(rawGem), null)))), ObjectList.of(stack(upgradedGem)), false);
         patterns.add(new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(gemRecipe, helper.getLevel().registryAccess()), gemRecipe));
-        var toolRecipe = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CHEST), List.of(
-                new Input(4, List.of(new Alternative(stack(tiers.getLast()), null))),
-                new Input(4, List.of(new Alternative(stack(shard), null))),
-                new Input(1, List.of(new Alternative(stack(upgradedGem), null)))), List.of(stack(tool)), false);
+        var toolRecipe = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CHEST), ObjectList.of(
+                new Input(4, ObjectList.of(new Alternative(stack(tiers.getLast()), null))),
+                new Input(4, ObjectList.of(new Alternative(stack(shard), null))),
+                new Input(1, ObjectList.of(new Alternative(stack(upgradedGem), null)))), ObjectList.of(stack(tool)), false);
         var factory = new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(toolRecipe, helper.getLevel().registryAccess()), toolRecipe);
         patterns.add(factory);
         var graph = new TrinityCraftingGraphSnapshot(1, patterns);
@@ -279,8 +279,8 @@ public final class ReusableInputGraphGameTest {
                 tiers.getLast(), BigInteger.valueOf(656354)), Set.of(tiers.getFirst(), rawGem, shard));
         try (var cache = TrinityComputationCache.create(Runnable::run)) {
             var computation = TrinityPlanningComputation.create(cache, TrinityGraphPlanner.pipeline());
-            for (BigInteger amount : List.of(BigInteger.valueOf(1000), BigInteger.valueOf(1_000_000), BigInteger.TEN.pow(18))) {
-                for (AEItemKey target : List.of(tool, tiers.getLast())) {
+            for (BigInteger amount : ObjectList.of(BigInteger.valueOf(1000), BigInteger.valueOf(1_000_000), BigInteger.TEN.pow(18))) {
+                for (AEItemKey target : ObjectList.of(tool, tiers.getLast())) {
                     var result = computation.calculate(new TrinityPlanningInput(1, graph, target, amount, CraftingQuantityMode.NET_NEW,
                             inventory, new TrinityPlanningLimits(64, 128, 500000, 10000)), TrinityPlanningProgressReporter.none());
                     if (!result.result().successful()) helper.fail("Retained-tool feedback must remain exactly plannable: " + result.result().diagnostic());
@@ -298,11 +298,11 @@ public final class ReusableInputGraphGameTest {
     }
 
     private static TrinityPatternPublicationSignature publication() {
-        return new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), List.of(
-                new Input(1L, List.of(new Alternative(stack(tool(0)), null), new Alternative(stack(tool(1)), null))),
-                new Input(1L, List.of(new Alternative(stack(AEItemKey.of(Items.REDSTONE)), null),
+        return new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE), ObjectList.of(
+                new Input(1L, ObjectList.of(new Alternative(stack(tool(0)), null), new Alternative(stack(tool(1)), null))),
+                new Input(1L, ObjectList.of(new Alternative(stack(AEItemKey.of(Items.REDSTONE)), null),
                         new Alternative(stack(AEItemKey.of(Items.COAL)), null)))),
-                List.of(stack(AEItemKey.of(Items.DIAMOND))), false);
+                ObjectList.of(stack(AEItemKey.of(Items.DIAMOND))), false);
     }
 
     private static TrinityBoundPatternInput bound(int slot, int alternative, ReusableInputRule rule, long amount, long multiplier) {

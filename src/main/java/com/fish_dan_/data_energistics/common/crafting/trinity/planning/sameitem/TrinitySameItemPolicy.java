@@ -15,7 +15,9 @@ import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.math.BigInteger;
@@ -35,7 +37,7 @@ import java.util.Set;
  */
 public final class TrinitySameItemPolicy {
 
-    private static final TrinitySameItemPolicy EMPTY = new TrinitySameItemPolicy(List.of());
+    private static final TrinitySameItemPolicy EMPTY = new TrinitySameItemPolicy(ObjectList.of());
 
     private final Map<Item, AEItemKey> representativesByItem;
     private final Set<AEItemKey> representatives;
@@ -140,9 +142,9 @@ public final class TrinitySameItemPolicy {
     }
 
     /** Merges positive stack amounts by logical accounting key without changing any source stack. */
-    public List<GenericStack> normalizeStacks(List<GenericStack> stacks) {
+    public ObjectList<GenericStack> normalizeStacks(List<GenericStack> stacks) {
         if (isEmpty()) {
-            return stacks;
+            return new ObjectImmutableList<>(stacks);
         }
         Object2LongLinkedOpenHashMap<AEKey> normalized = new Object2LongLinkedOpenHashMap<>();
         for (GenericStack stack : stacks) {
@@ -151,7 +153,7 @@ public final class TrinitySameItemPolicy {
         ObjectArrayList<GenericStack> result = new ObjectArrayList<>(normalized.size());
         normalized.object2LongEntrySet().forEach(
                 entry -> result.add(new GenericStack(entry.getKey(), entry.getLongValue())));
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     /** Returns one stable representative per authorised registered item. */
@@ -160,10 +162,10 @@ public final class TrinitySameItemPolicy {
     }
 
     /** Returns normalized keys in deterministic first-occurrence order. */
-    public List<AEKey> normalizeKeys(Collection<AEKey> keys) {
+    public ObjectList<AEKey> normalizeKeys(Collection<AEKey> keys) {
         ObjectLinkedOpenHashSet<AEKey> normalized = new ObjectLinkedOpenHashSet<>();
         keys.forEach(key -> normalized.add(normalizeKey(key)));
-        return List.copyOf(normalized);
+        return new ObjectImmutableList<>(normalized);
     }
 
     /** Returns whether no item domain is authorised. */

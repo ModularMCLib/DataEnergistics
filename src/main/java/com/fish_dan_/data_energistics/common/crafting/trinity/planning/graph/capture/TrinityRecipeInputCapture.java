@@ -32,9 +32,13 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
@@ -70,7 +74,7 @@ public final class TrinityRecipeInputCapture {
     private @Nullable AECraftingPattern craftingPattern;
     private @Nullable CraftingRecipe recipe;
     private int[] selected = new int[0];
-    private Iterator<AEItemKey> matchingItems = List.<AEItemKey>of().iterator();
+    private Iterator<AEItemKey> matchingItems = ObjectList.<AEItemKey>of().iterator();
     private boolean indexed;
     private boolean capturingPattern;
     private boolean capturingSlot;
@@ -157,7 +161,7 @@ public final class TrinityRecipeInputCapture {
             this.capturingSlot = true;
         }
         if (this.templateIndex == input.alternatives().size()) {
-            this.inputs.add(new Input(input.multiplier(), List.copyOf(this.alternatives)));
+            this.inputs.add(new Input(input.multiplier(), new ObjectImmutableList<>(this.alternatives)));
             this.alternatives.clear();
             this.templateIndex = 0;
             this.capturingSlot = false;
@@ -186,9 +190,9 @@ public final class TrinityRecipeInputCapture {
     }
 
     private Iterator<AEItemKey> candidatesFor(AEKey key) {
-        if (!(key instanceof AEItemKey item)) return List.<AEItemKey>of().iterator();
+        if (!(key instanceof AEItemKey item)) return ObjectList.<AEItemKey>of().iterator();
         var indexedItems = this.candidates.get(item.getItem());
-        return indexedItems == null ? List.<AEItemKey>of().iterator() : indexedItems.values().iterator();
+        return indexedItems == null ? ObjectList.<AEItemKey>of().iterator() : indexedItems.values().iterator();
     }
 
     private IPatternDetails.IInput[] resolveInputs(TrinityCraftingGraphPattern pattern) {
@@ -243,7 +247,7 @@ public final class TrinityRecipeInputCapture {
         CraftingInput nativeInput = CraftingInput.ofPositioned(3, 3, grid).input();
         if (consumed && this.recipe.matches(nativeInput, this.level) &&
                 pattern.outputs().getFirst().equals(GenericStack.fromItemStack(this.recipe.assemble(nativeInput, this.level.registryAccess())))) {
-            this.bindings.add(List.copyOf(assignment));
+            this.bindings.add(new ObjectImmutableList<>(assignment));
         }
         int index = this.selected.length - 1;
         while (index >= 0 && ++this.selected[index] == this.inputs.get(index).alternatives().size()) {
@@ -268,21 +272,25 @@ public final class TrinityRecipeInputCapture {
         this.slot = 0;
         this.capturingPattern = false;
         this.capturingSlot = false;
-        this.matchingItems = List.<AEItemKey>of().iterator();
+        this.matchingItems = ObjectList.<AEItemKey>of().iterator();
     }
 
     private void retainPublished(TrinityCraftingGraphPattern pattern, TrinityPlanningDiagnosticCode code, String translation) {
         // An unrelated, expensive recipe must not reject every request on the grid. No partial candidates escape.
         this.fallbacks.put(pattern.identity(), new TrinityPlanningDiagnostic(code,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                Map.of("phase", "recipe_input_capture", "limit", Integer.toString(this.limit), "action", "legacy_pattern")));
+                Object2ObjectMaps.unmodifiable(new Object2ObjectArrayMap<>(
+                        new String[] { "phase", "limit", "action" },
+                        new String[] { "recipe_input_capture", Integer.toString(this.limit), "legacy_pattern" }))));
         finish(pattern);
     }
 
     private TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> fail(TrinityPlanningDiagnosticCode code, String translation) {
         this.result = TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                Map.of("phase", "recipe_input_capture", "limit", Integer.toString(this.limit))));
+                Object2ObjectMaps.unmodifiable(new Object2ObjectArrayMap<>(
+                        new String[] { "phase", "limit" },
+                        new String[] { "recipe_input_capture", Integer.toString(this.limit) }))));
         return this.result;
     }
 }

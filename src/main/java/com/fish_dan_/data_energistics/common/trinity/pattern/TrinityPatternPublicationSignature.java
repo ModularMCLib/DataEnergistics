@@ -6,10 +6,10 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * AE-visible pattern semantics used to distinguish a harmless recipe-object rebind from a publication change.
@@ -20,8 +20,8 @@ import java.util.List;
  * @param pushesInputsToExternalInventory whether the pattern supports direct external input transfer
  */
 public record TrinityPatternPublicationSignature(AEItemKey definition,
-                                                 List<Input> inputs,
-                                                 List<GenericStack> outputs,
+                                                 ObjectList<Input> inputs,
+                                                 ObjectList<GenericStack> outputs,
                                                  boolean pushesInputsToExternalInventory) {
 
     /**
@@ -32,7 +32,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
         if (definition == null) {
             throw new IllegalArgumentException("A Trinity pattern publication requires a definition");
         }
-        inputs = List.copyOf(inputs);
+        inputs = new ObjectImmutableList<>(inputs);
         outputs = copyPositiveOutputs(outputs);
         if (outputs.isEmpty()) {
             throw new IllegalArgumentException("A Trinity pattern publication requires at least one output");
@@ -65,7 +65,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
         return new TrinityPatternPublicationSignature(
                 pattern.getDefinition(),
                 inputs,
-                pattern.getOutputs(),
+                new ObjectImmutableList<>(pattern.getOutputs()),
                 pattern.supportsPushInputsToExternalInventory());
     }
 
@@ -75,7 +75,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
      * @param multiplier   amount of the selected alternative consumed by one craft
      * @param alternatives immutable accepted alternatives and their corresponding remaining keys
      */
-    public record Input(long multiplier, List<Alternative> alternatives) {
+    public record Input(long multiplier, ObjectList<Alternative> alternatives) {
 
         /**
          * Validates the positive multiplier and isolates the alternatives array returned by AE2.
@@ -99,7 +99,7 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
                 }
                 unique.add(alternative);
             }
-            alternatives = List.copyOf(unique);
+            alternatives = new ObjectImmutableList<>(unique);
         }
 
         /**
@@ -124,8 +124,8 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
         /**
          * @return immutable accepted stacks in their first-choice order
          */
-        public List<GenericStack> possibleInputs() {
-            return this.alternatives.stream().map(Alternative::stack).toList();
+        public ObjectList<GenericStack> possibleInputs() {
+            return this.alternatives.stream().map(Alternative::stack).collect(ObjectImmutableList.toList());
         }
     }
 
@@ -145,12 +145,12 @@ public record TrinityPatternPublicationSignature(AEItemKey definition,
         }
     }
 
-    private static List<GenericStack> copyPositiveOutputs(List<GenericStack> stacks) {
+    private static ObjectList<GenericStack> copyPositiveOutputs(ObjectList<GenericStack> stacks) {
         ObjectArrayList<GenericStack> copied = new ObjectArrayList<>(stacks.size());
         for (GenericStack stack : stacks) {
             copied.add(requirePositiveStack(stack, "output"));
         }
-        return List.copyOf(copied);
+        return new ObjectImmutableList<>(copied);
     }
 
     private static GenericStack requirePositiveStack(@Nullable GenericStack stack, String role) {

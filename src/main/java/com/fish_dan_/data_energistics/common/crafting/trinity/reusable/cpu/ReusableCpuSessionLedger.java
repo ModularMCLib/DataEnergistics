@@ -16,11 +16,13 @@ import net.minecraft.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
@@ -43,20 +45,20 @@ public final class ReusableCpuSessionLedger {
     }
 
     /** Output expectations of one exact-state operation. Resident tool successors are deliberately absent. */
-    public record OutputContract(List<GenericStack> products, List<GenericStack> remainders,
-                                 List<DynamicOutput> dynamic, List<VirtualCraftingCompletion> virtual) {
+    public record OutputContract(ObjectList<GenericStack> products, ObjectList<GenericStack> remainders,
+                                 ObjectList<DynamicOutput> dynamic, ObjectList<VirtualCraftingCompletion> virtual) {
 
         public OutputContract {
-            products = List.copyOf(products);
-            remainders = List.copyOf(remainders);
-            dynamic = List.copyOf(dynamic);
-            virtual = List.copyOf(virtual);
+            products = new ObjectImmutableList<>(products);
+            remainders = new ObjectImmutableList<>(remainders);
+            dynamic = new ObjectImmutableList<>(dynamic);
+            virtual = new ObjectImmutableList<>(virtual);
         }
     }
 
     /** One exact submission and its one-time accounting boundary. Expected outputs are metadata, not owned items. */
     public record Submission(Work work, long count, long logicalOffer, double energy,
-                             OutputContract outputs, List<SlotStack> physicalInputs,
+                             OutputContract outputs, ObjectList<SlotStack> physicalInputs,
                              boolean transferred, boolean waitingRegistered, boolean accounted, long completed) {
 
         public Submission {
@@ -65,12 +67,12 @@ public final class ReusableCpuSessionLedger {
                     !transferred && completed != 0) {
                 throw new IllegalArgumentException("Inconsistent reusable CPU submission");
             }
-            physicalInputs = List.copyOf(physicalInputs);
+            physicalInputs = new ObjectImmutableList<>(physicalInputs);
         }
 
         /** Delivery history is metadata after transfer; only this view can be returned as CPU-owned escrow. */
-        public List<SlotStack> escrow() {
-            return transferred ? List.of() : physicalInputs;
+        public ObjectList<SlotStack> escrow() {
+            return transferred ? ObjectList.of() : physicalInputs;
         }
 
         Submission afterTransfer() {
@@ -98,7 +100,7 @@ public final class ReusableCpuSessionLedger {
         private final Target target;
         private final AEItemKey pattern;
         private final TrinityPatternIdentity publication;
-        private final List<TrinityBoundPatternInput> bindings;
+        private final ObjectList<TrinityBoundPatternInput> bindings;
         private final Long2ObjectLinkedOpenHashMap<Submission> submissions = new Long2ObjectLinkedOpenHashMap<>();
         private final LongLinkedOpenHashSet pending = new LongLinkedOpenHashSet();
         private long nextSequence;
@@ -107,13 +109,13 @@ public final class ReusableCpuSessionLedger {
         private @Nullable String settlementFingerprint;
 
         private Session(UUID id, UUID jobId, Target target, AEItemKey pattern, TrinityPatternIdentity publication,
-                        List<TrinityBoundPatternInput> bindings) {
+                        ObjectList<TrinityBoundPatternInput> bindings) {
             this.id = id;
             this.jobId = jobId;
             this.target = target;
             this.pattern = pattern;
             this.publication = publication;
-            this.bindings = List.copyOf(bindings);
+            this.bindings = new ObjectImmutableList<>(bindings);
         }
 
         public UUID id() {
@@ -136,7 +138,7 @@ public final class ReusableCpuSessionLedger {
             return publication;
         }
 
-        public List<TrinityBoundPatternInput> bindings() {
+        public ObjectList<TrinityBoundPatternInput> bindings() {
             return bindings;
         }
 
@@ -160,17 +162,17 @@ public final class ReusableCpuSessionLedger {
             return settlementFingerprint;
         }
 
-        public List<SubmissionEntry> submissions() {
+        public ObjectList<SubmissionEntry> submissions() {
             return submissions.long2ObjectEntrySet().stream()
-                    .map(entry -> new SubmissionEntry(entry.getLongKey(), entry.getValue())).toList();
+                    .map(entry -> new SubmissionEntry(entry.getLongKey(), entry.getValue())).collect(ObjectImmutableList.toList());
         }
 
         public @Nullable Submission submission(long sequence) {
             return submissions.get(sequence);
         }
 
-        public List<SubmissionEntry> pendingSubmissions() {
-            return pending.longStream().mapToObj(sequence -> new SubmissionEntry(sequence, submissions.get(sequence))).toList();
+        public ObjectList<SubmissionEntry> pendingSubmissions() {
+            return pending.longStream().mapToObj(sequence -> new SubmissionEntry(sequence, submissions.get(sequence))).collect(ObjectImmutableList.toList());
         }
     }
 
@@ -189,34 +191,34 @@ public final class ReusableCpuSessionLedger {
 
     /** Complete immutable metadata for one session, including any genuine local escrow. */
     public record SessionSnapshot(UUID id, UUID jobId, Target target, AEItemKey pattern,
-                                  TrinityPatternIdentity publication, List<TrinityBoundPatternInput> bindings,
-                                  List<SubmissionEntry> submissions, long nextSequence,
+                                  TrinityPatternIdentity publication, ObjectList<TrinityBoundPatternInput> bindings,
+                                  ObjectList<SubmissionEntry> submissions, long nextSequence,
                                   boolean closing, @Nullable String settlementFingerprint) {
 
         public SessionSnapshot {
-            bindings = List.copyOf(bindings);
-            submissions = List.copyOf(submissions);
+            bindings = new ObjectImmutableList<>(bindings);
+            submissions = new ObjectImmutableList<>(submissions);
             if (nextSequence < 0L) {
                 throw new IllegalArgumentException("Negative reusable submission sequence");
             }
         }
     }
 
-    public record Snapshot(UUID owner, List<SessionSnapshot> sessions, Set<UUID> replanningJobs, Set<UUID> uncertainSessions,
-                           List<RemoteCustodyEvidence> remoteEvidence) {
+    public record Snapshot(UUID owner, ObjectList<SessionSnapshot> sessions, ObjectSet<UUID> replanningJobs, ObjectSet<UUID> uncertainSessions,
+                           ObjectList<RemoteCustodyEvidence> remoteEvidence) {
 
         public Snapshot {
-            sessions = List.copyOf(sessions);
-            replanningJobs = Set.copyOf(replanningJobs);
-            uncertainSessions = Set.copyOf(uncertainSessions);
-            remoteEvidence = List.copyOf(remoteEvidence);
+            sessions = new ObjectImmutableList<>(sessions);
+            replanningJobs = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(replanningJobs));
+            uncertainSessions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(uncertainSessions));
+            remoteEvidence = new ObjectImmutableList<>(remoteEvidence);
         }
     }
 
     private final UUID owner;
     private final Object2ObjectLinkedOpenHashMap<UUID, Session> sessions = new Object2ObjectLinkedOpenHashMap<>();
-    private final Set<UUID> replanningJobs = new ObjectOpenHashSet<>();
-    private final Set<UUID> uncertainSessions = new ObjectOpenHashSet<>();
+    private final ObjectSet<UUID> replanningJobs = new ObjectOpenHashSet<>();
+    private final ObjectSet<UUID> uncertainSessions = new ObjectOpenHashSet<>();
     private final Object2ObjectLinkedOpenHashMap<UUID, RemoteCustodyEvidence> remoteEvidence = new Object2ObjectLinkedOpenHashMap<>();
 
     public ReusableCpuSessionLedger(UUID owner) {
@@ -231,8 +233,8 @@ public final class ReusableCpuSessionLedger {
         return owner.toString();
     }
 
-    public List<Session> sessions() {
-        return List.copyOf(sessions.values());
+    public ObjectList<Session> sessions() {
+        return new ObjectImmutableList<>(sessions.values());
     }
 
     public @Nullable Session session(UUID id) {
@@ -283,7 +285,7 @@ public final class ReusableCpuSessionLedger {
 
     /** Records intent before a submission can transfer assets. It does not manufacture a local tool balance. */
     public Session open(UUID id, UUID jobId, Target target, AEItemKey pattern, TrinityPatternIdentity publication,
-                        List<TrinityBoundPatternInput> bindings) {
+                        ObjectList<TrinityBoundPatternInput> bindings) {
         Session session = new Session(id, jobId, target, pattern, publication, bindings);
         if (sessions.putIfAbsent(id, session) != null) {
             throw new IllegalArgumentException("Reusable CPU session already exists");
@@ -307,7 +309,7 @@ public final class ReusableCpuSessionLedger {
     }
 
     /** Releases only local escrow after a proven rejection before provider ownership. */
-    public List<SlotStack> reject(UUID sessionId, long sequence) {
+    public ObjectList<SlotStack> reject(UUID sessionId, long sequence) {
         Session session = requireSession(sessionId);
         Submission submission = requireSubmission(session, sequence);
         if (submission.transferred()) {
@@ -431,8 +433,8 @@ public final class ReusableCpuSessionLedger {
     public Snapshot snapshot() {
         return new Snapshot(owner, sessions.values().stream().map(session -> new SessionSnapshot(session.id, session.jobId,
                 session.target, session.pattern, session.publication, session.bindings, session.submissions(),
-                session.nextSequence, session.closing, session.settlementFingerprint)).toList(), replanningJobs, uncertainSessions,
-                List.copyOf(remoteEvidence.values()));
+                session.nextSequence, session.closing, session.settlementFingerprint)).collect(ObjectImmutableList.toList()), replanningJobs, uncertainSessions,
+                new ObjectImmutableList<>(remoteEvidence.values()));
     }
 
     public static ReusableCpuSessionLedger restore(Snapshot snapshot) {

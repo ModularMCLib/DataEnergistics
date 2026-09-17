@@ -1,12 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.BigIntegerCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchAccountingDelta;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
 
 import appeng.api.stacks.KeyCounter;
+
+import java.math.BigInteger;
 
 /**
  * Unique server-thread boundary for a provider call, input ownership decision, and accounting settlement.
@@ -35,9 +38,10 @@ public final class CraftingDispatchCommitter {
             throw new IllegalArgumentException("Crafting dispatch commit request must not be null");
         }
         CraftingDispatchAccountingDelta accounting = request.accounting();
-        long admittedCount;
+        BigInteger admittedCount;
         try {
-            admittedCount = request.admission().count();
+            admittedCount = request.admission() instanceof BigIntegerCraftingAdmission exact ?
+                    exact.exactCount() : BigInteger.valueOf(request.admission().count());
         } catch (RuntimeException exception) {
             Data_Energistics.LOGGER.error(
                     "Crafting provider {} failed to report its admitted count for pattern {} on Trinity worker {} job {}",
@@ -48,11 +52,11 @@ public final class CraftingDispatchCommitter {
                     exception);
             return beforeOwnership(request, CraftingDispatchStatus.FAILED_BEFORE_OWNERSHIP, false);
         }
-        if (admittedCount != accounting.logicalCrafts()) {
+        if (!accounting.exactLogicalCrafts().equals(admittedCount)) {
             Data_Energistics.LOGGER.error(
                     "Crafting provider {} changed its admitted count from {} to {} for pattern {} on Trinity worker {} job {}",
                     request.provider(),
-                    accounting.logicalCrafts(),
+                    accounting.exactLogicalCrafts(),
                     admittedCount,
                     request.pattern().getDefinition(),
                     request.workerNumber(),

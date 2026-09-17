@@ -1,17 +1,19 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model;
 
+import java.math.BigInteger;
+
 /**
  * Structured result of one synchronous provider commit boundary.
  *
  * @param status                    final provider or dispatch status
- * @param logicalCrafts             exact count owned by the provider, or zero before ownership
+ * @param exactLogicalCrafts        exact count owned by the provider, or zero before ownership
  * @param physicalAttempted         whether the physical-call budget was acquired
  * @param inputOwnershipTransferred whether the provider owns the admitted inputs
  * @param accountingSettled         whether reserved resources were either applied or released completely
  */
 public record CraftingDispatchResult(
                                      CraftingDispatchStatus status,
-                                     long logicalCrafts,
+                                     BigInteger exactLogicalCrafts,
                                      boolean physicalAttempted,
                                      boolean inputOwnershipTransferred,
                                      boolean accountingSettled) {
@@ -20,10 +22,10 @@ public record CraftingDispatchResult(
         if (status == null) {
             throw new IllegalArgumentException("Crafting dispatch result status must not be null");
         }
-        if (logicalCrafts < 0L) {
+        if (exactLogicalCrafts.signum() < 0) {
             throw new IllegalArgumentException("Crafting dispatch result amount must not be negative");
         }
-        if (inputOwnershipTransferred != (logicalCrafts > 0L)) {
+        if (inputOwnershipTransferred != (exactLogicalCrafts.signum() > 0)) {
             throw new IllegalArgumentException("Crafting dispatch ownership must match its logical amount");
         }
         if (inputOwnershipTransferred && !physicalAttempted) {
@@ -37,6 +39,16 @@ public record CraftingDispatchResult(
                 status != CraftingDispatchStatus.ACCEPTED) {
             throw new IllegalArgumentException("Crafting dispatch failure status disagrees with input ownership");
         }
+    }
+
+    public CraftingDispatchResult(CraftingDispatchStatus status, long logicalCrafts, boolean physicalAttempted,
+                                  boolean inputOwnershipTransferred, boolean accountingSettled) {
+        this(status, BigInteger.valueOf(logicalCrafts), physicalAttempted, inputOwnershipTransferred, accountingSettled);
+    }
+
+    /** Legacy projection rejects oversized results rather than reporting a truncated ownership amount. */
+    public long logicalCrafts() {
+        return this.exactLogicalCrafts.longValueExact();
     }
 
     /**

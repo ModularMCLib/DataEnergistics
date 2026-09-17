@@ -27,9 +27,10 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -143,7 +144,7 @@ public final class ReusableCpuSessionLedgerNbtCodec {
         UUID owner = uuid(tag, "owner");
         ObjectOpenHashSet<UUID> replanning = new ObjectOpenHashSet<>();
         ObjectOpenHashSet<UUID> uncertain = new ObjectOpenHashSet<>();
-        List<RemoteCustodyEvidence> evidence = new ObjectArrayList<>();
+        ObjectList<RemoteCustodyEvidence> evidence = new ObjectArrayList<>();
         for (Tag value : list(tag, "remote_evidence")) {
             CompoundTag entry = (CompoundTag) value;
             evidence.add(new RemoteCustodyEvidence(uuid(entry, "session"), uuid(entry, "job"), string(entry, "target"),
@@ -160,7 +161,7 @@ public final class ReusableCpuSessionLedgerNbtCodec {
                 throw new IllegalArgumentException("Duplicate quarantined reusable session");
             }
         }
-        List<SessionSnapshot> sessions = new ObjectArrayList<>();
+        ObjectList<SessionSnapshot> sessions = new ObjectArrayList<>();
         for (Tag value : list(tag, "sessions")) {
             CompoundTag entry = (CompoundTag) value;
             Target target = new Target(string(entry, "target"),
@@ -169,17 +170,17 @@ public final class ReusableCpuSessionLedgerNbtCodec {
             if (!(key(compound(entry, "pattern"), registries) instanceof AEItemKey pattern)) {
                 throw new IllegalArgumentException("Reusable CPU pattern must be an item key");
             }
-            List<SubmissionEntry> submissions = new ObjectArrayList<>();
+            ObjectList<SubmissionEntry> submissions = new ObjectArrayList<>();
             for (Tag item : list(entry, "submissions")) {
                 CompoundTag stored = (CompoundTag) item;
-                List<SlotStack> escrow = new ObjectArrayList<>();
+                ObjectList<SlotStack> escrow = new ObjectArrayList<>();
                 for (Tag asset : list(stored, "physical_inputs")) {
                     CompoundTag owned = (CompoundTag) asset;
                     escrow.add(new SlotStack(integer(owned, "input_slot"), stack(owned, registries)));
                 }
                 require(stored, "energy", Tag.TAG_DOUBLE);
-                List<DynamicOutput> dynamic = new ObjectArrayList<>();
-                List<VirtualCraftingCompletion> virtual = new ObjectArrayList<>();
+                ObjectList<DynamicOutput> dynamic = new ObjectArrayList<>();
+                ObjectList<VirtualCraftingCompletion> virtual = new ObjectArrayList<>();
                 for (Tag valueOutput : list(stored, "dynamic")) {
                     CompoundTag output = (CompoundTag) valueOutput;
                     dynamic.add(new DynamicOutput(stack(output, registries), bool(output, "final"), ResourceLocation.parse(string(output, "source"))));
@@ -198,7 +199,7 @@ public final class ReusableCpuSessionLedgerNbtCodec {
             }
             sessions.add(new SessionSnapshot(uuid(entry, "id"), uuid(entry, "job"), target, pattern,
                     new TrinityPatternIdentity(string(entry, "definition"), string(entry, "publication")),
-                    TrinityBoundInputSnapshotCodec.read(list(entry, "bindings"), registries), submissions,
+                    new ObjectImmutableList<>(TrinityBoundInputSnapshotCodec.read(list(entry, "bindings"), registries)), submissions,
                     number(entry, "next_sequence"), bool(entry, "closing"), optionalString(entry, "settlement").orElse(null)));
         }
         return ReusableCpuSessionLedger.restore(new Snapshot(owner, sessions, replanning, uncertain, evidence));
@@ -223,17 +224,17 @@ public final class ReusableCpuSessionLedgerNbtCodec {
         return new Work(number(tag, "generation"), integer(tag, "stage"), integer(tag, "firing"),
                 new TrinityPatternIdentity(string(tag, "definition"), string(tag, "publication")),
                 key(compound(tag, "output"), registries), integer(tag, "variant"), number(tag, "maximum"), bool(tag, "cycle"),
-                TrinityBoundInputSnapshotCodec.read(list(tag, "bindings"), registries));
+                new ObjectImmutableList<>(TrinityBoundInputSnapshotCodec.read(list(tag, "bindings"), registries)));
     }
 
-    private static ListTag writeAssets(List<GenericStack> assets, HolderLookup.Provider registries) {
+    private static ListTag writeAssets(ObjectList<GenericStack> assets, HolderLookup.Provider registries) {
         ListTag tag = new ListTag();
         assets.forEach(asset -> tag.add(GenericStack.writeTag(registries, asset)));
         return tag;
     }
 
-    private static List<GenericStack> readAssets(ListTag tag, HolderLookup.Provider registries) {
-        List<GenericStack> result = new ObjectArrayList<>(tag.size());
+    private static ObjectList<GenericStack> readAssets(ListTag tag, HolderLookup.Provider registries) {
+        ObjectList<GenericStack> result = new ObjectArrayList<>(tag.size());
         for (Tag value : tag) {
             result.add(stack((CompoundTag) value, registries));
         }

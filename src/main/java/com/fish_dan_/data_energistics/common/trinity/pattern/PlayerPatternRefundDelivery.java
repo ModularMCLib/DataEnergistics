@@ -12,9 +12,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /** Default AE-network, player-inventory, then checked world-drop implementation for installed-pattern refunds. */
 public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDelivery {
@@ -24,7 +24,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
     private final MEStorage networkStorage;
     @Nullable
     private final IActionSource actionSource;
-    private List<ItemStack> preparedPatterns = List.of();
+    private ObjectList<ItemStack> preparedPatterns = ObjectList.of();
     private boolean prepared;
     private boolean delivered;
 
@@ -44,7 +44,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
     }
 
     @Override
-    public boolean prepare(List<ItemStack> patterns) {
+    public boolean prepare(ObjectList<ItemStack> patterns) {
         if (this.prepared || this.player.level().isClientSide() || patterns.isEmpty()) {
             return false;
         }
@@ -54,7 +54,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
     }
 
     @Override
-    public List<ItemStack> deliver(List<ItemStack> patterns) {
+    public ObjectList<ItemStack> deliver(ObjectList<ItemStack> patterns) {
         if (!this.prepared || this.delivered || !matchesPreparedPatterns(patterns)) {
             throw new IllegalStateException("Trinity pattern refund delivery was not prepared for this aggregate");
         }
@@ -78,7 +78,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
                 return undeliveredPatterns(patterns, index, remainder);
             }
         }
-        return List.of();
+        return ObjectList.of();
     }
 
     private void insertIntoNetwork(ItemStack remainder) {
@@ -107,7 +107,7 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
         remainder.shrink((int) inserted);
     }
 
-    private boolean matchesPreparedPatterns(List<ItemStack> patterns) {
+    private boolean matchesPreparedPatterns(ObjectList<ItemStack> patterns) {
         if (this.preparedPatterns.size() != patterns.size()) {
             return false;
         }
@@ -119,21 +119,21 @@ public final class PlayerPatternRefundDelivery implements TrinityPatternRefundDe
         return true;
     }
 
-    private static List<ItemStack> copyPatterns(List<ItemStack> patterns) {
+    private static ObjectList<ItemStack> copyPatterns(ObjectList<ItemStack> patterns) {
         ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(patterns.size());
         for (ItemStack pattern : patterns) {
             copies.add(pattern.copy());
         }
-        return List.copyOf(copies);
+        return new ObjectImmutableList<>(copies);
     }
 
-    private static List<ItemStack> undeliveredPatterns(List<ItemStack> patterns, int index, ItemStack remainder) {
+    private static ObjectList<ItemStack> undeliveredPatterns(ObjectList<ItemStack> patterns, int index, ItemStack remainder) {
         ObjectArrayList<ItemStack> undelivered = new ObjectArrayList<>(patterns.size() - index);
         undelivered.add(remainder.copy());
         for (int remainingIndex = index + 1; remainingIndex < patterns.size(); remainingIndex++) {
             undelivered.add(patterns.get(remainingIndex).copy());
         }
-        return List.copyOf(undelivered);
+        return new ObjectImmutableList<>(undelivered);
     }
 
     private boolean dropRemainder(ItemStack remainder) {

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model;
 
+import java.math.BigInteger;
+
 /**
  * One-shot, prevalidated accounting transition paired with a synchronous provider submission.
  *
@@ -11,16 +13,16 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model;
  */
 public final class CraftingDispatchAccountingDelta {
 
-    private final long logicalCrafts;
+    private final BigInteger logicalCrafts;
     private final Runnable applyAfterOwnership;
     private final Runnable releaseBeforeOwnership;
     private State state = State.READY;
 
     private CraftingDispatchAccountingDelta(
-                                            long logicalCrafts,
+                                            BigInteger logicalCrafts,
                                             Runnable applyAfterOwnership,
                                             Runnable releaseBeforeOwnership) {
-        if (logicalCrafts <= 0L) {
+        if (logicalCrafts.signum() <= 0) {
             throw new IllegalArgumentException("Crafting dispatch accounting amount must be positive");
         }
         if (applyAfterOwnership == null || releaseBeforeOwnership == null) {
@@ -44,9 +46,19 @@ public final class CraftingDispatchAccountingDelta {
                                                          Runnable applyAfterOwnership,
                                                          Runnable releaseBeforeOwnership) {
         return new CraftingDispatchAccountingDelta(
-                logicalCrafts,
+                BigInteger.valueOf(logicalCrafts),
                 applyAfterOwnership,
                 releaseBeforeOwnership);
+    }
+
+    /** Creates an exact one-shot ownership transition without a long-sized accounting ceiling. */
+    public static CraftingDispatchAccountingDelta create(BigInteger logicalCrafts, Runnable applyAfterOwnership,
+                                                         Runnable releaseBeforeOwnership) {
+        return new CraftingDispatchAccountingDelta(logicalCrafts, applyAfterOwnership, releaseBeforeOwnership);
+    }
+
+    public BigInteger exactLogicalCrafts() {
+        return this.logicalCrafts;
     }
 
     /**
@@ -55,7 +67,7 @@ public final class CraftingDispatchAccountingDelta {
      * @return positive logical craft count
      */
     public long logicalCrafts() {
-        return this.logicalCrafts;
+        return this.logicalCrafts.longValueExact();
     }
 
     /**

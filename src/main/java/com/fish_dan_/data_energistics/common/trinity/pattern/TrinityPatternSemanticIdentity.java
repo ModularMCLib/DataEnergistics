@@ -3,7 +3,8 @@ package com.fish_dan_.data_energistics.common.trinity.pattern;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.GenericStack;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Complete decoded execution semantics used to collapse equivalent encoded pattern items during migration.
@@ -14,8 +15,8 @@ import java.util.List;
  * </p>
  */
 record TrinityPatternSemanticIdentity(Class<?> patternFamily,
-                                      List<TrinityPatternPublicationSignature.Input> inputs,
-                                      List<GenericStack> outputs,
+                                      ObjectList<TrinityPatternPublicationSignature.Input> inputs,
+                                      ObjectList<GenericStack> outputs,
                                       boolean pushesInputsToExternalInventory) {
 
     static TrinityPatternSemanticIdentity capture(IPatternDetails pattern) {
@@ -28,7 +29,7 @@ record TrinityPatternSemanticIdentity(Class<?> patternFamily,
     }
 
     TrinityPatternSemanticIdentity {
-        inputs = List.copyOf(inputs);
-        outputs = List.copyOf(outputs);
+        inputs = new ObjectImmutableList<>(inputs);
+        outputs = new ObjectImmutableList<>(outputs);
     }
 }

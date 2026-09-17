@@ -57,9 +57,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -101,7 +103,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
      */
     private boolean patternHostReleasePending;
     @Nullable
-    private List<ItemStack> miningDropSnapshot;
+    private ObjectList<ItemStack> miningDropSnapshot;
 
     /**
      * Couples one host reference to its immutable catalog authority token.
@@ -345,8 +347,8 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
      *
      * @return defensive copies of the frozen snapshot, or a fresh read-only capture for non-player disassembly
      */
-    public List<ItemStack> getMiningDrops() {
-        List<ItemStack> snapshot = this.miningDropSnapshot;
+    public ObjectList<ItemStack> getMiningDrops() {
+        ObjectList<ItemStack> snapshot = this.miningDropSnapshot;
         if (snapshot != null) {
             return copyMiningDrops(snapshot);
         }
@@ -371,7 +373,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
      *
      * @return one core block item followed by each installed pattern stack
      */
-    public List<ItemStack> captureMiningDrops() {
+    public ObjectList<ItemStack> captureMiningDrops() {
         if (!isCoreStateReady() || this.level == null) {
             throw new IllegalStateException("Cannot capture mining drops before Trinity pattern core state is ready");
         }
@@ -393,7 +395,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
                 drops.add(pattern.copy());
             }
         }
-        return List.copyOf(drops);
+        return new ObjectImmutableList<>(drops);
     }
 
     @Override
@@ -405,12 +407,12 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
         return super.disassembleWithWrench(player, level, hitResult, wrench);
     }
 
-    private static List<ItemStack> copyMiningDrops(List<ItemStack> drops) {
+    private static ObjectList<ItemStack> copyMiningDrops(ObjectList<ItemStack> drops) {
         ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(drops.size());
         for (ItemStack drop : drops) {
             copies.add(drop.copy());
         }
-        return List.copyOf(copies);
+        return new ObjectImmutableList<>(copies);
     }
 
     @Override
@@ -482,7 +484,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     /** Read-only custody scope; an unready or no-longer-authorized mounted core is explicitly incomplete. */
     public ReusableCraftingCustodyCensus reusableCustody(UUID hostOwner, String cpuOwner) {
         boolean visible = isReusableOwner(hostOwner);
-        return this.custodyCoverage.census(cpuOwner, visible, visible ? List.of(this.core.reusableCustody(cpuOwner)) : List.of());
+        return this.custodyCoverage.census(cpuOwner, visible, visible ? ObjectList.of(this.core.reusableCustody(cpuOwner)) : ObjectList.of());
     }
 
     /** Uses the slot authorized by findReusableSession within the same synchronous server callback. */
@@ -571,7 +573,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     }
 
     @Override
-    public boolean enqueueBatch(PatternRoute route, ItemStack patternSnapshot, List<ItemStack> inputs, long queuedTick) {
+    public boolean enqueueBatch(PatternRoute route, ItemStack patternSnapshot, ObjectList<ItemStack> inputs, long queuedTick) {
         return readyCore().enqueueBatch(route, patternSnapshot, inputs, queuedTick);
     }
 
@@ -592,8 +594,18 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     }
 
     @Override
-    public List<TrinityCraftingBatch> queuedBatches(int slot) {
+    public ObjectList<TrinityCraftingBatch> queuedBatches(int slot) {
         return readyCore().queuedBatches(slot);
+    }
+
+    @Override
+    public boolean enqueueBatch(PatternRoute route,
+                                CachedPattern expectedPattern,
+                                long expectedRuntimeBindingRevision,
+                                TrinityCraftingBatch.InputSignature inputs,
+                                long queuedTick,
+                                BigInteger count) {
+        return readyCore().enqueueBatch(route, expectedPattern, expectedRuntimeBindingRevision, inputs, queuedTick, count);
     }
 
     @Override
@@ -617,12 +629,12 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     }
 
     @Override
-    public List<TrinityItemAmount> pendingOutputs(PatternRoute route) {
+    public ObjectList<TrinityItemAmount> pendingOutputs(PatternRoute route) {
         return readyCore().pendingOutputs(route);
     }
 
     @Override
-    public void appendPendingOutputs(PatternRoute route, List<TrinityItemAmount> outputs) {
+    public void appendPendingOutputs(PatternRoute route, ObjectList<TrinityItemAmount> outputs) {
         readyCore().appendPendingOutputs(route, outputs);
     }
 
@@ -736,7 +748,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
             return BatchExecutionResult.paused();
         }
         try {
-            List<ItemStack> inputs = batch.inputs();
+            ObjectList<ItemStack> inputs = batch.inputs();
             TransientCraftingContainer container = new TransientCraftingContainer(new AutoCraftingMenu(), 3, 3);
             for (int inputSlot = 0; inputSlot < inputs.size(); inputSlot++) {
                 container.setItem(inputSlot, inputs.get(inputSlot));

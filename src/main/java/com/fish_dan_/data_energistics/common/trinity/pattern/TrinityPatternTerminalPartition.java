@@ -9,7 +9,8 @@ import appeng.helpers.patternprovider.PatternContainer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.UUID;
 
 /**
@@ -134,8 +135,8 @@ public interface TrinityPatternTerminalPartition extends PatternContainer {
      * @param group   common terminal group used by every generated partition
      * @return detached partitions in stable core-position and physical-slot order
      */
-    static List<TrinityPatternTerminalPartition> createLayout(TrinityPatternCatalog catalog,
-                                                              PatternContainerGroup group) {
+    static ObjectList<TrinityPatternTerminalPartition> createLayout(TrinityPatternCatalog catalog,
+                                                                    PatternContainerGroup group) {
         return VirtualNodePatternTerminalPartition.createLayout(catalog, group);
     }
 }

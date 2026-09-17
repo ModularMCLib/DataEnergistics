@@ -32,8 +32,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,7 +53,7 @@ public final class TrinityDetachedCpuRecoveryGameTest {
         UUID session = UUID.randomUUID();
         ReusableCpuSessionLedger ledger = new ReusableCpuSessionLedger(owner);
         ledger.open(session, UUID.randomUUID(), new Target("executor:held-tool", CountedCraftingTarget.route("held-tool"), Optional.empty()),
-                AEItemKey.of(Items.CRAFTING_TABLE), new TrinityPatternIdentity("definition", "publication"), List.of());
+                AEItemKey.of(Items.CRAFTING_TABLE), new TrinityPatternIdentity("definition", "publication"), ObjectList.of());
         CompoundTag runtime = runtime(source, ReusableCpuSessionLedgerNbtCodec.encode(ledger, helper.getLevel().registryAccess()), helper);
         source.getCraftingRuntime().readFromTag(runtime, helper.getLevel().registryAccess());
         helper.assertTrue(source.getCraftingRuntime().hasBusyJobs(), "Jobless external custody keeps its worker retained");

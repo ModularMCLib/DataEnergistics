@@ -21,15 +21,18 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -38,18 +41,18 @@ import java.util.UUID;
 public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
 
     private static final int CRAFTING_GRID_SLOT_COUNT = 9;
-    private static final LayoutSnapshot EMPTY_LAYOUT = new LayoutSnapshot(0L, false, 0, List.of(), List.of());
+    private static final LayoutSnapshot EMPTY_LAYOUT = new LayoutSnapshot(0L, false, 0, ObjectList.of(), ObjectList.of());
 
     private final UUID hostId;
-    private final Map<TrinityPatternCore, CoreRuntime> runtimesByCore = new Reference2ReferenceOpenHashMap<>();
-    private final Map<PatternRoute, SlotBinding> routeBindings = new Object2ObjectOpenHashMap<>();
-    private final Map<TrinityPatternCore, IntSet> dirtySlotsByCore = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceMap<TrinityPatternCore, CoreRuntime> runtimesByCore = new Reference2ReferenceOpenHashMap<>();
+    private final Object2ObjectMap<PatternRoute, SlotBinding> routeBindings = new Object2ObjectOpenHashMap<>();
+    private final Reference2ReferenceMap<TrinityPatternCore, IntSet> dirtySlotsByCore = new Reference2ReferenceOpenHashMap<>();
     private final Int2ObjectAVLTreeMap<ActiveSlot> activeSlotsByGlobalIndex = new Int2ObjectAVLTreeMap<>();
 
     private LayoutSnapshot layout = EMPTY_LAYOUT;
-    private List<CoreRuntime> orderedRuntimes = List.of();
-    private List<IPatternDetails> availablePatterns = List.of();
-    private List<ActiveSlot> activeSlots = List.of();
+    private ObjectList<CoreRuntime> orderedRuntimes = ObjectList.of();
+    private ObjectList<IPatternDetails> availablePatterns = ObjectList.of();
+    private ObjectList<ActiveSlot> activeSlots = ObjectList.of();
     private long publicationRevision;
     private boolean retainedWork;
 
@@ -139,12 +142,12 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     @Override
-    public RebuildResult rebuild(List<CoreMount> mounts) {
+    public RebuildResult rebuild(ObjectList<CoreMount> mounts) {
         ObjectArrayList<CoreMount> sorted = new ObjectArrayList<>(mounts);
         sorted.sort((left, right) -> left.position().compareTo(right.position()));
 
-        Set<BlockPos> positions = new ObjectOpenHashSet<>();
-        Map<UUID, CoreMount> mountsByCoreId = new Object2ObjectOpenHashMap<>();
+        ObjectSet<BlockPos> positions = new ObjectOpenHashSet<>();
+        Object2ObjectMap<UUID, CoreMount> mountsByCoreId = new Object2ObjectOpenHashMap<>();
         for (CoreMount mount : sorted) {
             if (!positions.add(mount.position())) {
                 return rejectScan(mount.position(), "Duplicate Trinity pattern core position " + mount.position());
@@ -165,13 +168,13 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             }
         }
 
-        List<CoreMount> nextMounts = List.copyOf(sorted);
-        List<CoreRange> nextRanges = createRanges(nextMounts);
+        ObjectList<CoreMount> nextMounts = new ObjectImmutableList<>(sorted);
+        ObjectList<CoreRange> nextRanges = createRanges(nextMounts);
         if (hasSameActiveLayout(nextRanges)) {
             return new RebuildResult(true, false, null, "");
         }
 
-        Map<TrinityPatternCore, CoreRuntime> nextRuntimesByCore = new Reference2ReferenceOpenHashMap<>();
+        Reference2ReferenceMap<TrinityPatternCore, CoreRuntime> nextRuntimesByCore = new Reference2ReferenceOpenHashMap<>();
         Object2ObjectOpenHashMap<PatternRoute, SlotBinding> nextRouteBindings = new Object2ObjectOpenHashMap<>();
         Int2ObjectAVLTreeMap<ActiveSlot> nextActiveSlots = new Int2ObjectAVLTreeMap<>();
         ObjectArrayList<CoreRuntime> nextRuntimes = new ObjectArrayList<>(nextRanges.size());
@@ -213,8 +216,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         this.routeBindings.putAll(nextRouteBindings);
         this.activeSlotsByGlobalIndex.clear();
         this.activeSlotsByGlobalIndex.putAll(nextActiveSlots);
-        this.orderedRuntimes = List.copyOf(nextRuntimes);
-        this.availablePatterns = List.copyOf(nextPatterns);
+        this.orderedRuntimes = new ObjectImmutableList<>(nextRuntimes);
+        this.availablePatterns = new ObjectImmutableList<>(nextPatterns);
         rebuildActiveSlotSnapshot();
         this.dirtySlotsByCore.clear();
         this.retainedWork = false;
@@ -228,10 +231,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             return false;
         }
 
-        Map<TrinityPatternCore, IntSet> changedSlots = new Reference2ReferenceOpenHashMap<>(this.dirtySlotsByCore);
+        Reference2ReferenceMap<TrinityPatternCore, IntSet> changedSlots = new Reference2ReferenceOpenHashMap<>(this.dirtySlotsByCore);
         this.dirtySlotsByCore.clear();
         boolean publicationChanged = false;
-        for (Map.Entry<TrinityPatternCore, IntSet> changedCore : changedSlots.entrySet()) {
+        for (Reference2ReferenceMap.Entry<TrinityPatternCore, IntSet> changedCore : changedSlots.reference2ReferenceEntrySet()) {
             CoreRuntime runtime = this.runtimesByCore.get(changedCore.getKey());
             if (!runtime.matches(runtime.range.mount())) {
                 Data_Energistics.LOGGER.warn(
@@ -274,12 +277,12 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     @Override
-    public List<IPatternDetails> getAvailablePatterns() {
+    public ObjectList<IPatternDetails> getAvailablePatterns() {
         return this.availablePatterns;
     }
 
     @Override
-    public List<ActiveSlot> activeSlots() {
+    public ObjectList<ActiveSlot> activeSlots() {
         return this.activeSlots;
     }
 
@@ -288,7 +291,15 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                                KeyCounter[] inputHolder,
                                long queuedTick,
                                long count) {
-        if (count <= 0L) {
+        return pushPattern(patternDetails, inputHolder, queuedTick, BigInteger.valueOf(count));
+    }
+
+    @Override
+    public boolean pushPattern(IPatternDetails patternDetails,
+                               KeyCounter[] inputHolder,
+                               long queuedTick,
+                               BigInteger count) {
+        if (count.signum() <= 0) {
             throw new IllegalArgumentException("Trinity pattern dispatch count must be positive: " + count);
         }
         if (!this.layout.active() || !(patternDetails instanceof RoutedCraftingPatternDetails routed) || queuedTick < 0L) {
@@ -342,7 +353,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     @Override
-    public List<CoreMount> mountedCores() {
+    public ObjectList<CoreMount> mountedCores() {
         return this.layout.mounts();
     }
 
@@ -379,8 +390,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
 
         ObjectArrayList<TrinityPatternCore.RefundTransaction> transactions = new ObjectArrayList<>(capturedLayout.mounts().size());
         ObjectArrayList<TrinityItemAmount> refundable = new ObjectArrayList<>();
-        List<TrinityItemAmount> offered = List.of();
-        List<TrinityItemAmount> undelivered = List.of();
+        ObjectList<TrinityItemAmount> offered = ObjectList.of();
+        ObjectList<TrinityItemAmount> undelivered = ObjectList.of();
         boolean committed = false;
         try {
             for (CoreRange range : capturedLayout.ranges()) {
@@ -392,7 +403,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                 transactions.add(transaction);
                 refundable.addAll(transaction.refundableItems());
             }
-            offered = List.copyOf(refundable);
+            offered = new ObjectImmutableList<>(refundable);
             if (offered.isEmpty() || this.layout != capturedLayout || !delivery.prepare(offered)) {
                 return false;
             }
@@ -406,7 +417,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             }
             committed = true;
             try {
-                undelivered = List.copyOf(delivery.deliver(offered));
+                undelivered = new ObjectImmutableList<>(delivery.deliver(offered));
             } catch (RuntimeException exception) {
                 Data_Energistics.LOGGER.error(
                         "Trinity refund delivery failed after catalog {} committed queued state",
@@ -437,8 +448,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                     Math.incrementExact(this.layout.revision()),
                     false,
                     0,
-                    List.of(),
-                    List.of());
+                    ObjectList.of(),
+                    ObjectList.of());
             advancePublicationRevision();
         }
         clearRuntimeIndexes();
@@ -466,7 +477,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     private void rebuildActiveSlotSnapshot() {
-        this.activeSlots = List.copyOf(this.activeSlotsByGlobalIndex.values());
+        this.activeSlots = new ObjectImmutableList<>(this.activeSlotsByGlobalIndex.values());
     }
 
     private void rebuildActiveSlotsFromMountedWork() {
@@ -485,7 +496,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         for (CoreRuntime runtime : this.orderedRuntimes) {
             patterns.addAll(runtime.patterns);
         }
-        this.availablePatterns = List.copyOf(patterns);
+        this.availablePatterns = new ObjectImmutableList<>(patterns);
     }
 
     private void advancePublicationRevision() {
@@ -497,9 +508,9 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         this.routeBindings.clear();
         this.dirtySlotsByCore.clear();
         this.activeSlotsByGlobalIndex.clear();
-        this.orderedRuntimes = List.of();
-        this.availablePatterns = List.of();
-        this.activeSlots = List.of();
+        this.orderedRuntimes = ObjectList.of();
+        this.availablePatterns = ObjectList.of();
+        this.activeSlots = ObjectList.of();
     }
 
     private boolean isCurrentPatternRefundLayout(LayoutSnapshot capturedLayout) {
@@ -530,7 +541,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         return IntList.of(capturedSlots.toIntArray());
     }
 
-    private static List<ItemStack> copyPatternStacks(List<ItemStack> patterns) {
+    private static ObjectList<ItemStack> copyPatternStacks(ObjectList<ItemStack> patterns) {
         ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(patterns.size());
         for (ItemStack pattern : patterns) {
             if (pattern.isEmpty()) {
@@ -538,10 +549,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             }
             copies.add(pattern.copy());
         }
-        return List.copyOf(copies);
+        return new ObjectImmutableList<>(copies);
     }
 
-    private void markPatternRefundSlotsDirty(List<PatternRefundCapture> captures) {
+    private void markPatternRefundSlotsDirty(ObjectList<PatternRefundCapture> captures) {
         for (PatternRefundCapture capture : captures) {
             if (!capture.slots().isEmpty()) {
                 this.dirtySlotsByCore
@@ -552,7 +563,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     }
 
     private void refreshRolledBackPatternRefundPublication(LayoutSnapshot capturedLayout,
-                                                           List<PatternRefundCapture> captures) {
+                                                           ObjectList<PatternRefundCapture> captures) {
         if (!isCurrentPatternRefundLayout(capturedLayout)) {
             return;
         }
@@ -573,7 +584,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         return new RebuildResult(false, changed, position, reason);
     }
 
-    private void rollbackRefundTransactions(List<TrinityPatternCore.RefundTransaction> transactions) {
+    private void rollbackRefundTransactions(ObjectList<TrinityPatternCore.RefundTransaction> transactions) {
         for (int index = transactions.size() - 1; index >= 0; index--) {
             try {
                 transactions.get(index).rollback();
@@ -586,10 +597,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
     }
 
-    private void completeRefundTransactions(List<TrinityPatternCore.RefundTransaction> transactions,
-                                            List<TrinityItemAmount> offered,
-                                            List<TrinityItemAmount> undelivered) {
-        List<TrinityItemAmount> remaining = isValidRetainedUndeliveredSuffix(offered, undelivered) ? undelivered : offered;
+    private void completeRefundTransactions(ObjectList<TrinityPatternCore.RefundTransaction> transactions,
+                                            ObjectList<TrinityItemAmount> offered,
+                                            ObjectList<TrinityItemAmount> undelivered) {
+        ObjectList<TrinityItemAmount> remaining = isValidRetainedUndeliveredSuffix(offered, undelivered) ? undelivered : offered;
         int offeredCount = 0;
         for (TrinityPatternCore.RefundTransaction transaction : transactions) {
             offeredCount = Math.addExact(offeredCount, transaction.refundableItems().size());
@@ -615,10 +626,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         int cursor = 0;
         for (TrinityPatternCore.RefundTransaction transaction : transactions) {
             int nextCursor = Math.addExact(cursor, transaction.refundableItems().size());
-            List<TrinityItemAmount> transactionUndelivered = List.of();
+            ObjectList<TrinityItemAmount> transactionUndelivered = ObjectList.of();
             if (undeliveredStart < nextCursor) {
                 int first = Math.max(cursor, undeliveredStart);
-                transactionUndelivered = List.copyOf(remaining.subList(first - undeliveredStart,
+                transactionUndelivered = new ObjectImmutableList<>(remaining.subList(first - undeliveredStart,
                         nextCursor - undeliveredStart));
             }
             try {
@@ -633,7 +644,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
     }
 
-    private void rollbackPatternRefundTransactions(List<PatternRefundCapture> captures) {
+    private void rollbackPatternRefundTransactions(ObjectList<PatternRefundCapture> captures) {
         for (int index = captures.size() - 1; index >= 0; index--) {
             try {
                 captures.get(index).transaction().rollback();
@@ -646,10 +657,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
     }
 
-    private void completePatternRefundTransactions(List<PatternRefundCapture> captures,
-                                                   List<ItemStack> offered,
-                                                   List<ItemStack> undelivered) {
-        List<ItemStack> remaining = isValidPatternUndeliveredSuffix(offered, undelivered) ? undelivered : offered;
+    private void completePatternRefundTransactions(ObjectList<PatternRefundCapture> captures,
+                                                   ObjectList<ItemStack> offered,
+                                                   ObjectList<ItemStack> undelivered) {
+        ObjectList<ItemStack> remaining = isValidPatternUndeliveredSuffix(offered, undelivered) ? undelivered : offered;
         int offeredCount = 0;
         for (PatternRefundCapture capture : captures) {
             offeredCount = Math.addExact(offeredCount, capture.offeredPatterns().size());
@@ -675,7 +686,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         int cursor = 0;
         for (PatternRefundCapture capture : captures) {
             int nextCursor = Math.addExact(cursor, capture.offeredPatterns().size());
-            List<ItemStack> captureUndelivered = List.of();
+            ObjectList<ItemStack> captureUndelivered = ObjectList.of();
             if (undeliveredStart < nextCursor) {
                 int first = Math.max(cursor, undeliveredStart);
                 captureUndelivered = copyPatternStacks(remaining.subList(first - undeliveredStart,
@@ -693,8 +704,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
     }
 
-    private boolean isValidRetainedUndeliveredSuffix(List<TrinityItemAmount> offered,
-                                                     List<TrinityItemAmount> undelivered) {
+    private boolean isValidRetainedUndeliveredSuffix(ObjectList<TrinityItemAmount> offered,
+                                                     ObjectList<TrinityItemAmount> undelivered) {
         if (undelivered.size() > offered.size()) {
             Data_Energistics.LOGGER.error(
                     "Trinity retained refund delivery returned more items than catalog {} offered",
@@ -707,7 +718,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
         TrinityItemAmount offeredFirst = offered.get(start);
         TrinityItemAmount remainingFirst = undelivered.getFirst();
-        if (!offeredFirst.key().equals(remainingFirst.key()) || remainingFirst.amount() > offeredFirst.amount()) {
+        if (!offeredFirst.key().equals(remainingFirst.key()) ||
+                remainingFirst.exactAmount().compareTo(offeredFirst.exactAmount()) > 0) {
             Data_Energistics.LOGGER.error(
                     "Trinity retained refund delivery returned an invalid remaining prefix for catalog {}",
                     this.hostId);
@@ -724,7 +736,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         return true;
     }
 
-    private boolean isValidPatternUndeliveredSuffix(List<ItemStack> offered, List<ItemStack> undelivered) {
+    private boolean isValidPatternUndeliveredSuffix(ObjectList<ItemStack> offered, ObjectList<ItemStack> undelivered) {
         if (undelivered.size() > offered.size()) {
             Data_Energistics.LOGGER.error(
                     "Trinity installed-pattern refund delivery returned more patterns than catalog {} offered",
@@ -743,7 +755,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         return true;
     }
 
-    private static List<CoreRange> createRanges(List<CoreMount> mounts) {
+    private static ObjectList<CoreRange> createRanges(ObjectList<CoreMount> mounts) {
         ObjectArrayList<CoreRange> ranges = new ObjectArrayList<>(mounts.size());
         int firstGlobalIndex = 0;
         for (CoreMount mount : mounts) {
@@ -755,10 +767,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                     lastGlobalIndexExclusive));
             firstGlobalIndex = lastGlobalIndexExclusive;
         }
-        return List.copyOf(ranges);
+        return new ObjectImmutableList<>(ranges);
     }
 
-    private boolean hasSameActiveLayout(List<CoreRange> nextRanges) {
+    private boolean hasSameActiveLayout(ObjectList<CoreRange> nextRanges) {
         if (!this.layout.active() || this.layout.ranges().size() != nextRanges.size()) {
             return false;
         }
@@ -854,7 +866,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         private final Int2ObjectMap<SlotBinding> bindings = new Int2ObjectOpenHashMap<>();
         private final Int2ObjectAVLTreeMap<SlotBinding> publishedBindingsBySlot = new Int2ObjectAVLTreeMap<>();
         private long directoryRevision;
-        private List<IPatternDetails> patterns = List.of();
+        private ObjectList<IPatternDetails> patterns = ObjectList.of();
 
         private CoreRuntime(CoreRange range) {
             this.range = range;
@@ -910,8 +922,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                 nextPatterns.add(routed);
             }
             this.directoryRevision = snapshot.revision();
-            this.patterns = List.copyOf(nextPatterns);
-            return new PreparedPublication(List.copyOf(nextBindings), this.patterns);
+            this.patterns = new ObjectImmutableList<>(nextPatterns);
+            return new PreparedPublication(new ObjectImmutableList<>(nextBindings), this.patterns);
         }
 
         private boolean applyChangedPublication(IntSet dirtySlots) {
@@ -966,7 +978,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             if (!changedPublications.isEmpty()) {
                 this.patterns = this.publishedBindingsBySlot.values().stream()
                         .map(binding -> (IPatternDetails) binding.routedDetails)
-                        .toList();
+                        .collect(ObjectImmutableList.toList());
             }
             return !changedPublications.isEmpty();
         }
@@ -975,8 +987,8 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
     private final class MountedPatternRefundPreparation implements PatternRefundPreparation {
 
         private final LayoutSnapshot capturedLayout;
-        private final List<PatternRefundCapture> captures;
-        private final List<ItemStack> patterns = new ObjectArrayList<>();
+        private final ObjectList<PatternRefundCapture> captures;
+        private final ObjectList<ItemStack> patterns = new ObjectArrayList<>();
         private int rangeIndex;
         private boolean prepared;
         private boolean closed;
@@ -1025,13 +1037,13 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
                     return;
                 }
                 TrinityPatternCore.PatternRefundTransaction transaction = range.mount().core().preparePatternRefund();
-                this.captures.add(new PatternRefundCapture(range, transaction, IntList.of(), List.of()));
+                this.captures.add(new PatternRefundCapture(range, transaction, IntList.of(), ObjectList.of()));
                 if (transaction.isBlockedByWork()) {
                     finishPreparation(PatternRefundResult.BLOCKED_BY_WORK);
                     return;
                 }
                 IntList slots = capturePatternRefundSlots(range);
-                List<ItemStack> capturedPatterns = copyPatternStacks(transaction.patterns());
+                ObjectList<ItemStack> capturedPatterns = copyPatternStacks(transaction.patterns());
                 if (capturedPatterns.size() < slots.size()) {
                     throw new IllegalStateException(
                             "Trinity pattern refund capture is missing installed patterns for core " + range.coreId());
@@ -1068,7 +1080,7 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
             if (!this.prepared || this.terminalResult != null) {
                 throw new IllegalStateException("Trinity pattern refund preparation is not commit-ready");
             }
-            List<ItemStack> undelivered = List.of();
+            ObjectList<ItemStack> undelivered = ObjectList.of();
             boolean committed = false;
             try {
                 if (!isCurrentPatternRefundLayout(this.capturedLayout)) {
@@ -1179,15 +1191,15 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         }
     }
 
-    private record PreparedPublication(List<SlotBinding> bindings,
-                                       List<IPatternDetails> patterns) {}
+    private record PreparedPublication(ObjectList<SlotBinding> bindings,
+                                       ObjectList<IPatternDetails> patterns) {}
 
     private record SlotPublication(SlotBinding binding, @Nullable RoutedCraftingPatternDetails details) {}
 
     private record PatternRefundCapture(CoreRange range,
                                         TrinityPatternCore.PatternRefundTransaction transaction,
                                         IntList slots,
-                                        List<ItemStack> offeredPatterns) {
+                                        ObjectList<ItemStack> offeredPatterns) {
 
         private PatternRefundCapture {
             slots = IntList.of(slots.toIntArray());

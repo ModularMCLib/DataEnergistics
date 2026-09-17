@@ -5,9 +5,11 @@ import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.core.BlockPos;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -165,8 +167,8 @@ public interface TrinityPatternCatalog {
     record LayoutSnapshot(long revision,
                           boolean active,
                           int slotCount,
-                          List<CoreMount> mounts,
-                          List<CoreRange> ranges) {
+                          ObjectList<CoreMount> mounts,
+                          ObjectList<CoreRange> ranges) {
 
         /**
          * Copies collection components and verifies that active ranges form one gap-free global index space.
@@ -175,8 +177,8 @@ public interface TrinityPatternCatalog {
             if (revision < 0L || slotCount < 0) {
                 throw new IllegalArgumentException("A Trinity pattern layout requires non-negative revision and size");
             }
-            mounts = List.copyOf(mounts);
-            ranges = List.copyOf(ranges);
+            mounts = new ObjectImmutableList<>(mounts);
+            ranges = new ObjectImmutableList<>(ranges);
             if (!active) {
                 if (slotCount != 0 || !mounts.isEmpty() || !ranges.isEmpty()) {
                     throw new IllegalArgumentException("An inactive Trinity pattern layout must not expose cores");
@@ -364,7 +366,7 @@ public interface TrinityPatternCatalog {
      * @param mounts cores found in the crafting child structure
      * @return rebuild status and any formation-blocking diagnostic
      */
-    RebuildResult rebuild(List<CoreMount> mounts);
+    RebuildResult rebuild(ObjectList<CoreMount> mounts);
 
     /**
      * Applies all core-local catalog notifications accumulated since the previous host tick.
@@ -389,12 +391,12 @@ public interface TrinityPatternCatalog {
     /**
      * @return immutable routed AE patterns in stable core-position and slot order
      */
-    List<IPatternDetails> getAvailablePatterns();
+    ObjectList<IPatternDetails> getAvailablePatterns();
 
     /**
      * @return immutable work-bearing slot references in ascending global-index order
      */
-    List<ActiveSlot> activeSlots();
+    ObjectList<ActiveSlot> activeSlots();
 
     /**
      * Validates and enqueues one routed AE dispatch without partially consuming its input counters.
@@ -420,9 +422,21 @@ public interface TrinityPatternCatalog {
     boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder, long queuedTick, long count);
 
     /**
+     * Queues one exact batch on the server thread and consumes its physical prototype only after complete acceptance.
+     * The route, input-holder and tick contracts are identical to the long overload. The positive count is non-null;
+     * legacy catalogs reject out-of-range counts before mutation, while exact catalogs override this method.
+     *
+     * @return whether the complete batch was accepted
+     * @throws ArithmeticException when a legacy catalog cannot represent the count
+     */
+    default boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder, long queuedTick, BigInteger count) {
+        return pushPattern(patternDetails, inputHolder, queuedTick, count.longValueExact());
+    }
+
+    /**
      * @return immutable mounted cores in stable world-position order
      */
-    List<CoreMount> mountedCores();
+    ObjectList<CoreMount> mountedCores();
 
     /**
      * @return whether any mounted core owns queued inputs or pending outputs

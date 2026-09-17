@@ -16,14 +16,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -98,17 +99,17 @@ final class DynamicCraftingOutputLedger {
     /**
      * Rejects intrinsically ambiguous declarations and defers transient conflicts with already in-flight outputs.
      */
-    DispatchSafety evaluate(Map<AEKey, BigInteger> waitingFor,
-                            List<GenericStack> expectedPhysicalOutputs,
-                            List<Registration> registrations) {
-        Map<Item, Domain> activeDomains = domains(this.entries.stream()
+    DispatchSafety evaluate(Object2ObjectMap<AEKey, BigInteger> waitingFor,
+                            ObjectList<GenericStack> expectedPhysicalOutputs,
+                            ObjectList<Registration> registrations) {
+        Object2ObjectMap<Item, Domain> activeDomains = domains(this.entries.stream()
                 .map(MutableEntry::registration)
-                .toList());
-        Map<Item, Domain> newDomains = domains(registrations);
-        Map<Item, List<AEItemKey>> expectedDomains = expectedDomains(expectedPhysicalOutputs);
+                .collect(ObjectImmutableList.toList()));
+        Object2ObjectMap<Item, Domain> newDomains = domains(registrations);
+        Object2ObjectMap<Item, ObjectList<AEItemKey>> expectedDomains = expectedDomains(expectedPhysicalOutputs);
 
-        for (Map.Entry<Item, Domain> dynamic : newDomains.entrySet()) {
-            List<AEItemKey> expectedKeys = expectedDomains.getOrDefault(dynamic.getKey(), List.of());
+        for (Object2ObjectMap.Entry<Item, Domain> dynamic : newDomains.object2ObjectEntrySet()) {
+            ObjectList<AEItemKey> expectedKeys = expectedDomains.getOrDefault(dynamic.getKey(), ObjectList.of());
             if (expectedKeys.stream().anyMatch(key -> !key.equals(dynamic.getValue().plannedKey()))) {
                 throw new DynamicCraftingOutputResolutionException(
                         "One provider push exposes multiple component templates in dynamic item domain " +
@@ -129,7 +130,7 @@ final class DynamicCraftingOutputLedger {
             }
         }
 
-        for (Map.Entry<Item, List<AEItemKey>> expected : expectedDomains.entrySet()) {
+        for (Object2ObjectMap.Entry<Item, ObjectList<AEItemKey>> expected : expectedDomains.object2ObjectEntrySet()) {
             Domain active = activeDomains.get(expected.getKey());
             Domain incoming = newDomains.get(expected.getKey());
             if (active != null && (incoming == null || !active.compatible(incoming))) {
@@ -137,7 +138,7 @@ final class DynamicCraftingOutputLedger {
             }
         }
 
-        for (Map.Entry<Item, Domain> incoming : newDomains.entrySet()) {
+        for (Object2ObjectMap.Entry<Item, Domain> incoming : newDomains.object2ObjectEntrySet()) {
             Domain active = activeDomains.get(incoming.getKey());
             if (active != null) {
                 if (!active.compatible(incoming.getValue())) {
@@ -162,7 +163,7 @@ final class DynamicCraftingOutputLedger {
         return DispatchSafety.SAFE;
     }
 
-    void register(List<Registration> registrations) {
+    void register(ObjectList<Registration> registrations) {
         for (Registration registration : registrations) {
             MutableEntry existing = this.entries.stream()
                     .filter(entry -> entry.matches(registration))
@@ -186,7 +187,7 @@ final class DynamicCraftingOutputLedger {
      * @param cancelledRegistrations positive cancelled amounts, not the original accepted totals
      * @throws IllegalStateException when an exact registration is absent or has insufficient remaining amount
      */
-    Runnable prepareWithdrawal(List<Registration> cancelledRegistrations) {
+    Runnable prepareWithdrawal(ObjectList<Registration> cancelledRegistrations) {
         Object2ObjectLinkedOpenHashMap<MutableEntry, BigInteger> withdrawals = new Object2ObjectLinkedOpenHashMap<>();
         for (Registration registration : cancelledRegistrations) {
             MutableEntry existing = this.entries.stream()
@@ -221,7 +222,7 @@ final class DynamicCraftingOutputLedger {
     /**
      * Finds a same-item entry after the exact waiting path has rejected the remaining actual stack.
      */
-    Optional<Match> match(AEItemKey actualKey, long maximumAmount, Map<AEKey, BigInteger> waitingFor) {
+    Optional<Match> match(AEItemKey actualKey, long maximumAmount, Object2ObjectMap<AEKey, BigInteger> waitingFor) {
         if (maximumAmount <= 0L) {
             return Optional.empty();
         }
@@ -286,9 +287,9 @@ final class DynamicCraftingOutputLedger {
     /**
      * Returns the owned same-item alternatives without requiring one variant to satisfy the whole input.
      */
-    List<GenericStack> resolveInputs(AEKey plannedKey, KeyCounter inventory) {
+    ObjectList<GenericStack> resolveInputs(AEKey plannedKey, KeyCounter inventory) {
         if (!(plannedKey instanceof AEItemKey plannedItem)) {
-            return List.of();
+            return ObjectList.of();
         }
         ObjectArrayList<GenericStack> alternatives = new ObjectArrayList<>();
         for (var alias : this.inputAliases.object2ObjectEntrySet()) {
@@ -300,7 +301,7 @@ final class DynamicCraftingOutputLedger {
                 }
             }
         }
-        return List.copyOf(alternatives);
+        return new ObjectImmutableList<>(alternatives);
     }
 
     boolean isInputAlias(AEKey key) {
@@ -312,19 +313,20 @@ final class DynamicCraftingOutputLedger {
      */
     void consumeInputAliases(KeyCounter consumedInputs) {
         for (var consumed : consumedInputs) {
-            if (!(consumed.getKey() instanceof AEItemKey itemKey)) {
-                continue;
-            }
-            BigInteger aliased = this.inputAliases.getOrDefault(itemKey, BigInteger.ZERO);
-            if (aliased.signum() == 0) {
-                continue;
-            }
-            BigInteger remaining = aliased.subtract(aliased.min(BigInteger.valueOf(consumed.getLongValue())));
-            if (remaining.signum() == 0) {
-                this.inputAliases.remove(itemKey);
-            } else {
-                this.inputAliases.put(itemKey, remaining);
-            }
+            consumeInputAlias(consumed.getKey(), BigInteger.valueOf(consumed.getLongValue()));
+        }
+    }
+
+    void consumeInputAlias(AEKey key, BigInteger consumed) {
+        if (!(key instanceof AEItemKey itemKey)) {
+            return;
+        }
+        BigInteger aliased = this.inputAliases.getOrDefault(itemKey, BigInteger.ZERO);
+        BigInteger remaining = aliased.subtract(aliased.min(consumed));
+        if (remaining.signum() == 0) {
+            this.inputAliases.remove(itemKey);
+        } else {
+            this.inputAliases.put(itemKey, remaining);
         }
     }
 
@@ -362,7 +364,7 @@ final class DynamicCraftingOutputLedger {
 
     static DynamicCraftingOutputLedger readFromTag(CompoundTag root,
                                                    HolderLookup.Provider registries) {
-        if (!root.getAllKeys().equals(Set.of(WAITING_TAG, INPUT_ALIASES_TAG)) ||
+        if (!root.getAllKeys().equals(ObjectSet.of(WAITING_TAG, INPUT_ALIASES_TAG)) ||
                 !root.contains(WAITING_TAG, Tag.TAG_LIST) ||
                 !root.contains(INPUT_ALIASES_TAG, Tag.TAG_LIST)) {
             throw new IllegalArgumentException("Damaged dynamic crafting output ledger root");
@@ -376,7 +378,7 @@ final class DynamicCraftingOutputLedger {
         }
         for (Tag value : encoded) {
             if (!(value instanceof CompoundTag tag) ||
-                    !tag.getAllKeys().equals(Set.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG)) ||
+                    !tag.getAllKeys().equals(ObjectSet.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG)) ||
                     !tag.contains(KEY_TAG, Tag.TAG_COMPOUND) ||
                     !tag.contains(ROUTE_TAG, Tag.TAG_STRING) ||
                     !tag.contains(SOURCE_TAG, Tag.TAG_STRING)) {
@@ -408,7 +410,7 @@ final class DynamicCraftingOutputLedger {
         }
         for (Tag value : aliases) {
             if (!(value instanceof CompoundTag tag) ||
-                    !tag.getAllKeys().equals(Set.of(ACTUAL_KEY_TAG, AMOUNT_TAG)) ||
+                    !tag.getAllKeys().equals(ObjectSet.of(ACTUAL_KEY_TAG, AMOUNT_TAG)) ||
                     !tag.contains(ACTUAL_KEY_TAG, Tag.TAG_COMPOUND)) {
                 throw new IllegalArgumentException("Damaged same-item input alias entry");
             }
@@ -430,7 +432,7 @@ final class DynamicCraftingOutputLedger {
         return TrinityBigIntegerEncoding.readTag(tag, AMOUNT_TAG, "dynamic output ledger amount");
     }
 
-    private static Map<Item, Domain> domains(List<Registration> registrations) {
+    private static Object2ObjectMap<Item, Domain> domains(ObjectList<Registration> registrations) {
         Object2ObjectOpenHashMap<Item, Domain> domains = new Object2ObjectOpenHashMap<>();
         for (Registration registration : registrations) {
             Domain candidate = new Domain(registration.plannedKey(), registration.route());
@@ -444,11 +446,11 @@ final class DynamicCraftingOutputLedger {
         return domains;
     }
 
-    private static Map<Item, List<AEItemKey>> expectedDomains(List<GenericStack> outputs) {
-        Object2ObjectLinkedOpenHashMap<Item, List<AEItemKey>> domains = new Object2ObjectLinkedOpenHashMap<>();
+    private static Object2ObjectMap<Item, ObjectList<AEItemKey>> expectedDomains(ObjectList<GenericStack> outputs) {
+        Object2ObjectLinkedOpenHashMap<Item, ObjectList<AEItemKey>> domains = new Object2ObjectLinkedOpenHashMap<>();
         for (GenericStack output : outputs) {
             if (output.what() instanceof AEItemKey itemKey) {
-                List<AEItemKey> keys = domains.computeIfAbsent(itemKey.getItem(), ignored -> new ObjectArrayList<>());
+                ObjectList<AEItemKey> keys = domains.computeIfAbsent(itemKey.getItem(), ignored -> new ObjectArrayList<>());
                 if (!keys.contains(itemKey)) {
                     keys.add(itemKey);
                 }

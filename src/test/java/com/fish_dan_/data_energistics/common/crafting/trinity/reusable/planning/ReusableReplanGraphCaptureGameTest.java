@@ -34,7 +34,6 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -193,14 +192,14 @@ public final class ReusableReplanGraphCaptureGameTest {
     private static TrinityCraftingGraphSnapshot graph(long revision, GameTestHelper helper) {
         ReusableInputRule zero = ReusableInputRule.fixedDamageFast(RULE, 1, tool(0), 1, 3, ObjectList.of());
         ReusableInputRule one = ReusableInputRule.fixedDamageFast(RULE, 1, tool(1), 1, 3, ObjectList.of());
-        TrinityBoundPatternInput first = new TrinityBoundPatternInput(0, 0, new GenericStack(tool(0), 1), 1, tool(1), zero, List.of());
-        TrinityBoundPatternInput second = new TrinityBoundPatternInput(0, 0, new GenericStack(tool(1), 1), 1, tool(2), one, List.of());
+        TrinityBoundPatternInput first = new TrinityBoundPatternInput(0, 0, new GenericStack(tool(0), 1), 1, tool(1), zero, ObjectList.of());
+        TrinityBoundPatternInput second = new TrinityBoundPatternInput(0, 0, new GenericStack(tool(1), 1), 1, tool(2), one, ObjectList.of());
         TrinityPatternPublicationSignature signature = new TrinityPatternPublicationSignature(AEItemKey.of(Items.CRAFTING_TABLE),
-                List.of(new Input(1, List.of(new Alternative(new GenericStack(tool(0), 1), null)))),
-                List.of(new GenericStack(AEItemKey.of(Items.IRON_NUGGET), 1)), false);
+                ObjectList.of(new Input(1, ObjectList.of(new Alternative(new GenericStack(tool(0), 1), null)))),
+                ObjectList.of(new GenericStack(AEItemKey.of(Items.IRON_NUGGET), 1)), false);
         TrinityCraftingGraphPattern pattern = new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(signature, helper.getLevel().registryAccess()),
-                signature, List.of(List.of(first), List.of(second)));
-        return new TrinityCraftingGraphSnapshot(revision, List.of(pattern));
+                signature, ObjectList.of(ObjectList.of(first), ObjectList.of(second)));
+        return new TrinityCraftingGraphSnapshot(revision, ObjectList.of(pattern));
     }
 
     private static AEItemKey tool(int damage) {

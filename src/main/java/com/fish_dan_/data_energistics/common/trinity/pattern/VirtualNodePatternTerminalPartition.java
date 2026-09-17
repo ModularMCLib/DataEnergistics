@@ -18,9 +18,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
 /** Default live-inventory and virtual-grid-node implementation of {@link TrinityPatternTerminalPartition}. */
@@ -108,11 +109,11 @@ public final class VirtualNodePatternTerminalPartition implements TrinityPattern
      * @param group   common terminal group used by every generated partition
      * @return immutable partitions in core-position and physical-slot order
      */
-    static List<TrinityPatternTerminalPartition> createLayout(TrinityPatternCatalog catalog,
-                                                              PatternContainerGroup group) {
+    static ObjectList<TrinityPatternTerminalPartition> createLayout(TrinityPatternCatalog catalog,
+                                                                    PatternContainerGroup group) {
         TrinityPatternCatalog.LayoutSnapshot layout = catalog.layoutSnapshot();
         if (!layout.active()) {
-            return List.of();
+            return ObjectList.of();
         }
         PatternContainerGroup sharedGroup = copyGroup(group);
         ObjectArrayList<TrinityPatternTerminalPartition> partitions = new ObjectArrayList<>();
@@ -140,7 +141,7 @@ public final class VirtualNodePatternTerminalPartition implements TrinityPattern
                 globalPartitionIndex = Math.incrementExact(globalPartitionIndex);
             }
         }
-        return List.copyOf(partitions);
+        return new ObjectImmutableList<>(partitions);
     }
 
     @Override
@@ -336,7 +337,7 @@ public final class VirtualNodePatternTerminalPartition implements TrinityPattern
     }
 
     private static PatternContainerGroup copyGroup(PatternContainerGroup group) {
-        return new PatternContainerGroup(group.icon(), group.name(), List.copyOf(group.tooltip()));
+        return new PatternContainerGroup(group.icon(), group.name(), new ObjectImmutableList<>(group.tooltip()));
     }
 
     private static long createSortOrder(UUID hostId, int globalPartitionIndex) {

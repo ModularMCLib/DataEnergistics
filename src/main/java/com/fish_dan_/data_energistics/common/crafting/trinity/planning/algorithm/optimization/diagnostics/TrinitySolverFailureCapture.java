@@ -115,11 +115,6 @@ public final class TrinitySolverFailureCapture {
             }
             metadata.append("unbounded_or_outside_int_domains=").append(unsafeDomains).append('\n');
             Files.writeString(metadataFile, metadata, StandardCharsets.UTF_8);
-            Data_Energistics.LOGGER.error(
-                    "Trinity solver failure captured phase={} sense={} failure={} variables={} expressions={} " +
-                            "unboundedOrOutsideIntDomains={} model={} metadata={}",
-                    phase, sense, failure, model.countVariables(), model.countExpressions(), unsafeDomains,
-                    modelFile.toAbsolutePath(), metadataFile.toAbsolutePath());
         } catch (IOException | RuntimeException captureFailure) {
             Data_Energistics.LOGGER.error("Could not capture Trinity solver failure model for phase={}",
                     phase, captureFailure);

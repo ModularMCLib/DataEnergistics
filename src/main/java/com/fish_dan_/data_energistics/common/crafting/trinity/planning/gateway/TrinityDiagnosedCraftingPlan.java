@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityPlanningFailureLog;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityPlanningFailureReport;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
 
@@ -113,8 +113,8 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
     }
 
     /**
-     * Builds and logs a timed terminal diagnostic without starting or adopting the native AE2 planner.
-     * Log once at construction so repeated confirmation-menu reads do not repeat material evidence.
+     * Builds a timed terminal diagnostic and writes its standalone report without starting the native AE2 planner.
+     * Write once at construction so repeated confirmation-menu reads do not create duplicate reports.
      *
      * @param finalOutput      requested delivery retained for the confirmation menu
      * @param diagnostic       terminal Trinity result
@@ -144,7 +144,7 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
             view = new DiagnosticSimulation(finalOutput);
         }
         TrinityDiagnosedCraftingPlan plan = new TrinityDiagnosedCraftingPlan(view, diagnostic, false, calculationNanos);
-        TrinityPlanningFailureLog.write(finalOutput, diagnostic, calculationNanos);
+        TrinityPlanningFailureReport.write(finalOutput, diagnostic, calculationNanos);
         return plan;
     }
 

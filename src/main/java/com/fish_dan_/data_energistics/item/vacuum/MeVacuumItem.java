@@ -61,6 +61,9 @@ public class MeVacuumItem extends Item implements PoweredEnergyItem, IMenuItem {
     private static final int VACUUM_INTERVAL_TICKS = 5;
     private static final int VACUUM_SOUND_INTERVAL_TICKS = 8;
     private static final double VACUUM_DISTANCE = 2.5D;
+    private static final int VACUUM_RADIUS_X = 2;
+    private static final int VACUUM_RADIUS_Y = 2;
+    private static final int VACUUM_RADIUS_Z = 3;
     private static final double BLOCK_PICK_DISTANCE = 5.0D;
     private static final double HOVER_DISTANCE = 1.4D;
     private static final double HOVER_PULL_STRENGTH = 0.35D;
@@ -227,7 +230,7 @@ public class MeVacuumItem extends Item implements PoweredEnergyItem, IMenuItem {
             List<ItemEntity> nearbyItems = level.getEntitiesOfClass(
                     ItemEntity.class, area, entity -> entity.isAlive() && !entity.getItem().isEmpty());
             changed |= vacuumItemEntities(level, player, stack, nearbyItems);
-            changed |= vacuumFluidSources(level, player, stack, center);
+            changed |= vacuumFluidSources(level, player, stack, area);
         }
 
         List<Entity> nearbyEntities = level.getEntitiesOfClass(
@@ -274,20 +277,20 @@ public class MeVacuumItem extends Item implements PoweredEnergyItem, IMenuItem {
         return changed;
     }
 
-    private boolean vacuumFluidSources(ServerLevel level, Player player, ItemStack stack, BlockPos center) {
+    private boolean vacuumFluidSources(ServerLevel level, Player player, ItemStack stack, AABB area) {
         boolean changed = false;
         IActionSource actionSource = IActionSource.ofPlayer(player);
         var registries = level.registryAccess();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
+        for (int x = (int) area.minX; x < area.maxX; x++) {
+            for (int y = (int) area.minY; y < area.maxY; y++) {
+                for (int z = (int) area.minZ; z < area.maxZ; z++) {
                     if (!this.hasSufficientEnergy(stack)) {
                         player.stopUsingItem();
                         return changed;
                     }
 
-                    pos.set(center.getX() + x, center.getY() + y, center.getZ() + z);
+                    pos.set(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     FluidState fluidState = state.getFluidState();
                     if (fluidState.isEmpty() || !fluidState.isSource() ||
@@ -403,13 +406,7 @@ public class MeVacuumItem extends Item implements PoweredEnergyItem, IMenuItem {
     }
 
     private static AABB getVacuumArea(BlockPos center) {
-        return new AABB(
-                center.getX() - 1.0D,
-                center.getY() - 1.0D,
-                center.getZ() - 1.0D,
-                center.getX() + 2.0D,
-                center.getY() + 2.0D,
-                center.getZ() + 2.0D);
+        return new AABB(center).inflate(VACUUM_RADIUS_X, VACUUM_RADIUS_Y, VACUUM_RADIUS_Z);
     }
 
     private static boolean isVacuumHoverCandidate(Entity entity) {

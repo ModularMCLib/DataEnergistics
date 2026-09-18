@@ -246,7 +246,7 @@ public final class TrinityPlanningComputation {
                                 TrinityPlanningProgressMeasure.INDETERMINATE));
                     }
                 },
-                () -> TrinityCachedComputation.transientValue(solveWithFallback(
+                () -> TrinityCachedComputation.transientValue(solveWithinBudget(
                         requestStructure,
                         input,
                         projectedInventory,
@@ -545,26 +545,15 @@ public final class TrinityPlanningComputation {
         return reachableHit || trace.anyHit() ? PlanningCachePath.STRUCTURE_HIT : PlanningCachePath.MISS;
     }
 
-    private TrinityAlgorithmResult<TrinityCraftingPlan> solveWithFallback(
+    private TrinityAlgorithmResult<TrinityCraftingPlan> solveWithinBudget(
                                                                           TrinityCompiledGraphProofView structure,
                                                                           TrinityPlanningInput input,
                                                                           TrinityPlanningInventory projectedInventory,
                                                                           TrinityPlanningLimits limits,
                                                                           TrinityPlanningSession session) {
-        Optional<TrinityPlanningControl> boundedControl = session.boundedControl();
-        if (boundedControl.isPresent()) {
-            session.beginSolving(TrinityPlanningProgressPhase.SOLVING_BOUNDED, limits.maxScheduleStates());
-            TrinityAlgorithmResult<TrinityCraftingPlan> bounded = solveFirstFeasible(
-                    structure,
-                    input,
-                    projectedInventory,
-                    limits,
-                    boundedControl.orElseThrow());
-            if (bounded.successful() || !retryableFeasibilityStop(bounded.diagnostic())) {
-                return bounded;
-            }
-        }
-        session.beginSolving(TrinityPlanningProgressPhase.SOLVING_FALLBACK, 0);
+        // Compilation and every material/tool pass already share this deadline. Expiry never starts
+        // a cancellation-only retry, and an incomplete solve is not evidence that a different route failed.
+        session.beginSolving(TrinityPlanningProgressPhase.SOLVING_BOUNDED, limits.maxScheduleStates());
         return solveFirstFeasible(
                 structure,
                 input,
@@ -598,12 +587,6 @@ public final class TrinityPlanningComputation {
                 limits,
                 TrinityPlanningMode.FIRST_FEASIBLE,
                 control);
-    }
-
-    private static boolean retryableFeasibilityStop(TrinityPlanningDiagnostic diagnostic) {
-        return diagnostic.code() == TrinityPlanningDiagnosticCode.MIP_TIMEOUT ||
-                diagnostic.code() == TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT &&
-                        "timeout".equals(diagnostic.metadata().get("reason"));
     }
 
     private TrinityAlgorithmResult<TrinityCraftingPlan> withRequestTiming(

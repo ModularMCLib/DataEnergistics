@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.proof.TrinityCycleUnitProof;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCyclePlanSelector;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCycleSelection;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.cache.TrinityCycleSelectionCache;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
@@ -161,6 +162,7 @@ public final class TrinityGraphDemandAggregator {
         private final Int2ObjectMap<TrinityCycleDiagnosticEvidence> retainedCycleEvidence = new Int2ObjectOpenHashMap<>();
         private final Int2ObjectMap<Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>> cycleOutputDemands = new Int2ObjectLinkedOpenHashMap<>();
         private final MutationJournal mutationJournal = new MutationJournal();
+        private final TrinityCycleSelectionCache cycleSelections = new TrinityCycleSelectionCache();
         private int scheduleStates;
         private long mipNanos;
         private boolean diagnosticMode;
@@ -198,11 +200,11 @@ public final class TrinityGraphDemandAggregator {
         private TrinityAlgorithmResult<TrinityGraphDemandSolution> solve() {
             TrinityAlgorithmResult<TrinityGraphDemandSolution> result = solvePass();
             if (result.successful() || this.diagnosticMode ||
-                    result.diagnostic().code() == TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED ||
+                    !canTryAlternative(result.diagnostic()) ||
                     this.control.cancellationRequested()) {
                 return result;
             }
-            if (this.mode == TrinityPlanningMode.OPTIMAL && this.control.deadlineExceeded()) {
+            if (this.control.deadlineExceeded()) {
                 Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(result.diagnostic().metadata());
                 metadata.put("phase", "graph");
                 metadata.put("priorCode", result.diagnostic().code().name());
@@ -227,6 +229,10 @@ public final class TrinityGraphDemandAggregator {
             frames.push(new ComponentCursor(this.topology.topologicalOrder().size() - 1));
             TrinityPlanningDiagnostic pendingFailure = null;
             while (!frames.isEmpty()) {
+                // Check before rollback or candidate selection, including while propagating a failure.
+                if (this.control.cancellationRequested()) return cancelled();
+                if (this.control.deadlineExceeded()) return failed(deadlineExceeded().diagnostic());
+                if (pendingFailure != null && !canTryAlternative(pendingFailure)) return failed(pendingFailure);
                 SearchFrame frame = frames.pop();
                 if (frame instanceof ProducerChoiceFrame choice) {
                     if (pendingFailure != null) {
@@ -279,8 +285,7 @@ public final class TrinityGraphDemandAggregator {
             if (state == StopState.CANCELLED) {
                 return failureAction(cancelled());
             }
-            if (state == StopState.DEADLINE_EXCEEDED &&
-                    (!this.diagnosticMode || this.mode == TrinityPlanningMode.OPTIMAL)) {
+            if (state == StopState.DEADLINE_EXCEEDED) {
                 return failureAction(failed(deadlineExceeded().diagnostic()));
             }
             if (cursor.position() < 0) {
@@ -393,6 +398,7 @@ public final class TrinityGraphDemandAggregator {
                     BigInteger allocated = required.subtract(missing);
                     recordShortage(key, required, allocated, missing);
                     mergeState(this.demand, key, missing.negate());
+                    if (!this.diagnosticMode) return failureAction(insufficient());
                     return new ContinueAction(continuation);
                 }
                 return failureAction(failed(
@@ -557,6 +563,15 @@ public final class TrinityGraphDemandAggregator {
         private TrinityAlgorithmResult<TrinityCycleSelection> selectCycle(
                                                                           TrinityStronglyConnectedComponent component,
                                                                           CyclePreparation request) {
+            if (this.control.cancellationRequested()) return cancelled();
+            if (this.control.deadlineExceeded()) return failed(deadlineExceeded().diagnostic());
+            return this.cycleSelections.select(component.index(), request.demand(), this.inventory,
+                    request.producibleInputs(), request.unitProof(), () -> calculateCycle(component, request));
+        }
+
+        private TrinityAlgorithmResult<TrinityCycleSelection> calculateCycle(
+                                                                             TrinityStronglyConnectedComponent component,
+                                                                             CyclePreparation request) {
             TrinityMipCoefficientTemplate template = this.cycleMipTemplates.get(component.index());
             if (template == null) {
                 return TrinityGraphDemandAggregator.this.cyclePlanSelector.select(
@@ -603,6 +618,7 @@ public final class TrinityGraphDemandAggregator {
                             this.control.cancellationRequested()) {
                         return failureAction(cancelled());
                     }
+                    if (!canTryAlternative(cycleFailure)) return failureAction(failedNested(cycleFailure));
                     evidence = cycleFailure.cycleEvidence().stream()
                             .filter(candidate -> candidate.componentIndex() == component.index())
                             .filter(candidate -> satisfies(candidate, request.demand()))
@@ -696,6 +712,7 @@ public final class TrinityGraphDemandAggregator {
                 BigInteger reserved = reserveFromInventory(key, required);
                 BigInteger missing = required.subtract(reserved);
                 recordShortage(key, required, reserved, missing);
+                if (!this.diagnosticMode) return failureAction(insufficient());
                 return new ContinueAction(continuation);
             }
             int inputComponent = this.topology.componentByKey().getOrDefault(key, -1);
@@ -744,6 +761,8 @@ public final class TrinityGraphDemandAggregator {
 
         private SearchAction advanceChoice(ProducerChoiceFrame choice) {
             while (choice.nextCandidateIndex < choice.candidates.size()) {
+                if (this.control.cancellationRequested()) return failureAction(cancelled());
+                if (this.control.deadlineExceeded()) return failureAction(failed(deadlineExceeded().diagnostic()));
                 if (!this.routeSearchBudget.tryConsume()) {
                     return failureAction(routeSearchLimit());
                 }
@@ -758,6 +777,7 @@ public final class TrinityGraphDemandAggregator {
                     return new ContinueAction(choice.continuation);
                 }
                 TrinityPlanningDiagnostic diagnostic = applied.diagnostic();
+                if (!canTryAlternative(diagnostic)) return failureAction(failed(diagnostic));
                 this.mutationJournal.rollback(choice.checkpoint);
                 choice.recordFirstFailure(diagnostic);
             }
@@ -1400,6 +1420,15 @@ public final class TrinityGraphDemandAggregator {
         private int used() {
             return this.used;
         }
+    }
+
+    /** Only a proved route rejection permits trying alternatives; incomplete or invalid computations stop. */
+    private static boolean canTryAlternative(TrinityPlanningDiagnostic diagnostic) {
+        return switch (diagnostic.code()) {
+            case INSUFFICIENT_INPUT, MIP_NO_INTEGER_SOLUTION, NO_EXECUTABLE_ORDER, NO_PRODUCTIVE_CYCLE,
+                    UNSUPPORTED_PATTERN -> true;
+            default -> false;
+        };
     }
 
     private enum StopState {

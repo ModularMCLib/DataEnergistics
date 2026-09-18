@@ -879,8 +879,8 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
-                "Time budget for the initial first-feasible search in milliseconds. On timeout, retry without a time limit; both passes stop at a verified executable plan. Does not limit input capture.",
-                "首轮可行解搜索的时间预算，单位毫秒。超时后转入不限时的可行解搜索，两轮均在找到并验证可执行方案后返回，不要求最优解，也不限制输入捕获时间。"
+                "Shared time budget for background planning in milliseconds, including compilation, route search and diagnostics. Stops at a verified executable plan or the budget; no unbounded retry. Does not limit server-thread input capture.",
+                "后台规划共享的总时间预算，单位毫秒，包含结构编译、路线搜索和诊断。找到并验证可执行方案后返回，到期停止，不要求最优解，也不启动不限时重试。服务端输入捕获不计入此预算。"
         })
         @Configurable.Range(min = 1, max = Integer.MAX_VALUE)
         public int planningBudgetMs = 30_000;

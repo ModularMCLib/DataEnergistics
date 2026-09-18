@@ -365,7 +365,7 @@
 	"config.data_energistics.option.trinity.crafting.maxScheduleStates": "单次搜索最大状态数",
 	"config.data_energistics.option.trinity.crafting.plannerQueueCapacity": "规划队列容量",
 	"config.data_energistics.option.trinity.crafting.plannerThreads": "初始计划线程数",
-	"config.data_energistics.option.trinity.crafting.planningBudgetMs": "首轮可行解搜索预算（毫秒）",
+	"config.data_energistics.option.trinity.crafting.planningBudgetMs": "后台规划总时间预算（毫秒）",
 	"config.data_energistics.option.trinity.dispatch": "三位一体派发",
 	"config.data_energistics.option.trinity.dispatch.cooldownTicks": "冷却时长（Tick）",
 	"config.data_energistics.option.trinity.dispatch.ewmaAlpha": "EWMA 平滑系数",

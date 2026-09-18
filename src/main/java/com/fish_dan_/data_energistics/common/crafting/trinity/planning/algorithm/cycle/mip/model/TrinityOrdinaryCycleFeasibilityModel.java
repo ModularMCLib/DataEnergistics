@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityCycleObjectiveBounds;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.reservation.TrinityFeasibilityReserveProjection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.template.TrinityMipCoefficientTemplate.Coefficient;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
@@ -273,6 +274,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
         ModelData data = modelTemplate.forPass(request, pass);
         boolean relaxed = data.model().getVariables().stream()
+                .filter(variable -> variable.getLowerLimit().compareTo(variable.getUpperLimit()) != 0)
                 .anyMatch(variable -> variable.getUpperLimit().compareTo(INTEGER_BRANCH_LIMIT) >= 0);
         if (relaxed) {
             data.model().relax(true);
@@ -321,7 +323,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         if (verified.value().stream().anyMatch(value -> value.signum() < 0)) {
             return inexact("variable_lower", "negative");
         }
-        SolvedModel solved = data.decode(verified.value());
+        SolvedModel solved = data.decode(verified.value(), request);
         TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         if (!exact.successful()) {
             if (relaxed && pass == FeasibilityPass.INSTANCE) {
@@ -370,7 +372,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         if (!delta.successful()) return integerDomainLimit("correction_integer");
         List<BigInteger> restored = correction.restore(delta.value());
         if (restored == null) return integerDomainLimit("correction_domain");
-        SolvedModel solved = data.decode(restored);
+        SolvedModel solved = data.decode(restored, request);
         TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         return exact.successful() ? TrinityAlgorithmResult.success(new SolvedPass(solved, false)) :
                 integerDomainLimit("correction_verification");
@@ -722,18 +724,28 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                             .weight(BigDecimal.ONE.negate());
                 }
             }
-            return new ModelData(model, this);
+            boolean projectedReserves = pass == FeasibilityPass.INSTANCE && request.fixedExternalTotal().isEmpty();
+            if (projectedReserves) {
+                TrinityFeasibilityReserveProjection.apply(model, this.seedIndexes, this.externalIndexes);
+            }
+            return new ModelData(model, this, projectedReserves);
         }
     }
 
-    private record ModelData(ExpressionsBasedModel model, OrdinaryModelTemplate template) {
+    private record ModelData(ExpressionsBasedModel model, OrdinaryModelTemplate template, boolean projectedReserves) {
 
-        private SolvedModel decode(List<BigInteger> values) {
+        private SolvedModel decode(List<BigInteger> values, TrinityCycleFeasibilityRequest request) {
             Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
             Object2IntMaps.fastForEach(this.template.firingIndexes(), entry -> putPositive(firings, entry.getKey(), values.get(entry.getIntValue())));
-            return new SolvedModel(Collections.unmodifiableMap(firings),
-                    positiveAmounts(this.template.seedIndexes(), values),
-                    positiveAmounts(this.template.externalIndexes(), values));
+            Map<AEKey, BigInteger> seed = positiveAmounts(this.template.seedIndexes(), values);
+            Map<AEKey, BigInteger> external = positiveAmounts(this.template.externalIndexes(), values);
+            if (this.projectedReserves) {
+                seed = TrinityFeasibilityReserveProjection.reduce(request, firings, seed,
+                        this.template.objectiveBounds.minimumFirstInternalInput(request).max(request.seedLowerBound()));
+                external = TrinityFeasibilityReserveProjection.reduce(request, firings, external,
+                        this.template.objectiveBounds.minimumFirstExternalInput(request));
+            }
+            return new SolvedModel(Collections.unmodifiableMap(firings), seed, external);
         }
 
         private static Map<AEKey, BigInteger> positiveAmounts(Object2IntMap<AEKey> indexes, List<BigInteger> values) {

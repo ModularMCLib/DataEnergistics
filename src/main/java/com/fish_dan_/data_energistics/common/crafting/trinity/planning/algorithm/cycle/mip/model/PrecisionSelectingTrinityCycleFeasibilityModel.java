@@ -160,8 +160,9 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                         TrinityPlanningMode.FIRST_FEASIBLE,
                         control);
                 if (solved.successful() ||
-                        (solved.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION &&
-                                solved.diagnostic().code() != TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT)) {
+                        solved.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
+                    // Expanding a firing box addresses proved finite-domain infeasibility, not a rejected
+                    // numerical candidate. Preserve that stop for the exact backend instead of repeating it.
                     return solved;
                 }
                 firingUpper = firingUpper.shiftLeft(1);

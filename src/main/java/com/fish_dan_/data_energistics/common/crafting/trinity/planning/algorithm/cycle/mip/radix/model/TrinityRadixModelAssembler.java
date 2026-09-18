@@ -48,7 +48,7 @@ public final class TrinityRadixModelAssembler {
      *
      * @param request      immutable SCC feasibility request
      * @param pass         current sequential lexicographic pass
-     * @param logicalUpper upper bound for every logical axis in this representability domain
+     * @param logicalUpper temporary upper bound for firing counts; reserves include coefficient-scaled consumption
      */
     public TrinityRadixBuiltModel assemble(
                                            TrinityCycleFeasibilityRequest request,
@@ -58,6 +58,9 @@ public final class TrinityRadixModelAssembler {
             throw new IllegalArgumentException("A Trinity radix logical upper bound cannot be negative");
         }
         TrinityRadixLinearEncoder model = new TrinityRadixLinearEncoder(this.codec);
+        // One execution can consume thousands of fluid units. A firing-count cap is not a material cap.
+        // Derive a complete reserve envelope from the same bounded firing request as the ordinary backend.
+        BigInteger reserveUpper = this.exactBounds.reserveDomainUpper(request, logicalUpper);
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, TrinityRadixVariable> firingVariables = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < request.variants().size(); index++) {
             TrinityPatternVariant variant = request.variants().get(index);
@@ -76,13 +79,13 @@ public final class TrinityRadixModelAssembler {
                 request.internalKeys(),
                 request,
                 "seed_",
-                logicalUpper);
+                reserveUpper);
         Object2ObjectLinkedOpenHashMap<AEKey, TrinityRadixVariable> externalVariables = reserveVariables(
                 model,
                 this.exactBounds.externalReserveKeys(request),
                 request,
                 "external_",
-                logicalUpper);
+                reserveUpper);
         addConservation(model, request, firingVariables, seedVariables, externalVariables);
 
         TrinityRadixVariable seedTotal = model.addTotal("seed_total", seedVariables.values());

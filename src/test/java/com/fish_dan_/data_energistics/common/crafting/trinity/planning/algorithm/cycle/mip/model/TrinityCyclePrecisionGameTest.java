@@ -128,7 +128,9 @@ public final class TrinityCyclePrecisionGameTest {
         TrinityCycleFeasibilityRequest request = new TrinityCycleFeasibilityRequest(
                 variants, Set.of(first, second),
                 new TrinityCycleDemand(Map.of(), Map.of(), Map.of(first, requested), Set.of(first)),
-                Map.of(first, BigInteger.TEN, second, BigInteger.TEN), Set.of(),
+                // With ten second-items in stock, rounding reverse upward consumes only three and is valid.
+                // Zero second-stock makes the odd request force an actual half-firing with no integer witness.
+                Map.of(first, BigInteger.TEN, second, BigInteger.ZERO), Set.of(),
                 Map.of(forward, TrinityFiringBounds.fixed(requested.multiply(BigInteger.valueOf(3))),
                         reverse, new TrinityFiringBounds(BigInteger.ZERO, requested.shiftLeft(3))),
                 Optional.empty(), BigInteger.ZERO, BigInteger.ZERO, false, 0,

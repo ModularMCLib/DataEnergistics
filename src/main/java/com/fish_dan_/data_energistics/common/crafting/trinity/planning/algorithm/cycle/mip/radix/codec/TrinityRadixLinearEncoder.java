@@ -98,6 +98,16 @@ public final class TrinityRadixLinearEncoder {
         if (lowerBound == null || lowerBound.signum() < 0) {
             throw new IllegalArgumentException("A Trinity radix constraint lower bound cannot be negative");
         }
+        // Normalize the integer inequality before adding a unit-coefficient slack. Afterwards that slack
+        // makes the GCD one and preserves unnecessarily large recipe batch coefficients in every column.
+        Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> normalized = normalizedTerms(terms);
+        BigInteger divisor = normalized.values().stream().map(BigInteger::abs).reduce(BigInteger.ZERO, BigInteger::gcd);
+        if (divisor.compareTo(BigInteger.ONE) > 0) {
+            normalized.replaceAll((variable, coefficient) -> coefficient.divide(divisor));
+            BigInteger[] division = lowerBound.divideAndRemainder(divisor);
+            lowerBound = division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
+        }
+        terms = normalized;
         BigInteger maximum = maximumValue(terms);
         if (maximum.compareTo(lowerBound) < 0) {
             throw new TrinityRadixInfeasibleException(name);

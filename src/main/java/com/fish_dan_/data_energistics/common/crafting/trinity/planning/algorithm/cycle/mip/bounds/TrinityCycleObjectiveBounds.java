@@ -187,6 +187,28 @@ public final class TrinityCycleObjectiveBounds {
     }
 
     /**
+     * Bounds material units independently from the finite firing-count domain. Each consumed key can require
+     * its final balance plus every firing's negative net contribution; batch fluid quantities must not be
+     * capped at the number of executions. This is a representability envelope, never additional inventory.
+     */
+    public BigInteger reserveDomainUpper(TrinityCycleFeasibilityRequest request, BigInteger firingUpper) {
+        BigInteger upper = firingUpper.max(request.seedLowerBound())
+                .max(minimumFirstInternalInput(request)).max(minimumFirstExternalInput(request));
+        if (request.fixedExternalTotal().isPresent()) upper = upper.max(request.fixedExternalTotal().orElseThrow());
+        for (AEKey key : touchedKeys(request)) {
+            BigInteger required = request.demand().finalBalanceLowerBounds().getOrDefault(key, BigInteger.ZERO);
+            for (TrinityPatternVariant variant : request.variants()) {
+                BigInteger consumed = variant.netChange().getOrDefault(key, BigInteger.ZERO).negate();
+                if (consumed.signum() > 0) {
+                    required = required.add(consumed.multiply(request.firingBounds().get(variant).upperOr(firingUpper)));
+                }
+            }
+            upper = upper.max(required);
+        }
+        return upper;
+    }
+
+    /**
      * Derives the per-key reserve domain used by executable and diagnostic models.
      *
      * <p>

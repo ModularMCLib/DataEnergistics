@@ -27,6 +27,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -54,6 +56,8 @@ import java.util.concurrent.TimeUnit;
  * Sequential lexicographic model: inventory units, firings, then stable variant identity.
  */
 public final class TrinityAcyclicRouteOptimizer {
+
+    private static final BigInteger ORDINARY_DIAGNOSTIC_LIMIT = BigInteger.valueOf(Integer.MAX_VALUE);
 
     /**
      * @return ojAlgo-backed optimizer with exact integer and conservation verification
@@ -380,22 +384,23 @@ public final class TrinityAcyclicRouteOptimizer {
         BigInteger requiredTargetNet = requiredTargetNet(target, requestedAmount, quantityMode, inventory);
         SearchBudget budget = new SearchBudget(maxSearchStates, control);
 
-        TrinityAlgorithmResult<DiagnosticSolvedModel> missingResult = solveDiagnostic(
-                new DiagnosticModelRequest(
-                        reachable,
-                        sourceKeys,
-                        target,
-                        requestedAmount,
-                        requiredTargetNet,
-                        quantityMode,
-                        inventory),
-                budget,
-                control);
+        DiagnosticModelRequest request = new DiagnosticModelRequest(
+                reachable,
+                sourceKeys,
+                target,
+                requestedAmount,
+                requiredTargetNet,
+                quantityMode,
+                inventory);
+        TrinityAlgorithmResult<DiagnosticSolvedModel> missingResult =
+                requestedAmount.compareTo(ORDINARY_DIAGNOSTIC_LIMIT) > 0 ?
+                        diagnoseLargeShortage(request, budget, control) :
+                        solveDiagnostic(request, budget, control);
         if (!missingResult.successful()) {
             return TrinityAlgorithmResult.failure(missingResult.diagnostic());
         }
-        BigInteger optimalMissing = sum(missingResult.value().missing());
-        if (optimalMissing.signum() == 0) {
+        BigInteger totalMissing = sum(missingResult.value().missing());
+        if (totalMissing.signum() == 0) {
             return inexact("diagnostic_missing", "0");
         }
         DiagnosticSolvedModel selected = missingResult.value();
@@ -415,6 +420,59 @@ public final class TrinityAcyclicRouteOptimizer {
                 Collections.unmodifiableMap(requirements),
                 selected.netChange(),
                 budget.used()));
+    }
+
+    /**
+     * Builds one stable diagnostic route using BigInteger demand propagation. Virtual inputs are restricted to
+     * external sources and pass the same conservation checks as the solver-backed diagnostic.
+     */
+    private TrinityAlgorithmResult<DiagnosticSolvedModel> diagnoseLargeShortage(
+                                                                                DiagnosticModelRequest request,
+                                                                                SearchBudget budget,
+                                                                                TrinityPlanningControl control) {
+        if (!budget.consume()) {
+            Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
+            metadata.put("states", Integer.toString(budget.used()));
+            metadata.put("phase", "large_shortage");
+            return failure(
+                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
+                    SEARCH_LIMIT_KEY,
+                    metadata);
+        }
+        TrinityAlgorithmResult<Object2ObjectMap<TrinityPatternVariant, BigInteger>> expanded =
+                TrinityAcyclicShortagePropagator.expand(
+                        request.variants(), request.target(), request.requiredTargetNet(), request.available(), control);
+        if (!expanded.successful()) {
+            return TrinityAlgorithmResult.failure(expanded.diagnostic());
+        }
+
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
+        expanded.value().forEach((variant, count) -> variant.netChange()
+                .forEach((key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> reserves = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> missing = new Object2ObjectLinkedOpenHashMap<>();
+        BigInteger targetReserve = targetReserve(
+                request.target(), request.requestedAmount(), request.quantityMode(), request.available());
+        if (targetReserve.signum() > 0) {
+            reserves.put(request.target(), targetReserve);
+        }
+        for (Map.Entry<AEKey, BigInteger> change : net.entrySet()) {
+            if (change.getValue().signum() >= 0) {
+                continue;
+            }
+            AEKey key = change.getKey();
+            BigInteger required = change.getValue().negate();
+            BigInteger allocated = request.available().availableUpTo(key, required);
+            if (allocated.signum() > 0) {
+                reserves.put(key, allocated);
+            }
+            BigInteger shortage = required.subtract(allocated);
+            if (shortage.signum() > 0) {
+                missing.put(key, shortage);
+            }
+        }
+        return verifyDiagnostic(request, new DiagnosticSolvedModel(
+                expanded.value(), reserves, missing, Object2ObjectMaps.emptyMap()));
     }
 
     /**
@@ -1224,7 +1282,7 @@ public final class TrinityAcyclicRouteOptimizer {
     }
 
     /**
-     * One exact external-source requirement selected by the relaxed diagnostic model.
+     * One exact external-source requirement of the selected diagnostic route.
      *
      * @param required  total source input required by the selected route
      * @param allocated actual captured inventory allocated to that requirement

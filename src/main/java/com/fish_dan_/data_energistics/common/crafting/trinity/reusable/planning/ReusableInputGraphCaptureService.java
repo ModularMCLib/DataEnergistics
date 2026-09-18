@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
 /** Per-grid fair queue of request-local rule captures. All world reads and future completion run on the server. */
@@ -170,8 +169,9 @@ public final class ReusableInputGraphCaptureService {
             this.additionalStates = List.copyOf(additionalStates);
             this.limits = limits;
             this.rules = source.rules();
-            this.control = TrinityPlanningControl.create(future::isCancelled, nanoClock,
-                    TimeUnit.MILLISECONDS.toNanos(limits.planningBudgetMs()));
+            // Capture spans server ticks and may wait for a current publication. The optimizer time budget
+            // must not expire that waiting time; advance() bounds each tick and the owning future cancels work.
+            this.control = TrinityPlanningControl.unbounded(future::isCancelled);
         }
 
         private void advance(long slice) {
@@ -194,8 +194,8 @@ public final class ReusableInputGraphCaptureService {
         }
 
         private void step(long slice) {
-            if (control.deadlineExceeded()) {
-                future.complete(failure(TrinityPlanningDiagnosticCode.MIP_TIMEOUT, "timeout", "capture_deadline"));
+            if (control.cancellationRequested()) {
+                future.complete(failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, "cancelled", "capture_cancelled"));
                 return;
             }
             Optional<TrinityCraftingGraphSnapshot> current = source.graph();

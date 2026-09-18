@@ -93,6 +93,12 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
     private CompoundTag stagedCoreState;
     private boolean stagedInitialHydration;
     /**
+     * Migration persistence is deferred until the first server tick. Calling {@code setChanged()} while a chunk is
+     * still being post-loaded can synchronously request another chunk through neighbour updates and deadlock the
+     * server thread.
+     */
+    private boolean migrationSavePending;
+    /**
      * Current transient host together with the exact catalog range that authorized this binding.
      */
     @Nullable
@@ -165,6 +171,13 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
      * unbound, offline, or structurally invalid core cannot craft independently.
      */
     public void serverTick() {
+        if (this.migrationSavePending) {
+            setChanged();
+            this.migrationSavePending = false;
+            Data_Energistics.LOGGER.info(
+                    "Rewrote Trinity pattern core state at {} to its canonical persisted form",
+                    this.worldPosition);
+        }
         if (this.patternHostChangeFailed || this.patternHostReleasePending) {
             this.patternHostChangeFailed = false;
             releasePatternHost();
@@ -816,10 +829,7 @@ public final class TrinityPatternCoreBlockEntity extends AEBaseBlockEntity imple
             releasePatternHost();
         }
         if (migrated && this.level != null && !this.level.isClientSide()) {
-            setChanged();
-            Data_Energistics.LOGGER.info(
-                    "Rewrote Trinity pattern core state at {} to its canonical persisted form",
-                    this.worldPosition);
+            this.migrationSavePending = true;
         }
         return true;
     }

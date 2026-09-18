@@ -32,14 +32,12 @@ import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -92,22 +90,8 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
      * Slots retaining an encoded pattern, ordered for reload and persistence without a capacity scan.
      */
     private IntAVLTreeSet occupiedPatternSlots = new IntAVLTreeSet();
-    /**
-     * Slots with at least one queued group, ordered to preserve deterministic execution.
-     */
-    private IntAVLTreeSet queuedSlots = new IntAVLTreeSet();
-    /**
-     * Slots with at least one pending output route, ordered for sparse persistence and routing.
-     */
-    private IntAVLTreeSet pendingOutputSlots = new IntAVLTreeSet();
-    /**
-     * Per-host working physical slots combine queued inputs and pending outputs for sparse host scans.
-     */
-    private Object2ObjectMap<UUID, IntAVLTreeSet> workingSlotsByHost = new Object2ObjectOpenHashMap<>();
-    /**
-     * Per-host output slot indexes isolate sleeping routes after a movable core changes hosts.
-     */
-    private Object2ObjectMap<UUID, IntAVLTreeSet> pendingOutputSlotsByHost = new Object2ObjectOpenHashMap<>();
+    /** Derived sparse work indexes shared by queue, output and reusable-session mutations. */
+    private final TrinityPatternCoreWorkIndexes workIndexes = new TrinityPatternCoreWorkIndexes();
     /**
      * Installed patterns cleared for refund but not yet confirmed by an external destination.
      */
@@ -390,7 +374,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     @Override
     public int queuedBatchCount() {
         int count = 0;
-        for (int slot : this.queuedSlots) {
+        for (int slot : this.workIndexes.queuedSlots()) {
             count = Math.addExact(count, this.slots.get(slot).queuedBatchCount());
         }
         return count;
@@ -401,7 +385,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
         ensureNoActiveRefundTransaction();
         validateCurrentTick(currentTick);
         int completedGroups = 0;
-        for (int slotIndex : this.queuedSlots.toIntArray()) {
+        for (int slotIndex : this.workIndexes.queuedSlots().toIntArray()) {
             completedGroups = Math.addExact(
                     completedGroups,
                     executeReadyBatchesInSlot(slotIndex, currentTick, executor));
@@ -439,31 +423,28 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
 
     @Override
     public IntList pendingOutputSlots(UUID hostId) {
-        IntAVLTreeSet slots = this.pendingOutputSlotsByHost.get(hostId);
-        return slots == null ? IntList.of() : IntList.of(slots.toIntArray());
+        return this.workIndexes.pendingOutputSlots(hostId);
     }
 
     @Override
     public IntList workingSlots(UUID hostId) {
-        IntAVLTreeSet slots = this.workingSlotsByHost.get(hostId);
-        return slots == null ? IntList.of() : IntList.of(slots.toIntArray());
+        return this.workIndexes.workingSlots(hostId);
     }
 
     @Override
     public boolean isSlotWorking(UUID hostId, int slot) {
         checkSlot(slot);
-        IntAVLTreeSet slots = this.workingSlotsByHost.get(hostId);
-        return slots != null && slots.contains(slot);
+        return this.workIndexes.isSlotWorking(hostId, slot);
     }
 
     @Override
     public boolean hasWork() {
-        return !this.workingSlotsByHost.isEmpty();
+        return this.workIndexes.hasWork();
     }
 
     @Override
     public boolean hasWork(UUID hostId) {
-        return this.workingSlotsByHost.containsKey(hostId);
+        return this.workIndexes.hasWork(hostId);
     }
 
     @Override
@@ -587,8 +568,8 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
      */
     public void writeRetainedWorkToTag(CompoundTag data, HolderLookup.Provider registries) {
         ensureNoActiveRefundTransaction();
-        IntAVLTreeSet retainedSlots = new IntAVLTreeSet(this.queuedSlots);
-        retainedSlots.addAll(this.pendingOutputSlots);
+        IntAVLTreeSet retainedSlots = new IntAVLTreeSet(this.workIndexes.queuedSlots());
+        retainedSlots.addAll(this.workIndexes.pendingOutputSlots());
         if (retainedSlots.isEmpty() &&
                 this.patternRefundOutbox.isEmpty() &&
                 this.retainedRefundOutboxByHost.isEmpty() && this.reusableSlots.isEmpty() && this.custodyArchive.isEmpty()) {
@@ -677,7 +658,8 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
         boolean patternDirectoryChanged = !changedPatternSlots.isEmpty();
         long nextDirectoryRevision = patternDirectoryChanged ? Math.incrementExact(this.revision) : this.revision;
         long nextStateRevision = Math.incrementExact(this.stateRevision);
-        WorkIndexes loadedIndexes = createWorkIndexes(loadedSlots.values());
+        TrinityPatternCoreWorkIndexes.Snapshot loadedIndexes = this.workIndexes.snapshot(
+                new ObjectArrayList<>(loadedSlots.values()), loadedReusable);
         IntAVLTreeSet changedSlots = persistentSlots();
         changedSlots.addAll(loadedSlots.keySet());
         IntAVLTreeSet changedWorkSlots = new IntAVLTreeSet();
@@ -751,7 +733,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
         this.occupiedPatternSlotSnapshot = nextOccupiedSlotSnapshot;
         this.patternCacheSnapshot = nextPatternCacheSnapshot;
         this.revision = nextDirectoryRevision;
-        applyWorkIndexes(loadedIndexes);
+        this.workIndexes.apply(loadedIndexes);
         this.patternRefundOutbox = loadedOutbox.patterns();
         this.retainedRefundOutboxByHost = loadedOutbox.retainedByHost();
         this.reusableSlots = loadedReusable;
@@ -982,7 +964,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             return;
         }
         RetainedRefundOffer firstUndelivered = offers.get(undeliveredStart);
-        TrinityItemAmount remaining = undelivered.get(0);
+        TrinityItemAmount remaining = undelivered.getFirst();
         if (!firstUndelivered.entry().item().equals(remaining)) {
             replaceFirstRetainedRefund(firstUndelivered, remaining);
         }
@@ -993,11 +975,11 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
         if (entries == null || entries.isEmpty()) {
             throw new IllegalStateException("Missing delivered Trinity retained refund for host " + offer.hostId());
         }
-        RetainedRefundEntry actual = entries.get(0);
+        RetainedRefundEntry actual = entries.getFirst();
         if (!actual.matches(offer.entry())) {
             throw new IllegalStateException("Trinity retained refund order changed for host " + offer.hostId());
         }
-        entries.remove(0);
+        entries.removeFirst();
         if (entries.isEmpty()) {
             this.retainedRefundOutboxByHost.remove(offer.hostId(), entries);
         }
@@ -1006,7 +988,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
 
     private void replaceFirstRetainedRefund(RetainedRefundOffer offer, TrinityItemAmount remaining) {
         ObjectArrayList<RetainedRefundEntry> entries = this.retainedRefundOutboxByHost.get(offer.hostId());
-        if (entries == null || entries.isEmpty() || !entries.get(0).matches(offer.entry())) {
+        if (entries == null || entries.isEmpty() || !entries.getFirst().matches(offer.entry())) {
             throw new IllegalStateException("Trinity retained refund order changed for host " + offer.hostId());
         }
         entries.set(0, new RetainedRefundEntry(offer.entry().slot(), remaining));
@@ -1023,7 +1005,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             return start;
         }
         TrinityItemAmount expectedFirst = offers.get(start).entry().item();
-        TrinityItemAmount actualFirst = undelivered.get(0);
+        TrinityItemAmount actualFirst = undelivered.getFirst();
         if (!expectedFirst.key().equals(actualFirst.key()) ||
                 actualFirst.exactAmount().compareTo(expectedFirst.exactAmount()) > 0) {
             throw new IllegalArgumentException("Trinity retained refund delivery returned an invalid remaining suffix");
@@ -1066,11 +1048,11 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             if (this.patternRefundOutbox.isEmpty()) {
                 throw new IllegalStateException("Missing delivered Trinity installed-pattern refund");
             }
-            PatternRefundEntry actual = this.patternRefundOutbox.get(0);
+            PatternRefundEntry actual = this.patternRefundOutbox.getFirst();
             if (!actual.matches(expected)) {
                 throw new IllegalStateException("Trinity installed-pattern refund order changed");
             }
-            this.patternRefundOutbox.remove(0);
+            this.patternRefundOutbox.removeFirst();
             markPersistentChanged(expected.slot());
         }
     }
@@ -1544,87 +1526,15 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     }
 
     private IntAVLTreeSet persistentSlots() {
-        IntAVLTreeSet persistent = new IntAVLTreeSet(this.occupiedPatternSlots);
-        persistent.addAll(this.queuedSlots);
-        persistent.addAll(this.pendingOutputSlots);
-        return persistent;
+        return this.workIndexes.persistentSlots(this.occupiedPatternSlots);
     }
 
     private void updateSlotWorkIndexes(int slot) {
-        ObjectSet<UUID> previousWorkHosts = removeIndexedSlot(this.workingSlotsByHost, slot);
-        TrinityPatternSlot patternSlot = this.slots.get(slot);
-        if (patternSlot.hasQueuedWork()) {
-            this.queuedSlots.add(slot);
-        } else {
-            this.queuedSlots.remove(slot);
-        }
-        removeIndexedSlot(this.pendingOutputSlotsByHost, slot);
-        if (patternSlot.hasPendingOutputs()) {
-            this.pendingOutputSlots.add(slot);
-            for (UUID hostId : patternSlot.pendingOutputHostIds()) {
-                this.pendingOutputSlotsByHost
-                        .computeIfAbsent(hostId, ignored -> new IntAVLTreeSet())
-                        .add(slot);
-            }
-        } else {
-            this.pendingOutputSlots.remove(slot);
-        }
-        ObjectSet<UUID> currentWorkHosts = new ObjectOpenHashSet<>(patternSlot.workHostIds());
-        TrinityReusableSlot reusable = this.reusableSlots.get(slot);
-        if (reusable != null && reusable.hasWork()) {
-            currentWorkHosts.add(reusable.route().hostId());
-        }
-        for (UUID hostId : currentWorkHosts) {
-            this.workingSlotsByHost.computeIfAbsent(hostId, ignored -> new IntAVLTreeSet()).add(slot);
-        }
-        if (!previousWorkHosts.equals(currentWorkHosts)) {
-            notifyChange(new TrinityPatternSlot.Change(slot, TrinityPatternSlot.ChangeKind.WORK));
-        }
-    }
-
-    private static ObjectSet<UUID> removeIndexedSlot(Object2ObjectMap<UUID, IntAVLTreeSet> index, int slot) {
-        ObjectOpenHashSet<UUID> removedHosts = new ObjectOpenHashSet<>();
-        index.entrySet().removeIf(entry -> {
-            if (!entry.getValue().remove(slot)) {
-                return false;
-            }
-            removedHosts.add(entry.getKey());
-            return entry.getValue().isEmpty();
-        });
-        return ObjectSets.unmodifiable(new ObjectOpenHashSet<>(removedHosts));
+        this.workIndexes.updateSlot(slot, this.slots, this.reusableSlots, this::notifyChange);
     }
 
     private void rebuildWorkIndexes() {
-        applyWorkIndexes(createWorkIndexes(this.slots));
-    }
-
-    private WorkIndexes createWorkIndexes(Iterable<TrinityPatternSlot> sourceSlots) {
-        IntAVLTreeSet loadedQueuedSlots = new IntAVLTreeSet();
-        IntAVLTreeSet loadedPendingOutputSlots = new IntAVLTreeSet();
-        Object2ObjectOpenHashMap<UUID, IntAVLTreeSet> loadedWorkingSlotsByHost = new Object2ObjectOpenHashMap<>();
-        Object2ObjectOpenHashMap<UUID, IntAVLTreeSet> loadedPendingSlotsByHost = new Object2ObjectOpenHashMap<>();
-        for (TrinityPatternSlot patternSlot : sourceSlots) {
-            int slot = patternSlot.index();
-            if (patternSlot.hasQueuedWork()) {
-                loadedQueuedSlots.add(slot);
-            }
-            if (patternSlot.hasPendingOutputs()) {
-                loadedPendingOutputSlots.add(slot);
-                for (UUID hostId : patternSlot.pendingOutputHostIds()) {
-                    loadedPendingSlotsByHost
-                            .computeIfAbsent(hostId, ignored -> new IntAVLTreeSet())
-                            .add(slot);
-                }
-            }
-            for (UUID hostId : patternSlot.workHostIds()) {
-                loadedWorkingSlotsByHost.computeIfAbsent(hostId, ignored -> new IntAVLTreeSet()).add(slot);
-            }
-        }
-        return new WorkIndexes(
-                loadedQueuedSlots,
-                loadedPendingOutputSlots,
-                loadedWorkingSlotsByHost,
-                loadedPendingSlotsByHost);
+        this.workIndexes.apply(this.workIndexes.snapshot(this.slots, this.reusableSlots));
     }
 
     private static IntAVLTreeSet occupiedSlots(Iterable<TrinityPatternSlot> sourceSlots) {
@@ -1635,13 +1545,6 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             }
         }
         return occupied;
-    }
-
-    private void applyWorkIndexes(WorkIndexes indexes) {
-        this.queuedSlots = indexes.queuedSlots();
-        this.pendingOutputSlots = indexes.pendingOutputSlots();
-        this.workingSlotsByHost = indexes.workingSlotsByHost();
-        this.pendingOutputSlotsByHost = indexes.pendingSlotsByHost();
     }
 
     private void markPersistentChanged(int slot) {
@@ -1761,11 +1664,6 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
     /**
      * Detached sparse-index snapshot validated before an atomic load or refund restore mutates live state.
      */
-    private record WorkIndexes(IntAVLTreeSet queuedSlots,
-                               IntAVLTreeSet pendingOutputSlots,
-                               Object2ObjectMap<UUID, IntAVLTreeSet> workingSlotsByHost,
-                               Object2ObjectMap<UUID, IntAVLTreeSet> pendingSlotsByHost) {}
-
     private record SlotApplication(TrinityPatternSlot target, TrinityPatternSlot loaded) {}
 
     private record CachedRebind(CachedPattern target, CachedPattern.PreparedRebind prepared) {}

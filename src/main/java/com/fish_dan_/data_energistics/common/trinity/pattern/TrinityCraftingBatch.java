@@ -202,15 +202,11 @@ public final class TrinityCraftingBatch {
     }
 
     /**
-     * Projects a compatible later group's transferable count into one legacy long-sized request.
+     * Calculates the complete transferable count for a compatible later group.
      *
      * @param later later adjacent group candidate
-     * @return transferable legacy chunk, or zero when the merge key differs
+     * @return exact transferable count, or zero when the merge key differs
      */
-    long mergeableCount(TrinityCraftingBatch later) {
-        return exactMergeableCount(later).min(BigInteger.valueOf(Long.MAX_VALUE)).longValueExact();
-    }
-
     BigInteger exactMergeableCount(TrinityCraftingBatch later) {
         if (!this.mergeable || !later.mergeable ||
                 this.queuedTick != later.queuedTick || !this.route.equals(later.route) ||

@@ -339,11 +339,12 @@ public abstract class CraftingServiceMixin
         long graphRevision = graph
                 .map(TrinityCraftingGraphSnapshot::revision)
                 .orElse(publications.publicationRevision());
-        if (DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging) {
+        if (DataEnergisticsConfiguration.INSTANCE.developer.craftingServiceLogging) {
             Data_Energistics.LOGGER.info(
-                    "Trinity planning inventory captured request={} target={} revision={} finiteKeys={} unlimitedKeys={} inventorySentinelProbes={}",
+                    "Trinity planning inventory captured request={} target={} requestedAmount={} revision={} finiteKeys={} unlimitedKeys={} inventorySentinelProbes={}",
                     requestId,
                     what,
+                    amount,
                     graphRevision,
                     inventory.finiteAmounts().size(),
                     inventory.unlimitedKeys().size(),
@@ -514,7 +515,7 @@ public abstract class CraftingServiceMixin
                     TrinityPlanningDiagnosticCode.STALE_GRAPH,
                     Component.translatable("gui.data_energistics.trinity_planning.graph_unavailable"),
                     Map.of("request", Long.toString(requestId)));
-            if (DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging) {
+            if (DataEnergisticsConfiguration.INSTANCE.developer.craftingServiceLogging) {
                 Data_Energistics.LOGGER.info(
                         "Trinity planning fallback request={} target={} mode={} revision=-1 reason={} metadata={}",
                         requestId,

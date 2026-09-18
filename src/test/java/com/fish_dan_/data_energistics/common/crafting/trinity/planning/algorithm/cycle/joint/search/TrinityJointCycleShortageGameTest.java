@@ -14,11 +14,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilityRequest;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilitySolution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -40,7 +38,6 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,10 +51,10 @@ public final class TrinityJointCycleShortageGameTest {
 
     private TrinityJointCycleShortageGameTest() {}
 
-    @TestHolder("trinity_joint_cycle_stopped_root_retains_exact_large_request_shortage")
+    @TestHolder("trinity_joint_cycle_stopped_root_retains_failure_without_shortage_diagnosis")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
-    public static void stoppedRootRetainsExactLargeRequestShortage(GameTestHelper helper) {
+    public static void stoppedRootRetainsFailureWithoutShortageDiagnosis(GameTestHelper helper) {
         for (TrinityPlanningDiagnosticCode stop : List.of(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT)) {
@@ -66,62 +63,31 @@ public final class TrinityJointCycleShortageGameTest {
             TrinityAlgorithmResult<TrinityJointCyclePlan> result = search(
                     fixture, model, MAX_STATES, TrinityPlanningControl.unbounded());
 
-            helper.assertFalse(result.successful(), "A proved route with missing coal must remain non-executable");
+            helper.assertFalse(result.successful(), "An incomplete root solve cannot publish a plan");
             TrinityPlanningDiagnostic diagnostic = result.diagnostic();
             helper.assertValueEqual(diagnostic.code(), stop, "A route shortage must not claim global infeasibility");
             helper.assertValueEqual(diagnostic.metadata().get("state"), "FAILED", "The original stop must remain visible");
-            helper.assertValueEqual(model.diagnosticCalls, 1, "Only one diagnostic solve request is needed");
-            helper.assertValueEqual(model.diagnosticStateLimit, MAX_STATES - 1,
-                    "Diagnosis must use the remaining budget after the root solve");
-            helper.assertValueEqual(diagnostic.cycleEvidence().size(), 1, "The real evaluator must prove one cycle");
-
-            TrinityCycleDiagnosticEvidence evidence = diagnostic.cycleEvidence().getFirst();
-            TrinityPlanningDiagnostic.PartialPlan partial = diagnostic.partialPlan().orElseThrow();
-            TrinityPlanningDiagnostic.InputRequirement shortage = Objects.requireNonNull(
-                    partial.inputRequirements().get(fixture.fuel()),
-                    "The proved schedule must report coal as an exact shortage");
-            helper.assertValueEqual(evidence.demand(), fixture.demand(), "Evidence must match this exact request");
-            helper.assertValueEqual(evidence.quality(), TrinityPlanQuality.VERIFIED_FEASIBLE,
-                    "A diagnostic witness must not claim optimality");
-            helper.assertFalse(evidence.localOrder().isEmpty(), "Evidence must contain an actual compressed order");
-            helper.assertTrue(evidence.netChange().get(fixture.target()).compareTo(BigInteger.valueOf(100)) >= 0,
-                    "The verified schedule must satisfy the full large request");
-            helper.assertValueEqual(shortage.required(), evidence.initialInputs().get(fixture.fuel()),
-                    "Shortage requirements must come from the proved schedule, not the relaxed model seed");
-            helper.assertValueEqual(shortage.available(), BigInteger.TEN, "Real coal inventory must be preserved");
-            helper.assertValueEqual(shortage.missing(), shortage.required().subtract(BigInteger.TEN),
-                    "Missing coal must be the exact proved requirement minus real stock");
-            helper.assertValueEqual(evidence.netChange().get(fixture.fuel()).negate(), shortage.required(),
-                    "All required coal must be consumed by the actual firing vector");
-            helper.assertValueEqual(partial.missingItems().keySet(), partial.inputRequirements().keySet(),
-                    "Every published missing material must have an exact requirement, not unresolved demand");
-            partial.inputRequirements().forEach((key, requirement) -> helper.assertValueEqual(
-                    partial.missingItems().get(key), requirement.missing(), "Exact material counters must agree"));
-            helper.assertTrue(evidence.scheduleStates() <= MAX_STATES, "Diagnosis must not reset the shared budget");
+            helper.assertValueEqual(model.diagnosticCalls, 0, "A solver stop must not start another MIP");
+            helper.assertTrue(diagnostic.cycleEvidence().isEmpty(), "An incomplete solve has no cycle proof");
+            helper.assertTrue(diagnostic.partialPlan().isEmpty(), "Unproved shortages must not become material requirements");
         }
         helper.succeed();
     }
 
-    @TestHolder("trinity_joint_cycle_stopped_root_recovers_one_item_without_virtual_inventory")
+    @TestHolder("trinity_joint_cycle_stopped_root_does_not_retry_small_request_with_virtual_inventory")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
-    public static void stoppedRootRecoversOneItemWithoutVirtualInventory(GameTestHelper helper) {
+    public static void stoppedRootDoesNotRetrySmallRequestWithVirtualInventory(GameTestHelper helper) {
         CycleFixture fixture = cycle(1);
         StoppedRootFeasibility model = new StoppedRootFeasibility(TrinityPlanningDiagnosticCode.MIP_TIMEOUT);
         TrinityAlgorithmResult<TrinityJointCyclePlan> result = search(
                 fixture, model, MAX_STATES, TrinityPlanningControl.unbounded());
 
-        helper.assertTrue(result.successful(), "A fully verified zero-shortage witness may recover executable planning");
-        TrinityJointCyclePlan plan = result.value();
-        helper.assertValueEqual(plan.quality(), TrinityPlanQuality.VERIFIED_FEASIBLE,
-                "Recovery must not manufacture an optimality proof");
-        helper.assertValueEqual(model.diagnosticCalls, 1, "Recovery must use the real diagnostic model");
-        helper.assertFalse(plan.schedule().batches().isEmpty(), "Recovery requires a real executable schedule");
-        helper.assertTrue(plan.netChange().get(fixture.target()).compareTo(BigInteger.ONE) >= 0,
-                "Recovery must produce the requested net-new item");
-        plan.initialInputs().forEach((key, amount) -> helper.assertTrue(
-                amount.compareTo(fixture.available().getOrDefault(key, BigInteger.ZERO)) <= 0,
-                "An executable recovered plan must never use diagnostic-only virtual stock"));
+        helper.assertFalse(result.successful(), "A small request must respect the same terminal solver stop");
+        helper.assertValueEqual(result.diagnostic().code(), TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
+                "The root stop must remain visible even when inventory could satisfy another attempt");
+        helper.assertValueEqual(model.diagnosticCalls, 0, "Do not retry with virtual inventory after a solver stop");
+        helper.assertTrue(result.diagnostic().cycleEvidence().isEmpty(), "No unexecuted schedule may be published");
         helper.succeed();
     }
 
@@ -175,10 +141,10 @@ public final class TrinityJointCycleShortageGameTest {
         helper.succeed();
     }
 
-    @TestHolder("trinity_joint_cycle_secondary_diagnostic_failure_retains_root_stop")
+    @TestHolder("trinity_joint_cycle_root_search_limit_does_not_invoke_secondary_diagnosis")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
-    public static void secondaryDiagnosticFailureRetainsRootStop(GameTestHelper helper) {
+    public static void rootSearchLimitDoesNotInvokeSecondaryDiagnosis(GameTestHelper helper) {
         StoppedRootFeasibility model = new StoppedRootFeasibility(
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT, TrinityPlanningDiagnosticCode.MIP_TIMEOUT, () -> {});
         TrinityAlgorithmResult<TrinityJointCyclePlan> result = search(
@@ -189,7 +155,7 @@ public final class TrinityJointCycleShortageGameTest {
                 "A secondary diagnostic failure must not replace the original root stop");
         helper.assertValueEqual(result.diagnostic().metadata().get("state"), "FAILED",
                 "The root solver state must remain available for diagnosis");
-        helper.assertValueEqual(model.diagnosticCalls, 1, "A secondary failure must not cause unlimited retries");
+        helper.assertValueEqual(model.diagnosticCalls, 0, "A search limit must prevent the secondary solve entirely");
         helper.assertTrue(result.diagnostic().cycleEvidence().isEmpty(), "A failed diagnostic solve must not fabricate evidence");
         helper.succeed();
     }
@@ -236,7 +202,6 @@ public final class TrinityJointCycleShortageGameTest {
         private final @Nullable TrinityPlanningDiagnosticCode diagnosticStop;
         private final Runnable rootFinished;
         private int diagnosticCalls;
-        private int diagnosticStateLimit;
 
         private StoppedRootFeasibility(TrinityPlanningDiagnosticCode rootStop) {
             this(rootStop, null, () -> {});
@@ -260,7 +225,6 @@ public final class TrinityJointCycleShortageGameTest {
                 return failure(this.rootStop, "FAILED");
             }
             this.diagnosticCalls++;
-            this.diagnosticStateLimit = request.shortageStateLimit();
             if (this.diagnosticStop != null) {
                 return failure(this.diagnosticStop, "DIAGNOSTIC_STOP");
             }

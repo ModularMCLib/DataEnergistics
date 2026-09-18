@@ -11,9 +11,12 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +38,8 @@ public final class TrinityCraftingGraphSnapshot {
     private final List<AEKey> keys;
     private final Map<AEKey, List<TrinityCraftingGraphPattern>> patternsByOutput;
     private final Map<Item, List<TrinityCraftingGraphPattern>> patternsByOutputItem;
+    private final Object2ObjectMap<Item, ObjectList<TrinityCraftingGraphPattern>> captureProducersByItem;
+    private final Object2ObjectMap<Item, ObjectList<AEItemKey>> captureKeysByItem;
     private final Map<TrinityPatternIdentity, TrinityPlanningDiagnostic> reusableInputFallbacks;
 
     /**
@@ -124,6 +129,24 @@ public final class TrinityCraftingGraphSnapshot {
         Object2ObjectLinkedOpenHashMap<Item, List<TrinityCraftingGraphPattern>> itemProducerIndex = new Object2ObjectLinkedOpenHashMap<>();
         itemProducerSets.forEach((item, producers) -> itemProducerIndex.put(item, List.copyOf(producers)));
         this.patternsByOutputItem = Collections.unmodifiableMap(itemProducerIndex);
+        Object2ObjectLinkedOpenHashMap<Item, ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern>> captureProducers = new Object2ObjectLinkedOpenHashMap<>();
+        producerSets.forEach((key, producers) -> {
+            if (key instanceof AEItemKey item) {
+                captureProducers.computeIfAbsent(item.getItem(), ignored -> new ObjectLinkedOpenHashSet<>()).addAll(producers);
+            }
+        });
+        Object2ObjectLinkedOpenHashMap<Item, ObjectList<TrinityCraftingGraphPattern>> captureIndex = new Object2ObjectLinkedOpenHashMap<>();
+        captureProducers.forEach((item, producers) -> captureIndex.put(item, new ObjectImmutableList<>(producers)));
+        this.captureProducersByItem = Object2ObjectMaps.unmodifiable(captureIndex);
+        Object2ObjectLinkedOpenHashMap<Item, ObjectLinkedOpenHashSet<AEItemKey>> itemKeys = new Object2ObjectLinkedOpenHashMap<>();
+        for (AEKey key : this.keys) {
+            if (key instanceof AEItemKey item) {
+                itemKeys.computeIfAbsent(item.getItem(), ignored -> new ObjectLinkedOpenHashSet<>()).add(item);
+            }
+        }
+        Object2ObjectLinkedOpenHashMap<Item, ObjectList<AEItemKey>> keyIndex = new Object2ObjectLinkedOpenHashMap<>();
+        itemKeys.forEach((item, candidates) -> keyIndex.put(item, new ObjectImmutableList<>(candidates)));
+        this.captureKeysByItem = Object2ObjectMaps.unmodifiable(keyIndex);
     }
 
     /**
@@ -167,6 +190,20 @@ public final class TrinityCraftingGraphSnapshot {
      */
     public Map<AEKey, List<TrinityCraftingGraphPattern>> patternsByOutput() {
         return this.patternsByOutput;
+    }
+
+    /**
+     * Conservative producer candidates for request capture, including published remainders and byproducts.
+     * Sharing an item type selects candidates only; live ingredient validation must still prove component matches.
+     * The immutable index is built once with this publication and is safe on both capture and planner threads.
+     */
+    public ObjectList<TrinityCraftingGraphPattern> captureProducersForItem(Item item) {
+        return this.captureProducersByItem.getOrDefault(item, ObjectList.of());
+    }
+
+    /** Complete component candidate pool for one item, indexed once per immutable publication. */
+    public ObjectList<AEItemKey> captureKeysForItem(Item item) {
+        return this.captureKeysByItem.getOrDefault(item, ObjectList.of());
     }
 
     /** Returns the target-specific accounting policy derived from this complete graph. */

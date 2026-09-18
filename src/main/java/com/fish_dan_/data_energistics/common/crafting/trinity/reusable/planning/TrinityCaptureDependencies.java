@@ -64,7 +64,8 @@ final class TrinityCaptureDependencies {
     }
 
     /** Null means the tick slice expired, while an empty graph means the dependency closure is complete. */
-    @Nullable TrinityCraftingGraphSnapshot advance(long slice, LongSupplier clock, TrinityPlanningControl control) {
+    @Nullable
+    TrinityCraftingGraphSnapshot advance(long slice, LongSupplier clock, TrinityPlanningControl control) {
         if (control.cancellationRequested()) return null;
         if (this.cachedWave != null) {
             var result = this.cachedWave;

@@ -392,7 +392,8 @@ public final class ReusableInputGraphCaptureService {
             for (IPatternDetails live : source.patternsFor(pattern.outputs().getFirst().what())) {
                 if (live.getDefinition().equals(pattern.definition()) &&
                         TrinityPatternPublicationSignature.capture(live).equals(pattern.publication()) &&
-                        rules.mayMatch(live, source.recipeId(live))) return true;
+                        rules.mayMatch(live, source.recipeId(live)))
+                    return true;
             }
             return false;
         }
@@ -446,7 +447,8 @@ public final class ReusableInputGraphCaptureService {
             Endpoint after = current.get(index);
             if (!before.target().equals(after.target()) || !before.recipeId().equals(after.recipeId()) ||
                     before.adapter().getClass() != after.adapter().getClass() ||
-                    before.pattern().getClass() != after.pattern().getClass()) return false;
+                    before.pattern().getClass() != after.pattern().getClass())
+                return false;
         }
         return true;
     }

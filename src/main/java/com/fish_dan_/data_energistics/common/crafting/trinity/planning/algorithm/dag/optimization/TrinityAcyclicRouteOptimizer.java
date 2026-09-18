@@ -392,10 +392,9 @@ public final class TrinityAcyclicRouteOptimizer {
                 requiredTargetNet,
                 quantityMode,
                 inventory);
-        TrinityAlgorithmResult<DiagnosticSolvedModel> missingResult =
-                requestedAmount.compareTo(ORDINARY_DIAGNOSTIC_LIMIT) > 0 ?
-                        diagnoseLargeShortage(request, budget, control) :
-                        solveDiagnostic(request, budget, control);
+        TrinityAlgorithmResult<DiagnosticSolvedModel> missingResult = requestedAmount.compareTo(ORDINARY_DIAGNOSTIC_LIMIT) > 0 ?
+                diagnoseLargeShortage(request, budget, control) :
+                solveDiagnostic(request, budget, control);
         if (!missingResult.successful()) {
             return TrinityAlgorithmResult.failure(missingResult.diagnostic());
         }
@@ -439,9 +438,8 @@ public final class TrinityAcyclicRouteOptimizer {
                     SEARCH_LIMIT_KEY,
                     metadata);
         }
-        TrinityAlgorithmResult<Object2ObjectMap<TrinityPatternVariant, BigInteger>> expanded =
-                TrinityAcyclicShortagePropagator.expand(
-                        request.variants(), request.target(), request.requiredTargetNet(), request.available(), control);
+        TrinityAlgorithmResult<Object2ObjectMap<TrinityPatternVariant, BigInteger>> expanded = TrinityAcyclicShortagePropagator.expand(
+                request.variants(), request.target(), request.requiredTargetNet(), request.available(), control);
         if (!expanded.successful()) {
             return TrinityAlgorithmResult.failure(expanded.diagnostic());
         }

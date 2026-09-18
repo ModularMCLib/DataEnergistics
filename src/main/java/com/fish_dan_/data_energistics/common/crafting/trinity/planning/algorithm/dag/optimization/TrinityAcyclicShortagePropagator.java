@@ -36,11 +36,11 @@ final class TrinityAcyclicShortagePropagator {
      * requiredTargetNet and must not be allocated again, including for NET_NEW requests.
      */
     static TrinityAlgorithmResult<Object2ObjectMap<TrinityPatternVariant, BigInteger>> expand(
-                                                                                             Iterable<TrinityPatternVariant> variants,
-                                                                                             AEKey target,
-                                                                                             BigInteger requiredTargetNet,
-                                                                                             TrinityPlanningInventory inventory,
-                                                                                             TrinityPlanningControl control) {
+                                                                                              Iterable<TrinityPatternVariant> variants,
+                                                                                              AEKey target,
+                                                                                              BigInteger requiredTargetNet,
+                                                                                              TrinityPlanningInventory inventory,
+                                                                                              TrinityPlanningControl control) {
         Object2ObjectLinkedOpenHashMap<AEKey, TrinityPatternVariant> producers = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, ObjectLinkedOpenHashSet<AEKey>> dependencies = new Object2ObjectLinkedOpenHashMap<>();
         Object2IntLinkedOpenHashMap<AEKey> incoming = new Object2IntLinkedOpenHashMap<>();
@@ -88,8 +88,7 @@ final class TrinityAcyclicShortagePropagator {
                 BigInteger[] division = remaining.divideAndRemainder(producer.outputs().get(key));
                 BigInteger count = division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
                 firings.merge(producer, count, BigInteger::add);
-                producer.netChange().forEach((changedKey, amount) ->
-                        need.merge(changedKey, amount.multiply(count).negate(), BigInteger::add));
+                producer.netChange().forEach((changedKey, amount) -> need.merge(changedKey, amount.multiply(count).negate(), BigInteger::add));
             }
             if (dependencies.containsKey(key)) {
                 for (AEKey input : dependencies.get(key)) {

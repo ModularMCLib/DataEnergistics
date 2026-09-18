@@ -1,12 +1,14 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture.TrinityPlanningPublicationTracker;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
@@ -58,6 +60,7 @@ public final class IdentityCraftingProviderPublicationIndex implements CraftingP
      * Monotonic index revision used to reject stale capacity observations.
      */
     private long revision;
+    private final TrinityPlanningPublicationTracker planning = new TrinityPlanningPublicationTracker();
     private long providerSnapshotRevision = -1L;
     private List<CraftingProviderId> providerSnapshot = List.of();
 
@@ -93,6 +96,7 @@ public final class IdentityCraftingProviderPublicationIndex implements CraftingP
         }
         this.registrationSequence = nextRegistrationSequence;
         this.revision = nextRevision;
+        this.planning.publish(providerId, provider, new ObjectImmutableList<>(patternSnapshot));
         return providerId;
     }
 
@@ -124,6 +128,7 @@ public final class IdentityCraftingProviderPublicationIndex implements CraftingP
             }
         }
         this.revision = nextRevision;
+        this.planning.unpublish(providerId, publication.provider());
     }
 
     @Override
@@ -134,6 +139,11 @@ public final class IdentityCraftingProviderPublicationIndex implements CraftingP
     @Override
     public long publicationRevision() {
         return this.revision;
+    }
+
+    @Override
+    public long planningRevision() {
+        return this.planning.revision();
     }
 
     @Override

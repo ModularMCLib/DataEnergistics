@@ -45,7 +45,7 @@ public final class TrinityCraftingGraphSnapshot {
     /**
      * Builds a deterministic graph and rejects duplicate semantic identities.
      *
-     * @param revision crafting-provider revision captured for the complete graph
+     * @param revision settled planning-model revision captured for the complete graph
      * @param patterns immutable pattern values captured for that revision
      */
     public TrinityCraftingGraphSnapshot(long revision, List<TrinityCraftingGraphPattern> patterns) {
@@ -150,7 +150,7 @@ public final class TrinityCraftingGraphSnapshot {
     }
 
     /**
-     * @return provider revision represented by every value in this snapshot
+     * @return planning-model revision represented by every value in this snapshot
      */
     public long revision() {
         return this.revision;

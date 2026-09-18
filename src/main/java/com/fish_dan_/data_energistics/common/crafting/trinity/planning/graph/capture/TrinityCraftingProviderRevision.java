@@ -1,17 +1,18 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture;
 
 /**
- * Exposes a true monotonic mutation revision for AE2's grid-local crafting-provider index.
+ * Exposes a monotonic planning-model revision for AE2's grid-local crafting-provider index.
  *
  * <p>
- * AE2's public last-modified tick can repeat when several provider mutations happen in one tick. A runtime bridge
- * implements this contract so graph invalidation cannot miss those same-tick changes.
+ * Read on the server thread after complete provider refresh operations. Equivalent remove/add cycles preserve
+ * the model generation; changed patterns or non-empty provider membership invalidate it. This value does not
+ * replace the publication revision used to reject stale dispatch IDs and capacity observations.
  * </p>
  */
 public interface TrinityCraftingProviderRevision {
 
     /**
-     * @return non-negative revision incremented exactly once for every provider-index mutation
+     * @return non-negative revision advanced when the settled planning model changes
      */
     long data_energistics$trinityCraftingProviderRevision();
 }

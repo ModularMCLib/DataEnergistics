@@ -204,7 +204,7 @@ public final class ReusableInputGraphCaptureService {
                 return;
             }
             Optional<TrinityCraftingGraphSnapshot> current = source.graph();
-            if (current.isEmpty() || current.orElseThrow().revision() != source.publications().publicationRevision()) {
+            if (current.isEmpty() || current.orElseThrow().revision() != source.publications().planningRevision()) {
                 return;
             }
             CaptureGeneration capture = generation;
@@ -216,7 +216,7 @@ public final class ReusableInputGraphCaptureService {
                 if (base == null) return;
                 if (base.patterns().isEmpty()) {
                     if (validationIndex < validationPatterns.size()) {
-                        if (!completedEndpoints.get(validationIndex).equals(discover(validationPatterns.get(validationIndex)))) {
+                        if (!sameEndpoints(completedEndpoints.get(validationIndex), discover(validationPatterns.get(validationIndex)))) {
                             restart(current.orElseThrow());
                         } else {
                             validationIndex++;
@@ -296,7 +296,7 @@ public final class ReusableInputGraphCaptureService {
                 if (!endpoints.isEmpty()) {
                     return;
                 }
-            } else if (!endpoints.equals(discover(pattern))) {
+            } else if (!sameEndpoints(endpoints, discover(pattern))) {
                 restart(current.orElseThrow());
                 return;
             }
@@ -437,6 +437,19 @@ public final class ReusableInputGraphCaptureService {
 
     private record Endpoint(IPatternDetails pattern, ReusableCraftingProviderAdapter adapter, Target target,
                             Optional<ResourceLocation> recipeId) {}
+
+    /** Discovery already proved the publication signature; replacement recipe objects are not model changes. */
+    private static boolean sameEndpoints(List<Endpoint> captured, List<Endpoint> current) {
+        if (captured.size() != current.size()) return false;
+        for (int index = 0; index < captured.size(); index++) {
+            Endpoint before = captured.get(index);
+            Endpoint after = current.get(index);
+            if (!before.target().equals(after.target()) || !before.recipeId().equals(after.recipeId()) ||
+                    before.adapter().getClass() != after.adapter().getClass() ||
+                    before.pattern().getClass() != after.pattern().getClass()) return false;
+        }
+        return true;
+    }
 
     private static TrinityAlgorithmResult<TrinityCraftingGraphSnapshot> failure(TrinityPlanningDiagnosticCode code,
                                                                                 String translation, String reason) {

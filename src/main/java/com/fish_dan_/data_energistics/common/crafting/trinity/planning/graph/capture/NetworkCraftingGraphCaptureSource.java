@@ -40,7 +40,7 @@ public final class NetworkCraftingGraphCaptureSource implements TrinityCraftingG
      *
      * @param providers  live provider index, accessed only by the server-thread caller
      * @param registries server registry lookup used during canonical capture
-     * @param revision   non-negative monotonic provider mutation revision
+     * @param revision   non-negative monotonic settled planning-model revision
      */
     NetworkCraftingGraphCaptureSource(NetworkCraftingProviders providers,
                                       HolderLookup.Provider registries,

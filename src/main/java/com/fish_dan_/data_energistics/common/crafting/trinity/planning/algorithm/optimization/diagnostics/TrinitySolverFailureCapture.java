@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 
 import net.neoforged.fml.loading.FMLPaths;
 
@@ -15,7 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Captures the first failed solver input per process before presolve can mutate its constraints. */
+/**
+ * Captures the first failed solver input per process before presolve can mutate its constraints.
+ */
 public final class TrinitySolverFailureCapture {
 
     private static final AtomicBoolean CAPTURE_ATTEMPTED = new AtomicBoolean();
@@ -48,6 +51,9 @@ public final class TrinitySolverFailureCapture {
                                             Optimisation.Sense sense,
                                             String phase,
                                             boolean captureInfeasible) {
+        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinitySolverFailureModelCapture) {
+            return optimise(model, sense);
+        }
         if (CAPTURE_ATTEMPTED.get()) {
             return optimise(model, sense);
         }
@@ -78,6 +84,9 @@ public final class TrinitySolverFailureCapture {
                                 Optimisation.Sense sense,
                                 String phase,
                                 String failure) {
+        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinitySolverFailureModelCapture) {
+            return;
+        }
         try {
             Path directory = FMLPaths.GAMEDIR.get().resolve("logs").resolve("data_energistics").resolve("trinity");
             Files.createDirectories(directory);

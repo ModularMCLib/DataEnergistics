@@ -239,7 +239,7 @@ public final class TrinityRemainingPlanCalculation {
                     quantityMode,
                     inventory,
                     limits));
-            if (DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging) {
+            if (DataEnergisticsConfiguration.INSTANCE.developer.trinityPlanningLogging) {
                 var cache = computation.cacheStatistics();
                 TrinityPlanningStatistics statistics = computation.result().successful() ?
                         computation.result().value().statistics() : TrinityPlanningStatistics.empty();

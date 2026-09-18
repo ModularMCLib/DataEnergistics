@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnost
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
+import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -11,15 +12,24 @@ import net.neoforged.fml.loading.FMLPaths;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Writes standalone terminal planning evidence beside the captured ojAlgo models. */
+/**
+ * Writes standalone terminal planning evidence beside the captured ojAlgo models.
+ */
 public final class TrinityPlanningFailureReport {
 
     private static final AtomicBoolean WRITE_FAILURE_REPORTED = new AtomicBoolean();
+    private static final DateTimeFormatter FILE_TIMESTAMP = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd_HH-mm-ss_SSS")
+            .withZone(ZoneId.systemDefault());
 
     private TrinityPlanningFailureReport() {}
 
@@ -34,6 +44,10 @@ public final class TrinityPlanningFailureReport {
      * @param calculationNanos elapsed planning time, or zero when planning stopped before calculation
      */
     public static void write(GenericStack output, TrinityPlanningDiagnostic diagnostic, long calculationNanos) {
+        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinityPlanningFailureReports) {
+            return;
+        }
+
         StringBuilder report = new StringBuilder()
                 .append("timestamp=").append(Instant.now()).append('\n')
                 .append("target=").append(output.what()).append('\n')
@@ -78,13 +92,34 @@ public final class TrinityPlanningFailureReport {
         try {
             Path directory = FMLPaths.GAMEDIR.get().resolve("logs").resolve("data_energistics").resolve("trinity");
             Files.createDirectories(directory);
-            Path file = Files.createTempFile(directory, "planning-failure-", ".txt");
-            Files.writeString(file, report, StandardCharsets.UTF_8);
+            writeTimestampedReport(directory, report.toString());
         } catch (IOException failure) {
             if (WRITE_FAILURE_REPORTED.compareAndSet(false, true)) {
                 Data_Energistics.LOGGER.error("Could not write standalone Trinity planning failure report", failure);
             }
         }
+    }
+
+    private static void writeTimestampedReport(Path directory, String report) throws IOException {
+        String timestamp = FILE_TIMESTAMP.format(Instant.now());
+        for (int suffix = 0; suffix < 1000; suffix++) {
+            String name = suffix == 0 ?
+                    "planning-failure-" + timestamp + ".txt" :
+                    "planning-failure-" + timestamp + "-" + suffix + ".txt";
+            Path file = directory.resolve(name);
+            try {
+                Files.writeString(
+                        file,
+                        report,
+                        StandardCharsets.UTF_8,
+                        StandardOpenOption.CREATE_NEW,
+                        StandardOpenOption.WRITE);
+                return;
+            } catch (FileAlreadyExistsException ignored) {
+                // A same-millisecond collision is resolved with a short local suffix.
+            }
+        }
+        throw new IOException("Could not allocate a timestamped Trinity planning report name");
     }
 
     private static void appendShortage(StringBuilder report, AEKey key, BigInteger required,

@@ -201,7 +201,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     private long cachedTowerNetworkTargetSummariesTick = Long.MIN_VALUE;
     private long cachedTowerNetworkTargetSummariesRevision = Long.MIN_VALUE;
     private List<BoundTargetSummary> cachedTowerNetworkTargetSummaries = List.of();
-    private boolean verboseRuntimeLoggingEnabled;
+    private boolean towerRuntimeLoggingEnabled;
     private long diagnosticWindowStartTick = Long.MIN_VALUE;
     private int diagnosticRealExtractCalls;
     private int diagnosticSimulatedExtractCalls;
@@ -2058,28 +2058,28 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     @Override
     public void recordMaxExtractEndpoints(int endpointCount) {
-        if (this.verboseRuntimeLoggingEnabled) {
+        if (this.towerRuntimeLoggingEnabled) {
             this.diagnosticMaxExtractEndpoints = Math.max(this.diagnosticMaxExtractEndpoints, endpointCount);
         }
     }
 
     @Override
     public void recordMaxReceiveEndpoints(int endpointCount) {
-        if (this.verboseRuntimeLoggingEnabled) {
+        if (this.towerRuntimeLoggingEnabled) {
             this.diagnosticMaxReceiveEndpoints = Math.max(this.diagnosticMaxReceiveEndpoints, endpointCount);
         }
     }
 
     @Override
     public void recordSimulatedCacheHit() {
-        if (this.verboseRuntimeLoggingEnabled) {
+        if (this.towerRuntimeLoggingEnabled) {
             this.diagnosticSimulatedCacheHits++;
         }
     }
 
     @Override
     public void recordSimulatedCacheMiss() {
-        if (this.verboseRuntimeLoggingEnabled) {
+        if (this.towerRuntimeLoggingEnabled) {
             this.diagnosticSimulatedCacheMisses++;
         }
     }
@@ -3013,9 +3013,9 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private void emitDiagnosticLogIfNeeded() {
-        boolean enabled = DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging;
-        if (enabled != this.verboseRuntimeLoggingEnabled) {
-            this.verboseRuntimeLoggingEnabled = enabled;
+        boolean enabled = DataEnergisticsConfiguration.INSTANCE.developer.dataDistributionTowerLogging;
+        if (enabled != this.towerRuntimeLoggingEnabled) {
+            this.towerRuntimeLoggingEnabled = enabled;
             resetDiagnosticCounters(Long.MIN_VALUE);
         }
         if (!enabled) {
@@ -3525,12 +3525,12 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         @Override
         public int receiveEnergy(int maxReceive, boolean simulate) {
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 diagnosticReceiveCalls++;
                 diagnosticRequestedReceive += maxReceive;
             }
             int received = clampStoredAmount(distributeEnergyInRange(maxReceive, simulate, this.excludedPos));
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 diagnosticReturnedReceive += received;
             }
             return received;
@@ -3538,7 +3538,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         @Override
         public int extractEnergy(int maxExtract, boolean simulate) {
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 if (simulate) {
                     diagnosticSimulatedExtractCalls++;
                     diagnosticRequestedSimulatedExtract += maxExtract;
@@ -3549,7 +3549,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             }
 
             int extracted = extractEnergyFromRange(maxExtract, simulate, this.excludedPos);
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 if (simulate) {
                     diagnosticReturnedSimulatedExtract += extracted;
                 } else {
@@ -3561,7 +3561,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         @Override
         public int getEnergyStored() {
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 diagnosticGetStoredCalls++;
             }
             return clampStoredAmount(getTotalExtractableEnergy(this.excludedPos));
@@ -3569,7 +3569,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         @Override
         public int getMaxEnergyStored() {
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 diagnosticGetMaxStoredCalls++;
             }
             int stored = clampStoredAmount(getTotalExtractableEnergy(this.excludedPos));
@@ -3579,7 +3579,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         @Override
         public boolean canExtract() {
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 diagnosticCanExtractCalls++;
             }
             return hasAnySource(this.excludedPos);
@@ -3587,7 +3587,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         @Override
         public boolean canReceive() {
-            if (verboseRuntimeLoggingEnabled) {
+            if (towerRuntimeLoggingEnabled) {
                 diagnosticCanReceiveCalls++;
             }
             return hasAnyReceiver(this.excludedPos);

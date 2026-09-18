@@ -85,7 +85,7 @@ public final class TrinityInitialPlanCalculation {
             return TrinityPlanningAttempt.failure(diagnostic);
         }
 
-        if (DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging) {
+        if (DataEnergisticsConfiguration.INSTANCE.developer.trinityPlanningLogging) {
             TrinityPlanningStatistics statistics = plan.statistics();
             TrinityPlanningCacheStatistics cache = computation.cacheStatistics();
             Data_Energistics.LOGGER.info(
@@ -150,7 +150,7 @@ public final class TrinityInitialPlanCalculation {
                                    TrinityPlanningDiagnostic diagnostic,
                                    PlanningCachePath cachePath,
                                    TrinityPlanningCacheStatistics cache) {
-        if (!DataEnergisticsConfiguration.INSTANCE.developer.verboseRuntimeLogging) {
+        if (!DataEnergisticsConfiguration.INSTANCE.developer.trinityPlanningLogging) {
             return;
         }
         Data_Energistics.LOGGER.info(

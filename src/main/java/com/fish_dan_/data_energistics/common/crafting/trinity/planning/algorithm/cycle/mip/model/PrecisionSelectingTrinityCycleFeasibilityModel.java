@@ -194,17 +194,24 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                         .anyMatch(PrecisionSelectingTrinityCycleFeasibilityModel::exceedsWindow)) {
             return true;
         }
+        // Even an axis fixed to zero must not introduce an unrepresentable coefficient into the model.
+        if (request.variants().stream().flatMap(variant -> variant.netChange().values().stream())
+                .anyMatch(PrecisionSelectingTrinityCycleFeasibilityModel::exceedsWindow)) {
+            return true;
+        }
         Set<AEKey> externalKeys = OBJECTIVE_BOUNDS.externalReserveKeys(request);
         ObjectLinkedOpenHashSet<AEKey> touchedKeys = new ObjectLinkedOpenHashSet<>();
         request.variants().forEach(variant -> touchedKeys.addAll(variant.netChange().keySet()));
         touchedKeys.addAll(request.demand().finalBalanceLowerBounds().keySet());
         touchedKeys.addAll(request.demand().requiredNetChangeLowerBounds().keySet());
         for (AEKey key : touchedKeys) {
+            // Match OrdinaryModelTemplate.forPass: each firing axis has its own capped domain.
+            // logicalUpper also covers material reserves and is not the firing count of every recipe.
             BigInteger rowEnvelope = request.variants().stream()
                     .map(variant -> variant.netChange()
                             .getOrDefault(key, BigInteger.ZERO)
                             .abs()
-                            .multiply(logicalUpper))
+                            .multiply(request.firingBounds().get(variant).upperOr(logicalUpper)))
                     .reduce(BigInteger.ZERO, BigInteger::add);
             if (request.internalKeys().contains(key) || externalKeys.contains(key)) {
                 rowEnvelope = rowEnvelope.add(OBJECTIVE_BOUNDS.reserveUpperBound(request, key, logicalUpper));
@@ -213,8 +220,9 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 return true;
             }
         }
-        BigInteger firingObjectiveEnvelope = logicalUpper.multiply(
-                BigInteger.valueOf(request.variants().size()));
+        BigInteger firingObjectiveEnvelope = request.variants().stream()
+                .map(variant -> request.firingBounds().get(variant).upperOr(logicalUpper))
+                .reduce(BigInteger.ZERO, BigInteger::add);
         BigInteger seedObjectiveEnvelope = request.internalKeys().stream()
                 .map(key -> OBJECTIVE_BOUNDS.reserveUpperBound(request, key, logicalUpper))
                 .reduce(BigInteger.ZERO, BigInteger::add);

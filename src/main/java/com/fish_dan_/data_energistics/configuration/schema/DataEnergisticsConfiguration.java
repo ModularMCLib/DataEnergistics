@@ -185,49 +185,49 @@ public final class DataEnergisticsConfiguration {
 
     public static final class DeveloperConfigs {
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable high-frequency Trinity planning logs.",
                 "启用高频三位一体规划日志。"
         })
         public boolean trinityPlanningLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable high-frequency Trinity dispatch logs.",
                 "启用高频三位一体派发日志。"
         })
         public boolean trinityDispatchLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable Data Distribution Tower runtime logs.",
                 "启用数据分配塔运行时日志。"
         })
         public boolean dataDistributionTowerLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable AE2 crafting service runtime logs.",
                 "启用 AE2 合成服务运行时日志。"
         })
         public boolean craftingServiceLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable powered tool runtime logs.",
                 "启用能量工具运行时日志。"
         })
         public boolean poweredToolLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Write standalone Trinity planning failure reports under the game log directory.",
                 "将三位一体规划失败明细写入游戏日志目录下的独立报告文件。"
         })
         public boolean trinityPlanningFailureReports = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Capture the first failed Trinity solver model under the game log directory.",
                 "将首次失败的三位一体求解器模型捕获到游戏日志目录下。"

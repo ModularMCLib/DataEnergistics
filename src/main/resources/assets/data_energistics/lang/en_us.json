@@ -365,7 +365,7 @@
 	"config.data_energistics.option.trinity.crafting.maxScheduleStates": "Maximum States per Search",
 	"config.data_energistics.option.trinity.crafting.plannerQueueCapacity": "Planner Queue Capacity",
 	"config.data_energistics.option.trinity.crafting.plannerThreads": "Initial Plan Threads",
-	"config.data_energistics.option.trinity.crafting.planningBudgetMs": "Planning Budget (ms)",
+	"config.data_energistics.option.trinity.crafting.planningBudgetMs": "Optimization Search Budget (ms)",
 	"config.data_energistics.option.trinity.dispatch": "Trinity Dispatch",
 	"config.data_energistics.option.trinity.dispatch.cooldownTicks": "Cooldown Duration (Ticks)",
 	"config.data_energistics.option.trinity.dispatch.ewmaAlpha": "EWMA Alpha",

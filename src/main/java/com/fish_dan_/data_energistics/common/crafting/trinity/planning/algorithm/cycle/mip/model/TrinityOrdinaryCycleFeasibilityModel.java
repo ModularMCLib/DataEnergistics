@@ -438,17 +438,6 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         if (!exact.successful()) {
             return exact;
         }
-        boolean exportsInternalKey = request.internalKeys().stream()
-                .anyMatch(request.demand().requiredNetChangeLowerBounds()::containsKey);
-        for (AEKey key : request.internalKeys()) {
-            if (!request.producibleInputs().contains(key) &&
-                    !request.demand().requiredNetChangeLowerBounds().containsKey(key)) {
-                int sign = exact.value().getOrDefault(key, BigInteger.ZERO).signum();
-                if (exportsInternalKey ? sign != 0 : sign < 0) {
-                    return inexact("settled_internal", key.toString());
-                }
-            }
-        }
         BigInteger externalTotal = total(solved.externalInputs());
         BigInteger seedTotal = total(solved.modelSeed());
         BigInteger firingTotal = total(solved.firings());
@@ -566,25 +555,8 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             setNetCoefficients(net, request, firingVariables, bound.getKey());
             net.lower(bound.getValue());
         }
-        int settlementIndex = 0;
-        boolean exportsInternalKey = request.internalKeys().stream()
-                .anyMatch(request.demand().requiredNetChangeLowerBounds()::containsKey);
-        for (AEKey key : request.internalKeys()) {
-            // A returned ingredient may still be consumed overall when a proven predecessor supplies it.
-            if (request.producibleInputs().contains(key)) {
-                continue;
-            }
-            Expression settlement = model.addExpression("settled_internal_" + settlementIndex++);
-            setNetCoefficients(settlement, request, firingVariables, key);
-            BigInteger requestedOutput = request.demand().requiredNetChangeLowerBounds().get(key);
-            if (requestedOutput != null) {
-                settlement.lower(requestedOutput);
-            } else if (exportsInternalKey) {
-                settlement.level(BigInteger.ZERO);
-            } else {
-                settlement.lower(BigInteger.ZERO);
-            }
-        }
+        // SCC membership does not make stock catalytic. The bounded reserves and final balances above
+        // permit consuming real inventory while retaining every explicitly requested restart reserve.
     }
 
     private static void setNetCoefficients(

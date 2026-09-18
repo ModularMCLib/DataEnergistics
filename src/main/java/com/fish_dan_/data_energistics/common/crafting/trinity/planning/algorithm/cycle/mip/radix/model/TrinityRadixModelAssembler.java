@@ -231,25 +231,8 @@ public final class TrinityRadixModelAssembler {
                     netTerms(request, bound.getKey(), firingVariables),
                     bound.getValue());
         }
-        int settlementIndex = 0;
-        boolean exportsInternalKey = request.internalKeys().stream()
-                .anyMatch(request.demand().requiredNetChangeLowerBounds()::containsKey);
-        for (AEKey key : request.internalKeys()) {
-            // Required net production is already constrained above; external supply may cover consumption, not output.
-            if (request.producibleInputs().contains(key)) {
-                continue;
-            }
-            String name = "settled_internal_" + settlementIndex++;
-            Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> terms = netTerms(request, key, firingVariables);
-            BigInteger requestedOutput = request.demand().requiredNetChangeLowerBounds().get(key);
-            if (requestedOutput != null) {
-                model.addGreaterOrEqual(name, terms, requestedOutput);
-            } else if (exportsInternalKey) {
-                model.addExact(name, terms, BigInteger.ZERO);
-            } else {
-                model.addGreaterOrEqual(name, terms, BigInteger.ZERO);
-            }
-        }
+        // Match the ordinary model: finite reserves may be consumed. Only demand declares net production
+        // and retained final balances; a structural cycle alone does not require restoring every item.
     }
 
     private static Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> netTerms(

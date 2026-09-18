@@ -80,11 +80,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         Component.translatable("gui.data_energistics.trinity_planning.mip.timeout"),
-                        Map.of("phase", "settled_seed")));
-            }
-            TrinityPlanningDiagnostic settledSeedFailure = settledSeedFailure(request);
-            if (settledSeedFailure != null) {
-                return TrinityAlgorithmResult.failure(settledSeedFailure);
+                        Map.of("phase", "cycle_feasibility")));
             }
             if (requiresRadix(request)) {
                 if (mode == TrinityPlanningMode.FIRST_FEASIBLE) {
@@ -178,34 +174,6 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                             "phase", "bounded_ordinary_expansion",
                             "states", Integer.toString(MAX_BOUNDED_ORDINARY_DOMAINS))));
         }
-    }
-
-    /**
-     * A non-exported internal key must have zero net change when another internal key is exported. Its final
-     * reserve therefore cannot exceed real stock unless a predecessor may supply it. This contradiction holds
-     * for every firing domain; virtual diagnostic reserves deliberately bypass this executable-only check.
-     */
-    private static @Nullable TrinityPlanningDiagnostic settledSeedFailure(TrinityCycleFeasibilityRequest request) {
-        Set<AEKey> exportedKeys = request.demand().requiredNetChangeLowerBounds().keySet();
-        if (request.internalKeys().stream().noneMatch(exportedKeys::contains)) {
-            return null;
-        }
-        for (Map.Entry<AEKey, BigInteger> bound : request.demand().finalBalanceLowerBounds().entrySet()) {
-            AEKey key = bound.getKey();
-            if (!request.internalKeys().contains(key) || exportedKeys.contains(key) ||
-                    request.producibleInputs().contains(key)) {
-                continue;
-            }
-            BigInteger available = request.available().getOrDefault(key, BigInteger.ZERO);
-            if (bound.getValue().compareTo(available) > 0) {
-                return new TrinityPlanningDiagnostic(
-                        TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
-                        Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_integer_solution"),
-                        Map.of("constraint", "settled_seed", "key", key.toString(),
-                                "required", bound.getValue().toString(), "available", available.toString()));
-            }
-        }
-        return null;
     }
 
     private static boolean requiresRadix(TrinityCycleFeasibilityRequest request) {

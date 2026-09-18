@@ -18,8 +18,10 @@ import java.util.function.Consumer;
 /**
  * Maintains sparse queue and pending-output indexes for one Trinity pattern core.
  *
- * <p>The core owns pattern publication and persistence. This value owns only derived work membership, so every
- * mutation path uses the same index update operation and cannot accidentally update one host index without the other.</p>
+ * <p>
+ * The core owns pattern publication and persistence. This value owns only derived work membership, so every
+ * mutation path uses the same index update operation and cannot accidentally update one host index without the other.
+ * </p>
  */
 final class TrinityPatternCoreWorkIndexes {
 

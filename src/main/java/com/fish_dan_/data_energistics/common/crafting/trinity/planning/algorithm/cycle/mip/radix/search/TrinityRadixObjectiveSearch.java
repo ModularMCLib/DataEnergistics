@@ -168,7 +168,7 @@ public final class TrinityRadixObjectiveSearch {
             return stateLimit(stateBudget);
         }
         ExpressionsBasedModel solverModel = built.model().model();
-        configureSolve(solverModel, control, true);
+        configureSolve(solverModel, control);
         TrinityAlgorithmResult<Optimisation.Result> solved = minimise(solverModel, control, metrics);
         if (!solved.successful()) {
             return TrinityAlgorithmResult.failure(solved.diagnostic());
@@ -314,7 +314,7 @@ public final class TrinityRadixObjectiveSearch {
         if (!stateBudget.tryConsume()) {
             return stateLimit(stateBudget);
         }
-        configureSolve(probeModel, control, false);
+        configureSolve(probeModel, control);
         TrinityAlgorithmResult<Optimisation.Result> solved = minimise(probeModel, control, metrics);
         if (!solved.successful()) {
             return TrinityAlgorithmResult.failure(solved.diagnostic());
@@ -476,10 +476,9 @@ public final class TrinityRadixObjectiveSearch {
 
     private static void configureSolve(
                                        ExpressionsBasedModel model,
-                                       TrinityPlanningControl control,
-                                       boolean firstFeasible) {
+                                       TrinityPlanningControl control) {
         model.options.parallelism(1);
         model.options.integer(INTEGER_STRATEGY);
-        TrinityOjAlgoSolvePolicy.configure(model, control, firstFeasible);
+        TrinityOjAlgoSolvePolicy.configure(model, control);
     }
 }

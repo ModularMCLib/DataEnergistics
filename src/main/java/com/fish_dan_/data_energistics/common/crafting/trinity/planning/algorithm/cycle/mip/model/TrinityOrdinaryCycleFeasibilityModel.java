@@ -285,7 +285,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                             "limit", Integer.toString(stateBudget.limit()),
                             "states", Integer.toString(stateBudget.used())));
         }
-        TrinityOjAlgoSolvePolicy.configure(data.model(), control, pass == FeasibilityPass.INSTANCE);
+        TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         long started = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
                 data.model(), Optimisation.Sense.MIN, "ordinary_" + pass.getClass().getSimpleName());
@@ -352,7 +352,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
                     Map.of("limit", Integer.toString(stateBudget.limit()), "states", Integer.toString(stateBudget.used())));
         }
-        TrinityOjAlgoSolvePolicy.configure(data.model(), control, true);
+        TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         data.model().options.time_abort = Math.min(data.model().options.time_abort, CORRECTION_CALL_MILLIS);
         long started = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(

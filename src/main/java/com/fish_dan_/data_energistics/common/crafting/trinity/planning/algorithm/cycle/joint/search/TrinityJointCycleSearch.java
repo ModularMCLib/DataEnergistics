@@ -208,8 +208,9 @@ public final class TrinityJointCycleSearch {
                     this.mode,
                     this.control);
             if (!rootSolved.successful()) {
-                if (rootSolved.diagnostic().code() == TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION ||
-                        recoverableStop(rootSolved.diagnostic())) {
+                // A timeout or exhausted search budget does not prove a material shortage. Preserve that
+                // result so the caller can continue its feasibility policy without starting another MIP here.
+                if (rootSolved.diagnostic().code() == TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
                     return diagnoseRootShortage(rootBox, rootSolved.diagnostic());
                 }
                 return failed(rootSolved.diagnostic());

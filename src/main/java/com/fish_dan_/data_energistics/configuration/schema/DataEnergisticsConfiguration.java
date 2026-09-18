@@ -879,8 +879,8 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
-                "Maximum time spent proving a Trinity plan optimal before retaining a verified feasible plan, in milliseconds.",
-                "Trinity 计划证明全局最优的最长时间，超时后保留已验证可行计划，单位毫秒。"
+                "Time budget for the initial first-feasible search in milliseconds. On timeout, retry without a time limit; both passes stop at a verified executable plan. Does not limit input capture.",
+                "首轮可行解搜索的时间预算，单位毫秒。超时后转入不限时的可行解搜索，两轮均在找到并验证可执行方案后返回，不要求最优解，也不限制输入捕获时间。"
         })
         @Configurable.Range(min = 1, max = Integer.MAX_VALUE)
         public int planningBudgetMs = 30_000;

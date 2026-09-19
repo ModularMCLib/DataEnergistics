@@ -1600,9 +1600,11 @@ final class TrinityDataCoreCpuLogic {
                                 new ProviderDispatchOutcome(physicalAttempts, false));
                     }
 
-                    // A selected proposal holds the physical machine exclusively. Only that reservation permits
-                    // expanding the long selection window into a freshly admitted exact batch for this target.
-                    if (usingSelectedProposal && snapshot.machineTargetId().isPresent() && exactContext != null) {
+                    // A machine-targeted exact provider can validate its own admission on the server thread. This
+                    // also applies when the governor is in synchronous/SAFE mode, where no asynchronous proposal
+                    // reservation exists; otherwise our own crafting substructure would be forced through the
+                    // legacy long-sized preparation path.
+                    if (snapshot.machineTargetId().isPresent() && exactContext != null) {
                         BigIntegerCraftingProviderAdapter exactAdapter = CountedCraftingProviderAdapters.exactAdapter(provider);
                         if (exactAdapter != null && !VirtualCraftingOutputAdapters.project(details).hasVirtualOutputs()) {
                             CraftingDispatchResult result = dispatchExactBatch(currentJob, details, provider, exactAdapter,
@@ -1610,11 +1612,13 @@ final class TrinityDataCoreCpuLogic {
                                     () -> dispatchContextCurrent(dispatchLease, currentJob, publications, workGeneration, snapshot));
                             if (result.physicalAttempted()) {
                                 physicalAttempts = Math.incrementExact(physicalAttempts);
-                                this.capacitySliceCursor = selectedProposal.nextCursor();
+                                if (selectedProposal != null) {
+                                    this.capacitySliceCursor = selectedProposal.nextCursor();
+                                }
                             }
                             if (result.requiresJobAbort()) {
                                 finishJob(false);
-                            } else if (!result.physicalAttempted() &&
+                            } else if (asynchronousSelection && !result.physicalAttempted() &&
                                     (result.status() == CraftingDispatchStatus.NO_CAPACITY ||
                                             result.status() == CraftingDispatchStatus.FAILED_BEFORE_OWNERSHIP)) {
                                                 return resubmitAfterSelectedTargetFailure(dispatchLease, capacityCapture, maximumCount,
@@ -1622,7 +1626,12 @@ final class TrinityDataCoreCpuLogic {
                                                         result.status() == CraftingDispatchStatus.FAILED_BEFORE_OWNERSHIP ?
                                                                 CraftingDispatchExclusion.provider(snapshot) : CraftingDispatchExclusion.target(snapshot));
                                             }
-                            return settleProposal(workIdentity, true,
+                            if (!result.physicalAttempted() && !asynchronousSelection) {
+                                // The exact admission was rejected before ownership; let the ordinary provider
+                                // preparation inspect the same live target before giving up this candidate.
+                                continue;
+                            }
+                            return settleProposal(workIdentity, asynchronousSelection,
                                     new ProviderDispatchOutcome(physicalAttempts, result.dispatched() && !result.requiresJobAbort()));
                         }
                     }

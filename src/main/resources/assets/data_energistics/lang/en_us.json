@@ -1,5 +1,6 @@
 {
 	"block.data_energistics.adaptive_pattern_provider": "Adaptive Pattern Provider",
+	"block.data_energistics.digital_packaged_pattern_provider": "Digital Packaged Pattern Provider",
 	"block.data_energistics.amethyst_tuning_fork": "Amethyst Tuning Fork",
 	"block.data_energistics.astronomical_mirror": "Astronomical Mirror",
 	"block.data_energistics.astronomical_mirror_panel": "Astronomical Mirror Panel",
@@ -243,6 +244,7 @@
 	"config.data_energistics.option.dataNuke": "Data Nuke",
 	"config.data_energistics.option.dataRipper": "Data Ripper",
 	"config.data_energistics.option.developer": "Developer and Diagnostics",
+	"config.data_energistics.option.developer.packagedCraftingLogging": "Packaged Crafting Runtime Logging",
 	"config.data_energistics.option.developer.trinityPlanningLogging": "Trinity Planning Runtime Logging",
 	"config.data_energistics.option.developer.trinityDispatchLogging": "Trinity Dispatch Runtime Logging",
 	"config.data_energistics.option.developer.dataDistributionTowerLogging": "Data Distribution Tower Runtime Logging",
@@ -1071,6 +1073,8 @@
 	"screen.data_energistics.adaptive_pattern_provider.attached_machine": "%s[%s]",
 	"screen.data_energistics.adaptive_pattern_provider.provider_variant": "Adaptive[%s]",
 	"screen.data_energistics.adaptive_pattern_provider_part.provider_variant": "Adaptive [%s]",
+	"screen.data_energistics.digital_packaged_pattern_provider.operations": "Pending: %s  Failed: %s",
+	"screen.data_energistics.digital_packaged_pattern_provider.reencode_hint": "Re-encode invalid patterns",
 	"screen.data_energistics.ae_channels": "AE Channels: %s/%s",
 	"screen.data_energistics.beam.range": "Range: %s blocks",
 	"screen.data_energistics.beam.status.faulted": "Error: see server log",

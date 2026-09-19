@@ -1081,13 +1081,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     @Override
     public boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputHolder) {
+        AdaptivePatternProviderRegistration registration = resolvedRegistration();
         if (!this.connectorTargets.isEmpty() && !hasInputConnectorTargets()) {
             return false;
         }
-        if (!this.connectorTargets.isEmpty() && hasInputConnectorTargets() && !hasConnectorCapacity(patternDetails, inputHolder)) {
+        if ((registration == null || !registration.dispatch().validatesMachineCapacity()) &&
+                !this.connectorTargets.isEmpty() && hasInputConnectorTargets() && !hasConnectorCapacity(patternDetails, inputHolder)) {
             return false;
         }
-        AdaptivePatternProviderRegistration registration = resolvedRegistration();
         if (registration != null) {
             AdaptivePatternProviderDispatchContext context = createDispatchContext(registration, patternDetails, inputHolder);
             if (registration.dispatch().handles(context)) {

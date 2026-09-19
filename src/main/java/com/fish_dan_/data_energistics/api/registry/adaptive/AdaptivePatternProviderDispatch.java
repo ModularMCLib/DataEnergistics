@@ -4,8 +4,10 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -51,6 +53,16 @@ public interface AdaptivePatternProviderDispatch {
      * @return whether the special route is required
      */
     default boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
+        return false;
+    }
+
+    /** Whether this route validates a whole machine instead of the connector's ordinary inventory capacity. */
+    default boolean validatesMachineCapacity() {
+        return false;
+    }
+
+    /** Read-only recognition of a loaded machine main block that need not expose an inventory capability. */
+    default boolean acceptsConnectorMachine(ServerLevel level, BlockPos position) {
         return false;
     }
 

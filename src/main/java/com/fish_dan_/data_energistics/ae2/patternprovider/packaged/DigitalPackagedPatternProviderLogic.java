@@ -1,0 +1,135 @@
+package com.fish_dan_.data_energistics.ae2.patternprovider.packaged;
+
+import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedDispatchState;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTargetAvailability;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
+import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
+import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.PatternProviderLogicFieldAccessor;
+
+import appeng.api.config.LockCraftingMode;
+import appeng.api.crafting.IPatternDetails;
+import appeng.api.networking.IGridNode;
+import appeng.api.networking.IManagedGridNode;
+import appeng.api.networking.ticking.IGridTickable;
+import appeng.api.networking.ticking.TickRateModulation;
+import appeng.api.networking.ticking.TickingRequest;
+import appeng.api.stacks.KeyCounter;
+import appeng.core.settings.TickRates;
+import appeng.helpers.patternprovider.PatternProviderLogic;
+import appeng.helpers.patternprovider.PatternProviderLogicHost;
+
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
+
+/** Adjacent-only 36-slot host for the shared real-machine dispatcher. */
+public final class DigitalPackagedPatternProviderLogic extends PatternProviderLogic implements IGridTickable, BoundPatternInputProvider {
+
+    private final IManagedGridNode node;
+    private final PatternProviderLogicHost owner;
+    private PackagedDispatchState dispatch = new PackagedDispatchState();
+
+    public DigitalPackagedPatternProviderLogic(IManagedGridNode node, PatternProviderLogicHost owner) {
+        super(node, owner, 36);
+        this.node = node;
+        this.owner = owner;
+        this.returnInv = new PackagedReturnInventory(this::onReturnInventoryChanged);
+        node.addService(IGridTickable.class, this);
+    }
+
+    private void onReturnInventoryChanged() {
+        this.owner.saveChanges();
+        this.node.ifPresent((grid, gridNode) -> grid.getTickManager().alertDevice(gridNode));
+    }
+
+    public PackagedDispatchState dispatchState() {
+        return this.dispatch;
+    }
+
+    @Override
+    public CountedCraftingPreparation prepareBoundInputBatch(IPatternDetails patternDetails,
+                                                             IPatternDetails extractionDetails, KeyCounter[] prototype, long requestedCount,
+                                                             CraftingDispatchTargetAvailability targetAvailability) {
+        // The machine adapter validates the CPU's exact bound keys against the registered recipe.
+        var target = CraftingDispatchTarget.provider();
+        if (!targetAvailability.canAttempt(target)) {
+            return CountedCraftingPreparation.rejected(
+                    CraftingDispatchRejection.targeted(CraftingDispatchStatus.NO_CAPACITY, target));
+        }
+        return CountedCraftingPreparation.accepted(
+                PatternProviderBatching.prepareSingle(this, patternDetails, prototype, requestedCount), target);
+    }
+
+    @Override
+    public @Nullable CountedCraftingAdmission prepareBoundInputBatchForTarget(IPatternDetails patternDetails,
+                                                                              IPatternDetails extractionDetails, KeyCounter[] prototype, long requestedCount,
+                                                                              CraftingDispatchTarget target) {
+        return target.equals(CraftingDispatchTarget.provider()) ?
+                PatternProviderBatching.prepareSingle(this, patternDetails, prototype, requestedCount) : null;
+    }
+
+    @Override
+    public boolean pushPattern(IPatternDetails pattern, KeyCounter[] inputs) {
+        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        if (!this.node.isActive() || isBusy() || getCraftingLockedReason() != LockCraftingMode.NONE ||
+                !access.dataEnergistics$getPatterns().contains(pattern) ||
+                !(this.owner.getBlockEntity().getLevel() instanceof ServerLevel level))
+            return false;
+        var adjacent = new ObjectArrayList<ConnectorLink>();
+        for (var side : access.dataEnergistics$invokeGetActiveSides()) {
+            adjacent.add(new ConnectorLink(this.owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
+        }
+        if (!this.dispatch.dispatch(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(),
+                pattern, inputs, ObjectList.of(), adjacent))
+            return false;
+        access.dataEnergistics$invokeOnPushPatternSuccess(pattern);
+        this.owner.saveChanges();
+        this.node.ifPresent((grid, gridNode) -> grid.getTickManager().alertDevice(gridNode));
+        return true;
+    }
+
+    @Override
+    public TickingRequest getTickingRequest(IGridNode node) {
+        return new TickingRequest(TickRates.Interface, !hasWork());
+    }
+
+    @Override
+    public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
+        if (!this.node.isActive() || !(this.owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return TickRateModulation.SLEEP;
+        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        boolean worked = this.dispatch.tick(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(),
+                getReturnInv(), access.dataEnergistics$getActionSource());
+        worked |= access.dataEnergistics$invokeDoWork();
+        if (worked) this.owner.saveChanges();
+        return hasWork() ? worked ? TickRateModulation.URGENT : TickRateModulation.SLOWER : TickRateModulation.SLEEP;
+    }
+
+    private boolean hasWork() {
+        return this.dispatch.hasWork() || ((PatternProviderLogicFieldAccessor) (Object) this).dataEnergistics$invokeHasWorkToDo();
+    }
+
+    @Override
+    public void writeToNBT(CompoundTag tag, HolderLookup.Provider registries) {
+        super.writeToNBT(tag, registries);
+        var state = new CompoundTag();
+        this.dispatch.save(state, registries);
+        tag.put("packaged", state);
+    }
+
+    @Override
+    public void readFromNBT(CompoundTag tag, HolderLookup.Provider registries) {
+        super.readFromNBT(tag, registries);
+        this.dispatch = PackagedDispatchState.load(tag.getCompound("packaged"), registries);
+    }
+}

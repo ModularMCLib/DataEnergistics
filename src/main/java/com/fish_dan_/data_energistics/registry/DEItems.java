@@ -134,6 +134,7 @@ public final class DEItems {
             "data_sanctum_interface_part",
             () -> new PartItem<>(new Item.Properties(), DataSanctumInterfacePart.class, DataSanctumInterfacePart::new));
     public static final DeferredItem<BlockItem> ADAPTIVE_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.ADAPTIVE_PATTERN_PROVIDER);
+    public static final DeferredItem<BlockItem> DIGITAL_PACKAGED_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER);
     public static final DeferredItem<AdaptivePatternProviderUpgradeItem> ADAPTIVE_PATTERN_PROVIDER_UPGRADE = ITEMS.register(
             "adaptive_pattern_provider_upgrade",
             () -> new AdaptivePatternProviderUpgradeItem(new Item.Properties()));

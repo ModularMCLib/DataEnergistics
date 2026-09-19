@@ -124,7 +124,7 @@ dependencies {
     extraLocalRuntime(forge.aecs)
     extraLocalRuntime(forge.applied.flux)
     extraLocalRuntime(forge.aae)
-    extraLocalRuntime(forge.eco)
+    // extraLocalRuntime(forge.eco)
     // 等待eaep兼容
     // extraLocalRuntime(forge.extendedae.plus)
     extraLocalRuntime(forge.applied.pneumatics)

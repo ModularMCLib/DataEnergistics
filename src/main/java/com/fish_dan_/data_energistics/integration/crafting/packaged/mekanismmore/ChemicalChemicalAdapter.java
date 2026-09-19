@@ -5,9 +5,17 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 
 import appeng.api.crafting.IPatternDetails;
-import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+
+import com.jerry.meklm.common.tile.machine.TileEntityLargeChemicalInfuser;
+import com.jerry.meklm.common.tile.machine.TileEntityLargePigmentMixer;
+import com.jerry.meklm.common.tile.machine.TileEntityLargeSolarNeutronActivator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
 import mekanism.api.chemical.ChemicalStack;
@@ -16,19 +24,9 @@ import mekanism.api.recipes.ChemicalToChemicalRecipe;
 import mekanism.api.recipes.ingredients.ChemicalStackIngredient;
 import mekanism.api.recipes.vanilla_input.BiChemicalRecipeInput;
 import mekanism.api.recipes.vanilla_input.SingleChemicalRecipeInput;
-import mekanism.api.chemical.ChemicalStack;
-import com.jerry.meklm.common.tile.machine.TileEntityLargeChemicalInfuser;
-import com.jerry.meklm.common.tile.machine.TileEntityLargePigmentMixer;
-import com.jerry.meklm.common.tile.machine.TileEntityLargeSolarNeutronActivator;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Locale;
 
 /** Executes AMEK-backed chemical recipes while settling every chemical amount through the AE ledger. */
 final class ChemicalChemicalAdapter implements PackagedMachineAdapter {
@@ -47,7 +45,7 @@ final class ChemicalChemicalAdapter implements PackagedMachineAdapter {
 
     @Override
     public ResourceLocation id() {
-        return Data_Energistics.id("mekanism_more_" + this.kind.name().toLowerCase(java.util.Locale.ROOT));
+        return Data_Energistics.id("mekanism_more_" + this.kind.name().toLowerCase(Locale.ROOT));
     }
 
     @Override
@@ -151,8 +149,6 @@ final class ChemicalChemicalAdapter implements PackagedMachineAdapter {
     private static boolean matchesOutput(IPatternDetails pattern, ChemicalStack output) {
         if (pattern.getOutputs().size() != 1 || output.isEmpty()) return false;
         var declared = pattern.getOutputs().getFirst();
-        return declared.what() instanceof MekanismKey key
-                && ChemicalStack.isSameChemical(key.getStack(), output)
-                && declared.amount() == output.getAmount();
+        return declared.what() instanceof MekanismKey key && ChemicalStack.isSameChemical(key.getStack(), output) && declared.amount() == output.getAmount();
     }
 }

@@ -1072,7 +1072,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                                     orientation.flipped()));
                             if (!target.equals(origin)) {
                                 TraceabilityPredicate previous = predicates.putIfAbsent(target.asLong(), predicate);
-                                if (previous != predicate) {
+                                if (previous != null && previous != predicate) {
                                     throw new IllegalStateException(
                                             "Trinity auto-build pattern resolves conflicting predicates at " + target);
                                 }

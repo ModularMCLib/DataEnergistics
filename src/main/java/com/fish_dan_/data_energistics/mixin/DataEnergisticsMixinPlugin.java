@@ -30,6 +30,8 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("ae2cs", "ae2cs.");
         addModCompatMixin("appliedcreate", "appliedcreate.");
         addModCompatMixin("draconicevolution", "draconic.");
+        addModCompatMixin("botania", "botania.");
+        addModCompatMixin("malum", "malum.");
         addModCompatMixin("ae2lt", "ae2lt.");
         addModCompatMixin("extendedae", "extendedae.");
         addModCompatMixin("extendedae_plus", "extendedaeplus.");
@@ -73,6 +75,9 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        if (mixinClassName.startsWith("mekanismmore.")) {
+            return isModLoaded("mekmm") && isModLoaded("appmek");
+        }
 
         if (mixinClassName.startsWith("dev.")) {
             if (FMLLoader.isProduction()) {

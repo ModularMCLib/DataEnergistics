@@ -1,0 +1,22 @@
+{
+	"type": "draconicevolution:fusion_crafting",
+	"catalyst": {
+		"item": "minecraft:netherite_scrap"
+	},
+	"ingredients": [
+		{
+			"consume": true,
+			"ingredient": {
+				"type": "draconicevolution:stack",
+				"items": ["minecraft:honey_bottle"],
+				"count": 2
+			}
+		}
+	],
+	"result": {
+		"count": 1,
+		"id": "minecraft:diamond"
+	},
+	"techLevel": "draconium",
+	"totalEnergy": 1000000
+}

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.mixin.core.menu.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.EaepPatternEncodingHandoff;
@@ -539,6 +540,15 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                     AEItems.PROCESSING_PATTERN.is(encodedPattern) &&
                     dataEnergistics$requiresProcessingPatternNormalization()) {
                 encodedPattern = dataEnergistics$patchProcessingPatternWithGenericStacks(encodedPattern);
+            }
+            if (this.mode == EncodingMode.PROCESSING && encodedPattern != null) {
+                encodedPattern = PackagedPatternEncoding.complete(
+                        ((ServerPlayer) this.getPlayer()).serverLevel(),
+                        PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(
+                                this, data_energistics$getPreferenceSession(), this),
+                        PatternEncodingSourceHelper.resolveProcessingPatternRecipeId(
+                                this, data_energistics$getPreferenceSession()),
+                        encodedPattern);
             }
             if (encodedPattern == null) {
                 this.dataEnergistics$invokeClearPattern();

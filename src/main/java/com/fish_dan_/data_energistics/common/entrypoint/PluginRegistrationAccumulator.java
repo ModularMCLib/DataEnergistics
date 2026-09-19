@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.entrypoint;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
+import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
@@ -10,6 +11,7 @@ import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutput
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
+import com.fish_dan_.data_energistics.api.registry.packaged.PackagedCraftingRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
@@ -60,6 +62,7 @@ final class PluginRegistrationAccumulator {
     private final Object2ObjectMap<ResourceLocation, DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters = new Object2ObjectLinkedOpenHashMap<>();
     private volatile boolean frozen;
+    private final Object2ObjectMap<ResourceLocation, PackagedMachineAdapter> packagedAdapters = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<String, TowerEnergyEndpointIntegration> towerEnergyIntegrations = new Object2ObjectLinkedOpenHashMap<>();
 
     /**
@@ -175,7 +178,13 @@ final class PluginRegistrationAccumulator {
             }
         }
 
+        for (var id : staging.packagedAdapters.keySet()) {
+            if (this.packagedAdapters.containsKey(id)) {
+                throw new IllegalStateException("Duplicate packaged machine adapter '" + id + "' from " + staging.description());
+            }
+        }
         this.universalTerminals.putAll(staging.universalTerminals);
+        this.packagedAdapters.putAll(staging.packagedAdapters);
         this.patternProviders.putAll(staging.patternProviders);
         staging.patternProviders.values().forEach(registration -> this.patternProviderIdentities.put(
                 registration.metadata().providerIdentity(), registration.metadata().registrationId()));
@@ -215,7 +224,8 @@ final class PluginRegistrationAccumulator {
                 this.virtualCraftingOutputAdapters,
                 this.dynamicCraftingOutputAdapters,
                 this.reusableInputAdapters,
-                this.towerEnergyIntegrations.values());
+                this.towerEnergyIntegrations.values(),
+                new ObjectArrayList<>(this.packagedAdapters.values()));
         this.frozen = true;
         return snapshot;
     }
@@ -248,6 +258,7 @@ final class PluginRegistrationAccumulator {
         private final ObjectList<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters = new ObjectArrayList<>();
         private final Object2ObjectMap<ResourceLocation, DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters = new Object2ObjectLinkedOpenHashMap<>();
+        private final Object2ObjectMap<ResourceLocation, PackagedMachineAdapter> packagedAdapters = new Object2ObjectLinkedOpenHashMap<>();
         private final UniversalTerminalRegistry universalTerminalRegistry = new StagedUniversalTerminalRegistry();
         private final PatternProviderRegistry patternProviderRegistry = new StagedPatternProviderRegistry();
         private final CraftingMachineRegistry craftingMachineRegistry = new StagedCraftingMachineRegistry();
@@ -332,6 +343,21 @@ final class PluginRegistrationAccumulator {
             return this.towerEnergyIntegrationRegistry;
         }
 
+        @Override
+        public PackagedCraftingRegistry packagedCrafting() {
+            return adapter -> {
+                requireOpen();
+                var value = requireStagedValue(adapter, "Packaged machine adapter");
+                var id = requireStagedValue(value.id(), "Packaged machine adapter ID");
+                if (value.recipeTypes().isEmpty()) {
+                    throw new IllegalArgumentException("Packaged adapter must declare recipe categories: " + id);
+                }
+                if (this.packagedAdapters.putIfAbsent(id, value) != null) {
+                    throw new IllegalStateException("Duplicate packaged machine adapter '" + id + "' in " + description());
+                }
+            };
+        }
+
         /**
          * Closes and clears a failed transaction without touching already committed plugins.
          */
@@ -351,6 +377,7 @@ final class PluginRegistrationAccumulator {
             this.virtualCraftingOutputAdapters.clear();
             this.dynamicCraftingOutputAdapters.clear();
             this.reusableInputAdapters.clear();
+            this.packagedAdapters.clear();
             this.towerEnergyIntegrations.clear();
         }
 

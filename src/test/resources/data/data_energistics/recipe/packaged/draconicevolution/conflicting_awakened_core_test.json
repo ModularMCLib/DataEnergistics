@@ -1,0 +1,62 @@
+{
+	"type": "draconicevolution:fusion_crafting",
+	"catalyst": {
+		"item": "minecraft:nether_star"
+	},
+	"ingredients": [
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:wyvern_core"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:wyvern_core"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:wyvern_core"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:wyvern_core"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:awakened_draconium_ingot"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:awakened_draconium_ingot"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:awakened_draconium_ingot"
+			}
+		},
+		{
+			"consume": true,
+			"ingredient": {
+				"item": "draconicevolution:awakened_draconium_ingot"
+			}
+		}
+	],
+	"result": {
+		"count": 1,
+		"id": "draconicevolution:awakened_core"
+	},
+	"techLevel": "wyvern",
+	"totalEnergy": 1000000
+}

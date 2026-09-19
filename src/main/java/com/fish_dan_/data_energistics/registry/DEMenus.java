@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerB
 import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.storage.CompositeWarehouseBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotBlockEntity;
@@ -36,6 +37,7 @@ import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenu;
 import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenuHost;
 import com.fish_dan_.data_energistics.menu.machine.DataTeleportAnchorMenu;
 import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
+import com.fish_dan_.data_energistics.menu.patternprovider.DigitalPackagedPatternProviderMenu;
 import com.fish_dan_.data_energistics.menu.powered.MatterConvergingCrossbowConfigMenu;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumInterfaceMenu;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
@@ -199,6 +201,10 @@ public final class DEMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<AdaptivePatternProviderMenu>> ADAPTIVE_PATTERN_PROVIDER = MENUS.register("adaptive_pattern_provider", () -> MenuTypeBuilder
             .create(AdaptivePatternProviderMenu::new, AdaptivePatternProviderHost.class)
             .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "adaptive_pattern_provider")));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<DigitalPackagedPatternProviderMenu>> DIGITAL_PACKAGED_PATTERN_PROVIDER = MENUS.register("digital_packaged_pattern_provider", () -> MenuTypeBuilder
+            .create(DigitalPackagedPatternProviderMenu::new, DigitalPackagedPatternProviderBlockEntity.class)
+            .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "digital_packaged_pattern_provider")));
 
     public static final DeferredHolder<MenuType<?>, MenuType<TrinityInformationExchangeDepotMenu>> TRINITY_INFORMATION_EXCHANGE_DEPOT = MENUS.register("trinity_information_exchange_depot", () -> MenuTypeBuilder
             .create(TrinityInformationExchangeDepotMenu::new, TrinityInformationExchangeDepotMenuHost.class)

@@ -4,9 +4,45 @@ dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
 
+    // Test dependencies
     testImplementation(libs.testframework)
     testCompileOnly(libs.jspecify)
     testCompileOnly(forge.ae2)
+    testCompileOnly(forge.mystical.agriculture)
+    testCompileOnly(forge.cucumber)
+    testCompileOnly(forge.brandonscore)
+    testCompileOnly(forge.draconic.evolution)
+    testCompileOnly(forge.ars.nouveau)
+    testCompileOnly(forge.occultism)
+    testCompileOnly(forge.geckolib)
+    testCompileOnly(forge.modonomicon)
+    testCompileOnly(forge.botania)
+    testCompileOnly(forge.patchouli)
+    testCompileOnly(forge.malum)
+    testCompileOnly(forge.lodestone)
+    testCompileOnly(forge.extendedcrafting)
+    testCompileOnly(forge.mek)
+    testCompileOnly(forge.mekmm)
+    testCompileOnly(forge.amek)
+    testCompileOnly(forge.actually.additions)
+    testCompileOnly(forge.avaritia)
+
+    // Real-machine GameTest integrations; runtime libraries are declared explicitly.
+    testRuntimeOnly(forge.mystical.agriculture) { transitive = false }
+    testRuntimeOnly(forge.cucumber) { transitive = false }
+    testRuntimeOnly(forge.ars.nouveau) { transitive = false }
+    testRuntimeOnly(forge.occultism) { transitive = false }
+    testRuntimeOnly(forge.modonomicon) { transitive = false }
+    testRuntimeOnly(forge.smartbrainlib) { transitive = false }
+    testRuntimeOnly(forge.botania) { transitive = false }
+    testRuntimeOnly(forge.patchouli) { transitive = false }
+    testRuntimeOnly(forge.extendedcrafting) { transitive = false }
+    testRuntimeOnly(forge.malum) { transitive = false }
+    testRuntimeOnly(forge.lodestone) { transitive = false }
+    testRuntimeOnly(forge.mekmm) { transitive = false }
+    testRuntimeOnly(forge.amek) { transitive = false }
+    testRuntimeOnly(forge.actually.additions) { transitive = false }
+    testRuntimeOnly(forge.avaritia) { transitive = false }
 
     jarJar(api(forge.mdlib.get()))
     jarJar(api(libs.ojalgo.get()))
@@ -19,6 +55,23 @@ dependencies {
     compileOnly(forge.cucumber)
     compileOnly(forge.mystical.agriculture)
     compileOnly(forge.ato)
+
+    // Magic integrations and their API libraries
+    compileOnly(forge.botania)
+    compileOnly(forge.ars.nouveau)
+    compileOnly(forge.malum)
+    compileOnly(forge.occultism)
+    compileOnly(forge.modonomicon)
+    compileOnly(forge.lodestone)
+    compileOnly(forge.patchouli)
+    compileOnly(forge.geckolib)
+
+    // Extended crafting integrations
+    compileOnly(forge.extendedcrafting)
+    compileOnly(forge.avaritia)
+
+    // Mekanism machine integrations
+    compileOnly(forge.mekmm)
 
     // Optional cannon ammunition integration
     compileOnly(forge.draconic.evolution)
@@ -63,8 +116,6 @@ dependencies {
     compileOnly(forge.titanium)
     compileOnly(forge.brandonscore)
     compileOnly(forge.draconic.evolution)
-    testCompileOnly(forge.brandonscore)
-    testCompileOnly(forge.draconic.evolution)
     compileOnly(forge.oritech)
     compileOnly(forge.modern.industrialization)
     compileOnly(forge.grandpower)

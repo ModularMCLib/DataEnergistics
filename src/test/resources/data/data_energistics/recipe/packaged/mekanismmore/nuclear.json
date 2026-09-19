@@ -1,0 +1,8 @@
+{
+	"type": "mekanism:nucleosynthesizing",
+	"chemical_input": { "amount": 3, "chemical": "mekanism:antimatter" },
+	"duration": 10,
+	"item_input": { "count": 1, "item": "minecraft:paper" },
+	"output": { "count": 1, "id": "minecraft:diamond" },
+	"per_tick_usage": true
+}

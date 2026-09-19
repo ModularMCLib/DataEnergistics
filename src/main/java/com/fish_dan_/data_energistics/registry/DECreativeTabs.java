@@ -90,6 +90,7 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DATA_SANCTUM_INTERFACE_PART);
                         output.accept(DEItems.DATA_SANCTUM_INTERFACE_UPGRADE);
                         output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER);
+                        output.accept(DEItems.DIGITAL_PACKAGED_PATTERN_PROVIDER);
                         output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER_UPGRADE);
                         output.accept(DEItems.TNT_CONFIGURABLE);
                         output.accept(DEItems.DATA_NUKE);

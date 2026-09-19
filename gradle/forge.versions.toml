@@ -21,6 +21,15 @@ draconic-evolution = "1.21.1-3.1.4.633"
 modern-industrialization = "2.5.8"
 mystical-agriculture = "1.21.1-8.0.28"
 cucumber = "1.21.1-8.0.16"
+extendedcrafting = "1.21.1-7.0.9"
+botania = "455-20260821.172952-52"
+ars-nouveau = "5.11.6.1353"
+occultism = "1.205.0"
+modonomicon = "1.117.2"
+lodestone = "1.21.1-1.8.2.524"
+patchouli = "1.21.1-92-NEOFORGE"
+geckolib = "4.9.2"
+smartbrainlib = "1.16.11"
 grandpower = "3.0.2"
 
 ## ftb mod ##
@@ -48,7 +57,6 @@ ato = "7825464"
 titanium = "8760562"
 if = "8370717"
 spark = "6225208"
-geckolib = "8350073"
 glodium = "5821676"
 ae2ji = "7727898"
 ae2ct = "7182163"
@@ -56,6 +64,9 @@ eae = "8811572"
 aae = "8564177"
 aecs = "8498888"
 actually-additions = "8281896"
+avaritia = "7695278"
+malum = "7307339"
+mekmm = "8659501"
 eco = "8870957"
 extendedae-plus = "8755074"
 applied-flux = "8204513"
@@ -103,6 +114,17 @@ mystical-agriculture = { module = "com.blakebr0.mysticalagriculture:MysticalAgri
 cucumber            = { module = "com.blakebr0.cucumber:Cucumber", version.ref = "cucumber" }
 grandpower          = { module = "dev.technici4n:GrandPower", version.ref = "grandpower" }
 
+# Magic and extended crafting: official Maven publications.
+botania             = { module = "vazkii.botania:botania-neoforge-1.21.1", version.ref = "botania" }
+ars-nouveau         = { module = "com.hollingsworth.ars_nouveau:ars_nouveau-1.21.1", version.ref = "ars-nouveau" }
+extendedcrafting    = { module = "com.blakebr0.extendedcrafting:ExtendedCrafting", version.ref = "extendedcrafting" }
+occultism           = { module = "com.klikli_dev:occultism-1.21.1-neoforge", version.ref = "occultism" }
+modonomicon         = { module = "com.klikli_dev:modonomicon-1.21.1-neoforge", version.ref = "modonomicon" }
+lodestone           = { module = "team.lodestar.lodestone:lodestone", version.ref = "lodestone" }
+patchouli           = { module = "vazkii.patchouli:Patchouli", version.ref = "patchouli" }
+geckolib            = { module = "software.bernie.geckolib:geckolib-neoforge-1.21.1", version.ref = "geckolib" }
+smartbrainlib       = { module = "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1", version.ref = "smartbrainlib" }
+
 ftblibrary          = { module = "dev.ftb.mods:ftb-library-neoforge", version.ref = "ftblibrary" }
 ftbultimine         = { module = "dev.ftb.mods:ftb-ultimine-neoforge", version.ref = "ftbultimine" }
 ftbchunks           = { module = "dev.ftb.mods:ftb-chunks-neoforge", version.ref = "ftbchunks" }
@@ -118,7 +140,6 @@ iris                = { module = "maven.modrinth:iris", version.ref = "iris" }
 modernfix           = { module = "maven.modrinth:modernfix", version.ref = "modernfix" }
 bhc                 = { module = "maven.modrinth:baubley-heart-canisters", version.ref = "bhc" }
 
-geckolib            = { module = "curse.maven:geckolib-388172", version.ref = "geckolib" }
 ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }
 if                  = { module = "curse.maven:industrial-foregoing-266515", version.ref = "if" }
@@ -129,6 +150,9 @@ eae                 = { module = "curse.maven:ex-pattern-provider-892005", versi
 aae                 = { module = "curse.maven:advancedae-1084104", version.ref = "aae" }
 aecs                = { module = "curse.maven:ae2-crystal-science-1435174", version.ref = "aecs" }
 actually-additions  = { module = "curse.maven:actually-additions-228404", version.ref = "actually-additions" }
+avaritia            = { module = "curse.maven:re-avaritia-623969", version.ref = "avaritia" }
+malum               = { module = "curse.maven:malum-484064", version.ref = "malum" }
+mekmm               = { module = "curse.maven:mekanism-more-machine-1275257", version.ref = "mekmm" }
 eco                 = { module = "curse.maven:neo-eco-ae-extension-1460639", version.ref = "eco" }
 extendedae-plus     = { module = "curse.maven:extendedae-plus-1337639", version.ref = "extendedae-plus" }
 applied-flux        = { module = "curse.maven:applied-flux-965012", version.ref = "applied-flux" }

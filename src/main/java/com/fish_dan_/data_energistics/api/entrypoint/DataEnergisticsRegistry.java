@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.api.entrypoint;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutputRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
+import com.fish_dan_.data_energistics.api.registry.packaged.PackagedCraftingRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdRegistry;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRegistry;
@@ -20,6 +21,11 @@ import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegist
  * </p>
  */
 public interface DataEnergisticsRegistry {
+
+    /** Common-setup real-machine adapters; legacy registrars must explicitly opt into this facet. */
+    default PackagedCraftingRegistry packagedCrafting() {
+        throw new UnsupportedOperationException("This legacy registrar does not support packaged crafting");
+    }
 
     /** Returns the transaction-local energy adapter registry; legacy registrars must opt into this facet. */
     default TowerEnergyIntegrationRegistry towerEnergyIntegrations() {

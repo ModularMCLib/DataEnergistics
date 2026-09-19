@@ -341,7 +341,10 @@ public class RemoteLinkConnectorItem extends Item {
         }
         // The persisted side is the actual capability face on the target block. The clicked face is
         // the face whose capability was selected; inverting it queries the far side and breaks remote links.
-        if (!hasTargetCapability(level, clickedPos, clickedFace)) {
+        var registration = AdaptivePatternProviderResolver.resolveProviderRegistration(provider.getProviderStack());
+        boolean packagedMachine = level instanceof ServerLevel serverLevel && registration != null &&
+                registration.dispatch().acceptsConnectorMachine(serverLevel, clickedPos);
+        if (!packagedMachine && !hasTargetCapability(level, clickedPos, clickedFace)) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".target_invalid"), true);
             }

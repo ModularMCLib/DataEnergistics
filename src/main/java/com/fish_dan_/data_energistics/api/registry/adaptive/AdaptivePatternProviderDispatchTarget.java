@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.energy.IEnergyService;
@@ -222,6 +223,14 @@ public interface AdaptivePatternProviderDispatchTarget {
     default ObjectList<ConnectorLink> connectorBindingsFast() {
         List<ConnectorLink> legacy = connectorBindings();
         return legacy instanceof ObjectList<?> fast ? (ObjectList<ConnectorLink>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
+    }
+
+    /**
+     * Current host connector ordering on the server thread, without side effects.
+     * Legacy registrations retain round-robin behavior until they expose a host policy.
+     */
+    default ConnectorPolicy connectorPolicy() {
+        return ConnectorPolicy.ROUND_ROBIN;
     }
 
     /**

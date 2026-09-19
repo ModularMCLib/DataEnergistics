@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.client.screen.machine.DataSanctumLargeInte
 import com.fish_dan_.data_energistics.client.screen.machine.DataSanctumStatusScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataSolarPanelScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataTeleportAnchorScreen;
+import com.fish_dan_.data_energistics.client.screen.machine.DigitalPackagedPatternProviderScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.MePatternBufferScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.MeVacuumScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.OrderPackageScreen;
@@ -71,6 +72,8 @@ final class ClientScreenRegistrar {
         InitScreens.register(event, DEMenus.DATA_SANCTUM_INTERFACE.get(), DataSanctumInterfaceScreen::new, "/screens/data_sanctum_interface.json");
         InitScreens.register(event, DEMenus.DATA_SANCTUM_LARGE_INTERFACE.get(), DataSanctumLargeInterfaceScreen::new, "/screens/data_sanctum_large_interface.json");
         InitScreens.register(event, DEMenus.ADAPTIVE_PATTERN_PROVIDER.get(), AdaptivePatternProviderScreen::new, "/screens/adaptive_pattern_provider.json");
+        InitScreens.register(event, DEMenus.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), DigitalPackagedPatternProviderScreen::new,
+                "/screens/digital_packaged_pattern_provider.json");
         InitScreens.register(event, DEMenus.UNIVERSAL_ME_STORAGE.get(), UniversalMEStorageScreen::new, "/screens/universal_me_storage_terminal.json");
         InitScreens.register(event, DEMenus.UNIVERSAL_CRAFTING_TERM.get(), UniversalCraftingTermScreen::new, "/screens/universal_crafting_terminal.json");
         InitScreens.register(event, DEMenus.UNIVERSAL_PATTERN_ENCODING_TERM.get(), UniversalPatternEncodingTermScreen::new, "/screens/universal_pattern_encoding_terminal.json");

@@ -1,0 +1,33 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:pattern_provider"
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 2
+			},
+			{
+				"item": "data_energistics:data_framework"
+			},
+			{
+				"item": "data_energistics:data_carrier"
+			}
+		],
+		"fluids": [
+			{
+				"fluid": "data_energistics:ender",
+				"amount": 250
+			}
+		]
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:digital_packaged_pattern_provider"
+			}
+		]
+	}
+}

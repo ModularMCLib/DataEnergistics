@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.menu.patternencoding.source;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
@@ -190,7 +191,11 @@ public final class PatternEncodingSourceHelper {
             PatternEncodingPreferenceSession preferenceSession = menu instanceof PatternEncodingPreferenceMenu preferenceMenu ? preferenceMenu.data_energistics$getPreferenceSession() : null;
             if (!sourceAware.data_energistics$isPatternSourceEnabled()) {
                 if (preferenceSession != null) {
-                    preferenceSession.setRankingContext(null);
+                    PatternEncodingRankingContext packagedContext = preferenceSession.rankingContext();
+                    preferenceSession.setRecipeContext(
+                            packagedContext != null && PackagedRecipeCatalog.supportsType(packagedContext.recipeTypeId()) ?
+                                    packagedContext : null,
+                            preferenceSession.recipeId());
                 }
                 sourceAware.data_energistics$setPendingPatternSource(null);
                 return;
@@ -228,15 +233,19 @@ public final class PatternEncodingSourceHelper {
                                                                       PatternEncodingPreviewMenu previewMenu,
                                                                       PatternEncodingPreferenceSession session,
                                                                       PatternEncodingSourceAware sourceAware) {
-        if (!sourceAware.data_energistics$isPatternSourceEnabled()) {
-            return null;
-        }
         EncodingMode mode = previewMenu.data_energistics$getEncodingMode();
         if (mode != EncodingMode.PROCESSING) {
             return null;
         }
         PatternEncodingRankingContext context = session.rankingContext();
-        return context == null ? null : context.recipeTypeId();
+        if (context == null) {
+            return null;
+        }
+        if (sourceAware.data_energistics$isPatternSourceEnabled() ||
+                PackagedRecipeCatalog.supportsType(context.recipeTypeId())) {
+            return context.recipeTypeId();
+        }
+        return null;
     }
 
     /** Resolves the stable processing recipe identity that should be appended to the next encoded pattern. */

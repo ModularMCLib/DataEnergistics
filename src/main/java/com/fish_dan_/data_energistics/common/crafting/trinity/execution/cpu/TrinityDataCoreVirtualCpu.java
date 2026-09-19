@@ -169,6 +169,14 @@ public final class TrinityDataCoreVirtualCpu implements ICraftingCPU {
         return inserted;
     }
 
+    /** Inserts an exact returned amount through the Trinity CPU boundary without a long projection. */
+    public BigInteger insertExact(AEKey what, BigInteger amount, Actionable mode) {
+        boolean wasBusy = isBusy();
+        BigInteger inserted = this.logic.insertExact(what, amount, mode);
+        this.runtime.workerOperationCompleted(this, wasBusy);
+        return inserted;
+    }
+
     /**
      * Adds all currently awaited keys to AE2's request set.
      *

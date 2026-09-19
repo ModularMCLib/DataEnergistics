@@ -2302,10 +2302,11 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                                         CraftingService craftingService,
                                         TrinityDataCoreStorageSavedData storage) {
         try (PendingOutputCursor pending = core.openPendingOutputCursor(route)) {
-            return this.patternOutputRouter.route(
+            TrinityDataCoreCraftingRuntime runtime = this.craftingRuntime;
+            return this.patternOutputRouter.routeExact(
                     pending,
-                    craftingService::getRequestedAmount,
-                    craftingService::insertIntoCpus,
+                    runtime::getRequestedAmountExact,
+                    runtime::insertExactIntoCpus,
                     (key, amount, mode) -> storage.insert(
                             this.storageId,
                             key,

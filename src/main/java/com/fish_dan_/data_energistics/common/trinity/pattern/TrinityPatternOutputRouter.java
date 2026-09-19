@@ -6,6 +6,8 @@ import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;
 
 import java.math.BigInteger;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Routes ordered Trinity crafting output batches without allowing CPU-reserved items to leak into general storage.
@@ -71,7 +73,12 @@ public final class TrinityPatternOutputRouter {
          *
          * @param amount positive amount no greater than the selected entry amount
          */
-        void consumeCurrent(long amount);
+        default void consumeCurrent(long amount) {
+            consumeCurrent(BigInteger.valueOf(amount));
+        }
+
+        /** Consumes an exact amount without projecting it through an AE2 long counter. */
+        void consumeCurrent(BigInteger amount);
 
         /** Releases the route's exclusive cursor state. */
         @Override
@@ -123,6 +130,54 @@ public final class TrinityPatternOutputRouter {
             if (requestedBefore == Long.MAX_VALUE && output.exactAmount().compareTo(PHYSICAL_CHUNK) > 0) {
                 // A saturated AE request cannot describe the exact reserved tail. Re-query it on the next pass before
                 // advancing to another entry or deciding that any part of that tail belongs to main storage.
+                return new RouteResult(progressed, storageChanged);
+            }
+        }
+        return new RouteResult(progressed, storageChanged);
+    }
+
+    /**
+     * Routes output to a Trinity CPU through its exact public API before using long-sized storage chunks.
+     * The CPU sink may accept the complete BigInteger amount in one operation; only the fallback storage sink is
+     * constrained by AE2's physical long transfer boundary.
+     */
+    public RouteResult routeExact(PendingOutputCursor pending,
+                                  Function<AEItemKey, BigInteger> requestedAmount,
+                                  BiFunction<AEItemKey, BigInteger, BigInteger> cpuSink,
+                                  OutputSink storageSink) {
+        boolean progressed = false;
+        boolean storageChanged = false;
+        while (pending.advance()) {
+            TrinityItemAmount output = pending.current();
+            AEItemKey key = output.key();
+            BigInteger amount = output.exactAmount();
+            BigInteger requested = requestedAmount.apply(key);
+            if (requested.signum() < 0) {
+                throw new IllegalStateException("Exact crafting CPU request amount must not be negative");
+            }
+            BigInteger cpuOffer = amount.min(requested);
+            BigInteger inserted = cpuOffer.signum() == 0 ? BigInteger.ZERO : cpuSink.apply(key, cpuOffer);
+            if (inserted.signum() < 0 || inserted.compareTo(cpuOffer) > 0) {
+                throw new IllegalStateException("Exact crafting CPU returned invalid insertion " + inserted);
+            }
+            if (inserted.signum() > 0) {
+                pending.consumeCurrent(inserted);
+                progressed = true;
+            }
+            BigInteger remainder = amount.subtract(inserted);
+            if (remainder.signum() > 0 && requested.compareTo(amount) < 0) {
+                long storageOffer = remainder.min(PHYSICAL_CHUNK).longValueExact();
+                long stored = insertTwoPhase(storageSink, key, storageOffer, "main storage");
+                if (stored > 0L) {
+                    pending.consumeCurrent(BigInteger.valueOf(stored));
+                    progressed = true;
+                    storageChanged = true;
+                }
+                if (stored < storageOffer) {
+                    return new RouteResult(progressed, storageChanged);
+                }
+            }
+            if (inserted.compareTo(cpuOffer) < 0 || cpuOffer.compareTo(amount) < 0 && inserted.signum() == 0) {
                 return new RouteResult(progressed, storageChanged);
             }
         }

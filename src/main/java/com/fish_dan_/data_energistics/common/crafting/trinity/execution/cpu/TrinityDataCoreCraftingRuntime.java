@@ -45,6 +45,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -508,6 +509,27 @@ public final class TrinityDataCoreCraftingRuntime {
         return totalInserted;
     }
 
+    /** Routes one exact returned amount directly to retained Trinity CPUs. */
+    public BigInteger insertExactIntoCpus(AEKey what, BigInteger amount, Actionable mode) {
+        if (amount.signum() <= 0) {
+            return BigInteger.ZERO;
+        }
+        BigInteger remaining = amount;
+        for (int workerNumber : this.waitingIndex.waitingWorkerNumbers(what)) {
+            if (remaining.signum() == 0) {
+                break;
+            }
+            TrinityDataCoreVirtualCpu cpu = this.retainedWorkers.get(workerNumber);
+            remaining = remaining.subtract(cpu.insertExact(what, remaining, mode));
+        }
+        return amount.subtract(remaining);
+    }
+
+    /** Mutating convenience boundary used by the exact pattern-output router. */
+    public BigInteger insertExactIntoCpus(AEKey what, BigInteger amount) {
+        return insertExactIntoCpus(what, amount, Actionable.MODULATE);
+    }
+
     /**
      * Adds all currently awaited keys to AE2's request set.
      */
@@ -520,6 +542,15 @@ public final class TrinityDataCoreCraftingRuntime {
      */
     public long getRequestedAmount(AEKey what) {
         return this.waitingIndex.requestedAmount(what);
+    }
+
+    /** Returns the exact amount currently awaited by retained Trinity workers. */
+    public BigInteger getRequestedAmountExact(AEKey what) {
+        BigInteger total = BigInteger.ZERO;
+        for (int workerNumber : this.waitingIndex.waitingWorkerNumbers(what)) {
+            total = total.add(this.retainedWorkers.get(workerNumber).getWaitingFor(what));
+        }
+        return total;
     }
 
     /**

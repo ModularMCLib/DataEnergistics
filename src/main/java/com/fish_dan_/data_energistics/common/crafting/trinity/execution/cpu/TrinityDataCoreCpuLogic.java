@@ -3463,6 +3463,31 @@ final class TrinityDataCoreCpuLogic {
         return totalAccepted;
     }
 
+    /**
+     * Accepts an exact completion directly into a Trinity plan's working inventory. This is the public CPU fast path
+     * for the host's own pattern-output router; native AE2 requester links remain on the long physical boundary.
+     */
+    BigInteger insertExact(AEKey what, BigInteger amount, Actionable type) {
+        TrinityDataCoreExecutingCraftingJob currentJob = this.job;
+        if (currentJob == null || !currentJob.isTrinityPlan() || amount.signum() <= 0) {
+            return BigInteger.ZERO;
+        }
+        BigInteger accepted = currentJob.waitingFor.amount(what).min(amount);
+        if (accepted.signum() == 0) {
+            return BigInteger.ZERO;
+        }
+        if (type == Actionable.SIMULATE) {
+            return accepted;
+        }
+        this.exactWorkingInventory.deposit(what, accepted, this.inventory);
+        currentJob.waitingFor.extract(what, accepted, Actionable.MODULATE);
+        currentJob.trinityExecution().wake(what);
+        currentJob.timeTracker.decrementItems(accepted, what.getType());
+        postChange(what);
+        this.cpu.markDirty();
+        return accepted;
+    }
+
     private static void validateLinkAcceptance(AEKey what,
                                                long requested,
                                                long accepted,

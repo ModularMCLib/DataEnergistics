@@ -1250,10 +1250,10 @@ public final class TrinityPatternSlot {
         }
 
         @Override
-        public void consumeCurrent(long amount) {
+        public void consumeCurrent(BigInteger amount) {
             ensureCurrent();
-            BigInteger consumed = BigInteger.valueOf(amount);
-            if (amount <= 0L || consumed.compareTo(this.current.exactAmount()) > 0) {
+            BigInteger consumed = amount;
+            if (consumed.signum() <= 0 || consumed.compareTo(this.current.exactAmount()) > 0) {
                 throw new IllegalArgumentException(
                         "Consumed Trinity pending-output amount must be between one and " + this.current.exactAmount());
             }

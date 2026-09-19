@@ -1,6 +1,6 @@
 # 数位化封包供应器：阶段交付记录
 
-本分支是完整封包计划的阶段实现，尚未达到发布条件。相对原计划的实现及验证覆盖度估算约为 **55%**，不是按代码行数计算。
+本分支记录封包供应器的实现范围、边界和验证结果。未列入“已接入”的行为仍不会被封包路径调用。
 
 ## 已接入的公共路径
 
@@ -27,14 +27,14 @@
 | Draconic Evolution | 真实聚合核心与注入器 | 真实供能、材料消耗、产物回收、配方冲突拒绝及特殊多数量 fusion ingredient 已接入；仍需更多第三方配方回归 |
 | Botania | 花药台、魔力池、精灵传送门、泰拉凝聚板、符文祭坛 | 传送门要求预先开启；水桶样板要求空盆；特殊配方及编码需进一步整合验证 |
 | Extended Crafting | 末影合成器、通量合成器、四级工作台、组合合成核心 | 组合核心已覆盖原生能耗、产物和桶返还物；组合配方的更多特殊余物仍需继续验证 |
-| Actually Additions | 充能台 | 原子再构机未完成，充能台尚未实际运行验证 |
+| Actually Additions | 充能台、原子再构机的物品转换和染色透镜 | 去附魔及会改动世界或攻击实体的透镜不接入；转换、染色通过真实激光和物品实体执行 |
 | Malum | 精魂灌注、精魂聚焦代码 | 尚未完成真实机器回归验证 |
 | Avaritia | Sculk、Nether、End、Extreme 四级工作台、Extreme Smithing | Extreme Smithing 按原生五槽配方执行一次性封包任务，不依赖持久机器方块 |
-| Mekanism More Machines | 尚未接入 | 六类大型机器待实现 |
+| Mekanism More Machines | Chemical Infuser、Pigment Mixer、Solar Neutron Activator、Electrolytic Separator、Rotary Condensentrator、Antiprotonic Nucleosynthesizer | 仅在 `mekmm` 与 `appmek` 同时安装时注册；AMEK 化学键缺失时不注册，输出、排放和模式切换由封包占用保护 |
 
 ## 后续待完成的工作
 
-1. 完成余下适配，验证所有 Mod 缺失时的启动路径。
+1. 继续补充第三方配方回归和宿主生命周期用例；可选 Mod 缺失时的启动路径已覆盖。
 2. 扩展拆除恢复到所有供应器类型、失败任务和跨重启占用释放；当前普通 AE2 大数量掉落路径仍存在数量截断风险，不能作为完整恢复实现。
 3. 验证网络满、卸载、重启、删除链接和更换内装供应器；尤其检查持久化任务与维度占用记录的一致性。
 4. 完成三位一体超大订单、绑定输入、不可合批机器持续执行的端到端验证。存在 BigInteger 记账并不代表全部大数量入口已验证。
@@ -51,6 +51,7 @@
 - 三个聚合改动文件的 IDEA 错误检查、限定文件的 Spotless 检查及 UTF-8 无 BOM 检查通过。
 - 恢复生命周期与 Extended Crafting 组合核心定向 GameTest 共 11/11 通过，覆盖容量卡初始化、实际拆除、凭证重载、防重复领取、`BigInteger` 资源、原生组合能耗和桶返还物。
 - 上述历史通过结果不能代表后续全部变更已通过；最终结果以本 PR 的验证记录为准。
+- 2026-09-20 定向 GameTest：Actually Additions、Avaritia、Extended Crafting 7/7；Mekanism More Machines 7/7；缺少 AMEK 的可选注册路径 1/1；恢复路径探针通过。日志中的第三方联网更新失败与配方包缺失来自测试环境，不是封包适配断言。
 
 ## 依赖约定
 

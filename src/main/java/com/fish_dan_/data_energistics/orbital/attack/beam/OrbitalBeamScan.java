@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -113,12 +112,17 @@ public final class OrbitalBeamScan {
                 }
             }
         }
-        ordered.sort(Comparator.<Integer>comparingLong(packed -> {
-            int x = (packed >>> 10) - 256;
-            int z = (packed & 1023) - 256;
-            return (long) x * x + (long) z * z;
-        }).thenComparingInt(packed -> (packed >>> 10) - 256)
-                .thenComparingInt(packed -> (packed & 1023) - 256));
+        ordered.sort((int left, int right) -> {
+            int leftX = (left >>> 10) - 256;
+            int leftZ = (left & 1023) - 256;
+            int rightX = (right >>> 10) - 256;
+            int rightZ = (right & 1023) - 256;
+            int distanceOrder = Long.compare((long) leftX * leftX + (long) leftZ * leftZ,
+                    (long) rightX * rightX + (long) rightZ * rightZ);
+            if (distanceOrder != 0) return distanceOrder;
+            int xOrder = Integer.compare(leftX, rightX);
+            return xOrder != 0 ? xOrder : Integer.compare(leftZ, rightZ);
+        });
         offsets.addElements(0, ordered.toIntArray());
         long[] prefix = new long[offsets.size() + 1];
         Layout result = new Layout(offsets.toIntArray(), prefix, key.height(), key.path());

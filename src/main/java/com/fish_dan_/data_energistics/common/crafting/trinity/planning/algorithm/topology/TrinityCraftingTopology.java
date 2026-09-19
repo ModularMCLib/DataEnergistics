@@ -47,11 +47,12 @@ public record TrinityCraftingTopology(
         components = List.copyOf(components);
         int componentCount = components.size();
         Object2IntLinkedOpenHashMap<AEKey> copiedMapping = new Object2IntLinkedOpenHashMap<>();
-        componentByKey.forEach((key, index) -> {
+        Object2IntMaps.fastForEach(componentByKey, entry -> {
+            int index = entry.getIntValue();
             if (index < 0 || index >= componentCount) {
                 throw new IllegalArgumentException("A Trinity topology key must map to a valid component");
             }
-            copiedMapping.put(key, index);
+            copiedMapping.put(entry.getKey(), index);
         });
         for (TrinityStronglyConnectedComponent component : components) {
             if (component.index() >= components.size()) {
@@ -64,11 +65,12 @@ public record TrinityCraftingTopology(
             }
         }
         Int2ObjectLinkedOpenHashMap<List<TrinityPatternVariant>> copiedVariants = new Int2ObjectLinkedOpenHashMap<>();
-        variantsByOutputComponent.forEach((index, variants) -> {
+        Int2ObjectMaps.fastForEach(variantsByOutputComponent, entry -> {
+            int index = entry.getIntKey();
             if (index < 0 || index >= componentCount) {
                 throw new IllegalArgumentException("A Trinity output transition index must reference a component");
             }
-            copiedVariants.put(index, List.copyOf(variants));
+            copiedVariants.put(index, List.copyOf(entry.getValue()));
         });
         variantsByOutputComponent = Int2ObjectMaps.unmodifiable(copiedVariants);
         Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityPatternVariant>> copiedProducers = new Object2ObjectLinkedOpenHashMap<>();

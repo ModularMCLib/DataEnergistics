@@ -66,6 +66,7 @@ public final class TrinityExactCycleBalanceBounds {
     }
 
     private static final class Interval {
+
         private @Nullable BigInteger lower;
         private @Nullable BigInteger upper;
     }

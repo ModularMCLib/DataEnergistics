@@ -86,8 +86,7 @@ public final class TrinityGraphPlanAssembler {
                     stageIndex,
                     false,
                     firing.variant(),
-                    firing.count(),
-                    false));
+                    firing.count()));
             stageOrder.add(stageIndex);
             mergePatternFiring(patternFirings, firing.variant(), firing.count());
             chargeStacks(stackRequests, firing.variant(), firing.count());
@@ -159,8 +158,7 @@ public final class TrinityGraphPlanAssembler {
                         stageIndex,
                         false,
                         acyclic.variant(),
-                        acyclic.count(),
-                        false));
+                        acyclic.count()));
                 stageOrder.add(stageIndex);
                 mergePatternFiring(patternFirings, acyclic.variant(), acyclic.count());
                 mergeScaled(netChange, acyclic.variant().netChange(), acyclic.count());
@@ -177,15 +175,12 @@ public final class TrinityGraphPlanAssembler {
                     stackRequests);
             IntArrayList blockStages = new IntArrayList();
             Map<AEKey, BigInteger> repeatedNet = repeatedNetChange(cycle.localOrder(), cycle.repetitions());
-            List<AEKey> internalKeys = topology.components().get(cycle.componentIndex()).keys();
-            boolean productiveRepeat = internalKeys.stream().allMatch(key -> repeatedNet.getOrDefault(key, BigInteger.ZERO).signum() >= 0) &&
-                    internalKeys.stream().anyMatch(key -> repeatedNet.getOrDefault(key, BigInteger.ZERO).signum() > 0);
-            // A structural SCC is not proof of amplification. Finite conversions are ordinary one-time stages;
-            // only an exact positive internal gain with every internal balance preserved may form a repeat block.
+            boolean productiveRepeat = cycle.hasProductiveRepeat(topology.components().get(cycle.componentIndex()).keys());
+            // A structural SCC is not proof of amplification. Only an exact positive internal gain with every
+            // internal balance preserved may form a compressed repeat block. Finite non-amplifying routes remain
+            // ordinary sequential stages, where the dependency planner validates their actual material balance.
             if (!productiveRepeat && !cycle.repetitions().equals(BigInteger.ONE)) {
-                return failure(TrinityPlanningDiagnosticCode.NO_PRODUCTIVE_CYCLE,
-                        "gui.data_energistics.trinity_planning.diagnostic.no_productive_cycle",
-                        Map.of("component", Integer.toString(cycle.componentIndex()), "phase", "repeat_gain_validation"));
+                throw new IllegalStateException("A finite Trinity route must be scheduled before stage assembly");
             }
             for (TrinityVariantFiring batch : cycle.localOrder()) {
                 int stageIndex = stages.size();
@@ -193,8 +188,7 @@ public final class TrinityGraphPlanAssembler {
                         stageIndex,
                         productiveRepeat,
                         batch.variant(),
-                        batch.count(),
-                        productiveRepeat));
+                        batch.count()));
                 stageOrder.add(stageIndex);
                 blockStages.add(stageIndex);
                 BigInteger totalCount = batch.count().multiply(cycle.repetitions());
@@ -374,8 +368,7 @@ public final class TrinityGraphPlanAssembler {
                     stageIndex,
                     false,
                     batch.variant(),
-                    batch.count(),
-                    true));
+                    batch.count()));
             stageOrder.add(stageIndex);
             mergePatternFiring(patternFirings, batch.variant(), batch.count());
             chargeStacks(stackRequests, batch.variant(), batch.count());
@@ -419,11 +412,9 @@ public final class TrinityGraphPlanAssembler {
                                           int index,
                                           boolean cycle,
                                           TrinityPatternVariant variant,
-                                          BigInteger count,
-                                          boolean sequentialBatch) {
-        Map<AEKey, BigInteger> required = sequentialBatch ?
-                requiredAtStart(variant, count) :
-                multiplyPositive(variant.inputs(), count);
+                                          BigInteger count) {
+        // Returned inputs are available to later firings in the same batch, including ordinary tool use.
+        Map<AEKey, BigInteger> required = requiredAtStart(variant, count);
         return new TrinityPlanStage(
                 index,
                 cycle,
@@ -453,14 +444,6 @@ public final class TrinityGraphPlanAssembler {
             required.put(key, amount);
         });
         return Collections.unmodifiableMap(required);
-    }
-
-    private static Map<AEKey, BigInteger> multiplyPositive(
-                                                           Map<AEKey, BigInteger> amounts,
-                                                           BigInteger multiplier) {
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>();
-        amounts.forEach((key, amount) -> result.put(key, amount.multiply(multiplier)));
-        return Collections.unmodifiableMap(result);
     }
 
     private static Map<AEKey, BigInteger> multiplySigned(

@@ -20,6 +20,7 @@ dependencies {
     testCompileOnly(forge.patchouli)
     testCompileOnly(forge.malum)
     testCompileOnly(forge.lodestone)
+    testCompileOnly(forge.extendedcrafting)
 
     // Real-machine GameTest integrations; runtime libraries are declared explicitly.
     testRuntimeOnly(forge.mystical.agriculture) { transitive = false }

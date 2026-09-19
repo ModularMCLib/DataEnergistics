@@ -1,0 +1,11 @@
+{
+	"type": "extendedcrafting:combination",
+	"input": { "item": "minecraft:nether_star" },
+	"ingredients": [
+		{ "item": "minecraft:diamond" },
+		{ "item": "minecraft:milk_bucket" }
+	],
+	"result": { "id": "minecraft:netherite_ingot", "count": 1 },
+	"power_cost": 100,
+	"power_rate": 20
+}

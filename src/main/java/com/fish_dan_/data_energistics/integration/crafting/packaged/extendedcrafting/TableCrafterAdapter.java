@@ -78,8 +78,7 @@ final class TableCrafterAdapter implements PackagedMachineAdapter {
         if (table == null || !empty(table.inventory())) return null;
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof ITableRecipe recipe) ||
-                recipe.getType() != ModRecipeTypes.TABLE.get() || recipe.getTier() > this.tier ||
-                !recipe.hasRequiredTier())
+                recipe.getType() != ModRecipeTypes.TABLE.get() || recipe.getTier() > this.tier)
             return null;
         int width = recipe instanceof ShapedTableRecipe shaped ?
                 shaped.getWidth() : table.width();
@@ -91,7 +90,14 @@ final class TableCrafterAdapter implements PackagedMachineAdapter {
         var chosen = level.getRecipeManager().getRecipeFor(ModRecipeTypes.TABLE.get(), tableInput, level);
         if (chosen.isEmpty() || !chosen.get().id().equals(holder.get().id())) return null;
         ItemStack result = recipe.assemble(tableInput, level.registryAccess());
-        var remaining = recipe.getRemainingItems(tableInput);
+        var nativeRemaining = recipe.getRemainingItems(tableInput);
+        var remaining = new ObjectArrayList<ItemStack>(table.width() * table.width());
+        for (int i = 0; i < table.width() * table.width(); i++) remaining.add(ItemStack.EMPTY);
+        if (nativeRemaining.size() != tableInput.size()) return null;
+        for (int y = 0; y < tableInput.height(); y++) for (int x = 0; x < tableInput.width(); x++) {
+            remaining.set((y + tableInput.top()) * table.width() + x + tableInput.left(),
+                    nativeRemaining.get(y * tableInput.width() + x));
+        }
         var expected = new ObjectArrayList<ItemStack>();
         expected.add(result);
         expected.addAll(remaining);
@@ -122,14 +128,17 @@ final class TableCrafterAdapter implements PackagedMachineAdapter {
                 .orElseThrow(() -> new IllegalArgumentException("Missing Extended Crafting table output"));
         for (int slot = 0; slot < inputs.size(); slot++) {
             ItemStack actual = table.inventory().getStackInSlot(slot);
-            if (!ItemStack.matches(actual, inputs.get(slot))) {
-                if (progress.getBoolean("delivered")) {
-                    throw new IllegalStateException("Extended Crafting table input changed outside this operation");
-                }
-                if (!actual.isEmpty()) return false;
+            if (progress.getBoolean("delivered")) {
+                if (!ItemStack.matches(actual, inputs.get(slot))) throw new IllegalStateException("Extended Crafting table input changed outside this operation");
+            } else if (!actual.isEmpty()) {
+                return false;
             }
         }
         if (progress.getBoolean("delivered")) return collect(operation, table, result, remaining);
+        for (int slot = 0; slot < inputs.size(); slot++) {
+            ItemStack input = inputs.get(slot);
+            if (!input.isEmpty() && !table.inventory().insertItem(slot, input.copy(), true).isEmpty()) return false;
+        }
         for (int slot = 0; slot < inputs.size(); slot++) {
             ItemStack input = inputs.get(slot);
             if (input.isEmpty()) continue;

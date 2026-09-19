@@ -1,0 +1,9 @@
+{
+	"type": "extendedcrafting:shaped_table",
+	"pattern": ["AB"],
+	"key": {
+		"A": { "item": "minecraft:milk_bucket" },
+		"B": { "item": "minecraft:amethyst_shard" }
+	},
+	"result": { "id": "minecraft:diamond", "count": 1 }
+}

@@ -59,7 +59,10 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
         for (var side : target.targetSidesFast()) {
             adjacent.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));
         }
-        boolean accepted = state(target).dispatch(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(),
+        var catalog = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting();
+        var dispatch = state(target);
+        for (var adapter : catalog.adapters()) dispatch.policy(adapter.id(), target.connectorPolicy());
+        boolean accepted = dispatch.dispatch(level, catalog,
                 context.patternDetails(), context.inputHolder(), target.connectorBindingsFast(), adjacent);
         if (accepted) {
             target.saveChanges();

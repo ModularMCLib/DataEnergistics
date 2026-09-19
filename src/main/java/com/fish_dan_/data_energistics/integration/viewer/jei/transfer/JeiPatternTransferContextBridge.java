@@ -6,7 +6,9 @@ import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEnc
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderViewerWorkstations;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
@@ -50,6 +52,13 @@ public final class JeiPatternTransferContextBridge {
         if (recipe instanceof DataChargePressRecipeView view) {
             return view.patternRecipeId();
         }
-        return recipe instanceof RecipeHolder<?> holder ? holder.id() : null;
+        if (recipe instanceof RecipeHolder<?> holder) return holder.id();
+        // Several native categories, including Actually Additions, expose Recipe rather than RecipeHolder.
+        // Resolve the identical client recipe object, never guess its ID from a displayed output.
+        var level = Minecraft.getInstance().level;
+        if (level != null && recipe instanceof Recipe<?>) {
+            for (var holder : level.getRecipeManager().getRecipes()) if (holder.value() == recipe) return holder.id();
+        }
+        return null;
     }
 }

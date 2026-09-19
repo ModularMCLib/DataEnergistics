@@ -282,10 +282,12 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         return stack;
     }
 
-    /** DE consumes one physical item from an injector per cycle even when a custom ingredient matches a larger stack. */
+    /**
+     * DE consumes one physical item from an injector per cycle even when a custom ingredient matches a larger stack.
+     */
     private static void normalizeMultiCountIngredient(ItemStack actual,
-                                                       FusionRecipePlan.PlannedIngredient ingredient,
-                                                       long cycles) {
+                                                      FusionRecipePlan.PlannedIngredient ingredient,
+                                                      long cycles) {
         if (ingredient.retained() || ingredient.count() <= 1) return;
         long expectedBefore = Math.multiplyExact(ingredient.input().getCount(), cycles);
         long consumedByNativeCore = expectedBefore - 1;

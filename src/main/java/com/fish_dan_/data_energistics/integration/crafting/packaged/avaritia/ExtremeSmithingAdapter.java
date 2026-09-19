@@ -8,12 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIn
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
-import committee.nova.mods.avaritia.common.block.extreme.ExtremeSmithingTableBlock;
-import committee.nova.mods.avaritia.common.crafting.input.ExtremeSmithingRecipeInput;
-import committee.nova.mods.avaritia.common.crafting.recipe.ExtremeSmithingRecipe;
-import committee.nova.mods.avaritia.init.registry.ModRecipeTypes;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -22,6 +17,13 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+
+import committee.nova.mods.avaritia.common.block.extreme.ExtremeSmithingTableBlock;
+import committee.nova.mods.avaritia.common.crafting.input.ExtremeSmithingRecipeInput;
+import committee.nova.mods.avaritia.common.crafting.recipe.ExtremeSmithingRecipe;
+import committee.nova.mods.avaritia.init.registry.ModRecipeTypes;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 /** Executes Avaritia's five-slot extreme smithing recipe against the native recipe implementation. */

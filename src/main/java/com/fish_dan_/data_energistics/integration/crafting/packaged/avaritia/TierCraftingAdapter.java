@@ -10,17 +10,6 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
-import committee.nova.mods.avaritia.api.common.crafting.ITierCraftingRecipe;
-import committee.nova.mods.avaritia.api.common.crafting.TierInput;
-import committee.nova.mods.avaritia.common.crafting.recipe.ShapedTableCraftingRecipe;
-import committee.nova.mods.avaritia.common.tile.TierCraftTile;
-import committee.nova.mods.avaritia.init.registry.ModRecipeTypes;
-import committee.nova.mods.avaritia.init.registry.enums.ModCraftTier;
-import committee.nova.mods.avaritia.api.common.wrapper.ItemStackWrapper;
-
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -30,7 +19,17 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+
+import committee.nova.mods.avaritia.api.common.crafting.ITierCraftingRecipe;
+import committee.nova.mods.avaritia.api.common.crafting.TierInput;
+import committee.nova.mods.avaritia.api.common.wrapper.ItemStackWrapper;
+import committee.nova.mods.avaritia.common.crafting.recipe.ShapedTableCraftingRecipe;
+import committee.nova.mods.avaritia.common.tile.TierCraftTile;
+import committee.nova.mods.avaritia.init.registry.ModRecipeTypes;
+import committee.nova.mods.avaritia.init.registry.enums.ModCraftTier;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -72,7 +71,8 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof ITierCraftingRecipe recipe) ||
                 recipe.getType() != ModRecipeTypes.CRAFTING_TABLE_RECIPE.get() ||
-                recipe.getTier() > tier.ordinal() + 1) return null;
+                recipe.getTier() > tier.ordinal() + 1)
+            return null;
 
         int size = tier.size;
         ObjectList<ItemStack> grid;

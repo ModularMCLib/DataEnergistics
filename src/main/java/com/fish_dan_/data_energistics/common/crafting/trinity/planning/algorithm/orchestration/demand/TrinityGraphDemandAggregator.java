@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.proof.TrinityCycleUnitProof;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCyclePlanSelector;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCycleSelection;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.availability.TrinityUnavailableProducers;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration.demand.cache.TrinityCycleSelectionCache;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
@@ -42,6 +43,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
@@ -150,6 +152,9 @@ public final class TrinityGraphDemandAggregator {
         private final Int2ObjectMap<TrinityMipCoefficientTemplate> cycleMipTemplates;
         private final Int2IntMap topologicalPositions;
         private final RouteSearchBudget routeSearchBudget;
+        private final ObjectSet<TrinityPatternVariant> unavailableProducers;
+        private final Object2ObjectMap<AEKey, List<TrinityPatternVariant>> feasibleProducers = new Object2ObjectLinkedOpenHashMap<>();
+        private final Int2ObjectMap<Object2ObjectMap<AEKey, List<TrinityPatternVariant>>> feasibleBoundaryProducers = new Int2ObjectOpenHashMap<>();
         private final Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> demand = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectLinkedOpenHashMap<AEKey, InputRequirement> inputShortages = new Object2ObjectLinkedOpenHashMap<>();
@@ -194,6 +199,7 @@ public final class TrinityGraphDemandAggregator {
             this.cycleMipTemplates = cycleMipTemplates;
             this.topologicalPositions = topologicalPositions(topology);
             this.routeSearchBudget = new RouteSearchBudget(limits.maxScheduleStates(), control);
+            this.unavailableProducers = TrinityUnavailableProducers.find(topology, available, control);
             this.demand.put(target, requestedAmount);
         }
 
@@ -858,10 +864,24 @@ public final class TrinityGraphDemandAggregator {
                                                          AEKey key,
                                                          int outputComponent,
                                                          boolean crossBoundaryOnly) {
+            if (this.diagnosticMode) {
+                return selectProducers(key, outputComponent, crossBoundaryOnly);
+            }
+            Object2ObjectMap<AEKey, List<TrinityPatternVariant>> cache = crossBoundaryOnly ?
+                    this.feasibleBoundaryProducers.computeIfAbsent(outputComponent, ignored -> new Object2ObjectLinkedOpenHashMap<>()) :
+                    this.feasibleProducers;
+            return cache.computeIfAbsent(key, ignored -> selectProducers(key, outputComponent, crossBoundaryOnly));
+        }
+
+        private List<TrinityPatternVariant> selectProducers(
+                                                            AEKey key,
+                                                            int outputComponent,
+                                                            boolean crossBoundaryOnly) {
             int outputPosition = this.topologicalPositions.get(outputComponent);
             return this.topology.variantsByOutputKey()
                     .getOrDefault(key, List.of())
                     .stream()
+                    .filter(variant -> this.diagnosticMode || !this.unavailableProducers.contains(variant))
                     .filter(variant -> !crossBoundaryOnly || variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1)) < outputPosition))
                     .toList();
         }
@@ -875,6 +895,7 @@ public final class TrinityGraphDemandAggregator {
                 boolean hasEarlierProducer = this.topology.variantsByOutputKey()
                         .getOrDefault(key, List.of())
                         .stream()
+                        .filter(variant -> this.diagnosticMode || !this.unavailableProducers.contains(variant))
                         .anyMatch(variant -> variant.inputs().keySet().stream().allMatch(input -> this.topologicalPositions.get(this.topology.componentByKey().getOrDefault(input, -1)) <
                                 cyclePosition));
                 if (hasEarlierProducer) {

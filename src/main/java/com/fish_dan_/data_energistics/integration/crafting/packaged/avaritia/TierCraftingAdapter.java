@@ -19,7 +19,9 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
+import com.mojang.authlib.GameProfile;
 import committee.nova.mods.avaritia.api.common.crafting.ITierCraftingRecipe;
 import committee.nova.mods.avaritia.api.common.crafting.TierInput;
 import committee.nova.mods.avaritia.api.common.wrapper.ItemStackWrapper;
@@ -27,12 +29,17 @@ import committee.nova.mods.avaritia.common.crafting.recipe.ShapedTableCraftingRe
 import committee.nova.mods.avaritia.common.tile.TierCraftTile;
 import committee.nova.mods.avaritia.init.registry.ModRecipeTypes;
 import committee.nova.mods.avaritia.init.registry.enums.ModCraftTier;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 /** Runs a recipe through Avaritia's native tier input and inventory. */
 final class TierCraftingAdapter implements PackagedMachineAdapter {
@@ -45,7 +52,7 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
 
     TierCraftingAdapter(ModCraftTier tier) {
         this.tier = tier;
-        this.id = Data_Energistics.id("avaritia_" + tier.name.toLowerCase(java.util.Locale.ROOT) + "_crafting");
+        this.id = Data_Energistics.id("avaritia_" + tier.name().toLowerCase(Locale.ROOT) + "_crafting");
     }
 
     @Override
@@ -55,7 +62,8 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(TYPE);
+        return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath(
+                "avaritia", tier.name().toLowerCase(Locale.ROOT) + "_craft"));
     }
 
     @Override
@@ -93,15 +101,18 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
         var chosen = level.getRecipeManager().getRecipeFor(ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
         if (chosen.isEmpty() || !chosen.get().id().equals(recipeId)) return null;
         ItemStack result = recipe.assemble(nativeInput, level.registryAccess());
-        var remaining = recipe.getRemainingItems(nativeInput);
+        var nativeRemaining = level.getRecipeManager().getRemainingItemsFor(
+                ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
+        var consumed = consumedSlots(nativeInput, size);
+        var returned = returnedStacks(grid, consumed, nativeRemaining);
         var expected = new ObjectArrayList<ItemStack>();
         expected.add(result);
-        expected.addAll(remaining);
+        expected.addAll(returned);
         if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
 
         CompoundTag progress = new CompoundTag();
         progress.put("inputs", saveStacks(grid, level.registryAccess()));
-        progress.put("remaining", saveStacks(remaining, level.registryAccess()));
+        progress.put("returns", saveStacks(returned, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
@@ -113,10 +124,10 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
         CompoundTag progress = operation.progress();
         int slots = tier.size * tier.size;
         ObjectList<ItemStack> inputs = readStacks(operation, progress.getList("inputs", Tag.TAG_COMPOUND));
-        ObjectList<ItemStack> remaining = readStacks(operation, progress.getList("remaining", Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> returns = readStacks(operation, progress.getList("returns", Tag.TAG_COMPOUND));
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Avaritia table result"));
-        if (inputs.size() != slots || remaining.size() != slots) {
+        if (inputs.size() != slots) {
             throw new IllegalArgumentException("Invalid persisted Avaritia table grid");
         }
         ItemStackWrapper inventory = table.getInventory();
@@ -140,17 +151,31 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
                 throw new IllegalStateException("Avaritia table input changed outside this operation");
             }
         }
-        // The native tier table is an instant crafting menu. Apply its exact remainder list after validating it.
+        var fake = FakePlayerFactory.get(operation.level(), new GameProfile(
+                UUID.nameUUIDFromBytes(operation.id().toString().getBytes(StandardCharsets.UTF_8)),
+                "data_energistics_packaged"));
+        var menu = table.createMenu(0, fake.getInventory());
+        var output = menu.getSlot(0);
+        ItemStack actual = output.getItem().copy();
+        if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected Avaritia table output");
+        output.onTake(fake, actual.copy());
+
+        var actualReturns = new ObjectArrayList<ItemStack>();
         for (int index = 0; index < slots; index++) {
-            inventory.setStackInSlot(index, ItemStack.EMPTY);
-            ItemStack returned = remaining.get(index).copy();
-            if (!returned.isEmpty()) {
-                ItemStack rejected = inventory.insertItem(index, returned.copy(), false);
-                if (!rejected.isEmpty()) throw new IllegalStateException("Avaritia table remainder cannot be retained");
-                operation.returned(AEItemKey.of(returned), returned.getCount());
-            }
+            ItemStack returned = inventory.getStackInSlot(index).copy();
+            if (!returned.isEmpty()) actualReturns.add(returned);
         }
-        operation.returned(AEItemKey.of(result), result.getCount());
+        for (int index = 0; index < fake.getInventory().getContainerSize(); index++) {
+            ItemStack returned = fake.getInventory().getItem(index).copy();
+            if (!returned.isEmpty()) actualReturns.add(returned);
+        }
+        if (!sameStacks(actualReturns, returns)) {
+            throw new IllegalStateException("Avaritia table native remainder changed");
+        }
+        for (int index = 0; index < slots; index++) inventory.setStackInSlot(index, ItemStack.EMPTY);
+        fake.getInventory().clearContent();
+        for (ItemStack returned : actualReturns) operation.returned(AEItemKey.of(returned), returned.getCount());
+        operation.returned(AEItemKey.of(actual), actual.getCount());
         operation.complete();
         return true;
     }
@@ -179,5 +204,39 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
             stacks.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
         }
         return stacks;
+    }
+
+    private static int[] consumedSlots(TierInput input, int tableSize) {
+        var consumed = new ObjectArrayList<Integer>();
+        for (int row = 0; row < input.height(); row++) {
+            for (int column = 0; column < input.width(); column++) {
+                if (!input.getItem(column, row).isEmpty()) {
+                    consumed.add((input.top() + row) * tableSize + input.left() + column);
+                }
+            }
+        }
+        return consumed.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    private static ObjectList<ItemStack> returnedStacks(ObjectList<ItemStack> grid, int[] consumed,
+                                                        List<? extends ItemStack> nativeRemaining) {
+        var consumedSet = new IntOpenHashSet();
+        for (int index : consumed) consumedSet.add(index);
+        var returned = new ObjectArrayList<ItemStack>();
+        for (int index = 0; index < grid.size(); index++) {
+            ItemStack leftover = grid.get(index).copy();
+            if (consumedSet.contains(index)) leftover.shrink(1);
+            if (!leftover.isEmpty()) returned.add(leftover);
+        }
+        for (ItemStack remainder : nativeRemaining) if (!remainder.isEmpty()) returned.add(remainder.copy());
+        return returned;
+    }
+
+    private static boolean sameStacks(List<? extends ItemStack> actual, List<? extends ItemStack> expected) {
+        var actualCounts = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        var expectedCounts = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        for (ItemStack stack : actual) actualCounts.addTo(AEItemKey.of(stack), stack.getCount());
+        for (ItemStack stack : expected) expectedCounts.addTo(AEItemKey.of(stack), stack.getCount());
+        return actualCounts.equals(expectedCounts);
     }
 }

@@ -83,10 +83,10 @@ final class FusionRecipePlan {
             ItemStack input = assigned.get(index);
             boolean consumed = groups.get(index).consumed();
             ItemStack remaining = remaining(input, consumed, groups.get(index).count());
-            if (consumed && cycles > 1 && !remaining.isEmpty()) return null;
             injectors.add(new PlannedIngredient(input, remaining, !consumed, groups.get(index).count()));
             if (!remaining.isEmpty()) {
-                long multiplier = consumed ? cycles : 1;
+                long multiplier = consumed ?
+                        Math.multiplyExact(cycles, groups.get(index).count()) : 1;
                 actualOutputs.addTo(AEItemKey.of(remaining), Math.multiplyExact(remaining.getCount(), multiplier));
             }
         }
@@ -156,9 +156,14 @@ final class FusionRecipePlan {
             throw new IllegalArgumentException("Invalid Draconic fusion ingredient count");
         }
         if (input.hasCraftingRemainingItem()) {
-            ItemStack remainder = input.getItem().getCraftingRemainingItem(input);
+            // DE's native completion path passes the complete injector stack to the
+            // remainder hook, but only consumes one physical item. Keep the
+            // single-item remainder here; the adapter multiplies it by the
+            // StackIngredient count when it settles a native cycle.
+            ItemStack unit = input.copy();
+            unit.setCount(1);
+            ItemStack remainder = input.getItem().getCraftingRemainingItem(unit);
             if (remainder.isEmpty()) return remainder;
-            remainder.setCount(Math.multiplyExact(remainder.getCount(), ingredientCount));
             return remainder;
         }
         ItemStack remaining = input.copy();

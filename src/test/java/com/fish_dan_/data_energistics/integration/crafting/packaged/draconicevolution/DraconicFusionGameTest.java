@@ -43,6 +43,8 @@ public final class DraconicFusionGameTest {
 
     private static final ResourceLocation RECIPE = Data_Energistics.id(
             "packaged/draconicevolution/awakened_core_test");
+    private static final ResourceLocation MULTI_COUNT_RECIPE = Data_Energistics.id(
+            "packaged/draconicevolution/multi_count_remainder_test");
 
     private DraconicFusionGameTest() {}
 
@@ -132,6 +134,136 @@ public final class DraconicFusionGameTest {
         helper.assertValueEqual(supplied[0].get(AEItemKey.of(Items.NETHER_STAR)), 1L, "Rejected admission must retain the catalyst");
         helper.assertValueEqual(supplied[0].get(item("wyvern_core")), 4L, "Rejected admission must retain the injector inputs");
         helper.succeed();
+    }
+
+    @TestHolder("packaged_draconic_fusion_supports_multi_count_remainder")
+    @EmptyTemplate("50")
+    @GameTest(template = "empty_50x32x50", timeoutTicks = 1200)
+    public static void multiCountIngredientReturnsEveryNativeRemainder(GameTestHelper helper) {
+        BlockPos corePosition = helper.absolutePos(new BlockPos(7, 4, 7));
+        helper.getLevel().setBlockAndUpdate(corePosition, block("crafting_core").defaultBlockState());
+        var injectors = placeInjectors(helper, corePosition);
+        TileFusionCraftingCore core = requireCore(helper, corePosition);
+        var adapter = new DraconicFusionAdapter();
+        var supplied = new KeyCounter();
+        supplied.add(AEItemKey.of(Items.NETHERITE_SCRAP), 2);
+        supplied.add(AEItemKey.of(Items.HONEY_BOTTLE), 4);
+        var pattern = new OutputPattern(List.of(
+                new GenericStack(AEItemKey.of(Items.DIAMOND), 2),
+                new GenericStack(AEItemKey.of(Items.GLASS_BOTTLE), 4)));
+        var prepared = adapter.prepare(helper.getLevel(), corePosition, Direction.UP, MULTI_COUNT_RECIPE,
+                pattern, new KeyCounter[] { supplied });
+        helper.assertTrue(prepared != null, "A StackIngredient count greater than one must prepare");
+        var operation = new PackagedOperationState(adapter.id(), MULTI_COUNT_RECIPE, corePosition, Direction.UP,
+                requirePrepared(prepared), new KeyCounter[] { supplied });
+        operation.advance(helper.getLevel(), adapter);
+        helper.onEachTick(() -> {
+            operation.advance(helper.getLevel(), adapter);
+            for (var injector : injectors) {
+                var storage = BrandonsCoreEnergyIntegration.findEnergyStorage(
+                        helper.getLevel(), injector.getBlockPos(), null);
+                if (storage != null && BrandonsCoreEnergyIntegration.supports(storage)) {
+                    BrandonsCoreEnergyIntegration.insert(storage, 1_000_000L, false);
+                }
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(operation.failure() == null, "Multi-count fusion must not fail: " + operation.failure());
+            helper.assertTrue(operation.save(helper.getLevel().registryAccess()).getBoolean("complete"),
+                    "Multi-count fusion must complete through the native state machine");
+            helper.assertTrue(injectors.stream().allMatch(injector -> injector.getInjectorStack().isEmpty()),
+                    "The multi-count ingredient must be fully consumed");
+            var outputs = operation.save(helper.getLevel().registryAccess()).getList("outputs", Tag.TAG_COMPOUND);
+            helper.assertValueEqual(outputs.size(), 2, "The result and every native remainder must be returned");
+            boolean diamond = false;
+            boolean bottles = false;
+            for (int index = 0; index < outputs.size(); index++) {
+                CompoundTag output = outputs.getCompound(index);
+                AEKey key = AEKey.fromTagGeneric(helper.getLevel().registryAccess(), output.getCompound("key"));
+                if (key.equals(AEItemKey.of(Items.DIAMOND)) && output.getString("amount").equals("2")) diamond = true;
+                if (key.equals(AEItemKey.of(Items.GLASS_BOTTLE)) && output.getString("amount").equals("4")) bottles = true;
+            }
+            helper.assertTrue(diamond, "The native result must be returned");
+            helper.assertTrue(bottles, "Every consumed honey bottle must return its glass bottle");
+        });
+    }
+
+    @TestHolder("packaged_draconic_fusion_supports_multi_count_without_remainder")
+    @EmptyTemplate("50")
+    @GameTest(template = "empty_50x32x50", timeoutTicks = 600)
+    public static void multiCountIngredientConsumesExactBatch(GameTestHelper helper) {
+        BlockPos corePosition = helper.absolutePos(new BlockPos(7, 4, 7));
+        helper.getLevel().setBlockAndUpdate(corePosition, block("crafting_core").defaultBlockState());
+        var injectors = placeInjectors(helper, corePosition);
+        var adapter = new DraconicFusionAdapter();
+        var supplied = new KeyCounter();
+        supplied.add(AEItemKey.of(Items.NETHERITE_SCRAP), 1);
+        supplied.add(AEItemKey.of(Items.IRON_INGOT), 2);
+        var pattern = new OutputPattern(List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1)));
+        var prepared = adapter.prepare(helper.getLevel(), corePosition, Direction.UP,
+                Data_Energistics.id("packaged/draconicevolution/multi_count_plain_test"), pattern,
+                new KeyCounter[] { supplied });
+        helper.assertTrue(prepared != null, "A plain StackIngredient count greater than one must prepare");
+        var operation = new PackagedOperationState(adapter.id(),
+                Data_Energistics.id("packaged/draconicevolution/multi_count_plain_test"), corePosition, Direction.UP,
+                requirePrepared(prepared), new KeyCounter[] { supplied });
+        operation.advance(helper.getLevel(), adapter);
+        helper.onEachTick(() -> {
+            operation.advance(helper.getLevel(), adapter);
+            chargeInjectors(helper, injectors);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(operation.failure() == null, "Plain multi-count fusion must not fail: " + operation.failure());
+            helper.assertTrue(operation.save(helper.getLevel().registryAccess()).getBoolean("complete"),
+                    "Plain multi-count fusion must complete");
+            helper.assertTrue(injectors.stream().allMatch(injector -> injector.getInjectorStack().isEmpty()),
+                    "A consumed multi-count batch must leave the injector empty");
+        });
+    }
+
+    @TestHolder("packaged_draconic_fusion_retains_multi_count_ingredient")
+    @EmptyTemplate("50")
+    @GameTest(template = "empty_50x32x50", timeoutTicks = 600)
+    public static void retainedMultiCountIngredientReturnsWholeBatch(GameTestHelper helper) {
+        BlockPos corePosition = helper.absolutePos(new BlockPos(7, 4, 7));
+        helper.getLevel().setBlockAndUpdate(corePosition, block("crafting_core").defaultBlockState());
+        var injectors = placeInjectors(helper, corePosition);
+        var adapter = new DraconicFusionAdapter();
+        var supplied = new KeyCounter();
+        supplied.add(AEItemKey.of(Items.NETHERITE_SCRAP), 1);
+        supplied.add(AEItemKey.of(Items.GOLD_INGOT), 2);
+        var pattern = new OutputPattern(List.of(
+                new GenericStack(AEItemKey.of(Items.DIAMOND), 1),
+                new GenericStack(AEItemKey.of(Items.GOLD_INGOT), 2)));
+        ResourceLocation recipe = Data_Energistics.id("packaged/draconicevolution/multi_count_retained_test");
+        var prepared = adapter.prepare(helper.getLevel(), corePosition, Direction.UP, recipe, pattern,
+                new KeyCounter[] { supplied });
+        helper.assertTrue(prepared != null, "A retained StackIngredient count greater than one must prepare");
+        var operation = new PackagedOperationState(adapter.id(), recipe, corePosition, Direction.UP,
+                requirePrepared(prepared), new KeyCounter[] { supplied });
+        operation.advance(helper.getLevel(), adapter);
+        helper.onEachTick(() -> {
+            operation.advance(helper.getLevel(), adapter);
+            chargeInjectors(helper, injectors);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(operation.failure() == null, "Retained multi-count fusion must not fail: " + operation.failure());
+            helper.assertTrue(operation.save(helper.getLevel().registryAccess()).getBoolean("complete"),
+                    "Retained multi-count fusion must complete");
+            helper.assertTrue(injectors.stream().allMatch(injector -> injector.getInjectorStack().isEmpty()),
+                    "The retained batch must be returned by the operation");
+            var outputs = operation.save(helper.getLevel().registryAccess()).getList("outputs", Tag.TAG_COMPOUND);
+            helper.assertTrue(outputs.size() == 2, "Retained input and result must both be returned");
+        });
+    }
+
+    private static void chargeInjectors(GameTestHelper helper, List<TileFusionCraftingInjector> injectors) {
+        for (var injector : injectors) {
+            var storage = BrandonsCoreEnergyIntegration.findEnergyStorage(helper.getLevel(), injector.getBlockPos(), null);
+            if (storage != null && BrandonsCoreEnergyIntegration.supports(storage)) {
+                BrandonsCoreEnergyIntegration.insert(storage, 1_000_000L, false);
+            }
+        }
     }
 
     private static List<TileFusionCraftingInjector> placeInjectors(GameTestHelper helper, BlockPos core) {

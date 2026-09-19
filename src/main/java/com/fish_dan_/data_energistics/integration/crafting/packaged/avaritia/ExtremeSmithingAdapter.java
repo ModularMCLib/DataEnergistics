@@ -16,15 +16,23 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
+import com.mojang.authlib.GameProfile;
 import committee.nova.mods.avaritia.common.block.extreme.ExtremeSmithingTableBlock;
 import committee.nova.mods.avaritia.common.crafting.input.ExtremeSmithingRecipeInput;
 import committee.nova.mods.avaritia.common.crafting.recipe.ExtremeSmithingRecipe;
+import committee.nova.mods.avaritia.common.menu.ExtremeSmithingMenu;
 import committee.nova.mods.avaritia.init.registry.ModRecipeTypes;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 /** Executes Avaritia's five-slot extreme smithing recipe against the native recipe implementation. */
 final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
@@ -52,14 +60,28 @@ final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         if (!recognizes(level, position)) return null;
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof ExtremeSmithingRecipe recipe)) return null;
-        var assigned = PackagedIngredientAssignment.match(new ObjectArrayList<>(recipe.getIngredients()), inputs);
+        var requirements = new ObjectArrayList<Ingredient>();
+        requirements.add(recipe.template);
+        requirements.add(recipe.base);
+        requirements.add(recipe.additions);
+        requirements.add(recipe.additions);
+        requirements.add(recipe.additions);
+        var assigned = PackagedIngredientAssignment.match(requirements, inputs);
         if (assigned == null || assigned.size() != 5) return null;
         var input = new ExtremeSmithingRecipeInput(assigned.get(0), assigned.get(1), assigned.get(2), assigned.get(3), assigned.get(4));
         if (!recipe.matches(input, level)) return null;
         var selected = level.getRecipeManager().getRecipeFor(ModRecipeTypes.EXTREME_SMITHING_RECIPE.get(), input, level);
         if (selected.isEmpty() || !selected.get().id().equals(recipeId)) return null;
         var result = recipe.assemble(input, level.registryAccess());
-        if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, ObjectArrayList.of(result))) return null;
+        var expected = new ObjectArrayList<ItemStack>();
+        expected.add(result);
+        for (var stack : assigned) {
+            if (stack.getCount() <= 1) continue;
+            ItemStack leftover = stack.copy();
+            leftover.shrink(1);
+            if (!leftover.isEmpty()) expected.add(leftover);
+        }
+        if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
         var encoded = new ListTag();
         for (var stack : assigned) encoded.add(stack.saveOptional(level.registryAccess()));
@@ -88,12 +110,34 @@ final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         if (!recipe.matches(input, operation.level()) || !ItemStack.matches(result, recipe.assemble(input, operation.level().registryAccess()))) {
             throw new IllegalStateException("Avaritia smithing recipe changed after admission");
         }
+        var selected = operation.level().getRecipeManager().getRecipeFor(
+                ModRecipeTypes.EXTREME_SMITHING_RECIPE.get(), input, operation.level());
+        if (selected.isEmpty() || !selected.get().id().equals(operation.recipeId())) {
+            throw new IllegalStateException("Avaritia smithing menu selected a different recipe");
+        }
+        var fake = FakePlayerFactory.get(operation.level(), new GameProfile(
+                UUID.nameUUIDFromBytes(operation.id().toString().getBytes(StandardCharsets.UTF_8)),
+                "data_energistics_packaged"));
+        var menu = new ExtremeSmithingMenu(
+                0, fake.getInventory(), ContainerLevelAccess.create(operation.level(), operation.position()));
+        for (int index = 0; index < inputs.size(); index++) menu.getSlot(index).set(inputs.get(index).copy());
+        menu.createResult();
+        var output = menu.getSlot(5);
+        ItemStack actual = output.getItem().copy();
+        if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected Avaritia smithing output");
+        output.onTake(fake, actual.copy());
+        var leftovers = new ObjectArrayList<ItemStack>();
+        for (int index = 0; index < inputs.size(); index++) {
+            ItemStack leftover = menu.getSlot(index).getItem().copy();
+            if (!leftover.isEmpty()) leftovers.add(leftover);
+        }
         if (!progress.getBoolean("delivered")) {
             for (var stack : inputs) if (!stack.isEmpty()) operation.delivered(AEItemKey.of(stack), stack.getCount());
             progress.putBoolean("delivered", true);
             operation.changed();
         }
-        operation.returned(AEItemKey.of(result), result.getCount());
+        for (ItemStack leftover : leftovers) operation.returned(AEItemKey.of(leftover), leftover.getCount());
+        operation.returned(AEItemKey.of(actual), actual.getCount());
         operation.complete();
         return true;
     }

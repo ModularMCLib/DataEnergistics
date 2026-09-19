@@ -27,6 +27,7 @@ import com.brandon3055.draconicevolution.api.crafting.IFusionRecipe;
 import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingCore;
 import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingInjector;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -210,19 +211,32 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         if (!ItemStack.matches(expectedCatalyst, layout.core().getCatalystStack())) {
             throw new IllegalStateException("Draconic fusion catalyst changed outside this operation");
         }
+        var normalizedStacks = new ObjectArrayList<ItemStack>();
+        var remainders = new Object2LongLinkedOpenHashMap<AEItemKey>();
         for (int index = 0; index < selected.size(); index++) {
             var ingredient = plan.injectors().get(index);
             ItemStack actual = selected.get(index).getInjectorStack();
-            normalizeMultiCountIngredient(actual, ingredient, cycles);
+            ItemStack normalized = normalizeIngredient(actual, ingredient, cycles);
             ItemStack expected = expectedAfterCycle(ingredient, nextCycles);
-            if (!ItemStack.matches(expected, actual)) {
+            if (!ItemStack.matches(expected, normalized)) {
                 throw new IllegalStateException("Draconic fusion injector changed outside this operation");
             }
+            if (!ingredient.retained() && !ingredient.remaining().isEmpty()) {
+                long remainderAmount = Math.multiplyExact((long) ingredient.remaining().getCount(), ingredient.count());
+                remainders.addTo(AEItemKey.of(ingredient.remaining()), remainderAmount);
+            }
+            normalizedStacks.add(normalized.copy());
         }
         for (var injector : layout.injectors()) {
             if (!selected.contains(injector) && !injector.getInjectorStack().isEmpty()) {
                 throw new IllegalStateException("Unselected Draconic injector contains a foreign item");
             }
+        }
+        for (int index = 0; index < selected.size(); index++) {
+            selected.get(index).setInjectorStack(normalizedStacks.get(index));
+        }
+        for (var entry : remainders.object2LongEntrySet()) {
+            operation.returned(entry.getKey(), entry.getLongValue());
         }
         layout.core().setOutputStack(ItemStack.EMPTY);
         operation.returned(AEItemKey.of(result), result.getCount());
@@ -276,25 +290,40 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
 
     private static ItemStack expectedAfterCycle(FusionRecipePlan.PlannedIngredient ingredient, long cycles) {
         if (ingredient.retained()) return ingredient.input().copy();
-        if (cycles == 0) return ingredient.remaining().copy();
+        if (cycles == 0) return ItemStack.EMPTY;
         ItemStack stack = ingredient.input().copy();
         stack.setCount(Math.toIntExact(Math.multiplyExact(stack.getCount(), cycles)));
         return stack;
     }
 
     /**
-     * DE consumes one physical item from an injector per cycle even when a custom ingredient matches a larger stack.
+     * DE consumes one physical item from an injector per cycle even when a custom
+     * ingredient matches a larger stack. Its native remainder path replaces the
+     * entire injector stack, so restore the remaining batch explicitly and return
+     * one remainder for every item the custom ingredient consumed.
      */
-    private static void normalizeMultiCountIngredient(ItemStack actual,
-                                                      FusionRecipePlan.PlannedIngredient ingredient,
-                                                      long cycles) {
-        if (ingredient.retained() || ingredient.count() <= 1) return;
+    private static ItemStack normalizeIngredient(ItemStack actual,
+                                                 FusionRecipePlan.PlannedIngredient ingredient,
+                                                 long cycles) {
+        if (ingredient.retained()) return actual;
         long expectedBefore = Math.multiplyExact(ingredient.input().getCount(), cycles);
-        long consumedByNativeCore = expectedBefore - 1;
-        if (actual.getCount() != consumedByNativeCore) {
-            throw new IllegalStateException("Draconic core consumed an unexpected multi-count fusion ingredient amount");
+        if (!ingredient.remaining().isEmpty()) {
+            if (!ItemStack.matches(actual, ingredient.remaining())) {
+                throw new IllegalStateException("Draconic core produced an unexpected fusion crafting remainder");
+            }
+            ItemStack next = ingredient.input().copy();
+            next.setCount(Math.toIntExact(Math.multiplyExact(ingredient.input().getCount(), cycles - 1)));
+            return next;
         }
-        actual.shrink(ingredient.count() - 1);
+        long consumedByNativeCore = expectedBefore - 1;
+        if (actual.getCount() != consumedByNativeCore ||
+                consumedByNativeCore > 0 && !ItemStack.isSameItemSameComponents(actual, ingredient.input())) {
+            throw new IllegalStateException("Draconic core consumed an unexpected fusion ingredient amount");
+        }
+        if (consumedByNativeCore == 0) return ItemStack.EMPTY;
+        ItemStack normalized = actual.copy();
+        if (ingredient.count() > 1) normalized.shrink(ingredient.count() - 1);
+        return normalized;
     }
 
     private static IFusionRecipe recipe(PackagedMachineOperation operation, FusionRecipePlan.Plan plan) {

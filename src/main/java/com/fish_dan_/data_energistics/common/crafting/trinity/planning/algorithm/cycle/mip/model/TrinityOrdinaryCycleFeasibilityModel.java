@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityCycleObjectiveBounds;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.reservation.TrinityFeasibilityReserveProjection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.template.TrinityMipCoefficientTemplate.Coefficient;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
@@ -273,6 +274,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
         ModelData data = modelTemplate.forPass(request, pass);
         boolean relaxed = data.model().getVariables().stream()
+                .filter(variable -> variable.getLowerLimit().compareTo(variable.getUpperLimit()) != 0)
                 .anyMatch(variable -> variable.getUpperLimit().compareTo(INTEGER_BRANCH_LIMIT) >= 0);
         if (relaxed) {
             data.model().relax(true);
@@ -285,7 +287,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                             "limit", Integer.toString(stateBudget.limit()),
                             "states", Integer.toString(stateBudget.used())));
         }
-        TrinityOjAlgoSolvePolicy.configure(data.model(), control, pass == FeasibilityPass.INSTANCE);
+        TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         long started = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
                 data.model(), Optimisation.Sense.MIN, "ordinary_" + pass.getClass().getSimpleName());
@@ -300,7 +302,9 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
         boolean objectiveProved = !relaxed && result.getState().isOptimal();
         if (!objectiveProved && !result.getState().isFeasible()) {
-            if (relaxed && !control.deadlineExceeded()) {
+            // An infeasible continuous relaxation also proves this finite integer box infeasible.
+            // Only inconclusive solver states defer to the radix backend; finite infeasibility permits expansion.
+            if (relaxed && result.getState() != Optimisation.State.INFEASIBLE && !control.deadlineExceeded()) {
                 return integerDomainLimit(result.getState().name());
             }
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {
@@ -321,7 +325,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         if (verified.value().stream().anyMatch(value -> value.signum() < 0)) {
             return inexact("variable_lower", "negative");
         }
-        SolvedModel solved = data.decode(verified.value());
+        SolvedModel solved = data.decode(verified.value(), request);
         TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         if (!exact.successful()) {
             if (relaxed && pass == FeasibilityPass.INSTANCE) {
@@ -352,7 +356,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
                     Map.of("limit", Integer.toString(stateBudget.limit()), "states", Integer.toString(stateBudget.used())));
         }
-        TrinityOjAlgoSolvePolicy.configure(data.model(), control, true);
+        TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         data.model().options.time_abort = Math.min(data.model().options.time_abort, CORRECTION_CALL_MILLIS);
         long started = System.nanoTime();
         Optimisation.Result result = TrinitySolverFailureCapture.solve(
@@ -370,7 +374,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         if (!delta.successful()) return integerDomainLimit("correction_integer");
         List<BigInteger> restored = correction.restore(delta.value());
         if (restored == null) return integerDomainLimit("correction_domain");
-        SolvedModel solved = data.decode(restored);
+        SolvedModel solved = data.decode(restored, request);
         TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         return exact.successful() ? TrinityAlgorithmResult.success(new SolvedPass(solved, false)) :
                 integerDomainLimit("correction_verification");
@@ -437,17 +441,6 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                 request.demand().requiredNetChangeLowerBounds());
         if (!exact.successful()) {
             return exact;
-        }
-        boolean exportsInternalKey = request.internalKeys().stream()
-                .anyMatch(request.demand().requiredNetChangeLowerBounds()::containsKey);
-        for (AEKey key : request.internalKeys()) {
-            if (!request.producibleInputs().contains(key) &&
-                    !request.demand().requiredNetChangeLowerBounds().containsKey(key)) {
-                int sign = exact.value().getOrDefault(key, BigInteger.ZERO).signum();
-                if (exportsInternalKey ? sign != 0 : sign < 0) {
-                    return inexact("settled_internal", key.toString());
-                }
-            }
         }
         BigInteger externalTotal = total(solved.externalInputs());
         BigInteger seedTotal = total(solved.modelSeed());
@@ -566,25 +559,8 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             setNetCoefficients(net, request, firingVariables, bound.getKey());
             net.lower(bound.getValue());
         }
-        int settlementIndex = 0;
-        boolean exportsInternalKey = request.internalKeys().stream()
-                .anyMatch(request.demand().requiredNetChangeLowerBounds()::containsKey);
-        for (AEKey key : request.internalKeys()) {
-            // A returned ingredient may still be consumed overall when a proven predecessor supplies it.
-            if (request.producibleInputs().contains(key)) {
-                continue;
-            }
-            Expression settlement = model.addExpression("settled_internal_" + settlementIndex++);
-            setNetCoefficients(settlement, request, firingVariables, key);
-            BigInteger requestedOutput = request.demand().requiredNetChangeLowerBounds().get(key);
-            if (requestedOutput != null) {
-                settlement.lower(requestedOutput);
-            } else if (exportsInternalKey) {
-                settlement.level(BigInteger.ZERO);
-            } else {
-                settlement.lower(BigInteger.ZERO);
-            }
-        }
+        // SCC membership does not make stock catalytic. The bounded reserves and final balances above
+        // permit consuming real inventory while retaining every explicitly requested restart reserve.
     }
 
     private static void setNetCoefficients(
@@ -750,18 +726,28 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                             .weight(BigDecimal.ONE.negate());
                 }
             }
-            return new ModelData(model, this);
+            boolean projectedReserves = pass == FeasibilityPass.INSTANCE && request.fixedExternalTotal().isEmpty();
+            if (projectedReserves) {
+                TrinityFeasibilityReserveProjection.apply(model, this.seedIndexes, this.externalIndexes);
+            }
+            return new ModelData(model, this, projectedReserves);
         }
     }
 
-    private record ModelData(ExpressionsBasedModel model, OrdinaryModelTemplate template) {
+    private record ModelData(ExpressionsBasedModel model, OrdinaryModelTemplate template, boolean projectedReserves) {
 
-        private SolvedModel decode(List<BigInteger> values) {
+        private SolvedModel decode(List<BigInteger> values, TrinityCycleFeasibilityRequest request) {
             Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
             Object2IntMaps.fastForEach(this.template.firingIndexes(), entry -> putPositive(firings, entry.getKey(), values.get(entry.getIntValue())));
-            return new SolvedModel(Collections.unmodifiableMap(firings),
-                    positiveAmounts(this.template.seedIndexes(), values),
-                    positiveAmounts(this.template.externalIndexes(), values));
+            Map<AEKey, BigInteger> seed = positiveAmounts(this.template.seedIndexes(), values);
+            Map<AEKey, BigInteger> external = positiveAmounts(this.template.externalIndexes(), values);
+            if (this.projectedReserves) {
+                seed = TrinityFeasibilityReserveProjection.reduce(request, firings, seed,
+                        this.template.objectiveBounds.minimumFirstInternalInput(request).max(request.seedLowerBound()));
+                external = TrinityFeasibilityReserveProjection.reduce(request, firings, external,
+                        this.template.objectiveBounds.minimumFirstExternalInput(request));
+            }
+            return new SolvedModel(Collections.unmodifiableMap(firings), seed, external);
         }
 
         private static Map<AEKey, BigInteger> positiveAmounts(Object2IntMap<AEKey> indexes, List<BigInteger> values) {

@@ -34,6 +34,17 @@ public interface CraftingProviderPublicationIndex {
     long publicationRevision();
 
     /**
+     * Settled planner-model generation, read on the server thread outside publication callbacks.
+     * Equivalent refreshes may preserve this value even though dispatch IDs and publicationRevision change.
+     * The default preserves conservative invalidation for other index implementations.
+     *
+     * @return non-negative monotonic model revision; signature-capture failures propagate to the caller
+     */
+    default long planningRevision() {
+        return publicationRevision();
+    }
+
+    /**
      * Resolves all current publications that advertised this exact pattern object.
      *
      * @param patternIdentity live pattern identity; equality-equivalent objects remain isolated

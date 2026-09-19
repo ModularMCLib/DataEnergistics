@@ -86,7 +86,7 @@ public final class TrinityJointCandidateEvaluator {
         }
         List<TrinityPatternVariant> orderedVariants = variants.stream().sorted().toList();
         Set<AEKey> externalKeys = externalReserveKeys(orderedVariants, internalKeys, demand);
-        CandidateAccounting accounting = accountCandidate(solution.firings(), internalKeys, demand, producibleInputs)
+        CandidateAccounting accounting = accountCandidate(solution.firings(), internalKeys, demand)
                 .orElseThrow(() -> new IllegalStateException(
                         "An exact Trinity MIP solution failed its demand accounting"));
         if (exceedsAvailable(accounting.externalInputs(), available, producibleInputs) ||
@@ -299,24 +299,13 @@ public final class TrinityJointCandidateEvaluator {
     private static Optional<CandidateAccounting> accountCandidate(
                                                                   Map<TrinityPatternVariant, BigInteger> firings,
                                                                   Set<AEKey> internalKeys,
-                                                                  TrinityCycleDemand demand,
-                                                                  Set<AEKey> producibleInputs) {
+                                                                  TrinityCycleDemand demand) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        boolean exportsInternalKey = internalKeys.stream()
-                .anyMatch(demand.requiredNetChangeLowerBounds()::containsKey);
-        if (internalKeys.stream().anyMatch(key -> {
-            BigInteger amount = net.getOrDefault(key, BigInteger.ZERO);
-            BigInteger requested = demand.requiredNetChangeLowerBounds().get(key);
-            if (requested != null) {
-                return amount.compareTo(requested) < 0;
-            }
-            return !producibleInputs.contains(key) && (exportsInternalKey ? amount.signum() != 0 : amount.signum() < 0);
-        })) {
-            return Optional.empty();
-        }
+        // Negative internal net change is paid for by modelSeed below, then checked against stock and
+        // replayed by the scheduler. Only an explicit net-new demand constrains the sign independently.
         for (Map.Entry<AEKey, BigInteger> bound : demand.requiredNetChangeLowerBounds().entrySet()) {
             if (net.getOrDefault(bound.getKey(), BigInteger.ZERO).compareTo(bound.getValue()) < 0) {
                 return Optional.empty();

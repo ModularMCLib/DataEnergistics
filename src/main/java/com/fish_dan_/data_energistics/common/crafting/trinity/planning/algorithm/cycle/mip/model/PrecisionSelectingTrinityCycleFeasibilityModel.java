@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityCycleObjectiveBounds;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityExactCycleBalanceBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.TrinityRadixCycleFeasibilityModel;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
@@ -69,7 +70,6 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                                                                              TrinityCycleFeasibilityRequest request,
                                                                              TrinityPlanningMode mode,
                                                                              TrinityPlanningControl control) {
-            if (request.shortageDiagnostic()) return solveShortage(request, control);
             if (control.cancellationRequested()) {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
@@ -80,12 +80,15 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         Component.translatable("gui.data_energistics.trinity_planning.mip.timeout"),
-                        Map.of("phase", "settled_seed")));
+                        Map.of("phase", "cycle_feasibility")));
             }
-            TrinityPlanningDiagnostic settledSeedFailure = settledSeedFailure(request);
-            if (settledSeedFailure != null) {
-                return TrinityAlgorithmResult.failure(settledSeedFailure);
+            if (TrinityExactCycleBalanceBounds.contradictory(request)) {
+                return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
+                        TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
+                        Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_integer_solution"),
+                        Map.of("phase", "exact_balance_bounds")));
             }
+            if (request.shortageDiagnostic()) return solveShortage(request, control);
             if (requiresRadix(request)) {
                 if (mode == TrinityPlanningMode.FIRST_FEASIBLE) {
                     TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> bounded = solveBoundedOrdinary(
@@ -164,8 +167,9 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                         TrinityPlanningMode.FIRST_FEASIBLE,
                         control);
                 if (solved.successful() ||
-                        (solved.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION &&
-                                solved.diagnostic().code() != TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT)) {
+                        solved.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
+                    // Expanding a firing box addresses proved finite-domain infeasibility, not a rejected
+                    // numerical candidate. Preserve that stop for the exact backend instead of repeating it.
                     return solved;
                 }
                 firingUpper = firingUpper.shiftLeft(1);
@@ -178,34 +182,6 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                             "phase", "bounded_ordinary_expansion",
                             "states", Integer.toString(MAX_BOUNDED_ORDINARY_DOMAINS))));
         }
-    }
-
-    /**
-     * A non-exported internal key must have zero net change when another internal key is exported. Its final
-     * reserve therefore cannot exceed real stock unless a predecessor may supply it. This contradiction holds
-     * for every firing domain; virtual diagnostic reserves deliberately bypass this executable-only check.
-     */
-    private static @Nullable TrinityPlanningDiagnostic settledSeedFailure(TrinityCycleFeasibilityRequest request) {
-        Set<AEKey> exportedKeys = request.demand().requiredNetChangeLowerBounds().keySet();
-        if (request.internalKeys().stream().noneMatch(exportedKeys::contains)) {
-            return null;
-        }
-        for (Map.Entry<AEKey, BigInteger> bound : request.demand().finalBalanceLowerBounds().entrySet()) {
-            AEKey key = bound.getKey();
-            if (!request.internalKeys().contains(key) || exportedKeys.contains(key) ||
-                    request.producibleInputs().contains(key)) {
-                continue;
-            }
-            BigInteger available = request.available().getOrDefault(key, BigInteger.ZERO);
-            if (bound.getValue().compareTo(available) > 0) {
-                return new TrinityPlanningDiagnostic(
-                        TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
-                        Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_integer_solution"),
-                        Map.of("constraint", "settled_seed", "key", key.toString(),
-                                "required", bound.getValue().toString(), "available", available.toString()));
-            }
-        }
-        return null;
     }
 
     private static boolean requiresRadix(TrinityCycleFeasibilityRequest request) {
@@ -226,17 +202,24 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                         .anyMatch(PrecisionSelectingTrinityCycleFeasibilityModel::exceedsWindow)) {
             return true;
         }
+        // Even an axis fixed to zero must not introduce an unrepresentable coefficient into the model.
+        if (request.variants().stream().flatMap(variant -> variant.netChange().values().stream())
+                .anyMatch(PrecisionSelectingTrinityCycleFeasibilityModel::exceedsWindow)) {
+            return true;
+        }
         Set<AEKey> externalKeys = OBJECTIVE_BOUNDS.externalReserveKeys(request);
         ObjectLinkedOpenHashSet<AEKey> touchedKeys = new ObjectLinkedOpenHashSet<>();
         request.variants().forEach(variant -> touchedKeys.addAll(variant.netChange().keySet()));
         touchedKeys.addAll(request.demand().finalBalanceLowerBounds().keySet());
         touchedKeys.addAll(request.demand().requiredNetChangeLowerBounds().keySet());
         for (AEKey key : touchedKeys) {
+            // Match OrdinaryModelTemplate.forPass: each firing axis has its own capped domain.
+            // logicalUpper also covers material reserves and is not the firing count of every recipe.
             BigInteger rowEnvelope = request.variants().stream()
                     .map(variant -> variant.netChange()
                             .getOrDefault(key, BigInteger.ZERO)
                             .abs()
-                            .multiply(logicalUpper))
+                            .multiply(request.firingBounds().get(variant).upperOr(logicalUpper)))
                     .reduce(BigInteger.ZERO, BigInteger::add);
             if (request.internalKeys().contains(key) || externalKeys.contains(key)) {
                 rowEnvelope = rowEnvelope.add(OBJECTIVE_BOUNDS.reserveUpperBound(request, key, logicalUpper));
@@ -245,8 +228,9 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 return true;
             }
         }
-        BigInteger firingObjectiveEnvelope = logicalUpper.multiply(
-                BigInteger.valueOf(request.variants().size()));
+        BigInteger firingObjectiveEnvelope = request.variants().stream()
+                .map(variant -> request.firingBounds().get(variant).upperOr(logicalUpper))
+                .reduce(BigInteger.ZERO, BigInteger::add);
         BigInteger seedObjectiveEnvelope = request.internalKeys().stream()
                 .map(key -> OBJECTIVE_BOUNDS.reserveUpperBound(request, key, logicalUpper))
                 .reduce(BigInteger.ZERO, BigInteger::add);

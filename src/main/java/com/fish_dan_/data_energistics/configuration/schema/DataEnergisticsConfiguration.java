@@ -185,49 +185,49 @@ public final class DataEnergisticsConfiguration {
 
     public static final class DeveloperConfigs {
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable high-frequency Trinity planning logs.",
                 "启用高频三位一体规划日志。"
         })
         public boolean trinityPlanningLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable high-frequency Trinity dispatch logs.",
                 "启用高频三位一体派发日志。"
         })
         public boolean trinityDispatchLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable Data Distribution Tower runtime logs.",
                 "启用数据分配塔运行时日志。"
         })
         public boolean dataDistributionTowerLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable AE2 crafting service runtime logs.",
                 "启用 AE2 合成服务运行时日志。"
         })
         public boolean craftingServiceLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable powered tool runtime logs.",
                 "启用能量工具运行时日志。"
         })
         public boolean poweredToolLogging = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Write standalone Trinity planning failure reports under the game log directory.",
                 "将三位一体规划失败明细写入游戏日志目录下的独立报告文件。"
         })
         public boolean trinityPlanningFailureReports = false;
 
-        @Configurable
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Capture the first failed Trinity solver model under the game log directory.",
                 "将首次失败的三位一体求解器模型捕获到游戏日志目录下。"
@@ -879,8 +879,8 @@ public final class DataEnergisticsConfiguration {
 
         @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
-                "Maximum time spent proving a Trinity plan optimal before retaining a verified feasible plan, in milliseconds.",
-                "Trinity 计划证明全局最优的最长时间，超时后保留已验证可行计划，单位毫秒。"
+                "Shared time budget for background planning in milliseconds, including compilation, route search and diagnostics. Stops at a verified executable plan or the budget; no unbounded retry. Does not limit server-thread input capture.",
+                "后台规划共享的总时间预算，单位毫秒，包含结构编译、路线搜索和诊断。找到并验证可执行方案后返回，到期停止，不要求最优解，也不启动不限时重试。服务端输入捕获不计入此预算。"
         })
         @Configurable.Range(min = 1, max = Integer.MAX_VALUE)
         public int planningBudgetMs = 30_000;

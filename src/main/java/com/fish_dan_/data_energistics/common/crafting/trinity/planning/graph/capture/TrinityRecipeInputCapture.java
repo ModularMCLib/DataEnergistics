@@ -61,9 +61,11 @@ public final class TrinityRecipeInputCapture {
     private final Function<IPatternDetails, Optional<ResourceLocation>> recipeId;
     private final TrinityPlanningControl control;
     private final int limit;
+    private final Function<AEItemKey, String> canonicalKey;
     private final Thread owner = Thread.currentThread();
     private final Iterator<AEItemKey> inventory;
-    private final Iterator<AEKey> graphKeys;
+    private final Iterator<AEItemKey> graphKeys;
+    private final ObjectLinkedOpenHashSet<Item> relevantItems = new ObjectLinkedOpenHashSet<>();
     private final Object2ObjectLinkedOpenHashMap<Item, Object2ObjectAVLTreeMap<String, AEItemKey>> candidates = new Object2ObjectLinkedOpenHashMap<>();
     private final List<TrinityCraftingGraphPattern> completed = new ObjectArrayList<>();
     private final List<Input> inputs = new ObjectArrayList<>();
@@ -87,11 +89,38 @@ public final class TrinityRecipeInputCapture {
                                      ServerLevel level, Function<AEKey, List<IPatternDetails>> patternsFor,
                                      Function<IPatternDetails, Optional<ResourceLocation>> recipeId,
                                      int limit, TrinityPlanningControl control) {
+        this(graph, graph, inventory, level, patternsFor, recipeId, limit, control);
+    }
+
+    /** Captures only selected patterns while retaining component candidates from the complete published catalog. */
+    public TrinityRecipeInputCapture(TrinityCraftingGraphSnapshot graph, TrinityCraftingGraphSnapshot catalog,
+                                     List<AEItemKey> inventory, ServerLevel level,
+                                     Function<AEKey, List<IPatternDetails>> patternsFor,
+                                     Function<IPatternDetails, Optional<ResourceLocation>> recipeId,
+                                     int limit, TrinityPlanningControl control) {
+        this(graph, catalog, inventory, level, patternsFor, recipeId, limit, control,
+                key -> TrinityCanonicalNbt.encode(key.toTagGeneric(level.registryAccess())));
+    }
+
+    /** Shares only exact-key encoding work; candidate membership and recipe validation remain request-local. */
+    public TrinityRecipeInputCapture(TrinityCraftingGraphSnapshot graph, TrinityCraftingGraphSnapshot catalog,
+                                     List<AEItemKey> inventory, ServerLevel level,
+                                     Function<AEKey, List<IPatternDetails>> patternsFor,
+                                     Function<IPatternDetails, Optional<ResourceLocation>> recipeId,
+                                     int limit, TrinityPlanningControl control, Function<AEItemKey, String> canonicalKey) {
         if (limit <= 0) throw new IllegalArgumentException("Recipe input capture requires a positive variant limit");
+        this.canonicalKey = canonicalKey;
         this.graph = graph;
         this.fallbacks = new Object2ObjectLinkedOpenHashMap<>(graph.reusableInputFallbacks());
         this.inventory = inventory.iterator();
-        this.graphKeys = graph.keys().iterator();
+        for (var pattern : graph.patterns()) {
+            for (var input : pattern.inputs()) {
+                for (var alternative : input.alternatives()) {
+                    if (alternative.stack().what() instanceof AEItemKey item) this.relevantItems.add(item.getItem());
+                }
+            }
+        }
+        this.graphKeys = this.relevantItems.stream().flatMap(item -> catalog.captureKeysForItem(item).stream()).iterator();
         this.level = level;
         this.patternsFor = patternsFor;
         this.recipeId = recipeId;
@@ -117,9 +146,8 @@ public final class TrinityRecipeInputCapture {
     private void step() {
         if (!this.indexed) {
             if (this.inventory.hasNext()) index(this.inventory.next());
-            else if (this.graphKeys.hasNext()) {
-                if (this.graphKeys.next() instanceof AEItemKey item) index(item);
-            } else this.indexed = true;
+            else if (this.graphKeys.hasNext()) index(this.graphKeys.next());
+            else this.indexed = true;
             return;
         }
         if (this.patternIndex == this.graph.patterns().size()) {
@@ -185,8 +213,9 @@ public final class TrinityRecipeInputCapture {
     }
 
     private void index(AEItemKey key) {
+        if (!this.relevantItems.contains(key.getItem())) return;
         this.candidates.computeIfAbsent(key.getItem(), ignored -> new Object2ObjectAVLTreeMap<>())
-                .put(TrinityCanonicalNbt.encode(key.toTagGeneric(this.level.registryAccess())), key);
+                .put(this.canonicalKey.apply(key), key);
     }
 
     private Iterator<AEItemKey> candidatesFor(AEKey key) {

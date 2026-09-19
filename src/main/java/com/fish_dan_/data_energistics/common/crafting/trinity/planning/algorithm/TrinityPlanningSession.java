@@ -10,8 +10,8 @@ import java.util.function.LongSupplier;
 /**
  * Request-local owner of the monotonic planning budget and cooperative cancellation source.
  * <p>
- * Structural compilation and feasibility fallback use cancellation-only controls. The initial solve uses a bounded
- * control created from the remaining request budget. This object is thread-confined and is never cached.
+ * Structural compilation, route search and diagnostic work share one deadline. No retry replenishes the budget.
+ * Server-thread input capture happens before this session. This object is thread-confined and is never cached.
  */
 public final class TrinityPlanningSession {
 
@@ -29,22 +29,16 @@ public final class TrinityPlanningSession {
         return new TrinityPlanningSession(cancellation, nanoClock, planningBudgetNanos, progress);
     }
 
-    private final BooleanSupplier cancellation;
-    private final LongSupplier nanoClock;
-    private final long planningBudgetNanos;
-    private final long startedNanos;
     private final TrinityPlanningMetrics metrics;
+    private final TrinityPlanningControl control;
 
     private TrinityPlanningSession(
                                    BooleanSupplier cancellation,
                                    LongSupplier nanoClock,
                                    long planningBudgetNanos,
                                    TrinityPlanningProgressReporter progress) {
-        this.cancellation = cancellation;
-        this.nanoClock = nanoClock;
-        this.planningBudgetNanos = planningBudgetNanos;
-        this.startedNanos = nanoClock.getAsLong();
         this.metrics = TrinityPlanningMetrics.create(progress);
+        this.control = TrinityPlanningControl.create(cancellation, nanoClock, planningBudgetNanos, this.metrics);
     }
 
     /** Starts one solver phase whose counters are published through this request's detached reporter. */
@@ -53,24 +47,18 @@ public final class TrinityPlanningSession {
     }
 
     /**
-     * @return cancellation-only control used for compilation and first-feasible fallback
+     * @return shared bounded control used for compilation and every first-feasible attempt
      */
     public TrinityPlanningControl feasibilityControl() {
-        return TrinityPlanningControl.unbounded(this.cancellation, this.metrics);
+        return this.control;
     }
 
     /**
-     * Creates a bounded control from the remaining request budget. An empty result means compilation already consumed
-     * the complete bounded allowance and the caller must enter cancellation-only feasibility directly.
+     * Returns the same bounded control while time remains. Empty means the request must stop, not start a fresh pass.
      */
     public Optional<TrinityPlanningControl> boundedControl() {
         long remaining = remainingPlanningNanos();
-        return remaining == 0L ? Optional.empty() :
-                Optional.of(TrinityPlanningControl.create(
-                        this.cancellation,
-                        this.nanoClock,
-                        remaining,
-                        this.metrics));
+        return remaining == 0L ? Optional.empty() : Optional.of(this.control);
     }
 
     /** @return time spent in actual ojAlgo passes across the complete request */
@@ -102,11 +90,6 @@ public final class TrinityPlanningSession {
      * @return remaining non-negative planning budget
      */
     public long remainingPlanningNanos() {
-        long now = this.nanoClock.getAsLong();
-        if (now < this.startedNanos) {
-            throw new IllegalStateException("The Trinity planning session clock moved backwards");
-        }
-        long elapsed = now - this.startedNanos;
-        return elapsed >= this.planningBudgetNanos ? 0L : this.planningBudgetNanos - elapsed;
+        return this.control.remainingNanos();
     }
 }

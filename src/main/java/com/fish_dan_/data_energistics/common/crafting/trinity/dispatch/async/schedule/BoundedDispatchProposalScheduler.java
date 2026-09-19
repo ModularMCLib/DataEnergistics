@@ -178,13 +178,9 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
             }
         } catch (CancellationException exception) {
             if (!ticket.closed()) {
-                failed = true;
-                Data_Energistics.LOGGER.error(
-                        "Trinity dispatch proposal calculation was unexpectedly cancelled for worker {} job {}",
-                        request.lease().workerNumber(),
-                        request.lease().jobId(),
-                        exception);
-                ticket.complete(new DispatchProposalTicket.Failed(exception));
+                // The shared candidate cache cancels an obsolete capture revision when a newer server-thread
+                // capacity snapshot supersedes it. This is expected contention, not a Governor failure.
+                ticket.complete(DispatchProposalTicket.NoCapacity.INSTANCE);
             }
         } catch (RuntimeException exception) {
             if (!ticket.closed()) {

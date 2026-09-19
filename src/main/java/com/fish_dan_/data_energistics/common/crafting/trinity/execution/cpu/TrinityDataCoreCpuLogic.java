@@ -1962,8 +1962,11 @@ final class TrinityDataCoreCpuLogic {
                                                                CraftingDispatchWindow dispatchWindow,
                                                                boolean nativeSingleCraftFallback,
                                                                boolean countedDispatch) {
-        if (nativeSingleCraftFallback && (details == extractionDetails ||
-                extractionDetails instanceof TrinityBoundPatternDetails bound && bound.preservesNativeInputs(details))) {
+        // Exact CPU extraction creates a wrapper even when every emitted key is unchanged. Such a wrapper
+        // must not require a bound-input extension from a provider that already accepts the original pattern.
+        boolean nativeInputs = details == extractionDetails ||
+                extractionDetails instanceof TrinityBoundPatternDetails bound && bound.preservesNativeInputs(details);
+        if (nativeSingleCraftFallback && nativeInputs) {
             return CountedCraftingProviderAdapters.prepareNativeSingleCraft(
                     provider,
                     details,
@@ -1972,7 +1975,7 @@ final class TrinityDataCoreCpuLogic {
         return CountedCraftingProviderAdapters.prepare(
                 provider,
                 details,
-                extractionDetails,
+                nativeInputs ? details : extractionDetails,
                 prototype,
                 nativeSingleCraftFallback ? 1L : offeredCount,
                 snapshot,

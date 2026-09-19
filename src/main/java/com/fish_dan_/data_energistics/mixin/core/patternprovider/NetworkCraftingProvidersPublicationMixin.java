@@ -40,6 +40,11 @@ public abstract class NetworkCraftingProvidersPublicationMixin
     }
 
     @Override
+    public long planningRevision() {
+        return this.dataEnergistics$publicationIndex.planningRevision();
+    }
+
+    @Override
     public List<CraftingProviderId> providerIdsFor(IPatternDetails patternIdentity) {
         return this.dataEnergistics$publicationIndex.providerIdsFor(patternIdentity);
     }

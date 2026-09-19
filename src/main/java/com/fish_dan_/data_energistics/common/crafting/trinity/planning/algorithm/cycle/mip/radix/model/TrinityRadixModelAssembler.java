@@ -48,7 +48,7 @@ public final class TrinityRadixModelAssembler {
      *
      * @param request      immutable SCC feasibility request
      * @param pass         current sequential lexicographic pass
-     * @param logicalUpper upper bound for every logical axis in this representability domain
+     * @param logicalUpper temporary upper bound for firing counts; reserves include coefficient-scaled consumption
      */
     public TrinityRadixBuiltModel assemble(
                                            TrinityCycleFeasibilityRequest request,
@@ -58,6 +58,9 @@ public final class TrinityRadixModelAssembler {
             throw new IllegalArgumentException("A Trinity radix logical upper bound cannot be negative");
         }
         TrinityRadixLinearEncoder model = new TrinityRadixLinearEncoder(this.codec);
+        // One execution can consume thousands of fluid units. A firing-count cap is not a material cap.
+        // Derive a complete reserve envelope from the same bounded firing request as the ordinary backend.
+        BigInteger reserveUpper = this.exactBounds.reserveDomainUpper(request, logicalUpper);
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, TrinityRadixVariable> firingVariables = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < request.variants().size(); index++) {
             TrinityPatternVariant variant = request.variants().get(index);
@@ -76,13 +79,13 @@ public final class TrinityRadixModelAssembler {
                 request.internalKeys(),
                 request,
                 "seed_",
-                logicalUpper);
+                reserveUpper);
         Object2ObjectLinkedOpenHashMap<AEKey, TrinityRadixVariable> externalVariables = reserveVariables(
                 model,
                 this.exactBounds.externalReserveKeys(request),
                 request,
                 "external_",
-                logicalUpper);
+                reserveUpper);
         addConservation(model, request, firingVariables, seedVariables, externalVariables);
 
         TrinityRadixVariable seedTotal = model.addTotal("seed_total", seedVariables.values());
@@ -231,25 +234,8 @@ public final class TrinityRadixModelAssembler {
                     netTerms(request, bound.getKey(), firingVariables),
                     bound.getValue());
         }
-        int settlementIndex = 0;
-        boolean exportsInternalKey = request.internalKeys().stream()
-                .anyMatch(request.demand().requiredNetChangeLowerBounds()::containsKey);
-        for (AEKey key : request.internalKeys()) {
-            // Required net production is already constrained above; external supply may cover consumption, not output.
-            if (request.producibleInputs().contains(key)) {
-                continue;
-            }
-            String name = "settled_internal_" + settlementIndex++;
-            Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> terms = netTerms(request, key, firingVariables);
-            BigInteger requestedOutput = request.demand().requiredNetChangeLowerBounds().get(key);
-            if (requestedOutput != null) {
-                model.addGreaterOrEqual(name, terms, requestedOutput);
-            } else if (exportsInternalKey) {
-                model.addExact(name, terms, BigInteger.ZERO);
-            } else {
-                model.addGreaterOrEqual(name, terms, BigInteger.ZERO);
-            }
-        }
+        // Match the ordinary model: finite reserves may be consumed. Only demand declares net production
+        // and retained final balances; a structural cycle alone does not require restoring every item.
     }
 
     private static Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> netTerms(

@@ -43,7 +43,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.T
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture.NetworkCraftingGraphCaptureSource;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture.TrinityCraftingGraphRebuilder;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture.TrinityCraftingProviderRevision;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventorySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressMeasure;
@@ -252,14 +251,20 @@ public abstract class CraftingServiceMixin
                 settings.defaultQuantityMode);
         Optional<TrinityCraftingGraphSnapshot> graph = data_energistics$trinityCraftingGraphSnapshot();
         CraftingProviderPublicationIndex publications = data_energistics$craftingProviderPublicationIndex();
-        long publicationRevision = publications.publicationRevision();
+        long planningRevision;
+        try {
+            planningRevision = publications.planningRevision();
+        } catch (RuntimeException exception) {
+            // Signature capture crosses third-party pattern APIs; fail this request through AE2's future boundary.
+            return CompletableFuture.failedFuture(exception);
+        }
         Optional<TrinityCpuStorageCapacity> maxTrinityCapacity = dataEnergistics$maxPlanningTrinityCapacity(
                 actionSource);
         if (maxTrinityCapacity.isEmpty()) {
             boolean requiresTrinity;
             try {
                 requiresTrinity = graph
-                        .filter(snapshot -> snapshot.revision() == publicationRevision)
+                        .filter(snapshot -> snapshot.revision() == planningRevision)
                         .map(snapshot -> dataEnergistics$requiresTrinityDynamicOutput(snapshot, what))
                         .orElseGet(() -> dataEnergistics$requiresTrinityDynamicOutputFromProviders(what));
             } catch (RuntimeException exception) {
@@ -275,7 +280,7 @@ public abstract class CraftingServiceMixin
                 return dataEnergistics$noEligibleTrinityCpuDynamicOutputPlan(
                         what,
                         amount,
-                        publicationRevision);
+                        planningRevision);
             }
             progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.DELEGATED_TO_AE2,
@@ -338,7 +343,7 @@ public abstract class CraftingServiceMixin
         long gridScope = publications.publicationScope();
         long graphRevision = graph
                 .map(TrinityCraftingGraphSnapshot::revision)
-                .orElse(publications.publicationRevision());
+                .orElseGet(publications::planningRevision);
         if (DataEnergisticsConfiguration.INSTANCE.developer.craftingServiceLogging) {
             Data_Energistics.LOGGER.info(
                     "Trinity planning inventory captured request={} target={} requestedAmount={} revision={} finiteKeys={} unlimitedKeys={} inventorySentinelProbes={}",
@@ -840,8 +845,7 @@ public abstract class CraftingServiceMixin
                     DataEnergisticsConfiguration.INSTANCE.trinity.crafting.graphRebuildBudgetMs);
             this.dataEnergistics$trinityCraftingGraphRebuilder.advance(budgetNanos);
         } catch (RuntimeException exception) {
-            long revision = ((TrinityCraftingProviderRevision) this.craftingProviders)
-                    .data_energistics$trinityCraftingProviderRevision();
+            long revision = data_energistics$craftingProviderPublicationIndex().publicationRevision();
             if (revision != this.dataEnergistics$lastLoggedGraphFailureRevision) {
                 this.dataEnergistics$lastLoggedGraphFailureRevision = revision;
                 Data_Energistics.LOGGER.error(

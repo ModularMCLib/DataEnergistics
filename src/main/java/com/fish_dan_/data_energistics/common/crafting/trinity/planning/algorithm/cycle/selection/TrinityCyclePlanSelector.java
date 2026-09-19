@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.proof.TrinityCycleUnitProof;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.seed.TrinityCycleSeedRequirement;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.opportunity.TrinityPlanningAttempt;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityCompressedScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
@@ -170,7 +171,12 @@ public final class TrinityCyclePlanSelector {
             if (!selectedResult.successful()) {
                 return selectedResult;
             }
-            TrinityCycleSelection selected = selectedResult.value();
+            TrinityAlgorithmResult<TrinityCycleSelection> executionSelection = ordinaryFiniteSelection(
+                    component, selectedResult.value(), remainingStates, control);
+            if (!executionSelection.successful()) {
+                return executionSelection;
+            }
+            TrinityCycleSelection selected = executionSelection.value();
             if (!satisfiesDemand(selected, refinedDemand)) {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
@@ -233,6 +239,45 @@ public final class TrinityCyclePlanSelector {
             }
             refinedDemand = nextDemand;
         }
+    }
+
+    /** Materializes finite conversions as safe batches without expanding one stage per logical repetition. */
+    private static TrinityAlgorithmResult<TrinityCycleSelection> ordinaryFiniteSelection(
+                                                                                         TrinityStronglyConnectedComponent component,
+                                                                                         TrinityCycleSelection selected,
+                                                                                         int maxStates,
+                                                                                         TrinityPlanningControl control) {
+        if (selected.repetitions().equals(BigInteger.ONE) || selected.hasProductiveRepeat(component.keys())) {
+            return TrinityAlgorithmResult.success(selected);
+        }
+        if (control.cancellationRequested()) {
+            return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
+                    TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
+                    Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
+                    Map.of()));
+        }
+        int remainingStates = maxStates - selected.scheduleStates();
+        if (remainingStates <= 0) {
+            return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
+                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
+                    Component.translatable("gui.data_energistics.trinity_planning.diagnostic.search_limit"),
+                    Map.of("limit", Integer.toString(maxStates), "phase", "finite_route_schedule")));
+        }
+        var firings = new Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger>();
+        selected.prefixOrder().forEach(batch -> firings.merge(batch.variant(), batch.count(), BigInteger::add));
+        selected.localOrder().forEach(batch -> firings.merge(
+                batch.variant(), batch.count().multiply(selected.repetitions()), BigInteger::add));
+        selected.suffixOrder().forEach(batch -> firings.merge(batch.variant(), batch.count(), BigInteger::add));
+        var scheduled = TrinityCompressedScheduler.create().schedule(
+                firings, selected.initialInputs(), remainingStates, control);
+        if (!scheduled.successful()) {
+            return TrinityAlgorithmResult.failure(scheduled.diagnostic());
+        }
+        return TrinityAlgorithmResult.success(new TrinityCycleSelection(
+                selected.componentIndex(), List.of(), scheduled.value().batches(), BigInteger.ONE, List.of(),
+                selected.minimumSeed(), selected.initialInputs(), selected.netChange(), selected.exportableNet(),
+                Math.addExact(selected.scheduleStates(), scheduled.value().statesVisited()), selected.mipNanos(),
+                selected.quality(), selected.retainedSeed(), selected.seedRefinementPasses()));
     }
 
     private static boolean satisfiesFinalBounds(

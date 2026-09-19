@@ -175,7 +175,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         BigInteger proofUpper = null;
         try {
             while (true) {
-                TrinityRadixModelPass pass = TrinityRadixModelPass.External.INSTANCE;
+                TrinityRadixModelPass pass = TrinityRadixModelPass.Feasibility.INSTANCE;
                 control.recordSolverModel();
                 TrinityRadixBuiltModel built = this.modelAssembler.assemble(request, pass, logicalUpper);
                 TrinityAlgorithmResult<Map<Variable, BigInteger>> witness = this.objectiveSearch.findFeasible(

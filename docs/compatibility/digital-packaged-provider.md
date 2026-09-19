@@ -29,7 +29,7 @@
 | Extended Crafting | 末影合成器、通量合成器、四级工作台、组合合成核心 | 组合核心已覆盖原生能耗、产物和桶返还物；组合配方的更多特殊余物仍需继续验证 |
 | Actually Additions | 充能台 | 原子再构机未完成，充能台尚未实际运行验证 |
 | Malum | 精魂灌注、精魂聚焦代码 | 尚未完成真实机器回归验证 |
-| Avaritia | Sculk、Nether、End、Extreme 四级工作台 | Extreme Smithing 使用临时菜单库存，未接入持久封包执行 |
+| Avaritia | Sculk、Nether、End、Extreme 四级工作台、Extreme Smithing | Extreme Smithing 按原生五槽配方执行一次性封包任务，不依赖持久机器方块 |
 | Mekanism More Machines | 尚未接入 | 六类大型机器待实现 |
 
 ## 后续待完成的工作

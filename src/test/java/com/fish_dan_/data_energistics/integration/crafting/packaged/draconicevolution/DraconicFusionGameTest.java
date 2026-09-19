@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.integration.energy.brandonscore.BrandonsCo
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 
@@ -15,6 +16,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.Items;
@@ -46,7 +48,8 @@ public final class DraconicFusionGameTest {
 
     @TestHolder("packaged_draconic_fusion_uses_real_energy_and_returns_native_output")
     @EmptyTemplate("50")
-    @GameTest(template = "empty_50x32x50", timeoutTicks = 420)
+    // Wyvern injectors need 220 charging ticks plus 220 crafting ticks, before transition/collection overhead.
+    @GameTest(template = "empty_50x32x50", timeoutTicks = 600)
     public static void fusionConsumesEnergyAndReturnsNativeOutput(GameTestHelper helper) {
         BlockPos corePosition = helper.absolutePos(new BlockPos(7, 4, 7));
         helper.getLevel().setBlockAndUpdate(corePosition, block("crafting_core").defaultBlockState());
@@ -82,15 +85,23 @@ public final class DraconicFusionGameTest {
             }
         });
         helper.succeedWhen(() -> {
-            helper.assertTrue(operation.failure() == null, "The real fusion operation must not fail");
+            helper.assertTrue(operation.failure() == null, "The real fusion operation must not fail: " + operation.failure());
             helper.assertTrue(operation.save(helper.getLevel().registryAccess()).getBoolean("complete"),
-                    "Operation completion must follow the native fusion result");
+                    "Operation completion must follow the native fusion result: " + nativeState(core, operation) + ", energy=" + deliveredEnergy[0]);
             helper.assertTrue(deliveredEnergy[0] >= 1_000_000L,
                     "The native injectors must receive the recipe's real OP cost");
             helper.assertTrue(core.getCatalystStack().isEmpty() && core.getOutputStack().isEmpty(),
                     "The consumed catalyst and harvested output must leave the core empty");
             helper.assertTrue(injectors.stream().allMatch(injector -> injector.getInjectorStack().isEmpty()),
                     "Consumed native ingredients must leave every selected injector empty");
+            helper.assertTrue(injectors.stream().allMatch(injector -> injector.getInjectorEnergy() == 0),
+                    "The real fusion craft must consume the supplied injector energy");
+            var outputs = operation.save(helper.getLevel().registryAccess()).getList("outputs", Tag.TAG_COMPOUND);
+            helper.assertValueEqual(outputs.size(), 1, "The return ledger must contain exactly the native result");
+            var output = outputs.getCompound(0);
+            helper.assertValueEqual(AEKey.fromTagGeneric(helper.getLevel().registryAccess(), output.getCompound("key")),
+                    item("awakened_core"), "The harvested result must retain its actual item identity");
+            helper.assertValueEqual(output.getString("amount"), "1", "The return ledger must contain one actual result");
         });
     }
 

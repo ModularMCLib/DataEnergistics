@@ -33,6 +33,15 @@ final class FusionSnapshot implements IFusionInventory {
         return new FusionSnapshot(catalyst, injectors, minimumTier);
     }
 
+    /** Mirrors the full physical batch so count-sensitive native recipe selection stays read-only. */
+    static FusionSnapshot deliveredInventory(FusionRecipePlan.Plan plan, TechLevel minimumTier) {
+        var injectors = new ObjectArrayList<IFusionInjector>();
+        for (var ingredient : plan.injectors()) {
+            injectors.add(new SnapshotInjector(FusionRecipePlan.deliveredInjector(plan, ingredient), minimumTier));
+        }
+        return new FusionSnapshot(FusionRecipePlan.deliveredCatalyst(plan), injectors, minimumTier);
+    }
+
     @Override
     public ItemStack getCatalystStack() {
         return this.catalyst;

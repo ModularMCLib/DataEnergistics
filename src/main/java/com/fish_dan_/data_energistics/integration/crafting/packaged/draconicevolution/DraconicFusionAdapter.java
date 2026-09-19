@@ -84,9 +84,10 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         try {
             plan = FusionRecipePlan.prepare(level, recipe, minimumTier, pattern, inputs);
             if (plan == null || plan.injectors().size() != eligible.size()) return null;
-            // Reject accepted envelopes that cannot fit the real catalyst or injector slots.
-            FusionRecipePlan.deliveredCatalyst(plan);
-            for (var ingredient : plan.injectors()) FusionRecipePlan.deliveredInjector(plan, ingredient);
+            // Validate physical slot limits and the recipe the real core will select before accepting materials.
+            var snapshot = FusionSnapshot.deliveredInventory(plan, minimumTier);
+            var selected = level.getRecipeManager().getRecipeFor(DraconicAPI.FUSION_RECIPE_TYPE.get(), snapshot, level);
+            if (selected.isEmpty() || !selected.get().id().equals(recipeId)) return null;
         } catch (ArithmeticException | IllegalArgumentException exception) {
             return null;
         }

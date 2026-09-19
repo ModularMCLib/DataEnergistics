@@ -195,19 +195,21 @@ public final class TrinityGraphPlanAssembler {
                 mergePatternFiring(patternFirings, batch.variant(), totalCount);
                 chargeStacks(stackRequests, batch.variant(), totalCount);
             }
-            if (productiveRepeat) repeatBlocks.add(new TrinityCycleRepeatBlock(
-                    repeatIndex++,
-                    IntList.of(blockStages.toIntArray()),
-                    cycle.repetitions(),
-                    minimumBalances(cycle.localOrder()),
-                    repeatedNet));
+            if (productiveRepeat) {
+                repeatBlocks.add(new TrinityCycleRepeatBlock(
+                        repeatIndex++,
+                        IntList.of(blockStages.toIntArray()),
+                        cycle.repetitions(),
+                        minimumBalances(cycle.localOrder()),
+                        repeatedNet));
+                cycle.minimumSeed().forEach((key, amount) -> minimumSeed.merge(key, amount, BigInteger::max));
+            }
             appendOneTimeStages(
                     cycle.suffixOrder(),
                     stages,
                     stageOrder,
                     patternFirings,
                     stackRequests);
-            cycle.minimumSeed().forEach((key, amount) -> minimumSeed.merge(key, amount, BigInteger::max));
             cycle.retainedSeed().forEach((key, amount) -> retainedSeed.merge(key, amount, BigInteger::max));
             seedRefinementPasses = Math.addExact(seedRefinementPasses, cycle.seedRefinementPasses());
             mergeScaled(netChange, cycle.netChange(), BigInteger.ONE);

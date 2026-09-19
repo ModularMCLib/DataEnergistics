@@ -238,7 +238,9 @@ public final class TrinityGraphDemandAggregator {
                 // Check before rollback or candidate selection, including while propagating a failure.
                 if (this.control.cancellationRequested()) return cancelled();
                 if (this.control.deadlineExceeded()) return failed(deadlineExceeded().diagnostic());
-                if (pendingFailure != null && !canTryAlternative(pendingFailure)) return failed(pendingFailure);
+                // A diagnostic pass reports one route. Its completed report and secondary stops are terminal;
+                // revisiting producer choices would retain evidence from the abandoned diagnostic route.
+                if (pendingFailure != null && (this.diagnosticMode || !canTryAlternative(pendingFailure))) return failed(pendingFailure);
                 SearchFrame frame = frames.pop();
                 if (frame instanceof ProducerChoiceFrame choice) {
                     if (pendingFailure != null) {
@@ -857,6 +859,20 @@ public final class TrinityGraphDemandAggregator {
             }
             registerAcyclic(selected, count, rank);
             applyReverseDemand(selected, count, crossBoundaryInput ? key : null);
+            if (!this.diagnosticMode) {
+                // Inputs with no producer anywhere in the captured graph cannot receive later coproduct credit.
+                // Their aggregate demand only grows, so exceeding remaining stock already disproves this branch.
+                for (AEKey input : selected.inputs().keySet()) {
+                    if (this.unlimitedInventory.contains(input) ||
+                            !this.topology.variantsByOutputKey().getOrDefault(input, List.of()).isEmpty()) continue;
+                    BigInteger required = positiveDemand(input);
+                    if (availableUpTo(input, required).compareTo(required) >= 0) continue;
+                    BigInteger reserved = reserveFromInventory(input, required);
+                    recordShortage(input, required, reserved, required.subtract(reserved));
+                    mergeState(this.demand, input, required.negate());
+                    return insufficient();
+                }
+            }
             return TrinityAlgorithmResult.success(StepSuccess.INSTANCE);
         }
 

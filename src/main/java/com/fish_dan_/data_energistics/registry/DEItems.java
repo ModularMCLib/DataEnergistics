@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.meteorite.DataMeteoriteCompassItem;
 import com.fish_dan_.data_energistics.item.orbital.OrbitalControlTerminalItem;
 import com.fish_dan_.data_energistics.item.order.OrderPackageItem;
+import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.PoweredAxeItem;
 import com.fish_dan_.data_energistics.item.powered.PoweredCuttingKnifeItem;
@@ -135,6 +136,8 @@ public final class DEItems {
             () -> new PartItem<>(new Item.Properties(), DataSanctumInterfacePart.class, DataSanctumInterfacePart::new));
     public static final DeferredItem<BlockItem> ADAPTIVE_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.ADAPTIVE_PATTERN_PROVIDER);
     public static final DeferredItem<BlockItem> DIGITAL_PACKAGED_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER);
+    public static final DeferredItem<PackagedRecoveryItem> PACKAGED_RECOVERY = ITEMS.register(
+            "packaged_recovery", () -> new PackagedRecoveryItem(new Item.Properties().stacksTo(1).fireResistant()));
     public static final DeferredItem<AdaptivePatternProviderUpgradeItem> ADAPTIVE_PATTERN_PROVIDER_UPGRADE = ITEMS.register(
             "adaptive_pattern_provider_upgrade",
             () -> new AdaptivePatternProviderUpgradeItem(new Item.Properties()));

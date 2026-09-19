@@ -1641,8 +1641,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
 
     @Override
     public void addDrops(List<ItemStack> drops) {
-        super.addDrops(drops);
-
         for (ItemStack stack : this.patternSlotOverflow) {
             drops.add(stack.copy());
         }
@@ -1652,6 +1650,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             target.dispatch().addDropsFast(target, fastDrops);
             drops.addAll(fastDrops);
         }
+        // Routes may escrow their return inventory before AE2 converts its remaining contents into physical drops.
+        super.addDrops(drops);
+    }
+
+    /** Applies a physical route recovery receipt; copying memory-card settings never invokes this path. */
+    public boolean restoreRecoveryItem(ItemStack receipt) {
+        var target = activeDispatchTarget();
+        return target != null && target.dispatch().restoreRecoveryItem(target, receipt);
     }
 
     @Override

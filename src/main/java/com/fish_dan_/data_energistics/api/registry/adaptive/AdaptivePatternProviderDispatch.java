@@ -136,6 +136,15 @@ public interface AdaptivePatternProviderDispatch {
     /** Clears registration-owned runtime state when the provider is emptied. */
     default void clearState(AdaptivePatternProviderDispatchTarget target) {}
 
+    /**
+     * Restores one physical recovery receipt into this selected route on the server thread.
+     * The caller consumes the item only on success. Implementations must reject incompatible receipts
+     * and occupied destinations without mutating either, and prevent duplicate redemption.
+     */
+    default boolean restoreRecoveryItem(AdaptivePatternProviderDispatchTarget target, ItemStack receipt) {
+        return false;
+    }
+
     /** Notifies the registration that installed provider settings changed. */
     default void onProviderStateChanged(AdaptivePatternProviderDispatchTarget target) {}
 

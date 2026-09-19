@@ -28,10 +28,13 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /** Adjacent-only 36-slot host for the shared real-machine dispatcher. */
 public final class DigitalPackagedPatternProviderLogic extends PatternProviderLogic implements IGridTickable, BoundPatternInputProvider {
@@ -55,6 +58,34 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
 
     public PackagedDispatchState dispatchState() {
         return this.dispatch;
+    }
+
+    @Override
+    public void addDrops(List<ItemStack> drops) {
+        if (this.owner.getBlockEntity().getLevel() instanceof ServerLevel level) {
+            var receipt = this.dispatch.prepareRecoveryDrop(level, this.owner.getBlockEntity().getBlockPos(), "standalone", getReturnInv());
+            if (!receipt.isEmpty()) {
+                drops.add(receipt);
+                this.owner.saveChanges();
+            }
+        }
+        super.addDrops(drops);
+    }
+
+    @Override
+    public void clearContent() {
+        this.dispatch.ensureCanClear();
+        super.clearContent();
+        this.dispatch = new PackagedDispatchState();
+    }
+
+    /** Restores a dismantled provider receipt on the server thread, then wakes actual machine processing. */
+    public boolean restoreRecoveryItem(ItemStack receipt) {
+        if (!(this.owner.getBlockEntity().getLevel() instanceof ServerLevel level) ||
+                !this.dispatch.restoreRecovery(level, this.owner.getBlockEntity().getBlockPos(), "standalone", receipt, getReturnInv()))
+            return false;
+        onReturnInventoryChanged();
+        return true;
     }
 
     @Override

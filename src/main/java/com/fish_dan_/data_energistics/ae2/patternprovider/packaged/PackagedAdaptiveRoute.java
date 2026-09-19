@@ -13,8 +13,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Same-dimension remote automation selected by installing the digital packaged provider in an adaptive host. */
 public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispatch {
@@ -89,6 +91,32 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
     @Override
     public void readState(AdaptivePatternProviderDispatchTarget target, CompoundTag tag, HolderLookup.Provider registries) {
         target.routeState(State.class, State::new).dispatch = PackagedDispatchState.load(tag, registries);
+    }
+
+    @Override
+    public void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {
+        if (!(target.level() instanceof ServerLevel level)) return;
+        var receipt = state(target).prepareRecoveryDrop(level, target.providerPos(), "adaptive", target.returnInventory());
+        if (!receipt.isEmpty()) {
+            drops.add(receipt);
+            target.saveChanges();
+        }
+    }
+
+    @Override
+    public void clearState(AdaptivePatternProviderDispatchTarget target) {
+        state(target).ensureCanClear();
+        target.clearRouteState();
+    }
+
+    @Override
+    public boolean restoreRecoveryItem(AdaptivePatternProviderDispatchTarget target, ItemStack receipt) {
+        if (!(target.level() instanceof ServerLevel level) || !target.isSelected() ||
+                !state(target).restoreRecovery(level, target.providerPos(), "adaptive", receipt, target.returnInventory()))
+            return false;
+        target.saveChanges();
+        target.alertDevice();
+        return true;
     }
 
     private static final class State {

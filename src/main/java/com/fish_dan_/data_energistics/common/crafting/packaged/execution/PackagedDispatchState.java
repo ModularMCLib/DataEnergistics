@@ -5,25 +5,34 @@ import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
+import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryStore;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
+import appeng.helpers.patternprovider.PatternProviderReturnInventory;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
+
+import java.util.UUID;
 
 /** Per-provider operations and independent machine-family policies. World objects are resolved afresh each tick. */
 public final class PackagedDispatchState {
@@ -33,6 +42,7 @@ public final class PackagedDispatchState {
     private final Object2IntOpenHashMap<ResourceLocation> cursors = new Object2IntOpenHashMap<>();
     private final Object2ObjectLinkedOpenHashMap<ResourceLocation, ConnectorPolicy> policies = new Object2ObjectLinkedOpenHashMap<>();
     private int tickCursor;
+    private @Nullable UUID recoveryReceipt;
 
     public int pendingOperations() {
         return this.operations.size();
@@ -45,7 +55,55 @@ public final class PackagedDispatchState {
     }
 
     public boolean hasWork() {
-        return !this.operations.isEmpty();
+        return this.recoveryReceipt == null && !this.operations.isEmpty();
+    }
+
+    /** Freezes the source and escrows its exact assets before vanilla drop conversion can truncate long counts. */
+    public ItemStack prepareRecoveryDrop(ServerLevel level, BlockPos origin, String kind, PatternProviderReturnInventory returns) {
+        if (this.recoveryReceipt == null) {
+            if (this.operations.isEmpty() && returns.isEmpty()) return ItemStack.EMPTY;
+            var state = new CompoundTag();
+            save(state, level.registryAccess());
+            var receipt = UUID.randomUUID();
+            PackagedRecoveryStore.get(level).deposit(receipt, origin, kind, state, returns.writeToTag(level.registryAccess()));
+            this.recoveryReceipt = receipt;
+            returns.clear();
+        }
+        return PackagedRecoveryItem.create(level, origin, this.recoveryReceipt);
+    }
+
+    /** Restores once into an empty same-kind host at the original position. Failed checks never consume the receipt. */
+    public boolean restoreRecovery(ServerLevel level, BlockPos origin, String kind, ItemStack receipt, PatternProviderReturnInventory returns) {
+        UUID id = PackagedRecoveryItem.receipt(level, origin, receipt);
+        if (id == null || !returns.isEmpty() || !this.operations.isEmpty() && !id.equals(this.recoveryReceipt)) return false;
+        var store = PackagedRecoveryStore.get(level);
+        var payload = store.inspect(id, origin, kind);
+        if (payload == null) return false;
+        var restored = load(payload.getCompound("state"), level.registryAccess());
+        var encodedReturns = payload.getList("returns", Tag.TAG_COMPOUND);
+        if (restored.recoveryReceipt != null || encodedReturns.size() > returns.size()) throw new IllegalArgumentException("Invalid recovery destination state");
+        for (int slot = 0; slot < encodedReturns.size(); slot++) {
+            var entry = encodedReturns.getCompound(slot);
+            if (!entry.isEmpty()) {
+                var stack = GenericStack.readTag(level.registryAccess(), entry);
+                if (stack == null || stack.amount() <= 0) throw new IllegalArgumentException("Invalid packaged recovery return amount");
+            }
+        }
+        this.operations.clear();
+        this.operations.addAll(restored.operations);
+        this.policies.clear();
+        this.policies.putAll(restored.policies);
+        this.cursors.clear();
+        this.cursors.putAll(restored.cursors);
+        this.tickCursor = 0;
+        this.recoveryReceipt = null;
+        returns.readFromTag(encodedReturns, level.registryAccess());
+        store.redeem(id);
+        return true;
+    }
+
+    public void ensureCanClear() {
+        if (!this.operations.isEmpty() && this.recoveryReceipt == null) throw new IllegalStateException("Cannot erase packaged tasks before recovery handoff");
     }
 
     public ConnectorPolicy policy(ResourceLocation group) {
@@ -58,6 +116,7 @@ public final class PackagedDispatchState {
 
     public boolean dispatch(ServerLevel level, PackagedRecipeCatalog catalog, IPatternDetails pattern,
                             KeyCounter[] inputs, ObjectList<ConnectorLink> remote, ObjectList<ConnectorLink> adjacent) {
+        if (this.recoveryReceipt != null) return false;
         var stack = pattern.getDefinition().getReadOnlyStack();
         var reference = EncodedPatternRecipeReference.get(stack);
         var recipe = EncodedPatternRecipeReference.getProcessingRecipeId(stack);
@@ -106,6 +165,7 @@ public final class PackagedDispatchState {
     }
 
     public boolean tick(ServerLevel level, PackagedRecipeCatalog catalog, MEStorage returns, IActionSource source) {
+        if (this.recoveryReceipt != null) return false;
         int work = Math.min(TICK_OPERATIONS, this.operations.size());
         boolean changed = false;
         while (work-- > 0 && !this.operations.isEmpty()) {
@@ -129,6 +189,7 @@ public final class PackagedDispatchState {
     }
 
     public void save(CompoundTag tag, HolderLookup.Provider registries) {
+        if (this.recoveryReceipt != null) tag.putUUID("recovery_receipt", this.recoveryReceipt);
         var tasks = new ListTag();
         for (var operation : this.operations) tasks.add(operation.save(registries));
         tag.put("operations", tasks);
@@ -147,6 +208,10 @@ public final class PackagedDispatchState {
 
     public static PackagedDispatchState load(CompoundTag tag, HolderLookup.Provider registries) {
         var state = new PackagedDispatchState();
+        if (tag.contains("recovery_receipt")) {
+            if (!tag.hasUUID("recovery_receipt")) throw new IllegalArgumentException("Invalid packaged recovery receipt");
+            state.recoveryReceipt = tag.getUUID("recovery_receipt");
+        }
         var positions = new LongOpenHashSet();
         var tasks = tag.getList("operations", Tag.TAG_COMPOUND);
         for (int index = 0; index < tasks.size(); index++) {

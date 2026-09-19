@@ -704,6 +704,7 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     private AdaptivePatternProviderState getAdaptiveState() {
         if (this.adaptiveState == null) {
             this.adaptiveState = new AdaptivePatternProviderState(this, this::getProviderSlotLimit);
+            this.adaptiveState.refreshProviderSlotLimit();
         }
         return this.adaptiveState;
     }

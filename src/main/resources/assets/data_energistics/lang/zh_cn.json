@@ -1,6 +1,12 @@
 {
 	"block.data_energistics.adaptive_pattern_provider": "自适应样板供应器",
 	"block.data_energistics.digital_packaged_pattern_provider": "数位化封包样板供应器",
+	"item.data_energistics.packaged_recovery": "封包任务恢复凭证",
+	"item.data_energistics.packaged_recovery.description": "对原位置的空闲同类供应器使用，恢复任务和回收库存。复制凭证不能重复领取。",
+	"item.data_energistics.packaged_recovery.origin": "原位置：%s [%s, %s, %s]",
+	"item.data_energistics.packaged_recovery.restored": "封包任务和回收库存已恢复",
+	"item.data_energistics.packaged_recovery.invalid": "恢复存档处理失败，凭证已保留，请查看服务端日志",
+	"item.data_energistics.packaged_recovery.unavailable": "无法恢复：请确认原维度、位置、供应器类型和空闲状态；凭证可能已使用",
 	"block.data_energistics.amethyst_tuning_fork": "紫水晶音叉",
 	"block.data_energistics.astronomical_mirror": "天文观测镜",
 	"block.data_energistics.astronomical_mirror_panel": "天文观测镜面板",

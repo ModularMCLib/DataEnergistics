@@ -864,7 +864,8 @@ public final class TrinityGraphDemandAggregator {
                 // Their aggregate demand only grows, so exceeding remaining stock already disproves this branch.
                 for (AEKey input : selected.inputs().keySet()) {
                     if (this.unlimitedInventory.contains(input) ||
-                            !this.topology.variantsByOutputKey().getOrDefault(input, List.of()).isEmpty()) continue;
+                            !this.topology.variantsByOutputKey().getOrDefault(input, List.of()).isEmpty())
+                        continue;
                     BigInteger required = positiveDemand(input);
                     if (availableUpTo(input, required).compareTo(required) >= 0) continue;
                     BigInteger reserved = reserveFromInventory(input, required);

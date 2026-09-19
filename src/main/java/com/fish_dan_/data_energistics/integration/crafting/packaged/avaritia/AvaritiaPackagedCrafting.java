@@ -16,5 +16,6 @@ public final class AvaritiaPackagedCrafting implements DataEnergisticsPlugin {
         registry.packagedCrafting().register(new TierCraftingAdapter(ModCraftTier.NETHER));
         registry.packagedCrafting().register(new TierCraftingAdapter(ModCraftTier.END));
         registry.packagedCrafting().register(new TierCraftingAdapter(ModCraftTier.EXTREME));
+        registry.packagedCrafting().register(new ExtremeSmithingAdapter());
     }
 }

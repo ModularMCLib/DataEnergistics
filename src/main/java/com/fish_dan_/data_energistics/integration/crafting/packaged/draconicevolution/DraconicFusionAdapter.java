@@ -212,8 +212,10 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         }
         for (int index = 0; index < selected.size(); index++) {
             var ingredient = plan.injectors().get(index);
+            ItemStack actual = selected.get(index).getInjectorStack();
+            normalizeMultiCountIngredient(actual, ingredient, cycles);
             ItemStack expected = expectedAfterCycle(ingredient, nextCycles);
-            if (!ItemStack.matches(expected, selected.get(index).getInjectorStack())) {
+            if (!ItemStack.matches(expected, actual)) {
                 throw new IllegalStateException("Draconic fusion injector changed outside this operation");
             }
         }
@@ -278,6 +280,19 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         ItemStack stack = ingredient.input().copy();
         stack.setCount(Math.toIntExact(Math.multiplyExact(stack.getCount(), cycles)));
         return stack;
+    }
+
+    /** DE consumes one physical item from an injector per cycle even when a custom ingredient matches a larger stack. */
+    private static void normalizeMultiCountIngredient(ItemStack actual,
+                                                       FusionRecipePlan.PlannedIngredient ingredient,
+                                                       long cycles) {
+        if (ingredient.retained() || ingredient.count() <= 1) return;
+        long expectedBefore = Math.multiplyExact(ingredient.input().getCount(), cycles);
+        long consumedByNativeCore = expectedBefore - 1;
+        if (actual.getCount() != consumedByNativeCore) {
+            throw new IllegalStateException("Draconic core consumed an unexpected multi-count fusion ingredient amount");
+        }
+        actual.shrink(ingredient.count() - 1);
     }
 
     private static IFusionRecipe recipe(PackagedMachineOperation operation, FusionRecipePlan.Plan plan) {

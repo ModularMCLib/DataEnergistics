@@ -53,7 +53,6 @@ final class FusionRecipePlan {
         for (var ingredient : recipe.fusionIngredients()) {
             int count = ingredientCount(ingredient.get());
             // DE's standard completion path consumes one item from each injector, irrespective of custom counts.
-            if (count != 1) return null;
             try {
                 if (ingredient.consume()) perCycle = Math.addExact(perCycle, count);
                 else retainedTotal = Math.addExact(retainedTotal, count);
@@ -83,9 +82,9 @@ final class FusionRecipePlan {
         for (int index = 1; index < assigned.size(); index++) {
             ItemStack input = assigned.get(index);
             boolean consumed = groups.get(index).consumed();
-            ItemStack remaining = remaining(input, consumed);
+            ItemStack remaining = remaining(input, consumed, groups.get(index).count());
             if (consumed && cycles > 1 && !remaining.isEmpty()) return null;
-            injectors.add(new PlannedIngredient(input, remaining, !consumed));
+            injectors.add(new PlannedIngredient(input, remaining, !consumed, groups.get(index).count()));
             if (!remaining.isEmpty()) {
                 long multiplier = consumed ? cycles : 1;
                 actualOutputs.addTo(AEItemKey.of(remaining), Math.multiplyExact(remaining.getCount(), multiplier));
@@ -151,11 +150,19 @@ final class FusionRecipePlan {
                 stackIngredient.getCount() : 1;
     }
 
-    private static ItemStack remaining(ItemStack input, boolean consumed) {
+    private static ItemStack remaining(ItemStack input, boolean consumed, int ingredientCount) {
         if (!consumed) return input.copy();
-        if (input.hasCraftingRemainingItem()) return input.getItem().getCraftingRemainingItem(input);
+        if (ingredientCount <= 0 || input.getCount() < ingredientCount) {
+            throw new IllegalArgumentException("Invalid Draconic fusion ingredient count");
+        }
+        if (input.hasCraftingRemainingItem()) {
+            ItemStack remainder = input.getItem().getCraftingRemainingItem(input);
+            if (remainder.isEmpty()) return remainder;
+            remainder.setCount(Math.multiplyExact(remainder.getCount(), ingredientCount));
+            return remainder;
+        }
         ItemStack remaining = input.copy();
-        remaining.shrink(1);
+        remaining.shrink(ingredientCount);
         return remaining;
     }
 
@@ -182,6 +189,7 @@ final class FusionRecipePlan {
             encoded.put("input", ingredient.input().save(registries));
             encoded.put("remaining", ingredient.remaining().saveOptional(registries));
             encoded.putBoolean("retained", ingredient.retained());
+            encoded.putInt("count", ingredient.count());
             injectors.add(encoded);
         }
         tag.put("injectors", injectors);
@@ -202,7 +210,8 @@ final class FusionRecipePlan {
             injectors.add(new PlannedIngredient(
                     read(operation, ingredient, "input", false),
                     read(operation, ingredient, "remaining", true),
-                    ingredient.getBoolean("retained")));
+                    ingredient.getBoolean("retained"),
+                    Math.max(1, ingredient.getInt("count"))));
         }
         if (cycles <= 0 || energy < 0 || tier.isEmpty() || injectors.isEmpty()) {
             throw new IllegalArgumentException("Invalid persisted Draconic fusion plan");
@@ -226,7 +235,7 @@ final class FusionRecipePlan {
     record Plan(ItemStack catalyst, ObjectList<PlannedIngredient> injectors,
                 ItemStack result, long cycles, long energy, String tier) {}
 
-    record PlannedIngredient(ItemStack input, ItemStack remaining, boolean retained) {}
+    record PlannedIngredient(ItemStack input, ItemStack remaining, boolean retained, int count) {}
 
     private record Group(Ingredient ingredient, int count, boolean consumed, boolean catalyst) {}
 }

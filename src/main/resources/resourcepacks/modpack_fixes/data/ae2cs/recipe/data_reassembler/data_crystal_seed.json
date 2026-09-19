@@ -1,4 +1,10 @@
 {
+	"neoforge:conditions": [
+		{
+			"type": "neoforge:mod_loaded",
+			"modid": "ae2cs"
+		}
+	],
 	"type": "data_energistics:data_reassembler",
 	"inputs": {
 		"items": [

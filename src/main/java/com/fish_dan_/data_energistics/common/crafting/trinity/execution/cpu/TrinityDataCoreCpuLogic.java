@@ -3971,11 +3971,15 @@ final class TrinityDataCoreCpuLogic {
 
     /** Invalidates display rows without treating an observation reset as a newly available physical tool. */
     void residentObservationChanged(ObjectSet<AEKey> keys) {
-        beginReusableMutation();
-        try {
-            keys.forEach(this::postChange);
-        } finally {
-            endReusableMutation();
+        // Observations are transient display/cache state, not a persistent custody mutation.
+        // postChange still joins a surrounding real mutation when one is already in progress.
+        for (AEKey key : keys) {
+            try {
+                postChange(key);
+            } catch (RuntimeException failure) {
+                Data_Energistics.LOGGER.error("Trinity CPU {} observer failed after reusable observation changed for {}",
+                        this.cpu.number(), key, failure);
+            }
         }
     }
 

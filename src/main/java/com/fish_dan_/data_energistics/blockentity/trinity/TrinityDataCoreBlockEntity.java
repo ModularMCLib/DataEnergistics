@@ -453,6 +453,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         }
         long tickStartedAtNanos = System.nanoTime();
         try {
+            this.craftingRuntime.flushRestoredStateSave();
             tickServerState();
             if (currentLevel instanceof ServerLevel serverLevel) {
                 refundPendingInfiniteDrives(serverLevel);

@@ -481,7 +481,7 @@ public final class TrinityDataCoreVirtualCpu implements ICraftingCPU {
      * Marks the host block entity dirty after CPU state changes.
      */
     void markDirty() {
-        this.host.setChanged();
+        this.runtime.markCpuDirty();
     }
 
     TrinityDataCoreCpuLogic logic() {

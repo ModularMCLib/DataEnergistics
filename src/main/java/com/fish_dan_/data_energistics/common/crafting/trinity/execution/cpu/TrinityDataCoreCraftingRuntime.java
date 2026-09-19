@@ -120,6 +120,8 @@ public final class TrinityDataCoreCraftingRuntime {
     private long preparedDispatchTick = Long.MIN_VALUE;
     private boolean mainStructureFormed;
     private boolean paused;
+    private int stateRestoreDepth;
+    private boolean restoredStateNeedsSave;
 
     public TrinityDataCoreCraftingRuntime(TrinityDataCoreBlockEntity host) {
         this.host = host;
@@ -667,6 +669,16 @@ public final class TrinityDataCoreCraftingRuntime {
             return;
         }
 
+        this.stateRestoreDepth++;
+        try {
+            restoreWorkerLogic(registries);
+        } finally {
+            // setLevel may still be inside chunk post-load. Do not flush world updates on scope exit.
+            this.stateRestoreDepth--;
+        }
+    }
+
+    private void restoreWorkerLogic(HolderLookup.Provider registries) {
         var iterator = this.pendingWorkerLogic.int2ObjectEntrySet().iterator();
         while (iterator.hasNext()) {
             Int2ObjectMap.Entry<CompoundTag> entry = iterator.next();
@@ -691,6 +703,27 @@ public final class TrinityDataCoreCraftingRuntime {
         }
         releaseReleasableWorkers();
         rebuildRuntimeCaches();
+    }
+
+    /** Coalesces persistence corrections made during restoration without re-entering chunk loading. */
+    void markCpuDirty() {
+        if (this.stateRestoreDepth != 0 || this.restoredStateNeedsSave) {
+            this.restoredStateNeedsSave = true;
+            return;
+        }
+        this.host.setChanged();
+    }
+
+    /**
+     * Flushes restoration corrections from the host's normal server tick, including paused or inactive CPUs.
+     * Must not be called from setLevel/onLoad or a restoration finally block. No-op when no correction occurred;
+     * retains the pending flag if the host cannot complete its save notification.
+     */
+    public void flushRestoredStateSave() {
+        if (this.stateRestoreDepth == 0 && this.restoredStateNeedsSave) {
+            this.host.setChanged();
+            this.restoredStateNeedsSave = false;
+        }
     }
 
     /**

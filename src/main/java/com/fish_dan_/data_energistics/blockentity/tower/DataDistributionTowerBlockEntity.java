@@ -1578,18 +1578,32 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     public static void onPotentialNodeRemoved(Level level, BlockPos targetPos) {
-        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(targetPos)));
-        if (towerPositions == null || towerPositions.isEmpty()) {
-            return;
+        ObjectOpenHashSet<DataDistributionTowerBlockEntity> candidates = new ObjectOpenHashSet<>();
+
+        // The chunk index only covers the automatic range. Explicit point-to-point links may be anywhere, so
+        // include every loaded tower in this level when a block is removed. The final tracked-target check keeps
+        // this event local to towers that actually own the broken anchor.
+        Map<BlockPos, DataDistributionTowerBlockEntity> loadedTowers = LOADED_TOWERS.get(level);
+        if (loadedTowers != null) {
+            candidates.addAll(loadedTowers.values());
         }
 
-        for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
-            DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
-            if (tower == null || !tower.isWithinTowerCoverage(targetPos)) {
-                continue;
+        // Keep the indexed lookup as a fallback while a tower is transitioning into or out of the loaded-tower
+        // registry. This also avoids losing a removal event during chunk lifecycle callbacks.
+        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(targetPos)));
+        if (towerPositions != null) {
+            for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
+                DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
+                if (tower != null) {
+                    candidates.add(tower);
+                }
             }
+        }
 
-            tower.removeTarget(targetPos);
+        for (DataDistributionTowerBlockEntity tower : candidates) {
+            if (tower.hasTrackedTarget(targetPos)) {
+                tower.removeTarget(targetPos);
+            }
         }
     }
 
@@ -2666,6 +2680,15 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         invalidateTowerNetworkTopology(previousNetwork);
         invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
         this.setChanged();
+        // A broken target can be removed by a world event rather than a connector interaction. Push the updated
+        // binding list immediately so the client drops the corresponding connector line without waiting for a menu
+        // refresh or another block-entity update.
+        this.markForClientUpdate();
+    }
+
+    private boolean hasTrackedTarget(BlockPos targetPos) {
+        BlockPos normalizedPos = normalizeTargetPos(targetPos);
+        return this.linkGraph.containsLinked(normalizedPos) || this.targetTransferModes.containsKey(normalizedPos);
     }
 
     private void addTowerBinding(BlockPos targetPos, TowerBindingSource source) {

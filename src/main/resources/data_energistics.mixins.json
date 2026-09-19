@@ -5,6 +5,10 @@
 	"plugin": "com.fish_dan_.data_energistics.mixin.DataEnergisticsMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"mekanismmore.LargeMachineOutputOwnershipMixin",
+		"mekanismmore.LargeMachineItemEjectorMixin",
+		"mekanismmore.LargeSeparatorDumpingMixin",
+		"mekanismmore.LargeRotaryModeMixin",
 		"core.packaged.PackagedBlockEntityTickMixin",
 		"core.packaged.PackagedItemMergeMixin",
 		"core.packaged.PackagedReturnInventorySizeMixin",

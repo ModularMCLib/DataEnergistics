@@ -21,6 +21,11 @@ dependencies {
     testCompileOnly(forge.malum)
     testCompileOnly(forge.lodestone)
     testCompileOnly(forge.extendedcrafting)
+    testCompileOnly(forge.mek)
+    testCompileOnly(forge.mekmm)
+    testCompileOnly(forge.amek)
+    testCompileOnly(forge.actually.additions)
+    testCompileOnly(forge.avaritia)
 
     // Real-machine GameTest integrations; runtime libraries are declared explicitly.
     testRuntimeOnly(forge.mystical.agriculture) { transitive = false }
@@ -34,6 +39,10 @@ dependencies {
     testRuntimeOnly(forge.extendedcrafting) { transitive = false }
     testRuntimeOnly(forge.malum) { transitive = false }
     testRuntimeOnly(forge.lodestone) { transitive = false }
+    testRuntimeOnly(forge.mekmm) { transitive = false }
+    testRuntimeOnly(forge.amek) { transitive = false }
+    testRuntimeOnly(forge.actually.additions) { transitive = false }
+    testRuntimeOnly(forge.avaritia) { transitive = false }
 
     jarJar(api(forge.mdlib.get()))
     jarJar(api(libs.ojalgo.get()))

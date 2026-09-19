@@ -302,7 +302,9 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
         boolean objectiveProved = !relaxed && result.getState().isOptimal();
         if (!objectiveProved && !result.getState().isFeasible()) {
-            if (relaxed && !control.deadlineExceeded()) {
+            // An infeasible continuous relaxation also proves this finite integer box infeasible.
+            // Only inconclusive solver states defer to the radix backend; finite infeasibility permits expansion.
+            if (relaxed && result.getState() != Optimisation.State.INFEASIBLE && !control.deadlineExceeded()) {
                 return integerDomainLimit(result.getState().name());
             }
             if (control.deadlineExceeded() || result.getState() != Optimisation.State.INFEASIBLE) {

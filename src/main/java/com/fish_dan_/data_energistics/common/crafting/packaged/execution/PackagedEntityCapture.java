@@ -75,6 +75,9 @@ public final class PackagedEntityCapture {
                 !(event.getEntity() instanceof ItemEntity item) || owner(item) != null)
             return;
         item.getPersistentData().putUUID(OWNER, scope.operation());
+        // A provider can be offline longer than the vanilla five-minute item lifetime.
+        // These physical inputs/products remain owned until the operation collects them.
+        item.setUnlimitedLifetime();
     }
 
     private record Scope(ServerLevel level, UUID operation) {}

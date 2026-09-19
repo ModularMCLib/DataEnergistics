@@ -10,5 +10,6 @@ public final class ActuallyAdditionsPackagedCrafting implements DataEnergisticsP
     @Override
     public void register(DataEnergisticsRegistry registry) {
         registry.packagedCrafting().register(new EmpowererAdapter());
+        registry.packagedCrafting().register(new AtomicReconstructorAdapter());
     }
 }

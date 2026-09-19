@@ -18,20 +18,20 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingCore;
-import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingInjector;
 import com.brandon3055.brandonscore.api.TechLevel;
 import com.brandon3055.draconicevolution.api.DraconicAPI;
 import com.brandon3055.draconicevolution.api.crafting.IFusionRecipe;
+import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingCore;
+import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingInjector;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
@@ -171,13 +171,9 @@ public final class DraconicFusionGameTest {
         var active = core.getActiveRecipe();
         var stacks = new ObjectArrayList<String>();
         for (var injector : core.getInjectors()) {
-            stacks.add((injector instanceof TileFusionCraftingInjector tile ? tile.getBlockPos().toString() : "snapshot")
-                    + "=" + injector.getInjectorStack().getHoverName().getString()
-                    + "x" + injector.getInjectorStack().getCount());
+            stacks.add((injector instanceof TileFusionCraftingInjector tile ? tile.getBlockPos().toString() : "snapshot") + "=" + injector.getInjectorStack().getHoverName().getString() + "x" + injector.getInjectorStack().getCount());
         }
-        return "failure=" + operation.failure() + ", crafting=" + core.isCrafting() + ", active="
-                + (active == null ? "null" : active.id()) + ", state=" + core.getFusionState()
-                + ", injectors=" + core.getInjectors().size() + ", stacks=" + stacks;
+        return "failure=" + operation.failure() + ", crafting=" + core.isCrafting() + ", active=" + (active == null ? "null" : active.id()) + ", state=" + core.getFusionState() + ", injectors=" + core.getInjectors().size() + ", stacks=" + stacks;
     }
 
     private static TileFusionCraftingCore requireCore(GameTestHelper helper, BlockPos position) {

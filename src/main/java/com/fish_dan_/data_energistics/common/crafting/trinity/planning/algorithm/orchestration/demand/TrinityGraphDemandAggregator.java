@@ -276,6 +276,8 @@ public final class TrinityGraphDemandAggregator {
             return switch (cursor) {
                 case ComponentCursor component -> advanceComponent(component);
                 case AcyclicKeyCursor acyclic -> advanceAcyclic(acyclic);
+                case CycleSupplyCursor supply -> advanceCycleSupply(supply);
+                case CycleSolveCursor cycle -> advanceCycleSolve(cycle.component(), cycle.position());
                 case CycleInputCursor cycleInput -> advanceCycleInput(cycleInput);
             };
         }
@@ -299,15 +301,39 @@ public final class TrinityGraphDemandAggregator {
             if (!component.cyclic()) {
                 return new ContinueAction(new AcyclicKeyCursor(component, 0, cursor.position()));
             }
-            if (this.diagnosticMode) {
-                return advanceDiagnosticCycle(component, cursor.position());
+            return new ContinueAction(new CycleSupplyCursor(component, 0, cursor.position()));
+        }
+
+        /** External producers are real alternatives even when their output belongs to a structural cycle. */
+        private SearchAction advanceCycleSupply(CycleSupplyCursor cursor) {
+            TrinityStronglyConnectedComponent component = cursor.component();
+            if (cursor.keyIndex() >= component.keys().size()) {
+                return new ContinueAction(new CycleSolveCursor(component, cursor.position()));
             }
+            SearchCursor continuation = new CycleSupplyCursor(component, cursor.keyIndex() + 1, cursor.position());
+            AEKey key = component.keys().get(cursor.keyIndex());
+            BigInteger required = positiveDemand(key);
+            if (required.signum() <= 0 || (!key.equals(this.target) && availableUpTo(key, required).equals(required))) {
+                return new ContinueAction(continuation);
+            }
+            List<TrinityPatternVariant> candidates = producersFor(key, component.index(), true);
+            if (candidates.isEmpty()) return new ContinueAction(continuation);
+            // Leave existing SCC inventory available as restart seed for other demands. A first-feasible
+            // external route may supply the full amount; it makes no minimum-material claim.
+            ProducerChoiceFrame choice = new ProducerChoiceFrame(component, key, required, false,
+                    candidates, continuation, this.mutationJournal.checkpoint());
+            choice.cycleFallback = continuation;
+            return new ChoiceAction(choice);
+        }
+
+        private SearchAction advanceCycleSolve(TrinityStronglyConnectedComponent component, int position) {
+            if (this.diagnosticMode) return advanceDiagnosticCycle(component, position);
             TrinityAlgorithmResult<Optional<PreparedCycle>> prepared = prepareCycleComponent(component);
             if (!prepared.successful()) {
                 return failureAction(failed(prepared.diagnostic()));
             }
             if (prepared.value().isEmpty()) {
-                return new ContinueAction(new ComponentCursor(cursor.position() - 1));
+                return new ContinueAction(new ComponentCursor(position - 1));
             }
             PreparedCycle cycle = prepared.value().orElseThrow();
             return new ContinueAction(new CycleInputCursor(
@@ -315,7 +341,7 @@ public final class TrinityGraphDemandAggregator {
                     cycle,
                     List.copyOf(cycle.solution().initialInputs().entrySet()),
                     0,
-                    cursor.position()));
+                    position));
         }
 
         private TrinityAlgorithmResult<TrinityGraphDemandSolution> completeDemand() {
@@ -781,6 +807,12 @@ public final class TrinityGraphDemandAggregator {
                 this.mutationJournal.rollback(choice.checkpoint);
                 choice.recordFirstFailure(diagnostic);
             }
+            if (choice.cycleFallback != null) {
+                SearchCursor fallback = choice.cycleFallback;
+                choice.cycleFallback = null;
+                this.mutationJournal.rollback(choice.checkpoint);
+                return new ContinueAction(fallback);
+            }
             if (choice.bestDiagnostic != null) {
                 return failureAction(failed(choice.bestDiagnostic));
             }
@@ -814,7 +846,7 @@ public final class TrinityGraphDemandAggregator {
             }
             BigInteger count = ceilDivide(outputDemand, selected.outputs().get(key));
             int rank = Math.multiplyExact(this.topologicalPositions.get(outputComponent.index()), 2);
-            if (crossBoundaryInput) {
+            if (crossBoundaryInput || outputComponent.cyclic()) {
                 rank = Math.subtractExact(rank, 1);
             }
             registerAcyclic(selected, count, rank);
@@ -1213,9 +1245,15 @@ public final class TrinityGraphDemandAggregator {
         private sealed interface SearchFrame permits SearchCursor, ProducerChoiceFrame {}
 
         private sealed interface SearchCursor extends SearchFrame
-                                              permits ComponentCursor, AcyclicKeyCursor, CycleInputCursor {}
+                                              permits ComponentCursor, AcyclicKeyCursor, CycleSupplyCursor, CycleSolveCursor, CycleInputCursor {}
 
         private record ComponentCursor(int position) implements SearchCursor {}
+
+        private record CycleSupplyCursor(TrinityStronglyConnectedComponent component, int keyIndex, int position)
+                implements SearchCursor {}
+
+        private record CycleSolveCursor(TrinityStronglyConnectedComponent component, int position)
+                implements SearchCursor {}
 
         private record AcyclicKeyCursor(
                                         TrinityStronglyConnectedComponent component,
@@ -1241,6 +1279,7 @@ public final class TrinityGraphDemandAggregator {
             private final SearchCursor continuation;
             private final int checkpoint;
             private int nextCandidateIndex;
+            private @Nullable SearchCursor cycleFallback;
             @Nullable
             private TrinityPlanningDiagnostic bestDiagnostic;
 

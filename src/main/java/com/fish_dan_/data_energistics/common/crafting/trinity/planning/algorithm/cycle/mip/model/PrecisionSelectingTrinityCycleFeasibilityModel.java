@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityCycleObjectiveBounds;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.bounds.TrinityExactCycleBalanceBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.TrinityRadixCycleFeasibilityModel;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
@@ -69,7 +70,6 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                                                                              TrinityCycleFeasibilityRequest request,
                                                                              TrinityPlanningMode mode,
                                                                              TrinityPlanningControl control) {
-            if (request.shortageDiagnostic()) return solveShortage(request, control);
             if (control.cancellationRequested()) {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
@@ -82,6 +82,13 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                         Component.translatable("gui.data_energistics.trinity_planning.mip.timeout"),
                         Map.of("phase", "cycle_feasibility")));
             }
+            if (TrinityExactCycleBalanceBounds.contradictory(request)) {
+                return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
+                        TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
+                        Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_integer_solution"),
+                        Map.of("phase", "exact_balance_bounds")));
+            }
+            if (request.shortageDiagnostic()) return solveShortage(request, control);
             if (requiresRadix(request)) {
                 if (mode == TrinityPlanningMode.FIRST_FEASIBLE) {
                     TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> bounded = solveBoundedOrdinary(

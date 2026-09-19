@@ -176,26 +176,37 @@ public final class TrinityGraphPlanAssembler {
                     patternFirings,
                     stackRequests);
             IntArrayList blockStages = new IntArrayList();
+            Map<AEKey, BigInteger> repeatedNet = repeatedNetChange(cycle.localOrder(), cycle.repetitions());
+            List<AEKey> internalKeys = topology.components().get(cycle.componentIndex()).keys();
+            boolean productiveRepeat = internalKeys.stream().allMatch(key -> repeatedNet.getOrDefault(key, BigInteger.ZERO).signum() >= 0) &&
+                    internalKeys.stream().anyMatch(key -> repeatedNet.getOrDefault(key, BigInteger.ZERO).signum() > 0);
+            // A structural SCC is not proof of amplification. Finite conversions are ordinary one-time stages;
+            // only an exact positive internal gain with every internal balance preserved may form a repeat block.
+            if (!productiveRepeat && !cycle.repetitions().equals(BigInteger.ONE)) {
+                return failure(TrinityPlanningDiagnosticCode.NO_PRODUCTIVE_CYCLE,
+                        "gui.data_energistics.trinity_planning.diagnostic.no_productive_cycle",
+                        Map.of("component", Integer.toString(cycle.componentIndex()), "phase", "repeat_gain_validation"));
+            }
             for (TrinityVariantFiring batch : cycle.localOrder()) {
                 int stageIndex = stages.size();
                 stages.add(stage(
                         stageIndex,
-                        true,
+                        productiveRepeat,
                         batch.variant(),
                         batch.count(),
-                        true));
+                        productiveRepeat));
                 stageOrder.add(stageIndex);
                 blockStages.add(stageIndex);
                 BigInteger totalCount = batch.count().multiply(cycle.repetitions());
                 mergePatternFiring(patternFirings, batch.variant(), totalCount);
                 chargeStacks(stackRequests, batch.variant(), totalCount);
             }
-            repeatBlocks.add(new TrinityCycleRepeatBlock(
+            if (productiveRepeat) repeatBlocks.add(new TrinityCycleRepeatBlock(
                     repeatIndex++,
                     IntList.of(blockStages.toIntArray()),
                     cycle.repetitions(),
                     minimumBalances(cycle.localOrder()),
-                    repeatedNetChange(cycle.localOrder(), cycle.repetitions())));
+                    repeatedNet));
             appendOneTimeStages(
                     cycle.suffixOrder(),
                     stages,

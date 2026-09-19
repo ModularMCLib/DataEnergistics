@@ -115,10 +115,10 @@ public final class TrinityCyclePrecisionGameTest {
         helper.succeed();
     }
 
-    @TestHolder("trinity_cycle_precision_rejects_fractional_settlement_without_false_infeasibility")
+    @TestHolder("trinity_cycle_precision_proves_fractional_only_settlement_infeasible")
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
-    public static void rejectsFractionalSettlementWithoutFalseInfeasibility(GameTestHelper helper) {
+    public static void provesFractionalOnlySettlementInfeasible(GameTestHelper helper) {
         AEKey first = AEItemKey.of(Items.IRON_INGOT);
         AEKey second = AEItemKey.of(Items.GOLD_INGOT);
         TrinityPatternVariant forward = conversion("fractional_forward", first, 3, second, 5);
@@ -128,8 +128,9 @@ public final class TrinityCyclePrecisionGameTest {
         TrinityCycleFeasibilityRequest request = new TrinityCycleFeasibilityRequest(
                 variants, Set.of(first, second),
                 new TrinityCycleDemand(Map.of(), Map.of(), Map.of(first, requested), Set.of(first)),
-                // With ten second-items in stock, rounding reverse upward consumes only three and is valid.
-                // Zero second-stock makes the odd request force an actual half-firing with no integer witness.
+                // Fixed forward=3N requires reverse>=ceil(5N/2) for net A and reverse<=floor(5N/2)
+                // for non-negative B. Odd N and zero B stock make these integer bounds contradictory;
+                // projecting reserves and GCD-tightening rows proves infeasibility before candidate repair.
                 Map.of(first, BigInteger.TEN, second, BigInteger.ZERO), Set.of(),
                 Map.of(forward, TrinityFiringBounds.fixed(requested.multiply(BigInteger.valueOf(3))),
                         reverse, new TrinityFiringBounds(BigInteger.ZERO, requested.shiftLeft(3))),
@@ -139,8 +140,8 @@ public final class TrinityCyclePrecisionGameTest {
                 TrinityIntegerResultVerifier.create(), TrinityExactConservationVerifier.create());
         var solved = ordinary.solve(request, TrinityPlanningMode.FIRST_FEASIBLE, TrinityPlanningControl.unbounded());
         helper.assertFalse(solved.successful(), "Rounding must not turn a half-firing into an executable integer order");
-        helper.assertValueEqual(solved.diagnostic().code(), TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
-                "The candidate probe must defer to exact solving instead of asserting global infeasibility");
+        helper.assertValueEqual(solved.diagnostic().code(), TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
+                "Contradictory exact integer bounds must prove this fixed-firing request infeasible");
         helper.succeed();
     }
 }

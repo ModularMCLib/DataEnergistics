@@ -194,11 +194,12 @@ public final class TrinityCraftingCycleSummary {
 
     private static Object2IntMap<AEKey> copyInventoryUsage(Object2IntMap<AEKey> source) {
         Object2IntLinkedOpenHashMap<AEKey> copied = new Object2IntLinkedOpenHashMap<>();
-        source.forEach((key, basisPoints) -> {
+        Object2IntMaps.fastForEach(source, entry -> {
+            int basisPoints = entry.getIntValue();
             if (basisPoints < 0 || basisPoints > MAX_INVENTORY_USAGE_BASIS_POINTS) {
                 throw new IllegalArgumentException("Trinity inventory usage must remain within [0%, 100%]");
             }
-            copied.put(key, basisPoints);
+            copied.put(entry.getKey(), basisPoints);
         });
         return Object2IntMaps.unmodifiable(copied);
     }

@@ -70,10 +70,10 @@ public final class TrinityFeasibilityReserveProjection {
      * verify conservation, real inventory, firing domains and scheduling before publishing it.
      */
     public static Object2ObjectMap<AEKey, BigInteger> reduce(
-                                                            TrinityCycleFeasibilityRequest request,
-                                                            Map<TrinityPatternVariant, BigInteger> firings,
-                                                            Map<AEKey, BigInteger> caps,
-                                                            BigInteger minimumTotal) {
+                                                             TrinityCycleFeasibilityRequest request,
+                                                             Map<TrinityPatternVariant, BigInteger> firings,
+                                                             Map<AEKey, BigInteger> caps,
+                                                             BigInteger minimumTotal) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>();
         BigInteger total = BigInteger.ZERO;
         for (AEKey key : caps.keySet()) {

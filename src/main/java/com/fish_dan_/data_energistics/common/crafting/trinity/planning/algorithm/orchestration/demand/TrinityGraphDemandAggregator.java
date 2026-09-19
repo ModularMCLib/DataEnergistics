@@ -1425,8 +1425,7 @@ public final class TrinityGraphDemandAggregator {
     /** Only a proved route rejection permits trying alternatives; incomplete or invalid computations stop. */
     private static boolean canTryAlternative(TrinityPlanningDiagnostic diagnostic) {
         return switch (diagnostic.code()) {
-            case INSUFFICIENT_INPUT, MIP_NO_INTEGER_SOLUTION, NO_EXECUTABLE_ORDER, NO_PRODUCTIVE_CYCLE,
-                    UNSUPPORTED_PATTERN -> true;
+            case INSUFFICIENT_INPUT, MIP_NO_INTEGER_SOLUTION, NO_EXECUTABLE_ORDER, NO_PRODUCTIVE_CYCLE, UNSUPPORTED_PATTERN -> true;
             default -> false;
         };
     }

@@ -107,6 +107,7 @@
 		"advancedae.AdvancedAePatternProviderScreenMixin",
 		"advancedae.AdvancedAeSmallPatternProviderScreenMixin",
 		"ae2cs.Ae2CsUpgradeablePatternProviderGuiMixin",
+		"avaritia.ExtremeSmithingEmiInputsMixin",
 		"client.crafting.CPUSelectionListMixin",
 		"client.crafting.CraftAmountScreenMixin",
 		"client.crafting.CraftConfirmScreenMixin",

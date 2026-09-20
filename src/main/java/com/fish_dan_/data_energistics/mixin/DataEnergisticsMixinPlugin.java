@@ -77,6 +77,9 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        if (mixinClassName.equals("avaritia.ExtremeSmithingEmiInputsMixin")) {
+            return isModLoaded("avaritia") && isModLoaded("emi");
+        }
         if (mixinClassName.startsWith("mekanismmore.")) {
             return isModLoaded("mekmm") && isModLoaded("appmek");
         }

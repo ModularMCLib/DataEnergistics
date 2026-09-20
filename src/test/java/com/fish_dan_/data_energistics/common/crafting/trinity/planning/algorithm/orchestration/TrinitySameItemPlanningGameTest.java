@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
@@ -12,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
@@ -187,7 +187,7 @@ public final class TrinitySameItemPlanningGameTest {
     }
 
     private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output,
-                                             boolean flexibleInputs, boolean flexibleOutput) {
+                                              boolean flexibleInputs, boolean flexibleOutput) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs, List.of(output));
         var rules = new CompoundTag();
         if (flexibleInputs || flexibleOutput) {

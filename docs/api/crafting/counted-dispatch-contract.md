@@ -80,6 +80,16 @@ final class ExampleAdmission implements CountedCraftingAdmission {
 
 示例中的 `transferred = true` 必须发生在第一次外部 mutation 之前。不要在 mutation 之后才设置，也不要在 catch 中重新改回 `false`。
 
+## 原生封包容量
+
+`PackagedMachineAdapter.batchCapacity(...)` 为一台已加载、已识别且未被占用的机器报告 `0..requestedCount` 次逻辑合成的容量。参数中的样板和 `KeyCounter[] prototype` 都是一份逻辑合成，方法只读，不得扣料、取得占用或改变轮询游标。默认返回 1；只有能实际接收和加工多份输入的适配器才覆盖它。
+
+封包接单把容量和目标固定在一次性 admission 中，提交时重新检查同一目标和容量，再按 count 缩放输入及输出校验数量。匹配模式、原样板定义、槽索引和标签权限不因批量改变。完整输入转入持久封包操作后，admission 必须报告已转移，后续保存或成功回调异常不能使 CPU 再次使用这份材料。
+
+自适应 profile 通过 `AdaptivePatternProviderDispatch.countedAdapter(target)` 提供可选批量入口，默认 `null` 保留单份路线。独立封包供应器和自适应封包路线均把真实容量提交给 CPU 的容量快照与目标准备路径；仅实现普通 `pushPattern` 而没有 counted 调度的调用方仍按单次接口工作。
+
+Mek 大机器使用原生输入、输出端口容量并持续补料排料；物品实体路线采用真实堆叠上限、能源／魔力和原生配方选择约束。批量不是跳过机器时间或放宽产物数量。可复用催化剂另外遵守[会话契约](packaged-reusable-inputs.md)，不能通过把整套工具乘 count 来实现批量。
+
 ## 禁止的实现方式
 
 - prepare 时先扣 input，commit 失败再“尽量退回”；

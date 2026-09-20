@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
@@ -185,12 +186,16 @@ final class FusionRecipePlan {
 
     private static boolean outputsMatch(IPatternDetails pattern,
                                         Object2LongLinkedOpenHashMap<AEItemKey> actual) {
-        var declared = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        var actualItems = new Object2LongLinkedOpenHashMap<Item>();
+        for (var entry : actual.object2LongEntrySet()) {
+            actualItems.addTo(entry.getKey().getItem(), entry.getLongValue());
+        }
+        var declaredItems = new Object2LongLinkedOpenHashMap<Item>();
         for (var output : pattern.getOutputs()) {
             if (!(output.what() instanceof AEItemKey key) || output.amount() <= 0) return false;
-            declared.addTo(key, output.amount());
+            declaredItems.addTo(key.getItem(), output.amount());
         }
-        return declared.equals(actual);
+        return declaredItems.equals(actualItems);
     }
 
     static CompoundTag save(Plan plan, HolderLookup.Provider registries) {

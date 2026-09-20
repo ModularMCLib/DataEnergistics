@@ -41,7 +41,6 @@ public final class PackagedOperationState implements PackagedMachineOperation {
     private final Object2ObjectMap<AEKey, BigInteger> inputs;
     private final Object2ObjectMap<AEKey, BigInteger> outputs;
     private boolean complete;
-    private @Nullable String failure;
     private @Nullable ServerLevel activeLevel;
     private boolean changed;
 
@@ -53,13 +52,13 @@ public final class PackagedOperationState implements PackagedMachineOperation {
     public PackagedOperationState(ResourceLocation adapterId, ResourceLocation recipeId, BlockPos position,
                                   Direction face, CompoundTag preparation, KeyCounter[] inputs, ObjectList<BlockPos> occupiedPositions) {
         this(UUID.randomUUID(), adapterId, recipeId, position, face, preparation.copy(),
-                PackagedAmounts.capture(inputs), new Object2ObjectLinkedOpenHashMap<>(), false, null, occupiedPositions);
+                PackagedAmounts.capture(inputs), new Object2ObjectLinkedOpenHashMap<>(), false, occupiedPositions);
     }
 
     private PackagedOperationState(UUID id, ResourceLocation adapterId, ResourceLocation recipeId,
                                    BlockPos position, Direction face, CompoundTag progress,
                                    Object2ObjectMap<AEKey, BigInteger> inputs,
-                                   Object2ObjectMap<AEKey, BigInteger> outputs, boolean complete, @Nullable String failure,
+                                   Object2ObjectMap<AEKey, BigInteger> outputs, boolean complete,
                                    ObjectList<BlockPos> occupiedPositions) {
         this.id = id;
         this.adapterId = adapterId;
@@ -77,7 +76,6 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         this.inputs = inputs;
         this.outputs = outputs;
         this.complete = complete;
-        this.failure = failure;
     }
 
     /** Exceptions are logged here; the operation remains retryable on the next machine tick. */
@@ -149,10 +147,6 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         return this.complete && this.outputs.isEmpty();
     }
 
-    public @Nullable String failure() {
-        return this.failure;
-    }
-
     @Override
     public ServerLevel level() {
         if (this.activeLevel == null) throw new IllegalStateException("Packaged operation used outside its tick");
@@ -205,7 +199,6 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         tag.put("inputs", PackagedAmounts.save(this.inputs, registries));
         tag.put("outputs", PackagedAmounts.save(this.outputs, registries));
         tag.putBoolean("complete", this.complete);
-        if (this.failure != null) tag.putString("failure", this.failure);
         return tag;
     }
 
@@ -224,7 +217,6 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         return new PackagedOperationState(tag.getUUID("id"), ResourceLocation.parse(tag.getString("adapter")),
                 ResourceLocation.parse(tag.getString("recipe")), BlockPos.of(tag.getLong("position")), face,
                 tag.getCompound("progress").copy(), inputs,
-                PackagedAmounts.load(tag.getList("outputs", Tag.TAG_COMPOUND), registries), complete,
-                tag.contains("failure", Tag.TAG_STRING) ? tag.getString("failure") : null, occupied);
+                PackagedAmounts.load(tag.getList("outputs", Tag.TAG_COMPOUND), registries), complete, occupied);
     }
 }

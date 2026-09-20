@@ -68,12 +68,12 @@ public final class TrinitySameItemPolicy {
         Object2ObjectLinkedOpenHashMap<Item, AEItemKey> representatives = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityCraftingGraphPattern pattern : graph.patterns()) {
             long markerMask = EncodedPatternDynamicOutput.markerMask(pattern.definition());
-            if (markerMask != 0 &&
+            if (EncodedPatternDynamicOutput.isMarked(pattern.definition(), -1, 0) &&
                     pattern.outputs().getFirst().what() instanceof AEItemKey primaryOutput) {
                 representatives.putIfAbsent(primaryOutput.getItem(), primaryOutput);
             }
             for (int inputIndex = 0; inputIndex < pattern.inputs().size(); inputIndex++) {
-                if ((markerMask & (1 << inputIndex)) == 0) continue;
+                if ((markerMask & (1L << inputIndex)) == 0) continue;
                 for (var alternative : pattern.inputs().get(inputIndex).alternatives()) {
                     if (alternative.stack().what() instanceof AEItemKey inputKey) {
                         representatives.putIfAbsent(inputKey.getItem(), inputKey);

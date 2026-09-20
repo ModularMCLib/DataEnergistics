@@ -17,8 +17,6 @@ public final class DigitalPackagedPatternProviderMenu extends PatternProviderMen
     private final DigitalPackagedPatternProviderLogic packagedLogic;
     @GuiSync(800)
     public int pendingOperations;
-    @GuiSync(801)
-    public int failedOperations;
 
     public DigitalPackagedPatternProviderMenu(int id, Inventory inventory, PatternProviderLogicHost host) {
         super(DEMenus.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), id, inventory, host);
@@ -34,7 +32,6 @@ public final class DigitalPackagedPatternProviderMenu extends PatternProviderMen
     public void broadcastChanges() {
         if (isServerSide()) {
             this.pendingOperations = this.packagedLogic.dispatchState().pendingOperations();
-            this.failedOperations = this.packagedLogic.dispatchState().failedOperations();
         }
         super.broadcastChanges();
     }

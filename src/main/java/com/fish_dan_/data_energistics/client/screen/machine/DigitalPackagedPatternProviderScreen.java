@@ -26,7 +26,6 @@ public final class DigitalPackagedPatternProviderScreen
                 "operation_status",
                 Component.translatable(
                         "screen.data_energistics.digital_packaged_pattern_provider.operations",
-                        this.menu.pendingOperations,
-                        this.menu.failedOperations));
+                        this.menu.pendingOperations));
     }
 }

@@ -48,12 +48,6 @@ public final class PackagedDispatchState {
         return this.operations.size();
     }
 
-    public int failedOperations() {
-        int failed = 0;
-        for (var operation : this.operations) if (operation.failure() != null) failed++;
-        return failed;
-    }
-
     public boolean hasWork() {
         return this.recoveryReceipt == null && !this.operations.isEmpty();
     }

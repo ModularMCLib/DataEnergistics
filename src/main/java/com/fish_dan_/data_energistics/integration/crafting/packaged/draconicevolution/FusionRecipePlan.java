@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.draconicevolution;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
-import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -12,7 +12,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
@@ -97,7 +96,7 @@ final class FusionRecipePlan {
         ItemStack result = recipe.assemble(inventory, level.registryAccess());
         if (result.isEmpty()) return null;
         actualOutputs.addTo(AEItemKey.of(result), Math.multiplyExact(result.getCount(), cycles));
-        if (!outputsMatch(pattern, actualOutputs)) return null;
+        if (!PackagedIngredientAssignment.outputsMatch(pattern, toOutputStacks(actualOutputs))) return null;
         return new Plan(catalyst, injectors, result, cycles, recipe.getEnergyCost(), recipe.getRecipeTier().name());
     }
 
@@ -185,32 +184,13 @@ final class FusionRecipePlan {
         return remaining;
     }
 
-    private static boolean outputsMatch(IPatternDetails pattern,
-                                        Object2LongLinkedOpenHashMap<AEItemKey> actual) {
-        var actualItems = new Object2LongLinkedOpenHashMap<Item>();
+    private static ObjectList<ItemStack> toOutputStacks(Object2LongLinkedOpenHashMap<AEItemKey> actual) {
+        var stacks = new ObjectArrayList<ItemStack>();
         for (var entry : actual.object2LongEntrySet()) {
-            actualItems.addTo(entry.getKey().getItem(), entry.getLongValue());
+            ItemStack stack = entry.getKey().toStack(Math.toIntExact(entry.getLongValue()));
+            stacks.add(stack);
         }
-        var declaredExact = new Object2LongLinkedOpenHashMap<AEItemKey>();
-        var declaredItems = new Object2LongLinkedOpenHashMap<Item>();
-        int outputIndex = 0;
-        for (var output : pattern.getOutputs()) {
-            if (!(output.what() instanceof AEItemKey key) || output.amount() <= 0) return false;
-            if (EncodedPatternDynamicOutput.isMarked(pattern.getDefinition(), -1, outputIndex++)) {
-                declaredItems.addTo(key.getItem(), output.amount());
-            } else {
-                declaredExact.addTo(key, output.amount());
-            }
-        }
-        for (var entry : declaredExact.object2LongEntrySet()) {
-            if (actual.getLong(entry.getKey()) != entry.getLongValue()) return false;
-        }
-        for (var entry : declaredItems.object2LongEntrySet()) {
-            if (actualItems.getLong(entry.getKey()) != entry.getLongValue()) return false;
-        }
-        long declaredTotal = declaredExact.values().longStream().sum() + declaredItems.values().longStream().sum();
-        long actualTotal = actual.values().longStream().sum();
-        return declaredTotal == actualTotal;
+        return stacks;
     }
 
     static CompoundTag save(Plan plan, HolderLookup.Provider registries) {

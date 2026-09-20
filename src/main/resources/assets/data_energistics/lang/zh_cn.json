@@ -1164,7 +1164,7 @@
 	"screen.data_energistics.data_teleport_anchor.target.none": "目标：未记录",
 	"screen.data_energistics.data_teleport_anchor.title.offline": "数据传送锚 - 离线",
 	"screen.data_energistics.data_teleport_anchor.title.online": "数据传送锚 - 在线",
-	"screen.data_energistics.digital_packaged_pattern_provider.operations": "待处理：%s  失败：%s",
+	"screen.data_energistics.digital_packaged_pattern_provider.operations": "待处理：%s",
 	"screen.data_energistics.digital_packaged_pattern_provider.reencode_hint": "无效样板必须重新编码",
 	"screen.data_energistics.me_solar_panel.generation": "发电功率：%s AE/t",
 	"screen.data_energistics.me_solar_panel.stored": "已存储：%s / %s AE",

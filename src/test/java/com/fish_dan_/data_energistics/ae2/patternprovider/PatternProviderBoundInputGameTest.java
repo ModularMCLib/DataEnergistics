@@ -1,8 +1,10 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -16,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -126,6 +129,12 @@ public final class PatternProviderBoundInputGameTest {
                         new GenericStack(book, 1L),
                         new GenericStack(paper, 1L)),
                 List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L)));
+        var matching = new CompoundTag();
+        var idRule = new CompoundTag();
+        idRule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+        matching.put("i0", idRule.copy());
+        matching.put("i2", idRule.copy());
+        encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, matching);
         return new AEProcessingPattern(AEItemKey.of(encoded));
     }
 

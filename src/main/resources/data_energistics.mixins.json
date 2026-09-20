@@ -43,6 +43,7 @@
 		"core.crafting.CraftingServiceMixin",
 		"core.crafting.CraftingStatusMenuMixin",
 		"core.crafting.KeyCounterMixin",
+		"core.crafting.ProcessingPatternInputMatchingMixin",
 		"core.entity.OrbitalDeathNotificationMixin",
 		"core.entity.OrbitalLivingRecoveryMixin",
 		"core.entity.OrbitalPlayerDeathMixin",

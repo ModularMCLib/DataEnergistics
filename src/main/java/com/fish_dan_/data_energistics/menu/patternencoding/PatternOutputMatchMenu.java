@@ -1,18 +1,21 @@
 package com.fish_dan_.data_energistics.menu.patternencoding;
 
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+
 /**
  * Exposes per-slot matching rules of the encoded processing pattern to its amount sub-screen.
  */
 public interface PatternOutputMatchMenu {
 
-    /**
-     * Returns all processing input/output slots currently marked for same-item matching.
-     */
-    long data_energistics$getProcessingSameItemMask();
+    /** Sparse input modes held by the editor; server validates recipe tags before encoding. */
+    String data_energistics$getProcessingInputModes();
 
-    /** Returns whether the selected processing slot accepts the same registered item regardless of components. */
-    boolean data_energistics$isProcessingSameItem(int inputIndex, int outputIndex);
+    /** Sparse output modes, independent from all input-slot indexes. */
+    String data_energistics$getProcessingOutputModes();
 
-    /** Updates one per-pattern processing slot and sends the client action when called client-side. */
-    void data_energistics$setProcessingSameItem(int inputIndex, int outputIndex, boolean enabled);
+    /** Current selected mode. Tag encoding requires a native declaration for the selected role. */
+    ProcessingMatchMode data_energistics$getProcessingMatchMode(int inputIndex, int outputIndex);
+
+    /** Sets a mode on a real item slot. Sends a client action from client menus; no world side effects. */
+    void data_energistics$setProcessingMatchMode(int inputIndex, int outputIndex, ProcessingMatchMode mode);
 }

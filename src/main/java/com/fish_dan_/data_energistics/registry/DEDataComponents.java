@@ -249,12 +249,12 @@ public final class DEDataComponents {
                     .cacheEncoding()
                     .build());
 
-    /** Bit mask of processing input/output slots that use component-insensitive item matching. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> PROCESSING_SAME_ITEM_SLOTS = DATA_COMPONENT_TYPES.register(
-            "processing_same_item_slots",
-            () -> DataComponentType.<Long>builder()
-                    .persistent(Codec.LONG)
-                    .networkSynchronized(ByteBufCodecs.VAR_LONG)
+    /** Independent sparse input/output matching rules; tag names originate in the native recipe declaration. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> PROCESSING_PATTERN_MATCHING = DATA_COMPONENT_TYPES.register(
+            "processing_pattern_matching",
+            () -> DataComponentType.<CompoundTag>builder()
+                    .persistent(CompoundTag.CODEC)
+                    .networkSynchronized(ByteBufCodecs.COMPOUND_TAG)
                     .cacheEncoding()
                     .build());
 

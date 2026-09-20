@@ -10,8 +10,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 
-import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -43,7 +43,7 @@ public final class TrinityExecutionNbtCodec {
     private static final int BIG_INTEGER_SCHEMA = 6;
     private static final int SAME_ITEM_SCHEMA = 7;
     private static final int SHARED_SCHEMA = 8;
-    private static final int SCHEMA = 9;
+    private static final int SCHEMA = 10;
     private static final String PRODUCTION_RETIRED_TAG = "production_retired";
     private static final String EXACT_BINDINGS_TAG = "exact_bindings";
     private static final int MAX_BIG_INTEGER_BYTES = 512;
@@ -205,7 +205,7 @@ public final class TrinityExecutionNbtCodec {
         root.putString(PLAN_KIND_TAG, PLAN_KIND);
         root.putLong(CATALOG_REVISION_TAG, snapshot.catalogRevision());
         root.putString(QUANTITY_MODE_TAG, snapshot.quantityMode().name());
-        root.put(SAME_ITEM_POLICY_TAG, saveKeys(snapshot.sameItemPolicy().representatives(), registries));
+        root.put(SAME_ITEM_POLICY_TAG, snapshot.sameItemPolicy().save(registries));
         root.put(TARGET_KEY_TAG, snapshot.targetKey().toTagGeneric(registries));
         putBigInteger(root, TARGET_AMOUNT_TAG, snapshot.targetAmount());
         root.putString(STATUS_TAG, snapshot.status().name());
@@ -239,7 +239,7 @@ public final class TrinityExecutionNbtCodec {
             throw new IllegalArgumentException("Unsupported Trinity execution schema");
         }
         // Both branches wrote schema 8: released exact amounts, or draft resident bindings with long delivery amounts.
-        boolean residentLayout = schema == SCHEMA || schema == SHARED_SCHEMA && tag.contains(PRODUCTION_RETIRED_TAG);
+        boolean residentLayout = schema >= 9 || schema == SHARED_SCHEMA && tag.contains(PRODUCTION_RETIRED_TAG);
         requireFields(tag, residentLayout ? RETIRED_ROOT_FIELDS : schema >= SAME_ITEM_SCHEMA ? ROOT_FIELDS : LEGACY_ROOT_FIELDS, "execution root");
         if (residentLayout) {
             requireType(tag, PRODUCTION_RETIRED_TAG, Tag.TAG_BYTE, "production retirement marker");
@@ -587,12 +587,11 @@ public final class TrinityExecutionNbtCodec {
 
     private static TrinitySameItemPolicy readSameItemPolicy(CompoundTag tag,
                                                             HolderLookup.Provider registries) {
-        ObjectArrayList<AEItemKey> representatives = new ObjectArrayList<>();
-        for (AEKey key : readKeys(tag, SAME_ITEM_POLICY_TAG, registries, "same-item representative")) {
-            if (!(key instanceof AEItemKey itemKey)) {
-                throw new IllegalArgumentException("A Trinity same-item policy requires item representatives");
-            }
-            representatives.add(itemKey);
+        if (tag.getInt(SCHEMA_TAG) >= 10) return TrinitySameItemPolicy.load(tag.getList(SAME_ITEM_POLICY_TAG, Tag.TAG_COMPOUND), registries);
+        var representatives = new ObjectArrayList<AEItemKey>();
+        for (var key : readKeys(tag, SAME_ITEM_POLICY_TAG, registries, "same-item representative")) {
+            if (!(key instanceof AEItemKey item)) throw new IllegalArgumentException("Invalid legacy same-item representative");
+            representatives.add(item);
         }
         return TrinitySameItemPolicy.ofRepresentatives(representatives);
     }

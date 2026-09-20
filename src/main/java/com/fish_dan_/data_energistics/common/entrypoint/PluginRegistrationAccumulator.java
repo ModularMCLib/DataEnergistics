@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.entrypoint;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
+import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
@@ -11,6 +12,7 @@ import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutput
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
+import com.fish_dan_.data_energistics.api.registry.matching.RecipeMatchingRegistry;
 import com.fish_dan_.data_energistics.api.registry.packaged.PackagedCraftingRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
@@ -63,6 +65,7 @@ final class PluginRegistrationAccumulator {
     private final Object2ObjectMap<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters = new Object2ObjectLinkedOpenHashMap<>();
     private volatile boolean frozen;
     private final Object2ObjectMap<ResourceLocation, PackagedMachineAdapter> packagedAdapters = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<ResourceLocation, RecipeMatchingRuleAdapter> recipeMatchingAdapters = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<String, TowerEnergyEndpointIntegration> towerEnergyIntegrations = new Object2ObjectLinkedOpenHashMap<>();
 
     /**
@@ -183,6 +186,12 @@ final class PluginRegistrationAccumulator {
                 throw new IllegalStateException("Duplicate packaged machine adapter '" + id + "' from " + staging.description());
             }
         }
+        for (var id : staging.recipeMatchingAdapters.keySet()) {
+            if (this.recipeMatchingAdapters.containsKey(id)) {
+                throw new IllegalStateException("Duplicate recipe matching adapter '" + id + "' from " + staging.description());
+            }
+        }
+        this.recipeMatchingAdapters.putAll(staging.recipeMatchingAdapters);
         this.universalTerminals.putAll(staging.universalTerminals);
         this.packagedAdapters.putAll(staging.packagedAdapters);
         this.patternProviders.putAll(staging.patternProviders);
@@ -225,7 +234,7 @@ final class PluginRegistrationAccumulator {
                 this.dynamicCraftingOutputAdapters,
                 this.reusableInputAdapters,
                 this.towerEnergyIntegrations.values(),
-                new ObjectArrayList<>(this.packagedAdapters.values()));
+                new ObjectArrayList<>(this.packagedAdapters.values()), this.recipeMatchingAdapters.values());
         this.frozen = true;
         return snapshot;
     }
@@ -259,6 +268,7 @@ final class PluginRegistrationAccumulator {
         private final Object2ObjectMap<ResourceLocation, DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PackagedMachineAdapter> packagedAdapters = new Object2ObjectLinkedOpenHashMap<>();
+        private final Object2ObjectMap<ResourceLocation, RecipeMatchingRuleAdapter> recipeMatchingAdapters = new Object2ObjectLinkedOpenHashMap<>();
         private final UniversalTerminalRegistry universalTerminalRegistry = new StagedUniversalTerminalRegistry();
         private final PatternProviderRegistry patternProviderRegistry = new StagedPatternProviderRegistry();
         private final CraftingMachineRegistry craftingMachineRegistry = new StagedCraftingMachineRegistry();
@@ -344,6 +354,18 @@ final class PluginRegistrationAccumulator {
         }
 
         @Override
+        public RecipeMatchingRegistry recipeMatching() {
+            return adapter -> {
+                requireOpen();
+                var value = requireStagedValue(adapter, "Recipe matching adapter");
+                var id = requireStagedValue(value.id(), "Recipe matching adapter ID");
+                if (this.recipeMatchingAdapters.putIfAbsent(id, value) != null) {
+                    throw new IllegalStateException("Duplicate recipe matching adapter '" + id + "' in " + description());
+                }
+            };
+        }
+
+        @Override
         public PackagedCraftingRegistry packagedCrafting() {
             return adapter -> {
                 requireOpen();
@@ -366,6 +388,7 @@ final class PluginRegistrationAccumulator {
                 return;
             }
             this.state = State.DISCARDED;
+            this.recipeMatchingAdapters.clear();
             this.universalTerminals.clear();
             this.patternProviders.clear();
             this.patternProviderWorkstationSources.clear();

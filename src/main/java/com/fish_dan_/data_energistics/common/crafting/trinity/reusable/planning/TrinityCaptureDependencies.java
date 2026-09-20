@@ -131,6 +131,13 @@ final class TrinityCaptureDependencies {
     }
 
     private void include(AEKey key, boolean componentCandidates) {
+        if (componentCandidates && this.policy.allowsSameItem(key)) {
+            var logical = this.policy.normalizeKey(key);
+            for (var pattern : this.catalog.patterns()) {
+                if (pattern.outputs().stream().anyMatch(output -> this.policy.normalizeKey(output.what()).equals(logical))) select(pattern);
+            }
+            return;
+        }
         var producers = componentCandidates && key instanceof AEItemKey item ?
                 this.catalog.captureProducersForItem(item.getItem()) : this.catalog.patternsProducing(key);
         for (TrinityCraftingGraphPattern pattern : producers) {

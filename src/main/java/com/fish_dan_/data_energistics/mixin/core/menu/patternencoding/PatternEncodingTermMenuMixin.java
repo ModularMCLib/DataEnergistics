@@ -1,9 +1,10 @@
 package com.fish_dan_.data_energistics.mixin.core.menu.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
@@ -106,7 +107,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     @Unique
     private static final String DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE = "dataEnergistics$clearPatternSourceState";
     @Unique
-    private static final String DATA_ENERGISTICS_ACTION_SET_PROCESSING_SAME_ITEM = "dataEnergistics$setProcessingSameItem";
+    private static final String DATA_ENERGISTICS_ACTION_SET_PROCESSING_MATCH_MODE = "dataEnergistics$setProcessingMatchMode";
     @GuiSync(795)
     @Unique
     public int dataEnergistics$previewPanelOffsetX;
@@ -155,7 +156,10 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     private String dataEnergistics$displayTransferKeyOutputSerialized;
     @GuiSync(797)
     @Unique
-    public long dataEnergistics$processingSameItemMask;
+    public String dataEnergistics$processingOutputModes = "";
+    @GuiSync(799)
+    @Unique
+    public String dataEnergistics$processingInputModes = "";
     @GuiSync(798)
     @Unique
     public boolean dataEnergistics$networkBackedBlankPatternSlot = DataEnergisticsEarlyConfig.get().isEnabled(Option.PATTERN_ENCODING_NETWORK_BACKED_BLANK_PATTERN_SLOT);
@@ -186,47 +190,33 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     protected abstract void dataEnergistics$invokeClearPattern();
 
     @Override
-    public long data_energistics$getProcessingSameItemMask() {
-        return this.dataEnergistics$processingSameItemMask;
+    public String data_energistics$getProcessingOutputModes() {
+        return this.dataEnergistics$processingOutputModes;
     }
 
     @Override
-    public boolean data_energistics$isProcessingSameItem(int inputIndex, int outputIndex) {
-        int bit = dataEnergistics$processingSameItemBit(inputIndex, outputIndex);
-        return bit >= 0 && (this.dataEnergistics$processingSameItemMask & (1L << bit)) != 0;
+    public String data_energistics$getProcessingInputModes() {
+        return this.dataEnergistics$processingInputModes;
     }
 
     @Override
-    public void data_energistics$setProcessingSameItem(int inputIndex, int outputIndex, boolean enabled) {
-        int bit = dataEnergistics$processingSameItemBit(inputIndex, outputIndex);
-        if (bit < 0 || (enabled && !dataEnergistics$canUseSameItem(inputIndex, outputIndex))) {
-            if (this.isServerSide()) {
-                Data_Energistics.LOGGER.warn(
-                        "Rejected SAME_ITEM processing-slot action from {} because the selected slot is not an item",
-                        this.getPlayer().getGameProfile().getName());
-            }
-            return;
-        }
-        if (this.isClientSide()) {
-            sendClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_SAME_ITEM,
-                    inputIndex + ":" + outputIndex + ":" + enabled);
-        }
-        if (enabled) {
-            this.dataEnergistics$processingSameItemMask |= 1L << bit;
-        } else {
-            this.dataEnergistics$processingSameItemMask &= ~(1L << bit);
-        }
+    public ProcessingMatchMode data_energistics$getProcessingMatchMode(int inputIndex, int outputIndex) {
+        int slot = inputIndex >= 0 ? inputIndex : outputIndex;
+        String modes = inputIndex >= 0 ? this.dataEnergistics$processingInputModes : this.dataEnergistics$processingOutputModes;
+        return slot >= 0 && slot < modes.length() ? ProcessingMatchMode.values()[modes.charAt(slot) - '0'] : ProcessingMatchMode.EXACT;
     }
 
-    @Unique
-    private int dataEnergistics$processingSameItemBit(int inputIndex, int outputIndex) {
-        if (this.mode != EncodingMode.PROCESSING || (inputIndex >= 0) == (outputIndex >= 0)) {
-            return -1;
-        }
-        if (outputIndex > 0) {
-            return -1;
-        }
-        return inputIndex >= 0 ? inputIndex : EncodedPatternDynamicOutput.PROCESSING_INPUT_SLOTS + outputIndex;
+    @Override
+    public void data_energistics$setProcessingMatchMode(int inputIndex, int outputIndex, ProcessingMatchMode mode) {
+        if ((inputIndex >= 0) == (outputIndex >= 0) || !dataEnergistics$canUseSameItem(inputIndex, outputIndex)) return;
+        int slot = inputIndex >= 0 ? inputIndex : outputIndex;
+        if (slot >= EncodedPatternMatching.MAX_SLOTS) return;
+        if (isClientSide()) sendClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_MATCH_MODE, inputIndex + ":" + outputIndex + ":" + mode.ordinal());
+        var modes = new StringBuilder(inputIndex >= 0 ? this.dataEnergistics$processingInputModes : this.dataEnergistics$processingOutputModes);
+        while (modes.length() <= slot) modes.append('0');
+        modes.setCharAt(slot, (char) ('0' + mode.ordinal()));
+        if (inputIndex >= 0) this.dataEnergistics$processingInputModes = modes.toString();
+        else this.dataEnergistics$processingOutputModes = modes.toString();
     }
 
     @Unique
@@ -565,6 +555,15 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                 return;
             }
 
+            EncodedPatternRecipeReference.applyProcessingRecipeMetadata(encodedPattern,
+                    PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(this, data_energistics$getPreferenceSession(), this),
+                    PatternEncodingSourceHelper.resolveProcessingPatternRecipeId(this, data_energistics$getPreferenceSession()));
+            if (this.mode == EncodingMode.PROCESSING && !EncodedPatternMatching.apply(((ServerPlayer) getPlayer()).serverLevel(),
+                    encodedPattern, this.dataEnergistics$processingInputModes, this.dataEnergistics$processingOutputModes)) {
+                getPlayer().sendSystemMessage(Component.translatable("message.data_energistics.processing_match.no_declared_tag"));
+                ci.cancel();
+                return;
+            }
             ItemStack encodeOutput = this.encodedPatternSlot.getItem();
             if (!encodeOutput.isEmpty() && !PatternDetailsHelper.isEncodedPattern(encodeOutput) && !AEItems.BLANK_PATTERN.is(encodeOutput)) {
                 PatternEncodingSourceHelper.writePendingTransferKeyInput(this.getPlayer(), null);
@@ -581,18 +580,6 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             }
 
             // Publishing the slot re-enters broadcastChanges, so its recipe context must already be complete.
-            EncodedPatternDynamicOutput.apply(
-                    encodedPattern,
-                    this.mode == EncodingMode.PROCESSING ? this.dataEnergistics$processingSameItemMask : 0);
-            EncodedPatternRecipeReference.applyProcessingRecipeMetadata(
-                    encodedPattern,
-                    PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(
-                            this,
-                            data_energistics$getPreferenceSession(),
-                            this),
-                    PatternEncodingSourceHelper.resolveProcessingPatternRecipeId(
-                            this,
-                            data_energistics$getPreferenceSession()));
             this.encodedPatternSlot.set(encodedPattern);
             dataEnergistics$forceSyncPatternProviders();
             encodedSuccessfully = true;
@@ -1072,8 +1059,21 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                 this::dataEnergistics$setPatternSourceEnabledFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_SET_UPLOAD_ENABLED, Boolean.class,
                 this::dataEnergistics$setUploadEnabledFromClient);
-        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_SAME_ITEM, String.class,
-                this::dataEnergistics$setProcessingSameItemFromClient);
+        registerClientAction(DATA_ENERGISTICS_ACTION_SET_PROCESSING_MATCH_MODE, String.class, payload -> {
+            if (payload == null) return;
+            String[] values = payload.split(":", -1);
+            if (values.length != 3) return;
+            try {
+                int input = Integer.parseInt(values[0]);
+                int output = Integer.parseInt(values[1]);
+                int mode = Integer.parseInt(values[2]);
+                if (mode >= 0 && mode < ProcessingMatchMode.values().length) {
+                    data_energistics$setProcessingMatchMode(input, output, ProcessingMatchMode.values()[mode]);
+                }
+            } catch (NumberFormatException exception) {
+                Data_Energistics.LOGGER.warn("Rejected malformed processing match-mode action");
+            }
+        });
         registerClientAction(DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE,
                 this::data_energistics$clearPatternSourceState);
         registerClientAction(PatternEncodingPreviewLayoutHelper.ACTION_SET_PREVIEW_PANEL_OFFSET, String.class,
@@ -1138,7 +1138,8 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
         }
         var fallbackWorkstation = PatternEncodingSourceHelper.resolveFallbackWorkstationForMode(mode);
         if (mode != EncodingMode.PROCESSING) {
-            this.dataEnergistics$processingSameItemMask = 0;
+            this.dataEnergistics$processingOutputModes = "";
+            this.dataEnergistics$processingInputModes = "";
         }
         this.dataEnergistics$pendingPatternSource = fallbackWorkstation;
         data_energistics$getPreferenceSession().setRankingContext(
@@ -1155,28 +1156,13 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
             return;
         }
         this.dataEnergistics$observedEncodedPattern = definition;
-        this.dataEnergistics$processingSameItemMask = definition == null ? 0 :
-                EncodedPatternDynamicOutput.markerMask(definition);
+        this.dataEnergistics$processingOutputModes = definition == null ? "" : EncodedPatternMatching.modes(definition, true);
+        this.dataEnergistics$processingInputModes = definition == null ? "" : EncodedPatternMatching.modes(definition);
     }
 
     @Unique
     private void dataEnergistics$setPendingPatternSourceFromClient(@Nullable String workstationId) {
         data_energistics$setPendingPatternSource(workstationId == null || workstationId.isEmpty() ? null : ResourceLocation.tryParse(workstationId));
-    }
-
-    @Unique
-    private void dataEnergistics$setProcessingSameItemFromClient(@Nullable String payload) {
-        if (payload == null) return;
-        String[] parts = payload.split(":", -1);
-        if (parts.length != 3) return;
-        try {
-            int inputIndex = Integer.parseInt(parts[0]);
-            int outputIndex = Integer.parseInt(parts[1]);
-            boolean enabled = Boolean.parseBoolean(parts[2]);
-            data_energistics$setProcessingSameItem(inputIndex, outputIndex, enabled);
-        } catch (NumberFormatException ignored) {
-            Data_Energistics.LOGGER.warn("Rejected malformed processing same-item action payload: {}", payload);
-        }
     }
 
     @Unique

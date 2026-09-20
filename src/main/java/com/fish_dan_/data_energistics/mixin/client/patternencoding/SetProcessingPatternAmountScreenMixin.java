@@ -1,18 +1,15 @@
 package com.fish_dan_.data_energistics.mixin.client.patternencoding;
 
 import com.fish_dan_.data_energistics.client.screen.patternencoding.ProcessingPatternAmountContext;
+import com.fish_dan_.data_energistics.client.widget.pattern.ProcessingMatchModeButton;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternOutputMatchMenu;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AESubScreen;
-import appeng.client.gui.Icon;
 import appeng.client.gui.me.items.PatternEncodingTermScreen;
 import appeng.client.gui.me.items.SetProcessingPatternAmountScreen;
-import appeng.client.gui.widgets.ToggleButton;
 import appeng.menu.me.items.PatternEncodingTermMenu;
-
-import net.minecraft.network.chat.Component;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -20,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /** Adds the encoded pattern's per-slot matching switch to the correct middle-click amount window. */
@@ -29,7 +25,7 @@ public abstract class SetProcessingPatternAmountScreenMixin
                                                             extends AESubScreen<PatternEncodingTermMenu, PatternEncodingTermScreen<PatternEncodingTermMenu>> {
 
     @Unique
-    private ToggleButton dataEnergistics$outputMatchButton;
+    private ProcessingMatchModeButton dataEnergistics$outputMatchButton;
 
     protected SetProcessingPatternAmountScreenMixin(
                                                     PatternEncodingTermScreen<PatternEncodingTermMenu> parent) {
@@ -50,20 +46,9 @@ public abstract class SetProcessingPatternAmountScreenMixin
         }
 
         PatternOutputMatchMenu state = (PatternOutputMatchMenu) this.getMenu();
-        this.dataEnergistics$outputMatchButton = new ToggleButton(
-                Icon.FUZZY_IGNORE,
-                Icon.FUZZY_PERCENT_99,
-                enabled -> {
-                    state.data_energistics$setProcessingSameItem(inputIndex, outputIndex, enabled);
-                    this.dataEnergistics$outputMatchButton.setState(
-                            state.data_energistics$isProcessingSameItem(inputIndex, outputIndex));
-                });
-        this.dataEnergistics$outputMatchButton.setTooltipOn(List.of(
-                Component.translatable("gui.data_energistics.processing_output_match.same_item")));
-        this.dataEnergistics$outputMatchButton.setTooltipOff(List.of(
-                Component.translatable("gui.data_energistics.processing_output_match.exact")));
-        this.dataEnergistics$outputMatchButton.setState(
-                state.data_energistics$isProcessingSameItem(inputIndex, outputIndex));
+        this.dataEnergistics$outputMatchButton = new ProcessingMatchModeButton(
+                () -> state.data_energistics$getProcessingMatchMode(inputIndex, outputIndex),
+                mode -> state.data_energistics$setProcessingMatchMode(inputIndex, outputIndex, mode));
         this.addToLeftToolbar(this.dataEnergistics$outputMatchButton);
     }
 }

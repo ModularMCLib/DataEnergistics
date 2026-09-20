@@ -1,8 +1,7 @@
 package com.fish_dan_.data_energistics.api.crafting.dynamic;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,20 +11,15 @@ import java.util.Objects;
  *
  * @param outputs non-empty dynamic physical outputs in deterministic declaration order
  */
-public record DynamicCraftingOutputSemantics(List<DynamicCraftingOutput> outputs) {
+public record DynamicCraftingOutputSemantics(ObjectList<DynamicCraftingOutput> outputs) {
 
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #outputsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<DynamicCraftingOutput> outputs() {
-        return outputs;
+    public DynamicCraftingOutputSemantics(List<DynamicCraftingOutput> outputs) {
+        this(new ObjectImmutableList<>(outputs));
     }
 
     /** Returns an immutable FastUtil view of the declared outputs. */
     public ObjectList<DynamicCraftingOutput> outputsFast() {
-        return ObjectLists.unmodifiable(new ObjectArrayList<>(outputs));
+        return outputs;
     }
 
     /**
@@ -36,6 +30,6 @@ public record DynamicCraftingOutputSemantics(List<DynamicCraftingOutput> outputs
         if (outputs.isEmpty()) {
             throw new IllegalArgumentException("Dynamic crafting output semantics require at least one output");
         }
-        outputs = List.copyOf(outputs);
+        outputs = new ObjectImmutableList<>(outputs);
     }
 }

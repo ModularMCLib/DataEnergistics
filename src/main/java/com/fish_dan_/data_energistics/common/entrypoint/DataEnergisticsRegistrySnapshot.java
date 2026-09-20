@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.entrypoint;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
+import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
@@ -41,12 +42,7 @@ import java.util.Map;
 public final class DataEnergisticsRegistrySnapshot {
 
     private final PackagedRecipeCatalog packagedCrafting;
-
-    /** Immutable real-machine adapters declared by successfully committed plugins. */
-    public PackagedRecipeCatalog packagedCrafting() {
-        return this.packagedCrafting;
-    }
-
+    private final ObjectList<RecipeMatchingRuleAdapter> recipeMatching;
     private final ObjectList<UniversalTerminalRegistration> universalTerminalRegistrations;
     private final ObjectList<PatternProviderRegistration> patternProviderRegistrations;
     private final ObjectList<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations;
@@ -76,7 +72,9 @@ public final class DataEnergisticsRegistrySnapshot {
                                     Map<ResourceLocation, DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters,
                                     Map<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters,
                                     Collection<TowerEnergyEndpointIntegration> towerEnergyIntegrations,
-                                    ObjectList<PackagedMachineAdapter> packagedAdapters) {
+                                    ObjectList<PackagedMachineAdapter> packagedAdapters,
+                                    Collection<RecipeMatchingRuleAdapter> recipeMatchingAdapters) {
+        this.recipeMatching = immutableList(recipeMatchingAdapters);
         this.packagedCrafting = new PackagedRecipeCatalog(packagedAdapters);
         this.universalTerminalRegistrations = immutableList(universalTerminalRegistrations);
         this.patternProviderRegistrations = immutableList(patternProviderRegistrations);
@@ -188,5 +186,15 @@ public final class DataEnergisticsRegistrySnapshot {
     /** @return whether a server capture can benefit from querying reusable input rules */
     public boolean hasReusableInputRules() {
         return this.hasReusableInputRules;
+    }
+
+    /** Immutable global matching declarations in deterministic plugin order; not tied to packaged crafting. */
+    public ObjectList<RecipeMatchingRuleAdapter> recipeMatching() {
+        return this.recipeMatching;
+    }
+
+    /** Immutable real-machine adapters declared by successfully committed plugins. */
+    public PackagedRecipeCatalog packagedCrafting() {
+        return this.packagedCrafting;
     }
 }

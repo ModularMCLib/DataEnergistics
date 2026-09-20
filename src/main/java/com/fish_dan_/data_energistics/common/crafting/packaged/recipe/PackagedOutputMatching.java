@@ -1,7 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.recipe;
 
+import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.api.crafting.matching.ResourceCapacityMatching;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
-import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -14,39 +17,43 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.NullMarked;
 
+import java.math.BigInteger;
 import java.util.List;
 
-/** Pattern-authorized output comparison shared by admission, native recipe checks and physical collection. */
+/**
+ * Pattern-authorized output capacity assignment shared by admission and native physical collection.
+ */
+@NullMarked
 public final class PackagedOutputMatching {
 
     private static final String RULES = "pattern_outputs";
 
     private PackagedOutputMatching() {}
 
-    /** Freezes the accepted pattern's sparse-slot rules; later pattern edits cannot change an owned operation. */
+    /**
+     * Freezes every sparse output's template, quantity and global matching domain at admission.
+     */
     public static void save(IPatternDetails pattern, CompoundTag progress, HolderLookup.Provider registries) {
         var encoded = new ListTag();
-        for (var rule : rules(pattern)) {
+        for (Rule rule : rules(pattern)) {
             var tag = GenericStack.writeTag(registries, rule.stack());
-            tag.putBoolean("same_item", rule.sameItem());
+            tag.merge(rule.matching().save());
             encoded.add(tag);
         }
         progress.put(RULES, encoded);
     }
 
-    /** Reserves exact declarations before assigning remaining variants to marked output slots. */
     public static boolean matches(IPatternDetails pattern, List<ItemStack> actual) {
         return matches(pattern, amounts(actual));
     }
 
-    /** Keeps batch quantities as longs instead of converting them to an ItemStack count. */
     public static boolean matches(IPatternDetails pattern, Object2LongMap<? extends AEKey> actual) {
         var amounts = new KeyCounter();
         for (var entry : actual.object2LongEntrySet()) amounts.add(entry.getKey(), entry.getLongValue());
@@ -60,136 +67,127 @@ public final class PackagedOutputMatching {
     }
 
     public static boolean matches(IPatternDetails pattern, KeyCounter actual) {
-        var exact = new Object2LongLinkedOpenHashMap<AEKey>();
-        var flexible = new Object2LongLinkedOpenHashMap<Item>();
-        for (var rule : rules(pattern)) {
-            var key = rule.stack().what();
-            if (rule.sameItem() && key instanceof AEItemKey item) flexible.mergeLong(item.getItem(), rule.stack().amount(), Math::addExact);
-            else exact.mergeLong(key, rule.stack().amount(), Math::addExact);
-        }
-        return matches(exact, flexible, actual);
+        var rules = rules(pattern);
+        return assign(rules, rules.stream().map(Rule::stack).collect(ObjectArrayList.toList()), stacks(actual), true);
     }
 
-    /** Counts remain exact even when the accepted output slot ignores components. */
+    /**
+     * A single-port preflight; quantities are exact and explicit prototype declarations take priority.
+     */
+    public static boolean matches(IPatternDetails pattern, GenericStack expected, GenericStack actual) {
+        return expected.amount() == actual.amount() && sameKey(rules(pattern), expected.what(), actual.what());
+    }
+
     public static boolean matches(PackagedMachineOperation operation, ItemStack expected, ItemStack actual) {
         return expected.getCount() == actual.getCount() && sameKey(operation, expected, actual);
     }
 
-    /** For split item entities; callers must check the aggregate count before collecting. Legacy jobs stay exact. */
     public static boolean sameKey(PackagedMachineOperation operation, ItemStack expected, ItemStack actual) {
-        if (ItemStack.isSameItemSameComponents(expected, actual)) return true;
-        return !expected.isEmpty() && !actual.isEmpty() && expected.is(actual.getItem()) &&
-                allowsSameItem(operation, AEItemKey.of(expected));
+        if (expected.isEmpty() || actual.isEmpty()) return expected.isEmpty() && actual.isEmpty();
+        return sameKey(rules(operation), AEItemKey.of(expected), AEItemKey.of(actual));
     }
 
-    /** Compares complete cycle results, including already recovered containers, without rewriting physical keys. */
     public static boolean matches(PackagedMachineOperation operation, List<ItemStack> expected, List<ItemStack> actual) {
-        return matches(operation, amounts(expected), amounts(actual), true);
+        return assign(rules(operation), stacks(amounts(expected)), stacks(amounts(actual)), true);
     }
 
-    /** Allows an incomplete arrival only when every received item fits the cycle's output quantities and rules. */
     public static boolean acceptsPartial(PackagedMachineOperation operation, List<ItemStack> expected, List<ItemStack> actual) {
-        return matches(operation, amounts(expected), amounts(actual), false);
+        return assign(rules(operation), stacks(amounts(expected)), stacks(amounts(actual)), false);
     }
 
-    /** Matches ordered output ports; quantities, fluid keys and chemical keys remain exact. */
     public static boolean matchesResources(PackagedMachineOperation operation, List<GenericStack> expected,
                                            List<GenericStack> actual) {
         if (expected.size() != actual.size()) return false;
-        for (int index = 0; index < expected.size(); index++) {
-            if (!matches(operation, expected.get(index), actual.get(index))) return false;
-        }
-        return true;
+        for (int i = 0; i < expected.size(); i++) if (!matches(operation, expected.get(i), actual.get(i))) return false;
+        return assign(rules(operation), expected, actual, true);
     }
 
-    private static boolean matches(PackagedMachineOperation operation, KeyCounter expected, KeyCounter actual,
-                                   boolean complete) {
-        var exact = new Object2LongLinkedOpenHashMap<AEKey>();
-        var flexible = new Object2LongLinkedOpenHashMap<Item>();
-        for (var entry : expected) {
-            var key = entry.getKey();
-            if (key instanceof AEItemKey item && allowsSameItem(operation, item)) {
-                flexible.mergeLong(item.getItem(), entry.getLongValue(), Math::addExact);
-            } else {
-                exact.mergeLong(key, entry.getLongValue(), Math::addExact);
-            }
-        }
-        return matches(exact, flexible, actual, complete);
-    }
-
-    /** Non-item resources retain their exact key contract. */
     public static boolean matches(PackagedMachineOperation operation, GenericStack expected, GenericStack actual) {
-        if (expected.amount() != actual.amount()) return false;
-        if (expected.what().equals(actual.what())) return true;
-        return expected.what() instanceof AEItemKey expectedItem && actual.what() instanceof AEItemKey actualItem &&
-                expectedItem.getItem() == actualItem.getItem() && allowsSameItem(operation, expectedItem);
+        return expected.amount() == actual.amount() && sameKey(rules(operation), expected.what(), actual.what());
     }
 
-    private static boolean allowsSameItem(PackagedMachineOperation operation, AEItemKey expected) {
-        var encoded = operation.progress().getList(RULES, Tag.TAG_COMPOUND);
-        boolean marked = false;
-        for (int index = 0; index < encoded.size(); index++) {
-            var tag = encoded.getCompound(index);
-            var stack = GenericStack.readTag(operation.level().registryAccess(), tag);
-            if (stack == null || stack.amount() <= 0) throw new IllegalArgumentException("Invalid packaged output rule");
-            if (!(stack.what() instanceof AEItemKey key)) continue;
-            // An exact declaration for this prototype takes precedence over a same-item declaration.
-            if (!tag.getBoolean("same_item") && key.equals(expected)) return false;
-            if (tag.getBoolean("same_item") && key.getItem() == expected.getItem()) marked = true;
-        }
-        return marked;
+    private static boolean sameKey(List<Rule> rules, AEKey expected, AEKey actual) {
+        var matching = rules.stream().filter(rule -> rule.stack().what().equals(expected)).collect(ObjectArrayList.toList());
+        if (matching.isEmpty()) matching = rules.stream().filter(rule -> rule.accepts(expected)).collect(ObjectArrayList.toList());
+        if (matching.isEmpty()) return rules.isEmpty() && expected.equals(actual);
+        return matching.stream().allMatch(rule -> rule.accepts(actual));
     }
 
-    private static boolean matches(Object2LongLinkedOpenHashMap<AEKey> exact,
-                                   Object2LongLinkedOpenHashMap<Item> flexible, KeyCounter actual) {
-        return matches(exact, flexible, actual, true);
+    private static boolean assign(List<Rule> rules, List<GenericStack> expected, List<GenericStack> actual, boolean complete) {
+        if (expected.stream().anyMatch(stack -> stack.amount() <= 0) || actual.stream().anyMatch(stack -> stack.amount() <= 0))
+            return false;
+        BigInteger expectedTotal = total(expected);
+        BigInteger actualTotal = total(actual);
+        if (actualTotal.compareTo(expectedTotal) > 0 || complete && !actualTotal.equals(expectedTotal)) return false;
+        if (rules.isEmpty()) {
+            rules = expected.stream().map(stack -> new Rule(stack, ItemMatchingRule.EXACT)).collect(ObjectArrayList.toList());
+        }
+        BigInteger declaredTotal = total(rules.stream().map(Rule::stack).collect(ObjectArrayList.toList()));
+        if (declaredTotal.signum() == 0) return actualTotal.signum() == 0;
+        long[] capacities = new long[rules.size()];
+        for (int i = 0; i < capacities.length; i++) {
+            var scaled = BigInteger.valueOf(rules.get(i).stack().amount()).multiply(expectedTotal).divideAndRemainder(declaredTotal);
+            if (scaled[1].signum() != 0 || scaled[0].compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) return false;
+            capacities[i] = scaled[0].longValueExact();
+        }
+        var domains = rules;
+        return ResourceCapacityMatching.accepts(expected.stream().mapToLong(GenericStack::amount).toArray(), capacities,
+                actual.stream().mapToLong(GenericStack::amount).toArray(),
+                (e, r) -> domains.get(r).accepts(expected.get(e).what()),
+                (r, a) -> domains.get(r).accepts(actual.get(a).what()));
     }
 
-    private static boolean matches(Object2LongLinkedOpenHashMap<AEKey> exact,
-                                   Object2LongLinkedOpenHashMap<Item> flexible, KeyCounter actual, boolean complete) {
-        var remaining = new Object2LongLinkedOpenHashMap<AEKey>();
-        for (var entry : actual) {
-            if (entry.getLongValue() <= 0) return false;
-            remaining.mergeLong(entry.getKey(), entry.getLongValue(), Math::addExact);
-        }
-        for (var entry : exact.object2LongEntrySet()) {
-            long available = remaining.getLong(entry.getKey());
-            if (complete && available < entry.getLongValue()) return false;
-            remaining.put(entry.getKey(), available - Math.min(available, entry.getLongValue()));
-        }
-        var remainingItems = new Object2LongLinkedOpenHashMap<Item>();
-        for (var entry : remaining.object2LongEntrySet()) {
-            if (entry.getLongValue() == 0) continue;
-            if (!(entry.getKey() instanceof AEItemKey item)) return false;
-            remainingItems.mergeLong(item.getItem(), entry.getLongValue(), Math::addExact);
-        }
-        if (complete) return remainingItems.equals(flexible);
-        for (var entry : remainingItems.object2LongEntrySet()) {
-            if (entry.getLongValue() > flexible.getLong(entry.getKey())) return false;
-        }
-        return true;
+    private static BigInteger total(List<GenericStack> stacks) {
+        BigInteger total = BigInteger.ZERO;
+        for (GenericStack stack : stacks) total = total.add(BigInteger.valueOf(stack.amount()));
+        return total;
     }
 
     private static KeyCounter amounts(List<ItemStack> stacks) {
         var amounts = new KeyCounter();
-        for (var stack : stacks) {
-            if (!stack.isEmpty()) amounts.add(AEItemKey.of(stack), stack.getCount());
-        }
+        for (ItemStack stack : stacks) if (!stack.isEmpty()) amounts.add(AEItemKey.of(stack), stack.getCount());
         return amounts;
     }
 
+    private static List<GenericStack> stacks(KeyCounter counts) {
+        var result = new ObjectArrayList<GenericStack>();
+        for (var entry : counts) result.add(new GenericStack(entry.getKey(), entry.getLongValue()));
+        return result;
+    }
+
     private static List<Rule> rules(IPatternDetails pattern) {
-        var encoded = pattern.getDefinition().get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        var definition = pattern.getDefinition();
+        var encoded = definition.get(AEComponents.ENCODED_PROCESSING_PATTERN);
         var outputs = encoded == null ? pattern.getOutputs() : encoded.sparseOutputs();
         var rules = new ObjectArrayList<Rule>();
         for (int slot = 0; slot < outputs.size(); slot++) {
             var output = outputs.get(slot);
             if (output == null) continue;
             if (output.amount() <= 0) throw new IllegalArgumentException("Invalid packaged pattern output amount");
-            rules.add(new Rule(output, EncodedPatternDynamicOutput.isMarked(pattern.getDefinition(), -1, slot)));
+            var mode = EncodedPatternMatching.outputMode(definition, slot);
+            rules.add(new Rule(output, new ItemMatchingRule(mode,
+                    mode == ProcessingMatchMode.TAG ? EncodedPatternMatching.outputTags(definition, slot) : ObjectList.of())));
         }
         return rules;
     }
 
-    private record Rule(GenericStack stack, boolean sameItem) {}
+    private static List<Rule> rules(PackagedMachineOperation operation) {
+        var result = new ObjectArrayList<Rule>();
+        var encoded = operation.progress().getList(RULES, Tag.TAG_COMPOUND);
+        for (int i = 0; i < encoded.size(); i++) {
+            var tag = encoded.getCompound(i);
+            var stack = GenericStack.readTag(operation.level().registryAccess(), tag);
+            if (stack == null || stack.amount() <= 0)
+                throw new IllegalArgumentException("Invalid packaged output rule");
+            result.add(new Rule(stack, ItemMatchingRule.load(tag)));
+        }
+        return result;
+    }
+
+    private record Rule(GenericStack stack, ItemMatchingRule matching) {
+
+        boolean accepts(AEKey actual) {
+            return !(stack.what() instanceof AEItemKey) ? stack.what().equals(actual) : matching.matches(stack.what(), actual);
+        }
+    }
 }

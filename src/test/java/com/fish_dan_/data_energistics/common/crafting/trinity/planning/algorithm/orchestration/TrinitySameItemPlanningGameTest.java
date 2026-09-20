@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.orchestration;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -23,6 +24,7 @@ import appeng.crafting.pattern.AEProcessingPattern;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -150,8 +152,14 @@ public final class TrinitySameItemPlanningGameTest {
 
     private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output, boolean sameItem) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs, List.of(output));
-        EncodedPatternDynamicOutput.apply(encoded,
-                sameItem ? 1 << EncodedPatternDynamicOutput.PROCESSING_INPUT_SLOTS : 0);
+        var rules = new CompoundTag();
+        if (sameItem) {
+            var rule = new CompoundTag();
+            rule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+            rules.put("o0", rule.copy());
+            for (int i = 0; i < inputs.size(); i++) if (inputs.get(i).what() instanceof AEItemKey) rules.put("i" + i, rule.copy());
+        }
+        encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, rules);
         return new AEProcessingPattern(AEItemKey.of(encoded));
     }
 

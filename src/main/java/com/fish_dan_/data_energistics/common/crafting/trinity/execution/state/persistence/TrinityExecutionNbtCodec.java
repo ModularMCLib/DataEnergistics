@@ -10,8 +10,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 
-import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

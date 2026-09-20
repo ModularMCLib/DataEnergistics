@@ -26,7 +26,7 @@ public final class BotaniaPatternEncoding {
 
     /** Keeps the user's primary output prototype for its explicit matching mode, adding only missing returns. */
     static @Nullable ObjectList<@Nullable GenericStack> appendReturned(List<@Nullable GenericStack> original,
-                                                                     List<ItemStack> completed, int limit) {
+                                                                       List<ItemStack> completed, int limit) {
         var declared = new ObjectArrayList<>(completed);
         for (GenericStack output : original) {
             if (output == null) continue;
@@ -39,7 +39,7 @@ public final class BotaniaPatternEncoding {
 
     /** Preserves every existing sparse index and amount; only appends missing physical auxiliary resources. */
     static @Nullable ObjectList<@Nullable GenericStack> appendMissing(List<@Nullable GenericStack> original,
-                                                                    List<ItemStack> completed, int limit) {
+                                                                      List<ItemStack> completed, int limit) {
         var missing = new KeyCounter();
         for (ItemStack stack : completed) missing.add(AEItemKey.of(stack), stack.getCount());
         for (GenericStack stack : original) {

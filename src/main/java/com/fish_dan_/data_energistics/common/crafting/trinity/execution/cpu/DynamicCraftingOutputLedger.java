@@ -5,11 +5,11 @@ import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOut
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
-import appeng.api.ids.AEComponents;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

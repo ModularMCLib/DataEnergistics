@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern;
 
-import com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern.TrinityBoundPatternDetails.SlotBinding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
+import com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern.TrinityBoundPatternDetails.SlotBinding;
 import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternBindingEnumerator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;

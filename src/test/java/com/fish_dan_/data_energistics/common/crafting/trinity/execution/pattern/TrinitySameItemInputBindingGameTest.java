@@ -14,9 +14,9 @@ import appeng.api.stacks.KeyCounter;
 import appeng.crafting.inv.ListCraftingInventory;
 
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -26,8 +26,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-import org.jspecify.annotations.Nullable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 

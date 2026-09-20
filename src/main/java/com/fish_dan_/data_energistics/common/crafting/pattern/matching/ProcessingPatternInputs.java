@@ -70,8 +70,7 @@ public final class ProcessingPatternInputs {
             var original = (AEItemKey) template.what();
             if (rule.matches(original, original)) keys.add(original);
             for (var name : rule.tags()) {
-                BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, name)).ifPresent(items ->
-                        items.forEach(holder -> keys.add(AEItemKey.of(holder.value()))));
+                BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, name)).ifPresent(items -> items.forEach(holder -> keys.add(AEItemKey.of(holder.value()))));
             }
             if (keys.isEmpty()) throw new IllegalArgumentException("Recipe tag no longer contains any processing input");
             return keys.stream().map(key -> new GenericStack(key, 1)).toArray(GenericStack[]::new);

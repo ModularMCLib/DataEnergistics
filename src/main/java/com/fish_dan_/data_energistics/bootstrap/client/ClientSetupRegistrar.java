@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.bootstrap.client;
 
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
-import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.curios.client.CuriosDollRendererRegistry;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
 import com.fish_dan_.data_energistics.registry.DEStorageCells;
@@ -19,13 +19,13 @@ final class ClientSetupRegistrar {
         DEStorageCells.registerClientModels();
         ClientRenderLayerRegistrar.register();
         ClientItemModelPropertyRegistrar.register();
-        if (ModFlags.isCuriosLoaded()) {
+        if (MOD.isCuriosLoaded()) {
             CuriosDollRendererRegistry.register();
         }
-        if (ModFlags.isXaeroWorldMapLoaded()) {
+        if (MOD.isXaeroWorldMapLoaded()) {
             XaeroWorldMapOrbitalAdapter.register();
         }
-        if (ModFlags.isFtbChunksLoaded()) {
+        if (MOD.isFtbChunksLoaded()) {
             FtbChunksOrbitalAdapter.register();
         }
         ClientGameEventRegistrar.register();

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.ae2lt.orbital.CelestweaveErasureHooks;
+import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 import com.fish_dan_.data_energistics.mixin.configuration.DataEnergisticsEarlyConfig;
 
 import net.neoforged.fml.ModList;
@@ -25,22 +25,26 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
     private static final Map<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
 
     static {
-        addModCompatMixin("advancedae", "advancedae.");
-        addModCompatMixin("ae2ct", "ae2ct.");
-        addModCompatMixin("ae2cs", "ae2cs.");
-        addModCompatMixin("appliedcreate", "appliedcreate.");
-        addModCompatMixin("draconicevolution", "draconic.");
-        addModCompatMixin("ae2lt", "ae2lt.");
-        addModCompatMixin("extendedae", "extendedae.");
-        addModCompatMixin("extendedae_plus", "extendedaeplus.");
-        addModCompatMixin("ae2jeiintegration", "jei.");
+        addModCompatMixin("advancedae", "ae.advancedae.");
+        addModCompatMixin("ae2ct", "ae.ae2ct.");
+        addModCompatMixin("ae2cs", "ae.ae2cs.");
+        addModCompatMixin("appliedcreate", "ae.appliedcreate.");
+        addModCompatMixin("avaritia", "technology.avaritia.");
+        addModCompatMixin("draconicevolution", "technology.draconicevolution.");
+        addModCompatMixin("botania", "magic.botania.");
+        addModCompatMixin("malum", "magic.malum.");
+        addModCompatMixin("ae2lt", "ae.ae2lt.");
+        addModCompatMixin("extendedae", "ae.extendedae.");
+        addModCompatMixin("extendedae_plus", "ae.extendedaeplus.");
+        addModCompatMixin("extendedcrafting", "technology.extendedcrafting.");
+        addModCompatMixin("ae2jeiintegration", "ae.ae2jeiintegration.jei.");
         addModCompatMixin("jei", "viewer.jei.");
-        addModCompatMixin("emi", "emi.");
-        addModCompatMixin("ftbchunks", "ftbchunks.");
-        addModCompatMixin("ftblibrary", "ftblibrary.");
-        addModCompatMixin("guideme", "guideme.");
-        addModCompatMixin("neoecoae", "neoecoae.");
-        addModCompatMixin("xaeroworldmap", "xaeroworldmap.");
+        addModCompatMixin("emi", "viewer.emi.ae2.");
+        addModCompatMixin("ftbchunks", "map.ftbchunks.");
+        addModCompatMixin("ftblibrary", "library.ftblibrary.");
+        addModCompatMixin("guideme", "guide.guideme.");
+        addModCompatMixin("neoecoae", "ae.neoecoae.");
+        addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");
         addModCompatMixin("useless_mod", "useless.");
     }
 
@@ -73,6 +77,12 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        if (mixinClassName.equals("technology.avaritia.emi.ExtremeSmithingEmiInputsMixin")) {
+            return isModLoaded("avaritia") && isModLoaded("emi");
+        }
+        if (mixinClassName.startsWith("technology.mekanismmore.appmek.")) {
+            return isModLoaded("mekmm") && isModLoaded("appmek");
+        }
 
         if (mixinClassName.startsWith("dev.")) {
             if (FMLLoader.isProduction()) {
@@ -104,7 +114,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-        if (mixinClassName.equals(MIXIN_PACKAGE + "ae2lt.OrbitalCelestweaveProtectionMixin")) {
+        if (mixinClassName.equals(MIXIN_PACKAGE + "ae.ae2lt.OrbitalCelestweaveProtectionMixin")) {
             List<String> missing = CelestweaveErasureHooks.missingMethods(targetClass);
             if (!missing.isEmpty()) {
                 Data_Energistics.LOGGER.warn("LT orbital erasure compatibility skipped missing methods on {}: {}; vanilla termination remains active",

@@ -47,7 +47,7 @@ public final class AstronomicalObservatoryGameTest {
 
     @TestHolder("astronomical_observatory_obeys_environment_and_preserves_transactions")
     @EmptyTemplate("5")
-    @GameTest(template = "empty_5x5", timeoutTicks = 500)
+    @GameTest(template = "empty_5x5", batch = "orbital_astronomy_observatory", timeoutTicks = 500)
     public static void obeysEnvironmentAndPreservesTransactions(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         StellarErasureDeviceSavedData data = StellarErasureDeviceSavedData.get(level.getServer());

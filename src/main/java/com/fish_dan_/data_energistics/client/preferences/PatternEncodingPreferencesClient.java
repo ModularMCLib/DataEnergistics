@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.preferences;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
@@ -84,7 +85,8 @@ public final class PatternEncodingPreferencesClient {
         Interfaces interfaces = Interfaces.require(menu);
         PatternEncodingPreferenceSession session = interfaces.preferenceMenu().data_energistics$getPreferenceSession();
         session.rememberEncodedPattern(interfaces.previewMenu());
-        if (interfaces.sourceAware().data_energistics$isPatternSourceEnabled()) {
+        if (interfaces.sourceAware().data_energistics$isPatternSourceEnabled() ||
+                PackagedRecipeCatalog.supportsType(rankingContext.recipeTypeId())) {
             session.setRecipeContext(rankingContext, recipeId);
         } else {
             session.setRecipeContext(null, recipeId);
@@ -142,7 +144,10 @@ public final class PatternEncodingPreferencesClient {
         if (!enabled) {
             PatternEncodingPreferenceSession session = interfaces.preferenceMenu()
                     .data_energistics$getPreferenceSession();
-            session.setRecipeContext(null, session.recipeId());
+            PatternEncodingRankingContext context = session.rankingContext();
+            session.setRecipeContext(
+                    context != null && PackagedRecipeCatalog.supportsType(context.recipeTypeId()) ? context : null,
+                    session.recipeId());
             interfaces.sourceAware().data_energistics$setPendingPatternSource(null);
         }
         sendSnapshot(menu);

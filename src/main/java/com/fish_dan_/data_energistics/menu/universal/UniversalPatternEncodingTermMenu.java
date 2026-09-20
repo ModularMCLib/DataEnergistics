@@ -1,9 +1,10 @@
 package com.fish_dan_.data_energistics.menu.universal;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
-import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.EaepPatternEncodingHandoff;
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingInheritedState;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
@@ -185,6 +186,23 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
                 return;
             }
 
+            var recipeType = PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(this, data_energistics$getPreferenceSession(), this);
+            var recipeId = PatternEncodingSourceHelper.resolveProcessingPatternRecipeId(this, data_energistics$getPreferenceSession());
+            if (this.mode == EncodingMode.PROCESSING) {
+                encodedPattern = PackagedPatternEncoding.complete(((ServerPlayer) getPlayer()).serverLevel(), recipeType, recipeId, encodedPattern);
+                if (encodedPattern == null) {
+                    getPlayer().sendSystemMessage(Component.translatable("message.data_energistics.packaged_encoding.rejected"));
+                    return;
+                }
+            }
+            EncodedPatternRecipeReference.applyProcessingRecipeMetadata(encodedPattern, recipeType, recipeId);
+            var matching = (PatternOutputMatchMenu) this;
+            if (this.mode == EncodingMode.PROCESSING && !EncodedPatternMatching.apply(((ServerPlayer) getPlayer()).serverLevel(),
+                    encodedPattern, matching.data_energistics$getProcessingInputModes(), matching.data_energistics$getProcessingOutputModes())) {
+                getPlayer().sendSystemMessage(Component.translatable("message.data_energistics.processing_match.no_declared_tag"));
+                return;
+            }
+
             var encodedPatternInv = this.host.getLogic().getEncodedPatternInv();
             ItemStack encodeOutput = encodedPatternInv.getStackInSlot(0);
             if (!encodeOutput.isEmpty() && !PatternDetailsHelper.isEncodedPattern(encodeOutput) && !AEItems.BLANK_PATTERN.is(encodeOutput)) {
@@ -196,18 +214,6 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
             }
 
             // Inventory callbacks must observe the completed pattern, including this transfer's metadata.
-            EncodedPatternDynamicOutput.apply(
-                    encodedPattern,
-                    this.mode == EncodingMode.PROCESSING ? ((PatternOutputMatchMenu) this).data_energistics$getProcessingSameItemMask() : 0);
-            EncodedPatternRecipeReference.applyProcessingRecipeMetadata(
-                    encodedPattern,
-                    PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(
-                            this,
-                            data_energistics$getPreferenceSession(),
-                            this),
-                    PatternEncodingSourceHelper.resolveProcessingPatternRecipeId(
-                            this,
-                            data_energistics$getPreferenceSession()));
             encodedPatternInv.setItemDirect(0, encodedPattern);
             syncPatternProvidersIfNeeded(true);
             encodedSuccessfully = true;

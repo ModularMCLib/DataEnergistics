@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.ae2.sanctum.InterfaceStockLogic;
 import com.fish_dan_.data_energistics.ae2.sanctum.connector.InterfaceRemoteLinks;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
-import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.InterfaceLogicUpgradesAccessor;
+import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;

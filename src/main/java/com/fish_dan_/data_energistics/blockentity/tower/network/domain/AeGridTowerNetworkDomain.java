@@ -45,8 +45,8 @@ import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridCandi
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridCandidateStatus;
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridOwner;
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridOwnershipSnapshot;
-import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.ae.appflux.AE2FluxIntegration;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -486,7 +486,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             }
         }
 
-        if (ModFlags.isAppFluxEnergySupportLoaded()) {
+        if (MOD.isAppFluxLoaded()) {
             for (TowerWork towerWork : towerWorks) {
                 TowerNetworkParticipant participant = towerWork.participant();
                 if (!participant.isTowerNetworkActive() || !participant.towerAllowsFe()) {

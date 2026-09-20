@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.util;
 
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 
 import me.towdium.jecharacters.utils.Match;
 
@@ -62,7 +62,7 @@ public final class TextSearch {
      * @return whether JECh matches the candidate, or {@code false} when JECh is not loaded
      */
     public static boolean matchesJech(String text, String normalizedFilter) {
-        if (!ModFlags.isJechLoaded() || text.isEmpty() || normalizedFilter.isEmpty()) {
+        if (!MOD.isJechLoaded() || text.isEmpty() || normalizedFilter.isEmpty()) {
             return false;
         }
         return JechMatcher.contains(text, normalizedFilter);

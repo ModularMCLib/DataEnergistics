@@ -278,6 +278,15 @@ final class CommonCapabilityRegistrar {
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST,
+                DEBlockEntities.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(AECapabilities.GENERIC_INTERNAL_INV,
+                DEBlockEntities.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), (blockEntity, context) -> {
+                    if (context != null && !blockEntity.getTargets().contains(context)) {
+                        return null;
+                    }
+                    return blockEntity.getLogic().getReturnInv();
+                });
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.ME_COMPOSITE_INPUT_WAREHOUSE_BLOCK_ENTITY.get(),

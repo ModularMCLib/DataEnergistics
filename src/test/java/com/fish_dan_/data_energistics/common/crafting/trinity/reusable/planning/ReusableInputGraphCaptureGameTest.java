@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingCustodyCensus;
@@ -11,7 +12,6 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
-import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.IdentityCraftingProviderPublicationIndex;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
@@ -20,19 +20,23 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.crafting.pattern.EncodedProcessingPattern;
 import appeng.me.helpers.BaseActionSource;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -43,6 +47,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
@@ -304,8 +309,20 @@ public final class ReusableInputGraphCaptureGameTest {
         @Override
         public AEItemKey getDefinition() {
             ItemStack definition = new ItemStack(Items.CRAFTING_TABLE);
-            EncodedPatternDynamicOutput.apply(definition,
-                    aliasMaterial ? 1 << EncodedPatternDynamicOutput.PROCESSING_INPUT_SLOTS : 0);
+            var inputs = new ObjectArrayList<GenericStack>();
+            for (var input : getInputs()) {
+                var stack = input.getPossibleInputs()[0];
+                inputs.add(new GenericStack(stack.what(), Math.multiplyExact(stack.amount(), input.getMultiplier())));
+            }
+            definition.set(AEComponents.ENCODED_PROCESSING_PATTERN, new EncodedProcessingPattern(inputs, getOutputs()));
+            var rules = new CompoundTag();
+            if (aliasMaterial) {
+                var rule = new CompoundTag();
+                rule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+                rules.put("o0", rule.copy());
+                rules.put("i1", rule.copy());
+            }
+            definition.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, rules);
             return AEItemKey.of(definition);
         }
 

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.dynamic;
 
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -60,7 +62,7 @@ public final class BoundPatternInputEmitter {
             for (var actual : actualInput) {
                 AEKey actualKey = actual.getKey();
                 long amount = actual.getLongValue();
-                validateActualKey(plannedTemplate.what(), actualKey, amount, slot);
+                validateActualKey(originalDetails.getDefinition(), plannedTemplate.what(), actualKey, amount, slot);
                 actualAmount = Math.addExact(actualAmount, amount);
                 slices.enqueue(new ActualSlice(actualKey, amount));
             }
@@ -126,15 +128,11 @@ public final class BoundPatternInputEmitter {
         }
     }
 
-    private static void validateActualKey(AEKey plannedKey, AEKey actualKey, long amount, int slot) {
+    private static void validateActualKey(AEItemKey definition, AEKey plannedKey, AEKey actualKey, long amount, int slot) {
         if (amount <= 0L) {
             throw new IllegalArgumentException("Bound pattern input slot " + slot + " contains an invalid amount");
         }
-        if (plannedKey.equals(actualKey)) {
-            return;
-        }
-        if (!(plannedKey instanceof AEItemKey plannedItem) || !(actualKey instanceof AEItemKey actualItem) ||
-                plannedItem.getItem() != actualItem.getItem()) {
+        if (!EncodedPatternMatching.matchesInput(definition, slot, plannedKey, actualKey)) {
             throw new IllegalArgumentException(
                     "Bound pattern input slot " + slot + " contains an unauthorized key " + actualKey);
         }

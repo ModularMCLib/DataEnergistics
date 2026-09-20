@@ -11,6 +11,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 
+import lombok.Getter;
+
 import java.util.function.IntSupplier;
 
 public final class AdaptivePatternProviderState {
@@ -28,20 +30,19 @@ public final class AdaptivePatternProviderState {
     private static final int MENU_SLOT_SAFETY_MARGIN = 64;
     public static final int MAX_PATTERN_SLOTS = MAX_NETWORK_SAFE_MENU_SLOTS - FIXED_MENU_SLOT_OVERHEAD - MENU_SLOT_SAFETY_MARGIN;
 
+    @Getter
     private final AppEngInternalInventory providerInventory;
     private final IntSupplier providerSlotLimit;
     private boolean advancedAeFilteredImport;
+    @Getter
     private boolean resonatingPullEnabled;
 
     public AdaptivePatternProviderState(InternalInventoryHost inventoryHost, IntSupplier providerSlotLimit) {
         this.providerSlotLimit = providerSlotLimit;
         this.providerInventory = new AppEngInternalInventory(inventoryHost, 1);
-        refreshProviderSlotLimit();
+        // The host must publish this state before capacity-card lookup can call back into its provider inventory.
+        this.providerInventory.setMaxStackSize(0, PROVIDER_SLOT_LIMIT);
         this.providerInventory.setFilter(new ProviderFilter());
-    }
-
-    public AppEngInternalInventory getProviderInventory() {
-        return this.providerInventory;
     }
 
     public ItemStack getProviderStack() {
@@ -82,10 +83,6 @@ public final class AdaptivePatternProviderState {
 
         this.advancedAeFilteredImport = enabled;
         return true;
-    }
-
-    public boolean isResonatingPullEnabled() {
-        return this.resonatingPullEnabled;
     }
 
     public boolean setResonatingPullEnabled(boolean enabled) {

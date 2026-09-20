@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.energy.IEnergyService;
@@ -227,6 +228,11 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     @Override
     public ObjectList<ConnectorLink> connectorBindingsFast() {
         return this.logic.adaptiveConnectorBindings();
+    }
+
+    @Override
+    public ConnectorPolicy connectorPolicy() {
+        return this.logic.connectorPolicy();
     }
 
     @Override

@@ -21,8 +21,8 @@ import java.util.Set;
  * Ordered registry for tower energy endpoint integrations.
  *
  * <p>
- * Capability lookup order and operation dispatch are both driven by registered strategies, so adding a Mod does
- * not require another Mod-specific branch in the tower resolver or transfer engine.
+ * Capability lookup order and operation dispatch are both driven by registered strategies, so adding a MOD does
+ * not require another MOD-specific branch in the tower resolver or transfer engine.
  * </p>
  */
 public final class TowerEnergyEndpointIntegrationRegistry {

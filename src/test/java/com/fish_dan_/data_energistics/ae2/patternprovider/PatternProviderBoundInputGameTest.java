@@ -1,8 +1,10 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -16,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -40,10 +43,11 @@ public final class PatternProviderBoundInputGameTest {
         AEItemKey book = AEItemKey.of(Items.BOOK);
         AEItemKey firstActualPaper = namedPaper("first");
         AEItemKey secondActualPaper = namedPaper("second");
-        IPatternDetails registered = processingPattern(plannedPaper, book);
+        IPatternDetails registered = processingPattern(plannedPaper, book, false);
+        IPatternDetails authorized = processingPattern(plannedPaper, book, true);
         IPatternDetails emissionDetails = new BoundEmissionDetails(
-                registered,
-                List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)));
+                authorized,
+                List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L), new GenericStack(plannedPaper, 1L)));
         boolean strictRejected = false;
         try {
             PatternProviderBatching.expandPatternInputs(
@@ -59,7 +63,7 @@ public final class PatternProviderBoundInputGameTest {
 
         List<GenericStack> expanded = PatternProviderBatching.expandPatternInputs(
                 emissionDetails,
-                actualInputs(firstActualPaper, secondActualPaper, book),
+                authorizedInputs(firstActualPaper, secondActualPaper, book),
                 3L);
 
         helper.assertValueEqual(expanded.size(), 3, "Expanded provider input must retain all sparse slices");
@@ -119,13 +123,21 @@ public final class PatternProviderBoundInputGameTest {
         helper.succeed();
     }
 
-    private static IPatternDetails processingPattern(AEItemKey paper, AEItemKey book) {
+    private static IPatternDetails processingPattern(AEItemKey paper, AEItemKey book, boolean authorizePaper) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(
                 List.of(
                         new GenericStack(paper, 1L),
                         new GenericStack(book, 1L),
                         new GenericStack(paper, 1L)),
                 List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L)));
+        if (authorizePaper) {
+            var matching = new CompoundTag();
+            var idRule = new CompoundTag();
+            idRule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+            matching.put("i0", idRule.copy());
+            matching.put("i2", idRule.copy());
+            encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, matching);
+        }
         return new AEProcessingPattern(AEItemKey.of(encoded));
     }
 
@@ -136,6 +148,16 @@ public final class PatternProviderBoundInputGameTest {
         KeyCounter bookInputs = new KeyCounter();
         bookInputs.add(book, 1L);
         return new KeyCounter[] { paperInputs, bookInputs };
+    }
+
+    private static KeyCounter[] authorizedInputs(AEItemKey firstPaper, AEItemKey secondPaper, AEItemKey book) {
+        KeyCounter first = new KeyCounter();
+        first.add(firstPaper, 1L);
+        KeyCounter middle = new KeyCounter();
+        middle.add(book, 1L);
+        KeyCounter last = new KeyCounter();
+        last.add(secondPaper, 1L);
+        return new KeyCounter[] { first, middle, last };
     }
 
     private static AEItemKey namedPaper(String name) {

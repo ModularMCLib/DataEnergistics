@@ -1,8 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
+import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputResolutionException;
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -13,11 +16,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -62,7 +63,13 @@ final class DynamicCraftingOutputLedger {
     record Registration(AEItemKey plannedKey,
                         BigInteger amount,
                         Route route,
-                        ResourceLocation source) {
+                        ResourceLocation source,
+                        ItemMatchingRule rule,
+                        AEItemKey templateKey) {
+
+        Registration(AEItemKey plannedKey, BigInteger amount, Route route, ResourceLocation source, ItemMatchingRule rule) {
+            this(plannedKey, amount, route, source, rule, plannedKey);
+        }
 
         Registration {
             if (amount.signum() <= 0) {
@@ -82,7 +89,9 @@ final class DynamicCraftingOutputLedger {
     record Match(AEItemKey plannedKey,
                  long amount,
                  Route route,
-                 ResourceLocation source) {}
+                 ResourceLocation source,
+                 ItemMatchingRule rule,
+                 AEItemKey templateKey) {}
 
     /**
      * Whether a new push can coexist with all active same-item matching domains.
@@ -102,62 +111,32 @@ final class DynamicCraftingOutputLedger {
     DispatchSafety evaluate(Object2ObjectMap<AEKey, BigInteger> waitingFor,
                             ObjectList<GenericStack> expectedPhysicalOutputs,
                             ObjectList<Registration> registrations) {
-        Object2ObjectMap<Item, Domain> activeDomains = domains(this.entries.stream()
-                .map(MutableEntry::registration)
-                .collect(ObjectImmutableList.toList()));
-        Object2ObjectMap<Item, Domain> newDomains = domains(registrations);
-        Object2ObjectMap<Item, ObjectList<AEItemKey>> expectedDomains = expectedDomains(expectedPhysicalOutputs);
-
-        for (Object2ObjectMap.Entry<Item, Domain> dynamic : newDomains.object2ObjectEntrySet()) {
-            ObjectList<AEItemKey> expectedKeys = expectedDomains.getOrDefault(dynamic.getKey(), ObjectList.of());
-            if (expectedKeys.stream().anyMatch(key -> !key.equals(dynamic.getValue().plannedKey()))) {
-                throw new DynamicCraftingOutputResolutionException(
-                        "One provider push exposes multiple component templates in dynamic item domain " +
-                                dynamic.getValue().plannedKey().getItem());
+        for (Registration incoming : registrations) {
+            BigInteger expected = expectedPhysicalOutputs.stream().filter(stack -> stack.what().equals(incoming.plannedKey()))
+                    .map(stack -> BigInteger.valueOf(stack.amount())).reduce(BigInteger.ZERO, BigInteger::add);
+            BigInteger declared = registrations.stream().filter(value -> value.plannedKey().equals(incoming.plannedKey()))
+                    .map(Registration::amount).reduce(BigInteger.ZERO, BigInteger::add);
+            if (declared.compareTo(expected) > 0) throw new DynamicCraftingOutputResolutionException("Dynamic declaration exceeds physical output");
+            for (Registration other : registrations) {
+                if (incoming.rule().overlaps(incoming.templateKey(), other.rule(), other.templateKey()) &&
+                        (!incoming.plannedKey().equals(other.plannedKey()) || incoming.route() != other.route())) {
+                    throw new DynamicCraftingOutputResolutionException("One dispatch has overlapping output rules with different accounting routes");
+                }
             }
-            BigInteger expected = expectedPhysicalOutputs.stream()
-                    .filter(stack -> stack.what().equals(dynamic.getValue().plannedKey()))
-                    .map(stack -> BigInteger.valueOf(stack.amount()))
-                    .reduce(BigInteger.ZERO, BigInteger::add);
-            BigInteger registered = registrations.stream()
-                    .filter(value -> value.plannedKey().equals(dynamic.getValue().plannedKey()))
-                    .map(Registration::amount)
-                    .reduce(BigInteger.ZERO, BigInteger::add);
-            if (registered.compareTo(expected) > 0) {
-                throw new DynamicCraftingOutputResolutionException(
-                        "Dynamic output declaration exceeds the provider push output for " +
-                                dynamic.getValue().plannedKey());
-            }
-        }
-
-        for (Object2ObjectMap.Entry<Item, ObjectList<AEItemKey>> expected : expectedDomains.object2ObjectEntrySet()) {
-            Domain active = activeDomains.get(expected.getKey());
-            Domain incoming = newDomains.get(expected.getKey());
-            if (active != null && (incoming == null || !active.compatible(incoming))) {
-                return DispatchSafety.CONFLICT;
-            }
-        }
-
-        for (Object2ObjectMap.Entry<Item, Domain> incoming : newDomains.object2ObjectEntrySet()) {
-            Domain active = activeDomains.get(incoming.getKey());
-            if (active != null) {
-                if (!active.compatible(incoming.getValue())) {
+            for (var active : entries) {
+                if (incoming.rule().overlaps(incoming.templateKey(), active.rule, active.templateKey) &&
+                        (!incoming.plannedKey().equals(active.plannedKey) || incoming.route() != active.route))
                     return DispatchSafety.CONFLICT;
-                }
-                for (var waiting : waitingFor.entrySet()) {
-                    if (waiting.getKey() instanceof AEItemKey itemKey &&
-                            itemKey.getItem() == incoming.getKey() &&
-                            !itemKey.equals(active.plannedKey()) && waiting.getValue().signum() > 0) {
-                        return DispatchSafety.CONFLICT;
-                    }
-                }
-                continue;
             }
             for (var waiting : waitingFor.entrySet()) {
-                if (waiting.getKey() instanceof AEItemKey itemKey &&
-                        itemKey.getItem() == incoming.getKey() && waiting.getValue().signum() > 0) {
+                if (waiting.getValue().signum() > 0 && waiting.getKey() instanceof AEItemKey key &&
+                        !key.equals(incoming.plannedKey()) && incoming.rule().matches(incoming.templateKey(), key))
                     return DispatchSafety.CONFLICT;
-                }
+            }
+        }
+        for (var active : entries) for (var output : expectedPhysicalOutputs) {
+            if (output.what() instanceof AEItemKey key && !key.equals(active.plannedKey) && active.rule.matches(active.templateKey, key)) {
+                return DispatchSafety.CONFLICT;
             }
         }
         return DispatchSafety.SAFE;
@@ -175,6 +154,7 @@ final class DynamicCraftingOutputLedger {
                 existing.remaining = existing.remaining.add(registration.amount());
             }
         }
+        this.entries.sort((left, right) -> Integer.compare(left.rule.mode().ordinal(), right.rule.mode().ordinal()));
     }
 
     /**
@@ -227,7 +207,7 @@ final class DynamicCraftingOutputLedger {
             return Optional.empty();
         }
         for (MutableEntry entry : this.entries) {
-            if (entry.plannedKey.getItem() != actualKey.getItem()) {
+            if (!entry.rule.matches(entry.templateKey, actualKey)) {
                 continue;
             }
             BigInteger exactWaiting = waitingFor.getOrDefault(entry.plannedKey, BigInteger.ZERO);
@@ -242,10 +222,20 @@ final class DynamicCraftingOutputLedger {
     /**
      * Deducts exact output receipts from a compatible dynamic allowance first, releasing its item domain promptly.
      */
-    void consumeExact(AEKey exactKey, long amount) {
-        long remaining = amount;
+    long exactAllowance(AEKey key, long requested, BigInteger waiting) {
+        BigInteger forbidden = BigInteger.ZERO;
+        for (var entry : entries) if (entry.plannedKey.equals(key) && !entry.rule.matches(entry.templateKey, key)) {
+            forbidden = forbidden.add(entry.remaining);
+        }
+        return waiting.subtract(forbidden).max(BigInteger.ZERO).min(BigInteger.valueOf(requested)).longValueExact();
+    }
+
+    void consumeExact(AEKey exactKey, long amount, BigInteger stillWaiting) {
+        var flexible = entries.stream().filter(entry -> entry.plannedKey.equals(exactKey))
+                .map(entry -> entry.remaining).reduce(BigInteger.ZERO, BigInteger::add);
+        long remaining = flexible.subtract(stillWaiting).max(BigInteger.ZERO).min(BigInteger.valueOf(amount)).longValueExact();
         for (MutableEntry entry : this.entries) {
-            if (!entry.plannedKey.equals(exactKey) || remaining == 0L) {
+            if (!entry.plannedKey.equals(exactKey) || !entry.rule.matches(entry.templateKey, exactKey) || remaining == 0L) {
                 continue;
             }
             long consumed = entry.remaining.min(BigInteger.valueOf(remaining)).longValueExact();
@@ -262,7 +252,7 @@ final class DynamicCraftingOutputLedger {
         for (MutableEntry entry : this.entries) {
             if (entry.plannedKey.equals(match.plannedKey()) &&
                     entry.route == match.route() &&
-                    entry.source.equals(match.source())) {
+                    entry.source.equals(match.source()) && entry.rule.equals(match.rule()) && entry.templateKey.equals(match.templateKey())) {
                 if (BigInteger.valueOf(amount).compareTo(entry.remaining) > 0) {
                     throw new IllegalStateException("Dynamic output ledger changed after acceptance simulation");
                 }
@@ -287,13 +277,13 @@ final class DynamicCraftingOutputLedger {
     /**
      * Returns the owned same-item alternatives without requiring one variant to satisfy the whole input.
      */
-    ObjectList<GenericStack> resolveInputs(AEKey plannedKey, KeyCounter inventory) {
+    ObjectList<GenericStack> resolveInputs(AEItemKey definition, AEKey plannedKey, KeyCounter inventory) {
         if (!(plannedKey instanceof AEItemKey plannedItem)) {
             return ObjectList.of();
         }
         ObjectArrayList<GenericStack> alternatives = new ObjectArrayList<>();
         for (var alias : this.inputAliases.object2ObjectEntrySet()) {
-            if (alias.getKey().getItem() == plannedItem.getItem() &&
+            if (matchesAnyInput(definition, plannedItem, alias.getKey()) &&
                     !alias.getKey().equals(plannedKey)) {
                 long available = alias.getValue().min(BigInteger.valueOf(inventory.get(alias.getKey()))).longValueExact();
                 if (available > 0L) {
@@ -302,6 +292,18 @@ final class DynamicCraftingOutputLedger {
             }
         }
         return new ObjectImmutableList<>(alternatives);
+    }
+
+    private static boolean matchesAnyInput(AEItemKey definition, AEItemKey planned, AEItemKey actual) {
+        var encoded = definition.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (encoded == null) return planned.equals(actual);
+        int dense = 0;
+        for (var input : encoded.sparseInputs()) {
+            if (input == null) continue;
+            if (input.what().equals(planned) && EncodedPatternMatching.matchesInput(definition, dense, planned, actual)) return true;
+            dense++;
+        }
+        return false;
     }
 
     boolean isInputAlias(AEKey key) {
@@ -348,6 +350,8 @@ final class DynamicCraftingOutputLedger {
             tag.putByteArray(AMOUNT_TAG, TrinityBigIntegerEncoding.encode(entry.remaining, "dynamic output allowance"));
             tag.putString(ROUTE_TAG, entry.route.name());
             tag.putString(SOURCE_TAG, entry.source.toString());
+            tag.put("rule", entry.rule.save());
+            tag.put("template", entry.templateKey.toTagGeneric(registries));
             encoded.add(tag);
         }
         root.put(WAITING_TAG, encoded);
@@ -377,8 +381,9 @@ final class DynamicCraftingOutputLedger {
             throw new IllegalArgumentException("Damaged dynamic crafting output waiting list");
         }
         for (Tag value : encoded) {
+            boolean legacy = value instanceof CompoundTag entry && entry.getAllKeys().equals(ObjectSet.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG));
             if (!(value instanceof CompoundTag tag) ||
-                    !tag.getAllKeys().equals(ObjectSet.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG)) ||
+                    !legacy && !tag.getAllKeys().equals(ObjectSet.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG, "rule", "template")) ||
                     !tag.contains(KEY_TAG, Tag.TAG_COMPOUND) ||
                     !tag.contains(ROUTE_TAG, Tag.TAG_STRING) ||
                     !tag.contains(SOURCE_TAG, Tag.TAG_STRING)) {
@@ -396,9 +401,16 @@ final class DynamicCraftingOutputLedger {
             } catch (RuntimeException exception) {
                 throw new IllegalArgumentException("Damaged dynamic crafting output ledger metadata", exception);
             }
-            registrations.add(new Registration(itemKey, readAmount(tag), route, source));
+            var template = legacy ? itemKey : AEKey.fromTagGeneric(registries, tag.getCompound("template"));
+            if (!(template instanceof AEItemKey templateKey)) throw new IllegalArgumentException("Invalid dynamic output template");
+            registrations.add(new Registration(itemKey, readAmount(tag), route, source, legacy ? ItemMatchingRule.ID : ItemMatchingRule.load(tag.getCompound("rule")), templateKey));
         }
-        domains(registrations);
+        for (var first : registrations) for (var second : registrations) {
+            if (first.rule().overlaps(first.templateKey(), second.rule(), second.templateKey()) &&
+                    (!first.plannedKey().equals(second.plannedKey()) || first.route() != second.route())) {
+                throw new IllegalArgumentException("Persisted dynamic output rules have ambiguous routes");
+            }
+        }
         ledger.register(registrations);
         if (ledger.entries.size() != registrations.size()) {
             throw new IllegalArgumentException("Persisted dynamic crafting output ledger contains duplicate entries");
@@ -432,45 +444,13 @@ final class DynamicCraftingOutputLedger {
         return TrinityBigIntegerEncoding.readTag(tag, AMOUNT_TAG, "dynamic output ledger amount");
     }
 
-    private static Object2ObjectMap<Item, Domain> domains(ObjectList<Registration> registrations) {
-        Object2ObjectOpenHashMap<Item, Domain> domains = new Object2ObjectOpenHashMap<>();
-        for (Registration registration : registrations) {
-            Domain candidate = new Domain(registration.plannedKey(), registration.route());
-            Domain existing = domains.putIfAbsent(registration.plannedKey().getItem(), candidate);
-            if (existing != null && !existing.compatible(candidate)) {
-                throw new DynamicCraftingOutputResolutionException(
-                        "Dynamic output semantics contain ambiguous templates or routes for item " +
-                                registration.plannedKey().getItem());
-            }
-        }
-        return domains;
-    }
-
-    private static Object2ObjectMap<Item, ObjectList<AEItemKey>> expectedDomains(ObjectList<GenericStack> outputs) {
-        Object2ObjectLinkedOpenHashMap<Item, ObjectList<AEItemKey>> domains = new Object2ObjectLinkedOpenHashMap<>();
-        for (GenericStack output : outputs) {
-            if (output.what() instanceof AEItemKey itemKey) {
-                ObjectList<AEItemKey> keys = domains.computeIfAbsent(itemKey.getItem(), ignored -> new ObjectArrayList<>());
-                if (!keys.contains(itemKey)) {
-                    keys.add(itemKey);
-                }
-            }
-        }
-        return domains;
-    }
-
-    private record Domain(AEItemKey plannedKey, Route route) {
-
-        private boolean compatible(Domain other) {
-            return this.plannedKey.equals(other.plannedKey) && this.route == other.route;
-        }
-    }
-
     private static final class MutableEntry {
 
         private final AEItemKey plannedKey;
         private final Route route;
         private final ResourceLocation source;
+        private final ItemMatchingRule rule;
+        private final AEItemKey templateKey;
         private BigInteger remaining;
 
         private MutableEntry(Registration registration) {
@@ -478,20 +458,22 @@ final class DynamicCraftingOutputLedger {
             this.remaining = registration.amount();
             this.route = registration.route();
             this.source = registration.source();
+            this.rule = registration.rule();
+            this.templateKey = registration.templateKey();
         }
 
         private Registration registration() {
-            return new Registration(this.plannedKey, this.remaining, this.route, this.source);
+            return new Registration(this.plannedKey, this.remaining, this.route, this.source, this.rule, this.templateKey);
         }
 
         private boolean matches(Registration registration) {
             return this.plannedKey.equals(registration.plannedKey()) &&
                     this.route == registration.route() &&
-                    this.source.equals(registration.source());
+                    this.source.equals(registration.source()) && this.rule.equals(registration.rule()) && this.templateKey.equals(registration.templateKey());
         }
 
         private Match match(long amount) {
-            return new Match(this.plannedKey, amount, this.route, this.source);
+            return new Match(this.plannedKey, amount, this.route, this.source, this.rule, this.templateKey);
         }
     }
 }

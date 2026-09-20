@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.orbital.attack.entity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.draconic.orbital.DraconicGuardianErasureAdapter;
+import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.DraconicGuardianErasureAdapter;
 import com.fish_dan_.data_energistics.orbital.attack.entity.player.PlayerErasureExecutor;
 import com.fish_dan_.data_energistics.orbital.attack.entity.strike.OrbitalErasureOutcome;
 import com.fish_dan_.data_energistics.orbital.attack.entity.strike.OrbitalErasureStrike;

@@ -15,6 +15,34 @@
 
 内部类应直接迁移到正确包；不要为了保留内部 FQCN 建兼容 wrapper。外部模组本来就不得依赖内部 FQCN。
 
+## 模组集成与 Mixin 目录
+
+集成实现按“类别 → 模组 → 功能”组织，先找到模组，再定位其适配功能：
+
+```text
+integration/
+├── entrypoint/
+│   ├── client/                    仅客户端加载的集成入口
+│   └── common/                    通用及双端集成入口
+├── ae/
+│   ├── ae2cs/patternprovider/
+│   └── appflux/{energy,weapon}/
+├── magic/
+│   └── botania/{packaged,matching}/
+├── technology/
+│   ├── mekanismmore/packaged/
+│   └── draconicevolution/{packaged,orbital,weapon}/
+├── library/curios/equipment/
+├── viewer/{jei,emi,xei}/
+├── map/{ftbchunks,journeymap,xaero}/
+├── overlay/jade/
+└── guide/guideme/
+```
+
+使用本模组 `DataEnergisticsEntrypoint` API 的入口统一在 `entrypoint` 下按 `client` 和 `common` 分组，不再按模组建子包，也不保留转发到旧注册类的包装入口。实现第三方 API 的插件放在对应集成包：JEI、EMI 放在各自的 `viewer/<mod>/entrypoint`，Jade 放在 `overlay/jade`，JourneyMap 放在 `map/journeymap/client`。跨模组共享代码按实际职责保留，例如 `crafting/catalog`；不要为了对齐层级创建空模组包。
+
+Mixin 按“类别 → 目标模组 → 功能或额外依赖”组织。例如 `mixin/ae/ae2/crafting`、`mixin/technology/mekanismmore/appmek` 和 `mixin/technology/avaritia/emi`。额外依赖直接使用模组名称，不再插入 `compat` 层；加载条件仍由 Mixin 插件显式控制。
+
 ## 类名表达实际含义
 
 不要仅把接口名加上 `Impl` 作为实现类名。类名应说明它采用的策略、数据来源、生命周期或宿主，例如 `MountedCorePatternCatalog`、`PlayerInventoryRefundDelivery`、`VirtualNodePatternTerminalPartition`。
@@ -26,8 +54,6 @@
 ## Data Energistics 注册类前缀
 
 Data Energistics 自己持有的注册项和注册入口使用 `DE` 前缀，例如 `DEItems`、`DEBlocks`、`DEDataComponents`、`DEMenus`。这能把“属于本模组的注册项”与外部模组常见的 `ModItems` 区分开。
-
-`Mod` 前缀可以保留给职责本身就是“判断或描述模组加载状态”的类型，例如 `ModFlags`。判断标准是类的业务含义，不是机械替换所有包含 `Mod` 的名称。
 
 ## Nullability 与基础类型
 

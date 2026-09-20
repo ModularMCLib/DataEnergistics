@@ -165,8 +165,13 @@ public final class TrinityDataCoreVirtualCpu implements ICraftingCPU {
     public long insert(AEKey what, long amount, Actionable mode) {
         boolean wasBusy = isBusy();
         long inserted = this.logic.insert(what, amount, mode);
-        this.runtime.workerOperationCompleted(this, wasBusy);
+        if (mode == Actionable.MODULATE) this.runtime.workerOperationCompleted(this, wasBusy);
         return inserted;
+    }
+
+    /** Checks the job's frozen output rules without publishing activity or changing waiting amounts. */
+    long simulateReturn(AEKey what, long amount) {
+        return this.logic.insert(what, amount, Actionable.SIMULATE);
     }
 
     /** Inserts an exact returned amount through the Trinity CPU boundary without a long projection. */

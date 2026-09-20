@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 public @interface DataEnergisticsJeiEntrypoint {
 
     /**
-     * Mod IDs that must be loaded before the annotated class may be resolved.
+     * MOD IDs that must be loaded before the annotated class may be resolved.
      *
      * <p>
      * The scanner reads this value from NeoForge metadata before resolving the class, allowing an integration to

@@ -80,13 +80,20 @@ public final class PersistentReusableCraftingEndpoint {
         }
     }
 
-    /** Actual native outcome. Paused means no native effect occurred; failures after effects use executed=true. */
+    /** Actual native outcome. Paused has no effects; pending retains escrow until an asynchronous outcome is known. */
     public record NativeResult(boolean executed, List<ToolOutcome> tools, List<GenericStack> outputs,
-                               Optional<String> failure) {
+                               Optional<String> failure, boolean pending) {
+
+        public NativeResult(boolean executed, List<ToolOutcome> tools, List<GenericStack> outputs, Optional<String> failure) {
+            this(executed, tools, outputs, failure, false);
+        }
 
         public NativeResult {
             tools = List.copyOf(tools);
             outputs = checkedAssets(outputs);
+            if (pending && (executed || !tools.isEmpty() || !outputs.isEmpty() || failure.isPresent())) {
+                throw new IllegalArgumentException("An in-flight native result cannot settle assets");
+            }
             if (!executed && (!tools.isEmpty() || !outputs.isEmpty() || failure.isPresent())) {
                 throw new IllegalArgumentException("An unexecuted pause cannot report native effects");
             }
@@ -97,6 +104,10 @@ public final class PersistentReusableCraftingEndpoint {
 
         public static NativeResult paused() {
             return new NativeResult(false, List.of(), List.of(), Optional.empty());
+        }
+
+        public static NativeResult inFlight() {
+            return new NativeResult(false, ObjectList.of(), ObjectList.of(), Optional.empty(), true);
         }
     }
 
@@ -123,8 +134,36 @@ public final class PersistentReusableCraftingEndpoint {
             return 1L;
         }
 
-        /** Execute the whole escrow count atomically and return actual final tools plus total batch outputs. */
+        /**
+         * Starts the escrow's native work. Synchronous hosts complete atomically and return actual tools and
+         * batch outputs; asynchronous hosts may return inFlight and persist their physical progress for poll.
+         */
         NativeResult execute(Binding binding, Operation operation);
+
+        /** Opts into a durable in-flight checkpoint before execute; default synchronous hosts are unchanged. */
+        default boolean asynchronous() {
+            return false;
+        }
+
+        /**
+         * Resumes the same operation after an earlier start, including a reload or close request. Must use
+         * persistent physical ownership/stage evidence; execute is never called again for this operation.
+         * A checkpoint may precede physical delivery, so polling must safely handle that stage too.
+         * Return inFlight while pending, or actual complete/fault assets; paused is forbidden after starting.
+         */
+        default NativeResult poll(Binding binding, Operation operation) {
+            throw new IllegalStateException("Synchronous host cannot resume an asynchronous native operation");
+        }
+
+        /**
+         * Read-only recovery evidence on the server thread. Return a completed actual result only when
+         * persisted physical work matches this session, operation and append sequence. Never start or
+         * advance work, release ownership, or publish outputs. Empty means evidence is unavailable and
+         * may be retried later; a pending or unexecuted result is invalid.
+         */
+        default Optional<NativeResult> completedCheckpoint(Binding binding, Operation operation) {
+            return Optional.empty();
+        }
 
         /**
          * Atomically append this complete list to the host's ordinary persistent pending queue. Throwing
@@ -138,10 +177,15 @@ public final class PersistentReusableCraftingEndpoint {
     }
 
     /** Actual unpublished return; the active input escrow remains its accounting basis, not a second asset copy. */
-    record RecordedNativeResult(UUID loadedEpoch, long operationId, NativeResult result) {
+    record RecordedNativeResult(UUID loadedEpoch, long operationId, NativeResult result, boolean asynchronous) {
+
+        RecordedNativeResult(UUID loadedEpoch, long operationId, NativeResult result) {
+            this(loadedEpoch, operationId, result, false);
+        }
 
         RecordedNativeResult {
             if (operationId < 0) throw new IllegalArgumentException("Recorded native result requires a valid operation id");
+            if (result.pending() && !asynchronous) throw new IllegalArgumentException("Pending checkpoint requires an asynchronous host");
         }
     }
 
@@ -279,6 +323,10 @@ public final class PersistentReusableCraftingEndpoint {
         if (entry.session.tick(currentTick)) {
             changed(entry, host);
         }
+        if (entry.recordedResult != null && entry.recordedResult.result().pending()) {
+            if (!entry.failure.isEmpty() || batchBudget == 0) return 0;
+            return pollPending(entry, host);
+        }
         if (!entry.failure.isEmpty() || visibleState(entry) != State.OPEN || currentTick < entry.notBefore) {
             return 0;
         }
@@ -290,10 +338,21 @@ public final class PersistentReusableCraftingEndpoint {
             }
             Operation operation = next.orElseThrow();
             try {
-                changed(entry, host); // Active escrow is now part of the owning state if it is saved.
+                if (host.asynchronous()) {
+                    entry.recordedResult = new RecordedNativeResult(custody.census(entry.binding.identity().cpuOwner()).loadedEpoch(), operation.id(), NativeResult.inFlight(), true);
+                }
+                changed(entry, host); // Active escrow and asynchronous resume marker are persisted together.
                 NativeResult result = host.execute(entry.binding, operation);
+                if (result.pending()) {
+                    if (!host.asynchronous()) throw new IllegalStateException("Synchronous host returned an in-flight result");
+                    entry.asynchronousDiagnostic = "";
+                    break;
+                }
+                if (host.asynchronous() && !result.executed()) {
+                    throw new IllegalStateException("Started native operation cannot be aborted as unexecuted");
+                }
                 if (result.executed()) executed++;
-                entry.recordedResult = new RecordedNativeResult(custody.census(entry.binding.identity().cpuOwner()).loadedEpoch(), operation.id(), result);
+                entry.recordedResult = new RecordedNativeResult(custody.census(entry.binding.identity().cpuOwner()).loadedEpoch(), operation.id(), result, host.asynchronous());
                 changed(entry, host);
                 if (!result.executed()) {
                     entry.session.abortOperation(operation.id());
@@ -306,10 +365,15 @@ public final class PersistentReusableCraftingEndpoint {
                 changed(entry, host);
                 publishOutputs(entry, host);
                 changed(entry, host);
+                entry.asynchronousDiagnostic = "";
                 if (visibleState(entry) != State.OPEN) {
                     break;
                 }
             } catch (RuntimeException exception) {
+                if (host.asynchronous()) {
+                    diagnoseAsynchronous(entry, operation, exception);
+                    break;
+                }
                 // Actual native effects are unknown. Closing preserves unresolved execution escrow and
                 // the endpoint exposes FAULTED until an explicit actual-result reconciliation is supplied.
                 entry.failure = "Native operation " + operation.id() + " failed: " + exception.getMessage();
@@ -323,14 +387,48 @@ public final class PersistentReusableCraftingEndpoint {
         return executed;
     }
 
+    private int pollPending(Entry entry, Host host) {
+        Operation operation = entry.session.activeOperation();
+        if (operation == null) throw new IllegalStateException("Pending native work lost its execution escrow");
+        try {
+            NativeResult result = host.poll(entry.binding, operation);
+            if (result.pending()) {
+                entry.asynchronousDiagnostic = "";
+                return 0;
+            }
+            if (!result.executed()) throw new IllegalStateException("Started native operation cannot be aborted as unexecuted");
+            entry.recordedResult = new RecordedNativeResult(custody.census(entry.binding.identity().cpuOwner()).loadedEpoch(), operation.id(), result, true);
+            changed(entry, host);
+            complete(entry, operation, result);
+            entry.recordedResult = null;
+            changed(entry, host);
+            if (publishOutputs(entry, host)) changed(entry, host);
+            entry.asynchronousDiagnostic = "";
+            return 1;
+        } catch (RuntimeException failure) {
+            diagnoseAsynchronous(entry, operation, failure);
+            return 0;
+        }
+    }
+
+    private void diagnoseAsynchronous(Entry entry, Operation operation, RuntimeException failure) {
+        String diagnostic = failure.toString();
+        if (!entry.asynchronousDiagnostic.equals(diagnostic)) {
+            entry.asynchronousDiagnostic = diagnostic;
+            Data_Energistics.LOGGER.error("Reusable endpoint {} session {} asynchronous operation {} awaits retry",
+                    targetIdentity, entry.binding.identity().sessionId(), operation.id(), failure);
+        }
+    }
+
     /** Explicit recovery only: the host must have verified the actual outcome, including any claim of non-execution. */
     public void reconcile(UUID sessionId, NativeResult actual, Host host) {
+        if (actual.pending()) throw new IllegalArgumentException("Reconciliation requires a settled native outcome");
         Entry entry = requireEntry(sessionId);
         Operation operation = entry.session.activeOperation();
         if (operation == null) {
             throw new IllegalStateException("Session has no unresolved native operation");
         }
-        if (entry.recordedResult != null && !entry.recordedResult.result().equals(actual)) {
+        if (entry.recordedResult != null && !entry.recordedResult.result().pending() && !entry.recordedResult.result().equals(actual)) {
             throw new IllegalArgumentException("Reconciliation contradicts the recorded native result");
         }
         if (actual.executed()) {
@@ -349,7 +447,10 @@ public final class PersistentReusableCraftingEndpoint {
      */
     private boolean reconcileRecorded(Entry entry, Host host) {
         RecordedNativeResult recorded = entry.recordedResult;
-        if (recorded == null || entry.recoveryAttempted ||
+        if (recorded != null && !recorded.result().pending() && recorded.asynchronous()) {
+            return !host.asynchronous() || reconcileAsynchronousCheckpoint(entry, recorded, host);
+        }
+        if (recorded == null || recorded.result().pending() || entry.recoveryAttempted ||
                 !recorded.loadedEpoch().equals(custody.census(entry.binding.identity().cpuOwner()).loadedEpoch())) {
             return false;
         }
@@ -365,12 +466,53 @@ public final class PersistentReusableCraftingEndpoint {
         return true;
     }
 
+    private boolean reconcileAsynchronousCheckpoint(Entry entry, RecordedNativeResult recorded, Host host) {
+        Operation operation = entry.session.activeOperation();
+        if (operation == null || operation.id() != recorded.operationId()) {
+            throw new IllegalStateException("Recorded asynchronous result lost its execution escrow");
+        }
+        try {
+            Optional<NativeResult> evidence = host.completedCheckpoint(entry.binding, operation);
+            if (evidence.isEmpty()) return true;
+            NativeResult actual = evidence.orElseThrow();
+            if (actual.pending() || !actual.executed() || !equivalentResults(recorded.result(), actual)) {
+                throw new IllegalStateException("Completed physical evidence contradicts the native checkpoint");
+            }
+            complete(entry, operation, actual);
+            entry.recordedResult = null;
+            changed(entry, host);
+            if (publishOutputs(entry, host)) changed(entry, host);
+            entry.asynchronousDiagnostic = "";
+        } catch (RuntimeException failure) {
+            diagnoseAsynchronous(entry, operation, failure);
+        }
+        return true;
+    }
+
+    private static boolean equivalentResults(NativeResult expected, NativeResult actual) {
+        if (expected.executed() != actual.executed() || expected.pending() != actual.pending() ||
+                !expected.failure().equals(actual.failure()) || !counts(expected.outputs()).equals(counts(actual.outputs())) ||
+                expected.tools().size() != actual.tools().size())
+            return false;
+        var expectedTools = new Int2ObjectLinkedOpenHashMap<ToolOutcome>();
+        for (ToolOutcome tool : expected.tools()) {
+            if (expectedTools.putIfAbsent(tool.slot(), tool) != null) return false;
+        }
+        for (ToolOutcome tool : actual.tools()) {
+            ToolOutcome previous = expectedTools.remove(tool.slot());
+            if (previous == null || !counts(previous.successors()).equals(counts(tool.successors())) ||
+                    !counts(previous.byproducts()).equals(counts(tool.byproducts())))
+                return false;
+        }
+        return expectedTools.isEmpty();
+    }
+
     public void close(UUID sessionId, Host host) {
         Entry entry = sessions.get(sessionId);
         if (entry == null) {
             return;
         }
-        if (reconcileRecorded(entry, host)) return;
+        reconcileRecorded(entry, host);
         State before = visibleState(entry);
         entry.session.close();
         if (before != visibleState(entry)) {
@@ -644,6 +786,7 @@ public final class PersistentReusableCraftingEndpoint {
         private String failure;
         private @Nullable RecordedNativeResult recordedResult;
         private boolean recoveryAttempted;
+        private String asynchronousDiagnostic = "";
 
         private Entry(Binding binding, ReusableInputSession session, long revision, long notBefore,
                       boolean settlementAcknowledged, String failure, @Nullable RecordedNativeResult recordedResult) {

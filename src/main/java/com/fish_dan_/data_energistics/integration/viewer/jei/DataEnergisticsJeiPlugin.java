@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.client.screen.crafting.CraftingPlanTreeScr
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataRipperReassemblerScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.OrderPackageScreen;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.viewer.jei.entrypoint.DataEnergisticsJeiEntrypointLoader;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.Ae2JeiIngredientRegistration;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.CraftingPlanJeiIngredientViewer;
@@ -361,7 +361,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
      * JEI is the fallback integration; EMI owns the viewer registrations when both mods are installed.
      */
     private static boolean shouldRegisterJei() {
-        return !ModFlags.isEmiLoaded();
+        return !MOD.isEmiLoaded();
     }
 
     private static List<Component> resolveRecipeTypeName(IRecipeManager recipeManager,

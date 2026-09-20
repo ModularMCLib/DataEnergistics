@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarge
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletion;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletionMode;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput;
+import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.SlotStack;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.Settlement;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputAdapters;
@@ -801,7 +802,7 @@ final class TrinityDataCoreCpuLogic {
                         key -> work.cycle() && !currentJob.dynamicOutputs.isInputAlias(key) ?
                                 simulateNetworkExtraction(network, key) : 0L,
                         key -> execution.sameItemPolicy().allowsSameItem(key) ? sameItemInputs.candidates(key) :
-                                currentJob.dynamicOutputs.resolveInputs(key, this.inventory.list),
+                                currentJob.dynamicOutputs.resolveInputs(pattern.getDefinition(), key, this.inventory.list),
                         settings.maxBindingVariants);
         TrinityPatternSelector.Selected selected;
         switch (selection) {
@@ -2232,7 +2233,7 @@ final class TrinityDataCoreCpuLogic {
         Object2ObjectMap<AEKey, BigInteger> containers = exactAmounts(unit.expectedContainerItems(), count);
         ObjectList<DynamicCraftingOutputLedger.Registration> dynamic = unit.dynamicOutputs().stream()
                 .map(value -> new DynamicCraftingOutputLedger.Registration(value.plannedKey(), value.amount().multiply(count),
-                        value.route(), value.source()))
+                        value.route(), value.source(), value.rule(), value.templateKey()))
                 .collect(ObjectImmutableList.toList());
         BigInteger offered = maximum;
         try (TrinityExactInputTransaction extra = TrinityExactInputTransaction.withdraw(
@@ -2718,40 +2719,7 @@ final class TrinityDataCoreCpuLogic {
                         plannedKey,
                         amount,
                         dynamicRoute(currentJob, plannedKey),
-                        semantics.adapterId()));
-            }
-        }
-
-        if (EncodedPatternDynamicOutput.isMarked(details.getDefinition())) {
-            DynamicCraftingOutput declaration = EncodedPatternDynamicOutput.resolve(details);
-            AEItemKey plannedKey = (AEItemKey) declaration.plannedOutput().what();
-            BigInteger markedAmount = BigInteger.valueOf(declaration.plannedOutput().amount()).multiply(BigInteger.valueOf(count));
-            if (BigInteger.valueOf(amountFor(expectedOutputs, plannedKey)).compareTo(markedAmount) < 0) {
-                throw new DynamicCraftingOutputResolutionException(
-                        "Encoded pattern output is not present in the prepared physical outputs for " +
-                                details.getDefinition());
-            }
-            if (amountFor(expectedContainerItems, plannedKey) > 0L) {
-                throw new DynamicCraftingOutputResolutionException(
-                        "Encoded pattern output conflicts with a returned input container for " +
-                                details.getDefinition());
-            }
-
-            BigInteger adapterAmount = resolved.stream()
-                    .filter(registration -> registration.plannedKey().equals(plannedKey))
-                    .map(DynamicCraftingOutputLedger.Registration::amount)
-                    .reduce(BigInteger.ZERO, BigInteger::add);
-            if (adapterAmount.compareTo(markedAmount) > 0) {
-                throw new DynamicCraftingOutputResolutionException(
-                        "Registered dynamic output exceeds the encoded pattern output for " +
-                                details.getDefinition());
-            }
-            if (adapterAmount.compareTo(markedAmount) < 0) {
-                resolved.add(new DynamicCraftingOutputLedger.Registration(
-                        plannedKey,
-                        markedAmount.subtract(adapterAmount),
-                        dynamicRoute(currentJob, plannedKey),
-                        EncodedPatternDynamicOutput.SOURCE_ID));
+                        semantics.adapterId(), new ItemMatchingRule(declaration.matchMode(), declaration.tags())));
             }
         }
 
@@ -2764,22 +2732,21 @@ final class TrinityDataCoreCpuLogic {
         for (DynamicCraftingOutputLedger.Registration registration : resolved) {
             AEItemKey key = (AEItemKey) policy.normalizeKey(registration.plannedKey());
             normalized.add(new DynamicCraftingOutputLedger.Registration(
-                    key, registration.amount(), dynamicRoute(currentJob, key), registration.source()));
-            registeredAmounts.merge(key, registration.amount(), BigInteger::add);
+                    key, registration.amount(), dynamicRoute(currentJob, key), registration.source(), registration.rule(), registration.templateKey()));
+            registeredAmounts.merge(registration.templateKey(), registration.amount(), BigInteger::add);
         }
         ObjectArrayList<GenericStack> physicalOutputs = new ObjectArrayList<>(expectedOutputs);
         physicalOutputs.addAll(expectedContainerItems);
-        for (GenericStack output : policy.normalizeStacks(physicalOutputs)) {
+        for (GenericStack output : physicalOutputs) {
             if (policy.allowsSameItem(output.what())) {
-                BigInteger remaining = BigInteger.valueOf(output.amount()).subtract(registeredAmounts.getOrDefault(output.what(), BigInteger.ZERO));
-                if (remaining.signum() < 0) {
-                    throw new DynamicCraftingOutputResolutionException(
-                            "Dynamic registrations exceed prepared same-item outputs for " + details.getDefinition());
-                }
+                BigInteger covered = registeredAmounts.getOrDefault(output.what(), BigInteger.ZERO).min(BigInteger.valueOf(output.amount()));
+                registeredAmounts.computeIfPresent(output.what(), (ignored, amount) -> amount.subtract(covered));
+                BigInteger remaining = BigInteger.valueOf(output.amount()).subtract(covered);
                 if (remaining.signum() > 0) {
-                    AEItemKey key = (AEItemKey) output.what();
+                    AEItemKey key = (AEItemKey) policy.normalizeKey(output.what());
                     normalized.add(new DynamicCraftingOutputLedger.Registration(
-                            key, remaining, dynamicRoute(currentJob, key), EncodedPatternDynamicOutput.SOURCE_ID));
+                            key, remaining, dynamicRoute(currentJob, key), EncodedPatternDynamicOutput.SOURCE_ID,
+                            ItemMatchingRule.EXACT, (AEItemKey) output.what()));
                 }
             }
         }
@@ -3385,7 +3352,8 @@ final class TrinityDataCoreCpuLogic {
         }
 
         long waitingFor = currentJob.waitingFor.extract(what, amount, Actionable.SIMULATE);
-        long exactRequested = Math.min(amount, waitingFor);
+        long exactRequested = currentJob.dynamicOutputs.exactAllowance(what, Math.min(amount, waitingFor),
+                currentJob.waitingFor.snapshot().getOrDefault(what, BigInteger.ZERO));
         boolean exactFinalOutput = what.matches(currentJob.finalOutput);
         boolean exactReceiveLocally = currentJob.isTrinityPlan() || !exactFinalOutput || currentJob.link.isStandalone();
         long exactAccepted;
@@ -3417,7 +3385,7 @@ final class TrinityDataCoreCpuLogic {
             }
             currentJob.timeTracker.decrementItems(exactAccepted, what.getType());
             currentJob.waitingFor.extract(what, exactAccepted, Actionable.MODULATE);
-            currentJob.dynamicOutputs.consumeExact(what, exactAccepted);
+            currentJob.dynamicOutputs.consumeExact(what, exactAccepted, currentJob.waitingFor.snapshot().getOrDefault(what, BigInteger.ZERO));
             if (exactFinalOutput && !currentJob.isTrinityPlan()) {
                 currentJob.remainingAmount = currentJob.remainingAmount.subtract(BigInteger.valueOf(exactAccepted)).max(BigInteger.ZERO);
             }
@@ -4193,7 +4161,7 @@ final class TrinityDataCoreCpuLogic {
                 new ExtractedPatternInputs(recipe.sampleGrid(), recipe.exactInputs(), products, recipe.ordinaryRemainders(), waiting), 1L, false);
         return unit == null ? null : new OutputContract(unit.expectedOutputs(), unit.expectedContainerItems(),
                 unit.dynamicOutputs().stream().map(value -> new DynamicOutput(new GenericStack(value.plannedKey(), value.amount().longValueExact()),
-                        value.route() == DynamicCraftingOutputLedger.Route.FINAL_OUTPUT, value.source())).collect(ObjectImmutableList.toList()),
+                        value.route() == DynamicCraftingOutputLedger.Route.FINAL_OUTPUT, value.source(), value.rule(), value.templateKey())).collect(ObjectImmutableList.toList()),
                 unit.virtualCompletions());
     }
 
@@ -4347,7 +4315,7 @@ final class TrinityDataCoreCpuLogic {
         return outputs.dynamic().stream().map(value -> new DynamicCraftingOutputLedger.Registration((AEItemKey) value.stack().what(),
                 BigInteger.valueOf(value.stack().amount()).multiply(BigInteger.valueOf(count)), value.finalOutput() ? DynamicCraftingOutputLedger.Route.FINAL_OUTPUT :
                         DynamicCraftingOutputLedger.Route.INVENTORY,
-                value.source())).collect(ObjectImmutableList.toList());
+                value.source(), value.rule(), value.templateKey())).collect(ObjectImmutableList.toList());
     }
 
     private static final class ReusableWithdrawal {

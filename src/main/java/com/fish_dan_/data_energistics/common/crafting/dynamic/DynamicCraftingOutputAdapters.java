@@ -2,10 +2,11 @@ package com.fish_dan_.data_energistics.common.crafting.dynamic;
 
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
-import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputMatchMode;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputSemantics;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -16,6 +17,8 @@ import net.minecraft.world.item.Item;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.List;
 import java.util.Map;
@@ -61,6 +64,11 @@ public final class DynamicCraftingOutputAdapters {
         requireInstalled();
         if (details == null) {
             throw new DynamicCraftingOutputResolutionException("Dynamic output resolution requires pattern details");
+        }
+
+        if (details.getDefinition().get(AEComponents.ENCODED_PROCESSING_PATTERN) != null) {
+            var explicit = EncodedPatternDynamicOutput.resolveAll(details);
+            return explicit.isEmpty() ? Optional.empty() : Optional.of(new ResolvedSemantics(EncodedPatternDynamicOutput.SOURCE_ID, explicit));
         }
 
         ResolvedSemantics claimed = null;
@@ -112,7 +120,7 @@ public final class DynamicCraftingOutputAdapters {
         Object2LongLinkedOpenHashMap<AEKey> claimed = new Object2LongLinkedOpenHashMap<>();
         Map<Item, AEItemKey> domains = new Object2ObjectOpenHashMap<>();
         for (DynamicCraftingOutput output : semantics.outputsFast()) {
-            if (output.matchMode() != DynamicCraftingOutputMatchMode.SAME_ITEM ||
+            if (output.matchMode() == ProcessingMatchMode.EXACT ||
                     !(output.plannedOutput().what() instanceof AEItemKey plannedKey)) {
                 throw new DynamicCraftingOutputResolutionException(
                         "Dynamic output adapter " + adapterId + " declared an unsupported output match");
@@ -155,13 +163,17 @@ public final class DynamicCraftingOutputAdapters {
      * @param outputs   dynamic physical outputs in deterministic declaration order
      */
     public record ResolvedSemantics(ResourceLocation adapterId,
-                                    List<DynamicCraftingOutput> outputs) {
+                                    ObjectList<DynamicCraftingOutput> outputs) {
+
+        public ResolvedSemantics(ResourceLocation adapterId, List<DynamicCraftingOutput> outputs) {
+            this(adapterId, new ObjectImmutableList<>(outputs));
+        }
 
         /**
          * Isolates the adapter-owned list from runtime callers.
          */
         public ResolvedSemantics {
-            outputs = List.copyOf(outputs);
+            outputs = new ObjectImmutableList<>(outputs);
         }
     }
 }

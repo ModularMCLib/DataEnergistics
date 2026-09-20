@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletion;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletionMode;
+import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.SlotStack;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityPlanExecution.Work;
@@ -42,7 +43,7 @@ public final class ReusableCpuSessionLedgerNbtCodec {
     public static CompoundTag encode(ReusableCpuSessionLedger ledger, HolderLookup.Provider registries) {
         Snapshot snapshot = ledger.snapshot();
         CompoundTag tag = new CompoundTag();
-        tag.putInt("schema", 1);
+        tag.putInt("schema", 2);
         tag.putUUID("owner", snapshot.owner());
         ListTag replanning = new ListTag();
         for (UUID job : snapshot.replanningJobs()) {
@@ -106,6 +107,8 @@ public final class ReusableCpuSessionLedgerNbtCodec {
                     CompoundTag value = GenericStack.writeTag(registries, output.stack());
                     value.putBoolean("final", output.finalOutput());
                     value.putString("source", output.source().toString());
+                    value.put("rule", output.rule().save());
+                    value.put("template", output.templateKey().toTagGeneric(registries));
                     dynamic.add(value);
                 }
                 item.put("dynamic", dynamic);
@@ -138,7 +141,7 @@ public final class ReusableCpuSessionLedgerNbtCodec {
 
     public static ReusableCpuSessionLedger decode(CompoundTag tag, HolderLookup.Provider registries) {
         int schema = integer(tag, "schema");
-        if (schema != 1) {
+        if (schema != 1 && schema != 2) {
             throw new IllegalArgumentException("Unsupported reusable CPU ledger schema");
         }
         UUID owner = uuid(tag, "owner");
@@ -183,7 +186,11 @@ public final class ReusableCpuSessionLedgerNbtCodec {
                 ObjectList<VirtualCraftingCompletion> virtual = new ObjectArrayList<>();
                 for (Tag valueOutput : list(stored, "dynamic")) {
                     CompoundTag output = (CompoundTag) valueOutput;
-                    dynamic.add(new DynamicOutput(stack(output, registries), bool(output, "final"), ResourceLocation.parse(string(output, "source"))));
+                    var stack = stack(output, registries);
+                    var template = schema == 1 ? stack.what() : key(compound(output, "template"), registries);
+                    if (!(template instanceof AEItemKey templateKey)) throw new IllegalArgumentException("Invalid dynamic output custody template");
+                    dynamic.add(new DynamicOutput(stack, bool(output, "final"), ResourceLocation.parse(string(output, "source")),
+                            schema == 1 ? ItemMatchingRule.ID : ItemMatchingRule.load(compound(output, "rule")), templateKey));
                 }
                 for (Tag valueOutput : list(stored, "virtual")) {
                     CompoundTag output = (CompoundTag) valueOutput;

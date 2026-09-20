@@ -39,11 +39,11 @@ import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetSumm
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.ae.appflux.AE2FluxIntegration;
-import com.fish_dan_.data_energistics.integration.ae.crafting.AeCraftingDisplayBridge;
-import com.fish_dan_.data_energistics.integration.ae.neoecoae.NeoEcoAeTowerBridge;
-import com.fish_dan_.data_energistics.integration.curios.CuriosDataDistributionConnectorAccess;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.ae.ae2.display.AeCraftingDisplayBridge;
+import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;
+import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.NeoEcoAeTowerBridge;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -1492,7 +1492,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      * @return the original equipped connector stack, or an empty optional when Curios is absent or the slot is empty
      */
     private static Optional<ItemStack> findEquippedConnector(Player player) {
-        if (!ModFlags.isCuriosLoaded()) {
+        if (!MOD.isCuriosLoaded()) {
             return Optional.empty();
         }
         return CuriosDataDistributionConnectorAccess.find(player);
@@ -1746,7 +1746,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return 0;
         }
 
-        LevelChunk chunk = this.level.getChunkSource().getChunk(chunkX, chunkZ, false);
+        // getChunk(..., false) can still schedule generation for a ticketed holder; scanning must remain read-only.
+        LevelChunk chunk = this.level.getChunkSource().getChunkNow(chunkX, chunkZ);
         if (chunk == null) {
             return 0;
         }
@@ -1960,7 +1961,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return true;
         }
 
-        if (ModFlags.isAppFluxEnergySupportLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
+        if (MOD.isAppFluxLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
             return true;
         }
 
@@ -2257,7 +2258,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                LevelChunk chunk = this.level.getChunkSource().getChunk(chunkX, chunkZ, false);
+                LevelChunk chunk = this.level.getChunkSource().getChunkNow(chunkX, chunkZ);
                 if (chunk == null) {
                     continue;
                 }

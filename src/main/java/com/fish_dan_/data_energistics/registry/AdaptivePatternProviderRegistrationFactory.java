@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 
 /**
  * Shared construction rules for the individual adaptive provider registrations.
- * Mod-specific declarations remain in their own entrypoint classes.
+ * MOD-specific declarations remain in their own entrypoint classes.
  */
 public final class AdaptivePatternProviderRegistrationFactory {
 

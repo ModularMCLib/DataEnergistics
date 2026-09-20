@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.orbital.control;
 
-import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.curios.CuriosOrbitalControlTerminalAccess;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
 import net.minecraft.world.InteractionHand;
@@ -30,6 +30,6 @@ public final class OrbitalControlTerminalAccess {
         if (heldHand(player).isPresent()) {
             return true;
         }
-        return ModFlags.isCuriosLoaded() && CuriosOrbitalControlTerminalAccess.find(player).isPresent();
+        return MOD.isCuriosLoaded() && CuriosOrbitalControlTerminalAccess.find(player).isPresent();
     }
 }

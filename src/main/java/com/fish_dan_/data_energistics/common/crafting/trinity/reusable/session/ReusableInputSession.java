@@ -622,6 +622,21 @@ public final class ReusableInputSession {
 
     /** Restores persisted state and quarantines an interrupted operation until its actual result is reconciled. */
     public static ReusableInputSession restore(Snapshot snapshot) {
+        return restore(snapshot, false);
+    }
+
+    /**
+     * Restores an asynchronous escrow only after the owning codec has validated its durable native
+     * checkpoint identity. This preserves the saved state, including an existing fault; it never clears faults.
+     */
+    public static ReusableInputSession restoreWithNativeCheckpoint(Snapshot snapshot, long operationId) {
+        if (snapshot.active() == null || snapshot.active().id() != operationId) {
+            throw new IllegalArgumentException("Native checkpoint does not identify the saved active operation");
+        }
+        return restore(snapshot, true);
+    }
+
+    private static ReusableInputSession restore(Snapshot snapshot, boolean durableNativeCheckpoint) {
         ReusableInputSession result = new ReusableInputSession(snapshot.identity(), snapshot.contracts());
         long previousSequence = -1;
         for (AppendSnapshot append : snapshot.appends()) {
@@ -667,7 +682,7 @@ public final class ReusableInputSession {
         result.exhaustedTools = snapshot.exhaustedTools();
         result.fault = snapshot.fault();
         result.validateRestored();
-        if (result.active != null) {
+        if (result.active != null && !durableNativeCheckpoint) {
             result.state = State.FAULTED;
             result.fault = "Interrupted native operation requires actual-asset reconciliation";
         }

@@ -46,7 +46,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridCandi
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridOwner;
 import com.fish_dan_.data_energistics.blockentity.tower.virtual.VirtualGridOwnershipSnapshot;
 import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.ae.appflux.AE2FluxIntegration;
+import com.fish_dan_.data_energistics.integration.energy.ae.appflux.AE2FluxIntegration;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;

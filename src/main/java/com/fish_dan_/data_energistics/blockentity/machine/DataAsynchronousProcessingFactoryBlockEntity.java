@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
-import com.fish_dan_.data_energistics.integration.recipe.ExternalFactoryRecipeCatalog;
+import com.fish_dan_.data_energistics.integration.crafting.catalog.ExternalFactoryRecipeCatalog;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;

@@ -13,9 +13,9 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineC
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.curios.CuriosDataDistributionConnectorAccess;
-import com.fish_dan_.data_energistics.integration.curios.CuriosOrbitalControlTerminalAccess;
-import com.fish_dan_.data_energistics.integration.ftb.ultimine.DataCrystalPickaxeFtbUltimineCompat;
+import com.fish_dan_.data_energistics.integration.equipment.library.curios.CuriosDataDistributionConnectorAccess;
+import com.fish_dan_.data_energistics.integration.equipment.library.curios.CuriosOrbitalControlTerminalAccess;
+import com.fish_dan_.data_energistics.integration.mining.library.ftbultimine.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;

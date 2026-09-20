@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlo
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.BoundTargetSummary;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetKind;
 import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.ae.crafting.AeCraftingDisplayBridge;
-import com.fish_dan_.data_energistics.integration.ae.neoecoae.NeoEcoAeTowerBridge;
+import com.fish_dan_.data_energistics.integration.crafting.display.ae.ae2.AeCraftingDisplayBridge;
+import com.fish_dan_.data_energistics.integration.tower.ae.neoecoae.NeoEcoAeTowerBridge;
 
 import appeng.api.AECapabilities;
 import appeng.api.parts.IPart;

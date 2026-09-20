@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.block.worldgen;
 
 import com.fish_dan_.data_energistics.entity.resource.DispersingDataEntity;
-import com.fish_dan_.data_energistics.integration.ae.useless.SomeUselessThingsCompat;
+import com.fish_dan_.data_energistics.integration.equipment.technology.useless.SomeUselessThingsCompat;
 
 import appeng.core.definitions.AEItems;
 

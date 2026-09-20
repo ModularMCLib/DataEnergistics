@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.integration.viewer.xei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerBlockEntity.MachineMode;
-import com.fish_dan_.data_energistics.integration.recipe.EaeCircuitCutterRecipeCatalog;
+import com.fish_dan_.data_energistics.integration.crafting.catalog.ae.extendedae.EaeCircuitCutterRecipeCatalog;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipe;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipe;

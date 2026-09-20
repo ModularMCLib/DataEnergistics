@@ -64,7 +64,7 @@ public final class InterferenceArrayScalingGameTest {
 
     @TestHolder("interference_array_scales_tiers_and_transfers_exclusive_mirrors")
     @EmptyTemplate("50x32x50")
-    @GameTest(template = "empty_50x32x50", timeoutTicks = 1_000)
+    @GameTest(template = "empty_50x32x50", batch = "orbital_astronomy_scaling", timeoutTicks = 1_000)
     public static void scalesTiersAndTransfersExclusiveMirrors(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         StellarErasureDeviceSavedData data = StellarErasureDeviceSavedData.get(level.getServer());
@@ -239,7 +239,7 @@ public final class InterferenceArrayScalingGameTest {
 
     @TestHolder("interference_array_accepts_compact_radial_layout")
     @EmptyTemplate("50x32x50")
-    @GameTest(template = "empty_50x32x50", timeoutTicks = 40)
+    @GameTest(template = "empty_50x32x50", batch = "orbital_astronomy_scaling", timeoutTicks = 40)
     public static void acceptsCompactRadialLayout(GameTestHelper helper) {
         BlockPos core = new BlockPos(10, 2, 10);
         buildCompactCore(helper, core);

@@ -85,7 +85,7 @@ public final class LargeMachineGameTest {
 
     @TestHolder("packaged_mekmm_solar_requires_native_sunlight")
     @EmptyTemplate("9")
-    @GameTest(template = "empty_9x9", timeoutTicks = 240)
+    @GameTest(template = "empty_9x9", batch = "packaged_mekmm_solar", timeoutTicks = 240)
     public static void solar(GameTestHelper helper) {
         run(helper, LargeMachineKind.SOLAR_ACTIVATOR, "large_solar_neutron_activator", "mekanism:processing/lategame/polonium",
                 chemical("nuclear_waste"), chemical("nuclear_waste"), false, 2);

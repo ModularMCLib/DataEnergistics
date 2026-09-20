@@ -64,7 +64,11 @@ final class TableCrafterAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "table"));
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "table"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "basic_crafting"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "advanced_crafting"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "elite_crafting"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "ultimate_crafting"));
     }
 
     @Override
@@ -159,7 +163,10 @@ final class TableCrafterAdapter implements PackagedMachineAdapter {
         if (!(slot instanceof TableOutputSlot outputSlot)) throw new IllegalStateException("Missing table result slot");
         ItemStack actual = outputSlot.getItem().copy();
         if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Extended Crafting output");
-        outputSlot.onTake(context.player(), actual.copy());
+        ItemStack taken = outputSlot.remove(actual.getCount());
+        if (!ItemStack.matches(actual, taken)) throw new IllegalStateException("Extended Crafting result extraction changed");
+        outputSlot.onTake(context.player(), taken);
+        actual = taken;
         for (int index = 0; index < remaining.size(); index++) {
             if (!ItemStack.matches(remaining.get(index), table.inventory().getStackInSlot(index))) {
                 throw new IllegalStateException("Extended Crafting table remainder changed after result transfer");

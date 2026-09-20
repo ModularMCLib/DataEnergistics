@@ -64,7 +64,8 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
         return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath(
-                "avaritia", tier.name().toLowerCase(Locale.ROOT) + "_craft"));
+                "avaritia", tier.name().toLowerCase(Locale.ROOT) + "_craft"),
+                ResourceLocation.fromNamespaceAndPath("avaritia", tier.name));
     }
 
     @Override
@@ -159,7 +160,10 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
         var output = menu.getSlot(0);
         ItemStack actual = output.getItem().copy();
         if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Avaritia table output");
-        output.onTake(fake, actual.copy());
+        ItemStack taken = output.remove(actual.getCount());
+        if (!ItemStack.matches(actual, taken)) throw new IllegalStateException("Avaritia result extraction changed");
+        output.onTake(fake, taken);
+        actual = taken;
 
         var actualReturns = new ObjectArrayList<ItemStack>();
         for (int index = 0; index < slots; index++) {

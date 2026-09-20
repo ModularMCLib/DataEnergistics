@@ -17,5 +17,7 @@ public final class ExtendedCraftingPackagedCrafting implements DataEnergisticsPl
         registry.packagedCrafting().register(new CombinationCraftingAdapter());
         registry.packagedCrafting().register(new AlternatorCrafterAdapter(false));
         registry.packagedCrafting().register(new AlternatorCrafterAdapter(true));
+        registry.packagedCrafting().register(new QuantumCompressionAdapter());
+        registry.packagedCrafting().register(new PoweredTableAdapter());
     }
 }

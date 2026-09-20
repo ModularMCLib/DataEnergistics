@@ -29,12 +29,14 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("ae2ct", "ae2ct.");
         addModCompatMixin("ae2cs", "ae2cs.");
         addModCompatMixin("appliedcreate", "appliedcreate.");
+        addModCompatMixin("avaritia", "avaritia.");
         addModCompatMixin("draconicevolution", "draconic.");
         addModCompatMixin("botania", "botania.");
         addModCompatMixin("malum", "malum.");
         addModCompatMixin("ae2lt", "ae2lt.");
         addModCompatMixin("extendedae", "extendedae.");
         addModCompatMixin("extendedae_plus", "extendedaeplus.");
+        addModCompatMixin("extendedcrafting", "extendedcrafting.");
         addModCompatMixin("ae2jeiintegration", "jei.");
         addModCompatMixin("jei", "viewer.jei.");
         addModCompatMixin("emi", "emi.");

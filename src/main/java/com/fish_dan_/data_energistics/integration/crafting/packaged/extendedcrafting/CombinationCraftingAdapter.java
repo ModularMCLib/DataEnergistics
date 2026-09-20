@@ -276,14 +276,10 @@ final class CombinationCraftingAdapter implements PackagedMachineAdapter {
     private static @Nullable Layout layout(ServerLevel level, BlockPos position) {
         if (!level.isLoaded(position) || !(level.getBlockEntity(position) instanceof CraftingCoreTileEntity core)) return null;
         var pedestals = new ObjectArrayList<BlockPos>();
-        for (int x = -3; x <= 3; x++) {
-            for (int y = -3; y <= 3; y++) {
-                for (int z = -3; z <= 3; z++) {
-                    BlockPos candidate = position.offset(x, y, z);
-                    if (!level.isLoaded(candidate)) return null;
-                    if (level.getBlockEntity(candidate) instanceof PedestalTileEntity) pedestals.add(candidate.immutable());
-                }
-            }
+        // The native core scans only its own Y level, in BlockPos iteration order.
+        for (BlockPos candidate : BlockPos.betweenClosed(position.offset(-3, 0, -3), position.offset(3, 0, 3))) {
+            if (!level.isLoaded(candidate)) return null;
+            if (level.getBlockEntity(candidate) instanceof PedestalTileEntity) pedestals.add(candidate.immutable());
         }
         return new Layout(core, pedestals);
     }

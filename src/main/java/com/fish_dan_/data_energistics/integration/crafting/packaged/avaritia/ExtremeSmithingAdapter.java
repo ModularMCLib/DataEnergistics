@@ -47,7 +47,8 @@ final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(TYPE);
+        return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing_recipe"),
+                ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing_table"));
     }
 
     @Override
@@ -126,7 +127,10 @@ final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         var output = menu.getSlot(5);
         ItemStack actual = output.getItem().copy();
         if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Avaritia smithing output");
-        output.onTake(fake, actual.copy());
+        ItemStack taken = output.remove(actual.getCount());
+        if (!ItemStack.matches(actual, taken)) throw new IllegalStateException("Avaritia smithing extraction changed");
+        output.onTake(fake, taken);
+        actual = taken;
         var leftovers = new ObjectArrayList<ItemStack>();
         for (int index = 0; index < inputs.size(); index++) {
             ItemStack leftover = menu.getSlot(index).getItem().copy();

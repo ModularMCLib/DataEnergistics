@@ -99,7 +99,6 @@ final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
         var slots = new ListTag();
         for (int slot = 0; slot < 9; slot++) {
             var stack = grid.get(slot);
-            if (!stack.isEmpty() && !inventory.insertItem(slot, stack, true).isEmpty()) return null;
             slots.add(stack.saveOptional(level.registryAccess()));
         }
         progress.put("inputs", slots);
@@ -130,7 +129,6 @@ final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
         var grid = new ObjectArrayList<ItemStack>();
         for (int slot = 0; slot < 9; slot++) {
             var stack = ItemStack.parseOptional(operation.level().registryAccess(), slots.getCompound(slot));
-            if (!stack.isEmpty() && !inventory.insertItem(slot, stack, true).isEmpty()) return false;
             grid.add(stack);
         }
         var holder = operation.level().getRecipeManager().byKey(operation.recipeId());
@@ -143,10 +141,9 @@ final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
         for (int slot = 0; slot < 9; slot++) {
             var stack = grid.get(slot);
             if (stack.isEmpty()) continue;
-            var remainder = inventory.insertItem(slot, stack.copy(), false);
-            int accepted = stack.getCount() - remainder.getCount();
-            if (accepted > 0) operation.delivered(AEItemKey.of(stack), accepted);
-            if (!remainder.isEmpty()) throw new IllegalStateException("Alternator input capacity changed after simulation");
+            // Native automation intentionally rejects insertItem; the menu writes its crafting slots directly.
+            inventory.setStackInSlot(slot, stack.copy());
+            operation.delivered(AEItemKey.of(stack), stack.getCount());
         }
         progress.putBoolean("delivered", true);
         operation.changed();

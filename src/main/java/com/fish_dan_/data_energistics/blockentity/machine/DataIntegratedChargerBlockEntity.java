@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadW
 import com.fish_dan_.data_energistics.block.machine.DataIntegratedChargerBlock;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
+import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.integration.recipe.EaeCircuitCutterRecipeCatalog;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipe;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
@@ -20,6 +21,7 @@ import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerPatter
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerRecipe;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
 import com.fish_dan_.data_energistics.registry.DERecipes;
 
@@ -56,6 +58,7 @@ import appeng.recipes.handlers.InscriberProcessType;
 import appeng.recipes.handlers.InscriberRecipe;
 import appeng.util.ConfigManager;
 import appeng.util.ConfigMenuInventory;
+import appeng.util.SettingsFrom;
 import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.CombinedInternalInventory;
 import appeng.util.inv.FilteredInternalInventory;
@@ -65,12 +68,14 @@ import appeng.util.inv.filter.IAEItemFilter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -216,6 +221,32 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     @Override
     public IConfigManager getConfigManager() {
         return this.configManager;
+    }
+
+    @Override
+    public void exportSettings(SettingsFrom mode, DataComponentMap.Builder builder, @Nullable Player player) {
+        super.exportSettings(mode, builder, player);
+        if (mode != SettingsFrom.MEMORY_CARD) {
+            return;
+        }
+
+        CompoundTag settings = new CompoundTag();
+        settings.putString(MACHINE_MODE_TAG, this.machineMode.name());
+        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.outputSides));
+        builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
+    }
+
+    @Override
+    public void importSettings(SettingsFrom mode, DataComponentMap input, @Nullable Player player) {
+        super.importSettings(mode, input, player);
+        if (mode != SettingsFrom.MEMORY_CARD) {
+            return;
+        }
+
+        CompoundTag settings = input.get(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get());
+        if (settings != null) {
+            applyMemoryCardSettings(settings);
+        }
     }
 
     @Override
@@ -1360,6 +1391,28 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     private void onConfigChanged() {
         saveChanges();
         markForClientUpdate();
+    }
+
+    private void applyMemoryCardSettings(CompoundTag settings) {
+        boolean changed = false;
+        if (settings.contains(MACHINE_MODE_TAG, Tag.TAG_STRING)) {
+            MachineMode importedMode = readMachineMode(settings.getString(MACHINE_MODE_TAG));
+            if (this.machineMode != importedMode) {
+                this.machineMode = importedMode;
+                this.processingMode = importedMode;
+                resetProgress();
+                changed = true;
+            }
+        }
+        if (settings.contains(OUTPUT_SIDES_TAG, Tag.TAG_INT)) {
+            changed |= MemoryCardSettingsHelper.replaceSides(
+                    this.outputSides,
+                    settings.getInt(OUTPUT_SIDES_TAG));
+        }
+        if (changed) {
+            saveChanges();
+            markForClientUpdate();
+        }
     }
 
     private static void readOutputSides(CompoundTag data, Set<Direction> target) {

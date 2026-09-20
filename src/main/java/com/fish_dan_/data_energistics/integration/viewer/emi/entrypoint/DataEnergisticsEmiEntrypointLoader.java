@@ -32,7 +32,6 @@ import java.util.function.Predicate;
 public final class DataEnergisticsEmiEntrypointLoader {
 
     private static final String REQUIRED_MODS_MEMBER = "requiredMods";
-    private static boolean initialized;
 
     private DataEnergisticsEmiEntrypointLoader() {}
 
@@ -43,10 +42,6 @@ public final class DataEnergisticsEmiEntrypointLoader {
      * @param registry active Data Energistics EMI registration phase
      */
     public static synchronized void initialize(EmiRegistry registry) {
-        if (initialized) {
-            throw new IllegalStateException("Data Energistics EMI entrypoints have already been initialized");
-        }
-
         EmiPluginRegistrationAccumulator accumulator = new EmiPluginRegistrationAccumulator();
         List<EntrypointCandidate> candidates = discoverCandidates();
         int loaded = 0;
@@ -74,7 +69,6 @@ public final class DataEnergisticsEmiEntrypointLoader {
         for (EmiRecipeHandlerRegistration<?> recipeHandler : recipeHandlers) {
             recipeHandler.register(registry);
         }
-        initialized = true;
         Data_Energistics.LOGGER.info(
                 "Loaded {} of {} Data Energistics EMI plugins: {} recipe handlers",
                 loaded,

@@ -47,7 +47,7 @@ public final class PatternProviderBoundInputGameTest {
         IPatternDetails authorized = processingPattern(plannedPaper, book, true);
         IPatternDetails emissionDetails = new BoundEmissionDetails(
                 authorized,
-                List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)));
+                List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L), new GenericStack(plannedPaper, 1L)));
         boolean strictRejected = false;
         try {
             PatternProviderBatching.expandPatternInputs(
@@ -63,7 +63,7 @@ public final class PatternProviderBoundInputGameTest {
 
         List<GenericStack> expanded = PatternProviderBatching.expandPatternInputs(
                 emissionDetails,
-                actualInputs(firstActualPaper, secondActualPaper, book),
+                authorizedInputs(firstActualPaper, secondActualPaper, book),
                 3L);
 
         helper.assertValueEqual(expanded.size(), 3, "Expanded provider input must retain all sparse slices");
@@ -148,6 +148,16 @@ public final class PatternProviderBoundInputGameTest {
         KeyCounter bookInputs = new KeyCounter();
         bookInputs.add(book, 1L);
         return new KeyCounter[] { paperInputs, bookInputs };
+    }
+
+    private static KeyCounter[] authorizedInputs(AEItemKey firstPaper, AEItemKey secondPaper, AEItemKey book) {
+        KeyCounter first = new KeyCounter();
+        first.add(firstPaper, 1L);
+        KeyCounter middle = new KeyCounter();
+        middle.add(book, 1L);
+        KeyCounter last = new KeyCounter();
+        last.add(secondPaper, 1L);
+        return new KeyCounter[] { first, middle, last };
     }
 
     private static AEItemKey namedPaper(String name) {

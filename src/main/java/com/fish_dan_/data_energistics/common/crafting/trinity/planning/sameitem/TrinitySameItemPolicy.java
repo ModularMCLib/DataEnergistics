@@ -118,12 +118,17 @@ public final class TrinitySameItemPolicy {
             if (domains.stream().anyMatch(other -> !other.items().equals(domain.items()) &&
                     other.items().stream().anyMatch(domain.items()::contains)))
                 continue;
-            for (var item : domain.items()) {
-                AEItemKey representative = target instanceof AEItemKey targetItem && item.equals(targetItem.getItem())
-                        ? targetItem
-                        : outputRepresentatives.getOrDefault(item, domain.representative());
-                representatives.putIfAbsent(item, representative);
+            AEItemKey representative = domain.representative();
+            for (var output : outputRepresentatives.values()) {
+                if (domain.items().contains(output.getItem())) {
+                    representative = output;
+                    break;
+                }
             }
+            if (target instanceof AEItemKey targetItem && domain.items().contains(targetItem.getItem())) {
+                representative = targetItem;
+            }
+            for (var item : domain.items()) representatives.putIfAbsent(item, representative);
         }
         return representatives.isEmpty() ? EMPTY : new TrinitySameItemPolicy(representatives);
     }

@@ -37,6 +37,8 @@ public final class DEUpgrades {
     public static void init() {
         DataFlowBusStrategies.register();
         ((AdaptivePatternProviderBlock<?>) DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get()).bindBlockEntity();
+        DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER.get().bindBlockEntity();
+        AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), DEItems.DIGITAL_PACKAGED_PATTERN_PROVIDER.get());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_SOLAR_PANEL_BLOCK_ENTITY.get(), DEBlocks.DATA_SOLAR_PANEL.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DIGITAL_STORAGE_DEPOT_BLOCK_ENTITY.get(), DEBlocks.DIGITAL_STORAGE_DEPOT.get().asItem());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_EXTRACTOR_BLOCK_ENTITY.get(), DEBlocks.DATA_EXTRACTOR.get().asItem());

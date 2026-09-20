@@ -20,6 +20,7 @@ import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.Astronomical
 import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.AstronomicalObservatoryBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.InterferenceArrayCoreBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumReturnPortalBlockEntity;
@@ -186,6 +187,10 @@ public final class DEBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AdaptivePatternProviderBlockEntity>> ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register(
             "adaptive_pattern_provider",
             () -> BlockEntityType.Builder.of(AdaptivePatternProviderBlockEntity::new, DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DigitalPackagedPatternProviderBlockEntity>> DIGITAL_PACKAGED_PATTERN_PROVIDER = BLOCK_ENTITY_TYPES.register(
+            "digital_packaged_pattern_provider",
+            () -> BlockEntityType.Builder.of(DigitalPackagedPatternProviderBlockEntity::new, DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CompositeWarehouseBlockEntity>> COMPOSITE_WAREHOUSE_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register(
             "composite_warehouse",

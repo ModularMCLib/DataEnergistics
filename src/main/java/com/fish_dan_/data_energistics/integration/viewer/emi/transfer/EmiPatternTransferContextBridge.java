@@ -10,6 +10,7 @@ import appeng.menu.me.items.PatternEncodingTermMenu;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.neoforged.fml.ModList;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
 import org.jspecify.annotations.Nullable;
@@ -47,7 +48,8 @@ public final class EmiPatternTransferContextBridge {
         if (recipe instanceof DataChargePressEmiRecipe dataChargePressRecipe) {
             return dataChargePressRecipe.patternRecipeId();
         }
-        return holder == null ? recipe.getId() : holder.id();
+        if (holder != null) return holder.id();
+        return ModList.get().isLoaded("jei") ? JemiPatternRecipeIdentity.resolve(recipe) : recipe.getId();
     }
 
     /**

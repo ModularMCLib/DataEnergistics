@@ -1,8 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.dynamic;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -11,6 +14,7 @@ import appeng.api.stacks.KeyCounter;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -126,7 +130,14 @@ public final class BoundPatternInputEmitterGameTest {
 
         @Override
         public AEItemKey getDefinition() {
-            return AEItemKey.of(Items.CRAFTING_TABLE);
+            var definition = PatternDetailsHelper.encodeProcessingPattern(
+                    List.of(new GenericStack(paper, 2), new GenericStack(book, 1)), getOutputs());
+            var rule = new CompoundTag();
+            rule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+            var rules = new CompoundTag();
+            rules.put("i0", rule);
+            definition.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, rules);
+            return AEItemKey.of(definition);
         }
 
         @Override

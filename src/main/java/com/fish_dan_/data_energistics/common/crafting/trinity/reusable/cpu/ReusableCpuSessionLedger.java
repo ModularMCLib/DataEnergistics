@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletion;
+import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.SlotStack;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.Settlement;
@@ -35,7 +36,7 @@ import java.util.function.LongConsumer;
 public final class ReusableCpuSessionLedger {
 
     /** Frozen source-qualified registration in per-operation units, not an executable adapter callback. */
-    public record DynamicOutput(GenericStack stack, boolean finalOutput, ResourceLocation source) {
+    public record DynamicOutput(GenericStack stack, boolean finalOutput, ResourceLocation source, ItemMatchingRule rule, AEItemKey templateKey) {
 
         public DynamicOutput {
             if (!(stack.what() instanceof AEItemKey) || stack.amount() <= 0L) {

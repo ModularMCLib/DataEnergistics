@@ -94,6 +94,17 @@ public final class ReusableInputSessionNbtCodec {
 
     /** Restores all idempotency records and assets; interrupted native effects remain quarantined. */
     public static ReusableInputSession decode(CompoundTag tag, HolderLookup.Provider registries) {
+        return decode(tag, registries, -1);
+    }
+
+    /** Decodes a validated durable native checkpoint; the active operation must match exactly. */
+    public static ReusableInputSession decodeWithNativeCheckpoint(CompoundTag tag, HolderLookup.Provider registries,
+                                                                  long operationId) {
+        if (operationId < 0) throw new IllegalArgumentException("Invalid native checkpoint operation");
+        return decode(tag, registries, operationId);
+    }
+
+    private static ReusableInputSession decode(CompoundTag tag, HolderLookup.Provider registries, long operationId) {
         if (integer(tag, "schema") != SCHEMA) {
             throw new IllegalArgumentException("Unsupported reusable session schema");
         }
@@ -117,11 +128,13 @@ public final class ReusableInputSessionNbtCodec {
             active = new Operation(number(entry, "id"), number(entry, "append"), number(entry, "count"),
                     decodeInputs(entry, "consumed", registries), decodeTools(entry, "tools", registries));
         }
-        return ReusableInputSession.restore(new Snapshot(identity, contracts, State.valueOf(string(tag, "state")), appends,
+        Snapshot snapshot = new Snapshot(identity, contracts, State.valueOf(string(tag, "state")), appends,
                 decodeTools(tag, "tools", registries), active, decodeAssets(tag, "outputs", registries),
                 decodeReturns(tag, "returns", registries), decodeReturns(tag, "acknowledged", registries),
                 decodeTools(tag, "machine_released", registries), number(tag, "next_operation"), number(tag, "next_return"),
-                number(tag, "idle_since"), number(tag, "yield_requested_at"), number(tag, "exhausted"), string(tag, "fault")));
+                number(tag, "idle_since"), number(tag, "yield_requested_at"), number(tag, "exhausted"), string(tag, "fault"));
+        return operationId < 0 ? ReusableInputSession.restore(snapshot) :
+                ReusableInputSession.restoreWithNativeCheckpoint(snapshot, operationId);
     }
 
     private static CompoundTag encodeAppend(Append append, HolderLookup.Provider registries) {

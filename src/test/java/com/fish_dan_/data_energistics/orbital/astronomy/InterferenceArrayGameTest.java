@@ -58,7 +58,7 @@ public final class InterferenceArrayGameTest {
 
     @TestHolder("interference_array_produces_and_stops_when_mirror_path_or_sky_is_invalid")
     @EmptyTemplate("50x32x50")
-    @GameTest(template = "empty_50x32x50", timeoutTicks = 700)
+    @GameTest(template = "empty_50x32x50", batch = "orbital_astronomy_array", timeoutTicks = 700)
     public static void producesAndStopsWhenMirrorPathOrSkyIsInvalid(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         StellarErasureDeviceSavedData data = StellarErasureDeviceSavedData.get(level.getServer());

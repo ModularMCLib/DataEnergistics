@@ -27,6 +27,7 @@ import com.fish_dan_.data_energistics.block.orbital.astronomy.AstronomicalObserv
 import com.fish_dan_.data_energistics.block.orbital.astronomy.CelestialWaveguideBlock;
 import com.fish_dan_.data_energistics.block.orbital.astronomy.InterferenceArrayCoreBlock;
 import com.fish_dan_.data_energistics.block.patternprovider.AdaptivePatternProviderBlock;
+import com.fish_dan_.data_energistics.block.patternprovider.DigitalPackagedPatternProviderBlock;
 import com.fish_dan_.data_energistics.block.sanctum.DataSanctumBlock;
 import com.fish_dan_.data_energistics.block.sanctum.DataSanctumInterfaceBlock;
 import com.fish_dan_.data_energistics.block.sanctum.DataSanctumReturnPortalBlock;
@@ -239,6 +240,9 @@ public final class DEBlocks {
             "adaptive_pattern_provider",
             properties -> new AdaptivePatternProviderBlock(properties),
             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK));
+
+    public static final DeferredBlock<DigitalPackagedPatternProviderBlock> DIGITAL_PACKAGED_PATTERN_PROVIDER = BLOCKS.register(
+            "digital_packaged_pattern_provider", DigitalPackagedPatternProviderBlock::new);
 
     public static final DeferredBlock<Block> TNT_CONFIGURABLE = BLOCKS.registerBlock(
             "tnt_configurable",

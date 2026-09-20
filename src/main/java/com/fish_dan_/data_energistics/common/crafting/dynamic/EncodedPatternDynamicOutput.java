@@ -2,96 +2,51 @@ package com.fish_dan_.data_energistics.common.crafting.dynamic;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput;
-import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputMatchMode;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.GenericStack;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
-/**
- * Persists and resolves the player-controlled SAME_ITEM rule attached to an encoded processing pattern.
- */
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
+/** Resolves explicit slot rules without weakening the complete encoded-pattern identity. */
 public final class EncodedPatternDynamicOutput {
 
-    public static final int PROCESSING_INPUT_SLOTS = 9;
-
-    /** Stable source recorded in the CPU dynamic-output ledger. */
     public static final ResourceLocation SOURCE_ID = Data_Energistics.id("encoded_pattern_output");
 
     private EncodedPatternDynamicOutput() {}
 
-    /** Applies per-slot matching rules to the final encoded pattern stack. */
-    public static void apply(ItemStack encodedPattern, int markerMask) {
-        if (encodedPattern.isEmpty()) {
-            throw new IllegalArgumentException("Cannot mark an empty encoded pattern");
-        }
-        if (markerMask != 0) {
-            encodedPattern.set(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS, markerMask);
-        } else {
-            encodedPattern.remove(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS);
-        }
-    }
-
-    /**
-     * Reads the rule without weakening the complete encoded-pattern definition key.
-     *
-     * @param definition complete encoded-pattern identity
-     * @return whether the pattern explicitly opted into SAME_ITEM matching on any processing slot
-     */
     public static boolean isMarked(AEItemKey definition) {
-        return markerMask(definition) != 0;
-    }
-
-    /** Returns the persisted per-slot marker mask, or zero when no slots are marked. */
-    public static int markerMask(AEItemKey definition) {
-        Integer mask = definition.get(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS.get());
-        return mask == null ? 0 : mask;
+        return EncodedPatternMatching.flexible(definition);
     }
 
     public static boolean isMarked(AEItemKey definition, int inputIndex, int outputIndex) {
-        int bit = inputIndex >= 0 ? inputIndex : PROCESSING_INPUT_SLOTS + outputIndex;
-        return bit >= 0 && bit < Integer.SIZE - 1 && (markerMask(definition) & (1 << bit)) != 0;
+        return (inputIndex >= 0 ? EncodedPatternMatching.mode(definition, inputIndex) :
+                EncodedPatternMatching.outputMode(definition, outputIndex)) != ProcessingMatchMode.EXACT;
     }
 
-    /**
-     * Resolves and validates the marked pattern's first output against its physical output list.
-     *
-     * @param details original outer pattern details selected for dispatch
-     * @return one per-push SAME_ITEM declaration
-     */
-    public static DynamicCraftingOutput resolve(IPatternDetails details) {
-        GenericStack output = details.getPrimaryOutput();
-        if (output == null || output.amount() <= 0L || !(output.what() instanceof AEItemKey)) {
-            throw new DynamicCraftingOutputResolutionException(
-                    "Encoded pattern output matching requires a positive item output for pattern " +
-                            details.getDefinition());
-        }
-
-        long declaredAmount = 0L;
-        try {
-            for (GenericStack declared : details.getOutputs()) {
-                if (declared == null || declared.what() == null || declared.amount() <= 0L) {
-                    throw new DynamicCraftingOutputResolutionException(
-                            "Encoded pattern exposes an invalid physical output: " + details.getDefinition());
-                }
-                if (output.what().equals(declared.what())) {
-                    declaredAmount = Math.addExact(declaredAmount, declared.amount());
-                }
+    /** Every explicitly flexible sparse output slot contributes its own frozen count and rule. */
+    public static ObjectList<DynamicCraftingOutput> resolveAll(IPatternDetails details) {
+        var definition = details.getDefinition();
+        var encoded = definition.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        var outputs = encoded == null ? details.getOutputs() : encoded.sparseOutputs();
+        var result = new ObjectArrayList<DynamicCraftingOutput>();
+        for (int slot = 0; slot < outputs.size(); slot++) {
+            var output = outputs.get(slot);
+            var mode = EncodedPatternMatching.outputMode(definition, slot);
+            if (output == null || mode == ProcessingMatchMode.EXACT) continue;
+            if (output.amount() <= 0 || !(output.what() instanceof AEItemKey)) {
+                throw new DynamicCraftingOutputResolutionException("Flexible pattern output requires a positive item output");
             }
-        } catch (ArithmeticException exception) {
-            throw new DynamicCraftingOutputResolutionException(
-                    "Encoded pattern output amount overflow for pattern " + details.getDefinition(),
-                    exception);
+            result.add(new DynamicCraftingOutput(output, mode, mode == ProcessingMatchMode.TAG ?
+                    EncodedPatternMatching.outputTags(definition, slot) : ObjectList.of()));
         }
-        if (declaredAmount < output.amount()) {
-            throw new DynamicCraftingOutputResolutionException(
-                    "Encoded pattern declares a selected output that is absent from its physical outputs: " +
-                            details.getDefinition());
-        }
-        return new DynamicCraftingOutput(output, DynamicCraftingOutputMatchMode.SAME_ITEM);
+        return new ObjectImmutableList<>(result);
     }
 }

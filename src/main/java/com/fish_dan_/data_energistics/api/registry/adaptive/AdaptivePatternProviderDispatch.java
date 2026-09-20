@@ -1,11 +1,16 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
+import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -29,6 +34,24 @@ import java.util.List;
 @FunctionalInterface
 public interface AdaptivePatternProviderDispatch {
 
+    /**
+     * Optional capacity-aware batch view of this route on the server thread. Capture and preparation must be
+     * read-only; only admission commit transfers inputs. New admissions require the route to remain selected.
+     * Return null to keep the existing single-craft special route. Persistent work stays in route-owned state.
+     */
+    default @Nullable CountedCraftingProviderAdapter countedAdapter(AdaptivePatternProviderDispatchTarget target) {
+        return null;
+    }
+
+    /**
+     * Optional server-thread reusable executor, including already-owned sessions while this route is inactive.
+     * Returned adapters are ephemeral views; custody and progress must live in the route's persistent state.
+     * New admissions must independently require selection and normal provider availability.
+     */
+    default @Nullable ReusableCraftingProviderAdapter reusableAdapter(AdaptivePatternProviderDispatchTarget target) {
+        return null;
+    }
+
     /** Returns this provider registration's connector routes in stable priority order. */
     default ObjectList<AdaptiveProviderConnectorRoute> connectorRoutes() {
         return ObjectList.of();
@@ -51,6 +74,16 @@ public interface AdaptivePatternProviderDispatch {
      * @return whether the special route is required
      */
     default boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
+        return false;
+    }
+
+    /** Whether this route validates a whole machine instead of the connector's ordinary inventory capacity. */
+    default boolean validatesMachineCapacity() {
+        return false;
+    }
+
+    /** Read-only recognition of a loaded machine main block that need not expose an inventory capability. */
+    default boolean acceptsConnectorMachine(ServerLevel level, BlockPos position) {
         return false;
     }
 
@@ -123,6 +156,15 @@ public interface AdaptivePatternProviderDispatch {
 
     /** Clears registration-owned runtime state when the provider is emptied. */
     default void clearState(AdaptivePatternProviderDispatchTarget target) {}
+
+    /**
+     * Restores one physical recovery receipt into this selected route on the server thread.
+     * The caller consumes the item only on success. Implementations must reject incompatible receipts
+     * and occupied destinations without mutating either, and prevent duplicate redemption.
+     */
+    default boolean restoreRecoveryItem(AdaptivePatternProviderDispatchTarget target, ItemStack receipt) {
+        return false;
+    }
 
     /** Notifies the registration that installed provider settings changed. */
     default void onProviderStateChanged(AdaptivePatternProviderDispatchTarget target) {}

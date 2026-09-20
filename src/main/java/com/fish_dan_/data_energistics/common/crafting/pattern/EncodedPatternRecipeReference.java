@@ -45,6 +45,12 @@ public record EncodedPatternRecipeReference(Kind kind, ResourceLocation id) {
                 encodedPattern.get(DEDataComponents.PROCESSING_PATTERN_RECIPE_ID);
     }
 
+    /** Returns the persisted processing recipe type, including types kept while recording is disabled. */
+    public static @Nullable ResourceLocation getProcessingRecipeType(ItemStack encodedPattern) {
+        return encodedPattern.isEmpty() ? null :
+                encodedPattern.get(DEDataComponents.PROCESSING_PATTERN_RECIPE_TYPE);
+    }
+
     /**
      * Returns the concrete recipe ID already encoded by AE2, or the recorded processing recipe-type ID.
      */

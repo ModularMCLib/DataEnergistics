@@ -29,10 +29,14 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("ae2ct", "ae2ct.");
         addModCompatMixin("ae2cs", "ae2cs.");
         addModCompatMixin("appliedcreate", "appliedcreate.");
+        addModCompatMixin("avaritia", "avaritia.");
         addModCompatMixin("draconicevolution", "draconic.");
+        addModCompatMixin("botania", "botania.");
+        addModCompatMixin("malum", "malum.");
         addModCompatMixin("ae2lt", "ae2lt.");
         addModCompatMixin("extendedae", "extendedae.");
         addModCompatMixin("extendedae_plus", "extendedaeplus.");
+        addModCompatMixin("extendedcrafting", "extendedcrafting.");
         addModCompatMixin("ae2jeiintegration", "jei.");
         addModCompatMixin("jei", "viewer.jei.");
         addModCompatMixin("emi", "emi.");
@@ -73,6 +77,12 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+        if (mixinClassName.equals("avaritia.ExtremeSmithingEmiInputsMixin")) {
+            return isModLoaded("avaritia") && isModLoaded("emi");
+        }
+        if (mixinClassName.startsWith("mekanismmore.")) {
+            return isModLoaded("mekmm") && isModLoaded("appmek");
+        }
 
         if (mixinClassName.startsWith("dev.")) {
             if (FMLLoader.isProduction()) {

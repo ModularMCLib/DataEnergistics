@@ -1,9 +1,12 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -13,6 +16,7 @@ import appeng.crafting.inv.ListCraftingInventory;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -22,6 +26,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -85,7 +90,7 @@ public final class TrinitySameItemInputBindingGameTest {
     public static void keepsUnmarkedRequirementsExact(GameTestHelper helper) {
         AEItemKey actual = namedPaper("actual");
         ListCraftingInventory inventory = inventory(new GenericStack(actual, 2));
-        var result = TrinityPatternSelector.create().select(new ExactPattern(2), 0, false, 1,
+        var result = TrinityPatternSelector.create().select(new ExactPattern(false, 2), 0, false, 1,
                 inventory.list::get, ignored -> 0L, ignored -> List.of(), 8);
         helper.assertTrue(result instanceof TrinityPatternSelector.Unavailable, "Unmarked inputs must not accept another component variant");
         helper.assertValueEqual(inventory.list.get(actual), 2L, "Selection must not mutate physical inventory");
@@ -139,6 +144,13 @@ public final class TrinitySameItemInputBindingGameTest {
         private final IInput[] inputs;
 
         private ExactPattern(long... amounts) {
+            this(true, amounts);
+        }
+
+        private final boolean aliasesAllowed;
+
+        private ExactPattern(boolean aliasesAllowed, long... amounts) {
+            this.aliasesAllowed = aliasesAllowed;
             this.inputs = new IInput[amounts.length];
             for (int i = 0; i < amounts.length; i++) {
                 this.inputs[i] = new ExactInput(AEItemKey.of(Items.PAPER), amounts[i]);
@@ -147,7 +159,19 @@ public final class TrinitySameItemInputBindingGameTest {
 
         @Override
         public AEItemKey getDefinition() {
-            return AEItemKey.of(Items.CRAFTING_TABLE);
+            var materials = new ObjectArrayList<GenericStack>();
+            var rules = new CompoundTag();
+            for (int i = 0; i < inputs.length; i++) {
+                materials.add(new GenericStack(AEItemKey.of(Items.PAPER), inputs[i].getMultiplier()));
+                if (aliasesAllowed) {
+                    var rule = new CompoundTag();
+                    rule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+                    rules.put("i" + i, rule);
+                }
+            }
+            var definition = PatternDetailsHelper.encodeProcessingPattern(materials, getOutputs());
+            definition.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, rules);
+            return AEItemKey.of(definition);
         }
 
         @Override

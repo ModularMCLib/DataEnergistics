@@ -24,6 +24,12 @@ import java.util.Set;
 @Mixin(PatternProviderLogic.class)
 public interface PatternProviderLogicFieldAccessor extends PatternProviderBatchAccess {
 
+    @Invoker("doWork")
+    boolean dataEnergistics$invokeDoWork();
+
+    @Invoker("hasWorkToDo")
+    boolean dataEnergistics$invokeHasWorkToDo();
+
     @Override
     @Accessor("host")
     PatternProviderLogicHost dataEnergistics$getHost();

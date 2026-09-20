@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern;
 
+import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern.TrinityBoundPatternDetails.SlotBinding;
 import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternBindingEnumerator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
@@ -199,6 +200,7 @@ public final class TrinityPatternSelector {
             Candidate candidate;
             try {
                 candidate = evaluate(
+                        pattern.getDefinition(),
                         inputs,
                         binding.alternativeOrdinals(),
                         binding.cartesianOrdinal(),
@@ -246,7 +248,7 @@ public final class TrinityPatternSelector {
         return keys;
     }
 
-    private static Candidate evaluate(List<RuntimeInput> inputs,
+    private static Candidate evaluate(AEItemKey definition, List<RuntimeInput> inputs,
                                       IntList alternatives,
                                       int ordinal,
                                       long remainingCrafts,
@@ -273,14 +275,13 @@ public final class TrinityPatternSelector {
             remaining[slot] = Math.multiplyExact(template.amount(), input.signature().multiplier());
             allocations.add(new Object2LongLinkedOpenHashMap<>());
             captureAvailability(template.what(), cpuAvailability, networkAvailability, cpuAmounts, totalAmounts);
-            List<GenericStack> candidates = dynamicInputResolver.apply(template.what());
+            List<GenericStack> candidates = new ObjectArrayList<>();
+            for (var candidate : dynamicInputResolver.apply(template.what())) {
+                if (candidate.amount() <= 0) throw new IllegalArgumentException("Dynamic input resolver returned invalid quantity");
+                if (EncodedPatternMatching.matchesInput(definition, slot, template.what(), candidate.what())) candidates.add(candidate);
+            }
             aliases.add(candidates);
             for (GenericStack candidate : candidates) {
-                if (!(template.what() instanceof AEItemKey planned) ||
-                        !(candidate.what() instanceof AEItemKey actual) || actual.getItem() != planned.getItem() ||
-                        candidate.amount() <= 0L) {
-                    throw new IllegalArgumentException("Dynamic input resolver returned an invalid same-item alternative");
-                }
                 captureAvailability(candidate.what(), cpuAvailability, networkAvailability, cpuAmounts, totalAmounts);
                 aliasLimits.mergeLong(candidate.what(), candidate.amount(), Math::min);
                 observedKeys.add(candidate.what());
@@ -290,6 +291,7 @@ public final class TrinityPatternSelector {
         // Reserve exact requirements for every slot first, so a flexible input cannot steal a later exact input.
         for (int slot = 0; slot < inputs.size(); slot++) {
             GenericStack template = templates.get(slot);
+            if (!EncodedPatternMatching.matchesInput(definition, slot, template.what(), template.what())) continue;
             long taken = allocate(allocations.get(slot), available, template.what(), remaining[slot], template.amount());
             remaining[slot] -= taken;
         }

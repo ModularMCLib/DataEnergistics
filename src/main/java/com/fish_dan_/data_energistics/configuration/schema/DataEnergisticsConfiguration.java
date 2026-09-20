@@ -186,6 +186,10 @@ public final class DataEnergisticsConfiguration {
     public static final class DeveloperConfigs {
 
         @Configurable(key = Configurable.LocalizationKey.FULL)
+        @Configurable.Comment({ "Enable packaged crafting operation failure logs.", "启用封包合成任务失败日志。" })
+        public boolean packagedCraftingLogging = false;
+
+        @Configurable(key = Configurable.LocalizationKey.FULL)
         @Configurable.Comment({
                 "Enable high-frequency Trinity planning logs.",
                 "启用高频三位一体规划日志。"

@@ -1,17 +1,22 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+
+import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,7 +37,10 @@ final class TrinityCpuWaitingIndex {
     /**
      * Per-key entries retain exact totals and workers in routing order.
      */
-    private final Map<AEKey, WaitingEntry> entries = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<AEKey, WaitingEntry> entries = new Object2ObjectOpenHashMap<>();
+
+    /** Candidate routing only; each CPU's persisted output contract decides whether a variant is accepted. */
+    private final Object2ObjectMap<Item, ObjectSet<AEKey>> keysByItem = new Object2ObjectOpenHashMap<>();
 
     /**
      * Reverse membership makes worker removal proportional to that worker's requested key count.
@@ -65,6 +73,9 @@ final class TrinityCpuWaitingIndex {
         if (entry == null) {
             entry = new WaitingEntry();
             this.entries.put(what, entry);
+            if (what instanceof AEItemKey item) {
+                this.keysByItem.computeIfAbsent(item.getItem(), ignored -> new ObjectOpenHashSet<>()).add(what);
+            }
         }
         BigInteger previousAmount = entry.amountsByWorker.put(workerNumber, requestedAmount);
         if (previousAmount != null) {
@@ -91,7 +102,7 @@ final class TrinityCpuWaitingIndex {
             BigInteger removedAmount = entry.amountsByWorker.remove(workerNumber);
             entry.exactTotal = entry.exactTotal.subtract(removedAmount);
             if (entry.amountsByWorker.isEmpty()) {
-                this.entries.remove(what);
+                removeEntry(what);
             } else {
                 entry.rebuildWorkerNumbers();
             }
@@ -103,6 +114,7 @@ final class TrinityCpuWaitingIndex {
      */
     public void clear() {
         this.entries.clear();
+        this.keysByItem.clear();
         this.keysByWorker.clear();
     }
 
@@ -141,6 +153,34 @@ final class TrinityCpuWaitingIndex {
     }
 
     /**
+     * Visits exact-key workers first, then other workers waiting for this item ID, once each.
+     * This does not authorize component substitution or change the exact waiting counters.
+     * The returned snapshot remains stable while insertions update or remove index entries.
+     */
+    public IntList candidateWorkerNumbers(AEKey what) {
+        IntList exact = waitingWorkerNumbers(what);
+        if (!(what instanceof AEItemKey item)) return exact;
+        var keys = this.keysByItem.get(item.getItem());
+        if (keys == null) return exact;
+        var alternatives = new IntAVLTreeSet();
+        for (AEKey key : keys) alternatives.addAll(waitingWorkerNumbers(key));
+        alternatives.removeAll(exact);
+        if (alternatives.isEmpty()) return exact;
+        var candidates = new IntArrayList(exact);
+        candidates.addAll(alternatives);
+        return IntLists.unmodifiable(candidates);
+    }
+
+    private void removeEntry(AEKey what) {
+        this.entries.remove(what);
+        if (what instanceof AEItemKey item) {
+            var keys = this.keysByItem.get(item.getItem());
+            keys.remove(what);
+            if (keys.isEmpty()) this.keysByItem.remove(item.getItem());
+        }
+    }
+
+    /**
      * Removes one key membership while keeping both forward and reverse indexes consistent.
      */
     private void removeRequest(int workerNumber, AEKey what, WaitingEntry entry) {
@@ -155,7 +195,7 @@ final class TrinityCpuWaitingIndex {
             this.keysByWorker.remove(workerNumber);
         }
         if (entry.amountsByWorker.isEmpty()) {
-            this.entries.remove(what);
+            removeEntry(what);
         } else {
             entry.rebuildWorkerNumbers();
         }

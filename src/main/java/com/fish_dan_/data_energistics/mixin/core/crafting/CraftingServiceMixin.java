@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.LongAmountMath;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCpuStorageCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.lifecycle.TrinityDispatchProposalLifecycle;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.schedule.DispatchProposalMetrics;
@@ -429,7 +430,7 @@ public abstract class CraftingServiceMixin
                     return delegate instanceof IMolecularAssemblerSupportedPattern nativePattern ?
                             DataEnergisticsEntrypointLoader.snapshot().trinityPatternRecipes().resolve(nativePattern)
                                     .map(resolution -> resolution.recipeId()) :
-                            Optional.empty();
+                            Optional.ofNullable(EncodedPatternRecipeReference.getProcessingRecipeId(delegate.getDefinition().toStack()));
                 }
             }, System::nanoTime);
         }
@@ -1008,6 +1009,15 @@ public abstract class CraftingServiceMixin
     private void dataEnergistics$getTrinityDataCoreCpus(CallbackInfoReturnable<ImmutableSet<ICraftingCPU>> cir,
                                                         ImmutableSet.Builder<ICraftingCPU> cpus) {
         dataEnergistics$addActiveTrinityDataCoreCpus(cpus);
+    }
+
+    @WrapMethod(method = "isRequesting")
+    private boolean dataEnergistics$isTrinityDataCoreRequesting(AEKey what, Operation<Boolean> original) {
+        if (original.call(what)) return true;
+        for (TrinityDataCoreCraftingRuntime runtime : dataEnergistics$trinityDataCoreRuntimes()) {
+            if (runtime.getRequestedAmount(what) > 0) return true;
+        }
+        return false;
     }
 
     @WrapMethod(method = "getRequestedAmount")

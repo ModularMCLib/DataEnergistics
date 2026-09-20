@@ -20,6 +20,7 @@ repositories {
         filter {
             includeGroup("com.blakebr0.cucumber")
             includeGroup("com.blakebr0.mysticalagriculture")
+            includeGroup("com.blakebr0.extendedcrafting")
         }
     }
     maven { // JEI mirror, AE2
@@ -45,6 +46,27 @@ repositories {
     maven { // JEI
         name = "Jared's Maven"
         url = "https://maven.blamejared.com/"
+    }
+    exclusiveContent { // Official magic-mod publications
+        forRepository { maven { url = "https://maven.blamejared.com/" } }
+        filter {
+            includeGroup("vazkii.botania")
+            includeGroup("vazkii.patchouli")
+            includeGroup("com.hollingsworth.ars_nouveau")
+            includeGroup("team.lodestar.lodestone")
+        }
+    }
+    exclusiveContent { // Occultism and its companion libraries
+        forRepository { maven { url = "https://dl.cloudsmith.io/public/klikli-dev/mods/maven/" } }
+        filter { includeGroup("com.klikli_dev") }
+    }
+    exclusiveContent { // GeckoLib
+        forRepository { maven { url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/" } }
+        filter { includeGroup("software.bernie.geckolib") }
+    }
+    exclusiveContent { // SmartBrainLib
+        forRepository { maven { url = "https://dl.cloudsmith.io/public/tslat/sbl/maven/" } }
+        filter { includeGroup("net.tslat.smartbrainlib") }
     }
     maven { // LDLib
         name = "FirstDarkDev Maven"

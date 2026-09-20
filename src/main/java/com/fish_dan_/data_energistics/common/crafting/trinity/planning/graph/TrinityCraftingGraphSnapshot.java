@@ -244,8 +244,10 @@ public final class TrinityCraftingGraphSnapshot {
             }
             ObjectLinkedOpenHashSet<TrinityCraftingGraphPattern> producers = new ObjectLinkedOpenHashSet<>(patternsProducing(required));
             if (sameItemPolicy.allowsSameItem(required)) {
-                AEItemKey requiredItem = (AEItemKey) required;
-                producers.addAll(this.patternsByOutputItem.getOrDefault(requiredItem.getItem(), List.of()));
+                var logical = sameItemPolicy.normalizeKey(required);
+                for (var entry : this.patternsByOutputItem.entrySet()) {
+                    if (sameItemPolicy.normalizeKey(AEItemKey.of(entry.getKey())).equals(logical)) producers.addAll(entry.getValue());
+                }
             }
             for (TrinityCraftingGraphPattern pattern : producers) {
                 if (!reachablePatterns.add(pattern)) {

@@ -84,12 +84,22 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         FusionRecipePlan.Plan plan;
         try {
             plan = FusionRecipePlan.prepare(level, recipe, minimumTier, pattern, inputs);
-            if (plan == null || plan.injectors().size() != eligible.size()) return null;
+            if (plan == null || plan.injectors().size() != eligible.size()) {
+                Data_Energistics.LOGGER.warn("Rejected Draconic packaged dispatch at {} for {}: fusion plan unavailable (inputs={})",
+                        position, recipeId, inputs);
+                return null;
+            }
             // Validate physical slot limits and the recipe the real core will select before accepting materials.
             var snapshot = FusionSnapshot.deliveredInventory(plan, minimumTier);
             var selected = level.getRecipeManager().getRecipeFor(DraconicAPI.FUSION_RECIPE_TYPE.get(), snapshot, level);
-            if (selected.isEmpty() || !selected.get().id().equals(recipeId)) return null;
+            if (selected.isEmpty() || !selected.get().id().equals(recipeId)) {
+                Data_Energistics.LOGGER.warn("Rejected Draconic packaged dispatch at {} for {}: physical recipe selection was {}",
+                        position, recipeId, selected.isEmpty() ? "empty" : selected.get().id());
+                return null;
+            }
         } catch (ArithmeticException | IllegalArgumentException exception) {
+            Data_Energistics.LOGGER.warn("Rejected Draconic packaged dispatch at {} for {} while preparing", position, recipeId,
+                    exception);
             return null;
         }
         CompoundTag progress = FusionRecipePlan.save(plan, level.registryAccess());

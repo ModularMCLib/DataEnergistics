@@ -76,7 +76,8 @@ record LargeMachineRecipePlan(List<GenericStack> inputs, List<GenericStack> outp
                 // Query the same ordered native recipe cache before any physical input is touched.
                 var selected = layout.tile().getRecipeType().findFirst(level,
                         candidate -> unit(candidate, first, second, layout.fluidToChemical()) != null);
-                if (selected != recipe) continue;
+                // Native caches may rebuild recipe instances; require identical physical inputs and outputs.
+                if (selected == null || !unit.equals(unit(selected, first, second, layout.fluidToChemical()))) continue;
                 return new LargeMachineRecipePlan(unit.inputs(), unit.outputs(), cycles);
             }
         } catch (ArithmeticException exception) {

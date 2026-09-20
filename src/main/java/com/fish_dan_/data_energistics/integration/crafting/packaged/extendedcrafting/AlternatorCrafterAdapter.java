@@ -52,7 +52,8 @@ final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(this.type);
+        return ObjectSet.of(this.type, ResourceLocation.fromNamespaceAndPath(
+                "extendedcrafting", this.flux ? "flux_crafting" : "ender_crafting"));
     }
 
     @Override

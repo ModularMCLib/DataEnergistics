@@ -8,8 +8,12 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIn
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.crafting.pattern.AEProcessingPattern;
+import appeng.crafting.pattern.EncodedProcessingPattern;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -74,6 +78,66 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (processing == null || holder.isEmpty() || !(holder.get().value() instanceof ITierCraftingRecipe recipe)) return null;
+        var supplied = new KeyCounter();
+        for (var input : processing.sparseInputs()) if (input != null) supplied.add(input.what(), input.amount());
+        int recipeTier = recipe.getTier();
+        if (recipeTier < 1 || recipeTier > 4) return null;
+        int size = recipeTier * 2 + 1;
+        int width = recipe instanceof ShapedTableCraftingRecipe shaped ? shaped.getWidth() : size;
+        var grid = PackagedCraftingGrid.assign(new ObjectArrayList<>(recipe.getIngredients()), width, size, new KeyCounter[] { supplied });
+        if (grid == null) return null;
+        var nativeInput = TierInput.of(size, size, grid, recipeTier);
+        if (!recipe.matches(nativeInput, level)) return null;
+        var selected = level.getRecipeManager().getRecipeFor(ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
+        if (selected.isEmpty() || !selected.get().id().equals(recipeId)) return null;
+        ItemStack produced = recipe.assemble(nativeInput, level.registryAccess());
+        var returned = returnedStacks(grid, consumedSlots(nativeInput, size), recipe.getRemainingItems(nativeInput));
+        var pattern = new AEProcessingPattern(AEItemKey.of(encodedPattern));
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, produced, returned)) return null;
+        var missing = new KeyCounter();
+        for (ItemStack stack : returned) missing.add(AEItemKey.of(stack), stack.getCount());
+        var additions = new KeyCounter();
+        var returnKeys = new ObjectArrayList<AEItemKey>();
+        for (var entry : missing) returnKeys.add((AEItemKey) entry.getKey());
+        for (var key : returnKeys) {
+            long original = missing.get(key);
+            long low = 0;
+            long high = original;
+            while (low < high) {
+                long removed = low + (high - low + 1) / 2;
+                var remaining = new ObjectArrayList<ItemStack>();
+                for (var resource : missing) {
+                    long count = resource.getLongValue() - (resource.getKey().equals(key) ? removed : 0);
+                    if (count > 0) remaining.add(((AEItemKey) resource.getKey()).toStack(Math.toIntExact(count)));
+                }
+                if (PackagedOutputMatching.matchesWithAdditionalReturns(pattern, produced, remaining)) low = removed;
+                else high = removed - 1;
+            }
+            if (low > 0) {
+                additions.add(key, low);
+                missing.set(key, original - low);
+            }
+        }
+        var outputs = new ObjectArrayList<@Nullable GenericStack>(processing.sparseOutputs());
+        int tail = outputs.size();
+        while (tail > 0 && outputs.get(tail - 1) == null) tail--;
+        for (var entry : additions) {
+            if (tail >= AEProcessingPattern.MAX_OUTPUT_SLOTS) return null;
+            var output = new GenericStack(entry.getKey(), entry.getLongValue());
+            if (tail < outputs.size()) outputs.set(tail, output);
+            else outputs.add(output);
+            tail++;
+        }
+        ItemStack copy = encodedPattern.copy();
+        copy.set(AEComponents.ENCODED_PROCESSING_PATTERN, new EncodedProcessingPattern(processing.sparseInputs(), outputs));
+        return copy;
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         TierCraftTile table = table(level, position);
@@ -107,10 +171,7 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
                 ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
         var consumed = consumedSlots(nativeInput, size);
         var returned = returnedStacks(grid, consumed, nativeRemaining);
-        var expected = new ObjectArrayList<ItemStack>();
-        expected.add(result);
-        expected.addAll(returned);
-        if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
+        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returned)) return null;
 
         CompoundTag progress = new CompoundTag();
         progress.put("inputs", saveStacks(grid, level.registryAccess()));

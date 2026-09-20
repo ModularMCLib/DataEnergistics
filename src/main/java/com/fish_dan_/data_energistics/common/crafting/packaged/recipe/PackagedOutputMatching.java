@@ -71,6 +71,19 @@ public final class PackagedOutputMatching {
         return assign(rules, rules.stream().map(Rule::stack).collect(ObjectArrayList.toList()), stacks(actual), true);
     }
 
+    /** Requires the primary product exactly; every declared secondary output must be a real native return. */
+    public static boolean matchesWithAdditionalReturns(IPatternDetails pattern, ItemStack produced, List<ItemStack> returns) {
+        var declared = rules(pattern);
+        if (declared.isEmpty() || produced.isEmpty()) return false;
+        var primary = declared.getFirst();
+        if (primary.stack().amount() != produced.getCount() || !primary.accepts(AEItemKey.of(produced))) return false;
+        var available = stacks(amounts(returns));
+        var secondary = declared.subList(1, declared.size());
+        long[] required = secondary.stream().mapToLong(rule -> rule.stack().amount()).toArray();
+        return ResourceCapacityMatching.accepts(available.stream().mapToLong(GenericStack::amount).toArray(),
+                required, required, (a, r) -> secondary.get(r).accepts(available.get(a).what()), (r, a) -> r.equals(a));
+    }
+
     /**
      * A single-port preflight; quantities are exact and explicit prototype declarations take priority.
      */

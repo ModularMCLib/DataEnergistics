@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.mekanismmore;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.jerry.meklm.common.inventory.slot.BigStackInputInventorySlot;
@@ -11,7 +14,10 @@ import com.jerry.meklm.common.tile.machine.TileEntityLargeElectrolyticSeparator;
 import com.jerry.meklm.common.tile.machine.TileEntityLargePigmentMixer;
 import com.jerry.meklm.common.tile.machine.TileEntityLargeRotaryCondensentrator;
 import com.jerry.meklm.common.tile.machine.TileEntityLargeSolarNeutronActivator;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import mekanism.api.recipes.MekanismRecipeTypes;
+import mekanism.common.inventory.slot.EnergyInventorySlot;
+import mekanism.common.tile.TileEntityBoundingBlock;
 import mekanism.common.tile.TileEntityChemicalTank.GasMode;
 import mekanism.common.tile.prefab.TileEntityRecipeMachine;
 import org.jspecify.annotations.Nullable;
@@ -31,6 +37,32 @@ enum LargeMachineKind {
 
     LargeMachineKind(ResourceLocation recipeType) {
         this.recipeType = recipeType;
+    }
+
+    @Nullable
+    Layout layout(ServerLevel level, BlockPos position) {
+        if (!level.isLoaded(position)) return null;
+        var entity = level.getBlockEntity(position);
+        if (entity instanceof TileEntityBoundingBlock bounding) {
+            var main = bounding.getMainPos();
+            if (main.equals(position) || !level.isLoaded(main)) return null;
+            entity = level.getBlockEntity(main);
+        }
+        return layout(entity);
+    }
+
+    ObjectList<BlockPos> occupiedPositions(BlockPos position, CompoundTag progress) {
+        var main = BlockPos.of(progress.getLong("machine_position"));
+        return main.equals(position) ? ObjectList.of(position) : ObjectList.of(position, main);
+    }
+
+    @Nullable
+    Layout runningLayout(ServerLevel level, BlockPos position, CompoundTag progress) {
+        var layout = layout(level, position);
+        if (layout != null && layout.tile().getBlockPos().asLong() != progress.getLong("machine_position")) {
+            throw new IllegalStateException("Mekanism bounding block changed its owner");
+        }
+        return layout;
     }
 
     @Nullable
@@ -77,7 +109,7 @@ enum LargeMachineKind {
         boolean empty() {
             if (tile.getSavedOperatingTicks(0) != 0) return false;
             if (tile instanceof TileEntityLargeAntiprotonicNucleosynthesizer n && n.getSavedUsedSoFar(0) != 0) return false;
-            return tile.getInventorySlots(null).stream().allMatch(slot -> slot.isEmpty()) && tile.getChemicalTanks(null).stream().allMatch(tank -> tank.isEmpty()) && tile.getFluidTanks(null).stream().allMatch(tank -> tank.isEmpty());
+            return tile.getInventorySlots(null).stream().allMatch(slot -> slot instanceof EnergyInventorySlot || slot.isEmpty()) && tile.getChemicalTanks(null).stream().allMatch(tank -> tank.isEmpty()) && tile.getFluidTanks(null).stream().allMatch(tank -> tank.isEmpty());
         }
 
         boolean operatingModeValid() {

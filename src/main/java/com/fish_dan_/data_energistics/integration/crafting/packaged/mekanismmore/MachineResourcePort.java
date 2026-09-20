@@ -59,8 +59,9 @@ sealed interface MachineResourcePort {
         }
 
         public long insert(GenericStack stack, Action action) {
-            if (!(stack.what() instanceof AEFluidKey key) || stack.amount() > Integer.MAX_VALUE) return 0;
-            return stack.amount() - tank.insert(key.toStack((int) stack.amount()), action, AutomationType.INTERNAL).getAmount();
+            if (!(stack.what() instanceof AEFluidKey key)) return 0;
+            int offered = (int) Math.min(stack.amount(), Integer.MAX_VALUE);
+            return offered - tank.insert(key.toStack(offered), action, AutomationType.INTERNAL).getAmount();
         }
 
         public long extract(long amount) {
@@ -79,8 +80,9 @@ sealed interface MachineResourcePort {
         }
 
         public long insert(GenericStack stack, Action action) {
-            if (!(stack.what() instanceof AEItemKey key) || stack.amount() > Integer.MAX_VALUE) return 0;
-            return stack.amount() - slot.insertItem(key.toStack((int) stack.amount()), action, AutomationType.INTERNAL).getCount();
+            if (!(stack.what() instanceof AEItemKey key)) return 0;
+            int offered = (int) Math.min(stack.amount(), Integer.MAX_VALUE);
+            return offered - slot.insertItem(key.toStack(offered), action, AutomationType.INTERNAL).getCount();
         }
 
         public long extract(long amount) {

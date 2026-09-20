@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
 import mekanism.api.Action;
@@ -84,25 +85,37 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
 
     @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
-        return level.isLoaded(position) && kind.layout(level.getBlockEntity(position)) != null;
+        return kind.layout(level, position) != null;
     }
 
     @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
-        if (!level.isLoaded(position)) return null;
-        var layout = kind.layout(level.getBlockEntity(position));
+        var layout = kind.layout(level, position);
         if (layout == null || !layout.empty() || !layout.operatingModeValid()) return null;
         var plan = LargeMachineRecipePlan.prepare(level, layout, nativeRecipeId(recipeId), pattern, inputs);
-        if (plan == null || !fits(layout.inputs(), plan.inputs()) || !outputFits(layout, plan)) return null;
+        if (plan == null) return null;
+        long chemicalMinimum = plan.inputs().getLast().amount();
+        var holder = level.getRecipeManager().byKey(nativeRecipeId(recipeId));
+        if (holder.isPresent() && holder.get().value() instanceof NucleosynthesizingRecipe nuclear && nuclear.perTickUsage()) {
+            chemicalMinimum /= nuclear.getDuration();
+        }
+        if (!fits(layout.inputs(), plan.inputs(), chemicalMinimum) || !outputFits(layout, plan)) return null;
         var progress = plan.save(level.registryAccess());
+        progress.putLong("chemical_feed_minimum", chemicalMinimum);
+        progress.putLong("machine_position", layout.tile().getBlockPos().asLong());
         progress.putBoolean("fluid_to_chemical", layout.fluidToChemical());
         return progress;
     }
 
     @Override
+    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        return kind.occupiedPositions(position, preparation);
+    }
+
+    @Override
     public boolean advance(PackagedMachineOperation operation) {
-        var layout = kind.layout(operation.level().getBlockEntity(operation.position()));
+        var layout = kind.runningLayout(operation.level(), operation.position(), operation.progress());
         if (layout == null) return false;
         var progress = operation.progress();
         // Old drafts never stored physical resources. Refuse their progress instead of manufacturing an output.
@@ -112,7 +125,8 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
             throw new IllegalStateException("Mekanism machine resource layout changed");
         }
         if (!progress.getBoolean("in_machine")) {
-            if (!layout.empty() || !fits(layout.inputs(), plan.inputs()) || !outputFits(layout, plan)) return false;
+            long chemicalMinimum = progress.getLong("chemical_feed_minimum");
+            if (!layout.empty() || !fits(layout.inputs(), plan.inputs(), chemicalMinimum) || !outputFits(layout, plan)) return false;
             var holder = operation.level().getRecipeManager().byKey(nativeRecipeId(operation.recipeId()));
             if (holder.isEmpty()) throw new IllegalStateException("Mekanism recipe disappeared");
             var unit = LargeMachineRecipePlan.unit(holder.get().value(), plan.inputs().getFirst().what(),
@@ -126,12 +140,9 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
                     throw new IllegalStateException("Mekanism input ledger does not cover this cycle");
                 }
             }
-            for (int i = 0; i < plan.inputs().size(); i++) {
-                var stack = plan.inputs().get(i);
-                long accepted = layout.inputs().get(i).insert(stack, Action.EXECUTE);
-                if (accepted > 0) operation.delivered(stack.what(), accepted);
-                if (accepted != stack.amount()) throw new IllegalStateException("Mekanism input changed after simulation");
-            }
+            progress.putLongArray("input_delivered", new long[plan.inputs().size()]);
+            progress.putLongArray("output_collected", new long[plan.outputs().size()]);
+            feed(operation, layout, plan);
             progress.putBoolean("in_machine", true);
             if (kind == LargeMachineKind.ROTARY) {
                 layout.tile().getPersistentData().putUUID("de_packaged_rotary_owner", operation.id());
@@ -144,21 +155,34 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
             layout.tile().setChanged();
             return true;
         }
-        // Wait for all native output ports and consumed inputs, including per-tick nuclear chemicals.
-        var actualOutputs = new ObjectArrayList<GenericStack>();
+        boolean changed = feed(operation, layout, plan);
+        var collected = progress.getLongArray("output_collected");
+        if (collected.length != plan.outputs().size()) throw new IllegalArgumentException("Invalid Mekanism output ledger");
+        // Drain independently: a filled first output must not block arrival of the second output.
         for (int i = 0; i < plan.outputs().size(); i++) {
+            var expected = plan.outputs().get(i);
+            if (collected[i] < 0 || collected[i] > expected.amount()) throw new IllegalArgumentException("Invalid Mekanism collected amount");
             var actual = layout.outputs().get(i).contents();
-            if (actual == null) return false;
-            if (!PackagedOutputMatching.matches(operation, plan.outputs().get(i), actual)) throw new IllegalStateException("Unexpected Mekanism machine output");
-            actualOutputs.add(actual);
+            if (actual == null) continue;
+            if (actual.amount() > expected.amount() - collected[i] ||
+                    !PackagedOutputMatching.matches(operation, new GenericStack(expected.what(), actual.amount()), actual)) {
+                throw new IllegalStateException("Unexpected Mekanism machine output");
+            }
+            long extracted = layout.outputs().get(i).extract(actual.amount());
+            if (extracted > 0) {
+                operation.returned(actual.what(), extracted);
+                collected[i] += extracted;
+                progress.putLongArray("output_collected", collected);
+                operation.changed();
+                layout.tile().setChanged();
+                changed = true;
+            }
+            if (extracted != actual.amount()) throw new IllegalStateException("Mekanism output extraction was incomplete");
         }
-        for (var input : layout.inputs()) if (input.contents() != null) return false;
-        for (int i = 0; i < plan.outputs().size(); i++) {
-            var stack = actualOutputs.get(i);
-            long extracted = layout.outputs().get(i).extract(stack.amount());
-            if (extracted > 0) operation.returned(stack.what(), extracted);
-            if (extracted != stack.amount()) throw new IllegalStateException("Mekanism output extraction was incomplete");
-        }
+        for (int i = 0; i < collected.length; i++) if (collected[i] != plan.outputs().get(i).amount()) return changed;
+        var delivered = delivered(progress, plan);
+        for (int i = 0; i < delivered.length; i++) if (delivered[i] != plan.inputs().get(i).amount()) return changed;
+        for (var input : layout.inputs()) if (input.contents() != null) return changed;
         progress.putBoolean("in_machine", false);
         progress.putLong("cycles", plan.cycles() - 1);
         operation.changed();
@@ -176,10 +200,46 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
         return id;
     }
 
-    private static boolean fits(List<MachineResourcePort> ports, List<GenericStack> stacks) {
+    private boolean fits(List<MachineResourcePort> ports, List<GenericStack> stacks, long chemicalMinimum) {
         if (ports.size() != stacks.size()) return false;
-        for (int i = 0; i < ports.size(); i++) if (ports.get(i).insert(stacks.get(i), Action.SIMULATE) != stacks.get(i).amount()) return false;
+        for (int i = 0; i < ports.size(); i++) {
+            long accepted = ports.get(i).insert(stacks.get(i), Action.SIMULATE);
+            long minimum = kind == LargeMachineKind.NUCLEOSYNTHESIZER && i == 1 ? chemicalMinimum : stacks.get(i).amount();
+            if (minimum <= 0 || accepted < minimum) return false;
+        }
         return true;
+    }
+
+    private static long[] delivered(CompoundTag progress, LargeMachineRecipePlan plan) {
+        var delivered = progress.getLongArray("input_delivered");
+        if (delivered.length != plan.inputs().size()) throw new IllegalArgumentException("Invalid Mekanism input ledger");
+        for (int i = 0; i < delivered.length; i++) {
+            if (delivered[i] < 0 || delivered[i] > plan.inputs().get(i).amount()) throw new IllegalArgumentException("Invalid Mekanism delivered amount");
+        }
+        return delivered;
+    }
+
+    private static boolean feed(PackagedMachineOperation operation, LargeMachineKind.Layout layout, LargeMachineRecipePlan plan) {
+        var delivered = delivered(operation.progress(), plan);
+        boolean changed = false;
+        for (int i = 0; i < delivered.length; i++) {
+            var input = plan.inputs().get(i);
+            long remaining = input.amount() - delivered[i];
+            if (remaining == 0) continue;
+            if (operation.available(input.what()).compareTo(BigInteger.valueOf(remaining)) < 0) {
+                throw new IllegalStateException("Mekanism input ledger does not cover pending delivery");
+            }
+            long accepted = layout.inputs().get(i).insert(new GenericStack(input.what(), remaining), Action.EXECUTE);
+            if (accepted > 0) {
+                operation.delivered(input.what(), accepted);
+                delivered[i] += accepted;
+                operation.progress().putLongArray("input_delivered", delivered);
+                operation.changed();
+                layout.tile().setChanged();
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     private static boolean outputFits(LargeMachineKind.Layout layout, LargeMachineRecipePlan plan) {

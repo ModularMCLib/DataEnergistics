@@ -1,6 +1,6 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "data_energistics:item/stellar/orbital_control_terminal"
-  }
+	"parent": "minecraft:item/generated",
+	"textures": {
+		"layer0": "data_energistics:item/stellar/orbital_control_terminal"
+	}
 }

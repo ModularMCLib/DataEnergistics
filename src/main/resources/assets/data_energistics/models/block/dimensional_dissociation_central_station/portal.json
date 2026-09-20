@@ -10,10 +10,10 @@
 		{
 			"from": [-8, -16, 8],
 			"to": [24, 32, 8],
-			"rotation": {"angle": 0, "axis": "y", "origin": [8, 0, 8]},
+			"rotation": { "angle": 0, "axis": "y", "origin": [8, 0, 8] },
 			"faces": {
-				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
-				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
+				"north": { "uv": [0, 0, 16, 16], "texture": "#0" },
+				"south": { "uv": [0, 0, 16, 16], "texture": "#0" }
 			}
 		}
 	]

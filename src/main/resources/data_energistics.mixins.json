@@ -71,6 +71,7 @@
 		"core.patternprovider.PatternProviderMenuMixin",
 		"core.patternprovider.PatternProviderPartMixin",
 		"core.world.BlockRedstonePulseMixin",
+		"core.world.ChunkUnloadOwnershipMixin",
 		"core.world.FarmBlockMixin",
 		"core.world.InscriberBlockEntityMixin",
 		"core.world.ProjectileUtilMixin",

@@ -25,23 +25,6 @@ dependencies {
     testCompileOnly(forge.actually.additions)
     testCompileOnly(forge.avaritia)
 
-    // Real-machine GameTest integrations; runtime libraries are declared explicitly.
-    testRuntimeOnly(forge.mystical.agriculture) { transitive = false }
-    testRuntimeOnly(forge.cucumber) { transitive = false }
-    testRuntimeOnly(forge.ars.nouveau) { transitive = false }
-    testRuntimeOnly(forge.occultism) { transitive = false }
-    testRuntimeOnly(forge.modonomicon) { transitive = false }
-    testRuntimeOnly(forge.smartbrainlib) { transitive = false }
-    testRuntimeOnly(forge.botania) { transitive = false }
-    testRuntimeOnly(forge.patchouli) { transitive = false }
-    testRuntimeOnly(forge.extendedcrafting) { transitive = false }
-    testRuntimeOnly(forge.malum) { transitive = false }
-    testRuntimeOnly(forge.lodestone) { transitive = false }
-    testRuntimeOnly(forge.mekmm) { transitive = false }
-    testRuntimeOnly(forge.amek) { transitive = false }
-    testRuntimeOnly(forge.actually.additions) { transitive = false }
-    testRuntimeOnly(forge.avaritia) { transitive = false }
-
     jarJar(api(forge.mdlib.get()))
     jarJar(api(libs.ojalgo.get()))
     jarJar(api(forge.configuration.get()))
@@ -185,6 +168,23 @@ dependencies {
     // Runtime recipe viewers
     localRuntime(forge.emi)
     localRuntime(forge.jei.neoforge.impl)
+
+    // Real-machine GameTest integrations; runtime libraries are declared explicitly.
+    extraLocalRuntime(forge.mystical.agriculture) { transitive = false }
+    extraLocalRuntime(forge.cucumber) { transitive = false }
+    extraLocalRuntime(forge.ars.nouveau) { transitive = false }
+    extraLocalRuntime(forge.occultism) { transitive = false }
+    extraLocalRuntime(forge.modonomicon) { transitive = false }
+    extraLocalRuntime(forge.smartbrainlib) { transitive = false }
+    extraLocalRuntime(forge.botania) { transitive = false }
+    extraLocalRuntime(forge.patchouli) { transitive = false }
+    extraLocalRuntime(forge.extendedcrafting) { transitive = false }
+    extraLocalRuntime(forge.malum) { transitive = false }
+    extraLocalRuntime(forge.lodestone) { transitive = false }
+    extraLocalRuntime(forge.mekmm) { transitive = false }
+    extraLocalRuntime(forge.amek) { transitive = false }
+    extraLocalRuntime(forge.actually.additions) { transitive = false }
+    extraLocalRuntime(forge.avaritia) { transitive = false }
 
     // Client-only runtime mods
     clientLocalRuntime(forge.jech)

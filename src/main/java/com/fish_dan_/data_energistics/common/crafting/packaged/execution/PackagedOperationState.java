@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
 
@@ -145,6 +146,18 @@ public final class PackagedOperationState implements PackagedMachineOperation {
 
     public boolean settled() {
         return this.complete && this.outputs.isEmpty();
+    }
+
+    /** Native completion before external output transfer, used by the reusable input custody bridge. */
+    public boolean completed() {
+        return this.complete;
+    }
+
+    /** Immutable evidence of actual collected assets; reading does not transfer or duplicate ownership. */
+    public ObjectList<GenericStack> collectedOutputs() {
+        var result = new ObjectArrayList<GenericStack>();
+        this.outputs.forEach((key, amount) -> result.add(new GenericStack(key, amount.longValueExact())));
+        return ObjectLists.unmodifiable(result);
     }
 
     /** Retires a dismantled structure, returning only undelivered inputs and already collected outputs. */

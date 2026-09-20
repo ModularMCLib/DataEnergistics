@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
+import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -30,6 +32,15 @@ import java.util.List;
  */
 @FunctionalInterface
 public interface AdaptivePatternProviderDispatch {
+
+    /**
+     * Optional server-thread reusable executor, including already-owned sessions while this route is inactive.
+     * Returned adapters are ephemeral views; custody and progress must live in the route's persistent state.
+     * New admissions must independently require selection and normal provider availability.
+     */
+    default @Nullable ReusableCraftingProviderAdapter reusableAdapter(AdaptivePatternProviderDispatchTarget target) {
+        return null;
+    }
 
     /** Returns this provider registration's connector routes in stable priority order. */
     default ObjectList<AdaptiveProviderConnectorRoute> connectorRoutes() {

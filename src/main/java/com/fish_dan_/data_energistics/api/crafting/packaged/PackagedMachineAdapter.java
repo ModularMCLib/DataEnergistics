@@ -42,6 +42,16 @@ public interface PackagedMachineAdapter {
     boolean recognizes(ServerLevel level, BlockPos position);
 
     /**
+     * Opts into durable CPU-supplied reusable inputs. A separately registered reusable rule must identify
+     * each retained slot with an UNCHANGED rule. Each native cycle must physically return those exact assets through the operation;
+     * the dispatcher holds them between cycles and settles them to their CPU owner only once.
+     * Called read-only on the server thread; ordinary adapters retain their counted-input behavior.
+     */
+    default boolean supportsReusableInputs() {
+        return false;
+    }
+
+    /**
      * Resolves the exact encoded recipe and checks the complete live structure, ingredients and outputs.
      * Returns durable, adapter-specific preparation data or null when this target cannot currently accept.
      * The supplied input counters are read-only. Every referenced structure position must already be loaded.

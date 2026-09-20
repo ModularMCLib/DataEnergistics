@@ -58,6 +58,11 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public boolean supportsReusableInputs() {
+        return this.kind == ArsMachineKind.IMBUEMENT;
+    }
+
+    @Override
     public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !this.kind.accepts(holder.get().value())) return null;
@@ -109,7 +114,9 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 if (result == null || result.isEmpty()) continue;
                 var remaining = new ObjectArrayList<ItemStack>();
                 for (ItemStack stack : pedestalInputs) remaining.add(this.kind.remainder(stack));
-                if (!ArsInputAssignment.outputsMatch(pattern, result, remaining, cycles)) continue;
+                if (this.kind == ArsMachineKind.IMBUEMENT && cycles == 1) {
+                    if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, remaining)) continue;
+                } else if (!ArsInputAssignment.outputsMatch(pattern, result, remaining, cycles)) continue;
                 var progress = new CompoundTag();
                 progress.put("center", center.save(level.registryAccess()));
                 progress.put("result", result.save(level.registryAccess()));

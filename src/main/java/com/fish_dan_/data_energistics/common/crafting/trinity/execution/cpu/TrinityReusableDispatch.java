@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.State;
+import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CraftingDispatchWindow;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
@@ -38,7 +39,6 @@ import appeng.api.stacks.KeyCounter;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import appeng.crafting.execution.CraftingCpuHelper;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -115,7 +115,8 @@ final class TrinityReusableDispatch {
         }
         IPatternDetails delegate = pattern instanceof RoutedCraftingPatternDetails routed ? routed.delegate() : pattern;
         var recipeId = delegate instanceof IMolecularAssemblerSupportedPattern nativePattern ?
-                DataEnergisticsEntrypointLoader.snapshot().trinityPatternRecipes().resolve(nativePattern).map(value -> value.recipeId()) : Optional.<ResourceLocation>empty();
+                DataEnergisticsEntrypointLoader.snapshot().trinityPatternRecipes().resolve(nativePattern).map(value -> value.recipeId()) :
+                Optional.ofNullable(EncodedPatternRecipeReference.getProcessingRecipeId(delegate.getDefinition().toStack()));
         TrinityReusableRecipe recipe = new TrinityReusableRecipe(pattern, work.exactBindings(), recipeId);
         var outputs = owner.reusableOutputs(job, pattern, recipe);
         if (outputs == null) {

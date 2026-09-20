@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.recipe;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 
 import net.minecraft.resources.ResourceLocation;
@@ -18,11 +19,18 @@ public final class PackagedPatternEncoding {
         if (type == null) return encodedPattern;
         var adapters = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting().forType(type);
         if (adapters.isEmpty()) return encodedPattern;
-        if (recipeId == null) return null;
+        if (recipeId == null) {
+            Data_Energistics.LOGGER.warn("Rejected packaged pattern encoding: recipe identity is missing for category {}", type);
+            return null;
+        }
         ItemStack completed = encodedPattern;
         for (var adapter : adapters) {
             completed = adapter.completeEncoding(level, recipeId, completed);
-            if (completed == null) return null;
+            if (completed == null) {
+                Data_Energistics.LOGGER.warn("Rejected packaged pattern encoding: adapter {} rejected recipe {} in category {}",
+                        adapter.id(), recipeId, type);
+                return null;
+            }
         }
         return completed;
     }

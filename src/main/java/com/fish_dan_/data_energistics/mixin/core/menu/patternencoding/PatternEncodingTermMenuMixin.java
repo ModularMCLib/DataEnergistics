@@ -542,13 +542,20 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                 encodedPattern = dataEnergistics$patchProcessingPatternWithGenericStacks(encodedPattern);
             }
             if (this.mode == EncodingMode.PROCESSING && encodedPattern != null) {
-                encodedPattern = PackagedPatternEncoding.complete(
+                var completedPattern = PackagedPatternEncoding.complete(
                         ((ServerPlayer) this.getPlayer()).serverLevel(),
                         PatternEncodingSourceHelper.resolveProcessingPatternRecipeType(
                                 this, data_energistics$getPreferenceSession(), this),
                         PatternEncodingSourceHelper.resolveProcessingPatternRecipeId(
                                 this, data_energistics$getPreferenceSession()),
                         encodedPattern);
+                if (completedPattern == null) {
+                    this.getPlayer().sendSystemMessage(Component.translatable(
+                            "message.data_energistics.packaged_encoding.rejected"));
+                    ci.cancel();
+                    return;
+                }
+                encodedPattern = completedPattern;
             }
             if (encodedPattern == null) {
                 this.dataEnergistics$invokeClearPattern();

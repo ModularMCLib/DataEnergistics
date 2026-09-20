@@ -1,16 +1,15 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.transfer;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataChargePressRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderViewerWorkstations;
+import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.ViewerRecipeIdentity;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import org.jspecify.annotations.Nullable;
 
@@ -48,17 +47,8 @@ public final class JeiPatternTransferContextBridge {
 
     /** Resolves the stable recipe identity represented by the transferred JEI layout, if it exposes one. */
     public static @Nullable ResourceLocation resolveRecipeId(IRecipeLayoutDrawable<?> recipeLayout) {
-        Object recipe = recipeLayout.getRecipe();
-        if (recipe instanceof DataChargePressRecipeView view) {
-            return view.patternRecipeId();
-        }
-        if (recipe instanceof RecipeHolder<?> holder) return holder.id();
-        // Several native categories, including Actually Additions, expose Recipe rather than RecipeHolder.
-        // Resolve the identical client recipe object, never guess its ID from a displayed output.
         var level = Minecraft.getInstance().level;
-        if (level != null && recipe instanceof Recipe<?>) {
-            for (var holder : level.getRecipeManager().getRecipes()) if (holder.value() == recipe) return holder.id();
-        }
-        return null;
+        return ViewerRecipeIdentity.resolve(recipeLayout.getRecipe(),
+                level == null ? ObjectList.of() : level.getRecipeManager().getRecipes());
     }
 }

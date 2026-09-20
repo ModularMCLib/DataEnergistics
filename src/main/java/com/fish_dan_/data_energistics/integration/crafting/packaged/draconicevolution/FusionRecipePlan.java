@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.draconicevolution;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -190,12 +191,26 @@ final class FusionRecipePlan {
         for (var entry : actual.object2LongEntrySet()) {
             actualItems.addTo(entry.getKey().getItem(), entry.getLongValue());
         }
+        var declaredExact = new Object2LongLinkedOpenHashMap<AEItemKey>();
         var declaredItems = new Object2LongLinkedOpenHashMap<Item>();
+        int outputIndex = 0;
         for (var output : pattern.getOutputs()) {
             if (!(output.what() instanceof AEItemKey key) || output.amount() <= 0) return false;
-            declaredItems.addTo(key.getItem(), output.amount());
+            if (EncodedPatternDynamicOutput.isMarked(pattern.getDefinition(), -1, outputIndex++)) {
+                declaredItems.addTo(key.getItem(), output.amount());
+            } else {
+                declaredExact.addTo(key, output.amount());
+            }
         }
-        return declaredItems.equals(actualItems);
+        for (var entry : declaredExact.object2LongEntrySet()) {
+            if (actual.getLong(entry.getKey()) != entry.getLongValue()) return false;
+        }
+        for (var entry : declaredItems.object2LongEntrySet()) {
+            if (actualItems.getLong(entry.getKey()) != entry.getLongValue()) return false;
+        }
+        long declaredTotal = declaredExact.values().longStream().sum() + declaredItems.values().longStream().sum();
+        long actualTotal = actual.values().longStream().sum();
+        return declaredTotal == actualTotal;
     }
 
     static CompoundTag save(Plan plan, HolderLookup.Provider registries) {

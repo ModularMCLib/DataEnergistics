@@ -297,7 +297,8 @@ public final class PackagedReusableState {
                             !machine.recognizes(level, entry.position) || binding.recipeId().isEmpty())
                         return false;
                     if (!binding.publicationIdentity().equals(TrinityPatternIdentity.capture(
-                            TrinityPatternPublicationSignature.capture(pattern), level.registryAccess()))) return false;
+                            TrinityPatternPublicationSignature.capture(pattern), level.registryAccess())))
+                        return false;
                     if (!PackagedMachineClaims.get(level).available(entry.position)) return false;
                     var prototype = new KeyCounter[binding.inputSlots()];
                     for (int i = 0; i < prototype.length; i++) prototype[i] = new KeyCounter();
@@ -372,7 +373,8 @@ public final class PackagedReusableState {
                     NativeWork work = entry.work;
                     if (work == null || !work.released || !work.machine.completed() ||
                             !work.session.equals(binding.identity().sessionId()) || work.operation != operation.id() ||
-                            work.sequence != operation.appendSequence()) return Optional.empty();
+                            work.sequence != operation.appendSequence())
+                        return Optional.empty();
                     return Optional.of(completedResult(work, operation));
                 }
 

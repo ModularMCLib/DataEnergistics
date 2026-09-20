@@ -4,8 +4,8 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Admission-only batch output view. The original definition and input domains keep their slot identities. */
 public record PackagedBatchPattern(IPatternDetails original, long count, ObjectList<GenericStack> outputs) implements IPatternDetails {

@@ -492,7 +492,8 @@ public final class PersistentReusableCraftingEndpoint {
     private static boolean equivalentResults(NativeResult expected, NativeResult actual) {
         if (expected.executed() != actual.executed() || expected.pending() != actual.pending() ||
                 !expected.failure().equals(actual.failure()) || !counts(expected.outputs()).equals(counts(actual.outputs())) ||
-                expected.tools().size() != actual.tools().size()) return false;
+                expected.tools().size() != actual.tools().size())
+            return false;
         var expectedTools = new Int2ObjectLinkedOpenHashMap<ToolOutcome>();
         for (ToolOutcome tool : expected.tools()) {
             if (expectedTools.putIfAbsent(tool.slot(), tool) != null) return false;
@@ -500,7 +501,8 @@ public final class PersistentReusableCraftingEndpoint {
         for (ToolOutcome tool : actual.tools()) {
             ToolOutcome previous = expectedTools.remove(tool.slot());
             if (previous == null || !counts(previous.successors()).equals(counts(tool.successors())) ||
-                    !counts(previous.byproducts()).equals(counts(tool.byproducts()))) return false;
+                    !counts(previous.byproducts()).equals(counts(tool.byproducts())))
+                return false;
         }
         return expectedTools.isEmpty();
     }

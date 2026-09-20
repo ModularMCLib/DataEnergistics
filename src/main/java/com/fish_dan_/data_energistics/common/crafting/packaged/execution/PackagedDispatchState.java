@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 
-import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
+import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedBatchPattern;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.PackagedReusableState;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
@@ -122,9 +122,9 @@ public final class PackagedDispatchState {
 
     /** Read-only capacity preparation; commit revalidates and owns the fixed machine and complete scaled envelope. */
     public @Nullable CountedCraftingAdmission prepareBatch(ServerLevel level, PackagedRecipeCatalog catalog,
-                                                          IPatternDetails pattern, KeyCounter[] prototype, long requestedCount,
-                                                          ObjectList<ConnectorLink> remote, ObjectList<ConnectorLink> adjacent,
-                                                          @Nullable ConnectorPolicy routePolicy, BooleanSupplier available, Runnable success) {
+                                                           IPatternDetails pattern, KeyCounter[] prototype, long requestedCount,
+                                                           ObjectList<ConnectorLink> remote, ObjectList<ConnectorLink> adjacent,
+                                                           @Nullable ConnectorPolicy routePolicy, BooleanSupplier available, Runnable success) {
         if (requestedCount <= 0) throw new IllegalArgumentException("Packaged batch count must be positive");
         if (this.recoveryReceipt != null || !available.getAsBoolean()) return null;
         var stack = pattern.getDefinition().getReadOnlyStack();
@@ -159,21 +159,27 @@ public final class PackagedDispatchState {
                     if (occupied.stream().anyMatch(position -> !level.isLoaded(position) || !claims.available(position))) continue;
                     int next = (index + 1) % candidates.size();
                     return new CountedCraftingAdmission() {
+
                         private boolean attempted;
                         private boolean transferred;
 
                         @Override
-                        public long count() { return count; }
+                        public long count() {
+                            return count;
+                        }
 
                         @Override
-                        public boolean hasTransferredInputOwnership() { return transferred; }
+                        public boolean hasTransferredInputOwnership() {
+                            return transferred;
+                        }
 
                         @Override
                         public boolean commit(KeyCounter[] supplied) {
                             if (attempted || supplied != prototype) throw new IllegalStateException("Packaged admission must commit its original prototype once");
                             attempted = true;
                             if (recoveryReceipt != null || !available.getAsBoolean() || !level.isLoaded(link.position()) ||
-                                    !adapter.recognizes(level, link.position()) || !claims.available(link.position())) return false;
+                                    !adapter.recognizes(level, link.position()) || !claims.available(link.position()))
+                                return false;
                             var actualInputs = scaledInputs(supplied, count);
                             if (!sameInputs(inputs, actualInputs)) return false;
                             long currentCapacity = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, supplied, count);

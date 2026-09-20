@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.AppendReceipt;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedDispatchState;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
@@ -19,7 +20,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
-import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.PatternProviderLogicFieldAccessor;
@@ -89,7 +89,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
 
     @Override
     public CountedCraftingPreparation prepareBatch(IPatternDetails pattern, KeyCounter[] prototype, long count,
-                                                    CraftingDispatchTargetAvailability availability) {
+                                                   CraftingDispatchTargetAvailability availability) {
         var target = CraftingDispatchTarget.provider();
         var admission = availability.canAttempt(target) ? prepareBatch(pattern, prototype, count) : null;
         return admission == null ? CountedCraftingPreparation.rejected(CraftingDispatchRejection.targeted(CraftingDispatchStatus.NO_CAPACITY, target)) :
@@ -98,14 +98,14 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
 
     @Override
     public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] prototype,
-                                                                   long count, CraftingDispatchTarget target) {
+                                                                    long count, CraftingDispatchTarget target) {
         return target.equals(CraftingDispatchTarget.provider()) ? prepareBatch(pattern, prototype, count) : null;
     }
 
     @Override
     public ObjectList<ProviderCapacitySnapshot> snapshotCapacity(CraftingProviderId providerId, IPatternDetails pattern,
-                                                                KeyCounter[] prototype, long count, String patternIdentity,
-                                                                long publicationRevision, long capacityRevision, long captureTick) {
+                                                                 KeyCounter[] prototype, long count, String patternIdentity,
+                                                                 long publicationRevision, long capacityRevision, long captureTick) {
         var admission = prepareBatch(pattern, prototype, count);
         long capacity = admission == null ? 0 : admission.count();
         return ObjectList.of(new ProviderCapacitySnapshot(providerId, CraftingDispatchTarget.provider(), Optional.empty(),

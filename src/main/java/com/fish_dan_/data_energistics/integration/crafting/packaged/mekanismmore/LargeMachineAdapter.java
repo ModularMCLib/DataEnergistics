@@ -120,7 +120,7 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
     }
 
     private @Nullable CompoundTag prepare(ServerLevel level, LargeMachineKind.Layout layout,
-                                         ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
+                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         if (!layout.empty() || !layout.operatingModeValid()) return null;
         var plan = LargeMachineRecipePlan.prepare(level, layout, nativeRecipeId(recipeId), pattern, inputs);
         if (plan == null) return null;

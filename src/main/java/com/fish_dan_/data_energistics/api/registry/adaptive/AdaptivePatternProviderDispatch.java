@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
-import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
+import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;

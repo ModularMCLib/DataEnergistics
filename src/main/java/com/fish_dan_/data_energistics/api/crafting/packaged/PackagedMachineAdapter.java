@@ -57,7 +57,8 @@ public interface PackagedMachineAdapter {
 
     /**
      * Opts into durable CPU-supplied reusable inputs. A separately registered reusable rule must identify
-     * each retained slot with an UNCHANGED rule. Each native cycle must physically return those exact assets through the operation;
+     * each retained slot with an UNCHANGED rule. Each native cycle must physically return those exact assets through
+     * the operation;
      * the dispatcher holds them between cycles and settles them to their CPU owner only once.
      * Called read-only on the server thread; ordinary adapters retain their counted-input behavior.
      */

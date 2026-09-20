@@ -31,10 +31,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 import vazkii.botania.api.block.PetalApothecary;
-import vazkii.botania.api.recipe.ManaInfusionRecipe;
 import vazkii.botania.api.recipe.ElvenTradeRecipe;
-import vazkii.botania.common.crafting.BotaniaRecipeTypes;
-import vazkii.botania.common.crafting.recipe.RecipeUtils;
+import vazkii.botania.api.recipe.ManaInfusionRecipe;
 import vazkii.botania.api.recipe.PetalApothecaryRecipe;
 import vazkii.botania.api.recipe.RunicAltarRecipe;
 import vazkii.botania.api.state.BotaniaStateProperties;
@@ -46,6 +44,8 @@ import vazkii.botania.common.block.block_entity.PetalApothecaryBlockEntity;
 import vazkii.botania.common.block.block_entity.RunicAltarBlockEntity;
 import vazkii.botania.common.block.block_entity.TerrestrialAgglomerationPlateBlockEntity;
 import vazkii.botania.common.block.block_entity.mana.ManaPoolBlockEntity;
+import vazkii.botania.common.crafting.BotaniaRecipeTypes;
+import vazkii.botania.common.crafting.recipe.RecipeUtils;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -317,7 +317,8 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
         var pools = new ObjectArrayList<ManaPoolBlockEntity>();
         for (BlockPos pos : BlockPos.betweenClosed(portal.getBlockPos().offset(-5, -5, -5), portal.getBlockPos().offset(5, 5, 5))) {
             if (portal.getLevel().getBlockState(pos).is(BotaniaBlocks.NATURA_PYLON) &&
-                    portal.getLevel().getBlockEntity(pos.below()) instanceof ManaPoolBlockEntity pool) pools.add(pool);
+                    portal.getLevel().getBlockEntity(pos.below()) instanceof ManaPoolBlockEntity pool)
+                pools.add(pool);
         }
         if (pools.size() < AlfheimPortalBlockEntity.MIN_REQUIRED_PYLONS) return 0;
         int cost = Math.max(1, AlfheimPortalBlockEntity.MANA_COST / pools.size());
@@ -340,7 +341,10 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
             for (var other : level.getRecipeManager().getAllRecipesFor(BotaniaRecipeTypes.ELVEN_TRADE_TYPE)) {
                 if (other.id().equals(holder.id())) continue;
                 var candidate = other.value().tryAssemble(nativeInput, level.registryAccess());
-                if (candidate.isPresent() && candidate.get().compareTo(matched.get()) <= 0) { conflict = true; break; }
+                if (candidate.isPresent() && candidate.get().compareTo(matched.get()) <= 0) {
+                    conflict = true;
+                    break;
+                }
             }
             if (conflict) break;
             capacity = cycles;

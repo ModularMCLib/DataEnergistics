@@ -45,6 +45,12 @@ public final class ExampleDataEnergisticsPlugin implements DataEnergisticsPlugin
 | `adaptivePatternProviders()` | adaptive provider definition |
 | `trinityPatternRecipes()` | Trinity pattern recipe-ID resolver |
 | `virtualCrafting()` | virtual crafting output adapter |
+| `recipeMatching()` | 全局输入／输出材料角色与原生标签声明，见[三态匹配](../crafting/item-matching.md) |
+| `dynamicCraftingOutputs()` | 动态产物声明及结算适配 |
+| `reusableInputs()` | 可复用输入规则 |
+| `packagedCrafting()` | 原生机器封包执行适配；独立于全局匹配规则 |
+| `trinityPatternSearch()` | Trinity 样板搜索词贡献 |
+| `towerEnergyIntegrations()` | 能量塔端点集成 |
 
 优先通过这些 facet 声明扩展。不要访问 `registry`、`common` 或 `util` 包中的内部静态集合；这些集合不是 API，也不提供晚注册保证。
 

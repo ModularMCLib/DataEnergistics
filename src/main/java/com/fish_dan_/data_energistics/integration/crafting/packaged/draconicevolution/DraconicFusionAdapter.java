@@ -421,7 +421,9 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
                             obstructed(level, injectorPosition, position, injector.getRotation()))
                         continue;
                     BlockPos linkedCore = injector.corePos.get().getPos();
-                    if (linkedCore.getY() != -9999 && !linkedCore.equals(position)) return null;
+                    // An injector may retain a stale link to another core within the scan range.
+                    // It is not part of this structure and must not invalidate the current core.
+                    if (linkedCore.getY() != -9999 && !linkedCore.equals(position)) continue;
                     injectors.add(injector);
                 }
             }

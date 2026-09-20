@@ -134,7 +134,11 @@ final class FusionRecipePlan {
         }
         for (int index = 0; index < keys.size(); index++) {
             if (available[index] < required) continue;
-            ItemStack candidate = keys.get(index).toStack(group.count());
+            // Keep the complete AE key, including custom components, when adapting its count
+            // to a StackIngredient. Some AE key implementations do not preserve components
+            // through the counted toStack overload.
+            ItemStack candidate = keys.get(index).toStack();
+            candidate.setCount(group.count());
             if (!group.ingredient().test(candidate)) continue;
             available[index] -= required;
             assigned.add(candidate);

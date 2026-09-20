@@ -81,18 +81,17 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         this.failure = failure;
     }
 
-    /** Exceptions are isolated here; the failed operation keeps its materials and diagnostic until recovered. */
+    /** Exceptions are logged here; the operation remains retryable on the next machine tick. */
     public boolean advance(ServerLevel level, PackagedMachineAdapter adapter) {
-        if (this.complete || this.failure != null || !level.isLoaded(this.position)) return false;
+        if (this.complete || !level.isLoaded(this.position)) return false;
         this.activeLevel = level;
         this.changed = false;
         try {
             if (!adapter.id().equals(this.adapterId)) throw new IllegalArgumentException("Packaged adapter changed identity");
             return adapter.advance(this) || this.changed;
         } catch (RuntimeException exception) {
-            this.failure = exception.getClass().getSimpleName() + ": " + exception.getMessage();
             Data_Energistics.LOGGER.error(
-                    "Packaged operation {} for {} at {} using recipe {} stopped (progress={}, inputs={})",
+                    "Packaged operation {} for {} at {} using recipe {} will retry (progress={}, inputs={})",
                     this.id, this.adapterId, this.position, this.recipeId, this.progress, this.inputs, exception);
             return true;
         } finally {

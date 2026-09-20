@@ -49,6 +49,7 @@
 
 - [全局三态物品匹配与原生配方规则](crafting/item-matching.md)
 - [Counted dispatch 契约](crafting/counted-dispatch-contract.md)
+- [原生封包的可复用输入](crafting/packaged-reusable-inputs.md)
 - [Virtual output](crafting/virtual-output.md)
 
 ### Trinity

@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.integration;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 
-public final class ModFlags {
+public final class MOD {
 
-    private ModFlags() {}
+    private MOD() {}
 
     public static boolean isJechLoaded() {
         return isLoaded("jecharacters");

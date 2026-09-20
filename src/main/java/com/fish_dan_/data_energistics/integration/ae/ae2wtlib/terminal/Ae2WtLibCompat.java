@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2wtlib.terminal;
 
 import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -12,7 +12,7 @@ public final class Ae2WtLibCompat {
 
     @SuppressWarnings("unchecked")
     public static <T> T maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
-        if (FMLEnvironment.dist != Dist.CLIENT || currentScreen == null || !ModFlags.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (FMLEnvironment.dist != Dist.CLIENT || currentScreen == null || !MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
             return null;
         }
 

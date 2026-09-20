@@ -55,8 +55,6 @@ Mixin 按“类别 → 目标模组 → 功能或额外依赖”组织。例如 
 
 Data Energistics 自己持有的注册项和注册入口使用 `DE` 前缀，例如 `DEItems`、`DEBlocks`、`DEDataComponents`、`DEMenus`。这能把“属于本模组的注册项”与外部模组常见的 `ModItems` 区分开。
 
-`Mod` 前缀可以保留给职责本身就是“判断或描述模组加载状态”的类型，例如 `ModFlags`。判断标准是类的业务含义，不是机械替换所有包含 `Mod` 的名称。
-
 ## Nullability 与基础类型
 
 - 当一个包的大多数类型默认非空时，在 `package-info.java` 使用包级 `@NotNullByDefault`。

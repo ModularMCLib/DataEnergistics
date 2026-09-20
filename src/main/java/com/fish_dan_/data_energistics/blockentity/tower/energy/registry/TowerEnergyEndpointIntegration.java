@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
  * One registered strategy for resolving and operating a tower energy endpoint.
  *
  * <p>
- * Mod-specific behavior belongs here; tower orchestration only consumes this contract.
+ * MOD-specific behavior belongs here; tower orchestration only consumes this contract.
  * </p>
  */
 public interface TowerEnergyEndpointIntegration {

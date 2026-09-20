@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2wtlib.terminal.Ae2WtLibCompat;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 
@@ -19,7 +19,7 @@ public final class PatternEncodingScreenRouter {
 
     public static void onScreenInitPost(ScreenEvent.Init.Post event) {
         maybeReplaceNativePatternEncodingScreen(event.getScreen(), true);
-        if (ModFlags.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
             Ae2WtLibCompat.maybeReplaceWirelessPatternEncodingScreen(event.getScreen(), true);
         }
     }
@@ -29,7 +29,7 @@ public final class PatternEncodingScreenRouter {
             return null;
         }
         Screen replacement = maybeReplaceNativePatternEncodingScreen(currentScreen, false);
-        if (replacement == null && ModFlags.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (replacement == null && MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
             replacement = Ae2WtLibCompat.maybeReplaceWirelessPatternEncodingScreen(currentScreen, false);
         }
         return replacement;

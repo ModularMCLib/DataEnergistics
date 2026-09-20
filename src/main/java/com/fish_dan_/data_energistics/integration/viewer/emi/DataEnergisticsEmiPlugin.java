@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.integration.viewer.emi.entrypoint;
+package com.fish_dan_.data_energistics.integration.viewer.emi;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.crafting.tree.viewer.CraftingPlanIngredientViewers;

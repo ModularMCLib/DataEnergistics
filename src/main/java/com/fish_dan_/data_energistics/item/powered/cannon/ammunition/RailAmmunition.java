@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.item.powered.cannon.ammunition;
 
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.appflux.weapon.FluxAmmunition;
 
 import appeng.api.stacks.AEItemKey;
@@ -52,7 +52,7 @@ public enum RailAmmunition {
             return null;
         }
         if (key.equals(DataFlowKey.of())) return DATA;
-        if (ModFlags.isAppFluxLoaded() && key.equals(FluxAmmunition.key())) return FE;
+        if (MOD.isAppFluxLoaded() && key.equals(FluxAmmunition.key())) return FE;
         return null;
     }
 }

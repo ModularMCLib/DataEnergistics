@@ -8,8 +8,10 @@ import appeng.block.crafting.PatternProviderBlock;
 import appeng.block.crafting.PushDirection;
 import appeng.menu.locator.MenuLocators;
 import appeng.util.InteractionUtil;
+import appeng.util.Platform;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -57,12 +59,27 @@ public final class DigitalPackagedPatternProviderBlock extends AEBaseEntityBlock
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos position,
                                               Player player, InteractionHand hand, BlockHitResult hit) {
         if (InteractionUtil.canWrenchRotate(stack)) {
-            var current = state.getValue(PatternProviderBlock.PUSH_DIRECTION).getDirection();
-            var selected = current == hit.getDirection() ? PushDirection.ALL : PushDirection.fromDirection(hit.getDirection());
-            level.setBlockAndUpdate(position, state.setValue(PatternProviderBlock.PUSH_DIRECTION, selected));
+            setSide(level, position, hit.getDirection());
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         return super.useItemOn(stack, state, level, position, player, hand, hit);
+    }
+
+    /** Applies AE2's push-side cycle so the rendered arrow points toward the selected destination face. */
+    public void setSide(Level level, BlockPos position, Direction face) {
+        BlockState state = level.getBlockState(position);
+        Direction current = state.getValue(PatternProviderBlock.PUSH_DIRECTION).getDirection();
+        PushDirection selected;
+        if (current == face.getOpposite()) {
+            selected = PushDirection.fromDirection(face);
+        } else if (current == face) {
+            selected = PushDirection.ALL;
+        } else if (current == null) {
+            selected = PushDirection.fromDirection(face.getOpposite());
+        } else {
+            selected = PushDirection.fromDirection(Platform.rotateAround(current, face));
+        }
+        level.setBlockAndUpdate(position, state.setValue(PatternProviderBlock.PUSH_DIRECTION, selected));
     }
 
     @Override

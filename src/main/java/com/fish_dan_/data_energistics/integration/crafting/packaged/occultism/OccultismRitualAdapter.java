@@ -8,8 +8,11 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIn
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.crafting.pattern.EncodedProcessingPattern;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,13 +31,10 @@ import net.minecraft.world.phys.AABB;
 import com.klikli_dev.occultism.common.block.SpiritFireBlock;
 import com.klikli_dev.occultism.common.blockentity.GoldenSacrificialBowlBlockEntity;
 import com.klikli_dev.occultism.common.blockentity.SacrificialBowlBlockEntity;
-import com.klikli_dev.occultism.common.ritual.CraftRitual;
-import com.klikli_dev.occultism.common.ritual.CraftWithSpiritNameRitual;
 import com.klikli_dev.occultism.crafting.recipe.RitualRecipe;
 import com.klikli_dev.occultism.crafting.recipe.conditionextension.RitualRecipeConditionContext;
 import com.klikli_dev.occultism.registry.OccultismBlocks;
 import com.klikli_dev.occultism.registry.OccultismRecipes;
-import com.klikli_dev.occultism.util.ItemNBTUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -44,7 +44,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 /**
- * Item-producing rituals with deterministic results; summoning, sacrifice and player-use rituals need other contracts.
+ * Native item-producing rituals, including their real sacrifice and item-use requirements.
  */
 final class OccultismRitualAdapter implements PackagedMachineAdapter {
 
@@ -66,6 +66,32 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = recipe(level, recipeId);
+        if (holder == null) return null;
+        if (!holder.value().requiresItemUse()) return encodedPattern;
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (processing == null) return null;
+        var ingredients = new ObjectArrayList<Ingredient>();
+        ingredients.add(holder.value().getActivationItem());
+        ingredients.addAll(holder.value().getIngredients());
+        var supplied = new KeyCounter();
+        for (var input : processing.sparseInputs()) if (input != null) supplied.add(input.what(), input.amount());
+        var complete = new ObjectArrayList<>(ingredients);
+        complete.add(holder.value().getItemToUse());
+        if (PackagedIngredientAssignment.match(complete, new KeyCounter[] { supplied }) != null) return encodedPattern;
+        if (PackagedIngredientAssignment.match(ingredients, new KeyCounter[] { supplied }) == null) return null;
+        ItemStack[] candidates = holder.value().getItemToUse().getItems();
+        if (candidates.length == 0) return null;
+        var inputs = new ObjectArrayList<GenericStack>();
+        for (var input : processing.sparseInputs()) if (input != null) inputs.add(input);
+        inputs.add(new GenericStack(AEItemKey.of(candidates[0]), 1));
+        ItemStack result = encodedPattern.copy();
+        result.set(AEComponents.ENCODED_PROCESSING_PATTERN, new EncodedProcessingPattern(inputs, processing.sparseOutputs()));
+        return result;
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         RecipeHolder<RitualRecipe> holder = recipe(level, recipeId);
@@ -76,6 +102,8 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
         ingredients.add(holder.value().getActivationItem());
         ingredients.addAll(holder.value().getIngredients());
         if (ingredients.size() > layout.inputs().size() + 1) return null;
+        int bowlIngredients = ingredients.size();
+        if (holder.value().requiresItemUse()) ingredients.add(holder.value().getItemToUse());
         KeyCounter totals = new KeyCounter();
         long total = 0;
         for (var counter : inputs) {
@@ -96,13 +124,13 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
         }
         var assigned = PackagedIngredientAssignment.match(ingredients, new KeyCounter[] { perCycle });
         if (assigned == null) return null;
-        if (!holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), assigned.subList(1, assigned.size()))) return null;
-        if (!choosesRecipe(level, position, recipeId, assigned.getFirst(), assigned.subList(1, assigned.size()))) return null;
-        ItemStack result = result(level, holder.value(), assigned.getFirst());
+        if (!holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), assigned.subList(1, bowlIngredients))) return null;
+        if (!choosesRecipe(level, position, recipeId, assigned.getFirst(), assigned.subList(1, bowlIngredients))) return null;
+        ItemStack result = RitualItemResult.preview(level, holder.value(), assigned.getFirst(), assigned.subList(1, bowlIngredients));
         if (result.isEmpty() || cycles > Long.MAX_VALUE / result.getCount() || pattern.getOutputs().size() != 1) return null;
         if (!PackagedOutputMatching.matches(pattern, result, cycles * result.getCount())) return null;
         var slots = new ListTag();
-        for (int index = 1; index < assigned.size(); index++) {
+        for (int index = 1; index < bowlIngredients; index++) {
             var bowl = layout.inputs().get(index - 1);
             if (!bowl.itemStackHandler.insertItem(0, assigned.get(index), true).isEmpty()) return null;
             var slot = new CompoundTag();
@@ -115,6 +143,7 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
         progress.put("activation", assigned.getFirst().save(level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
         progress.putLong("cycles", cycles);
+        if (holder.value().requiresItemUse()) progress.put("use_item", assigned.getLast().save(level.registryAccess()));
         if (layout.output() != null) progress.putLong("output_bowl", layout.output().getBlockPos().asLong());
         return progress;
     }
@@ -143,12 +172,12 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
             return false;
         ItemStack expected = read(operation, progress, "result");
         var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
-        if (progress.getBoolean("delivered")) return collect(operation, layout, slots, expected);
+        if (progress.getBoolean("delivered")) {
+            if (layout.center().getCurrentRitualRecipe() != null) return RitualNativeActions.advance(operation, layout.center());
+            return collect(operation, layout, slots, expected);
+        }
         if (!layout.empty()) return false;
         ItemStack activation = read(operation, progress, "activation");
-        if (!PackagedOutputMatching.matches(operation, expected, result(operation.level(), holder.value(), activation))) {
-            throw new IllegalStateException("Occultism ritual result changed after preparation");
-        }
         var targets = new ObjectArrayList<SacrificialBowlBlockEntity>();
         var inputs = new ObjectArrayList<ItemStack>();
         var required = new KeyCounter();
@@ -168,6 +197,9 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
             if (operation.available(entry.getKey()).compareTo(BigInteger.valueOf(entry.getLongValue())) < 0) {
                 throw new IllegalStateException("Occultism ritual exceeds its owned materials");
             }
+        }
+        if (!PackagedOutputMatching.matches(operation, expected, RitualItemResult.preview(operation.level(), holder.value(), activation, inputs))) {
+            throw new IllegalStateException("Occultism ritual result changed after preparation");
         }
         if (activation.getCount() != 1 || !holder.value().getActivationItem().test(activation) ||
                 !holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), inputs)) {
@@ -239,6 +271,7 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
             }
         }
         long cycles = operation.progress().getLong("cycles") - 1;
+        RitualNativeActions.returnHeld(operation);
         operation.progress().putLong("cycles", cycles);
         operation.progress().putBoolean("delivered", false);
         operation.changed();
@@ -249,19 +282,10 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
     private static @Nullable RecipeHolder<RitualRecipe> recipe(ServerLevel level, ResourceLocation recipeId) {
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof RitualRecipe recipe) ||
-                recipe.getType() != OccultismRecipes.RITUAL_TYPE.get() || recipe.requiresSacrifice() || recipe.requiresItemUse())
+                recipe.getType() != OccultismRecipes.RITUAL_TYPE.get())
             return null;
-        var ritual = recipe.getRitual();
-        if (ritual.getClass() != CraftRitual.class && ritual.getClass() != CraftWithSpiritNameRitual.class) return null;
+        if (!RitualItemResult.supports(recipe)) return null;
         return new RecipeHolder<>(holder.get().id(), recipe);
-    }
-
-    private static ItemStack result(ServerLevel level, RitualRecipe recipe, ItemStack activation) {
-        ItemStack result = recipe.getResultItem(level.registryAccess()).copy();
-        if (recipe.getRitual() instanceof CraftWithSpiritNameRitual) {
-            ItemNBTUtil.setBoundSpiritName(result, ItemNBTUtil.getBoundSpiritName(activation));
-        }
-        return result;
     }
 
     private static boolean choosesRecipe(ServerLevel level, BlockPos position, ResourceLocation expected,

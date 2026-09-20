@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededC
 import com.fish_dan_.data_energistics.client.screen.MenuClientRefreshHandler;
 import com.fish_dan_.data_energistics.client.screen.terminal.UniversalTerminalStateSyncClientHandler;
 import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.scene.StructurePreviewSceneBinder;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2wtlib.terminal.client.Ae2WtLibClientCompat;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.DataRipperReassemblerGuideRecipeBody;
 import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassResponsePayload;
@@ -100,7 +100,7 @@ public final class ClientRuntimeBridge implements DataEnergisticsClientBridge {
 
     @Override
     public Object maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
-        if (!ModFlags.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (!MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
             return null;
         }
         return Ae2WtLibClientCompatHolder.maybeReplaceWirelessPatternEncodingScreen(currentScreen, applyImmediately);

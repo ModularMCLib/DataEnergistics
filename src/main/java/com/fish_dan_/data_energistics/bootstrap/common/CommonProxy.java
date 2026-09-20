@@ -12,7 +12,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsRegistryS
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
@@ -98,11 +98,11 @@ public class CommonProxy {
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
             OrbitalControlPlayerMenu.register();
-            if (ModFlags.isCuriosLoaded()) {
+            if (MOD.isCuriosLoaded()) {
                 CuriosDataDistributionConnectorAccess.register();
                 CuriosOrbitalControlTerminalAccess.register();
             }
-            if (ModFlags.isFtbChunksLoaded()) {
+            if (MOD.isFtbChunksLoaded()) {
                 OrbitalClaimHints.install(FtbChunksOrbitalClaimHints::isClaimed);
                 Data_Energistics.LOGGER.info("Registered FTB Chunks orbital tactical-map claim hints");
             }

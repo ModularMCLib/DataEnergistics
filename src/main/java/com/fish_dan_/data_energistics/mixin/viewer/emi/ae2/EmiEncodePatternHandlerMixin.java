@@ -21,7 +21,6 @@ import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -29,10 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = EmiEncodePatternHandler.class, remap = false)
 public abstract class EmiEncodePatternHandlerMixin {
 
-    @Unique
-    private static final String TRANSFER_METHOD = "transferRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;" + "Lnet/minecraft/world/item/crafting/RecipeHolder;" + "Ldev/emi/emi/api/recipe/EmiRecipe;Z)" + "Lappeng/integration/modules/emi/AbstractRecipeHandler$Result;";
-
-    @WrapMethod(method = TRANSFER_METHOD)
+    @WrapMethod(method = "transferRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Lnet/minecraft/world/item/crafting/RecipeHolder;Ldev/emi/emi/api/recipe/EmiRecipe;Z)Lappeng/integration/modules/emi/AbstractRecipeHandler$Result;")
     private AbstractRecipeHandler.Result dataEnergistics$captureTransferContext(
                                                                                 PatternEncodingTermMenu menu,
                                                                                 @Nullable RecipeHolder<?> holder,
@@ -66,7 +62,7 @@ public abstract class EmiEncodePatternHandlerMixin {
     }
 
     @Inject(
-            method = TRANSFER_METHOD,
+            method = "transferRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Lnet/minecraft/world/item/crafting/RecipeHolder;Ldev/emi/emi/api/recipe/EmiRecipe;Z)Lappeng/integration/modules/emi/AbstractRecipeHandler$Result;",
             at = @At(
                      value = "INVOKE",
                      target = "Lappeng/integration/modules/emi/AbstractRecipeHandler$Result;createSuccessful()Lappeng/integration/modules/emi/AbstractRecipeHandler$Result$Success;"))

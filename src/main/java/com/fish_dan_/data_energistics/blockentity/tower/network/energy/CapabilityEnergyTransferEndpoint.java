@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergy
 import com.fish_dan_.data_energistics.util.ThrowableIsolation;
 
 /**
- * Capability-backed transaction endpoint dispatched through the registered Mod integration for its route.
+ * Capability-backed transaction endpoint dispatched through the registered MOD integration for its route.
  */
 public final class CapabilityEnergyTransferEndpoint implements TowerEnergyTransferEndpoint {
 

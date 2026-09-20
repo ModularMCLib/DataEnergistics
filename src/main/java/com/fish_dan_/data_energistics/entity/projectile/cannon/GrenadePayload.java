@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.entity.projectile.cannon;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.technology.draconicevolution.weapon.DraconicReactorPayload;
 
 import net.minecraft.core.Direction;
@@ -41,6 +41,6 @@ public final class GrenadePayload {
     }
 
     private static boolean isReactorCore(ItemStack ammunition) {
-        return ModFlags.isDraconicEvolutionLoaded() && DraconicReactorPayload.isReactorCore(ammunition);
+        return MOD.isDraconicEvolutionLoaded() && DraconicReactorPayload.isReactorCore(ammunition);
     }
 }

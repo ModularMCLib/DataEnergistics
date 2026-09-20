@@ -39,7 +39,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetSumm
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.integration.ModFlags;
+import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.display.AeCraftingDisplayBridge;
 import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;
 import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.NeoEcoAeTowerBridge;
@@ -1492,7 +1492,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      * @return the original equipped connector stack, or an empty optional when Curios is absent or the slot is empty
      */
     private static Optional<ItemStack> findEquippedConnector(Player player) {
-        if (!ModFlags.isCuriosLoaded()) {
+        if (!MOD.isCuriosLoaded()) {
             return Optional.empty();
         }
         return CuriosDataDistributionConnectorAccess.find(player);
@@ -1961,7 +1961,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return true;
         }
 
-        if (ModFlags.isAppFluxLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
+        if (MOD.isAppFluxLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
             return true;
         }
 

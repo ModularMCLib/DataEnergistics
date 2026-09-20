@@ -45,12 +45,22 @@ public final class PackagedIngredientAssignment {
         Ingredient ingredient = ingredients.get(slots.size());
         for (int index = 0; index < keys.size(); index++) {
             ItemStack candidate = keys.get(index).toStack();
-            if (counts[index] == 0 || !ingredient.test(candidate)) continue;
+            if (counts[index] == 0 || !matches(ingredient, candidate)) continue;
             counts[index]--;
             slots.add(candidate);
             if (assign(ingredients, keys, counts, slots, budget)) return true;
             slots.removeLast();
             counts[index]++;
+        }
+        return false;
+    }
+
+    private static boolean matches(Ingredient ingredient, ItemStack candidate) {
+        if (ingredient.test(candidate)) return true;
+        // A component-free ingredient explicitly ignores the candidate's components.
+        // Keep component-constrained ingredients exact.
+        for (ItemStack example : ingredient.getItems()) {
+            if (example.getItem() == candidate.getItem() && example.getComponents().isEmpty()) return true;
         }
         return false;
     }

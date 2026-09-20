@@ -139,12 +139,20 @@ final class FusionRecipePlan {
             // through the counted toStack overload.
             ItemStack candidate = keys.get(index).toStack();
             candidate.setCount(group.count());
-            if (!group.ingredient().test(candidate)) continue;
+            if (!matches(group.ingredient(), candidate)) continue;
             available[index] -= required;
             assigned.add(candidate);
             if (assign(groups, keys, available, cycles, assigned, budget)) return true;
             assigned.removeLast();
             available[index] += required;
+        }
+        return false;
+    }
+
+    private static boolean matches(Ingredient ingredient, ItemStack candidate) {
+        if (ingredient.test(candidate)) return true;
+        for (ItemStack example : ingredient.getItems()) {
+            if (example.getItem() == candidate.getItem() && example.getComponents().isEmpty()) return true;
         }
         return false;
     }

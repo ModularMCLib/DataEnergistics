@@ -11,7 +11,6 @@ import com.fish_dan_.data_energistics.mixin.botania.RunicAltarAccessor;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.crafting.pattern.EncodedProcessingPattern;
 
@@ -94,28 +93,32 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
                     ((RunicAltarRecipe) holder.get().value()).getReagent();
             for (int mask = 1; mask <= 3 && augmented == null; mask++) {
                 var stripped = new ObjectArrayList<>(selected.stream().map(ItemStack::copy).toList());
-                if ((mask & 1) != 0 && !removeOne(stripped, reagent::test)) continue;
-                if ((mask & 2) != 0 && (this.kind != BotaniaMachineKind.PETAL || !removeOne(stripped, stack -> stack.is(Items.WATER_BUCKET)))) continue;
-                augmented = BotaniaPatternEncoding.augment(level, holder.get(), stripped);
+                ItemStack selectedReagent = (mask & 1) != 0 ? removeOne(stripped, reagent::test) : null;
+                if ((mask & 1) != 0 && selectedReagent.isEmpty()) continue;
+                if ((mask & 2) != 0 && (this.kind != BotaniaMachineKind.PETAL || removeOne(stripped, stack -> stack.is(Items.WATER_BUCKET)).isEmpty())) continue;
+                augmented = BotaniaPatternEncoding.augment(level, holder.get(), stripped, selectedReagent);
             }
             if (augmented == null) return null;
         }
+        var completedInputs = BotaniaPatternEncoding.appendMissing(processing.sparseInputs(), augmented.inputs(), 81);
+        var completedOutputs = BotaniaPatternEncoding.appendReturned(processing.sparseOutputs(), augmented.outputs(), 27);
+        if (completedInputs == null || completedOutputs == null) return null;
         ItemStack copy = encodedPattern.copy();
         copy.set(AEComponents.ENCODED_PROCESSING_PATTERN, new EncodedProcessingPattern(
-                augmented.inputs().stream().map(stack -> new GenericStack(AEItemKey.of(stack), stack.getCount())).toList(),
-                augmented.outputs().stream().map(stack -> new GenericStack(AEItemKey.of(stack), stack.getCount())).toList()));
+                completedInputs, completedOutputs));
         return copy;
     }
 
-    private static boolean removeOne(List<ItemStack> stacks, Predicate<ItemStack> predicate) {
+    private static ItemStack removeOne(List<ItemStack> stacks, Predicate<ItemStack> predicate) {
         for (int index = 0; index < stacks.size(); index++) {
             ItemStack stack = stacks.get(index);
             if (!predicate.test(stack)) continue;
+            ItemStack removed = stack.copyWithCount(1);
             stack.shrink(1);
             if (stack.isEmpty()) stacks.remove(index);
-            return true;
+            return removed;
         }
-        return false;
+        return ItemStack.EMPTY;
     }
 
     @Override

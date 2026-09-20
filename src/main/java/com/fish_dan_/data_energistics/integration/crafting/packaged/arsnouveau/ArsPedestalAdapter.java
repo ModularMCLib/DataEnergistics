@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import com.hollingsworth.arsnouveau.common.block.ArcaneCore;
 import com.hollingsworth.arsnouveau.common.block.tile.ArcanePedestalTile;
 import com.hollingsworth.arsnouveau.common.block.tile.EnchantingApparatusTile;
+import com.hollingsworth.arsnouveau.common.crafting.recipes.ImbuementRecipe;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -57,6 +58,13 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (holder.isEmpty() || !this.kind.accepts(holder.get().value())) return null;
+        return holder.get().value() instanceof ImbuementRecipe recipe ? ArsPatternEncoding.imbuement(recipe, encodedPattern) : encodedPattern;
+    }
+
+    @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Layout layout = layout(level, position);
@@ -64,9 +72,16 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
         var availablePedestals = new ObjectArrayList<ArcanePedestalTile>();
         var installed = new ObjectArrayList<ItemStack>();
         var catalysts = new ListTag();
+        var displaced = new ListTag();
         for (var pedestal : layout.pedestals()) {
             if (pedestal.isEmpty()) availablePedestals.add(pedestal);
-            else {
+            else if (this.kind == ArsMachineKind.IMBUEMENT) {
+                availablePedestals.add(pedestal);
+                var previous = new CompoundTag();
+                previous.putLong("position", pedestal.getBlockPos().asLong());
+                previous.put("input", pedestal.getStack().save(level.registryAccess()));
+                displaced.add(previous);
+            } else {
                 if (!this.kind.retained(pedestal.getStack())) return null;
                 installed.add(pedestal.getStack().copy());
                 var catalyst = new CompoundTag();
@@ -109,6 +124,7 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 }
                 progress.put("pedestals", slots);
                 progress.put("catalysts", catalysts);
+                progress.put("displaced", displaced);
                 return progress;
             }
         }
@@ -119,9 +135,12 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
     public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         var positions = new ObjectArrayList<BlockPos>();
         positions.add(position);
-        for (var name : ObjectList.of("pedestals", "catalysts")) {
+        for (var name : ObjectList.of("pedestals", "catalysts", "displaced")) {
             var slots = preparation.getList(name, Tag.TAG_COMPOUND);
-            for (int index = 0; index < slots.size(); index++) positions.add(BlockPos.of(slots.getCompound(index).getLong("position")));
+            for (int index = 0; index < slots.size(); index++) {
+                BlockPos target = BlockPos.of(slots.getCompound(index).getLong("position"));
+                if (!positions.contains(target)) positions.add(target);
+            }
         }
         return positions;
     }
@@ -132,6 +151,22 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
         if (layout == null) return false;
         CompoundTag progress = operation.progress();
         if (progress.getLong("cycles") <= 0) throw new IllegalArgumentException("Invalid Ars cycle count");
+        var displaced = progress.getList("displaced", Tag.TAG_COMPOUND);
+        if (!displaced.isEmpty()) {
+            if (!layout.centerEmpty()) return false;
+            // Retire the previous setup once, before validating the new native pedestal recipe.
+            var entry = displaced.getCompound(0);
+            BlockPos target = BlockPos.of(entry.getLong("position"));
+            var pedestal = layout.pedestals().stream().filter(candidate -> candidate.getBlockPos().equals(target)).findFirst();
+            if (pedestal.isEmpty()) return false;
+            if (!ItemStack.matches(read(operation, entry, "input"), pedestal.get().getStack())) {
+                throw new IllegalStateException("Ars catalyst changed before automatic replacement");
+            }
+            harvest(operation, pedestal.get());
+            displaced.remove(0);
+            operation.changed();
+            return true;
+        }
         ListTag slots = progress.getList("pedestals", Tag.TAG_COMPOUND);
         if (slots.size() > layout.pedestals().size()) return false;
         ObjectList<ArcanePedestalTile> selected = new ObjectArrayList<>();

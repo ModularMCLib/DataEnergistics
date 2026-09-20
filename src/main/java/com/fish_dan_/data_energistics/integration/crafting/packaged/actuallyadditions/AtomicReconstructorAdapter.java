@@ -103,6 +103,21 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public long batchCapacity(ServerLevel level, BlockPos position, Direction face, ResourceLocation recipeId,
+                              IPatternDetails pattern, KeyCounter[] prototype, long requestedCount) {
+        var progress = prepare(level, position, face, recipeId, pattern, prototype);
+        if (progress == null) return 0;
+        var machine = (TileEntityAtomicReconstructor) level.getBlockEntity(position);
+        int energy = progress.getInt("energy");
+        if (machine.getEnergy() < energy) return 0;
+        var input = ItemStack.parse(level.registryAccess(), progress.getCompound(INPUT)).orElseThrow();
+        var output = ItemStack.parse(level.registryAccess(), progress.getCompound(RESULT)).orElseThrow();
+        int capacity = Math.min(input.getMaxStackSize(), output.getMaxStackSize());
+        if (progress.getString(MODE).equals("laser")) capacity = Math.min(capacity, (machine.getEnergy() - ENERGY_START) / (energy - ENERGY_START));
+        return Math.min(requestedCount, capacity / progress.getLong("cycles"));
+    }
+
+    @Override
     public boolean advance(PackagedMachineOperation operation) {
         if (!(operation.level().getBlockEntity(operation.position()) instanceof TileEntityAtomicReconstructor machine)) {
             return false;
@@ -119,7 +134,8 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
         ItemStack input = read(operation, INPUT);
         ItemStack expected = read(operation, RESULT);
         int energy = progress.getInt("energy");
-        if (input.getCount() != 1 || expected.isEmpty() || energy <= 0 || mode.isEmpty()) {
+        if (input.getCount() != 1 || expected.isEmpty() || energy <= 0 || mode.isEmpty() ||
+                mode.equals("laser") && energy <= ENERGY_START) {
             throw new IllegalArgumentException("Invalid Atomic Reconstructor progress");
         }
         if (!lensMatches(machine.getLens(), mode) || machine.getEnergy() < energy || !machine.getLens().canInvoke(machine, machine.getOrientation(), ENERGY_START)) {
@@ -138,7 +154,11 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
                     !PackagedOutputMatching.matches(operation, expected, selected.get().value().getResultItem(operation.level().registryAccess()).copyWithCount(1)))
                 throw new IllegalStateException("Atomic conversion recipe changed after admission");
         }
-        if (operation.available(AEItemKey.of(input)).compareTo(BigInteger.ONE) < 0) {
+        int capacity = Math.min(input.getMaxStackSize(), expected.getMaxStackSize());
+        if (mode.equals("laser")) capacity = Math.min(capacity, (machine.getEnergy() - ENERGY_START) / (energy - ENERGY_START));
+        int batch = (int) Math.min(cycles, capacity);
+        if (batch <= 0) return false;
+        if (operation.available(AEItemKey.of(input)).compareTo(BigInteger.valueOf(batch)) < 0) {
             throw new IllegalStateException("Atomic Reconstructor dispatch exceeds owned materials");
         }
         var existing = owned(operation.level(), operation.id(), target);
@@ -147,8 +167,8 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
         int beforeEnergy = machine.getEnergy();
         var spawned = new ObjectArrayList<ItemEntity>();
         PackagedEntityCapture.run(operation.level(), operation.id(), () -> {
-            spawned.add(spawn(operation.level(), target, input));
-            operation.delivered(AEItemKey.of(input), 1);
+            spawned.add(spawn(operation.level(), target, input.copyWithCount(batch)));
+            operation.delivered(AEItemKey.of(input), batch);
             machine.activateOnPulse();
         });
         var drops = owned(operation.level(), operation.id(), target);
@@ -158,7 +178,7 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
             }
         }
         if (drops.isEmpty()) throw new IllegalStateException("Atomic Reconstructor lens did not produce a captured item result");
-        if (!PackagedOutputMatching.matches(operation, ObjectList.of(expected),
+        if (!PackagedOutputMatching.matches(operation, ObjectList.of(expected.copyWithCount(batch)),
                 drops.stream().map(ItemEntity::getItem).toList()))
             throw new IllegalStateException("Atomic Reconstructor produced an unexpected item result");
         if (machine.getEnergy() >= beforeEnergy) throw new IllegalStateException("Atomic Reconstructor did not consume its energy");
@@ -167,9 +187,9 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
             drop.discard();
             operation.returned(AEItemKey.of(actual), actual.getCount());
         }
-        progress.putLong("cycles", cycles - 1);
+        progress.putLong("cycles", cycles - batch);
         operation.changed();
-        if (cycles == 1) operation.complete();
+        if (cycles == batch) operation.complete();
         return true;
     }
 
@@ -224,7 +244,7 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
     }
 
     private static ItemEntity spawn(ServerLevel level, BlockPos target, ItemStack stack) {
-        var entity = new ItemEntity(level, target.getX() + 0.5, target.getY() + 0.25, target.getZ() + 0.5, stack.copyWithCount(1));
+        var entity = new ItemEntity(level, target.getX() + 0.5, target.getY() + 0.25, target.getZ() + 0.5, stack.copy());
         entity.setNoPickUpDelay();
         if (!level.addFreshEntity(entity)) throw new IllegalStateException("Atomic Reconstructor input entity was rejected");
         return entity;

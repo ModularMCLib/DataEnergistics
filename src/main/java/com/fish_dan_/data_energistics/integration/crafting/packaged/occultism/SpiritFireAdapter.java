@@ -26,6 +26,8 @@ import com.klikli_dev.occultism.registry.OccultismRecipes;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
+
 /** Invokes the actual fire collision on a physical input entity and harvests only causally tagged output entities. */
 final class SpiritFireAdapter implements PackagedMachineAdapter {
 
@@ -83,6 +85,16 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public long batchCapacity(ServerLevel level, BlockPos position, Direction face, ResourceLocation recipeId,
+                              IPatternDetails pattern, KeyCounter[] prototype, long requestedCount) {
+        var progress = prepare(level, position, face, recipeId, pattern, prototype);
+        if (progress == null) return 0;
+        var input = ItemStack.parse(level.registryAccess(), progress.getCompound("input")).orElseThrow();
+        var result = ItemStack.parse(level.registryAccess(), progress.getCompound("result")).orElseThrow();
+        return Math.min(requestedCount, Math.min(input.getMaxStackSize(), result.getMaxStackSize()) / progress.getLong("cycles"));
+    }
+
+    @Override
     public boolean advance(PackagedMachineOperation operation) {
         if (!recognizes(operation.level(), operation.position())) return false;
         CompoundTag progress = operation.progress();
@@ -91,12 +103,14 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
         long cycles = progress.getLong("cycles");
         if (cycles <= 0 || input.getCount() != 1 || result.getCount() != 1) throw new IllegalArgumentException("Invalid spirit fire plan");
         if (progress.getBoolean("waiting")) {
-            if (!harvest(operation, result)) return false;
+            int batch = progress.contains("batch") ? progress.getInt("batch") : 1;
+            if (batch <= 0 || batch > cycles) throw new IllegalArgumentException("Invalid spirit fire batch");
+            if (!harvest(operation, result.copyWithCount(batch))) return false;
             progress.putBoolean("waiting", false);
-            progress.putLong("cycles", cycles - 1);
+            progress.putLong("cycles", cycles - batch);
             progress.remove("entity");
             operation.changed();
-            if (cycles == 1) operation.complete();
+            if (cycles == batch) operation.complete();
             return true;
         }
         var holder = operation.level().getRecipeManager().byKey(operation.recipeId());
@@ -109,13 +123,15 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
         var selected = operation.level().getRecipeManager().getRecipeFor(OccultismRecipes.SPIRIT_FIRE_TYPE.get(), recipeInput, operation.level());
         if (selected.isEmpty() || !selected.get().id().equals(operation.recipeId())) return false;
         AEItemKey key = AEItemKey.of(input);
-        if (operation.available(key).signum() <= 0) throw new IllegalStateException("Missing spirit fire input");
+        int batch = (int) Math.min(cycles, Math.min(input.getMaxStackSize(), result.getMaxStackSize()));
+        if (operation.available(key).compareTo(BigInteger.valueOf(batch)) < 0) throw new IllegalStateException("Missing spirit fire input");
         BlockPos position = operation.position();
         var entity = new ItemEntity(operation.level(), position.getX() + 0.5, position.getY() + 0.25,
-                position.getZ() + 0.5, input.copy());
+                position.getZ() + 0.5, input.copyWithCount(batch));
         entity.setNoPickUpDelay();
         if (!operation.level().addFreshEntity(entity)) return false;
-        operation.delivered(key, 1);
+        operation.delivered(key, batch);
+        progress.putInt("batch", batch);
         progress.putUUID("entity", entity.getUUID());
         progress.putBoolean("waiting", true);
         operation.changed();
@@ -125,12 +141,12 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
         if (!entity.isRemoved()) throw new IllegalStateException("Spirit fire refused the validated physical input");
         // Fire recipes are synchronous. Recover now so the output cannot enter a second fire recipe on the next entity
         // tick.
-        if (harvest(operation, result)) {
+        if (harvest(operation, result.copyWithCount(batch))) {
             progress.putBoolean("waiting", false);
-            progress.putLong("cycles", cycles - 1);
+            progress.putLong("cycles", cycles - batch);
             progress.remove("entity");
             operation.changed();
-            if (cycles == 1) operation.complete();
+            if (cycles == batch) operation.complete();
         }
         return true;
     }

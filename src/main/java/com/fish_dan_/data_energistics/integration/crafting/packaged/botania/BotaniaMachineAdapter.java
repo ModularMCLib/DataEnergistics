@@ -32,6 +32,9 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 import vazkii.botania.api.block.PetalApothecary;
 import vazkii.botania.api.recipe.ManaInfusionRecipe;
+import vazkii.botania.api.recipe.ElvenTradeRecipe;
+import vazkii.botania.common.crafting.BotaniaRecipeTypes;
+import vazkii.botania.common.crafting.recipe.RecipeUtils;
 import vazkii.botania.api.recipe.PetalApothecaryRecipe;
 import vazkii.botania.api.recipe.RunicAltarRecipe;
 import vazkii.botania.api.state.BotaniaStateProperties;
@@ -156,6 +159,8 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
         if (machine == null) return false;
         var progress = operation.progress();
         if (progress.getLong("cycles") <= 0) throw new IllegalArgumentException("Invalid Botania cycle count");
+        if (progress.contains("batch") && (progress.getInt("batch") <= 0 || progress.getInt("batch") > progress.getLong("cycles")))
+            throw new IllegalArgumentException("Invalid Botania batch size");
         if (progress.getBoolean("delivered")) {
             if (machine instanceof RunicAltarBlockEntity altar && !progress.getBoolean("activated")) {
                 if (altar.getTargetMana() <= 0 || altar.getCurrentMana() < altar.getTargetMana()) return false;
@@ -167,12 +172,13 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
                 operation.changed();
             }
             if (!BotaniaOperationItems.collect(operation)) return false;
-            long cycles = progress.getLong("cycles") - 1;
+            long cycles = progress.getLong("cycles") - (progress.contains("batch") ? progress.getInt("batch") : 1);
             progress.putLong("cycles", cycles);
             progress.putBoolean("delivered", false);
             progress.putBoolean("activated", false);
             progress.remove("recovered");
             progress.remove("entities");
+            progress.remove("batch");
             operation.changed();
             if (cycles == 0) operation.complete();
             return true;
@@ -195,6 +201,23 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
         if (outputs.size() != storedOutputs.size()) throw new IllegalStateException("Botania output shape changed");
         if (!PackagedOutputMatching.matches(operation, storedOutputs, outputs)) throw new IllegalStateException("Botania output changed after preparation");
         if (!physicalCapacity(machine, holder.get(), count)) return false;
+        int batch = 1;
+        if (this.kind == BotaniaMachineKind.MANA || this.kind == BotaniaMachineKind.PORTAL) {
+            batch = (int) Math.min(progress.getLong("cycles"), stackCapacity(inputs, outputs));
+            if (machine instanceof AlfheimPortalBlockEntity portal) {
+                batch = Math.min(batch, portalCapacity(portal));
+                batch = portalRecipeCapacity(operation.level(), holder.get(), inputs, batch);
+            }
+            if (machine instanceof ManaPoolBlockEntity pool && holder.get().value() instanceof ManaInfusionRecipe mana && mana.getManaToConsume() > 0)
+                batch = Math.min(batch, pool.getCurrentMana() / mana.getManaToConsume());
+            if (batch <= 0) return false;
+            for (var entry : required) {
+                if (operation.available(entry.getKey()).compareTo(BigInteger.valueOf(entry.getLongValue()).multiply(BigInteger.valueOf(batch))) < 0)
+                    throw new IllegalStateException("Missing owned Botania batch materials");
+            }
+        }
+        progress.putInt("batch", batch);
+        operation.changed();
         if (machine instanceof PetalApothecaryBlockEntity apothecary) {
             if (progress.getBoolean("water")) {
                 if (apothecary.getFluid() != PetalApothecary.State.EMPTY) return false;
@@ -217,13 +240,21 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
                 if (!stack.isEmpty()) throw new IllegalStateException("Runic altar refused a planned ingredient");
             }
         } else if (machine instanceof ManaPoolBlockEntity pool) {
-            var item = BotaniaOperationItems.spawn(operation, inputs.getFirst(), operation.position().getCenter());
-            PackagedEntityCapture.run(operation.level(), operation.id(), () -> pool.collideEntityItem(item));
+            // Mana infusion's native collision consumes exactly one item. Plans are normalized to this unit.
+            if (inputs.size() != 1 || inputs.getFirst().getCount() != 1)
+                throw new IllegalArgumentException("Invalid normalized mana infusion input");
+            var item = BotaniaOperationItems.spawn(operation, inputs.getFirst().copyWithCount(batch), operation.position().getCenter());
+            for (int index = 0; index < batch; index++) {
+                PackagedEntityCapture.run(operation.level(), operation.id(), () -> pool.collideEntityItem(item));
+            }
             if (item.isAlive() && !item.getItem().isEmpty()) throw new IllegalStateException("Mana pool refused a planned infusion");
         } else {
             var target = machine instanceof AlfheimPortalBlockEntity ? operation.position().getCenter().add(0, 1, 0) :
                     operation.position().getCenter().add(0, -0.3, 0);
-            for (int index = 0; index < count; index++) BotaniaOperationItems.spawn(operation, inputs.get(index), target);
+            for (int index = 0; index < count; index++) {
+                ItemStack input = inputs.get(index);
+                BotaniaOperationItems.spawn(operation, input.copyWithCount(Math.multiplyExact(input.getCount(), batch)), target);
+            }
             if (machine instanceof TerrestrialAgglomerationPlateBlockEntity plate) plate.tryStartProcessing();
         }
         progress.putBoolean("delivered", true);
@@ -252,6 +283,69 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
                 ((AlfheimPortalAccessor) portal).dataEnergistics$pendingTradeItems().isEmpty() &&
                 AlfheimPortalBlockEntity.MULTIBLOCK.get().validate(machine.getLevel(), machine.getBlockPos()) != null;
         return machine instanceof ManaPoolBlockEntity;
+    }
+
+    private static int stackCapacity(List<ItemStack> inputs, List<ItemStack> outputs) {
+        var counts = new KeyCounter();
+        for (ItemStack input : inputs) counts.add(AEItemKey.of(input), input.getCount());
+        int capacity = Integer.MAX_VALUE;
+        for (var entry : counts) capacity = (int) Math.min(capacity, ((AEItemKey) entry.getKey()).toStack().getMaxStackSize() / entry.getLongValue());
+        for (ItemStack output : outputs) capacity = Math.min(capacity, output.getMaxStackSize() / output.getCount());
+        return capacity;
+    }
+
+    @Override
+    public long batchCapacity(ServerLevel level, BlockPos position, Direction face, ResourceLocation recipeId,
+                              IPatternDetails pattern, KeyCounter[] prototype, long requestedCount) {
+        if (this.kind != BotaniaMachineKind.MANA && this.kind != BotaniaMachineKind.PORTAL) return Math.min(1, requestedCount);
+        BlockEntity machine = machine(level, position);
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (machine == null || !ready(machine) || holder.isEmpty()) return 0;
+        var plan = BotaniaRecipePlan.prepare(level, machine, holder.get(), pattern, prototype, false);
+        if (plan == null || !physicalCapacity(machine, holder.get(), plan.ingredientCount())) return 0;
+        long capacity = stackCapacity(plan.inputs(), plan.outputs());
+        if (machine instanceof AlfheimPortalBlockEntity portal) {
+            capacity = Math.min(capacity, portalCapacity(portal));
+            capacity = portalRecipeCapacity(level, holder.get(), plan.inputs(), (int) capacity);
+        }
+        if (machine instanceof ManaPoolBlockEntity pool && holder.get().value() instanceof ManaInfusionRecipe mana && mana.getManaToConsume() > 0)
+            capacity = Math.min(capacity, pool.getCurrentMana() / mana.getManaToConsume());
+        return Math.min(requestedCount, capacity / plan.cycles());
+    }
+
+    private static int portalCapacity(AlfheimPortalBlockEntity portal) {
+        var pools = new ObjectArrayList<ManaPoolBlockEntity>();
+        for (BlockPos pos : BlockPos.betweenClosed(portal.getBlockPos().offset(-5, -5, -5), portal.getBlockPos().offset(5, 5, 5))) {
+            if (portal.getLevel().getBlockState(pos).is(BotaniaBlocks.NATURA_PYLON) &&
+                    portal.getLevel().getBlockEntity(pos.below()) instanceof ManaPoolBlockEntity pool) pools.add(pool);
+        }
+        if (pools.size() < AlfheimPortalBlockEntity.MIN_REQUIRED_PYLONS) return 0;
+        int cost = Math.max(1, AlfheimPortalBlockEntity.MANA_COST / pools.size());
+        int capacity = Integer.MAX_VALUE;
+        for (var pool : pools) capacity = Math.min(capacity, pool.getCurrentMana() / cost);
+        return capacity;
+    }
+
+    private static int portalRecipeCapacity(ServerLevel level, RecipeHolder<?> holder, List<ItemStack> inputs, int maximum) {
+        var intended = (ElvenTradeRecipe) holder.value();
+        int capacity = 0;
+        // Every intermediate remainder must still choose this recipe, not just the initially full batch.
+        for (int cycles = 1; cycles <= maximum; cycles++) {
+            var stacks = new ObjectArrayList<ItemStack>();
+            for (ItemStack input : inputs) stacks.add(input.copyWithCount(input.getCount() * cycles));
+            var nativeInput = RecipeUtils.getInputFromListWithoutUnstacking(stacks);
+            var matched = intended.tryAssemble(nativeInput, level.registryAccess());
+            if (matched.isEmpty()) break;
+            boolean conflict = false;
+            for (var other : level.getRecipeManager().getAllRecipesFor(BotaniaRecipeTypes.ELVEN_TRADE_TYPE)) {
+                if (other.id().equals(holder.id())) continue;
+                var candidate = other.value().tryAssemble(nativeInput, level.registryAccess());
+                if (candidate.isPresent() && candidate.get().compareTo(matched.get()) <= 0) { conflict = true; break; }
+            }
+            if (conflict) break;
+            capacity = cycles;
+        }
+        return capacity;
     }
 
     private static boolean physicalCapacity(BlockEntity machine, RecipeHolder<?> holder, int ingredientCount) {

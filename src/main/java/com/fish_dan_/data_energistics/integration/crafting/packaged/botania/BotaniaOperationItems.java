@@ -57,6 +57,11 @@ final class BotaniaOperationItems {
         var ids = operation.progress().getList("entities", Tag.TAG_COMPOUND);
         for (int index = 0; index < ids.size(); index++) inputIds.add(ids.getCompound(index).getUUID("id"));
         var expected = read(operation, "outputs");
+        int batch = operation.progress().contains("batch") ? operation.progress().getInt("batch") : 1;
+        for (int index = 0; index < expected.size(); index++) {
+            ItemStack stack = expected.get(index);
+            expected.set(index, stack.copyWithCount(Math.multiplyExact(stack.getCount(), batch)));
+        }
         var actual = new ObjectArrayList<ItemStack>();
         var harvested = operation.progress().getList("recovered", Tag.TAG_COMPOUND);
         for (int index = 0; index < harvested.size(); index++) {
@@ -68,16 +73,18 @@ final class BotaniaOperationItems {
                 entity -> PackagedEntityCapture.ownedBy(entity, operation.id()) && !inputIds.contains(entity.getUUID()));
         for (var drop : drops) actual.add(drop.getItem());
         if (!PackagedOutputMatching.acceptsPartial(operation, expected, actual)) throw new IllegalStateException("Unexpected owned Botania output");
-        if (!PackagedOutputMatching.matches(operation, expected, actual)) return false;
+        boolean complete = PackagedOutputMatching.matches(operation, expected, actual);
         for (var drop : drops) {
             ItemStack stack = drop.getItem().copy();
             drop.discard();
             operation.returned(AEItemKey.of(stack), stack.getCount());
             harvested.add(stack.save(operation.level().registryAccess()));
         }
-        operation.progress().put("recovered", harvested);
-        operation.changed();
-        return true;
+        if (!drops.isEmpty()) {
+            operation.progress().put("recovered", harvested);
+            operation.changed();
+        }
+        return complete;
     }
 
     static void recoveredInputContainer(PackagedMachineOperation operation, ItemEntity entity, ItemStack expected) {

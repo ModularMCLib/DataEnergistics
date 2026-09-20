@@ -1,6 +1,4 @@
 dependencies {
-    implementation "curse.maven:projecte-226410:6611984"
-
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
 
@@ -55,6 +53,7 @@ dependencies {
     compileOnly(forge.cucumber)
     compileOnly(forge.mystical.agriculture)
     compileOnly(forge.ato)
+    compileOnly(forge.projecte)
 
     // Magic integrations and their API libraries
     compileOnly(forge.botania)
@@ -160,6 +159,7 @@ dependencies {
     localRuntime(forge.draconic.evolution)
     localRuntime(forge.if)
     localRuntime(forge.titanium)
+    localRuntime(forge.projecte)
 
     extraLocalRuntime(forge.sut)
     extraLocalRuntime(forge.cucumber)

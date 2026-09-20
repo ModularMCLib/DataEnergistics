@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInvento
 import com.fish_dan_.data_energistics.ae2.sanctum.InterfaceStockLogic;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
-import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.InterfaceLogicTickAccessor;
-import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.InterfaceLogicUpgradesAccessor;
+import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicTickAccessor;
+import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 

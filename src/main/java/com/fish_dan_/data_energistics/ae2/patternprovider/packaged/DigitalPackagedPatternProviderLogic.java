@@ -22,7 +22,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Pro
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
-import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.PatternProviderLogicFieldAccessor;
+import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.PatternProviderLogicFieldAccessor;
 
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Settings;

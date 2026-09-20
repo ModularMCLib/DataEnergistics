@@ -15,6 +15,32 @@
 
 内部类应直接迁移到正确包；不要为了保留内部 FQCN 建兼容 wrapper。外部模组本来就不得依赖内部 FQCN。
 
+## 模组集成与 Mixin 目录
+
+集成实现按“类别 → 模组 → 功能”组织，先找到模组，再定位其适配功能：
+
+```text
+integration/
+├── entrypoint/                    所有集成入口直接放在此包
+├── ae/
+│   ├── ae2cs/patternprovider/
+│   └── appflux/{energy,weapon}/
+├── magic/
+│   └── botania/{packaged,matching}/
+├── technology/
+│   ├── mekanismmore/packaged/
+│   └── draconicevolution/{packaged,orbital,weapon}/
+├── library/curios/equipment/
+├── viewer/{jei,emi,xei}/
+├── map/{ftbchunks,journeymap,xaero}/
+├── overlay/jade/
+└── guide/guideme/
+```
+
+入口包是统一入口的明确例外，不再按模组建子包，也不保留转发到旧注册类的包装入口。跨模组共享代码按实际职责保留，例如 `crafting/catalog`；不要为了对齐层级创建空模组包。
+
+Mixin 按“类别 → 目标模组 → 功能或额外依赖”组织。例如 `mixin/ae/ae2/crafting`、`mixin/technology/mekanismmore/appmek` 和 `mixin/technology/avaritia/emi`。额外依赖直接使用模组名称，不再插入 `compat` 层；加载条件仍由 Mixin 插件显式控制。
+
 ## 类名表达实际含义
 
 不要仅把接口名加上 `Impl` 作为实现类名。类名应说明它采用的策略、数据来源、生命周期或宿主，例如 `MountedCorePatternCatalog`、`PlayerInventoryRefundDelivery`、`VirtualNodePatternTerminalPartition`。

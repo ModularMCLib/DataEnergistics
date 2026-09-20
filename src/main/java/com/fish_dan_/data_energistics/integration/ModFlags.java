@@ -41,10 +41,6 @@ public final class ModFlags {
         return isLoaded("appflux");
     }
 
-    public static boolean isAppFluxEnergySupportLoaded() {
-        return isAppFluxLoaded();
-    }
-
     public static boolean isDraconicEvolutionLoaded() {
         return isLoaded("draconicevolution");
     }

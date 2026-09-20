@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.item.powered;
 
-import com.fish_dan_.data_energistics.integration.ae.extendedae.ExtendedAeRenamerCompat;
+import com.fish_dan_.data_energistics.integration.ae.extendedae.naming.ExtendedAeRenamerCompat;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.implementations.menuobjects.IMenuItem;

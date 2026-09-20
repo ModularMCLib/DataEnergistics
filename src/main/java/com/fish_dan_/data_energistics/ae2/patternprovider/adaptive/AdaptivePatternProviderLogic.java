@@ -795,7 +795,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 var admission = counted.prepareBatch(patternDetails, prototype, routeBatchLimit(requestedCrafts));
                 long capacity = admission == null ? 0 : admission.count();
                 return ObjectList.of(new ProviderCapacitySnapshot(providerId, CraftingDispatchTarget.provider(), Optional.empty(),
-                        patternIdentity, publicationRevision, capacityRevision, captureTick, ProviderRoutingMode.UNKNOWN,
+                        patternIdentity, publicationRevision, capacityRevision, captureTick, ProviderRoutingMode.AGGREGATE,
                         new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
             }
             return List.of(new ProviderCapacitySnapshot(

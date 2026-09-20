@@ -5,8 +5,10 @@ package com.fish_dan_.data_energistics.menu.patternencoding;
  */
 public interface PatternOutputMatchMenu {
 
-    /** Returns all processing input/output slots currently marked for same-item matching. */
-    int data_energistics$getProcessingSameItemMask();
+    /**
+     * Returns all processing input/output slots currently marked for same-item matching.
+     */
+    long data_energistics$getProcessingSameItemMask();
 
     /** Returns whether the selected processing slot accepts the same registered item regardless of components. */
     boolean data_energistics$isProcessingSameItem(int inputIndex, int outputIndex);

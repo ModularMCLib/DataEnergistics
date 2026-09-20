@@ -155,7 +155,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     private String dataEnergistics$displayTransferKeyOutputSerialized;
     @GuiSync(797)
     @Unique
-    public int dataEnergistics$processingSameItemMask;
+    public long dataEnergistics$processingSameItemMask;
     @GuiSync(798)
     @Unique
     public boolean dataEnergistics$networkBackedBlankPatternSlot = DataEnergisticsEarlyConfig.get().isEnabled(Option.PATTERN_ENCODING_NETWORK_BACKED_BLANK_PATTERN_SLOT);
@@ -186,14 +186,14 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     protected abstract void dataEnergistics$invokeClearPattern();
 
     @Override
-    public int data_energistics$getProcessingSameItemMask() {
+    public long data_energistics$getProcessingSameItemMask() {
         return this.dataEnergistics$processingSameItemMask;
     }
 
     @Override
     public boolean data_energistics$isProcessingSameItem(int inputIndex, int outputIndex) {
         int bit = dataEnergistics$processingSameItemBit(inputIndex, outputIndex);
-        return bit >= 0 && (this.dataEnergistics$processingSameItemMask & (1 << bit)) != 0;
+        return bit >= 0 && (this.dataEnergistics$processingSameItemMask & (1L << bit)) != 0;
     }
 
     @Override
@@ -212,9 +212,9 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                     inputIndex + ":" + outputIndex + ":" + enabled);
         }
         if (enabled) {
-            this.dataEnergistics$processingSameItemMask |= 1 << bit;
+            this.dataEnergistics$processingSameItemMask |= 1L << bit;
         } else {
-            this.dataEnergistics$processingSameItemMask &= ~(1 << bit);
+            this.dataEnergistics$processingSameItemMask &= ~(1L << bit);
         }
     }
 

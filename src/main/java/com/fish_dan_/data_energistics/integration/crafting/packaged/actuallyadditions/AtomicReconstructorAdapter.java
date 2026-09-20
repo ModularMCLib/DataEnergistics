@@ -199,7 +199,8 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
             // Native conversion ignores ordinary terrain. Reject only blocks the installed lens could transform.
             var blockItem = new ItemStack(state.getBlock());
             if (lens instanceof LensConversion && !(state.getBlock() instanceof BlockLaserRelay) &&
-                    LaserRecipe.getRecipeForStack(blockItem).isPresent()) return false;
+                    LaserRecipe.getRecipeForStack(blockItem).isPresent())
+                return false;
             if (lens instanceof LensColor && ColorChangeRecipe.getRecipeForStack(blockItem).isPresent()) return false;
         }
         var end = origin.relative(direction, lens.getDistance());

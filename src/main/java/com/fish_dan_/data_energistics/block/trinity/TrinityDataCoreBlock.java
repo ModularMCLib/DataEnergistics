@@ -6,8 +6,6 @@ import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEn
 import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 
-import appeng.hooks.WrenchHook;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -70,12 +68,6 @@ public class TrinityDataCoreBlock extends DataRipperReassemblerBlock implements 
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide() && player.getAbilities().instabuild && !WrenchHook.isDisassembling()) {
-            ItemStack drop = createHostDrop(level.getBlockEntity(pos));
-            if (!drop.isEmpty()) {
-                Block.popResource(level, pos, drop);
-            }
-        }
         return super.playerWillDestroy(level, pos, state, player);
     }
 

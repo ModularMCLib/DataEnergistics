@@ -499,7 +499,7 @@ public final class TrinityDataCoreCraftingRuntime {
      */
     public long insertIntoCpus(AEKey what, long amount, Actionable mode, long inserted) {
         long totalInserted = inserted;
-        for (int workerNumber : this.waitingIndex.waitingWorkerNumbers(what)) {
+        for (int workerNumber : this.waitingIndex.candidateWorkerNumbers(what)) {
             if (totalInserted >= amount) {
                 break;
             }
@@ -541,7 +541,13 @@ public final class TrinityDataCoreCraftingRuntime {
      * Returns the amount all retained workers are waiting for.
      */
     public long getRequestedAmount(AEKey what) {
-        return this.waitingIndex.requestedAmount(what);
+        long requested = 0;
+        for (int workerNumber : this.waitingIndex.candidateWorkerNumbers(what)) {
+            long accepted = this.retainedWorkers.get(workerNumber).simulateReturn(what, Long.MAX_VALUE - requested);
+            requested += accepted;
+            if (requested == Long.MAX_VALUE) break;
+        }
+        return requested;
     }
 
     /** Returns the exact amount currently awaited by retained Trinity workers. */

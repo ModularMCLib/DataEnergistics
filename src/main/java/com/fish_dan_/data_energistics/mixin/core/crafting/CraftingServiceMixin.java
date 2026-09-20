@@ -1010,6 +1010,15 @@ public abstract class CraftingServiceMixin
         dataEnergistics$addActiveTrinityDataCoreCpus(cpus);
     }
 
+    @WrapMethod(method = "isRequesting")
+    private boolean dataEnergistics$isTrinityDataCoreRequesting(AEKey what, Operation<Boolean> original) {
+        if (original.call(what)) return true;
+        for (TrinityDataCoreCraftingRuntime runtime : dataEnergistics$trinityDataCoreRuntimes()) {
+            if (runtime.getRequestedAmount(what) > 0) return true;
+        }
+        return false;
+    }
+
     @WrapMethod(method = "getRequestedAmount")
     private long dataEnergistics$getTrinityDataCoreRequestedAmount(AEKey what, Operation<Long> original) {
         long requested = original.call(what);

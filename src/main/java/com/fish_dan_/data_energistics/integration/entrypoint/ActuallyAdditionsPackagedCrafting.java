@@ -1,11 +1,10 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.actuallyadditions.AtomicReconstructorAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.actuallyadditions.EmpowererAdapter;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
+import com.fish_dan_.data_energistics.integration.technology.actuallyadditions.packaged.AtomicReconstructorAdapter;
+import com.fish_dan_.data_energistics.integration.technology.actuallyadditions.packaged.EmpowererAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "actuallyadditions")
 public final class ActuallyAdditionsPackagedCrafting implements DataEnergisticsPlugin {

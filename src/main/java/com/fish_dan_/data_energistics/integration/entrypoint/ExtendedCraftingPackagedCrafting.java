@@ -1,14 +1,13 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.extendedcrafting.AlternatorCrafterAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.extendedcrafting.CombinationCraftingAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.extendedcrafting.PoweredTableAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.extendedcrafting.QuantumCompressionAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.extendedcrafting.TableCrafterAdapter;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
+import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.AlternatorCrafterAdapter;
+import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.CombinationCraftingAdapter;
+import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.PoweredTableAdapter;
+import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.QuantumCompressionAdapter;
+import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.packaged.TableCrafterAdapter;
 
 /** Real powered and alternator-driven crafting; optional classes load only with their owning mods. */
 @DataEnergisticsEntrypoint(requiredMods = { "extendedcrafting", "cucumber" })

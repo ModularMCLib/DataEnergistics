@@ -1,11 +1,10 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.energy.technology.modernindustrialization.ModernIndustrializationEnergyBridge;
-import com.fish_dan_.data_energistics.integration.energy.technology.modernindustrialization.ModernIndustrializationEnergyEndpointIntegration;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
+import com.fish_dan_.data_energistics.integration.technology.modernindustrialization.energy.ModernIndustrializationEnergyBridge;
+import com.fish_dan_.data_energistics.integration.technology.modernindustrialization.energy.ModernIndustrializationEnergyEndpointIntegration;
 
 @DataEnergisticsEntrypoint(requiredMods = "modern_industrialization")
 public final class ModernIndustrializationEnergyRegistration implements DataEnergisticsPlugin {

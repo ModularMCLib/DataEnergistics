@@ -40,10 +40,10 @@ import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.energy.ae.appflux.AE2FluxIntegration;
-import com.fish_dan_.data_energistics.integration.crafting.display.ae.ae2.AeCraftingDisplayBridge;
-import com.fish_dan_.data_energistics.integration.tower.ae.neoecoae.NeoEcoAeTowerBridge;
-import com.fish_dan_.data_energistics.integration.equipment.library.curios.CuriosDataDistributionConnectorAccess;
+import com.fish_dan_.data_energistics.integration.ae.ae2.display.AeCraftingDisplayBridge;
+import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;
+import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.NeoEcoAeTowerBridge;
+import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -1961,7 +1961,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return true;
         }
 
-        if (ModFlags.isAppFluxEnergySupportLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
+        if (ModFlags.isAppFluxLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
             return true;
         }
 

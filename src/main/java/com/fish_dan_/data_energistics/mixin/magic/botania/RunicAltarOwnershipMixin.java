@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.magic.botania;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.botania.BotaniaItemOwnership;
+import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaItemOwnership;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.ItemEntity;

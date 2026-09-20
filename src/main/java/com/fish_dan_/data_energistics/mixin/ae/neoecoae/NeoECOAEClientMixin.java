@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.neoecoae;
 
-import com.fish_dan_.data_energistics.integration.tower.ae.neoecoae.client.NeoEcoAdditionalRendererGuard;
+import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.client.NeoEcoAdditionalRendererGuard;
 
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSectionRenderer;

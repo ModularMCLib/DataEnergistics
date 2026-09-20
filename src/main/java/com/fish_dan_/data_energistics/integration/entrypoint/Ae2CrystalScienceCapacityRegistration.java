@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
-import com.fish_dan_.data_energistics.integration.patternprovider.ae.ae2cs.Ae2CrystalScienceCapacity;
+import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceCapacity;
 
 import net.minecraft.resources.ResourceLocation;
 
@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 @DataEnergisticsEntrypoint(requiredMods = "ae2cs")
 public final class Ae2CrystalScienceCapacityRegistration implements DataEnergisticsPlugin {
+
     @Override
     public void register(DataEnergisticsRegistry registry) {
         for (String id : ObjectList.of("circuit_etcher", "crystal_aggregator", "crystal_pulverizer",

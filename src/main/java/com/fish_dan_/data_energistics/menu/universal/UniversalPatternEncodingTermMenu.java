@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
-import com.fish_dan_.data_energistics.integration.patternencoding.ae.extendedaeplus.EaepPatternEncodingHandoff;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingInheritedState;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;

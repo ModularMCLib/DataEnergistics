@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.entity.projectile.cannon;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.integration.ModFlags;
-import com.fish_dan_.data_energistics.integration.weapon.technology.draconicevolution.DraconicReactorPayload;
+import com.fish_dan_.data_energistics.integration.technology.draconicevolution.weapon.DraconicReactorPayload;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;

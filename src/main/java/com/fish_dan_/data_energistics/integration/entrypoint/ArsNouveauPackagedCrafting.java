@@ -1,13 +1,12 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.arsnouveau.ArsMachineKind;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.arsnouveau.ArsPedestalAdapter;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.integration.crafting.matching.magic.arsnouveau.ArsRecipeIngredientRoles;
-import com.fish_dan_.data_energistics.integration.crafting.reusable.magic.arsnouveau.ArsImbuementReusableInputs;
+import com.fish_dan_.data_energistics.integration.magic.arsnouveau.matching.ArsRecipeIngredientRoles;
+import com.fish_dan_.data_energistics.integration.magic.arsnouveau.packaged.ArsMachineKind;
+import com.fish_dan_.data_energistics.integration.magic.arsnouveau.packaged.ArsPedestalAdapter;
+import com.fish_dan_.data_energistics.integration.magic.arsnouveau.reusable.ArsImbuementReusableInputs;
 
 @DataEnergisticsEntrypoint(requiredMods = "ars_nouveau")
 public final class ArsNouveauPackagedCrafting implements DataEnergisticsPlugin {

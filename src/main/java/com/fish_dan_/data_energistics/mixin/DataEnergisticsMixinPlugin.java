@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.orbital.ae.ae2lt.CelestweaveErasureHooks;
+import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 import com.fish_dan_.data_energistics.mixin.configuration.DataEnergisticsEarlyConfig;
 
 import net.neoforged.fml.ModList;
@@ -37,9 +37,9 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("extendedae", "ae.extendedae.");
         addModCompatMixin("extendedae_plus", "ae.extendedaeplus.");
         addModCompatMixin("extendedcrafting", "technology.extendedcrafting.");
-        addModCompatMixin("ae2jeiintegration", "ae.ae2jeiintegration.compat.jei.");
+        addModCompatMixin("ae2jeiintegration", "ae.ae2jeiintegration.jei.");
         addModCompatMixin("jei", "viewer.jei.");
-        addModCompatMixin("emi", "viewer.emi.compat.ae2.");
+        addModCompatMixin("emi", "viewer.emi.ae2.");
         addModCompatMixin("ftbchunks", "map.ftbchunks.");
         addModCompatMixin("ftblibrary", "library.ftblibrary.");
         addModCompatMixin("guideme", "guide.guideme.");
@@ -77,10 +77,10 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
             return true;
         }
         mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
-        if (mixinClassName.equals("technology.avaritia.compat.emi.ExtremeSmithingEmiInputsMixin")) {
+        if (mixinClassName.equals("technology.avaritia.emi.ExtremeSmithingEmiInputsMixin")) {
             return isModLoaded("avaritia") && isModLoaded("emi");
         }
-        if (mixinClassName.startsWith("technology.mekanismmore.compat.appmek.")) {
+        if (mixinClassName.startsWith("technology.mekanismmore.appmek.")) {
             return isModLoaded("mekmm") && isModLoaded("appmek");
         }
 

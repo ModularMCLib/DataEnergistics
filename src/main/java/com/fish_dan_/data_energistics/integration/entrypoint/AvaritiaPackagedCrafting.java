@@ -1,12 +1,11 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.avaritia.ExtremeSmithingAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.avaritia.NeutronCompressionAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.technology.avaritia.TierCraftingAdapter;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
+import com.fish_dan_.data_energistics.integration.technology.avaritia.packaged.ExtremeSmithingAdapter;
+import com.fish_dan_.data_energistics.integration.technology.avaritia.packaged.NeutronCompressionAdapter;
+import com.fish_dan_.data_energistics.integration.technology.avaritia.packaged.TierCraftingAdapter;
 
 import committee.nova.mods.avaritia.init.registry.enums.ModCraftTier;
 

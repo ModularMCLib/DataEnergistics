@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.ae.extendedaeplus;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.patternencoding.ae.extendedaeplus.EaepPatternEncodingHandoff;
-import com.fish_dan_.data_energistics.integration.patternencoding.ae.extendedaeplus.EaepPatternUploadScope;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
+import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternUploadScope;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.source.PatternEncodingSourceHelper;
 

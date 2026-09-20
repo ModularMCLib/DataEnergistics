@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2lt;
 
-import com.fish_dan_.data_energistics.integration.orbital.ae.ae2lt.CelestweaveErasureHooks;
+import com.fish_dan_.data_energistics.integration.ae.ae2lt.orbital.CelestweaveErasureHooks;
 import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
 
 import net.minecraft.server.level.ServerPlayer;

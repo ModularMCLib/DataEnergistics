@@ -1,11 +1,10 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.mysticalagriculture.AltarKind;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.mysticalagriculture.MysticalAltarAdapter;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
+import com.fish_dan_.data_energistics.integration.magic.mysticalagriculture.packaged.AltarKind;
+import com.fish_dan_.data_energistics.integration.magic.mysticalagriculture.packaged.MysticalAltarAdapter;
 
 /** Keeps optional MA classes behind the mod-gated plugin boundary. */
 @DataEnergisticsEntrypoint(requiredMods = { "mysticalagriculture", "cucumber" })

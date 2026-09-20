@@ -1,13 +1,12 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.patternprovider.ae.ae2cs.Ae2CrystalScienceAdaptiveRoute;
-import com.fish_dan_.data_energistics.integration.patternprovider.ae.ae2cs.Ae2CrystalScienceMeteoriteRoute;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
+import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceAdaptiveRoute;
+import com.fish_dan_.data_energistics.integration.ae.ae2cs.patternprovider.Ae2CrystalScienceMeteoriteRoute;
 import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
 /** Registers AE2 Crystal Science pattern-provider variants and routes. */

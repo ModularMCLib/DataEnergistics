@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.technology.draconicevolution;
 
-import com.fish_dan_.data_energistics.integration.orbital.technology.draconicevolution.GuardianEncounterCleanup;
+import com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital.GuardianEncounterCleanup;
 
 import com.brandon3055.draconicevolution.entity.guardian.GuardianFightManager;
 import org.spongepowered.asm.mixin.Mixin;

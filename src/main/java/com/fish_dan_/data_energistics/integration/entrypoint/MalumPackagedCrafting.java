@@ -1,11 +1,10 @@
 package com.fish_dan_.data_energistics.integration.entrypoint;
 
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.malum.MalumMachineAdapter;
-import com.fish_dan_.data_energistics.integration.crafting.packaged.magic.malum.MalumMachineKind;
-
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
+import com.fish_dan_.data_energistics.integration.magic.malum.packaged.MalumMachineAdapter;
+import com.fish_dan_.data_energistics.integration.magic.malum.packaged.MalumMachineKind;
 
 @DataEnergisticsEntrypoint(requiredMods = "malum")
 public final class MalumPackagedCrafting implements DataEnergisticsPlugin {

@@ -24,6 +24,7 @@ import net.minecraft.world.phys.AABB;
 
 import de.ellpeck.actuallyadditions.api.lens.Lens;
 import de.ellpeck.actuallyadditions.api.lens.LensConversion;
+import de.ellpeck.actuallyadditions.mod.blocks.BlockLaserRelay;
 import de.ellpeck.actuallyadditions.mod.crafting.ColorChangeRecipe;
 import de.ellpeck.actuallyadditions.mod.crafting.LaserRecipe;
 import de.ellpeck.actuallyadditions.mod.items.lens.LensColor;
@@ -37,7 +38,11 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.UUID;
 
-/** Runs the real Atomic Reconstructor beam against item entities using its installed lens. */
+/**
+ * Runs the real Atomic Reconstructor beam against item entities using its installed lens.
+ * Only the machine is reserved: a shot and its output collection run synchronously, and air in the beam is not a
+ * removable structure part. The live beam checks exclude foreign items before every shot.
+ */
 final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
 
     private static final ResourceLocation LASER = ResourceLocation.fromNamespaceAndPath("actuallyadditions", "laser");
@@ -95,15 +100,6 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
             return singleProgress(machine, target, "laser", totals.unit(), result, totals.total(), (int) energy);
         }
         return null;
-    }
-
-    @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
-        var machine = (TileEntityAtomicReconstructor) level.getBlockEntity(position);
-        for (var affected : affectedBlocks(position, machine.getOrientation(), machine.getLens())) positions.add(affected.immutable());
-        return positions;
     }
 
     @Override
@@ -194,8 +190,17 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
     }
 
     private static boolean safeBeam(ServerLevel level, BlockPos origin, Direction direction, Lens lens) {
-        for (var target : affectedBlocks(origin, direction, lens)) {
-            if (!level.isLoaded(target) || !level.getBlockState(target).isAir()) return false;
+        BlockPos inputPosition = origin.relative(direction);
+        if (!level.isLoaded(inputPosition) || !level.getBlockState(inputPosition).isAir()) return false;
+        for (var target : affectedBlocks(level, origin, direction, lens)) {
+            if (!level.isLoaded(target)) return false;
+            var state = level.getBlockState(target);
+            if (state.isAir()) continue;
+            // Native conversion ignores ordinary terrain. Reject only blocks the installed lens could transform.
+            var blockItem = new ItemStack(state.getBlock());
+            if (lens instanceof LensConversion && !(state.getBlock() instanceof BlockLaserRelay) &&
+                    LaserRecipe.getRecipeForStack(blockItem).isPresent()) return false;
+            if (lens instanceof LensColor && ColorChangeRecipe.getRecipeForStack(blockItem).isPresent()) return false;
         }
         var end = origin.relative(direction, lens.getDistance());
         var area = new AABB(origin.getX(), origin.getY(), origin.getZ(), end.getX() + 1, end.getY() + 1, end.getZ() + 1)
@@ -203,7 +208,7 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
         return level.getEntitiesOfClass(ItemEntity.class, area).isEmpty();
     }
 
-    private static ObjectList<BlockPos> affectedBlocks(BlockPos origin, Direction direction, Lens lens) {
+    private static ObjectList<BlockPos> affectedBlocks(ServerLevel level, BlockPos origin, Direction direction, Lens lens) {
         var positions = new ObjectArrayList<BlockPos>();
         int radius = lens instanceof LensConversion ? 1 : 0;
         int x = direction.getAxis() == Direction.Axis.X ? 0 : radius;
@@ -212,6 +217,7 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
         for (int distance = 1; distance <= lens.getDistance(); distance++) {
             var center = origin.relative(direction, distance);
             for (var target : BlockPos.betweenClosed(center.offset(-x, -y, -z), center.offset(x, y, z))) positions.add(target.immutable());
+            if (lens instanceof LensConversion && level.isLoaded(center) && !level.getBlockState(center).isAir()) break;
         }
         return positions;
     }

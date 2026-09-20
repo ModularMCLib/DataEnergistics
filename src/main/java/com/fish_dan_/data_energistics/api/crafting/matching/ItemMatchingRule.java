@@ -47,7 +47,8 @@ public record ItemMatchingRule(ProcessingMatchMode mode, ObjectList<ResourceLoca
         if (mode == ProcessingMatchMode.EXACT) return expected.equals(actual);
         if (!(expected instanceof AEItemKey template) || !(actual instanceof AEItemKey item)) return false;
         if (mode == ProcessingMatchMode.ID) return template.getItem() == item.getItem();
-        return tags.stream().anyMatch(tag -> item.getItem().builtInRegistryHolder().is(TagKey.create(Registries.ITEM, tag)));
+        var holder = BuiltInRegistries.ITEM.wrapAsHolder(item.getItem());
+        return tags.stream().anyMatch(tag -> holder.is(TagKey.create(Registries.ITEM, tag)));
     }
 
     /** True when two declared domains can accept at least one common item key; quantities are not considered. */

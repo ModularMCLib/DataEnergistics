@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -92,10 +91,9 @@ public final class PackagedOperationState implements PackagedMachineOperation {
             return adapter.advance(this) || this.changed;
         } catch (RuntimeException exception) {
             this.failure = exception.getClass().getSimpleName() + ": " + exception.getMessage();
-            if (DataEnergisticsConfiguration.INSTANCE.developer.packagedCraftingLogging) {
-                Data_Energistics.LOGGER.error("Packaged operation {} for {} at {} using recipe {} stopped",
-                        this.id, this.adapterId, this.position, this.recipeId, exception);
-            }
+            Data_Energistics.LOGGER.error(
+                    "Packaged operation {} for {} at {} using recipe {} stopped (progress={}, inputs={})",
+                    this.id, this.adapterId, this.position, this.recipeId, this.progress, this.inputs, exception);
             return true;
         } finally {
             this.activeLevel = null;

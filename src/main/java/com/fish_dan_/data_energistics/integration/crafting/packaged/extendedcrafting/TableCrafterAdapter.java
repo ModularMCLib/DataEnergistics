@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -157,7 +158,7 @@ final class TableCrafterAdapter implements PackagedMachineAdapter {
         Slot slot = context.menu().getSlot(0);
         if (!(slot instanceof TableOutputSlot outputSlot)) throw new IllegalStateException("Missing table result slot");
         ItemStack actual = outputSlot.getItem().copy();
-        if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected Extended Crafting output");
+        if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Extended Crafting output");
         outputSlot.onTake(context.player(), actual.copy());
         for (int index = 0; index < remaining.size(); index++) {
             if (!ItemStack.matches(remaining.get(index), table.inventory().getStackInSlot(index))) {

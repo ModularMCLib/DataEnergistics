@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -146,7 +147,7 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
         if (progress.getBoolean("delivered")) return collect(operation, layout, slots, expected);
         if (!layout.empty()) return false;
         ItemStack activation = read(operation, progress, "activation");
-        if (!ItemStack.matches(expected, result(operation.level(), holder.value(), activation))) {
+        if (!PackagedOutputMatching.matches(operation, expected, result(operation.level(), holder.value(), activation))) {
             throw new IllegalStateException("Occultism ritual result changed after preparation");
         }
         var targets = new ObjectArrayList<SacrificialBowlBlockEntity>();
@@ -216,17 +217,17 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
             var inventory = layout.output().itemStackHandler;
             ItemStack actual = inventory.getStackInSlot(0);
             if (actual.isEmpty()) return false;
-            if (!ItemStack.matches(actual, expected)) throw new IllegalStateException("Unexpected Occultism output bowl contents");
+            if (!PackagedOutputMatching.matches(operation, expected, actual)) throw new IllegalStateException("Unexpected Occultism output bowl contents");
             ItemStack extracted = inventory.extractItem(0, actual.getCount(), false);
             if (!extracted.isEmpty()) operation.returned(AEItemKey.of(extracted), extracted.getCount());
-            if (!ItemStack.matches(extracted, expected)) throw new IllegalStateException("Incomplete Occultism output extraction");
+            if (!ItemStack.matches(extracted, actual)) throw new IllegalStateException("Incomplete Occultism output extraction");
         } else {
             var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(8),
                     item -> PackagedEntityCapture.ownedBy(item, operation.id()));
             if (drops.isEmpty()) return false;
             int count = 0;
             for (ItemEntity drop : drops) {
-                if (!ItemStack.isSameItemSameComponents(drop.getItem(), expected)) {
+                if (!PackagedOutputMatching.sameKey(operation, expected, drop.getItem())) {
                     throw new IllegalStateException("Occultism ritual returned interrupted inputs or unexpected results");
                 }
                 count = Math.addExact(count, drop.getItem().getCount());

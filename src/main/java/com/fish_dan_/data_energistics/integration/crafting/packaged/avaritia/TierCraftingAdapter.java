@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -157,7 +158,7 @@ final class TierCraftingAdapter implements PackagedMachineAdapter {
         var menu = table.createMenu(0, fake.getInventory());
         var output = menu.getSlot(0);
         ItemStack actual = output.getItem().copy();
-        if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected Avaritia table output");
+        if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Avaritia table output");
         output.onTake(fake, actual.copy());
 
         var actualReturns = new ObjectArrayList<ItemStack>();

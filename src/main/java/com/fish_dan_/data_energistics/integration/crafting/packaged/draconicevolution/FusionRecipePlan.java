@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.draconicevolution;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -96,7 +96,7 @@ final class FusionRecipePlan {
         ItemStack result = recipe.assemble(inventory, level.registryAccess());
         if (result.isEmpty()) return null;
         actualOutputs.addTo(AEItemKey.of(result), Math.multiplyExact(result.getCount(), cycles));
-        if (!PackagedIngredientAssignment.outputsMatch(pattern, toOutputStacks(actualOutputs))) return null;
+        if (!PackagedOutputMatching.matches(pattern, actualOutputs)) return null;
         return new Plan(catalyst, injectors, result, cycles, recipe.getEnergyCost(), recipe.getRecipeTier().name());
     }
 
@@ -182,15 +182,6 @@ final class FusionRecipePlan {
         ItemStack remaining = input.copy();
         remaining.shrink(ingredientCount);
         return remaining;
-    }
-
-    private static ObjectList<ItemStack> toOutputStacks(Object2LongLinkedOpenHashMap<AEItemKey> actual) {
-        var stacks = new ObjectArrayList<ItemStack>();
-        for (var entry : actual.object2LongEntrySet()) {
-            ItemStack stack = entry.getKey().toStack(Math.toIntExact(entry.getLongValue()));
-            stacks.add(stack);
-        }
-        return stacks;
     }
 
     static CompoundTag save(Plan plan, HolderLookup.Provider registries) {

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -107,7 +108,7 @@ final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
             throw new IllegalStateException("Avaritia smithing recipe disappeared after admission");
         }
         var input = new ExtremeSmithingRecipeInput(inputs.get(0), inputs.get(1), inputs.get(2), inputs.get(3), inputs.get(4));
-        if (!recipe.matches(input, operation.level()) || !ItemStack.matches(result, recipe.assemble(input, operation.level().registryAccess()))) {
+        if (!recipe.matches(input, operation.level()) || !PackagedOutputMatching.matches(operation, result, recipe.assemble(input, operation.level().registryAccess()))) {
             throw new IllegalStateException("Avaritia smithing recipe changed after admission");
         }
         var selected = operation.level().getRecipeManager().getRecipeFor(
@@ -124,7 +125,7 @@ final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         menu.createResult();
         var output = menu.getSlot(5);
         ItemStack actual = output.getItem().copy();
-        if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected Avaritia smithing output");
+        if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Avaritia smithing output");
         output.onTake(fake, actual.copy());
         var leftovers = new ObjectArrayList<ItemStack>();
         for (int index = 0; index < inputs.size(); index++) {

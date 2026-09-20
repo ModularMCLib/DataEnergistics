@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.draconicevo
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -124,6 +125,14 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         FusionRecipePlan.Plan plan = FusionRecipePlan.load(operation);
         IFusionRecipe recipe = recipe(operation, plan);
         int phase = operation.progress().getInt(PHASE);
+        // A manual/redstone start may finish while an older operation is still in its delivery phase.
+        if (phase == READY && operation.progress().getBoolean("catalyst_delivered") &&
+                operation.progress().getInt("delivered_injectors") == selected.size() &&
+                (layout.core().isCrafting() || !layout.core().getOutputStack().isEmpty())) {
+            phase = RUNNING;
+            operation.progress().putInt(PHASE, phase);
+            operation.changed();
+        }
         if (phase == READY) return deliver(operation, layout, selected, plan, recipe);
         if (phase != RUNNING) throw new IllegalArgumentException("Unknown Draconic fusion operation phase");
         return collect(operation, layout, selected, plan, recipe);
@@ -181,7 +190,7 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
             progress.putBoolean("catalyst_delivered", true);
             operation.changed();
         }
-        requireRecipe(operation.level(), layout.core(), operation.recipeId(), recipe, plan);
+        requireRecipe(operation, layout.core(), recipe, plan);
         progress.putInt(PHASE, RUNNING);
         operation.changed();
         start(operation, layout.core());
@@ -201,11 +210,11 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         ItemStack result = layout.core().getOutputStack();
         if (result.isEmpty()) {
             validateReadyCycle(layout, selected, plan);
-            requireRecipe(operation.level(), layout.core(), operation.recipeId(), recipe, plan);
+            requireRecipe(operation, layout.core(), recipe, plan);
             start(operation, layout.core());
             return true;
         }
-        if (!ItemStack.matches(result, plan.result())) {
+        if (!PackagedOutputMatching.matches(operation, plan.result(), result)) {
             throw new IllegalStateException("Unexpected Draconic fusion output");
         }
         long cycles = plan.cycles();
@@ -247,8 +256,7 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         operation.progress().putLong("cycles", nextCycles);
         operation.changed();
         if (nextCycles > 0) {
-            requireRecipe(operation.level(), layout.core(), operation.recipeId(), recipe,
-                    FusionRecipePlan.load(operation));
+            requireRecipe(operation, layout.core(), recipe, FusionRecipePlan.load(operation));
             start(operation, layout.core());
             return true;
         }
@@ -343,14 +351,17 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
         return recipe;
     }
 
-    private static void requireRecipe(ServerLevel level, TileFusionCraftingCore core, ResourceLocation recipeId,
+    private static void requireRecipe(PackagedMachineOperation operation, TileFusionCraftingCore core,
                                       IFusionRecipe recipe, FusionRecipePlan.Plan plan) {
+        var level = operation.level();
+        // Native assemble transfers modules and may mutate its catalyst. Preview only detached stacks.
+        var snapshot = FusionSnapshot.deliveredInventory(plan, core.getMinimumTier());
         if (!recipe.matches(core, level) || !recipe.canStartCraft(core, level, null) ||
-                !ItemStack.matches(plan.result(), recipe.assemble(core, level.registryAccess()))) {
+                !PackagedOutputMatching.matches(operation, plan.result(), recipe.assemble(snapshot, level.registryAccess()))) {
             throw new IllegalStateException("Draconic fusion recipe no longer matches its physical inventory");
         }
         var selected = level.getRecipeManager().getRecipeFor(DraconicAPI.FUSION_RECIPE_TYPE.get(), core, level);
-        if (selected.isEmpty() || !selected.get().id().equals(recipeId)) {
+        if (selected.isEmpty() || !selected.get().id().equals(operation.recipeId())) {
             throw new IllegalStateException("Draconic core selected a different fusion recipe");
         }
     }

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -196,7 +197,7 @@ final class CombinationCraftingAdapter implements PackagedMachineAdapter {
         if (ItemStack.matches(actual, assigned.getFirst()) && matchesRunningInputs(operation.level(), selected, assigned)) {
             return false;
         }
-        if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected Extended Crafting combination output");
+        if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Extended Crafting combination output");
         for (int index = 0; index < selected.size(); index++) {
             var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(selected.get(index));
             if (pedestal == null || !ItemStack.matches(pedestal.getInventory().getStackInSlot(0), remaining.get(index))) {

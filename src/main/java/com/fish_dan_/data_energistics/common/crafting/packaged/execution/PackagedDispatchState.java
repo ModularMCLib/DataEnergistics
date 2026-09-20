@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
@@ -148,6 +149,7 @@ public final class PackagedDispatchState {
             if (preparation == null) continue;
             var occupied = adapter.occupiedPositions(level, link.position(), preparation);
             if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) continue;
+            PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
             var operation = new PackagedOperationState(adapter.id(), recipe, link.position(), link.side(), preparation, inputs, occupied);
             if (!claims.acquireAll(operation.occupiedPositions(), operation.id())) continue;
             this.operations.add(operation);

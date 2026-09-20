@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -132,13 +133,13 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
         if (mode.equals("color")) {
             var selected = ColorChangeRecipe.getRecipeForStack(input);
             if (selected.isEmpty() || !selected.get().id().equals(operation.recipeId()) ||
-                    !ItemStack.matches(selected.get().value().getResultItem(operation.level().registryAccess()).copyWithCount(1), expected))
+                    !PackagedOutputMatching.matches(operation, expected, selected.get().value().getResultItem(operation.level().registryAccess()).copyWithCount(1)))
                 throw new IllegalStateException("Atomic color recipe changed after admission");
         } else {
             var selected = LaserRecipe.getRecipeForStack(input);
             if (selected.isEmpty() || !selected.get().id().equals(operation.recipeId()) ||
                     selected.get().value().getEnergy() != energy - ENERGY_START ||
-                    !ItemStack.matches(selected.get().value().getResultItem(operation.level().registryAccess()).copyWithCount(1), expected))
+                    !PackagedOutputMatching.matches(operation, expected, selected.get().value().getResultItem(operation.level().registryAccess()).copyWithCount(1)))
                 throw new IllegalStateException("Atomic conversion recipe changed after admission");
         }
         if (operation.available(AEItemKey.of(input)).compareTo(BigInteger.ONE) < 0) {
@@ -161,7 +162,9 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
             }
         }
         if (drops.isEmpty()) throw new IllegalStateException("Atomic Reconstructor lens did not produce a captured item result");
-        if (!outputsEqual(drops, expected)) throw new IllegalStateException("Atomic Reconstructor produced an unexpected item result");
+        if (!PackagedOutputMatching.matches(operation, ObjectList.of(expected),
+                drops.stream().map(ItemEntity::getItem).toList()))
+            throw new IllegalStateException("Atomic Reconstructor produced an unexpected item result");
         if (machine.getEnergy() >= beforeEnergy) throw new IllegalStateException("Atomic Reconstructor did not consume its energy");
         for (ItemEntity drop : drops) {
             ItemStack actual = drop.getItem().copy();
@@ -224,18 +227,8 @@ final class AtomicReconstructorAdapter implements PackagedMachineAdapter {
         return new ObjectArrayList<>(level.getEntitiesOfClass(ItemEntity.class, new AABB(target).inflate(1), entity -> PackagedEntityCapture.ownedBy(entity, operation)));
     }
 
-    private static boolean outputsEqual(ObjectList<ItemEntity> entities, ItemStack first) {
-        var actual = new Object2LongLinkedOpenHashMap<AEItemKey>();
-        for (ItemEntity entity : entities) actual.addTo(AEItemKey.of(entity.getItem()), entity.getItem().getCount());
-        var expected = new Object2LongLinkedOpenHashMap<AEItemKey>();
-        expected.addTo(AEItemKey.of(first), first.getCount());
-        return actual.equals(expected);
-    }
-
     private static boolean outputsMatch(IPatternDetails pattern, ItemStack output, long count) {
-        if (pattern.getOutputs().size() != 1) return false;
-        var declared = pattern.getOutputs().getFirst();
-        return declared.what().equals(AEItemKey.of(output)) && declared.amount() == count;
+        return PackagedOutputMatching.matches(pattern, output, count);
     }
 
     private static @Nullable InputTotals totals(KeyCounter[] inputs) {

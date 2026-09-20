@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.arsnouveau;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -181,7 +182,7 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
         ItemStack currentResult = holder.isEmpty() ? null : this.kind.validate(operation.level(), layout.tile(),
                 operation.recipeId(), holder.get().value(), center, recipePedestals);
         if (currentResult == null) return false;
-        if (!ItemStack.matches(result, currentResult)) throw new IllegalStateException("Ars recipe output changed after preparation");
+        if (!PackagedOutputMatching.matches(operation, result, currentResult)) throw new IllegalStateException("Ars recipe output changed after preparation");
         for (int index = 0; index < slots.size(); index++) {
             ItemStack expected = ItemStack.parseOptional(operation.level().registryAccess(), slots.getCompound(index).getCompound("remaining"));
             if (!ItemStack.matches(expected, this.kind.remainder(pedestalInputs.get(index)))) {
@@ -208,7 +209,7 @@ final class ArsPedestalAdapter implements PackagedMachineAdapter {
                                    ObjectList<ArcanePedestalTile> selected, ListTag slots, ItemStack result) {
         if (layout.tile() instanceof EnchantingApparatusTile apparatus && apparatus.isCrafting) return false;
         ItemStack actual = layout.inventory().getItem(0);
-        if (!ItemStack.matches(actual, result)) return false;
+        if (!PackagedOutputMatching.matches(operation, result, actual)) return false;
         for (int index = 0; index < selected.size(); index++) {
             ItemStack expected = ItemStack.parseOptional(operation.level().registryAccess(), slots.getCompound(index).getCompound("remaining"));
             if (!ItemStack.matches(expected, selected.get(index).getStack())) {

@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.actuallyadd
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -106,7 +107,7 @@ final class EmpowererAdapter implements PackagedMachineAdapter {
             // The modifiers disappearing proves this cycle completed even if input and output are the same item.
             for (int index = 1; index < 5; index++) if (!inventories.get(index).getStackInSlot(0).isEmpty()) return false;
             var actual = inventories.getFirst().getStackInSlot(0);
-            if (!ItemStack.matches(actual, expected)) return false;
+            if (!PackagedOutputMatching.matches(operation, expected, actual)) return false;
             // The public manual-extraction path permits a result that is also an input to another empowerer recipe.
             var extracted = inventories.getFirst().extractItem(0, actual.getCount(), false, false);
             if (extracted.isEmpty()) return false;
@@ -125,7 +126,7 @@ final class EmpowererAdapter implements PackagedMachineAdapter {
         }
         if (!matches(operation.recipeId(), stacks)) throw new IllegalStateException("Empowerer recipe changed after admission");
         var current = operation.level().getRecipeManager().byKey(operation.recipeId());
-        if (current.isEmpty() || !(current.get().value() instanceof EmpowererRecipe recipe) || !ItemStack.matches(recipe.getOutput(), expected)) {
+        if (current.isEmpty() || !(current.get().value() instanceof EmpowererRecipe recipe) || !PackagedOutputMatching.matches(operation, expected, recipe.getOutput())) {
             throw new IllegalStateException("Empowerer output changed after admission");
         }
         // Center last: inserting the trigger cannot expose an incomplete set of modifiers to the machine.

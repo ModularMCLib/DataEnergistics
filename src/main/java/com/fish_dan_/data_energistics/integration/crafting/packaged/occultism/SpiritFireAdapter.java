@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -103,7 +104,7 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
         var recipeInput = new SingleRecipeInput(input);
         if (holder.isEmpty() || !(holder.get().value() instanceof SpiritFireRecipe recipe) ||
                 !recipe.matches(recipeInput, operation.level()) ||
-                !ItemStack.matches(result, recipe.assemble(recipeInput, operation.level().registryAccess()))) {
+                !PackagedOutputMatching.matches(operation, result, recipe.assemble(recipeInput, operation.level().registryAccess()))) {
             throw new IllegalStateException("Spirit fire recipe changed after preparation");
         }
         var selected = operation.level().getRecipeManager().getRecipeFor(OccultismRecipes.SPIRIT_FIRE_TYPE.get(), recipeInput, operation.level());
@@ -141,7 +142,7 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
         if (entities.isEmpty()) return false;
         int count = 0;
         for (var entity : entities) {
-            if (!ItemStack.isSameItemSameComponents(expected, entity.getItem())) {
+            if (!PackagedOutputMatching.sameKey(operation, expected, entity.getItem())) {
                 throw new IllegalStateException("Unexpected causally captured spirit fire result");
             }
             count = Math.addExact(count, entity.getItem().getCount());

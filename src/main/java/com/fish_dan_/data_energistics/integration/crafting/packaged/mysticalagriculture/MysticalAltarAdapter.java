@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.mysticalagr
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -134,7 +135,7 @@ final class MysticalAltarAdapter implements PackagedMachineAdapter {
         Recipe<CraftingInput> recipe = holder.isEmpty() ? null : this.kind.recipe(holder.get().value());
         CraftingInput input = CraftingInput.of(3, 3, inputs);
         if (recipe == null || !recipe.matches(input, operation.level()) ||
-                !ItemStack.matches(result, recipe.assemble(input, operation.level().registryAccess()))) {
+                !PackagedOutputMatching.matches(operation, result, recipe.assemble(input, operation.level().registryAccess()))) {
             throw new IllegalStateException("MA altar recipe changed after accepting its inputs");
         }
         var remaining = recipe.getRemainingItems(input);
@@ -171,7 +172,7 @@ final class MysticalAltarAdapter implements PackagedMachineAdapter {
         BaseItemStackHandler altarInventory = layout.altar().getInventory();
         ItemStack output = altarInventory.getStackInSlot(1);
         if (output.isEmpty()) return false;
-        if (!ItemStack.matches(output, result)) throw new IllegalStateException("Unexpected item in MA altar output");
+        if (!PackagedOutputMatching.matches(operation, result, output)) throw new IllegalStateException("Unexpected item in MA altar output");
         // Validate the entire completed cycle before taking anything; unrelated inserted items remain in the world.
         for (int index = 0; index < 9; index++) {
             ItemStack expected = ItemStack.parseOptional(operation.level().registryAccess(), slots.getCompound(index).getCompound("remaining"));

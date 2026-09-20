@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -115,7 +116,7 @@ final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
         if (progress.getBoolean("delivered")) {
             var actual = inventory.getStackInSlot(9);
             if (actual.isEmpty()) return false;
-            if (!ItemStack.matches(actual, result)) throw new IllegalStateException("Unexpected alternator crafter output");
+            if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected alternator crafter output");
             for (int slot = 0; slot < 9; slot++) if (!inventory.getStackInSlot(slot).isEmpty()) return false;
             var extracted = inventory.extractItem(9, actual.getCount(), false);
             if (extracted.isEmpty()) return false;
@@ -136,7 +137,7 @@ final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
         var recipe = holder.isEmpty() ? null : recipe(holder.get());
         var input = CraftingInput.of(3, 3, grid);
         if (recipe == null || !recipe.matches(input, operation.level()) ||
-                !ItemStack.matches(result, recipe.assemble(input, operation.level().registryAccess()))) {
+                !PackagedOutputMatching.matches(operation, result, recipe.assemble(input, operation.level().registryAccess()))) {
             throw new IllegalStateException("Alternator crafter recipe changed after admission");
         }
         for (int slot = 0; slot < 9; slot++) {

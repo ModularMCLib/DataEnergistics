@@ -25,7 +25,7 @@ public final class EncodedPatternDynamicOutput {
     private EncodedPatternDynamicOutput() {}
 
     /** Applies per-slot matching rules to the final encoded pattern stack. */
-    public static void apply(ItemStack encodedPattern, int markerMask) {
+    public static void apply(ItemStack encodedPattern, long markerMask) {
         if (encodedPattern.isEmpty()) {
             throw new IllegalArgumentException("Cannot mark an empty encoded pattern");
         }
@@ -47,14 +47,14 @@ public final class EncodedPatternDynamicOutput {
     }
 
     /** Returns the persisted per-slot marker mask, or zero when no slots are marked. */
-    public static int markerMask(AEItemKey definition) {
-        Integer mask = definition.get(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS.get());
+    public static long markerMask(AEItemKey definition) {
+        Long mask = definition.get(DEDataComponents.PROCESSING_SAME_ITEM_SLOTS.get());
         return mask == null ? 0 : mask;
     }
 
     public static boolean isMarked(AEItemKey definition, int inputIndex, int outputIndex) {
         int bit = inputIndex >= 0 ? inputIndex : PROCESSING_INPUT_SLOTS + outputIndex;
-        return bit >= 0 && bit < Integer.SIZE - 1 && (markerMask(definition) & (1 << bit)) != 0;
+        return bit >= 0 && bit < Long.SIZE - 1 && (markerMask(definition) & (1L << bit)) != 0;
     }
 
     /**

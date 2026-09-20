@@ -67,7 +67,7 @@ public final class TrinitySameItemPolicy {
     public static TrinitySameItemPolicy fromGraph(TrinityCraftingGraphSnapshot graph, AEKey target) {
         Object2ObjectLinkedOpenHashMap<Item, AEItemKey> representatives = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityCraftingGraphPattern pattern : graph.patterns()) {
-            int markerMask = EncodedPatternDynamicOutput.markerMask(pattern.definition());
+            long markerMask = EncodedPatternDynamicOutput.markerMask(pattern.definition());
             if (markerMask != 0 &&
                     pattern.outputs().getFirst().what() instanceof AEItemKey primaryOutput) {
                 representatives.putIfAbsent(primaryOutput.getItem(), primaryOutput);

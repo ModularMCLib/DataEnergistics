@@ -1,9 +1,12 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.recipe;
 
+import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
@@ -72,10 +75,28 @@ public final class PackagedIngredientAssignment {
             if (!stack.isEmpty()) expected.addTo(AEItemKey.of(stack), stack.getCount());
         }
         var declared = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        var declaredItems = new Object2LongLinkedOpenHashMap<Item>();
+        int outputIndex = 0;
         for (var output : pattern.getOutputs()) {
             if (!(output.what() instanceof AEItemKey item)) return false;
-            declared.addTo(item, output.amount());
+            if (EncodedPatternDynamicOutput.isMarked(pattern.getDefinition(), -1, outputIndex++)) {
+                declaredItems.addTo(item.getItem(), output.amount());
+            } else {
+                declared.addTo(item, output.amount());
+            }
         }
-        return expected.equals(declared);
+        for (var entry : declared.object2LongEntrySet()) {
+            if (expected.getLong(entry.getKey()) != entry.getLongValue()) return false;
+        }
+        for (var entry : declaredItems.object2LongEntrySet()) {
+            long actualAmount = 0;
+            for (var actualEntry : expected.object2LongEntrySet()) {
+                if (actualEntry.getKey().getItem() == entry.getKey()) actualAmount += actualEntry.getLongValue();
+            }
+            if (actualAmount != entry.getLongValue()) return false;
+        }
+        long actualTotal = expected.values().longStream().sum();
+        long declaredTotal = declared.values().longStream().sum() + declaredItems.values().longStream().sum();
+        return actualTotal == declaredTotal;
     }
 }

@@ -33,8 +33,15 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-/** One native cycle plus the exact number of cycles represented by the input envelope. */
+/** Per-cycle native resources and the concurrent cycle count represented by the input envelope. */
 record LargeMachineRecipePlan(List<GenericStack> inputs, List<GenericStack> outputs, long cycles) {
+
+    LargeMachineRecipePlan {
+        if (cycles <= 0) throw new IllegalArgumentException("Invalid Mekanism native batch size");
+        // Check the entire envelope before a live resource port can be mutated, including after reload.
+        for (long amount : totals(inputs).values()) Math.multiplyExact(amount, cycles);
+        for (long amount : totals(outputs).values()) Math.multiplyExact(amount, cycles);
+    }
 
     static @Nullable LargeMachineRecipePlan prepare(ServerLevel level, LargeMachineKind.Layout layout,
                                                     ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] counters) {

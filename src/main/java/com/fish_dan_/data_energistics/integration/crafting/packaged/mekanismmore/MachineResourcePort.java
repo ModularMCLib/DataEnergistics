@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.mekanismmor
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import me.ramidzkh.mekae2.ae2.MekanismKey;
@@ -25,13 +26,18 @@ sealed interface MachineResourcePort {
     /** Removes the requested amount from this slot and returns what was actually removed. */
     long extract(long amount);
 
+    /** Reads native storage capacity for the key, independently of output-only insertion policy. */
+    long capacity(AEKey key);
+
     /** Checks output storage capacity without using the automation insertion policy of an output-only slot. */
-    boolean canHold(GenericStack stack);
+    default boolean canHold(GenericStack stack) {
+        return stack.amount() <= capacity(stack.what());
+    }
 
     record Chemical(IChemicalTank tank) implements MachineResourcePort {
 
-        public boolean canHold(GenericStack stack) {
-            return stack.what() instanceof MekanismKey && stack.amount() <= tank.getCapacity();
+        public long capacity(AEKey key) {
+            return key instanceof MekanismKey ? tank.getCapacity() : 0;
         }
 
         public @Nullable GenericStack contents() {
@@ -50,8 +56,8 @@ sealed interface MachineResourcePort {
 
     record Fluid(IExtendedFluidTank tank) implements MachineResourcePort {
 
-        public boolean canHold(GenericStack stack) {
-            return stack.what() instanceof AEFluidKey && stack.amount() <= tank.getCapacity();
+        public long capacity(AEKey key) {
+            return key instanceof AEFluidKey ? tank.getCapacity() : 0;
         }
 
         public @Nullable GenericStack contents() {
@@ -71,8 +77,8 @@ sealed interface MachineResourcePort {
 
     record Item(IInventorySlot slot) implements MachineResourcePort {
 
-        public boolean canHold(GenericStack stack) {
-            return stack.what() instanceof AEItemKey key && stack.amount() <= slot.getLimit(key.toStack());
+        public long capacity(AEKey key) {
+            return key instanceof AEItemKey item ? slot.getLimit(item.toStack()) : 0;
         }
 
         public @Nullable GenericStack contents() {

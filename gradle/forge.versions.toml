@@ -142,7 +142,6 @@ modernfix           = { module = "maven.modrinth:modernfix", version.ref = "mode
 bhc                 = { module = "maven.modrinth:baubley-heart-canisters", version.ref = "bhc" }
 
 projecte            = { module = "curse.maven:projecte-226410", version.ref = "projecte" }
-geckolib            = { module = "curse.maven:geckolib-388172", version.ref = "geckolib" }
 ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }
 if                  = { module = "curse.maven:industrial-foregoing-266515", version.ref = "if" }

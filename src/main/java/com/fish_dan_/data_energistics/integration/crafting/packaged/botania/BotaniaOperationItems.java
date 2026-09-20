@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.botania;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -56,23 +56,19 @@ final class BotaniaOperationItems {
         var inputIds = new ObjectOpenHashSet<UUID>();
         var ids = operation.progress().getList("entities", Tag.TAG_COMPOUND);
         for (int index = 0; index < ids.size(); index++) inputIds.add(ids.getCompound(index).getUUID("id"));
-        var expected = new KeyCounter();
-        for (ItemStack stack : read(operation, "outputs")) expected.add(AEItemKey.of(stack), stack.getCount());
+        var expected = read(operation, "outputs");
+        var actual = new ObjectArrayList<ItemStack>();
         var harvested = operation.progress().getList("recovered", Tag.TAG_COMPOUND);
         for (int index = 0; index < harvested.size(); index++) {
             var stack = ItemStack.parse(operation.level().registryAccess(), harvested.getCompound(index)).orElseThrow();
-            expected.remove(AEItemKey.of(stack), stack.getCount());
+            actual.add(stack);
         }
-        expected.removeZeros();
-        if (expected.isEmpty()) return true;
+        if (PackagedOutputMatching.matches(operation, expected, actual)) return true;
         var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(8),
                 entity -> PackagedEntityCapture.ownedBy(entity, operation.id()) && !inputIds.contains(entity.getUUID()));
-        var actual = new KeyCounter();
-        for (var drop : drops) actual.add(AEItemKey.of(drop.getItem()), drop.getItem().getCount());
-        for (var entry : actual) {
-            if (entry.getLongValue() > expected.get(entry.getKey())) throw new IllegalStateException("Unexpected owned Botania output");
-        }
-        for (var entry : expected) if (actual.get(entry.getKey()) != entry.getLongValue()) return false;
+        for (var drop : drops) actual.add(drop.getItem());
+        if (!PackagedOutputMatching.acceptsPartial(operation, expected, actual)) throw new IllegalStateException("Unexpected owned Botania output");
+        if (!PackagedOutputMatching.matches(operation, expected, actual)) return false;
         for (var drop : drops) {
             ItemStack stack = drop.getItem().copy();
             drop.discard();
@@ -85,7 +81,7 @@ final class BotaniaOperationItems {
     }
 
     static void recoveredInputContainer(PackagedMachineOperation operation, ItemEntity entity, ItemStack expected) {
-        if (!ItemStack.matches(entity.getItem(), expected)) throw new IllegalStateException("Unexpected Botania fluid container remainder");
+        if (!PackagedOutputMatching.matches(operation, expected, entity.getItem())) throw new IllegalStateException("Unexpected Botania fluid container remainder");
         ItemStack actual = entity.getItem().copy();
         entity.discard();
         operation.returned(AEItemKey.of(actual), actual.getCount());

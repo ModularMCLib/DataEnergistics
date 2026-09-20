@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -151,7 +152,7 @@ final class MalumMachineAdapter implements PackagedMachineAdapter {
         ItemStack actualMain = progress.getBoolean("installed") ? layout.main().getStackInSlot(0) : main;
         if (recipe == null || !selectedRecipe(operation.level(), recipe, actualMain, spirits, extraStacks)) return false;
         ItemStack actualOutput = recipe instanceof SpiritInfusionRecipe infusion ? infusion.getOutput(operation.level(), actualMain.copy()) : ((SpiritFocusingRecipe) recipe).output;
-        if (!ItemStack.matches(actualOutput, output)) throw new IllegalStateException("Malum base output changed");
+        if (!PackagedOutputMatching.matches(operation, output, actualOutput)) throw new IllegalStateException("Malum base output changed");
         for (int index = 0; index < targets.size(); index++) insert(operation, targets.get(index).getSuppliedInventory(), 0, extraStacks.get(index));
         for (int index = 0; index < spirits.size(); index++) insert(operation, layout.spirits(), index, spirits.get(index));
         if (!progress.getBoolean("installed")) insert(operation, layout.main(), 0, main);
@@ -173,7 +174,7 @@ final class MalumMachineAdapter implements PackagedMachineAdapter {
         var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(8),
                 entity -> PackagedEntityCapture.ownedBy(entity, operation.id()));
         long baseCount = 0;
-        for (var drop : drops) if (ItemStack.isSameItemSameComponents(drop.getItem(), output)) baseCount += drop.getItem().getCount();
+        for (var drop : drops) if (PackagedOutputMatching.sameKey(operation, output, drop.getItem())) baseCount += drop.getItem().getCount();
         if (baseCount < output.getCount()) return false;
         // Luck/augment bonuses are actual owned drops, never promised by the static pattern or discarded.
         for (var drop : drops) {

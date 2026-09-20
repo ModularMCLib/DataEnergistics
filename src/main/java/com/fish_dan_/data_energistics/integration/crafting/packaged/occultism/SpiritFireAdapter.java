@@ -74,8 +74,7 @@ final class SpiritFireAdapter implements PackagedMachineAdapter {
         if (selected.isEmpty() || !selected.get().id().equals(recipeId)) return null;
         ItemStack result = recipe.assemble(recipeInput, level.registryAccess());
         if (result.isEmpty() || result.getCount() != 1 || pattern.getOutputs().size() != 1) return null;
-        var output = pattern.getOutputs().getFirst();
-        if (!AEItemKey.of(result).equals(output.what()) || output.amount() != total) return null;
+        if (!PackagedOutputMatching.matches(pattern, result, total)) return null;
         var progress = new CompoundTag();
         progress.put("input", input.save(level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));

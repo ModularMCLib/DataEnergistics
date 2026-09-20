@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.malum;
 
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
@@ -84,8 +86,7 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
             output = focusing.output.copy();
         }
         if (output.isEmpty() || cycles > Long.MAX_VALUE / output.getCount() || pattern.getOutputs().size() != 1) return null;
-        var declared = pattern.getOutputs().getFirst();
-        if (!AEItemKey.of(output).equals(declared.what()) || declared.amount() != cycles * output.getCount()) return null;
+        if (!PackagedOutputMatching.matches(pattern, output, cycles * output.getCount())) return null;
         return new MalumRecipePlan(main, spiritStacks, extras, output, cycles, installedMain);
     }
 

@@ -100,8 +100,7 @@ final class OccultismRitualAdapter implements PackagedMachineAdapter {
         if (!choosesRecipe(level, position, recipeId, assigned.getFirst(), assigned.subList(1, assigned.size()))) return null;
         ItemStack result = result(level, holder.value(), assigned.getFirst());
         if (result.isEmpty() || cycles > Long.MAX_VALUE / result.getCount() || pattern.getOutputs().size() != 1) return null;
-        var declared = pattern.getOutputs().getFirst();
-        if (!AEItemKey.of(result).equals(declared.what()) || declared.amount() != cycles * result.getCount()) return null;
+        if (!PackagedOutputMatching.matches(pattern, result, cycles * result.getCount())) return null;
         var slots = new ListTag();
         for (int index = 1; index < assigned.size(); index++) {
             var bowl = layout.inputs().get(index - 1);

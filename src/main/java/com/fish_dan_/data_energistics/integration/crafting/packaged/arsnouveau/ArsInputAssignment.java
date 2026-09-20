@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.arsnouveau;
 
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
@@ -58,13 +60,6 @@ final class ArsInputAssignment {
             if (amount > Long.MAX_VALUE - expected.getLong(key)) return false;
             expected.addTo(key, amount);
         }
-        var declared = new Object2LongOpenHashMap<AEItemKey>();
-        for (var stack : pattern.getOutputs()) {
-            if (!(stack.what() instanceof AEItemKey item) || stack.amount() <= 0 ||
-                    stack.amount() > Long.MAX_VALUE - declared.getLong(item))
-                return false;
-            declared.addTo(item, stack.amount());
-        }
-        return declared.equals(expected);
+        return PackagedOutputMatching.matches(pattern, expected);
     }
 }

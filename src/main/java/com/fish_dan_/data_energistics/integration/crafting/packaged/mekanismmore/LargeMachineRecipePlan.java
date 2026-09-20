@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.mekanismmore;
 
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -18,6 +20,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
 import mekanism.api.chemical.ChemicalStack;
@@ -29,7 +32,6 @@ import mekanism.api.recipes.RotaryRecipe;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /** One native cycle plus the exact number of cycles represented by the input envelope. */
 record LargeMachineRecipePlan(List<GenericStack> inputs, List<GenericStack> outputs, long cycles) {
@@ -52,28 +54,25 @@ record LargeMachineRecipePlan(List<GenericStack> inputs, List<GenericStack> outp
             for (var first : supplied.keySet()) for (var second : supplied.keySet()) {
                 var unit = unit(recipe, first, second, layout.fluidToChemical());
                 if (unit == null) continue;
-                var expected = totals(unit.outputs());
-                var declared = new Object2LongLinkedOpenHashMap<AEKey>();
-                for (var output : pattern.getOutputs()) {
-                    if (output.amount() <= 0) return null;
-                    declared.merge(output.what(), output.amount(), Math::addExact);
-                }
-                if (!declared.keySet().equals(expected.keySet())) continue;
+                var required = totals(unit.inputs());
+                if (!supplied.keySet().equals(required.keySet())) continue;
                 long cycles = 0;
                 boolean matched = true;
-                for (var output : expected.entrySet()) {
-                    long amount = declared.getLong(output.getKey());
-                    if (amount % output.getValue() != 0 || cycles != 0 && cycles != amount / output.getValue()) {
+                for (var input : required.object2LongEntrySet()) {
+                    long amount = supplied.getLong(input.getKey());
+                    long perCycle = input.getLongValue();
+                    if (perCycle <= 0 || amount % perCycle != 0 || cycles != 0 && cycles != amount / perCycle) {
                         matched = false;
                         break;
                     }
-                    cycles = amount / output.getValue();
+                    cycles = amount / perCycle;
                 }
                 if (!matched || cycles <= 0) continue;
-                var required = totals(unit.inputs());
-                final long count = cycles;
-                required.replaceAll((key, amount) -> Math.multiplyExact(amount, count));
-                if (!supplied.equals(required)) continue;
+                var expected = totals(unit.outputs());
+                for (var entry : expected.object2LongEntrySet()) {
+                    entry.setValue(Math.multiplyExact(entry.getLongValue(), cycles));
+                }
+                if (!PackagedOutputMatching.matches(pattern, expected)) continue;
                 // Query the same ordered native recipe cache before any physical input is touched.
                 var selected = layout.tile().getRecipeType().findFirst(level,
                         candidate -> unit(candidate, first, second, layout.fluidToChemical()) != null);
@@ -143,9 +142,9 @@ record LargeMachineRecipePlan(List<GenericStack> inputs, List<GenericStack> outp
         return new GenericStack(AEFluidKey.of(stack), stack.getAmount());
     }
 
-    static Map<AEKey, Long> totals(List<GenericStack> stacks) {
+    static Object2LongMap<AEKey> totals(List<GenericStack> stacks) {
         var result = new Object2LongLinkedOpenHashMap<AEKey>();
-        for (var stack : stacks) result.merge(stack.what(), stack.amount(), Math::addExact);
+        for (var stack : stacks) result.mergeLong(stack.what(), stack.amount(), Math::addExact);
         return result;
     }
 

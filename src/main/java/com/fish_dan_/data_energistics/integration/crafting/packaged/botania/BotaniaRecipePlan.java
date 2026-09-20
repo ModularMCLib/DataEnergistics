@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.crafting.packaged.botania;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -116,11 +117,6 @@ record BotaniaRecipePlan(ObjectList<ItemStack> inputs, ObjectList<ItemStack> out
             if (amount > Long.MAX_VALUE - expected.getLong(key)) return false;
             expected.addTo(key, amount);
         }
-        var declared = new Object2LongOpenHashMap<AEItemKey>();
-        for (var output : pattern.getOutputs()) {
-            if (!(output.what() instanceof AEItemKey key) || output.amount() <= 0 || output.amount() > Long.MAX_VALUE - declared.getLong(key)) return false;
-            declared.addTo(key, output.amount());
-        }
-        return expected.equals(declared);
+        return PackagedOutputMatching.matches(pattern, expected);
     }
 }

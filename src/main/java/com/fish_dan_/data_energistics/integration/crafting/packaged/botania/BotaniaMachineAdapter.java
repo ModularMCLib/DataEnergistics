@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.mixin.botania.AlfheimPortalAccessor;
 import com.fish_dan_.data_energistics.mixin.botania.RunicAltarAccessor;
 
@@ -187,9 +188,7 @@ final class BotaniaMachineAdapter implements PackagedMachineAdapter {
         if (progress.getBoolean("water")) outputs.add(new ItemStack(Items.BUCKET));
         var storedOutputs = BotaniaOperationItems.read(operation, "outputs");
         if (outputs.size() != storedOutputs.size()) throw new IllegalStateException("Botania output shape changed");
-        for (int index = 0; index < outputs.size(); index++) {
-            if (!ItemStack.matches(outputs.get(index), storedOutputs.get(index))) throw new IllegalStateException("Botania output changed after preparation");
-        }
+        if (!PackagedOutputMatching.matches(operation, storedOutputs, outputs)) throw new IllegalStateException("Botania output changed after preparation");
         if (!physicalCapacity(machine, holder.get(), count)) return false;
         if (machine instanceof PetalApothecaryBlockEntity apothecary) {
             if (progress.getBoolean("water")) {

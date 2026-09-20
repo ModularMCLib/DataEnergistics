@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.crafting.packaged.mekanismmor
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -116,11 +117,12 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
             if (holder.isEmpty()) throw new IllegalStateException("Mekanism recipe disappeared");
             var unit = LargeMachineRecipePlan.unit(holder.get().value(), plan.inputs().getFirst().what(),
                     plan.inputs().getLast().what(), layout.fluidToChemical());
-            if (unit == null || !unit.inputs().equals(plan.inputs()) || !unit.outputs().equals(plan.outputs())) {
+            if (unit == null || !unit.inputs().equals(plan.inputs()) ||
+                    !PackagedOutputMatching.matchesResources(operation, plan.outputs(), unit.outputs())) {
                 throw new IllegalStateException("Mekanism recipe changed after admission");
             }
-            for (var entry : LargeMachineRecipePlan.totals(plan.inputs()).entrySet()) {
-                if (operation.available(entry.getKey()).compareTo(BigInteger.valueOf(entry.getValue())) < 0) {
+            for (var entry : LargeMachineRecipePlan.totals(plan.inputs()).object2LongEntrySet()) {
+                if (operation.available(entry.getKey()).compareTo(BigInteger.valueOf(entry.getLongValue())) < 0) {
                     throw new IllegalStateException("Mekanism input ledger does not cover this cycle");
                 }
             }
@@ -143,14 +145,16 @@ final class LargeMachineAdapter implements PackagedMachineAdapter {
             return true;
         }
         // Wait for all native output ports and consumed inputs, including per-tick nuclear chemicals.
+        var actualOutputs = new ObjectArrayList<GenericStack>();
         for (int i = 0; i < plan.outputs().size(); i++) {
             var actual = layout.outputs().get(i).contents();
             if (actual == null) return false;
-            if (!actual.equals(plan.outputs().get(i))) throw new IllegalStateException("Unexpected Mekanism machine output");
+            if (!PackagedOutputMatching.matches(operation, plan.outputs().get(i), actual)) throw new IllegalStateException("Unexpected Mekanism machine output");
+            actualOutputs.add(actual);
         }
         for (var input : layout.inputs()) if (input.contents() != null) return false;
         for (int i = 0; i < plan.outputs().size(); i++) {
-            var stack = plan.outputs().get(i);
+            var stack = actualOutputs.get(i);
             long extracted = layout.outputs().get(i).extract(stack.amount());
             if (extracted > 0) operation.returned(stack.what(), extracted);
             if (extracted != stack.amount()) throw new IllegalStateException("Mekanism output extraction was incomplete");

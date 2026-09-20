@@ -84,15 +84,37 @@ public final class PackagedOutputMatching {
 
     /** Compares complete cycle results, including already recovered containers, without rewriting physical keys. */
     public static boolean matches(PackagedMachineOperation operation, List<ItemStack> expected, List<ItemStack> actual) {
+        return matches(operation, amounts(expected), amounts(actual), true);
+    }
+
+    /** Allows an incomplete arrival only when every received item fits the cycle's output quantities and rules. */
+    public static boolean acceptsPartial(PackagedMachineOperation operation, List<ItemStack> expected, List<ItemStack> actual) {
+        return matches(operation, amounts(expected), amounts(actual), false);
+    }
+
+    /** Matches ordered output ports; quantities, fluid keys and chemical keys remain exact. */
+    public static boolean matchesResources(PackagedMachineOperation operation, List<GenericStack> expected,
+                                           List<GenericStack> actual) {
+        if (expected.size() != actual.size()) return false;
+        for (int index = 0; index < expected.size(); index++) {
+            if (!matches(operation, expected.get(index), actual.get(index))) return false;
+        }
+        return true;
+    }
+
+    private static boolean matches(PackagedMachineOperation operation, KeyCounter expected, KeyCounter actual,
+                                   boolean complete) {
         var exact = new Object2LongLinkedOpenHashMap<AEKey>();
         var flexible = new Object2LongLinkedOpenHashMap<Item>();
-        for (var stack : expected) {
-            if (stack.isEmpty()) continue;
-            var key = AEItemKey.of(stack);
-            if (allowsSameItem(operation, key)) flexible.mergeLong(key.getItem(), stack.getCount(), Math::addExact);
-            else exact.mergeLong(key, stack.getCount(), Math::addExact);
+        for (var entry : expected) {
+            var key = entry.getKey();
+            if (key instanceof AEItemKey item && allowsSameItem(operation, item)) {
+                flexible.mergeLong(item.getItem(), entry.getLongValue(), Math::addExact);
+            } else {
+                exact.mergeLong(key, entry.getLongValue(), Math::addExact);
+            }
         }
-        return matches(exact, flexible, amounts(actual));
+        return matches(exact, flexible, actual, complete);
     }
 
     /** Non-item resources retain their exact key contract. */
@@ -120,6 +142,11 @@ public final class PackagedOutputMatching {
 
     private static boolean matches(Object2LongLinkedOpenHashMap<AEKey> exact,
                                    Object2LongLinkedOpenHashMap<Item> flexible, KeyCounter actual) {
+        return matches(exact, flexible, actual, true);
+    }
+
+    private static boolean matches(Object2LongLinkedOpenHashMap<AEKey> exact,
+                                   Object2LongLinkedOpenHashMap<Item> flexible, KeyCounter actual, boolean complete) {
         var remaining = new Object2LongLinkedOpenHashMap<AEKey>();
         for (var entry : actual) {
             if (entry.getLongValue() <= 0) return false;
@@ -127,8 +154,8 @@ public final class PackagedOutputMatching {
         }
         for (var entry : exact.object2LongEntrySet()) {
             long available = remaining.getLong(entry.getKey());
-            if (available < entry.getLongValue()) return false;
-            remaining.put(entry.getKey(), available - entry.getLongValue());
+            if (complete && available < entry.getLongValue()) return false;
+            remaining.put(entry.getKey(), available - Math.min(available, entry.getLongValue()));
         }
         var remainingItems = new Object2LongLinkedOpenHashMap<Item>();
         for (var entry : remaining.object2LongEntrySet()) {
@@ -136,7 +163,11 @@ public final class PackagedOutputMatching {
             if (!(entry.getKey() instanceof AEItemKey item)) return false;
             remainingItems.mergeLong(item.getItem(), entry.getLongValue(), Math::addExact);
         }
-        return remainingItems.equals(flexible);
+        if (complete) return remainingItems.equals(flexible);
+        for (var entry : remainingItems.object2LongEntrySet()) {
+            if (entry.getLongValue() > flexible.getLong(entry.getKey())) return false;
+        }
+        return true;
     }
 
     private static KeyCounter amounts(List<ItemStack> stacks) {

@@ -6,24 +6,8 @@ dependencies {
     testImplementation(libs.testframework)
     testCompileOnly(libs.jspecify)
     testCompileOnly(forge.ae2)
-    testCompileOnly(forge.mystical.agriculture)
-    testCompileOnly(forge.cucumber)
     testCompileOnly(forge.brandonscore)
     testCompileOnly(forge.draconic.evolution)
-    testCompileOnly(forge.ars.nouveau)
-    testCompileOnly(forge.occultism)
-    testCompileOnly(forge.geckolib)
-    testCompileOnly(forge.modonomicon)
-    testCompileOnly(forge.botania)
-    testCompileOnly(forge.patchouli)
-    testCompileOnly(forge.malum)
-    testCompileOnly(forge.lodestone)
-    testCompileOnly(forge.extendedcrafting)
-    testCompileOnly(forge.mek)
-    testCompileOnly(forge.mekmm)
-    testCompileOnly(forge.amek)
-    testCompileOnly(forge.actually.additions)
-    testCompileOnly(forge.avaritia)
 
     jarJar(api(forge.mdlib.get()))
     jarJar(api(libs.ojalgo.get()))
@@ -169,7 +153,7 @@ dependencies {
     localRuntime(forge.emi)
     localRuntime(forge.jei.neoforge.impl)
 
-    // Real-machine GameTest integrations; runtime libraries are declared explicitly.
+    // Optional machine integrations for local development; runtime libraries are declared explicitly.
     extraLocalRuntime(forge.mystical.agriculture) { transitive = false }
     extraLocalRuntime(forge.cucumber) { transitive = false }
     extraLocalRuntime(forge.ars.nouveau) { transitive = false }

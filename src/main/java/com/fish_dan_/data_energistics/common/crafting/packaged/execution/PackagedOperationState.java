@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 
@@ -90,9 +89,6 @@ public final class PackagedOperationState implements PackagedMachineOperation {
             if (!adapter.id().equals(this.adapterId)) throw new IllegalArgumentException("Packaged adapter changed identity");
             return adapter.advance(this) || this.changed;
         } catch (RuntimeException exception) {
-            Data_Energistics.LOGGER.error(
-                    "Packaged operation {} for {} at {} using recipe {} will retry (progress={}, inputs={})",
-                    this.id, this.adapterId, this.position, this.recipeId, this.progress, this.inputs, exception);
             return true;
         } finally {
             this.activeLevel = null;

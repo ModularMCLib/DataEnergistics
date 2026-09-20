@@ -422,8 +422,11 @@ final class DraconicFusionAdapter implements PackagedMachineAdapter {
                         continue;
                     BlockPos linkedCore = injector.corePos.get().getPos();
                     // An injector may retain a stale link to another core within the scan range.
-                    // It is not part of this structure and must not invalidate the current core.
-                    if (linkedCore.getY() != -9999 && !linkedCore.equals(position)) continue;
+                    // Clear that persisted link so dismantle/rebuild cycles do not keep stale ownership.
+                    if (linkedCore.getY() != -9999 && !linkedCore.equals(position)) {
+                        injector.setCore(null);
+                        continue;
+                    }
                     injectors.add(injector);
                 }
             }

@@ -1746,7 +1746,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return 0;
         }
 
-        LevelChunk chunk = this.level.getChunkSource().getChunk(chunkX, chunkZ, false);
+        // getChunk(..., false) can still schedule generation for a ticketed holder; scanning must remain read-only.
+        LevelChunk chunk = this.level.getChunkSource().getChunkNow(chunkX, chunkZ);
         if (chunk == null) {
             return 0;
         }
@@ -2257,7 +2258,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
         for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                LevelChunk chunk = this.level.getChunkSource().getChunk(chunkX, chunkZ, false);
+                LevelChunk chunk = this.level.getChunkSource().getChunkNow(chunkX, chunkZ);
                 if (chunk == null) {
                     continue;
                 }

@@ -42,6 +42,20 @@ public interface PackagedMachineAdapter {
     boolean recognizes(ServerLevel level, BlockPos position);
 
     /**
+     * Reads the maximum currently safe logical batch for one concrete machine, bounded by requestedCount.
+     * Prototype counters and pattern describe one logical craft and must not be mutated. Called only for
+     * loaded, recognized, unclaimed machines on the server thread. Return zero when unavailable; the default
+     * preserves single-craft adapters. Opted-in adapters must accept the scaled inputs and output quantities
+     * in prepare and physically process them without bypassing native energy, timing or output accounting.
+     * Capacity must be based on real machine storage or native item/entity processing limits, not an unbounded
+     * provider queue. No world references or reservations may be retained from this read-only observation.
+     */
+    default long batchCapacity(ServerLevel level, BlockPos position, Direction face, ResourceLocation recipeId,
+                               IPatternDetails pattern, KeyCounter[] prototype, long requestedCount) {
+        return 1;
+    }
+
+    /**
      * Opts into durable CPU-supplied reusable inputs. A separately registered reusable rule must identify
      * each retained slot with an UNCHANGED rule. Each native cycle must physically return those exact assets through the operation;
      * the dispatcher holds them between cycles and settles them to their CPU owner only once.

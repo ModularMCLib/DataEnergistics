@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider.packaged;
 
-import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingCustodyCensus;
@@ -16,11 +15,17 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTargetAvailability;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.mixin.core.accessor.ae2.PatternProviderLogicFieldAccessor;
 
 import appeng.api.config.LockCraftingMode;
+import appeng.api.config.Settings;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IManagedGridNode;
@@ -47,7 +52,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** Adjacent-only 36-slot host for the shared real-machine dispatcher. */
-public final class DigitalPackagedPatternProviderLogic extends PatternProviderLogic implements IGridTickable, BoundPatternInputProvider, ReusableCraftingProviderAdapter {
+public final class DigitalPackagedPatternProviderLogic extends PatternProviderLogic implements IGridTickable, BoundPatternInputProvider, ReusableCraftingProviderAdapter, TargetedCountedCraftingProvider {
 
     private final IManagedGridNode node;
     private final PatternProviderLogicHost owner;
@@ -66,7 +71,46 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
 
     @Override
     public @Nullable CountedCraftingAdmission prepareBatch(IPatternDetails pattern, KeyCounter[] prototype, long count) {
-        return PatternProviderBatching.prepareSingle(this, pattern, prototype, count);
+        if (!(owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return null;
+        var access = (PatternProviderLogicFieldAccessor) (Object) this;
+        var adjacent = new ObjectArrayList<ConnectorLink>();
+        for (var side : access.dataEnergistics$invokeGetActiveSides()) adjacent.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
+        var lock = getConfigManager().getSetting(Settings.LOCK_CRAFTING_MODE);
+        long bounded = lock == LockCraftingMode.LOCK_UNTIL_RESULT || lock == LockCraftingMode.LOCK_UNTIL_PULSE ? 1 : count;
+        return dispatch.prepareBatch(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(), pattern, prototype, bounded,
+                ObjectList.of(), adjacent, null,
+                () -> node.isActive() && !owner.getBlockEntity().isRemoved() && !isBusy() &&
+                        getCraftingLockedReason() == LockCraftingMode.NONE && access.dataEnergistics$getPatterns().contains(pattern),
+                () -> {
+                    access.dataEnergistics$invokeOnPushPatternSuccess(pattern);
+                    onReturnInventoryChanged();
+                });
+    }
+
+    @Override
+    public CountedCraftingPreparation prepareBatch(IPatternDetails pattern, KeyCounter[] prototype, long count,
+                                                    CraftingDispatchTargetAvailability availability) {
+        var target = CraftingDispatchTarget.provider();
+        var admission = availability.canAttempt(target) ? prepareBatch(pattern, prototype, count) : null;
+        return admission == null ? CountedCraftingPreparation.rejected(CraftingDispatchRejection.targeted(CraftingDispatchStatus.NO_CAPACITY, target)) :
+                CountedCraftingPreparation.accepted(admission, target);
+    }
+
+    @Override
+    public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] prototype,
+                                                                   long count, CraftingDispatchTarget target) {
+        return target.equals(CraftingDispatchTarget.provider()) ? prepareBatch(pattern, prototype, count) : null;
+    }
+
+    @Override
+    public ObjectList<ProviderCapacitySnapshot> snapshotCapacity(CraftingProviderId providerId, IPatternDetails pattern,
+                                                                KeyCounter[] prototype, long count, String patternIdentity,
+                                                                long publicationRevision, long capacityRevision, long captureTick) {
+        var admission = prepareBatch(pattern, prototype, count);
+        long capacity = admission == null ? 0 : admission.count();
+        return ObjectList.of(new ProviderCapacitySnapshot(providerId, CraftingDispatchTarget.provider(), Optional.empty(),
+                patternIdentity, publicationRevision, capacityRevision, captureTick, ProviderRoutingMode.UNKNOWN,
+                new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
     }
 
     @Override
@@ -166,22 +210,14 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
     public CountedCraftingPreparation prepareBoundInputBatch(IPatternDetails patternDetails,
                                                              IPatternDetails extractionDetails, KeyCounter[] prototype, long requestedCount,
                                                              CraftingDispatchTargetAvailability targetAvailability) {
-        // The machine adapter validates the CPU's exact bound keys against the registered recipe.
-        var target = CraftingDispatchTarget.provider();
-        if (!targetAvailability.canAttempt(target)) {
-            return CountedCraftingPreparation.rejected(
-                    CraftingDispatchRejection.targeted(CraftingDispatchStatus.NO_CAPACITY, target));
-        }
-        return CountedCraftingPreparation.accepted(
-                PatternProviderBatching.prepareSingle(this, patternDetails, prototype, requestedCount), target);
+        return prepareBatch(patternDetails, prototype, requestedCount, targetAvailability);
     }
 
     @Override
     public @Nullable CountedCraftingAdmission prepareBoundInputBatchForTarget(IPatternDetails patternDetails,
                                                                               IPatternDetails extractionDetails, KeyCounter[] prototype, long requestedCount,
                                                                               CraftingDispatchTarget target) {
-        return target.equals(CraftingDispatchTarget.provider()) ?
-                PatternProviderBatching.prepareSingle(this, patternDetails, prototype, requestedCount) : null;
+        return prepareBatchForTarget(patternDetails, prototype, requestedCount, target);
     }
 
     @Override

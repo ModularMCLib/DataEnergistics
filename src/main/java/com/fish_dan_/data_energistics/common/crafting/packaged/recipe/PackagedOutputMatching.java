@@ -169,6 +169,11 @@ public final class PackagedOutputMatching {
     }
 
     private static List<Rule> rules(IPatternDetails pattern) {
+        if (pattern instanceof PackagedBatchPattern batch) {
+            return rules(batch.original()).stream().map(rule -> new Rule(
+                    new GenericStack(rule.stack().what(), Math.multiplyExact(rule.stack().amount(), batch.count())), rule.matching()))
+                    .collect(ObjectArrayList.toList());
+        }
         var definition = pattern.getDefinition();
         var encoded = definition.get(AEComponents.ENCODED_PROCESSING_PATTERN);
         var outputs = encoded == null ? pattern.getOutputs() : encoded.sparseOutputs();

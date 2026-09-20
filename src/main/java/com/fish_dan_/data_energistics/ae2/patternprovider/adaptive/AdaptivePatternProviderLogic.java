@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarge
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingCustodyCensus;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.SlotStack;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
@@ -52,6 +53,7 @@ import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
 import appeng.api.config.LockCraftingMode;
+import appeng.api.config.Settings;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -170,6 +172,16 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private @Nullable ReusableCraftingProviderAdapter activeRouteReusableAdapter() {
         var target = activeDispatchTarget();
         return target == null ? null : target.dispatch().reusableAdapter(target);
+    }
+
+    private @Nullable CountedCraftingProviderAdapter activeRouteCountedAdapter() {
+        var target = activeDispatchTarget();
+        return target == null ? null : target.dispatch().countedAdapter(target);
+    }
+
+    private long routeBatchLimit(long requested) {
+        var mode = getConfigManager().getSetting(Settings.LOCK_CRAFTING_MODE);
+        return mode == LockCraftingMode.LOCK_UNTIL_RESULT || mode == LockCraftingMode.LOCK_UNTIL_PULSE ? 1 : requested;
     }
 
     private ObjectList<ReusableCraftingProviderAdapter> routeReusableAdapters() {
@@ -729,6 +741,13 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                 return CountedCraftingPreparation.rejected(
                         CraftingDispatchRejection.targeted(CraftingDispatchStatus.NO_CAPACITY, target));
             }
+            var counted = activeRouteCountedAdapter();
+            if (counted != null) {
+                var admission = counted.prepareBatch(patternDetails, prototype, routeBatchLimit(requestedCount));
+                return admission == null ? CountedCraftingPreparation.rejected(
+                        CraftingDispatchRejection.targeted(CraftingDispatchStatus.NO_CAPACITY, target)) :
+                        CountedCraftingPreparation.accepted(admission, target);
+            }
             return CountedCraftingPreparation.accepted(
                     PatternProviderBatching.prepareSingle(this, patternDetails, prototype, requestedCount),
                     target);
@@ -771,6 +790,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                                            long capacityRevision,
                                                            long captureTick) {
         if (usesSpecialBatchRoute(patternDetails)) {
+            var counted = activeRouteCountedAdapter();
+            if (counted != null) {
+                var admission = counted.prepareBatch(patternDetails, prototype, routeBatchLimit(requestedCrafts));
+                long capacity = admission == null ? 0 : admission.count();
+                return ObjectList.of(new ProviderCapacitySnapshot(providerId, CraftingDispatchTarget.provider(), Optional.empty(),
+                        patternIdentity, publicationRevision, capacityRevision, captureTick, ProviderRoutingMode.UNKNOWN,
+                        new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
+            }
             return List.of(new ProviderCapacitySnapshot(
                     providerId,
                     CraftingDispatchTarget.provider(),
@@ -804,6 +831,9 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                                           long requestedCount,
                                                           CraftingDispatchTarget target) {
         if (usesSpecialBatchRoute(patternDetails)) {
+            var counted = activeRouteCountedAdapter();
+            if (counted != null) return target.equals(CraftingDispatchTarget.provider()) ?
+                    counted.prepareBatch(patternDetails, prototype, routeBatchLimit(requestedCount)) : null;
             return target.equals(CraftingDispatchTarget.provider()) ?
                     PatternProviderBatching.prepareSingle(this, patternDetails, prototype, requestedCount) :
                     null;

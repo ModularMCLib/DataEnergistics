@@ -1,9 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedBatchPattern;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.PackagedReusableState;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
@@ -35,6 +37,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 /** Per-provider operations and independent machine-family policies. World objects are resolved afresh each tick. */
 public final class PackagedDispatchState {
@@ -117,6 +120,111 @@ public final class PackagedDispatchState {
         this.policies.put(group, policy);
     }
 
+    /** Read-only capacity preparation; commit revalidates and owns the fixed machine and complete scaled envelope. */
+    public @Nullable CountedCraftingAdmission prepareBatch(ServerLevel level, PackagedRecipeCatalog catalog,
+                                                          IPatternDetails pattern, KeyCounter[] prototype, long requestedCount,
+                                                          ObjectList<ConnectorLink> remote, ObjectList<ConnectorLink> adjacent,
+                                                          @Nullable ConnectorPolicy routePolicy, BooleanSupplier available, Runnable success) {
+        if (requestedCount <= 0) throw new IllegalArgumentException("Packaged batch count must be positive");
+        if (this.recoveryReceipt != null || !available.getAsBoolean()) return null;
+        var stack = pattern.getDefinition().getReadOnlyStack();
+        var reference = EncodedPatternRecipeReference.get(stack);
+        var recipe = EncodedPatternRecipeReference.getProcessingRecipeId(stack);
+        if (reference == null || recipe == null) return null;
+        long bounded = requestedCount;
+        for (var input : prototype) for (var entry : input) {
+            if (entry.getLongValue() <= 0) throw new IllegalArgumentException("Invalid packaged input prototype");
+            bounded = Math.min(bounded, Long.MAX_VALUE / entry.getLongValue());
+        }
+        for (var output : pattern.getOutputs()) bounded = Math.min(bounded, Long.MAX_VALUE / output.amount());
+        var claims = PackagedMachineClaims.get(level);
+        for (var links : ObjectList.of(remote, adjacent)) {
+            for (var adapter : catalog.forType(reference.recipeTypeId())) {
+                var candidates = candidates(links);
+                if (candidates.isEmpty()) continue;
+                var routing = routePolicy == null ? policy(adapter.id()) : routePolicy;
+                int start = routing == ConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.cursors.getInt(adapter.id()), candidates.size()) : 0;
+                for (int offset = 0; offset < candidates.size(); offset++) {
+                    int index = (start + offset) % candidates.size();
+                    var link = candidates.get(index);
+                    if (!level.isLoaded(link.position()) || !adapter.recognizes(level, link.position()) || !claims.available(link.position())) continue;
+                    long count = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, prototype, bounded);
+                    if (count < 0 || count > bounded) throw new IllegalStateException("Invalid packaged machine batch capacity");
+                    if (count == 0) continue;
+                    IPatternDetails batch = count == 1 ? pattern : new PackagedBatchPattern(pattern, count);
+                    var inputs = scaledInputs(prototype, count);
+                    var preparation = adapter.prepare(level, link.position(), link.side(), recipe, batch, inputs);
+                    if (preparation == null) continue;
+                    var occupied = adapter.occupiedPositions(level, link.position(), preparation);
+                    if (occupied.stream().anyMatch(position -> !level.isLoaded(position) || !claims.available(position))) continue;
+                    int next = (index + 1) % candidates.size();
+                    return new CountedCraftingAdmission() {
+                        private boolean attempted;
+                        private boolean transferred;
+
+                        @Override
+                        public long count() { return count; }
+
+                        @Override
+                        public boolean hasTransferredInputOwnership() { return transferred; }
+
+                        @Override
+                        public boolean commit(KeyCounter[] supplied) {
+                            if (attempted || supplied != prototype) throw new IllegalStateException("Packaged admission must commit its original prototype once");
+                            attempted = true;
+                            if (recoveryReceipt != null || !available.getAsBoolean() || !level.isLoaded(link.position()) ||
+                                    !adapter.recognizes(level, link.position()) || !claims.available(link.position())) return false;
+                            var actualInputs = scaledInputs(supplied, count);
+                            if (!sameInputs(inputs, actualInputs)) return false;
+                            long currentCapacity = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, supplied, count);
+                            if (currentCapacity != count) return false;
+                            var current = adapter.prepare(level, link.position(), link.side(), recipe, batch, actualInputs);
+                            if (current == null) return false;
+                            var positions = adapter.occupiedPositions(level, link.position(), current);
+                            if (positions.stream().anyMatch(position -> !level.isLoaded(position))) return false;
+                            PackagedOutputMatching.save(batch, current, level.registryAccess());
+                            var operation = new PackagedOperationState(adapter.id(), recipe, link.position(), link.side(), current, actualInputs, positions);
+                            if (!claims.acquireAll(positions, operation.id())) return false;
+                            transferred = true;
+                            operations.add(operation);
+                            for (var input : supplied) input.clear();
+                            cursors.put(adapter.id(), next);
+                            success.run();
+                            return true;
+                        }
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
+    private static KeyCounter[] scaledInputs(KeyCounter[] prototype, long count) {
+        var inputs = new KeyCounter[prototype.length];
+        for (int i = 0; i < inputs.length; i++) {
+            inputs[i] = new KeyCounter();
+            for (var entry : prototype[i]) inputs[i].add(entry.getKey(), Math.multiplyExact(entry.getLongValue(), count));
+        }
+        return inputs;
+    }
+
+    private static boolean sameInputs(KeyCounter[] expected, KeyCounter[] actual) {
+        for (int i = 0; i < expected.length; i++) {
+            for (var entry : expected[i]) if (actual[i].get(entry.getKey()) != entry.getLongValue()) return false;
+            for (var entry : actual[i]) if (expected[i].get(entry.getKey()) != entry.getLongValue()) return false;
+        }
+        return true;
+    }
+
+    private static ObjectList<ConnectorLink> candidates(ObjectList<ConnectorLink> links) {
+        var candidates = new ObjectArrayList<ConnectorLink>();
+        var seen = new LongOpenHashSet();
+        for (var link : links) {
+            if (link.mode().supportsInput() && seen.add(link.position().asLong())) candidates.add(link);
+        }
+        return candidates;
+    }
+
     public boolean dispatch(ServerLevel level, PackagedRecipeCatalog catalog, IPatternDetails pattern,
                             KeyCounter[] inputs, ObjectList<ConnectorLink> remote, ObjectList<ConnectorLink> adjacent) {
         if (this.recoveryReceipt != null) return false;
@@ -139,13 +247,8 @@ public final class PackagedDispatchState {
     private boolean dispatchGroup(ServerLevel level, PackagedMachineAdapter adapter, PackagedMachineClaims claims,
                                   ResourceLocation recipe, IPatternDetails pattern, KeyCounter[] inputs,
                                   ObjectList<ConnectorLink> links) {
-        var candidates = new ObjectArrayList<ConnectorLink>();
-        var seen = new LongOpenHashSet();
-        for (var link : links) {
-            // Keep unloaded links in the ordering so loading a chunk cannot move the round-robin cursor.
-            if (link.mode().supportsInput() && seen.add(link.position().asLong()))
-                candidates.add(link);
-        }
+        // Keep unloaded links in the ordering so loading a chunk cannot move the round-robin cursor.
+        var candidates = candidates(links);
         if (candidates.isEmpty()) return false;
         int start = policy(adapter.id()) == ConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.cursors.getInt(adapter.id()), candidates.size()) : 0;
         for (int offset = 0; offset < candidates.size(); offset++) {

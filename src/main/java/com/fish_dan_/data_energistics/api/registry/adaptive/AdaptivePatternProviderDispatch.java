@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.api.registry.adaptive;
 
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
@@ -32,6 +33,15 @@ import java.util.List;
  */
 @FunctionalInterface
 public interface AdaptivePatternProviderDispatch {
+
+    /**
+     * Optional capacity-aware batch view of this route on the server thread. Capture and preparation must be
+     * read-only; only admission commit transfers inputs. New admissions require the route to remain selected.
+     * Return null to keep the existing single-craft special route. Persistent work stays in route-owned state.
+     */
+    default @Nullable CountedCraftingProviderAdapter countedAdapter(AdaptivePatternProviderDispatchTarget target) {
+        return null;
+    }
 
     /**
      * Optional server-thread reusable executor, including already-owned sessions while this route is inactive.

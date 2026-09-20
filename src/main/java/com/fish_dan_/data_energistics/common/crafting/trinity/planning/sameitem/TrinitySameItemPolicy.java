@@ -76,6 +76,7 @@ public final class TrinitySameItemPolicy {
      */
     public static TrinitySameItemPolicy fromGraph(TrinityCraftingGraphSnapshot graph, AEKey target) {
         var domains = new ObjectArrayList<Domain>();
+        var outputRepresentatives = new Object2ObjectLinkedOpenHashMap<Item, AEItemKey>();
         var exact = new ObjectLinkedOpenHashSet<Item>();
         for (TrinityCraftingGraphPattern pattern : graph.patterns()) {
             var definition = pattern.definition();
@@ -84,12 +85,14 @@ public final class TrinitySameItemPolicy {
                 for (int slot = 0; slot < encoded.sparseInputs().size(); slot++) {
                     var input = encoded.sparseInputs().get(slot);
                     if (input != null && input.what() instanceof AEItemKey key) addDomain(domains, exact, key,
-                            EncodedPatternMatching.mode(definition, slot), EncodedPatternMatching.tags(definition, slot));
+                            EncodedPatternMatching.mode(definition, slot), EncodedPatternMatching.tags(definition, slot), false,
+                            outputRepresentatives);
                 }
                 for (int slot = 0; slot < encoded.sparseOutputs().size(); slot++) {
                     var output = encoded.sparseOutputs().get(slot);
                     if (output != null && output.what() instanceof AEItemKey key) addDomain(domains, exact, key,
-                            EncodedPatternMatching.outputMode(definition, slot), EncodedPatternMatching.outputTags(definition, slot));
+                            EncodedPatternMatching.outputMode(definition, slot), EncodedPatternMatching.outputTags(definition, slot), true,
+                            outputRepresentatives);
                 }
             } else {
                 for (var input : pattern.inputs()) for (var alternative : input.alternatives()) {
@@ -115,13 +118,24 @@ public final class TrinitySameItemPolicy {
             if (domains.stream().anyMatch(other -> !other.items().equals(domain.items()) &&
                     other.items().stream().anyMatch(domain.items()::contains)))
                 continue;
-            AEItemKey representative = target instanceof AEItemKey item && domain.items().contains(item.getItem()) ? item : domain.representative();
+            AEItemKey representative = domain.representative();
+            for (var output : outputRepresentatives.values()) {
+                if (domain.items().contains(output.getItem())) {
+                    representative = output;
+                    break;
+                }
+            }
+            if (target instanceof AEItemKey targetItem && domain.items().contains(targetItem.getItem())) {
+                representative = targetItem;
+            }
             for (var item : domain.items()) representatives.putIfAbsent(item, representative);
         }
         return representatives.isEmpty() ? EMPTY : new TrinitySameItemPolicy(representatives);
     }
 
-    private static void addDomain(ObjectList<Domain> domains, ObjectSet<Item> exact, AEItemKey key, ProcessingMatchMode mode, List<ResourceLocation> tags) {
+    private static void addDomain(ObjectList<Domain> domains, ObjectSet<Item> exact, AEItemKey key,
+                                  ProcessingMatchMode mode, List<ResourceLocation> tags, boolean output,
+                                  Object2ObjectLinkedOpenHashMap<Item, AEItemKey> outputRepresentatives) {
         if (mode == ProcessingMatchMode.EXACT) {
             exact.add(key.getItem());
             return;
@@ -134,6 +148,7 @@ public final class TrinitySameItemPolicy {
             for (var name : tags) BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, name))
                     .ifPresent(values -> values.forEach(holder -> members.add(holder.value())));
         }
+        if (output) outputRepresentatives.putIfAbsent(key.getItem(), key);
         domains.add(new Domain(key, ObjectSets.unmodifiable(members)));
     }
 

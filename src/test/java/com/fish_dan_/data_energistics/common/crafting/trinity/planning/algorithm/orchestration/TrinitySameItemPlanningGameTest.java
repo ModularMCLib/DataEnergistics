@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
@@ -25,6 +26,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -55,7 +58,7 @@ public final class TrinitySameItemPlanningGameTest {
         AEItemKey target = AEItemKey.of(Items.DIAMOND);
         TrinityCraftingGraphSnapshot graph = graph(helper,
                 processing(List.of(new GenericStack(fuel, 1L)), new GenericStack(producerOutput, 1L), true),
-                processing(List.of(new GenericStack(consumerInput, 1L)), new GenericStack(target, 1L), false));
+                processing(List.of(new GenericStack(consumerInput, 1L)), new GenericStack(target, 1L), true, false));
 
         TrinityAlgorithmResult<TrinityCraftingPlan> result = plan(
                 graph,
@@ -84,7 +87,7 @@ public final class TrinitySameItemPlanningGameTest {
         TrinityCraftingGraphSnapshot graph = graph(helper,
                 processing(List.of(new GenericStack(AEItemKey.of(Items.COAL), 1L)),
                         new GenericStack(producerOutput, 1L), true),
-                processing(List.of(new GenericStack(consumerInput, 2L)), new GenericStack(target, 1L), false));
+                processing(List.of(new GenericStack(consumerInput, 2L)), new GenericStack(target, 1L), true, false));
         TrinityPlanningInventory inventory = TrinityPlanningInventory.finite(Map.of(
                 firstStock, BigInteger.ONE,
                 secondStock, BigInteger.ONE));
@@ -124,6 +127,35 @@ public final class TrinitySameItemPlanningGameTest {
         helper.succeed();
     }
 
+    @TestHolder("tag_domain_preserves_one_representative_and_target_across_reload")
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5")
+    public static void tagDomainPreservesOneRepresentativeAcrossReload(GameTestHelper helper) {
+        AEItemKey oak = AEItemKey.of(Items.OAK_PLANKS);
+        AEItemKey birch = AEItemKey.of(Items.BIRCH_PLANKS);
+        ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(
+                List.of(new GenericStack(oak, 1L)), List.of(new GenericStack(birch, 1L)));
+        CompoundTag rule = new CompoundTag();
+        rule.putInt("mode", ProcessingMatchMode.TAG.ordinal());
+        ListTag tags = new ListTag();
+        tags.add(StringTag.valueOf("minecraft:planks"));
+        rule.put("tags", tags);
+        CompoundTag matching = new CompoundTag();
+        matching.put("i0", rule.copy());
+        matching.put("o0", rule.copy());
+        encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, matching);
+        var graph = graph(helper, new AEProcessingPattern(AEItemKey.of(encoded)));
+        var policy = graph.sameItemPolicy(oak);
+        helper.assertValueEqual(policy.normalizeKey(birch), oak, "Every tag member must share the exact target representative");
+        helper.assertValueEqual(policy.normalizeKey(oak), oak, "Target must remain its own representative");
+        var restored = TrinitySameItemPolicy.load(
+                policy.save(helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
+        helper.assertValueEqual(restored, policy, "Tag-domain representatives must survive reload");
+        var nonTarget = graph.sameItemPolicy(AEItemKey.of(Items.DIAMOND));
+        helper.assertValueEqual(nonTarget.normalizeKey(oak), birch, "A non-target tag domain must share the output representative");
+        helper.succeed();
+    }
+
     private static TrinityAlgorithmResult<TrinityCraftingPlan> plan(TrinityCraftingGraphSnapshot graph,
                                                                     AEKey target,
                                                                     TrinityPlanningInventory inventory) {
@@ -151,13 +183,18 @@ public final class TrinitySameItemPlanningGameTest {
     }
 
     private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output, boolean sameItem) {
+        return processing(inputs, output, sameItem, sameItem);
+    }
+
+    private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output,
+                                              boolean flexibleInputs, boolean flexibleOutput) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs, List.of(output));
         var rules = new CompoundTag();
-        if (sameItem) {
+        if (flexibleInputs || flexibleOutput) {
             var rule = new CompoundTag();
             rule.putInt("mode", ProcessingMatchMode.ID.ordinal());
-            rules.put("o0", rule.copy());
-            for (int i = 0; i < inputs.size(); i++) if (inputs.get(i).what() instanceof AEItemKey) rules.put("i" + i, rule.copy());
+            if (flexibleOutput) rules.put("o0", rule.copy());
+            for (int i = 0; flexibleInputs && i < inputs.size(); i++) if (inputs.get(i).what() instanceof AEItemKey) rules.put("i" + i, rule.copy());
         }
         encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, rules);
         return new AEProcessingPattern(AEItemKey.of(encoded));

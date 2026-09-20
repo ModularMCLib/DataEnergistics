@@ -21,7 +21,9 @@
 
 ```text
 integration/
-├── entrypoint/                    所有集成入口直接放在此包
+├── entrypoint/
+│   ├── client/                    仅客户端加载的集成入口
+│   └── common/                    通用及双端集成入口
 ├── ae/
 │   ├── ae2cs/patternprovider/
 │   └── appflux/{energy,weapon}/
@@ -37,7 +39,7 @@ integration/
 └── guide/guideme/
 ```
 
-入口包是统一入口的明确例外，不再按模组建子包，也不保留转发到旧注册类的包装入口。跨模组共享代码按实际职责保留，例如 `crafting/catalog`；不要为了对齐层级创建空模组包。
+入口统一在 `entrypoint` 下按 `client` 和 `common` 分组，不再按模组建子包，也不保留转发到旧注册类的包装入口。Jade 同时注册服务端数据与客户端显示，属于 `common`。跨模组共享代码按实际职责保留，例如 `crafting/catalog`；不要为了对齐层级创建空模组包。
 
 Mixin 按“类别 → 目标模组 → 功能或额外依赖”组织。例如 `mixin/ae/ae2/crafting`、`mixin/technology/mekanismmore/appmek` 和 `mixin/technology/avaritia/emi`。额外依赖直接使用模组名称，不再插入 `compat` 层；加载条件仍由 Mixin 插件显式控制。
 

@@ -27,7 +27,7 @@ import java.util.Optional;
 /** Native endpoint metadata plus complete session escrows; embedded directly in the owning core/provider state. */
 public final class ReusableCraftingEndpointNbtCodec {
 
-    private static final int SCHEMA = 2;
+    private static final int SCHEMA = 3;
 
     private ReusableCraftingEndpointNbtCodec() {}
 
@@ -67,14 +67,31 @@ public final class ReusableCraftingEndpointNbtCodec {
         requireType(tag, "schema", Tag.TAG_INT);
         requireType(tag, "target", Tag.TAG_STRING);
         int schema = tag.getInt("schema");
-        if (schema != 1 && schema != SCHEMA) {
+        if (schema < 1 || schema > SCHEMA) {
             throw new IllegalArgumentException("Unsupported native reusable endpoint schema");
         }
         List<EntrySnapshot> snapshots = new ObjectArrayList<>();
         for (Tag encoded : compounds(tag, "sessions")) {
             CompoundTag entry = (CompoundTag) encoded;
             requireType(entry, "session", Tag.TAG_COMPOUND);
-            ReusableInputSession session = ReusableInputSessionNbtCodec.decode(entry.getCompound("session"), registries);
+            RecordedNativeResult recorded = null;
+            if (schema >= 2) {
+                requireType(entry, "native_result", Tag.TAG_COMPOUND);
+                CompoundTag nativeResult = entry.getCompound("native_result");
+                if (schema >= 3 && !nativeResult.isEmpty()) {
+                    requireType(nativeResult, "pending", Tag.TAG_BYTE);
+                    requireType(nativeResult, "asynchronous", Tag.TAG_BYTE);
+                }
+                recorded = decodeResult(nativeResult, registries);
+                if (schema < 3 && recorded != null && (recorded.asynchronous() || recorded.result().pending())) {
+                    throw new IllegalArgumentException("Legacy native checkpoint cannot resume asynchronously");
+                }
+            } else if (entry.contains("native_result")) {
+                throw new IllegalArgumentException("Legacy endpoint schema cannot contain a native result checkpoint");
+            }
+            ReusableInputSession session = schema >= 3 && recorded != null && recorded.asynchronous() ?
+                    ReusableInputSessionNbtCodec.decodeWithNativeCheckpoint(entry.getCompound("session"), registries, recorded.operationId()) :
+                    ReusableInputSessionNbtCodec.decode(entry.getCompound("session"), registries);
             requireType(entry, "input_slots", Tag.TAG_INT);
             List<SlotInput> consumed = new ObjectArrayList<>();
             for (Tag inputTag : compounds(entry, "consumed")) {
@@ -101,13 +118,6 @@ public final class ReusableCraftingEndpointNbtCodec {
             requireType(entry, "not_before", Tag.TAG_LONG);
             requireType(entry, "acknowledged", Tag.TAG_BYTE);
             requireType(entry, "failure", Tag.TAG_STRING);
-            RecordedNativeResult recorded = null;
-            if (schema == SCHEMA) {
-                requireType(entry, "native_result", Tag.TAG_COMPOUND);
-                recorded = decodeResult(entry.getCompound("native_result"), registries);
-            } else if (entry.contains("native_result")) {
-                throw new IllegalArgumentException("Legacy endpoint schema cannot contain a native result checkpoint");
-            }
             snapshots.add(new EntrySnapshot(binding, session, entry.getLong("revision"), entry.getLong("not_before"),
                     entry.getBoolean("acknowledged"), entry.getString("failure"), recorded));
         }
@@ -119,8 +129,10 @@ public final class ReusableCraftingEndpointNbtCodec {
         if (recorded == null) return tag;
         tag.putUUID("epoch", recorded.loadedEpoch());
         tag.putLong("operation", recorded.operationId());
+        tag.putBoolean("asynchronous", recorded.asynchronous());
         NativeResult result = recorded.result();
         tag.putBoolean("executed", result.executed());
+        tag.putBoolean("pending", result.pending());
         tag.putString("failure", result.failure().orElse(""));
         tag.put("outputs", stacks(result.outputs(), registries));
         ListTag tools = new ListTag();
@@ -149,7 +161,8 @@ public final class ReusableCraftingEndpointNbtCodec {
         }
         String failure = tag.getString("failure");
         return new RecordedNativeResult(tag.getUUID("epoch"), tag.getLong("operation"), new NativeResult(tag.getBoolean("executed"), tools,
-                readStacks(tag, "outputs", registries), failure.isEmpty() ? Optional.empty() : Optional.of(failure)));
+                readStacks(tag, "outputs", registries), failure.isEmpty() ? Optional.empty() : Optional.of(failure), tag.getBoolean("pending")),
+                tag.getBoolean("asynchronous"));
     }
 
     private static ListTag stacks(List<GenericStack> stacks, HolderLookup.Provider registries) {

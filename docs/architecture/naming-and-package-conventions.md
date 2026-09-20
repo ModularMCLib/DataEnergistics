@@ -39,7 +39,7 @@ integration/
 └── guide/guideme/
 ```
 
-入口统一在 `entrypoint` 下按 `client` 和 `common` 分组，不再按模组建子包，也不保留转发到旧注册类的包装入口。Jade 同时注册服务端数据与客户端显示，属于 `common`。跨模组共享代码按实际职责保留，例如 `crafting/catalog`；不要为了对齐层级创建空模组包。
+使用本模组 `DataEnergisticsEntrypoint` API 的入口统一在 `entrypoint` 下按 `client` 和 `common` 分组，不再按模组建子包，也不保留转发到旧注册类的包装入口。实现第三方 API 的插件放在对应集成包：JEI、EMI 放在各自的 `viewer/<mod>/entrypoint`，Jade 放在 `overlay/jade`，JourneyMap 放在 `map/journeymap/client`。跨模组共享代码按实际职责保留，例如 `crafting/catalog`；不要为了对齐层级创建空模组包。
 
 Mixin 按“类别 → 目标模组 → 功能或额外依赖”组织。例如 `mixin/ae/ae2/crafting`、`mixin/technology/mekanismmore/appmek` 和 `mixin/technology/avaritia/emi`。额外依赖直接使用模组名称，不再插入 `compat` 层；加载条件仍由 Mixin 插件显式控制。
 

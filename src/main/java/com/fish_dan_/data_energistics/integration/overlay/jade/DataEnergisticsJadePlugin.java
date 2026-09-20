@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.integration.entrypoint.common;
+package com.fish_dan_.data_energistics.integration.overlay.jade;
 
 import com.fish_dan_.data_energistics.block.TuningForkBaseBlock;
 import com.fish_dan_.data_energistics.block.machine.DataChargerBlock;

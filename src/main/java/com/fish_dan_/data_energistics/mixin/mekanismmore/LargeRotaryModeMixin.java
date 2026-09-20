@@ -20,6 +20,11 @@ abstract class LargeRotaryModeMixin {
         if (!(tile.getLevel() instanceof ServerLevel level)) return;
         var owner = PackagedMachineClaims.get(level).owner(tile.getBlockPos());
         var data = tile.getPersistentData();
+        if (data.hasUUID("de_packaged_rotary_owner") && !data.getUUID("de_packaged_rotary_owner").equals(owner)) {
+            data.remove("de_packaged_rotary_owner");
+            data.remove("de_packaged_rotary_mode");
+            tile.setChanged();
+        }
         if (owner != null && data.hasUUID("de_packaged_rotary_owner") && owner.equals(data.getUUID("de_packaged_rotary_owner")) && data.getBoolean("de_packaged_rotary_mode") != tile.getMode()) cir.setReturnValue(false);
     }
 }

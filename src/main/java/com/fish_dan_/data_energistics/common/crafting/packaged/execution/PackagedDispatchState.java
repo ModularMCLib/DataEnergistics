@@ -167,12 +167,15 @@ public final class PackagedDispatchState {
             var operation = this.operations.get(this.tickCursor);
             var adapter = catalog.adapter(operation.adapterId());
             var claims = PackagedMachineClaims.get(level);
-            if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id())) {
+            if (claims.structureRemoved(operation.id())) {
+                changed |= operation.retireRemovedStructure();
+            } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id())) {
                 changed |= operation.advance(level, adapter);
             }
             changed |= operation.flush(returns, source);
             if (operation.settled()) {
-                claims.releaseAll(operation.occupiedPositions(), operation.id());
+                if (claims.structureRemoved(operation.id())) claims.acknowledgeRemoval(operation.id());
+                else claims.releaseAll(operation.occupiedPositions(), operation.id());
                 this.operations.remove(this.tickCursor);
                 changed = true;
             } else {

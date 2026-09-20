@@ -10,6 +10,7 @@
 		"mekanismmore.LargeSeparatorDumpingMixin",
 		"mekanismmore.LargeRotaryModeMixin",
 		"core.packaged.PackagedBlockEntityTickMixin",
+		"core.packaged.PackagedMachineRemovalMixin",
 		"core.packaged.PackagedItemMergeMixin",
 		"core.packaged.PackagedReturnInventorySizeMixin",
 		"botania.AlfheimPortalAccessor",

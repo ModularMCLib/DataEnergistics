@@ -147,6 +147,15 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         return this.complete && this.outputs.isEmpty();
     }
 
+    /** Retires a dismantled structure, returning only undelivered inputs and already collected outputs. */
+    public boolean retireRemovedStructure() {
+        if (this.complete) return false;
+        this.inputs.forEach((key, amount) -> this.outputs.merge(key, amount, BigInteger::add));
+        this.inputs.clear();
+        this.complete = true;
+        return true;
+    }
+
     @Override
     public ServerLevel level() {
         if (this.activeLevel == null) throw new IllegalStateException("Packaged operation used outside its tick");

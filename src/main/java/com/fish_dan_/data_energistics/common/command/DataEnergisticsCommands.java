@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.orbital.command;
+package com.fish_dan_.data_energistics.common.command;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackRecord;
@@ -10,134 +10,193 @@ import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLocation;
 import com.fish_dan_.data_energistics.orbital.model.OrbitalAccessRole;
 import com.fish_dan_.data_energistics.orbital.storage.OrbitalOwnershipTransfer;
 import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
+import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Server-side orbital commands: player lifecycle intents plus operator-only attack recovery. */
-public final class OrbitalAdminCommands {
+/** Shared server commands for Data Energistics and its domain integrations. */
+public final class DataEnergisticsCommands {
 
-    public OrbitalAdminCommands() {}
+    public DataEnergisticsCommands() {}
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(
                 Commands.literal("data_energistics")
-                        .then(Commands.literal("orbital")
-                                .then(Commands.literal("transfer")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .then(Commands.argument("recipient", UuidArgument.uuid())
-                                                        .executes(context -> requestTransfer(
-                                                                context.getSource(),
-                                                                UuidArgument.getUuid(context, "weapon"),
-                                                                UuidArgument.getUuid(context, "recipient"))))))
-                                .then(Commands.literal("accept-transfer")
-                                        .then(Commands.argument("transfer", UuidArgument.uuid())
-                                                .executes(context -> acceptTransfer(
+                        .then(Commands.literal("trinity")
+                                .then(Commands.literal("recover")
+                                        .requires(source -> source.hasPermission(2))
+                                        .then(Commands.argument("storage", UuidArgument.uuid())
+                                                .executes(context -> recoverForSource(
                                                         context.getSource(),
-                                                        UuidArgument.getUuid(context, "transfer")))))
-                                .then(Commands.literal("retire")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .executes(context -> beginRetirement(
-                                                        context.getSource(),
-                                                        UuidArgument.getUuid(context, "weapon")))))
-                                .then(Commands.literal("confirm-retire")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .then(Commands.argument("confirmation", UuidArgument.uuid())
-                                                        .executes(context -> confirmRetirement(
+                                                        UuidArgument.getUuid(context, "storage")))
+                                                .then(Commands.argument("player", EntityArgument.player())
+                                                        .executes(context -> recoverForTarget(
                                                                 context.getSource(),
-                                                                UuidArgument.getUuid(context, "weapon"),
-                                                                UuidArgument.getUuid(context, "confirmation"))))))
-                                .then(Commands.literal("endpoint-priority")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .then(Commands.argument("dimension", StringArgumentType.word())
-                                                        .then(Commands.argument("x", IntegerArgumentType.integer(-30_000_000, 30_000_000))
-                                                                .then(Commands.argument("y", IntegerArgumentType.integer(-2_000_000, 2_000_000))
-                                                                        .then(Commands.argument("z", IntegerArgumentType.integer(-30_000_000, 30_000_000))
-                                                                                .then(Commands.argument("priority", IntegerArgumentType.integer(0, 31))
-                                                                                        .executes(context -> setEndpointPriority(
-                                                                                                context.getSource(),
-                                                                                                UuidArgument.getUuid(context, "weapon"),
-                                                                                                StringArgumentType.getString(context, "dimension"),
-                                                                                                IntegerArgumentType.getInteger(context, "x"),
-                                                                                                IntegerArgumentType.getInteger(context, "y"),
-                                                                                                IntegerArgumentType.getInteger(context, "z"),
-                                                                                                IntegerArgumentType.getInteger(context, "priority"))))))))))
-                                .then(Commands.literal("primary-anchor")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .then(Commands.argument("dimension", StringArgumentType.word())
-                                                        .then(Commands.argument("x", IntegerArgumentType.integer(-30_000_000, 30_000_000))
-                                                                .then(Commands.argument("y", IntegerArgumentType.integer(-2_000_000, 2_000_000))
-                                                                        .then(Commands.argument("z", IntegerArgumentType.integer(-30_000_000, 30_000_000))
-                                                                                .executes(context -> selectPrimaryAnchor(
-                                                                                        context.getSource(),
-                                                                                        UuidArgument.getUuid(context, "weapon"),
-                                                                                        StringArgumentType.getString(context, "dimension"),
-                                                                                        IntegerArgumentType.getInteger(context, "x"),
-                                                                                        IntegerArgumentType.getInteger(context, "y"),
-                                                                                        IntegerArgumentType.getInteger(context, "z")))))))))
-                                .then(Commands.literal("authorize")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .then(Commands.argument("player", UuidArgument.uuid())
-                                                        .then(Commands.argument("role", StringArgumentType.word())
-                                                                .executes(context -> authorize(
+                                                                UuidArgument.getUuid(context, "storage"),
+                                                                EntityArgument.getPlayer(context, "player")))))))
+                        .then(orbitalRegistration()));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> orbitalRegistration() {
+        return Commands.literal("orbital")
+                .then(Commands.literal("transfer")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .then(Commands.argument("recipient", UuidArgument.uuid())
+                                        .executes(context -> requestTransfer(
+                                                context.getSource(),
+                                                UuidArgument.getUuid(context, "weapon"),
+                                                UuidArgument.getUuid(context, "recipient"))))))
+                .then(Commands.literal("accept-transfer")
+                        .then(Commands.argument("transfer", UuidArgument.uuid())
+                                .executes(context -> acceptTransfer(
+                                        context.getSource(),
+                                        UuidArgument.getUuid(context, "transfer")))))
+                .then(Commands.literal("retire")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .executes(context -> beginRetirement(
+                                        context.getSource(),
+                                        UuidArgument.getUuid(context, "weapon")))))
+                .then(Commands.literal("confirm-retire")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .then(Commands.argument("confirmation", UuidArgument.uuid())
+                                        .executes(context -> confirmRetirement(
+                                                context.getSource(),
+                                                UuidArgument.getUuid(context, "weapon"),
+                                                UuidArgument.getUuid(context, "confirmation"))))))
+                .then(Commands.literal("endpoint-priority")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .then(Commands.argument("dimension", StringArgumentType.word())
+                                        .then(Commands.argument("x", IntegerArgumentType.integer(-30_000_000, 30_000_000))
+                                                .then(Commands.argument("y", IntegerArgumentType.integer(-2_000_000, 2_000_000))
+                                                        .then(Commands.argument("z", IntegerArgumentType.integer(-30_000_000, 30_000_000))
+                                                                .then(Commands.argument("priority", IntegerArgumentType.integer(0, 31))
+                                                                        .executes(context -> setEndpointPriority(
+                                                                                context.getSource(),
+                                                                                UuidArgument.getUuid(context, "weapon"),
+                                                                                StringArgumentType.getString(context, "dimension"),
+                                                                                IntegerArgumentType.getInteger(context, "x"),
+                                                                                IntegerArgumentType.getInteger(context, "y"),
+                                                                                IntegerArgumentType.getInteger(context, "z"),
+                                                                                IntegerArgumentType.getInteger(context, "priority"))))))))))
+                .then(Commands.literal("primary-anchor")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .then(Commands.argument("dimension", StringArgumentType.word())
+                                        .then(Commands.argument("x", IntegerArgumentType.integer(-30_000_000, 30_000_000))
+                                                .then(Commands.argument("y", IntegerArgumentType.integer(-2_000_000, 2_000_000))
+                                                        .then(Commands.argument("z", IntegerArgumentType.integer(-30_000_000, 30_000_000))
+                                                                .executes(context -> selectPrimaryAnchor(
                                                                         context.getSource(),
                                                                         UuidArgument.getUuid(context, "weapon"),
-                                                                        UuidArgument.getUuid(context, "player"),
-                                                                        StringArgumentType.getString(context, "role")))))))
-                                .then(Commands.literal("revoke")
-                                        .then(Commands.argument("weapon", UuidArgument.uuid())
-                                                .then(Commands.argument("player", UuidArgument.uuid())
-                                                        .executes(context -> revoke(
-                                                                context.getSource(),
-                                                                UuidArgument.getUuid(context, "weapon"),
-                                                                UuidArgument.getUuid(context, "player"))))))
-                                .then(Commands.literal("inspect")
-                                        .requires(source -> source.hasPermission(2))
-                                        .then(Commands.argument("attack", UuidArgument.uuid())
-                                                .executes(context -> inspectAttack(
+                                                                        StringArgumentType.getString(context, "dimension"),
+                                                                        IntegerArgumentType.getInteger(context, "x"),
+                                                                        IntegerArgumentType.getInteger(context, "y"),
+                                                                        IntegerArgumentType.getInteger(context, "z")))))))))
+                .then(Commands.literal("authorize")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .then(Commands.argument("player", UuidArgument.uuid())
+                                        .then(Commands.argument("role", StringArgumentType.word())
+                                                .executes(context -> authorize(
                                                         context.getSource(),
-                                                        UuidArgument.getUuid(context, "attack")))))
-                                .then(Commands.literal("retry")
-                                        .requires(source -> source.hasPermission(2))
-                                        .then(Commands.argument("attack", UuidArgument.uuid())
-                                                .executes(context -> retryAttack(
-                                                        context.getSource(),
-                                                        UuidArgument.getUuid(context, "attack")))))
-                                .then(Commands.literal("abort")
-                                        .requires(source -> source.hasPermission(2))
-                                        .then(Commands.argument("attack", UuidArgument.uuid())
-                                                .executes(context -> abortAttack(
-                                                        context.getSource(),
-                                                        UuidArgument.getUuid(context, "attack")))))
-                                .then(Commands.literal("refund")
-                                        .requires(source -> source.hasPermission(2))
-                                        .then(Commands.argument("attack", UuidArgument.uuid())
-                                                .executes(context -> refundAttack(
-                                                        context.getSource(),
-                                                        UuidArgument.getUuid(context, "attack")))))
-                                .then(Commands.literal("repair-owner-index")
-                                        .requires(source -> source.hasPermission(2))
-                                        .executes(context -> repairOwnerIndex(context.getSource())))
-                                .then(Commands.literal("reconcile-endpoints")
-                                        .requires(source -> source.hasPermission(2))
-                                        .executes(context -> reconcileEndpoints(context.getSource())))));
+                                                        UuidArgument.getUuid(context, "weapon"),
+                                                        UuidArgument.getUuid(context, "player"),
+                                                        StringArgumentType.getString(context, "role")))))))
+                .then(Commands.literal("revoke")
+                        .then(Commands.argument("weapon", UuidArgument.uuid())
+                                .then(Commands.argument("player", UuidArgument.uuid())
+                                        .executes(context -> revoke(
+                                                context.getSource(),
+                                                UuidArgument.getUuid(context, "weapon"),
+                                                UuidArgument.getUuid(context, "player"))))))
+                .then(Commands.literal("inspect")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("attack", UuidArgument.uuid())
+                                .executes(context -> inspectAttack(
+                                        context.getSource(),
+                                        UuidArgument.getUuid(context, "attack")))))
+                .then(Commands.literal("retry")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("attack", UuidArgument.uuid())
+                                .executes(context -> retryAttack(
+                                        context.getSource(),
+                                        UuidArgument.getUuid(context, "attack")))))
+                .then(Commands.literal("abort")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("attack", UuidArgument.uuid())
+                                .executes(context -> abortAttack(
+                                        context.getSource(),
+                                        UuidArgument.getUuid(context, "attack")))))
+                .then(Commands.literal("refund")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("attack", UuidArgument.uuid())
+                                .executes(context -> refundAttack(
+                                        context.getSource(),
+                                        UuidArgument.getUuid(context, "attack")))))
+                .then(Commands.literal("repair-owner-index")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> repairOwnerIndex(context.getSource())))
+                .then(Commands.literal("reconcile-endpoints")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> reconcileEndpoints(context.getSource())));
+    }
+
+    private static int recoverForSource(CommandSourceStack source, UUID storageId) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("commands.data_energistics.trinity.recover.player_required"));
+            return 0;
+        }
+        return recover(source, storageId, player);
+    }
+
+    private static int recoverForTarget(CommandSourceStack source, UUID storageId, ServerPlayer player) {
+        return recover(source, storageId, player);
+    }
+
+    private static int recover(CommandSourceStack source, UUID storageId, ServerPlayer player) {
+        try {
+            ItemStack core = DEBlocks.TRINITY_DATA_CORE.get().asItem().getDefaultInstance();
+            core.set(DEDataComponents.TRINITY_DATA_CORE_STORAGE_ID, storageId);
+            core.set(DEDataComponents.TRINITY_DATA_CORE_HOST_ID, UUID.randomUUID());
+            core.set(DEDataComponents.TRINITY_DATA_CORE_STORAGE_PRIORITY, 0);
+            core.set(DEDataComponents.TRINITY_DATA_CORE_PATTERN_PRIORITY, 0);
+            player.getInventory().placeItemBackInInventory(core);
+            source.sendSuccess(
+                    () -> Component.translatable(
+                            "commands.data_energistics.trinity.recover.success",
+                            storageId,
+                            player.getDisplayName()),
+                    true);
+            return 1;
+        } catch (RuntimeException exception) {
+            Data_Energistics.LOGGER.error(
+                    "Failed to recover Trinity Data Core for storage {} to player {}",
+                    storageId,
+                    player.getGameProfile().getName(),
+                    exception);
+            source.sendFailure(Component.translatable("commands.data_energistics.trinity.recover.failed", storageId));
+            return 0;
+        }
     }
 
     private static int setEndpointPriority(

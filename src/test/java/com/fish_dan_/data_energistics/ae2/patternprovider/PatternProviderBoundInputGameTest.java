@@ -43,9 +43,10 @@ public final class PatternProviderBoundInputGameTest {
         AEItemKey book = AEItemKey.of(Items.BOOK);
         AEItemKey firstActualPaper = namedPaper("first");
         AEItemKey secondActualPaper = namedPaper("second");
-        IPatternDetails registered = processingPattern(plannedPaper, book);
+        IPatternDetails registered = processingPattern(plannedPaper, book, false);
+        IPatternDetails authorized = processingPattern(plannedPaper, book, true);
         IPatternDetails emissionDetails = new BoundEmissionDetails(
-                registered,
+                authorized,
                 List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)));
         boolean strictRejected = false;
         try {
@@ -122,19 +123,21 @@ public final class PatternProviderBoundInputGameTest {
         helper.succeed();
     }
 
-    private static IPatternDetails processingPattern(AEItemKey paper, AEItemKey book) {
+    private static IPatternDetails processingPattern(AEItemKey paper, AEItemKey book, boolean authorizePaper) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(
                 List.of(
                         new GenericStack(paper, 1L),
                         new GenericStack(book, 1L),
                         new GenericStack(paper, 1L)),
                 List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L)));
-        var matching = new CompoundTag();
-        var idRule = new CompoundTag();
-        idRule.putInt("mode", ProcessingMatchMode.ID.ordinal());
-        matching.put("i0", idRule.copy());
-        matching.put("i2", idRule.copy());
-        encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, matching);
+        if (authorizePaper) {
+            var matching = new CompoundTag();
+            var idRule = new CompoundTag();
+            idRule.putInt("mode", ProcessingMatchMode.ID.ordinal());
+            matching.put("i0", idRule.copy());
+            matching.put("i2", idRule.copy());
+            encoded.set(DEDataComponents.PROCESSING_PATTERN_MATCHING, matching);
+        }
         return new AEProcessingPattern(AEItemKey.of(encoded));
     }
 

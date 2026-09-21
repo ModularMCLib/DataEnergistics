@@ -22,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -180,13 +181,17 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
             var found = layout.pedestals().stream().filter(target -> target.getAccessPointBlockPos().equals(position)).findFirst();
             if (found.isEmpty() || !found.get().getSuppliedInventory().isEmpty()) return false;
         }
-        var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(8),
-                entity -> PackagedEntityCapture.ownedBy(entity, operation.id()));
+        Vec3 nativeDropPosition = layout.tile() instanceof SpiritAltarBlockEntity altar ? altar.getItemPos() : operation.position().getCenter();
+        var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(nativeDropPosition, nativeDropPosition).inflate(2),
+                entity -> PackagedEntityCapture.ownedBy(entity, operation.id()) ||
+                        layout.tile() instanceof SpiritAltarBlockEntity &&
+                                PackagedOutputMatching.sameKey(operation, output, entity.getItem()));
         long baseCount = 0;
         for (var drop : drops) if (PackagedOutputMatching.sameKey(operation, output, drop.getItem())) baseCount += drop.getItem().getCount();
         if (baseCount < output.getCount()) return false;
         // Luck/augment bonuses are actual owned drops, never promised by the static pattern or discarded.
         for (var drop : drops) {
+            if (!PackagedEntityCapture.ownedBy(drop, operation.id())) PackagedEntityCapture.claim(drop, operation.id());
             ItemStack stack = drop.getItem().copy();
             drop.discard();
             operation.returned(AEItemKey.of(stack), stack.getCount());

@@ -51,6 +51,12 @@ public final class PackagedEntityCapture {
         return operation.equals(owner(entity));
     }
 
+    /** Binds a native machine drop after the machine created it outside the tick capture scope. */
+    public static void claim(ItemEntity entity, UUID operation) {
+        entity.getPersistentData().putUUID(OWNER, operation);
+        entity.setUnlimitedLifetime();
+    }
+
     public static @Nullable UUID owner(ItemEntity entity) {
         var data = entity.getPersistentData();
         return data.hasUUID(OWNER) ? data.getUUID(OWNER) : null;
@@ -67,10 +73,7 @@ public final class PackagedEntityCapture {
             if (operation == null) return;
             scope = new Scope(level, operation);
         }
-        item.getPersistentData().putUUID(OWNER, scope.operation());
-        // A provider can be offline longer than the vanilla five-minute item lifetime.
-        // These physical inputs/products remain owned until the operation collects them.
-        item.setUnlimitedLifetime();
+        claim(item, scope.operation());
     }
 
     private record Scope(ServerLevel level, UUID operation) {}

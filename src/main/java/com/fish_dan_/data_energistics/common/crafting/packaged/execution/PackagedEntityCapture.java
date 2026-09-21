@@ -58,10 +58,15 @@ public final class PackagedEntityCapture {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void spawned(EntityJoinLevelEvent event) {
-        var scope = CURRENT.get();
-        if (scope == null || event.isCanceled() || event.loadedFromDisk() || event.getLevel() != scope.level() ||
+        if (event.isCanceled() || event.loadedFromDisk() || !(event.getLevel() instanceof ServerLevel level) ||
                 !(event.getEntity() instanceof ItemEntity item) || owner(item) != null)
             return;
+        var scope = CURRENT.get();
+        if (scope == null || scope.level() != level) {
+            var operation = PackagedMachineClaims.get(level).ownerNear(item.blockPosition(), 3);
+            if (operation == null) return;
+            scope = new Scope(level, operation);
+        }
         item.getPersistentData().putUUID(OWNER, scope.operation());
         // A provider can be offline longer than the vanilla five-minute item lifetime.
         // These physical inputs/products remain owned until the operation collects them.

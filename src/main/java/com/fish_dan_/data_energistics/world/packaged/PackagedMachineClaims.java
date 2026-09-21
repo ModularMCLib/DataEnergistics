@@ -55,6 +55,21 @@ public final class PackagedMachineClaims extends SavedData {
         return this.owners.get(position.asLong());
     }
 
+    /** Resolves a nearby claimed machine for native drops spawned outside its block tick callback. */
+    public @Nullable UUID ownerNear(BlockPos position, int radius) {
+        double best = Double.POSITIVE_INFINITY;
+        UUID result = null;
+        for (var entry : this.owners.long2ObjectEntrySet()) {
+            BlockPos claimed = BlockPos.of(entry.getLongKey());
+            double distance = claimed.distSqr(position);
+            if (distance <= (double) radius * radius && distance < best) {
+                best = distance;
+                result = entry.getValue();
+            }
+        }
+        return result;
+    }
+
     public boolean acquire(BlockPos position, UUID operation) {
         if (this.removedStructures.contains(operation)) return false;
         UUID owner = this.owners.putIfAbsent(position.asLong(), operation);

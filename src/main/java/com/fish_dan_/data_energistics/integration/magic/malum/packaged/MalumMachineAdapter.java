@@ -67,6 +67,11 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public boolean supportsReusableInputs() {
+        return this.kind == MalumMachineKind.CRUCIBLE;
+    }
+
+    @Override
     public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         var result = new ObjectArrayList<BlockPos>();
         result.add(position);

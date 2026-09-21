@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankin
 
 import appeng.menu.me.items.PatternEncodingTermMenu;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.fml.ModList;
@@ -48,8 +49,30 @@ public final class EmiPatternTransferContextBridge {
         if (recipe instanceof DataChargePressEmiRecipe dataChargePressRecipe) {
             return dataChargePressRecipe.patternRecipeId();
         }
-        if (holder != null) return holder.id();
-        return ModList.get().isLoaded("jei") ? JemiPatternRecipeIdentity.resolve(recipe) : recipe.getId();
+        ResourceLocation resolved = holder != null ? holder.id() :
+                ModList.get().isLoaded("jei") ? JemiPatternRecipeIdentity.resolve(recipe) : recipe.getId();
+        return canonicalRecipeId(resolved);
+    }
+
+    /** Converts EMI's slash-prefixed synthetic id back to the longest matching native recipe id. */
+    private static @Nullable ResourceLocation canonicalRecipeId(@Nullable ResourceLocation id) {
+        if (id == null || !id.getPath().startsWith("/")) return id;
+        var level = Minecraft.getInstance().level;
+        if (level != null) {
+            String syntheticPath = id.getPath();
+            ResourceLocation best = null;
+            for (var candidate : level.getRecipeManager().getRecipes()) {
+                ResourceLocation candidateId = candidate.id();
+                String prefix = "/" + candidateId.getPath() + "/";
+                if (candidateId.getNamespace().equals(id.getNamespace()) && syntheticPath.startsWith(prefix) &&
+                        (best == null || candidateId.getPath().length() > best.getPath().length())) {
+                    best = candidateId;
+                }
+            }
+            if (best != null) return best;
+        }
+        String path = id.getPath().substring(1);
+        return path.isEmpty() ? null : ResourceLocation.fromNamespaceAndPath(id.getNamespace(), path);
     }
 
     /**

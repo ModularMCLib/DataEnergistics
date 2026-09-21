@@ -36,7 +36,8 @@ import java.math.BigInteger;
 /** Runs Botania's native brewery item pickup and mana-gated craft cycle for packaged inputs. */
 public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
 
-    private static final ResourceLocation RECIPE_TYPE = BotanicalBreweryRecipe.TYPE_ID;
+    /** EMI/JEI processing category used by Botania's botanical brewery viewer. */
+    private static final ResourceLocation RECIPE_CATEGORY = ResourceLocation.fromNamespaceAndPath("botania", "botanical_brewery");
 
     @Override
     public ResourceLocation id() {
@@ -45,7 +46,7 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(RECIPE_TYPE);
+        return ObjectSet.of(RECIPE_CATEGORY);
     }
 
     @Override
@@ -55,7 +56,7 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
 
     @Override
     public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
-        var holder = level.getRecipeManager().byKey(recipeId);
+        var holder = level.getRecipeManager().byKey(resolveRecipeId(level, recipeId));
         return holder.isPresent() ? BotanicalBreweryPatternEncoding.complete(level, holder.get(), encodedPattern) : null;
     }
 
@@ -64,7 +65,7 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         if (!recognizes(level, position) || !(level.getBlockEntity(position) instanceof BotanicalBreweryBlockEntity brewery) || !ready(brewery))
             return null;
-        var holder = level.getRecipeManager().byKey(recipeId);
+        var holder = level.getRecipeManager().byKey(resolveRecipeId(level, recipeId));
         if (holder.isEmpty() || !(holder.get().value() instanceof BotanicalBreweryRecipe recipe)) return null;
 
         var plan = plan(level, recipe, pattern, inputs);
@@ -113,7 +114,7 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
             if (operation.available(entry.getKey()).compareTo(BigInteger.valueOf(entry.getLongValue())) < 0)
                 throw new IllegalStateException("Missing owned Botania brewery input");
         }
-        var holder = operation.level().getRecipeManager().byKey(operation.recipeId());
+        var holder = operation.level().getRecipeManager().byKey(resolveRecipeId(operation.level(), operation.recipeId()));
         if (holder.isEmpty() || !(holder.get().value() instanceof BotanicalBreweryRecipe recipe))
             throw new IllegalStateException("Botania brewery recipe disappeared");
         var nativeInput = RecipeUtils.getInputFromListWithoutUnstacking(inputs);
@@ -178,6 +179,24 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
     private static boolean ready(BotanicalBreweryBlockEntity brewery) {
         for (int slot = 0; slot < brewery.inventorySize(); slot++) if (!brewery.getItemHandler().getItem(slot).isEmpty()) return false;
         return true;
+    }
+
+    /** Resolves Botania's EMI synthetic container suffix to the native brewery recipe id. */
+    private static ResourceLocation resolveRecipeId(ServerLevel level, ResourceLocation recipeId) {
+        if (level.getRecipeManager().byKey(recipeId).isPresent()) return recipeId;
+        String path = recipeId.getPath();
+        if (path.startsWith("/")) path = path.substring(1);
+        ResourceLocation best = null;
+        for (var candidate : level.getRecipeManager().getRecipes()) {
+            ResourceLocation candidateId = candidate.id();
+            if (!(candidate.value() instanceof BotanicalBreweryRecipe) ||
+                    !candidateId.getNamespace().equals(recipeId.getNamespace()) ||
+                    !path.startsWith(candidateId.getPath() + "/") ||
+                    (best != null && candidateId.getPath().length() <= best.getPath().length()))
+                continue;
+            best = candidateId;
+        }
+        return best == null ? recipeId : best;
     }
 
     private static ObjectList<ItemStack> read(PackagedMachineOperation operation, String name) {

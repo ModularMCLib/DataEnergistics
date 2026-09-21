@@ -261,7 +261,8 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
             if (!this.spirits.isEmpty()) return false;
             if (kind == MalumMachineKind.ALTAR) return this.main.isEmpty() && ((SpiritAltarBlockEntity) this.tile).extrasInventory.isEmpty() &&
                     this.pedestals.stream().allMatch(pedestal -> pedestal.getSuppliedInventory().isEmpty());
-            return !this.main.isEmpty();
+            var crucible = (SpiritCrucibleCoreBlockEntity) this.tile;
+            return this.main.isEmpty() && crucible.recipe == null && !crucible.isCrafting;
         }
     }
 }

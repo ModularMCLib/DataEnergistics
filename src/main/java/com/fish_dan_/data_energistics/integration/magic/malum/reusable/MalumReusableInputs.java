@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
-import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.NativeReusableCrafting;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -19,7 +18,6 @@ import java.util.Optional;
 public final class MalumReusableInputs implements ReusableInputRuleAdapter {
 
     private static final ResourceLocation ID = Data_Energistics.id("malum_spirit_focusing_tool");
-    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("malum", "spirit_focusing");
 
     @Override
     public ResourceLocation id() {
@@ -28,8 +26,10 @@ public final class MalumReusableInputs implements ReusableInputRuleAdapter {
 
     @Override
     public boolean mayMatch(IPatternDetails pattern, Optional<ResourceLocation> recipeId) {
-        return recipeId.isPresent() && TYPE.equals(recipeId.get()) &&
-                NativeReusableCrafting.usesNativeRecipeValidation(pattern, recipeId);
+        // Processing patterns carry the concrete recipe ID, while the recipe type is only the
+        // pattern-category metadata. The recipe class/type is verified against the server recipe
+        // manager in resolve(), where that information is available.
+        return recipeId.isPresent();
     }
 
     @Override

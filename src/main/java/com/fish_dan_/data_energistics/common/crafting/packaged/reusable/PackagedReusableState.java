@@ -34,6 +34,7 @@ import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -184,7 +185,8 @@ public final class PackagedReusableState {
                     !available.test(request.pattern()))
                 return null;
             for (var input : request.inputsFast()) {
-                if (input.tool().isPresent() && input.tool().orElseThrow().rule().kind() != ReusableInputRule.Kind.UNCHANGED) return null;
+                if (input.tool().isPresent() && input.tool().orElseThrow().rule().kind() == ReusableInputRule.Kind.TRANSITIONS)
+                    return null;
             }
             String identity = request.target().persistentIdentity();
             if (links.stream().noneMatch(link -> link.mode().supportsInput() && target(link.position()).equals(identity))) return null;
@@ -358,7 +360,7 @@ public final class PackagedReusableState {
                         if (work.advance(level, machine)) changed.run();
                         if (!work.completed()) return NativeResult.inFlight();
                     }
-                    NativeResult result = completedResult(active, operation);
+                    NativeResult result = completedResult(active, binding, operation);
                     if (!active.released) {
                         if (claims.structureRemoved(work.id())) claims.acknowledgeRemoval(work.id());
                         else claims.releaseAll(work.occupiedPositions(), work.id());
@@ -375,7 +377,7 @@ public final class PackagedReusableState {
                             !work.session.equals(binding.identity().sessionId()) || work.operation != operation.id() ||
                             work.sequence != operation.appendSequence())
                         return Optional.empty();
-                    return Optional.of(completedResult(work, operation));
+                    return Optional.of(completedResult(work, binding, operation));
                 }
 
                 @Override
@@ -395,15 +397,31 @@ public final class PackagedReusableState {
         return DataEnergisticsEntrypointLoader.snapshot().packagedCrafting().adapter(entry.adapter);
     }
 
-    private static NativeResult completedResult(NativeWork work, Operation operation) {
+    private static NativeResult completedResult(NativeWork work, Binding binding, Operation operation) {
         var actual = new KeyCounter();
         for (var stack : work.machine.collectedOutputs()) actual.add(stack.what(), stack.amount());
         var tools = new ObjectArrayList<ToolOutcome>();
         for (var tool : operation.tools()) {
             GenericStack stack = tool.stack();
-            if (actual.get(stack.what()) < stack.amount()) throw new IllegalStateException("Native machine did not return the held reusable input");
-            actual.add(stack.what(), -stack.amount());
-            tools.add(new ToolOutcome(tool.slot(), ObjectList.of(stack), ObjectList.of()));
+            var contract = binding.tools().stream().filter(candidate -> candidate.slot() == tool.slot()).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Native reusable result has an unknown tool slot"));
+            var expected = contract.rule().advance((AEItemKey) stack.what(), operation.count());
+            var successors = new ObjectArrayList<GenericStack>();
+            if (expected.successor() != null) {
+                if (actual.get(expected.successor()) < stack.amount())
+                    throw new IllegalStateException("Native machine did not return the expected reusable successor");
+                actual.add(expected.successor(), -stack.amount());
+                successors.add(new GenericStack(expected.successor(), stack.amount()));
+            }
+            var byproducts = new ObjectArrayList<GenericStack>();
+            for (var byproduct : expected.byproductsFast()) {
+                long amount = Math.multiplyExact(byproduct.amount(), stack.amount());
+                if (actual.get(byproduct.what()) < amount)
+                    throw new IllegalStateException("Native machine did not return the expected reusable byproduct");
+                actual.add(byproduct.what(), -amount);
+                byproducts.add(new GenericStack(byproduct.what(), amount));
+            }
+            tools.add(new ToolOutcome(tool.slot(), successors, byproducts));
         }
         var produced = new ObjectArrayList<GenericStack>();
         for (var stack : actual) if (stack.getLongValue() > 0) produced.add(new GenericStack(stack.getKey(), stack.getLongValue()));

@@ -122,7 +122,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         var output = read(operation, progress.getCompound("output"));
         var extras = progress.getList("extras", Tag.TAG_COMPOUND);
         if (progress.getBoolean("delivered")) return collect(operation, layout, extras, output);
-        if (!layout.ready(this.kind)) return false;
+        if (!layout.ready(this.kind) && !continuingCrucible(layout, progress)) return false;
         var main = read(operation, progress.getCompound("main"));
         var spiritTags = progress.getList("spirits", Tag.TAG_COMPOUND);
         var spirits = new ObjectArrayList<ItemStack>();
@@ -155,9 +155,13 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         if (!PackagedOutputMatching.matches(operation, output, actualOutput)) throw new IllegalStateException("Malum base output changed");
         for (int index = 0; index < targets.size(); index++) insert(operation, targets.get(index).getSuppliedInventory(), 0, extraStacks.get(index));
         for (int index = 0; index < spirits.size(); index++) insert(operation, layout.spirits(), index, spirits.get(index));
-        if (!progress.getBoolean("installed")) insert(operation, layout.main(), 0, main);
+        if (!progress.getBoolean("installed")) {
+            insert(operation, layout.main(), 0, main);
+            progress.putBoolean("installed", true);
+        }
         if (layout.tile() instanceof SpiritAltarBlockEntity altar && altar.recipe != recipe) throw new IllegalStateException("Malum altar selected another recipe");
-        if (layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible && crucible.recipe != recipe) throw new IllegalStateException("Malum crucible selected another recipe");
+        if (layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible && crucible.recipe != null && crucible.recipe != recipe)
+            throw new IllegalStateException("Malum crucible selected another recipe");
         progress.putBoolean("delivered", true);
         operation.changed();
         return true;
@@ -182,12 +186,25 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
             drop.discard();
             operation.returned(AEItemKey.of(stack), stack.getCount());
         }
+        if (this.kind == MalumMachineKind.CRUCIBLE && operation.progress().getLong("cycles") == 1) {
+            ItemStack remaining = layout.main().getStackInSlot(0);
+            if (!remaining.isEmpty()) {
+                layout.main().extractItem(0, remaining.getCount(), false);
+                operation.returned(AEItemKey.of(remaining), remaining.getCount());
+            }
+        }
         long cycles = operation.progress().getLong("cycles") - 1;
         operation.progress().putLong("cycles", cycles);
         operation.progress().putBoolean("delivered", false);
         operation.changed();
         if (cycles == 0) operation.complete();
         return true;
+    }
+
+    private boolean continuingCrucible(Layout layout, CompoundTag progress) {
+        if (this.kind != MalumMachineKind.CRUCIBLE || !progress.getBoolean("installed") || !(layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible))
+            return false;
+        return !layout.main().isEmpty() && layout.spirits().isEmpty() && !crucible.isCrafting;
     }
 
     private static void insert(PackagedMachineOperation operation, LodestoneBlockEntityInventory inventory, int slot, ItemStack stack) {

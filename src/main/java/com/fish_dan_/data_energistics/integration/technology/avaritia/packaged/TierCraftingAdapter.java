@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.technology.avaritia.packaged;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedBatchPattern;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
@@ -142,6 +143,7 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         TierCraftTile table = table(level, position);
         if (table == null || !empty(table.getInventory())) return null;
+        long batch = batchCount(pattern);
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof ITierCraftingRecipe recipe) ||
                 recipe.getType() != ModRecipeTypes.CRAFTING_TABLE_RECIPE.get() ||
@@ -151,10 +153,10 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         int size = tier.size;
         ObjectList<ItemStack> grid;
         if (recipe instanceof ShapedTableCraftingRecipe shaped) {
-            grid = PackagedCraftingGrid.assign(new ObjectArrayList<>(recipe.getIngredients()),
-                    shaped.getWidth(), size, inputs);
+            grid = PackagedCraftingGrid.assignBatch(new ObjectArrayList<>(recipe.getIngredients()),
+                    shaped.getWidth(), size, inputs, batch);
         } else {
-            var assigned = PackagedIngredientAssignment.match(new ObjectArrayList<>(recipe.getIngredients()), inputs);
+            var assigned = PackagedIngredientAssignment.matchBatch(new ObjectArrayList<>(recipe.getIngredients()), inputs, batch);
             if (assigned == null || assigned.size() > size * size) return null;
             grid = new ObjectArrayList<>(size * size);
             for (int index = 0; index < size * size; index++) {
@@ -171,13 +173,52 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
                 ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
         var consumed = consumedSlots(nativeInput, size);
         var returned = returnedStacks(grid, consumed, nativeRemaining);
-        if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returned)) return null;
+        if (batch > 1) {
+            if (!returned.isEmpty() || !PackagedOutputMatching.matches(pattern,
+                    ObjectList.of(result.copyWithCount(Math.toIntExact(Math.multiplyExact(result.getCount(), batch))))))
+                return null;
+        } else if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returned)) return null;
 
         CompoundTag progress = new CompoundTag();
         progress.put("inputs", saveStacks(grid, level.registryAccess()));
         progress.put("returns", saveStacks(returned, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
+        progress.putLong("cycles", batch);
         return progress;
+    }
+
+    @Override
+    public long batchCapacity(ServerLevel level, BlockPos position, Direction face, ResourceLocation recipeId,
+                              IPatternDetails pattern, KeyCounter[] prototype, long requestedCount) {
+        TierCraftTile table = table(level, position);
+        if (table == null || !empty(table.getInventory()) || requestedCount <= 0) return 0;
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (holder.isEmpty() || !(holder.get().value() instanceof ITierCraftingRecipe recipe) ||
+                recipe.getType() != ModRecipeTypes.CRAFTING_TABLE_RECIPE.get() || recipe.getTier() > tier.ordinal() + 1)
+            return 0;
+        int size = tier.size;
+        ObjectList<ItemStack> grid;
+        if (recipe instanceof ShapedTableCraftingRecipe shaped) {
+            grid = PackagedCraftingGrid.assign(new ObjectArrayList<>(recipe.getIngredients()), shaped.getWidth(), size, prototype);
+        } else {
+            var assigned = PackagedIngredientAssignment.match(new ObjectArrayList<>(recipe.getIngredients()), prototype);
+            if (assigned == null || assigned.size() > size * size) return 0;
+            grid = new ObjectArrayList<>(size * size);
+            for (int index = 0; index < size * size; index++) grid.add(index < assigned.size() ? assigned.get(index) : ItemStack.EMPTY);
+        }
+        if (grid == null || grid.size() != size * size) return 0;
+        TierInput nativeInput = TierInput.of(size, size, grid, tier.ordinal() + 1);
+        if (!recipe.matches(nativeInput, level)) return 0;
+        var chosen = level.getRecipeManager().getRecipeFor(ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level);
+        if (chosen.isEmpty() || !chosen.get().id().equals(recipeId)) return 0;
+        ItemStack result = recipe.assemble(nativeInput, level.registryAccess());
+        var returned = returnedStacks(grid, consumedSlots(nativeInput, size),
+                level.getRecipeManager().getRemainingItemsFor(ModRecipeTypes.CRAFTING_TABLE_RECIPE.get(), nativeInput, level));
+        if (result.isEmpty() || !returned.isEmpty()) return 0;
+        long capacity = requestedCount;
+        for (var stack : grid) if (!stack.isEmpty()) capacity = Math.min(capacity, stack.getMaxStackSize() / stack.getCount());
+        capacity = Math.min(capacity, result.getMaxStackSize() / result.getCount());
+        return Math.max(0, capacity);
     }
 
     @Override
@@ -210,7 +251,9 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
             return true;
         }
         for (int index = 0; index < slots; index++) {
-            if (!ItemStack.matches(inventory.getStackInSlot(index), inputs.get(index))) {
+            ItemStack actualInput = inventory.getStackInSlot(index);
+            if (!actualInput.isEmpty() && (!ItemStack.isSameItemSameComponents(actualInput, inputs.get(index)) ||
+                    actualInput.getCount() > inputs.get(index).getCount())) {
                 throw new IllegalStateException("Avaritia table input changed outside this operation");
             }
         }
@@ -220,11 +263,30 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         var menu = table.createMenu(0, fake.getInventory());
         var output = menu.getSlot(0);
         ItemStack actual = output.getItem().copy();
-        if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Avaritia table output");
+        if (actual.isEmpty()) return false;
+        if (!PackagedOutputMatching.matches(operation, result.copyWithCount(actual.getCount()), actual))
+            throw new IllegalStateException("Unexpected Avaritia table output");
         ItemStack taken = output.remove(actual.getCount());
         if (!ItemStack.matches(actual, taken)) throw new IllegalStateException("Avaritia result extraction changed");
         output.onTake(fake, taken);
         actual = taken;
+        long cycles = progress.contains("cycles", Tag.TAG_LONG) ? progress.getLong("cycles") : 1;
+        operation.returned(AEItemKey.of(actual), actual.getCount());
+        if (cycles > 1) {
+            var batchReturns = new ObjectArrayList<ItemStack>();
+            for (int index = 0; index < slots; index++) {
+                ItemStack returned = inventory.getStackInSlot(index).copy();
+                if (!returned.isEmpty()) batchReturns.add(returned);
+            }
+            for (int index = 0; index < fake.getInventory().getContainerSize(); index++) {
+                ItemStack returned = fake.getInventory().getItem(index).copy();
+                if (!returned.isEmpty()) batchReturns.add(returned);
+            }
+            if (!batchReturns.isEmpty()) throw new IllegalStateException("Avaritia table produced a batch remainder");
+            progress.putLong("cycles", cycles - 1);
+            operation.changed();
+            return true;
+        }
 
         var actualReturns = new ObjectArrayList<ItemStack>();
         for (int index = 0; index < slots; index++) {
@@ -241,9 +303,12 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         for (int index = 0; index < slots; index++) inventory.setStackInSlot(index, ItemStack.EMPTY);
         fake.getInventory().clearContent();
         for (ItemStack returned : actualReturns) operation.returned(AEItemKey.of(returned), returned.getCount());
-        operation.returned(AEItemKey.of(actual), actual.getCount());
         operation.complete();
         return true;
+    }
+
+    private static long batchCount(IPatternDetails pattern) {
+        return pattern instanceof PackagedBatchPattern batch ? batch.count() : 1;
     }
 
     private @Nullable TierCraftTile table(ServerLevel level, BlockPos position) {

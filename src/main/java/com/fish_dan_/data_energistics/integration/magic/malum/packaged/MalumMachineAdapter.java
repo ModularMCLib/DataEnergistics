@@ -225,6 +225,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
 
     private static void resetAltarState(SpiritAltarBlockEntity altar) {
         altar.recipe = null;
+        altar.possibleRecipes.clear();
         altar.isCrafting = false;
         altar.progress = 0;
         altar.idleProgress = 0;
@@ -314,11 +315,18 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
                           ObjectList<IMalumSpecialItemAccessPoint> pedestals) {
 
         boolean ready(MalumMachineKind kind) {
-            if (!this.spirits.isEmpty()) return false;
-            if (kind == MalumMachineKind.ALTAR) return this.main.isEmpty() && ((SpiritAltarBlockEntity) this.tile).extrasInventory.isEmpty() &&
-                    this.pedestals.stream().allMatch(pedestal -> pedestal.getSuppliedInventory().isEmpty());
+            if (!empty(this.spirits)) return false;
+            if (kind == MalumMachineKind.ALTAR) return empty(this.main) && empty(((SpiritAltarBlockEntity) this.tile).extrasInventory) &&
+                    this.pedestals.stream().allMatch(pedestal -> empty(pedestal.getSuppliedInventory()));
             var crucible = (SpiritCrucibleCoreBlockEntity) this.tile;
-            return this.main.isEmpty() && crucible.recipe == null && !crucible.isCrafting;
+            return empty(this.main) && crucible.recipe == null && !crucible.isCrafting;
+        }
+
+        private static boolean empty(IItemHandler inventory) {
+            for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                if (!inventory.getStackInSlot(slot).isEmpty()) return false;
+            }
+            return true;
         }
     }
 }

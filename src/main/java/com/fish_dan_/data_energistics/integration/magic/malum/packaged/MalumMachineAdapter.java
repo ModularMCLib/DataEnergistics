@@ -214,12 +214,21 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
                 operation.returned(AEItemKey.of(remaining), remaining.getCount());
             }
         }
+        if (layout.tile() instanceof SpiritAltarBlockEntity altar) resetAltarState(altar);
         long cycles = operation.progress().getLong("cycles") - 1;
         operation.progress().putLong("cycles", cycles);
         operation.progress().putBoolean("delivered", false);
         operation.changed();
         if (cycles == 0) operation.complete();
         return true;
+    }
+
+    private static void resetAltarState(SpiritAltarBlockEntity altar) {
+        altar.recipe = null;
+        altar.isCrafting = false;
+        altar.progress = 0;
+        altar.idleProgress = 0;
+        altar.setChanged();
     }
 
     private static void drain(PackagedMachineOperation operation, IItemHandler inventory) {

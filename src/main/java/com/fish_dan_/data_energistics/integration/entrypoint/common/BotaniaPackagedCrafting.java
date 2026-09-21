@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.integration.magic.botania.matching.BotaniaRecipeIngredientRoles;
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaMachineAdapter;
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotaniaMachineKind;
+import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotanicalBreweryAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "botania")
 public final class BotaniaPackagedCrafting implements DataEnergisticsPlugin {
@@ -14,5 +15,6 @@ public final class BotaniaPackagedCrafting implements DataEnergisticsPlugin {
     public void register(DataEnergisticsRegistry registry) {
         registry.recipeMatching().register(new BotaniaRecipeIngredientRoles());
         for (BotaniaMachineKind kind : BotaniaMachineKind.values()) registry.packagedCrafting().register(new BotaniaMachineAdapter(kind));
+        registry.packagedCrafting().register(new BotanicalBreweryAdapter());
     }
 }

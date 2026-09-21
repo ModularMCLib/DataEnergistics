@@ -182,7 +182,10 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
             if (found.isEmpty() || !found.get().getSuppliedInventory().isEmpty()) return false;
         }
         Vec3 nativeDropPosition = layout.tile() instanceof SpiritAltarBlockEntity altar ? altar.getItemPos() : operation.position().getCenter();
-        var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(nativeDropPosition, nativeDropPosition).inflate(2),
+        // Malum gives the altar drop an ordinary ItemEntity with its own motion. It may move away from
+        // getItemPos() before the next packaged tick, so use the whole native work area for owned drops.
+        // The fallback output-key match remains restricted to the altar and is claimed immediately below.
+        var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(nativeDropPosition, nativeDropPosition).inflate(8),
                 entity -> PackagedEntityCapture.ownedBy(entity, operation.id()) ||
                         layout.tile() instanceof SpiritAltarBlockEntity &&
                                 PackagedOutputMatching.sameKey(operation, output, entity.getItem()));

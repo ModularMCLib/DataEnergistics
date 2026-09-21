@@ -98,6 +98,14 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
             return true;
         }
         if (!ready(brewery)) return false;
+        // Botania clears the physical slots when the brew finishes, but keeps the old recipe
+        // reference until its next native tick. Clear that derived state before inserting the
+        // next operation so a same-tick dispatch is not rejected by addItem().
+        if (brewery.recipe != null) {
+            brewery.recipe = null;
+            brewery.signal = 0;
+            brewery.setChanged();
+        }
         var inputs = read(operation, "inputs");
         var required = new KeyCounter();
         for (var input : inputs) required.add(AEItemKey.of(input), input.getCount());
@@ -168,7 +176,6 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
     }
 
     private static boolean ready(BotanicalBreweryBlockEntity brewery) {
-        if (brewery.recipe != null || brewery.getCurrentMana() != 0) return false;
         for (int slot = 0; slot < brewery.inventorySize(); slot++) if (!brewery.getItemHandler().getItem(slot).isEmpty()) return false;
         return true;
     }

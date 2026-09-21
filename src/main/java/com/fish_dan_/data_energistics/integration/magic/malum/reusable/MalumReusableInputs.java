@@ -12,6 +12,7 @@ import appeng.api.stacks.AEItemKey;
 import net.minecraft.resources.ResourceLocation;
 
 import com.sammy.malum.common.recipe.SpiritFocusingRecipe;
+
 import java.util.Optional;
 
 /** Declares deterministic fixed-damage custody for Malum spirit-focusing tools. */

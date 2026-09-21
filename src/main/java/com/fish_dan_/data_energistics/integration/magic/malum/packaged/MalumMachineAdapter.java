@@ -23,6 +23,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -174,13 +175,6 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     private boolean collect(PackagedMachineOperation operation, Layout layout, ListTag extras, ItemStack output) {
-        if (!layout.spirits().isEmpty()) return false;
-        if (layout.tile() instanceof SpiritAltarBlockEntity altar && (!altar.inventory.isEmpty() || !altar.extrasInventory.isEmpty())) return false;
-        for (int index = 0; index < extras.size(); index++) {
-            var position = BlockPos.of(extras.getCompound(index).getLong("position"));
-            var found = layout.pedestals().stream().filter(target -> target.getAccessPointBlockPos().equals(position)).findFirst();
-            if (found.isEmpty() || !found.get().getSuppliedInventory().isEmpty()) return false;
-        }
         Vec3 nativeDropPosition = layout.tile() instanceof SpiritAltarBlockEntity altar ? altar.getItemPos() : operation.position().getCenter();
         // Malum gives the altar drop an ordinary ItemEntity with its own motion. It may move away from
         // getItemPos() before the next packaged tick, so use the whole native work area for owned drops.
@@ -192,6 +186,20 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         long baseCount = 0;
         for (var drop : drops) if (PackagedOutputMatching.sameKey(operation, output, drop.getItem())) baseCount += drop.getItem().getCount();
         if (baseCount < output.getCount()) return false;
+        if (layout.tile() instanceof SpiritAltarBlockEntity altar) {
+            // Malum can leave an inventory cache non-empty until its next native tick. The owned
+            // output proves that this craft completed, so return residual assets instead of waiting
+            // for a save/reload cycle to refresh those caches.
+            drain(operation, altar.inventory);
+            drain(operation, altar.spiritInventory);
+            drain(operation, altar.extrasInventory);
+            for (int index = 0; index < extras.size(); index++) {
+                var position = BlockPos.of(extras.getCompound(index).getLong("position"));
+                var found = layout.pedestals().stream()
+                        .filter(target -> target.getAccessPointBlockPos().equals(position)).findFirst();
+                if (found.isPresent()) drain(operation, found.orElseThrow().getSuppliedInventory());
+            }
+        }
         // Luck/augment bonuses are actual owned drops, never promised by the static pattern or discarded.
         for (var drop : drops) {
             if (!PackagedEntityCapture.ownedBy(drop, operation.id())) PackagedEntityCapture.claim(drop, operation.id());
@@ -212,6 +220,15 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         operation.changed();
         if (cycles == 0) operation.complete();
         return true;
+    }
+
+    private static void drain(PackagedMachineOperation operation, IItemHandler inventory) {
+        for (int slot = 0; slot < inventory.getSlots(); slot++) {
+            ItemStack present = inventory.getStackInSlot(slot);
+            if (present.isEmpty()) continue;
+            ItemStack remaining = inventory.extractItem(slot, present.getCount(), false);
+            if (!remaining.isEmpty()) operation.returned(AEItemKey.of(remaining), remaining.getCount());
+        }
     }
 
     private boolean continuingCrucible(Layout layout, CompoundTag progress) {

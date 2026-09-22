@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.integration.technology.extendedcrafting.p
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
-import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedBatchPattern;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
@@ -82,15 +81,16 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Table table = table(level, position);
         if (table == null || !empty(table.inventory())) return null;
-        long batch = batchCount(pattern);
+        // Extended Crafting's result slot is a single native transaction. Do
+        // not loop over that slot to simulate a bulk craft.
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof ITableRecipe recipe) ||
                 recipe.getType() != ModRecipeTypes.TABLE.get() || recipe.getTier() > this.tier)
             return null;
         int width = recipe instanceof ShapedTableRecipe shaped ?
                 shaped.getWidth() : table.width();
-        ObjectList<ItemStack> grid = PackagedCraftingGrid.assignBatch(
-                new ObjectArrayList<>(recipe.getIngredients()), width, table.width(), inputs, batch);
+        ObjectList<ItemStack> grid = PackagedCraftingGrid.assign(
+                new ObjectArrayList<>(recipe.getIngredients()), width, table.width(), inputs);
         if (grid == null) return null;
         TableCraftingInput tableInput = TableCraftingInput.of(table.width(), table.width(), grid, this.tier);
         if (!recipe.matches(tableInput, level)) return null;
@@ -105,17 +105,15 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
             remaining.set((y + tableInput.top()) * table.width() + x + tableInput.left(),
                     nativeRemaining.get(y * tableInput.width() + x));
         }
-        if (batch > 1 && remaining.stream().anyMatch(stack -> !stack.isEmpty())) return null;
         var expected = new ObjectArrayList<ItemStack>();
-        expected.add(result.copyWithCount(Math.toIntExact(Math.multiplyExact(result.getCount(), batch))));
-        if (batch == 1) expected.addAll(remaining);
+        expected.add(result);
+        expected.addAll(remaining);
         if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
         progress.putInt("width", table.width());
         progress.put("inputs", saveStacks(grid, level.registryAccess()));
         progress.put("remaining", saveStacks(remaining, level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
-        progress.putLong("cycles", batch);
         return progress;
     }
 
@@ -136,12 +134,10 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         var chosen = level.getRecipeManager().getRecipeFor(ModRecipeTypes.TABLE.get(), nativeInput, level);
         if (chosen.isEmpty() || !chosen.get().id().equals(recipeId)) return 0;
         ItemStack result = recipe.assemble(nativeInput, level.registryAccess());
-        var remaining = recipe.getRemainingItems(nativeInput);
-        if (result.isEmpty() || remaining.stream().anyMatch(stack -> !stack.isEmpty())) return 0;
-        long capacity = requestedCount;
-        for (var stack : grid) if (!stack.isEmpty()) capacity = Math.min(capacity, stack.getMaxStackSize() / stack.getCount());
-        capacity = Math.min(capacity, result.getMaxStackSize() / result.getCount());
-        return Math.max(0, capacity);
+        if (result.isEmpty()) return 0;
+        // Return 1 for recipes with containers/remainders. Returning zero
+        // makes otherwise valid single crafts impossible to dispatch.
+        return 1;
     }
 
     @Override
@@ -149,6 +145,7 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         Table table = table(operation.level(), operation.position());
         if (table == null) return false;
         CompoundTag progress = operation.progress();
+        if (progress.getLong("cycles") > 1) throw new IllegalStateException("Legacy multi-cycle Extended Crafting operation requires input recovery before redispatch");
         int width = progress.getInt("width");
         if (width != table.width()) throw new IllegalArgumentException("Extended Crafting table tier changed");
         ListTag encodedInputs = progress.getList("inputs", Tag.TAG_COMPOUND);
@@ -171,8 +168,7 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
                 return false;
             }
         }
-        long cycles = progress.contains("cycles", Tag.TAG_LONG) ? progress.getLong("cycles") : 1;
-        if (delivered) return collect(operation, table, result, remaining, cycles);
+        if (delivered) return collect(operation, table, result, remaining);
         for (int slot = 0; slot < inputs.size(); slot++) {
             ItemStack input = inputs.get(slot);
             if (!input.isEmpty() && !table.inventory().insertItem(slot, input.copy(), true).isEmpty()) return false;
@@ -190,7 +186,7 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
     }
 
     private boolean collect(PackagedMachineOperation operation, Table table, ItemStack result,
-                            ObjectList<ItemStack> remaining, long cycles) {
+                            ObjectList<ItemStack> remaining) {
         MenuContext context = createMenu(table, operation);
         Slot slot = context.menu().getSlot(0);
         if (!(slot instanceof TableOutputSlot outputSlot)) throw new IllegalStateException("Missing table result slot");
@@ -203,11 +199,6 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         outputSlot.onTake(context.player(), taken);
         actual = taken;
         operation.returned(AEItemKey.of(actual), actual.getCount());
-        if (cycles > 1) {
-            operation.progress().putLong("cycles", cycles - 1);
-            operation.changed();
-            return true;
-        }
         for (int index = 0; index < remaining.size(); index++) {
             if (!ItemStack.matches(remaining.get(index), table.inventory().getStackInSlot(index))) {
                 throw new IllegalStateException("Extended Crafting table remainder changed after result transfer");
@@ -220,10 +211,6 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         }
         operation.complete();
         return true;
-    }
-
-    private static long batchCount(IPatternDetails pattern) {
-        return pattern instanceof PackagedBatchPattern batch ? batch.count() : 1;
     }
 
     private static MenuContext createMenu(Table table, PackagedMachineOperation operation) {

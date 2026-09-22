@@ -32,7 +32,6 @@ import com.stal111.forbidden_arcanus.common.block.HephaestusForgeBlock;
 import com.stal111.forbidden_arcanus.common.block.entity.PedestalBlockEntity;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ForgeDataCache;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.HephaestusForgeBlockEntity;
-import com.stal111.forbidden_arcanus.common.block.entity.forge.HephaestusForgeLevel;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.essence.EssenceModifier;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ritual.Ritual;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.ritual.RitualInput;
@@ -50,7 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
 
-/** Feeds a tier-five Hephaestus Forge and lets its native ritual manager consume essences and finish the item. */
+/** Feeds the actual forge tier and leaves essence consumption and processing to its native ritual. */
 public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
     private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge");
@@ -67,7 +66,7 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
     @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
-        return level.isLoaded(position) && level.getBlockEntity(position) instanceof HephaestusForgeBlockEntity && level.getBlockState(position).getBlock() instanceof HephaestusForgeBlock block && block.getLevel() == HephaestusForgeLevel.FIVE;
+        return level.isLoaded(position) && level.getBlockEntity(position) instanceof HephaestusForgeBlockEntity && level.getBlockState(position).getBlock() instanceof HephaestusForgeBlock;
     }
 
     @Override
@@ -77,6 +76,8 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
         var holder = level.registryAccess().lookupOrThrow(FARegistries.RITUAL).get(ResourceKey.create(FARegistries.RITUAL, recipeId));
         if (holder.isEmpty()) return null;
         Ritual ritual = holder.get().value();
+        int tier = ((HephaestusForgeBlock) forge.getBlockState().getBlock()).getLevel().getAsInt();
+        if (!ritual.requirements().tier().test(tier)) return null;
         ItemStack main = findMain(inputs, ritual.mainIngredient());
         if (main.isEmpty() || !forge.getStack(HephaestusForgeBlockEntity.MAIN_SLOT).isEmpty() || forge.getRitualManager().isRitualActive()) return null;
         var remaining = new KeyCounter();
@@ -200,9 +201,10 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
         var modifiers = cache.getEnhancers().stream()
                 .flatMap(enhancer -> enhancer.value().getEffects(EnhancerTarget.HEPHAESTUS_FORGE))
                 .filter(effect -> effect instanceof EssenceModifier).map(effect -> (EssenceModifier) effect).toList();
+        int tier = ((HephaestusForgeBlock) forge.getBlockState().getBlock()).getLevel().getAsInt();
         for (var holder : operation.level().registryAccess().lookupOrThrow(FARegistries.RITUAL).listElements().toList()) {
             Ritual ritual = holder.value();
-            if (forge.getEssences().hasMoreThan(ritual.requirements().essences().applyModifiers(modifiers)) && ritual.canStart(cache, HephaestusForgeLevel.FIVE.getAsInt())) {
+            if (forge.getEssences().hasMoreThan(ritual.requirements().essences().applyModifiers(modifiers)) && ritual.canStart(cache, tier)) {
                 return holder.is(ResourceKey.create(FARegistries.RITUAL, operation.recipeId()));
             }
         }

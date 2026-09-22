@@ -24,13 +24,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.phys.AABB;
 
 import com.breakinblocks.neovitae.common.blockentity.HellfireForgeBlockEntity;
-import com.breakinblocks.neovitae.common.datacomponent.NVDataComponents;
-import com.breakinblocks.neovitae.common.item.NVItems;
 import com.breakinblocks.neovitae.common.recipe.NVRecipes;
-import com.breakinblocks.neovitae.common.recipe.forge.ForgeInput;
 import com.breakinblocks.neovitae.common.recipe.forge.ForgeRecipe;
-import com.breakinblocks.neovitae.common.tag.NVTags;
-import com.breakinblocks.neovitae.spiritus.SpiritusHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -38,29 +33,17 @@ import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 
-/**
- * Runs native forge recipes with either a pre-installed gem or a counted supplied gem. Installed gems
- * remain in the machine for successive crafts. Supplied gems return with their real charged components;
- * their world-dependent charge is not a deterministic CPU reusable-input transition.
- */
+/** Supplies recipe ingredients while leaving the dedicated gem slot entirely to the native forge. */
 public final class HellfireForgeAdapter implements PackagedMachineAdapter {
 
-    private static final String INSTALLED_GEM_MARKER = "data_energistics_installed_forge_gem";
     private static final String OWNER = "data_energistics_forge_operation";
     private static final String INSERTED = "inserted_slots";
 
     private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("neovitae", "hellfire_forge");
     private static final String SLOTS = "slots";
-    private static final String GEM = "gem";
     private static final String OUTPUT = "output";
     private static final String LOADED = "loaded";
     private static final String HARVEST_SLOT = "harvest_slot";
-    private static final String INSTALLED_GEM = "installed_gem";
-
-    /** Whether the current task delivered the gem; an unstarted claim never owns a player's installed gem. */
-    public static boolean hasSuppliedGem(HellfireForgeBlockEntity forge) {
-        return forge.getPersistentData().hasUUID(OWNER) && !forge.getPersistentData().getBoolean(INSTALLED_GEM_MARKER);
-    }
 
     @Override
     public ResourceLocation id() {
@@ -85,17 +68,13 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
             return null;
         ForgeRecipe recipe = recipe(level, recipeId);
         if (recipe == null || !validCosts(recipe)) return null;
-        ItemStack installed = forge.inv.getStackInSlot(HellfireForgeBlockEntity.GEM_SLOT);
-        Plan plan = installed.isEmpty() ? plan(level, recipeId, recipe, inputs) :
-                assign(level, recipeId, recipe, inputs, installed);
-        if (plan == null || pattern.getOutputs().size() != 1 ||
+        ObjectList<ItemStack> slots = assign(recipe, inputs);
+        if (slots == null || pattern.getOutputs().size() != 1 ||
                 !PackagedOutputMatching.matches(pattern, recipe.resultItem, recipe.resultItem.getCount()))
             return null;
         var result = new CompoundTag();
-        result.put(SLOTS, saveStacks(plan.slots(), level));
-        result.put(GEM, plan.gem().save(level.registryAccess()));
+        result.put(SLOTS, saveStacks(slots, level));
         result.put(OUTPUT, recipe.resultItem.save(level.registryAccess()));
-        result.putBoolean(INSTALLED_GEM, !installed.isEmpty());
         return result;
     }
 
@@ -114,7 +93,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
                 forge.getPersistentData().hasUUID(OWNER) && operation.id().equals(forge.getPersistentData().getUUID(OWNER))) {
             int inserted = operation.progress().getInt(INSERTED);
             for (int slot = 0; slot <= HellfireForgeBlockEntity.OUTPUT_SLOT; slot++) {
-                if (slot == HellfireForgeBlockEntity.GEM_SLOT && operation.progress().getBoolean(INSTALLED_GEM)) continue;
+                if (slot == HellfireForgeBlockEntity.GEM_SLOT) continue;
                 if ((inserted & 1 << slot) == 0 && !(slot == HellfireForgeBlockEntity.OUTPUT_SLOT && operation.progress().getBoolean(LOADED))) continue;
                 ItemStack actual = forge.inv.getStackInSlot(slot);
                 if (actual.isEmpty()) continue;
@@ -139,13 +118,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
         ForgeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null || !validCosts(recipe)) return false;
         ObjectList<ItemStack> slots = readStacks(operation, operation.progress().getList(SLOTS, Tag.TAG_COMPOUND));
-        boolean installed = operation.progress().getBoolean(INSTALLED_GEM);
-        ItemStack gem = installed ? forge.inv.getStackInSlot(HellfireForgeBlockEntity.GEM_SLOT) : readStack(operation, GEM);
-        if (!installed && !forge.inv.getStackInSlot(HellfireForgeBlockEntity.GEM_SLOT).isEmpty()) return false;
-        if (slots.size() != HellfireForgeBlockEntity.GEM_SLOT || !validGem(gem, recipe)) return false;
-        ForgeInput nativeInput = new ForgeInput(slots, gem, HellfireForgeBlockEntity.GEM_SLOT);
-        if (!recipe.matches(nativeInput, operation.level()) || !selects(operation.level(), operation.recipeId(), nativeInput))
-            return false;
+        if (slots.size() != HellfireForgeBlockEntity.GEM_SLOT) return false;
 
         for (int slot = 0; slot < slots.size(); slot++) {
             ItemStack stack = slots.get(slot);
@@ -155,13 +128,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
                     !forge.inv.insertItem(slot, stack.copy(), true).isEmpty())
                 return false;
         }
-        AEItemKey gemKey = AEItemKey.of(gem);
-        if (!installed && (operation.available(gemKey).compareTo(BigInteger.ONE) < 0 ||
-                !forge.inv.insertItem(HellfireForgeBlockEntity.GEM_SLOT, gem.copy(), true).isEmpty()))
-            return false;
-
         forge.getPersistentData().putUUID(OWNER, operation.id());
-        forge.getPersistentData().putBoolean(INSTALLED_GEM_MARKER, installed);
         forge.setChanged();
         for (int slot = 0; slot < slots.size(); slot++) {
             ItemStack stack = slots.get(slot);
@@ -171,13 +138,6 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
                 throw new IllegalStateException("Hellfire Forge rejected a preflighted ingredient");
             operation.delivered(AEItemKey.of(stack), 1);
             operation.progress().putInt(INSERTED, operation.progress().getInt(INSERTED) | 1 << slot);
-        }
-        if (!installed) {
-            ItemStack gemRemainder = forge.inv.insertItem(HellfireForgeBlockEntity.GEM_SLOT, gem.copy(), false);
-            if (!gemRemainder.isEmpty() || !sameStack(gem, forge.inv.getStackInSlot(HellfireForgeBlockEntity.GEM_SLOT)))
-                throw new IllegalStateException("Hellfire Forge rejected the preflighted Greater Spiritus Gem");
-            operation.delivered(gemKey, 1);
-            operation.progress().putInt(INSERTED, operation.progress().getInt(INSERTED) | 1 << HellfireForgeBlockEntity.GEM_SLOT);
         }
         operation.progress().putBoolean(LOADED, true);
         operation.changed();
@@ -190,15 +150,8 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
         if (harvestSlot == 0) {
             ItemStack expected = readStack(operation, OUTPUT);
             ItemStack output = forge.inv.getStackInSlot(HellfireForgeBlockEntity.OUTPUT_SLOT);
-            ItemStack gem = forge.inv.getStackInSlot(HellfireForgeBlockEntity.GEM_SLOT);
-            if (!PackagedOutputMatching.matches(operation, expected, output) ||
-                    !gem.is(NVItems.SPIRITUS_GEM_GREATER.get()) || !gem.has(NVDataComponents.SPIRITUS_AMOUNT))
+            if (!PackagedOutputMatching.matches(operation, expected, output))
                 return false;
-            if (!progress.getBoolean(INSTALLED_GEM)) {
-                ItemStack extractedGem = forge.inv.extractItem(HellfireForgeBlockEntity.GEM_SLOT, gem.getCount(), false);
-                if (!sameStack(gem, extractedGem)) throw new IllegalStateException("Hellfire Forge gem extraction was incomplete");
-                operation.returned(AEItemKey.of(extractedGem), extractedGem.getCount());
-            }
             ItemStack extractedOutput = forge.inv.extractItem(HellfireForgeBlockEntity.OUTPUT_SLOT, output.getCount(), false);
             if (!sameStack(output, extractedOutput)) throw new IllegalStateException("Hellfire Forge output extraction was incomplete");
             operation.returned(AEItemKey.of(extractedOutput), extractedOutput.getCount());
@@ -225,80 +178,18 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
         return true;
     }
 
-    private static @Nullable Plan plan(ServerLevel level, ResourceLocation recipeId, ForgeRecipe recipe,
-                                       KeyCounter[] inputs) {
-        for (var counter : inputs) {
-            for (var entry : counter) {
-                if (!(entry.getKey() instanceof AEItemKey key) || entry.getLongValue() <= 0) return null;
-                ItemStack gem = key.toStack().copyWithCount(1);
-                if (!validGem(gem, recipe)) continue;
-                KeyCounter remaining = withoutOne(inputs, key);
-                if (remaining == null) return null;
-                Plan plan = assign(level, recipeId, recipe, new KeyCounter[] { remaining }, gem);
-                if (plan != null) return plan;
-            }
-        }
-        return null;
-    }
-
-    private static @Nullable Plan assign(ServerLevel level, ResourceLocation recipeId, ForgeRecipe recipe,
-                                         KeyCounter[] inputs, ItemStack gem) {
-        if (!validGem(gem, recipe)) return null;
+    private static @Nullable ObjectList<ItemStack> assign(ForgeRecipe recipe, KeyCounter[] inputs) {
         ObjectList<ItemStack> assigned = PackagedIngredientAssignment.match(
                 new ObjectArrayList<Ingredient>(recipe.ingredients), inputs);
         if (assigned == null || assigned.size() > HellfireForgeBlockEntity.GEM_SLOT) return null;
         var slots = new ObjectArrayList<ItemStack>(assigned);
         while (slots.size() < HellfireForgeBlockEntity.GEM_SLOT) slots.add(ItemStack.EMPTY);
-        ForgeInput nativeInput = new ForgeInput(slots, gem, HellfireForgeBlockEntity.GEM_SLOT);
-        return recipe.matches(nativeInput, level) && selects(level, recipeId, nativeInput) ? new Plan(slots, gem) : null;
-    }
-
-    private static @Nullable KeyCounter withoutOne(KeyCounter[] inputs, AEItemKey removed) {
-        var result = new KeyCounter();
-        boolean removedOne = false;
-        for (var counter : inputs) {
-            for (var entry : counter) {
-                if (!(entry.getKey() instanceof AEItemKey key) || entry.getLongValue() <= 0) return null;
-                long amount = entry.getLongValue();
-                if (!removedOne && key.equals(removed)) {
-                    amount--;
-                    removedOne = true;
-                }
-                if (amount > 0) result.add(key, amount);
-            }
-        }
-        return removedOne ? result : null;
-    }
-
-    private static boolean validGem(ItemStack gem, ForgeRecipe recipe) {
-        if (!gem.is(NVItems.SPIRITUS_GEM_GREATER.get()) || !gem.has(NVDataComponents.SPIRITUS_AMOUNT) ||
-                SpiritusHelper.resolveMaxSpiritus(gem) < recipe.minSpiritus)
-            return false;
-        return recipe.spiritusType.isEmpty() ||
-                recipe.spiritusType.get() == SpiritusHelper.getCurrentType(gem);
+        return slots;
     }
 
     private static boolean validCosts(ForgeRecipe recipe) {
         return Double.isFinite(recipe.minSpiritus) && recipe.minSpiritus >= 0 &&
                 Double.isFinite(recipe.usedSpiritus) && recipe.usedSpiritus >= 0;
-    }
-
-    private static boolean selects(ServerLevel level, ResourceLocation recipeId, ForgeInput input) {
-        var selected = level.getRecipeManager().getRecipeFor(NVRecipes.HELLFIRE_FORGE_TYPE.get(), input, level);
-        if (selected.isEmpty() || !selected.get().id().equals(recipeId)) return false;
-        if (selected.get().value().hasEnoughSpiritus(input)) return true;
-        var slots = new ObjectArrayList<ItemStack>();
-        int craftingGemSlot = -1;
-        for (int slot = 0; slot < HellfireForgeBlockEntity.GEM_SLOT; slot++) {
-            ItemStack stack = input.getItem(slot);
-            slots.add(stack);
-            if (stack.is(NVTags.Items.SPIRITUS_GEM)) craftingGemSlot = slot;
-        }
-        if (craftingGemSlot < 0) return true;
-        var fallback = new ForgeInput(slots, slots.get(craftingGemSlot), craftingGemSlot);
-        var alternative = level.getRecipeManager().getRecipeFor(NVRecipes.HELLFIRE_FORGE_TYPE.get(), fallback, level);
-        return alternative.isEmpty() || !alternative.get().value().hasEnoughSpiritus(fallback) ||
-                alternative.get().id().equals(recipeId);
     }
 
     private static @Nullable ForgeRecipe recipe(ServerLevel level, ResourceLocation recipeId) {
@@ -337,6 +228,4 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
         return ItemStack.parse(operation.level().registryAccess(), operation.progress().getCompound(key))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Neo Vitae Hellfire Forge stack: " + key));
     }
-
-    private record Plan(ObjectList<ItemStack> slots, ItemStack gem) {}
 }

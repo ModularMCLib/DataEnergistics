@@ -24,11 +24,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.phys.AABB;
 
 import com.breakinblocks.neovitae.common.blockentity.TabulaVitaeBlockEntity;
-import com.breakinblocks.neovitae.common.item.BloodOrbItem;
-import com.breakinblocks.neovitae.common.item.potion.ItemAlchemyFlask;
 import com.breakinblocks.neovitae.common.recipe.NVRecipes;
-import com.breakinblocks.neovitae.common.recipe.flask.FlaskInput;
-import com.breakinblocks.neovitae.common.recipe.tabulavitae.TabulaVitaeInput;
 import com.breakinblocks.neovitae.common.recipe.tabulavitae.TabulaVitaeRecipe;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -42,7 +38,6 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
 
     private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("neovitae", "alchemytable");
     private static final String INPUTS = "inputs";
-    private static final String ORB = "orb";
     private static final String OUTPUT = "output";
     private static final String LOADED = "loaded";
     private static final String OWNER = "data_energistics_tabula_operation";
@@ -72,20 +67,14 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
             return null;
         TabulaVitaeRecipe recipe = recipe(level, recipeId);
         if (recipe == null || recipe.getInput().size() > TabulaVitaeBlockEntity.ORB_SLOT) return null;
-        ItemStack orb = table.inv.getStackInSlot(TabulaVitaeBlockEntity.ORB_SLOT);
-        int orbTier = orbTier(orb);
-        if (orbTier < recipe.getMinimumTier()) return null;
         ObjectList<ItemStack> assigned = PackagedIngredientAssignment.match(
                 new ObjectArrayList<Ingredient>(recipe.getInput()), inputs);
         if (assigned == null) return null;
-        TabulaVitaeInput nativeInput = new TabulaVitaeInput(assigned, orbTier);
-        if (!recipe.matches(nativeInput, level) || !selects(level, recipeId, nativeInput) ||
-                pattern.getOutputs().size() != 1 ||
+        if (pattern.getOutputs().size() != 1 ||
                 !PackagedOutputMatching.matches(pattern, recipe.getOutput(), recipe.getOutput().getCount()))
             return null;
         var result = new CompoundTag();
         result.put(INPUTS, saveStacks(assigned, level));
-        result.put(ORB, orb.save(level.registryAccess()));
         result.put(OUTPUT, recipe.getOutput().save(level.registryAccess()));
         return result;
     }
@@ -144,17 +133,8 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         if (!emptyInputsAndOutput(table) || !safePartner(operation.level(), table)) return false;
         TabulaVitaeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null) return false;
-        ItemStack expectedOrb = readStack(operation, ORB);
-        ItemStack actualOrb = table.inv.getStackInSlot(TabulaVitaeBlockEntity.ORB_SLOT);
-        if (!sameStack(expectedOrb, actualOrb)) return false;
-        int orbTier = orbTier(actualOrb);
-        if (orbTier < recipe.getMinimumTier()) return false;
         ObjectList<ItemStack> inputs = readStacks(operation, operation.progress().getList(INPUTS, Tag.TAG_COMPOUND));
         if (inputs.size() > TabulaVitaeBlockEntity.ORB_SLOT) return false;
-        TabulaVitaeInput nativeInput = new TabulaVitaeInput(inputs, orbTier);
-        if (!recipe.matches(nativeInput, operation.level()) ||
-                !selects(operation.level(), operation.recipeId(), nativeInput))
-            return false;
 
         for (int slot = 0; slot < inputs.size(); slot++) {
             ItemStack stack = inputs.get(slot);
@@ -200,25 +180,6 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         return true;
     }
 
-    private static boolean selects(ServerLevel level, ResourceLocation recipeId, TabulaVitaeInput input) {
-        // The native table always checks flask recipes before ordinary item recipes.
-        for (int slot = 0; slot < input.size(); slot++) {
-            ItemStack flask = input.getItem(slot);
-            if (!(flask.getItem() instanceof ItemAlchemyFlask)) continue;
-            var ingredients = new ObjectArrayList<ItemStack>();
-            for (int other = 0; other < input.size(); other++) {
-                if (other != slot && !input.getItem(other).isEmpty()) ingredients.add(input.getItem(other));
-            }
-            var flaskInput = new FlaskInput(ingredients, flask, ItemAlchemyFlask.getEffectHolders(flask), input.orbTier());
-            if (level.getRecipeManager().getAllRecipesFor(NVRecipes.FLASK_TYPE.get()).stream()
-                    .anyMatch(holder -> holder.value().matches(flaskInput, level)))
-                return false;
-            break; // Native lookup uses only the first flask, including when it has no matching recipe.
-        }
-        return level.getRecipeManager().getRecipeFor(NVRecipes.TABULA_VITAE_TYPE.get(), input, level)
-                .filter(holder -> holder.id().equals(recipeId)).isPresent();
-    }
-
     private static boolean safePartner(ServerLevel level, TabulaVitaeBlockEntity table) {
         BlockPos position = table.getConnectedPos();
         if (!level.isLoaded(position) || !(level.getBlockEntity(position) instanceof TabulaVitaeBlockEntity partner) ||
@@ -235,10 +196,6 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         var holder = level.getRecipeManager().byKey(recipeId);
         return holder.isPresent() && holder.get().value() instanceof TabulaVitaeRecipe recipe &&
                 recipe.getType() == NVRecipes.TABULA_VITAE_TYPE.get() ? recipe : null;
-    }
-
-    private static int orbTier(ItemStack orb) {
-        return orb.getItem() instanceof BloodOrbItem bloodOrb ? bloodOrb.getOrbTier(orb) : -1;
     }
 
     private static boolean emptyInputsAndOutput(TabulaVitaeBlockEntity table) {

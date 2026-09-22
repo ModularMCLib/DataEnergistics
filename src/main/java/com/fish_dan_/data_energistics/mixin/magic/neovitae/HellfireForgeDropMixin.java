@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.magic.neovitae;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
-import com.fish_dan_.data_energistics.integration.magic.neovitae.packaged.HellfireForgeAdapter;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 
 import net.minecraft.core.BlockPos;
@@ -25,8 +24,7 @@ abstract class HellfireForgeDropMixin {
     @WrapOperation(method = "onRemove", at = @At(value = "INVOKE", target = "Lcom/breakinblocks/neovitae/util/helper/BlockEntityHelper;dropContents(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/neoforged/neoforge/items/IItemHandler;)V"))
     private void preserveInstalledGem(Level level, BlockPos position, IItemHandler inventory, Operation<Void> original) {
         if (!(level instanceof ServerLevel server) || PackagedMachineClaims.get(server).owner(position) == null ||
-                !(level.getBlockEntity(position) instanceof HellfireForgeBlockEntity forge) ||
-                HellfireForgeAdapter.hasSuppliedGem(forge)) {
+                !(level.getBlockEntity(position) instanceof HellfireForgeBlockEntity forge)) {
             original.call(level, position, inventory);
             return;
         }

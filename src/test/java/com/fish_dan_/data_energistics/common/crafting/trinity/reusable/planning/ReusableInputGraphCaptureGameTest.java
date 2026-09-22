@@ -188,7 +188,8 @@ public final class ReusableInputGraphCaptureGameTest {
                     return Optional.of(ReusableInputRule.unchanged(id, epoch, (AEItemKey) context.actualInput().what()));
                 }
                 return Optional.of(ReusableInputRule.fixedDamageFast(id,
-                        epoch, (AEItemKey) context.actualInput().what(), 1, 2, ObjectList.of()));
+                        epoch, (AEItemKey) context.actualInput().what(), 1, 2,
+                        firstTargetUnchanged ? ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 1L)) : ObjectList.of()));
             };
         }
 

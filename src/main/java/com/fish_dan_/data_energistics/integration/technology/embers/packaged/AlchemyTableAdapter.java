@@ -3,11 +3,13 @@ package com.fish_dan_.data_energistics.integration.technology.embers.packaged;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedPatternInputCompletion;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -28,6 +31,7 @@ import com.rekindled.embers.api.tile.IBin;
 import com.rekindled.embers.blockentity.AlchemyPedestalBlockEntity;
 import com.rekindled.embers.blockentity.AlchemyPedestalTopBlockEntity;
 import com.rekindled.embers.blockentity.AlchemyTabletBlockEntity;
+import com.rekindled.embers.blockentity.BeamCannonBlockEntity;
 import com.rekindled.embers.recipe.AlchemyContext;
 import com.rekindled.embers.recipe.IAlchemyRecipe;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -36,10 +40,14 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 
 /** Places an Embers alchemy tablet recipe into the native tablet and pedestal inventories. */
-public final class AlchemyTableAdapter implements PackagedMachineAdapter {
+public final class AlchemyTableAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion {
+
+    @Override
+    public @Nullable ObjectList<GenericStack> completePatternInputs(ServerLevel level, ResourceLocation recipeId, ObjectList<GenericStack> inputs) {
+        return AlchemyPatternInputs.complete(level, recipeId, inputs);
+    }
 
     public static final String SELECTED_RECIPE = "data_energistics_embers_recipe";
     private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("embers", "alchemy");
@@ -74,7 +82,7 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter {
         var code = recipe.getCode(level.getSeed());
         if (code.size() != recipe.getInputs().size() || pedestals.size() < code.size()) return null;
         var plan = new ListTag();
-        var contents = new ArrayList<IAlchemyRecipe.PedestalContents>();
+        var contents = new ObjectArrayList<IAlchemyRecipe.PedestalContents>();
         var returns = new ObjectArrayList<ItemStack>();
         for (int index = 0; index < recipe.getInputs().size(); index++) {
             ItemStack input = take(remaining, recipe.getInputs().get(index));
@@ -128,7 +136,7 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter {
             if (tablet.cachedRecipe != null && tablet.cachedRecipe != recipe) throw new IllegalStateException("Embers tablet selected another alchemy recipe");
             return false;
         }
-        if (!tablet.outputMode) return false;
+        if (!tablet.outputMode) return fireCannon(operation);
         ItemStack actual = tablet.inventory.getStackInSlot(0);
         if (!PackagedOutputMatching.matches(operation, expected, actual)) return false;
         for (int index = 0; index < list.size(); index++) {
@@ -184,6 +192,30 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter {
             return true;
         }
         throw new IllegalArgumentException("Invalid Embers delivery cursor");
+    }
+
+    /** A clear cardinal firing line allows native cannon firing without synthetic sparks or energy edits. */
+    private static boolean fireCannon(PackagedMachineOperation operation) {
+        long now = operation.level().getGameTime();
+        if (now < operation.progress().getLong("next_cannon_attempt")) return false;
+        operation.progress().putLong("next_cannon_attempt", now + 20);
+        for (Direction direction : Direction.values()) {
+            for (int distance = 1; distance <= BeamCannonBlockEntity.MAX_DISTANCE; distance++) {
+                BlockPos position = operation.position().relative(direction, distance);
+                if (!operation.level().isLoaded(position)) break;
+                var state = operation.level().getBlockState(position);
+                if (operation.level().getBlockEntity(position) instanceof BeamCannonBlockEntity cannon) {
+                    Direction facing = direction.getOpposite();
+                    if (state.getValue(BlockStateProperties.FACING) != facing) {
+                        operation.level().setBlock(position, state.setValue(BlockStateProperties.FACING, facing), 3);
+                    }
+                    if (operation.position().equals(cannon.getTarget(facing)) && cannon.tryMountedFire()) return true;
+                    break;
+                }
+                if (!state.getCollisionShape(operation.level(), position).isEmpty()) break;
+            }
+        }
+        return true;
     }
 
     @Override

@@ -36,6 +36,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("naturesaura", "magic.naturesaura.");
         addModCompatMixin("embers", "technology.embers.");
         addModCompatMixin("neovitae", "magic.neovitae.");
+        addModCompatMixin("forbidden_arcanus", "magic.forbiddenarcanus.");
         addModCompatMixin("ae2lt", "ae.ae2lt.");
         addModCompatMixin("extendedae", "ae.extendedae.");
         addModCompatMixin("extendedae_plus", "ae.extendedaeplus.");

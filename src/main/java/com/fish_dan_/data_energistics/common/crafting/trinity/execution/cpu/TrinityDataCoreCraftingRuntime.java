@@ -62,11 +62,9 @@ public final class TrinityDataCoreCraftingRuntime {
     private static final AtomicLong RUNTIME_GENERATION_SEQUENCE = new AtomicLong();
 
     private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int LONG_CAPACITY_SCHEMA_VERSION = 2;
     private static final int SCHEMA_VERSION = 3;
     private static final String CONTRIBUTIONS_TAG = "contributions";
     private static final String CONTRIBUTION_NAME_TAG = "name";
-    private static final String STORAGE_BYTES_TAG = "storage_bytes";
     private static final String STORAGE_CAPACITY_TAG = "storage_capacity";
     private static final String STORAGE_UNLIMITED_TAG = "storage_unlimited";
     private static final String CO_PROCESSORS_TAG = "co_processors";
@@ -657,11 +655,10 @@ public final class TrinityDataCoreCraftingRuntime {
             return;
         }
         int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != LONG_CAPACITY_SCHEMA_VERSION && schemaVersion != SCHEMA_VERSION) {
+        if (schemaVersion != SCHEMA_VERSION) {
             Data_Energistics.LOGGER.warn(
-                    "Ignoring Trinity Data Core CPU runtime schema version {}; expected {} or {}",
+                    "Ignoring Trinity Data Core CPU runtime schema version {}; expected {}",
                     schemaVersion,
-                    LONG_CAPACITY_SCHEMA_VERSION,
                     SCHEMA_VERSION);
             return;
         }
@@ -675,9 +672,7 @@ public final class TrinityDataCoreCraftingRuntime {
             return;
         }
 
-        Map<String, TrinityDataCoreCpuContribution> restoredContributions = readContributions(
-                contributionsTag,
-                schemaVersion);
+        Map<String, TrinityDataCoreCpuContribution> restoredContributions = readContributions(contributionsTag);
         TrinityDataCoreCpuProfile restoredProfile;
         try {
             restoredProfile = TrinityDataCoreCpuProfile.fromContributions(restoredContributions);
@@ -687,7 +682,7 @@ public final class TrinityDataCoreCraftingRuntime {
         }
         this.externalContributions.putAll(restoredContributions);
         applyProfile(restoredProfile);
-        restorePendingWorkers(partitionsTag, schemaVersion);
+        restorePendingWorkers(partitionsTag);
         restorePendingPartitionLogic(registries);
     }
 
@@ -1139,15 +1134,13 @@ public final class TrinityDataCoreCraftingRuntime {
         advanceAvailableWorkerNumber();
     }
 
-    private Map<String, TrinityDataCoreCpuContribution> readContributions(
-                                                                          ListTag contributionsTag,
-                                                                          int schemaVersion) {
+    private Map<String, TrinityDataCoreCpuContribution> readContributions(ListTag contributionsTag) {
         Map<String, TrinityDataCoreCpuContribution> restored = new Object2ObjectRBTreeMap<>();
         for (int index = 0; index < contributionsTag.size(); index++) {
             CompoundTag contributionTag = contributionsTag.getCompound(index);
             try {
                 String structureName = requireStructureName(contributionTag.getString(CONTRIBUTION_NAME_TAG));
-                restored.put(structureName, readContribution(contributionTag, schemaVersion));
+                restored.put(structureName, readContribution(contributionTag));
             } catch (RuntimeException exception) {
                 Data_Energistics.LOGGER.error(
                         "Rejecting invalid Trinity CPU contribution at persisted index {}",
@@ -1167,12 +1160,12 @@ public final class TrinityDataCoreCraftingRuntime {
         return listTag;
     }
 
-    private void restorePendingWorkers(ListTag partitionsTag, int schemaVersion) {
+    private void restorePendingWorkers(ListTag partitionsTag) {
         IntSet seenWorkerNumbers = new IntOpenHashSet();
         for (int tagIndex = 0; tagIndex < partitionsTag.size(); tagIndex++) {
             CompoundTag partitionTag = partitionsTag.getCompound(tagIndex);
             try {
-                TrinityDataCoreCpuPartitionProfile savedProfile = readWorkerProfile(partitionTag, schemaVersion);
+                TrinityDataCoreCpuPartitionProfile savedProfile = readWorkerProfile(partitionTag);
                 int workerNumber = savedProfile.index();
                 if (!seenWorkerNumbers.add(workerNumber)) {
                     Data_Energistics.LOGGER.error(
@@ -1209,7 +1202,7 @@ public final class TrinityDataCoreCraftingRuntime {
         rebuildAvailableWorkerNumber();
     }
 
-    private static TrinityDataCoreCpuPartitionProfile readWorkerProfile(CompoundTag data, int schemaVersion) {
+    private static TrinityDataCoreCpuPartitionProfile readWorkerProfile(CompoundTag data) {
         if (!data.contains(PARTITION_INDEX_TAG, Tag.TAG_INT) ||
                 !data.contains(PARTITION_COUNT_TAG, Tag.TAG_INT) ||
                 !data.contains(CO_PROCESSORS_TAG, Tag.TAG_INT) ||
@@ -1226,7 +1219,7 @@ public final class TrinityDataCoreCraftingRuntime {
         return new TrinityDataCoreCpuPartitionProfile(
                 persistedIndex,
                 workerCapacity,
-                readStorageCapacity(data, schemaVersion),
+                readStorageCapacity(data),
                 data.getInt(CO_PROCESSORS_TAG),
                 CpuSelectionMode.valueOf(data.getString(SELECTION_MODE_TAG)));
     }
@@ -1271,7 +1264,7 @@ public final class TrinityDataCoreCraftingRuntime {
         data.putString(SELECTION_MODE_TAG, contribution.selectionMode().name());
     }
 
-    private static TrinityDataCoreCpuContribution readContribution(CompoundTag data, int schemaVersion) {
+    private static TrinityDataCoreCpuContribution readContribution(CompoundTag data) {
         if (!data.contains(CO_PROCESSORS_TAG, Tag.TAG_INT) ||
                 !data.contains(PARTITION_COUNT_TAG, Tag.TAG_INT) ||
                 !data.contains(SELECTION_MODE_TAG, Tag.TAG_STRING)) {
@@ -1279,7 +1272,7 @@ public final class TrinityDataCoreCraftingRuntime {
         }
         CpuSelectionMode selectionMode = CpuSelectionMode.valueOf(data.getString(SELECTION_MODE_TAG));
         return new TrinityDataCoreCpuContribution(
-                readStorageCapacity(data, schemaVersion),
+                readStorageCapacity(data),
                 data.getInt(CO_PROCESSORS_TAG),
                 data.getInt(PARTITION_COUNT_TAG),
                 selectionMode);
@@ -1297,13 +1290,7 @@ public final class TrinityDataCoreCraftingRuntime {
         }
     }
 
-    private static TrinityCpuStorageCapacity readStorageCapacity(CompoundTag data, int schemaVersion) {
-        if (schemaVersion == LONG_CAPACITY_SCHEMA_VERSION) {
-            if (!data.contains(STORAGE_BYTES_TAG, Tag.TAG_LONG)) {
-                throw new IllegalArgumentException("Persisted 3.1.3 Trinity CPU storage capacity is missing");
-            }
-            return TrinityCpuStorageCapacity.fromEncodedLong(data.getLong(STORAGE_BYTES_TAG));
-        }
+    private static TrinityCpuStorageCapacity readStorageCapacity(CompoundTag data) {
         if (!data.contains(STORAGE_UNLIMITED_TAG, Tag.TAG_BYTE)) {
             throw new IllegalArgumentException("Persisted Trinity CPU storage kind is missing");
         }

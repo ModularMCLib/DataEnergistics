@@ -45,7 +45,6 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
     private static final String DATA_NAME = Data_Energistics.MODID + "_trinity_data_core_storage";
     private static final String SCHEMA_VERSION_TAG = "schema_version";
     private static final int SCHEMA_VERSION = 2;
-    private static final int INVENTORY_ONLY_SCHEMA_VERSION = 1;
     private static final String DETACHED_RUNTIMES_TAG = "detached_cpu_runtimes";
     private static final String HOSTS_TAG = "hosts";
     private static final String HOST_ID_TAG = "host_id";
@@ -72,16 +71,14 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
             return data;
         }
         int schemaVersion = tag.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != INVENTORY_ONLY_SCHEMA_VERSION && schemaVersion != SCHEMA_VERSION) {
+        if (schemaVersion != SCHEMA_VERSION) {
             LOGGER.warn(
                     "Ignoring Trinity Data Core storage SavedData schema version {}; expected {}",
                     schemaVersion,
                     SCHEMA_VERSION);
             return data;
         }
-        if (schemaVersion == SCHEMA_VERSION) {
-            data.readDetachedRuntimes(tag);
-        }
+        data.readDetachedRuntimes(tag);
         Tag hostsTag = tag.get(HOSTS_TAG);
         if (!(hostsTag instanceof ListTag hostList)) {
             return data;

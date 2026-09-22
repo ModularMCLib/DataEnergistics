@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Reads and writes the binding schema used by release 3.1.3 and the current release.
+ * Reads and writes the binding schema used by release 3.2.2 and the current release.
  */
 public final class VersionedTowerBindingCodec {
 

@@ -51,8 +51,6 @@ import java.util.function.Function;
 final class TrinityDataCoreExecutingCraftingJob {
 
     private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int DYNAMIC_OUTPUT_SCHEMA_VERSION = 3;
-    private static final int SHARED_SCHEMA_VERSION = 4;
     private static final int SCHEMA_VERSION = 5;
     private static final String TARGET_PRINCIPAL_KNOWN_TAG = "target_principal_known";
     private static final String TARGET_PRINCIPAL_TAG = "target_principal";
@@ -168,7 +166,6 @@ final class TrinityDataCoreExecutingCraftingJob {
                     data.getCompound(PLAN_EXECUTION_TAG),
                     registries,
                     TickHandler.instance().getCurrentTick());
-            this.timeTracker.restorePlanBaseline(this.planExecution.pendingOutputs());
             GenericStack executionOutput = this.planExecution.finalOutput();
             if (!this.finalOutput.what().equals(executionOutput.what()) ||
                     this.finalOutput.amount() != executionOutput.amount() ||
@@ -365,11 +362,10 @@ final class TrinityDataCoreExecutingCraftingJob {
             return false;
         }
         int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion < DYNAMIC_OUTPUT_SCHEMA_VERSION || schemaVersion > SCHEMA_VERSION) {
+        if (schemaVersion != SCHEMA_VERSION) {
             Data_Energistics.LOGGER.warn(
-                    "Ignoring persisted Trinity Data Core CPU job schema version {}; expected {} through {}",
+                    "Ignoring persisted Trinity Data Core CPU job schema version {}; expected {}",
                     schemaVersion,
-                    DYNAMIC_OUTPUT_SCHEMA_VERSION,
                     SCHEMA_VERSION);
             return false;
         }
@@ -444,14 +440,6 @@ final class TrinityDataCoreExecutingCraftingJob {
     }
 
     private static @Nullable BigInteger readTargetPrincipal(CompoundTag data) {
-        int schema = data.getInt(SCHEMA_VERSION_TAG);
-        // Released schema 4 used exact outputs without principal metadata; the resident draft used the same version.
-        if (schema == DYNAMIC_OUTPUT_SCHEMA_VERSION || schema == SHARED_SCHEMA_VERSION && !data.contains(TARGET_PRINCIPAL_KNOWN_TAG)) {
-            if (data.contains(TARGET_PRINCIPAL_KNOWN_TAG) || data.contains(TARGET_PRINCIPAL_TAG)) {
-                throw new IllegalArgumentException("Legacy job schema cannot contain target-principal metadata");
-            }
-            return null;
-        }
         if (!data.contains(TARGET_PRINCIPAL_KNOWN_TAG, Tag.TAG_BYTE)) {
             throw new IllegalArgumentException("Current job schema requires an explicit target-principal state");
         }

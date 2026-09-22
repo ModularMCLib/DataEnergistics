@@ -165,9 +165,6 @@ final class TrinityDataCoreCpuLogic {
 
     private static final String SCHEMA_VERSION_TAG = "schema_version";
     private static final int SCHEMA_VERSION = 5;
-    private static final int REUSABLE_LEDGER_SCHEMA_VERSION = 4;
-    private static final int EXACT_WORKING_INVENTORY_SCHEMA_VERSION = 3;
-    private static final int LONG_INVENTORY_SCHEMA_VERSION = 2;
     private static final String INVENTORY_TAG = "inventory";
     private static final String EXACT_INVENTORY_TAG = "exact_inventory";
     private static final String VIRTUAL_COMPLETIONS_TAG = "virtual_completions";
@@ -3743,11 +3740,10 @@ final class TrinityDataCoreCpuLogic {
             return;
         }
         int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion < LONG_INVENTORY_SCHEMA_VERSION || schemaVersion > SCHEMA_VERSION) {
+        if (schemaVersion != SCHEMA_VERSION) {
             Data_Energistics.LOGGER.warn(
-                    "Ignoring Trinity Data Core CPU logic schema version {}; expected {} through {}",
+                    "Ignoring Trinity Data Core CPU logic schema version {}; expected {}",
                     schemaVersion,
-                    LONG_INVENTORY_SCHEMA_VERSION,
                     SCHEMA_VERSION);
             return;
         }
@@ -3759,7 +3755,7 @@ final class TrinityDataCoreCpuLogic {
         }
 
         this.inventory.readFromNBT(inventoryTag, registries);
-        if (schemaVersion >= EXACT_WORKING_INVENTORY_SCHEMA_VERSION && data.contains(EXACT_INVENTORY_TAG)) {
+        if (data.contains(EXACT_INVENTORY_TAG)) {
             if (!data.contains(EXACT_INVENTORY_TAG, Tag.TAG_COMPOUND)) {
                 Data_Energistics.LOGGER.error("Ignoring Trinity Data Core CPU logic with invalid exact inventory");
                 discardPersistedState();
@@ -3863,10 +3859,7 @@ final class TrinityDataCoreCpuLogic {
         int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
         Tag raw = data.get(REUSABLE_LEDGER_TAG);
         this.quarantinedReusableState = raw == null ? null : raw.copy();
-        if (raw == null && schemaVersion < SCHEMA_VERSION) {
-            return;
-        }
-        if (schemaVersion < REUSABLE_LEDGER_SCHEMA_VERSION || schemaVersion > SCHEMA_VERSION || !(raw instanceof CompoundTag encoded)) {
+        if (schemaVersion != SCHEMA_VERSION || !(raw instanceof CompoundTag encoded)) {
             if (raw == null) {
                 this.quarantinedReusableState = new CompoundTag();
             }

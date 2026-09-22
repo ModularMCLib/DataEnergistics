@@ -50,7 +50,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(RECIPE_TYPE);
+        return ObjectSet.of(RECIPE_TYPE, ResourceLocation.fromNamespaceAndPath("neovitae", "tabula_vitae"));
     }
 
     @Override

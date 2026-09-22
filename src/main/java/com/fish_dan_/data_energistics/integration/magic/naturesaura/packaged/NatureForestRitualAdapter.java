@@ -7,9 +7,9 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.execution.Package
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.storage.NatureRitualLedger;
 import com.fish_dan_.data_energistics.mixin.magic.naturesaura.WoodStandRitualAccessor;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -172,7 +172,6 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
         // Native completion removes powder and tree. Harvest before checking the consumed structure.
         if (progress.getString("phase").equals("ritual")) {
             if (collect(operation)) {
-                NatureRitualLedger.get(operation.level()).release(operation.id());
                 operation.complete();
                 return true;
             }
@@ -348,7 +347,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
 
     private static boolean collect(PackagedMachineOperation operation) {
         var progress = operation.progress();
-        var ledger = NatureRitualLedger.get(operation.level());
+        var ledger = PackagedRecoveryJournal.get(operation.level());
         var evidence = ledger.read(operation.id());
         BlockPos min = BlockPos.of(progress.getLong("capture_min"));
         BlockPos max = BlockPos.of(progress.getLong("capture_max"));
@@ -379,10 +378,9 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
     @Override
     public boolean recoverRemoved(PackagedMachineOperation operation) {
         var progress = operation.progress();
-        var ledger = NatureRitualLedger.get(operation.level());
+        var ledger = PackagedRecoveryJournal.get(operation.level());
         if (progress.getString("phase").equals("ritual")) {
             if (collect(operation)) {
-                ledger.release(operation.id());
                 return true;
             }
             if (ledger.read(operation.id()).getBoolean("completed")) return false;
@@ -469,7 +467,6 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
             entity.discard();
             operation.returned(AEItemKey.of(stack), stack.getCount());
         }
-        ledger.release(operation.id());
         return true;
     }
 

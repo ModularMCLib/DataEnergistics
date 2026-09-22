@@ -145,7 +145,6 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         Table table = table(operation.level(), operation.position());
         if (table == null) return false;
         CompoundTag progress = operation.progress();
-        if (progress.getLong("cycles") > 1) throw new IllegalStateException("Legacy multi-cycle Extended Crafting operation requires input recovery before redispatch");
         int width = progress.getInt("width");
         if (width != table.width()) throw new IllegalArgumentException("Extended Crafting table tier changed");
         ListTag encodedInputs = progress.getList("inputs", Tag.TAG_COMPOUND);

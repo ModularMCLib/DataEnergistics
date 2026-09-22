@@ -219,7 +219,6 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         TierCraftTile table = table(operation.level(), operation.position());
         if (table == null) return false;
         CompoundTag progress = operation.progress();
-        if (progress.getLong("cycles") > 1) throw new IllegalStateException("Legacy multi-cycle Avaritia operation requires input recovery before redispatch");
         int slots = tier.size * tier.size;
         ObjectList<ItemStack> inputs = readStacks(operation, progress.getList("inputs", Tag.TAG_COMPOUND));
         ObjectList<ItemStack> returns = readStacks(operation, progress.getList("returns", Tag.TAG_COMPOUND));

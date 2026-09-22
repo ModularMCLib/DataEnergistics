@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.magic.naturesaura;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
-import com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.storage.NatureRitualLedger;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -58,7 +58,7 @@ abstract class WoodStandRitualPersistenceMixin {
         }
         original.call();
         if (!before.isEmpty() && state.dataEnergistics$timer() > timer) {
-            var ledger = NatureRitualLedger.get(level);
+            var ledger = PackagedRecoveryJournal.get(level);
             var data = ledger.read(owner);
             var consumed = data.getList("consumed_materials", 10);
             for (var entry : before.entrySet()) {
@@ -79,7 +79,7 @@ abstract class WoodStandRitualPersistenceMixin {
         }
         boolean added = original.call(level, entity);
         if (owner != null && level instanceof ServerLevel server && entity instanceof ItemEntity item) {
-            var ledger = NatureRitualLedger.get(server);
+            var ledger = PackagedRecoveryJournal.get(server);
             var data = ledger.read(owner);
             data.putBoolean("completed", true);
             data.remove("consumed_materials");

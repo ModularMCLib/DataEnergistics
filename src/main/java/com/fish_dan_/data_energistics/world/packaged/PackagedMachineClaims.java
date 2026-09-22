@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.world.packaged;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -9,12 +7,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -24,7 +18,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /** Dimension-local durable exclusion: another provider cannot spend inputs into an already owned machine. */
-@EventBusSubscriber(modid = Data_Energistics.MODID)
 public final class PackagedMachineClaims extends SavedData {
 
     private static final Factory<PackagedMachineClaims> FACTORY = new Factory<>(PackagedMachineClaims::new, PackagedMachineClaims::load);
@@ -35,19 +28,6 @@ public final class PackagedMachineClaims extends SavedData {
 
     public static PackagedMachineClaims get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(FACTORY, "data_energistics_packaged_claims");
-    }
-
-    /** Repairs old saves with claims at already removed blocks without loading their chunks. */
-    @SubscribeEvent
-    public static void clearMissingBlocks(LevelTickEvent.Post event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || level.getGameTime() % 20 != 0) return;
-        var claims = get(level);
-        var missing = new LongArrayList();
-        for (long packed : claims.owners.keySet()) {
-            BlockPos position = BlockPos.of(packed);
-            if (!claims.changingPositions.contains(packed) && level.isLoaded(position) && level.getBlockState(position).isAir()) missing.add(packed);
-        }
-        for (long packed : missing) claims.blockReplaced(BlockPos.of(packed));
     }
 
     public boolean available(BlockPos position) {

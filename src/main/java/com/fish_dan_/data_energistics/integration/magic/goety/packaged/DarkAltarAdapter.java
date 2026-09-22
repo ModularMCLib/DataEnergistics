@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.integration.magic.goety.packaged.storage.DarkAltarRecoveryLedger;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -169,7 +169,10 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
                 }
             }
             if (!recipe.getRitual().isValid(operation.level(), operation.position(), altar, player, activation, recipe.getIngredients())) return false;
-            DarkAltarRecoveryLedger.get(operation.level()).begin(operation.id());
+            var journal = PackagedRecoveryJournal.get(operation.level());
+            var evidence = journal.read(operation.id());
+            evidence.putBoolean("observed", true);
+            journal.write(operation.id(), evidence);
             try {
                 altar.startRitual(player, activation.copy(), recipe, operation.recipeId());
             } finally {
@@ -205,7 +208,6 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
         }
         nativeState.remove(COMPLETED_OPERATION);
         altar.setChanged();
-        DarkAltarRecoveryLedger.get(operation.level()).release(operation.id());
         operation.complete();
         return true;
     }
@@ -224,21 +226,14 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
             if (!operation.level().isLoaded(position)) return false;
         }
         CompoundTag progress = operation.progress();
-        var ledger = DarkAltarRecoveryLedger.get(operation.level());
-        if (progress.contains("native_consumed_unrecoverable", Tag.TAG_LIST)) {
-            var consumed = new ObjectArrayList<ItemStack>();
-            for (var encoded : progress.getList("native_consumed_unrecoverable", Tag.TAG_COMPOUND)) {
-                consumed.add(ItemStack.parse(operation.level().registryAccess(), (CompoundTag) encoded).orElseThrow());
-            }
-            ledger.recordConsumed(operation.id(), consumed, operation.level().registryAccess());
-            progress.remove("native_consumed_unrecoverable");
-            operation.changed();
-        }
+        var ledger = PackagedRecoveryJournal.get(operation.level());
         if (!progress.getBoolean("recovery_inspected")) {
             if (operation.level().getBlockEntity(operation.position()) instanceof DarkAltarBlockEntity altar) {
-                DarkAltarRecoveryLedger.capture(altar);
                 if (altar.getPersistentData().hasUUID(COMPLETED_OPERATION) && operation.id().equals(altar.getPersistentData().getUUID(COMPLETED_OPERATION))) {
-                    ledger.completed(operation.id());
+                    var evidence = ledger.read(operation.id());
+                    evidence.putBoolean("observed", true);
+                    evidence.putBoolean("completed", true);
+                    ledger.write(operation.id(), evidence);
                 }
                 altar.clearRitual();
                 altar.getPersistentData().remove(COMPLETED_OPERATION);
@@ -271,11 +266,8 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
         }
         var evidence = ledger.read(operation.id());
         if (progress.getBoolean("started") && !evidence.getBoolean("observed")) {
-            progress.putString("recovery_wait_reason", "Legacy native altar has no durable consumption evidence");
-            operation.changed();
-            return false;
+            throw new IllegalStateException("Started Dark Altar operation has no consumption evidence");
         }
-        progress.remove("recovery_wait_reason");
         if (!evidence.getBoolean("completed")) {
             ListTag consumed = evidence.getList("consumed", Tag.TAG_COMPOUND);
             int cursor = evidence.getInt("refunded");
@@ -290,7 +282,6 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
                 ledger.write(operation.id(), evidence);
             }
         }
-        ledger.release(operation.id());
         operation.changed();
         return true;
     }

@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.storage.NatureRitualLedger;
 import com.fish_dan_.data_energistics.mixin.magic.naturesaura.OfferingTableQueueAccessor;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -148,7 +148,6 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
         if (progress.getString("phase").equals("waiting")) {
             boolean complete = collect(operation, false);
             if (!complete || !table.items.getStackInSlot(0).isEmpty() || !queueEmpty(operation.level(), table)) return false;
-            NatureRitualLedger.get(operation.level()).release(operation.id());
             operation.complete();
             return true;
         }
@@ -211,7 +210,7 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
     public boolean recoverRemoved(PackagedMachineOperation operation) {
         if (!operation.level().isLoaded(operation.position())) return false;
         var table = operation.level().getBlockEntity(operation.position());
-        var ledger = NatureRitualLedger.get(operation.level());
+        var ledger = PackagedRecoveryJournal.get(operation.level());
         var queued = ledger.read(operation.id()).getList("offering_queue", Tag.TAG_COMPOUND);
         if (table instanceof BlockEntityOfferingTable offering) {
             var nativeQueue = ((OfferingTableQueueAccessor) offering).dataEnergistics$queuedOutputs();
@@ -234,7 +233,6 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
             var stack = ItemStack.parse(operation.level().registryAccess(), (CompoundTag) encoded).orElseThrow();
             operation.returned(AEItemKey.of(stack), stack.getCount());
         }
-        ledger.release(operation.id());
         collect(operation, true);
         return true;
     }

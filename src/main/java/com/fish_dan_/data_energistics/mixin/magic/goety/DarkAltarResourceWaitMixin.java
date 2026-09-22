@@ -1,15 +1,19 @@
 package com.fish_dan_.data_energistics.mixin.magic.goety;
 
 import com.fish_dan_.data_energistics.integration.magic.goety.packaged.DarkAltarAdapter;
-import com.fish_dan_.data_energistics.integration.magic.goety.packaged.storage.DarkAltarRecoveryLedger;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.BucketItem;
 
 import com.Polarice3.Goety.common.blocks.entities.CursedCageBlockEntity;
 import com.Polarice3.Goety.common.blocks.entities.DarkAltarBlockEntity;
 import com.Polarice3.Goety.common.ritual.EnchantItemRitual;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -25,7 +29,7 @@ public abstract class DarkAltarResourceWaitMixin {
         var claims = PackagedMachineClaims.get(level);
         var owner = claims.owner(altar.getBlockPos());
         if (owner == null) return;
-        DarkAltarRecoveryLedger.capture(altar);
+        dataEnergistics$captureConsumption();
         if (claims.structureRemoved(owner)) {
             callback.cancel();
             return;
@@ -42,17 +46,45 @@ public abstract class DarkAltarResourceWaitMixin {
 
     @Inject(method = "tick", at = @At("RETURN"))
     private void dataEnergistics$recordConsumption(CallbackInfo callback) {
-        DarkAltarRecoveryLedger.capture((DarkAltarBlockEntity) (Object) this);
+        dataEnergistics$captureConsumption();
     }
 
     @Inject(method = "stopRitual", at = @At("HEAD"))
     private void dataEnergistics$preserveBeforeStop(boolean finished, CallbackInfo callback) {
-        DarkAltarRecoveryLedger.capture((DarkAltarBlockEntity) (Object) this);
+        dataEnergistics$captureConsumption();
     }
 
     @Inject(method = "clearRitual", at = @At("HEAD"))
     private void dataEnergistics$preserveBeforeClear(CallbackInfo callback) {
-        DarkAltarRecoveryLedger.capture((DarkAltarBlockEntity) (Object) this);
+        dataEnergistics$captureConsumption();
+    }
+
+    /** Copies actual native consumption before clear/stop can erase it. */
+    @Unique
+    private void dataEnergistics$captureConsumption() {
+        var altar = (DarkAltarBlockEntity) (Object) this;
+        if (!(altar.getLevel() instanceof ServerLevel level)) return;
+        var owner = PackagedMachineClaims.get(level).owner(altar.getBlockPos());
+        if (owner == null || altar.getCurrentRitualRecipe() == null && altar.consumedIngredients.isEmpty()) return;
+        var journal = PackagedRecoveryJournal.get(level);
+        var data = journal.read(owner);
+        if (data.getBoolean("completed")) return;
+        var receipts = data.getList("consumed", Tag.TAG_COMPOUND);
+        if (altar.consumedIngredients.size() < receipts.size()) return;
+        for (int index = receipts.size(); index < altar.consumedIngredients.size(); index++) {
+            var stack = altar.consumedIngredients.get(index);
+            if (stack.isEmpty()) throw new IllegalStateException("Native Goety consumption receipt is empty");
+            var entry = new CompoundTag();
+            entry.put("input", stack.save(level.registryAccess()));
+            // Native buckets and crafting remainders are recovered as physical entities,
+            // never alongside a recreated input.
+            boolean transformed = stack.getItem() instanceof BucketItem bucket && !bucket.content.defaultFluidState().isEmpty() || stack.hasCraftingRemainingItem();
+            entry.putBoolean("refund_input", !transformed);
+            receipts.add(entry);
+        }
+        data.put("consumed", receipts);
+        data.putBoolean("observed", true);
+        journal.write(owner, data);
     }
 
     @Inject(method = "stopRitual", at = @At("RETURN"))
@@ -62,7 +94,11 @@ public abstract class DarkAltarResourceWaitMixin {
         if (!(altar.getLevel() instanceof ServerLevel level)) return;
         var owner = PackagedMachineClaims.get(level).owner(altar.getBlockPos());
         if (owner != null) {
-            DarkAltarRecoveryLedger.get(level).completed(owner);
+            var journal = PackagedRecoveryJournal.get(level);
+            var data = journal.read(owner);
+            data.putBoolean("observed", true);
+            data.putBoolean("completed", true);
+            journal.write(owner, data);
             altar.getPersistentData().putUUID(DarkAltarAdapter.COMPLETED_OPERATION, owner);
             altar.setChanged();
         }

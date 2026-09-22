@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.storage;
+package com.fish_dan_.data_energistics.world.packaged;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -11,14 +11,18 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.UUID;
 
-/** Native consumption and queued outputs survive destruction of the ritual's block entity. */
-public final class NatureRitualLedger extends SavedData {
+/**
+ * Dimension-local recovery evidence for native packaged operations, keyed by operation UUID.
+ * Native callbacks can write while the provider is unloaded or its recovery voucher is outstanding.
+ * Server-thread only; adapters define the payload and claims release its lifetime.
+ */
+public final class PackagedRecoveryJournal extends SavedData {
 
-    private static final Factory<NatureRitualLedger> FACTORY = new Factory<>(NatureRitualLedger::new, NatureRitualLedger::load);
+    private static final Factory<PackagedRecoveryJournal> FACTORY = new Factory<>(PackagedRecoveryJournal::new, PackagedRecoveryJournal::load);
     private final Object2ObjectOpenHashMap<UUID, CompoundTag> operations = new Object2ObjectOpenHashMap<>();
 
-    public static NatureRitualLedger get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(FACTORY, "data_energistics_nature_rituals");
+    public static PackagedRecoveryJournal get(ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(FACTORY, "data_energistics_packaged_recovery_journal");
     }
 
     /** Returns an isolated server-thread snapshot; changes become durable only through write. */
@@ -33,7 +37,7 @@ public final class NatureRitualLedger extends SavedData {
         setDirty();
     }
 
-    /** Called after the operation has taken ownership of all remaining ledger assets. */
+    /** Removes evidence after all recoverable assets have transferred to the task or its receiver. */
     public void release(UUID operation) {
         if (this.operations.remove(operation) != null) setDirty();
     }
@@ -51,12 +55,12 @@ public final class NatureRitualLedger extends SavedData {
         return tag;
     }
 
-    private static NatureRitualLedger load(CompoundTag tag, HolderLookup.Provider registries) {
-        var ledger = new NatureRitualLedger();
+    private static PackagedRecoveryJournal load(CompoundTag tag, HolderLookup.Provider registries) {
+        var ledger = new PackagedRecoveryJournal();
         for (var encoded : tag.getList("operations", Tag.TAG_COMPOUND)) {
             var entry = (CompoundTag) encoded;
-            if (!entry.hasUUID("operation") || !entry.contains("data", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Invalid nature ritual ledger entry");
-            if (ledger.operations.putIfAbsent(entry.getUUID("operation"), entry.getCompound("data").copy()) != null) throw new IllegalArgumentException("Duplicate nature ritual operation");
+            if (!entry.hasUUID("operation") || !entry.contains("data", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Invalid packaged recovery journal entry");
+            if (ledger.operations.putIfAbsent(entry.getUUID("operation"), entry.getCompound("data").copy()) != null) throw new IllegalArgumentException("Duplicate packaged recovery operation");
         }
         return ledger;
     }

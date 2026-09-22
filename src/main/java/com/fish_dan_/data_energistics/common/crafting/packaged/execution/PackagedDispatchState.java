@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.Packaged
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryStore;
 
 import appeng.api.crafting.IPatternDetails;
@@ -443,6 +444,7 @@ public final class PackagedDispatchState {
             if (operation.settled()) {
                 if (claims.structureRemoved(operation.id())) claims.acknowledgeRemoval(operation.id());
                 else claims.releaseAll(operation.occupiedPositions(), operation.id());
+                PackagedRecoveryJournal.get(level).release(operation.id());
                 this.operations.remove(this.tickCursor);
                 changed = true;
             } else {
@@ -473,7 +475,9 @@ public final class PackagedDispatchState {
 
     public static PackagedDispatchState load(CompoundTag tag, HolderLookup.Provider registries) {
         var state = new PackagedDispatchState();
-        if (tag.contains("reusable", Tag.TAG_COMPOUND)) state.reusable = PackagedReusableState.load(tag.getCompound("reusable"), registries);
+        if (tag.isEmpty()) return state;
+        if (!tag.contains("reusable", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Missing packaged reusable state");
+        state.reusable = PackagedReusableState.load(tag.getCompound("reusable"), registries);
         if (tag.contains("recovery_receipt")) {
             if (!tag.hasUUID("recovery_receipt")) throw new IllegalArgumentException("Invalid packaged recovery receipt");
             state.recoveryReceipt = tag.getUUID("recovery_receipt");

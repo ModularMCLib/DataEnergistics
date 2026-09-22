@@ -29,6 +29,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.R
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -365,6 +366,7 @@ public final class PackagedReusableState {
                     if (!active.released) {
                         if (claims.structureRemoved(work.id())) claims.acknowledgeRemoval(work.id());
                         else claims.releaseAll(work.occupiedPositions(), work.id());
+                        PackagedRecoveryJournal.get(level).release(work.id());
                         active.released = true;
                         changed.run();
                     }

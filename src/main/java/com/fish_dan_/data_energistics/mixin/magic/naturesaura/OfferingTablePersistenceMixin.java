@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.magic.naturesaura;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
-import com.fish_dan_.data_energistics.integration.magic.naturesaura.packaged.storage.NatureRitualLedger;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -38,7 +38,7 @@ abstract class OfferingTablePersistenceMixin {
         if (!(table.getLevel() instanceof ServerLevel level)) return;
         var owner = PackagedMachineClaims.get(level).owner(table.getBlockPos());
         if (owner == null || PackagedMachineClaims.get(level).structureRemoved(owner)) return;
-        var ledger = NatureRitualLedger.get(level);
+        var ledger = PackagedRecoveryJournal.get(level);
         var data = ledger.read(owner);
         var queue = new ListTag();
         for (var stack : ((OfferingTableQueueAccessor) table).dataEnergistics$queuedOutputs()) queue.add(stack.save(level.registryAccess()));

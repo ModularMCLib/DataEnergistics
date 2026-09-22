@@ -255,11 +255,8 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         var inputs = PackagedAmounts.load(tag.getList("inputs", Tag.TAG_COMPOUND), registries);
         boolean complete = tag.getBoolean("complete");
         var occupied = new ObjectArrayList<BlockPos>();
-        if (tag.contains("occupied", Tag.TAG_LONG_ARRAY)) {
-            for (long position : tag.getLongArray("occupied")) occupied.add(BlockPos.of(position));
-        } else {
-            occupied.add(BlockPos.of(tag.getLong("position")));
-        }
+        if (!tag.contains("occupied", Tag.TAG_LONG_ARRAY)) throw new IllegalArgumentException("Missing packaged operation reservations");
+        for (long position : tag.getLongArray("occupied")) occupied.add(BlockPos.of(position));
         if (complete && !inputs.isEmpty()) throw new IllegalArgumentException("Completed packaged task still owns inputs");
         return new PackagedOperationState(tag.getUUID("id"), ResourceLocation.parse(tag.getString("adapter")),
                 ResourceLocation.parse(tag.getString("recipe")), BlockPos.of(tag.getLong("position")), face,

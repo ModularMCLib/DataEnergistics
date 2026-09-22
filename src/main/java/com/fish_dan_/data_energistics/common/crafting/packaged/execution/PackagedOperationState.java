@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 
@@ -44,6 +45,7 @@ public final class PackagedOperationState implements PackagedMachineOperation {
     private boolean complete;
     private @Nullable ServerLevel activeLevel;
     private boolean changed;
+    private long nextErrorLog;
 
     public PackagedOperationState(ResourceLocation adapterId, ResourceLocation recipeId, BlockPos position,
                                   Direction face, CompoundTag preparation, KeyCounter[] inputs) {
@@ -88,6 +90,10 @@ public final class PackagedOperationState implements PackagedMachineOperation {
             if (!adapter.id().equals(this.adapterId)) throw new IllegalArgumentException("Packaged adapter changed identity");
             return adapter.advance(this) || this.changed;
         } catch (RuntimeException exception) {
+            if (level.getGameTime() >= this.nextErrorLog) {
+                Data_Energistics.LOGGER.error("Packaged operation {} ({}, recipe {}, at {}) remains pending", this.id, this.adapterId, this.recipeId, this.position, exception);
+                this.nextErrorLog = level.getGameTime() + 1200;
+            }
             return true;
         } finally {
             this.activeLevel = null;
@@ -167,6 +173,25 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         this.inputs.clear();
         this.complete = true;
         return true;
+    }
+
+    /** Recovers adapter-owned world assets before settling a removed structure. */
+    public boolean recoverRemoved(ServerLevel level, PackagedMachineAdapter adapter) {
+        if (this.complete) return false;
+        this.activeLevel = level;
+        this.changed = false;
+        try {
+            if (adapter.recoverRemoved(this)) return retireRemovedStructure();
+            return this.changed;
+        } catch (RuntimeException exception) {
+            if (level.getGameTime() >= this.nextErrorLog) {
+                Data_Energistics.LOGGER.error("Packaged recovery {} ({}, recipe {}, at {}) remains pending", this.id, this.adapterId, this.recipeId, this.position, exception);
+                this.nextErrorLog = level.getGameTime() + 1200;
+            }
+            return true;
+        } finally {
+            this.activeLevel = null;
+        }
     }
 
     @Override

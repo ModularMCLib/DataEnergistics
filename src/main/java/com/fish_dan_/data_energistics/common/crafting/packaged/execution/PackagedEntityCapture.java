@@ -28,6 +28,11 @@ public final class PackagedEntityCapture {
         withScope(new Scope(level, operation), action);
     }
 
+    /** Keeps pre-installed player assets outside an enclosing operation-owned removal callback. */
+    public static void unowned(Runnable action) {
+        withScope(null, action);
+    }
+
     public static void machineTick(ServerLevel level, BlockPos position, Runnable tick) {
         // Resolve the claim at the tick boundary. A cached LevelEvent.Load view can be stale
         // during world reloads, which would let native drops escape without an operation owner.
@@ -68,11 +73,7 @@ public final class PackagedEntityCapture {
                 !(event.getEntity() instanceof ItemEntity item) || owner(item) != null)
             return;
         var scope = CURRENT.get();
-        if (scope == null || scope.level() != level) {
-            var operation = PackagedMachineClaims.get(level).ownerNear(item.blockPosition(), 3);
-            if (operation == null) return;
-            scope = new Scope(level, operation);
-        }
+        if (scope == null || scope.level() != level) return;
         claim(item, scope.operation());
     }
 

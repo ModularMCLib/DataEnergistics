@@ -344,7 +344,7 @@ public final class PackagedReusableState {
                         if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) return NativeResult.inFlight();
                         PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
                         var work = new PackagedOperationState(entry.adapter, recipeId, entry.position, entry.face, preparation, inputs, occupied);
-                        if (!claims.acquireAll(occupied, work.id())) return NativeResult.inFlight();
+                        if (!claims.acquireAll(occupied, work.id(), work.progress().getLongArray("changing_positions"))) return NativeResult.inFlight();
                         active = new NativeWork(binding.identity().sessionId(), operation.id(), operation.appendSequence(), work, false);
                         entry.work = active;
                         changed.run();
@@ -354,10 +354,11 @@ public final class PackagedReusableState {
                     var claims = PackagedMachineClaims.get(level);
                     if (!work.completed()) {
                         if (claims.structureRemoved(work.id())) {
-                            throw new IllegalStateException("Reusable machine removed while holding native inputs");
+                            work.progress().putBoolean("removed_structure", true);
+                            if (work.recoverRemoved(level, machine)) changed.run();
+                        } else if (claims.acquireAll(work.occupiedPositions(), work.id(), work.progress().getLongArray("changing_positions"))) {
+                            if (work.advance(level, machine)) changed.run();
                         }
-                        if (!claims.acquireAll(work.occupiedPositions(), work.id())) return NativeResult.inFlight();
-                        if (work.advance(level, machine)) changed.run();
                         if (!work.completed()) return NativeResult.inFlight();
                     }
                     NativeResult result = completedResult(active, binding, operation);
@@ -398,6 +399,7 @@ public final class PackagedReusableState {
     }
 
     private static NativeResult completedResult(NativeWork work, Binding binding, Operation operation) {
+        if (work.machine.progress().getBoolean("removed_structure")) return recoveredResult(work, binding, operation);
         var actual = new KeyCounter();
         for (var stack : work.machine.collectedOutputs()) actual.add(stack.what(), stack.amount());
         var tools = new ObjectArrayList<ToolOutcome>();
@@ -426,6 +428,37 @@ public final class PackagedReusableState {
         var produced = new ObjectArrayList<GenericStack>();
         for (var stack : actual) if (stack.getLongValue() > 0) produced.add(new GenericStack(stack.getKey(), stack.getLongValue()));
         return new NativeResult(true, tools, produced, Optional.empty());
+    }
+
+    private static NativeResult recoveredResult(NativeWork work, Binding binding, Operation operation) {
+        var actual = new KeyCounter();
+        for (var stack : work.machine.collectedOutputs()) actual.add(stack.what(), stack.amount());
+        var tools = new ObjectArrayList<ToolOutcome>();
+        for (var tool : operation.tools()) {
+            var contract = binding.tools().stream().filter(candidate -> candidate.slot() == tool.slot()).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Recovered reusable input has an unknown tool slot"));
+            var successors = new ObjectArrayList<GenericStack>();
+            AEItemKey initial = (AEItemKey) tool.stack().what();
+            long remaining = tool.stack().amount();
+            long recovered = Math.min(remaining, actual.get(initial));
+            if (recovered > 0) {
+                actual.add(initial, -recovered);
+                successors.add(new GenericStack(initial, recovered));
+                remaining -= recovered;
+            }
+            AEItemKey successor = contract.rule().advance(initial, operation.count()).successor();
+            if (remaining > 0 && successor != null && !successor.equals(initial)) {
+                recovered = Math.min(remaining, actual.get(successor));
+                if (recovered > 0) {
+                    actual.add(successor, -recovered);
+                    successors.add(new GenericStack(successor, recovered));
+                }
+            }
+            tools.add(new ToolOutcome(tool.slot(), successors, List.of()));
+        }
+        var returned = new ObjectArrayList<GenericStack>();
+        for (var stack : actual) if (stack.getLongValue() > 0) returned.add(new GenericStack(stack.getKey(), stack.getLongValue()));
+        return new NativeResult(true, tools, returned, Optional.of("Native packaged structure was removed; recovered physical assets retained"));
     }
 
     public CompoundTag save(HolderLookup.Provider registries) {

@@ -330,7 +330,7 @@ public final class PackagedDispatchState {
                     PackagedOutputMatching.save(target.pattern(), current, this.level.registryAccess());
                     var operation = new PackagedOperationState(this.adapter.id(), this.recipe, link.position(), link.side(),
                             current, actualInputs, positions);
-                    if (!this.claims.acquireAll(positions, operation.id())) {
+                    if (!this.claims.acquireAll(positions, operation.id(), operation.progress().getLongArray("changing_positions"))) {
                         releaseClaims(committed);
                         return false;
                     }
@@ -416,7 +416,7 @@ public final class PackagedDispatchState {
             if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) continue;
             PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
             var operation = new PackagedOperationState(adapter.id(), recipe, link.position(), link.side(), preparation, inputs, occupied);
-            if (!claims.acquireAll(operation.occupiedPositions(), operation.id())) continue;
+            if (!claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) continue;
             this.operations.add(operation);
             for (var input : inputs) input.clear();
             this.cursors.put(adapter.id(), (index + 1) % candidates.size());
@@ -435,8 +435,8 @@ public final class PackagedDispatchState {
             var adapter = catalog.adapter(operation.adapterId());
             var claims = PackagedMachineClaims.get(level);
             if (claims.structureRemoved(operation.id())) {
-                changed |= operation.retireRemovedStructure();
-            } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id())) {
+                changed |= adapter == null ? operation.retireRemovedStructure() : operation.recoverRemoved(level, adapter);
+            } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) {
                 changed |= operation.advance(level, adapter);
             }
             changed |= operation.flush(returns, source);

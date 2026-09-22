@@ -49,6 +49,7 @@ public final class JeiPatternTransferContextBridge {
     public static @Nullable ResourceLocation resolveRecipeId(IRecipeLayoutDrawable<?> recipeLayout) {
         var level = Minecraft.getInstance().level;
         return ViewerRecipeIdentity.resolve(recipeLayout.getRecipe(),
-                level == null ? ObjectList.of() : level.getRecipeManager().getRecipes());
+                level == null ? ObjectList.of() : level.getRecipeManager().getRecipes(),
+                level == null ? null : level.registryAccess());
     }
 }

@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Optional;
 
-/** Preserves surviving ingredients when a claimed active ritual loses a pedestal. */
+/** Keeps unbound managers passive and preserves physical inputs of claimed server rituals. */
 @Mixin(value = RitualManager.class, remap = false)
 public abstract class RitualManagerRecoveryMixin {
 
@@ -43,7 +43,9 @@ public abstract class RitualManagerRecoveryMixin {
     @Inject(method = "onDataChanged", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$preservePhysicalInputs(ForgeDataCache cache, EssencesDefinition essences,
                                                         HolderLookup.Provider lookup, CallbackInfo callback) {
-        if (this.level == null || !isRitualActive() || PackagedMachineClaims.get(this.level).owner(this.pos) == null) return;
+        // Client synchronization and loading before setup have no server world or position.
+        // Refresh the cache without failing/resetting a ritual or sending server events.
+        if (this.level != null && (!isRitualActive() || PackagedMachineClaims.get(this.level).owner(this.pos) == null)) return;
         this.dataCache = cache;
         updateValidRitual(essences, lookup);
         callback.cancel();

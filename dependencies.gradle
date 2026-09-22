@@ -26,6 +26,12 @@ dependencies {
     compileOnly(forge.botania)
     compileOnly(forge.ars.nouveau)
     compileOnly(forge.malum)
+    compileOnly(forge.forbidden.arcanus)
+    compileOnly(forge.natures.aura)
+    compileOnly(forge.neovitae)
+    compileOnly(forge.embers.re.ignited)
+    compileOnly(forge.goety)
+    compileOnly(forge.valhelsia.core)
     compileOnly(forge.occultism)
     compileOnly(forge.modonomicon)
     compileOnly(forge.lodestone)
@@ -164,6 +170,12 @@ dependencies {
     extraLocalRuntime(forge.patchouli) { transitive = false }
     extraLocalRuntime(forge.extendedcrafting) { transitive = false }
     extraLocalRuntime(forge.malum) { transitive = false }
+    extraLocalRuntime(forge.forbidden.arcanus) { transitive = false }
+    extraLocalRuntime(forge.natures.aura) { transitive = false }
+    extraLocalRuntime(forge.neovitae) { transitive = false }
+    extraLocalRuntime(forge.embers.re.ignited) { transitive = false }
+    extraLocalRuntime(forge.goety) { transitive = false }
+    extraLocalRuntime(forge.valhelsia.core) { transitive = false }
     extraLocalRuntime(forge.lodestone) { transitive = false }
     extraLocalRuntime(forge.mekmm) { transitive = false }
     extraLocalRuntime(forge.amek) { transitive = false }

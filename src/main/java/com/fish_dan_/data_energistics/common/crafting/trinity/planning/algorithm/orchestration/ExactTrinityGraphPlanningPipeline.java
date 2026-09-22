@@ -207,6 +207,12 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
         if (state == StopState.DEADLINE_EXCEEDED) {
             return deadlineExceeded();
         }
+        if (reachableSnapshot.patterns().isEmpty()) {
+            return failure(
+                    TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
+                    TARGET_ABSENT_KEY,
+                    Map.of("target", target.toString()));
+        }
         TrinitySameItemPolicy sameItemPolicy = reachableSnapshot.sameItemPolicy(target);
         List<TrinityPatternVariant> normalizedVariants = expandedVariants.stream()
                 .map(variant -> variant.normalized(sameItemPolicy))

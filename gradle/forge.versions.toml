@@ -31,6 +31,7 @@ patchouli = "1.21.1-92-NEOFORGE"
 geckolib = "4.9.2"
 smartbrainlib = "1.16.11"
 grandpower = "3.0.2"
+neovitae = "1.21.1-1.1.26"
 
 ## ftb mod ##
 ftblibrary = "2101.1.36"
@@ -77,6 +78,11 @@ mega-cells = "7952621"
 sut = "8865224"
 cloth-config = "5729127"
 amek = "7096962"
+forbidden-arcanus = "6875895"
+natures-aura = "8809415"
+embers-re-ignited = "8909613"
+goety = "8911352"
+valhelsia-core = "6296775"
 jech = "8771217"
 ctm = "5587515"
 worldedit = "5830452"
@@ -123,6 +129,7 @@ occultism           = { module = "com.klikli_dev:occultism-1.21.1-neoforge", ver
 modonomicon         = { module = "com.klikli_dev:modonomicon-1.21.1-neoforge", version.ref = "modonomicon" }
 lodestone           = { module = "team.lodestar.lodestone:lodestone", version.ref = "lodestone" }
 patchouli           = { module = "vazkii.patchouli:Patchouli", version.ref = "patchouli" }
+neovitae            = { module = "com.breakinblocks.neovitae:neovitae", version.ref = "neovitae" }
 geckolib            = { module = "software.bernie.geckolib:geckolib-neoforge-1.21.1", version.ref = "geckolib" }
 smartbrainlib       = { module = "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1", version.ref = "smartbrainlib" }
 
@@ -164,6 +171,11 @@ mega-cells          = { module = "curse.maven:mega-cells-622112", version.ref = 
 sut                 = { module = "curse.maven:some-useless-things-1401600", version.ref = "sut"}
 cloth-config        = { module = "curse.maven:cloth-config-348521", version.ref = "cloth-config" }
 amek                = { module = "curse.maven:applied-mekanistics-574300", version.ref = "amek" }
+forbidden-arcanus   = { module = "curse.maven:forbidden-arcanus-309858", version.ref = "forbidden-arcanus" }
+natures-aura        = { module = "curse.maven:natures-aura-306626", version.ref = "natures-aura" }
+embers-re-ignited   = { module = "curse.maven:embers-re-ignited-1579725", version.ref = "embers-re-ignited" }
+goety               = { module = "curse.maven:goety-586095", version.ref = "goety" }
+valhelsia-core      = { module = "curse.maven:valhelsia-core-416935", version.ref = "valhelsia-core" }
 
 spark               = { module = "curse.maven:spark-361579", version.ref = "spark" }
 jech                = { module = "curse.maven:just-enough-characters-250702", version.ref = "jech" }

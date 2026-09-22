@@ -29,4 +29,21 @@ public final class PackagedCraftingGrid {
         }
         return grid;
     }
+
+    /** Assigns a counted batch while retaining one physical slot per recipe ingredient. */
+    public static @Nullable ObjectList<ItemStack> assignBatch(ObjectList<Ingredient> ingredients, int width, int gridSize,
+                                                              KeyCounter[] inputs, long batch) {
+        if (width <= 0 || width > gridSize || ingredients.size() > width * gridSize || batch <= 0) return null;
+        var nonEmpty = new ObjectArrayList<Ingredient>();
+        for (var ingredient : ingredients) if (!ingredient.isEmpty()) nonEmpty.add(ingredient);
+        var matched = PackagedIngredientAssignment.matchBatch(nonEmpty, inputs, batch);
+        if (matched == null) return null;
+        var grid = new ObjectArrayList<ItemStack>(gridSize * gridSize);
+        for (int slot = 0; slot < gridSize * gridSize; slot++) grid.add(ItemStack.EMPTY);
+        int next = 0;
+        for (int slot = 0; slot < ingredients.size(); slot++) {
+            if (!ingredients.get(slot).isEmpty()) grid.set(slot / width * gridSize + slot % width, matched.get(next++));
+        }
+        return grid;
+    }
 }

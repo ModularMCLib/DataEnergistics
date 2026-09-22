@@ -35,14 +35,14 @@ public record EncodedPatternRecipeReference(Kind kind, ResourceLocation id) {
         if (recipeId == null) {
             encodedPattern.remove(DEDataComponents.PROCESSING_PATTERN_RECIPE_ID);
         } else {
-            encodedPattern.set(DEDataComponents.PROCESSING_PATTERN_RECIPE_ID, recipeId);
+            encodedPattern.set(DEDataComponents.PROCESSING_PATTERN_RECIPE_ID, canonicalRecipeId(recipeId));
         }
     }
 
     /** Returns the stable processing recipe identity appended by a successful viewer transfer, if present. */
     public static @Nullable ResourceLocation getProcessingRecipeId(ItemStack encodedPattern) {
         return encodedPattern.isEmpty() ? null :
-                encodedPattern.get(DEDataComponents.PROCESSING_PATTERN_RECIPE_ID);
+                canonicalRecipeId(encodedPattern.get(DEDataComponents.PROCESSING_PATTERN_RECIPE_ID));
     }
 
     /** Returns the persisted processing recipe type, including types kept while recording is disabled. */
@@ -99,6 +99,16 @@ public record EncodedPatternRecipeReference(Kind kind, ResourceLocation id) {
             return EncodingMode.STONECUTTING;
         }
         return encodedPattern.has(AEComponents.ENCODED_PROCESSING_PATTERN) ? EncodingMode.PROCESSING : null;
+    }
+
+    /**
+     * EMI uses a leading slash for synthetic recipe ids. Processing patterns must persist the native recipe id so
+     * the server recipe manager and packaged adapters can resolve the recipe after the viewer transfer completes.
+     */
+    private static @Nullable ResourceLocation canonicalRecipeId(@Nullable ResourceLocation recipeId) {
+        if (recipeId == null || !recipeId.getPath().startsWith("/")) return recipeId;
+        String path = recipeId.getPath().substring(1);
+        return path.isEmpty() ? null : ResourceLocation.fromNamespaceAndPath(recipeId.getNamespace(), path);
     }
 
     public enum Kind {

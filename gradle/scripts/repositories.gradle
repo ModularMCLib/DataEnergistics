@@ -32,6 +32,10 @@ repositories {
             artifact()
         }
     }
+    exclusiveContent { // Neo Vitae official Maven
+        forRepository { maven { url = "https://maven.breakinblocks.com/releases" } }
+        filter { includeGroup("com.breakinblocks.neovitae") }
+    }
     maven {
         url = "https://maven.quiltmc.org/repository/release/"
     }
@@ -157,12 +161,12 @@ repositories {
             includeGroup("xaero.map")
         }
     }
-    exclusiveContent { // Modrinth Maven
-        forRepository { maven { url = "https://api.modrinth.com/maven" } }
-        filter { includeGroup("maven.modrinth") }
-    }
     exclusiveContent { // Curseforge Maven
         forRepository { maven { url = "https://cursemaven.com" } }
         filter { includeGroup("curse.maven") }
+    }
+    exclusiveContent { // Modrinth Maven fallback
+        forRepository { maven { url = "https://api.modrinth.com/maven" } }
+        filter { includeGroup("maven.modrinth") }
     }
 }

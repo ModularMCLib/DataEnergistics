@@ -1,7 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -42,8 +45,10 @@ public final class PackagedOperationState implements PackagedMachineOperation {
     private final Object2ObjectMap<AEKey, BigInteger> inputs;
     private final Object2ObjectMap<AEKey, BigInteger> outputs;
     private boolean complete;
+    private boolean machineReleased;
     private @Nullable ServerLevel activeLevel;
     private boolean changed;
+    private long nextErrorLog;
 
     public PackagedOperationState(ResourceLocation adapterId, ResourceLocation recipeId, BlockPos position,
                                   Direction face, CompoundTag preparation, KeyCounter[] inputs) {
@@ -88,6 +93,10 @@ public final class PackagedOperationState implements PackagedMachineOperation {
             if (!adapter.id().equals(this.adapterId)) throw new IllegalArgumentException("Packaged adapter changed identity");
             return adapter.advance(this) || this.changed;
         } catch (RuntimeException exception) {
+            if (level.getGameTime() >= this.nextErrorLog) {
+                Data_Energistics.LOGGER.error("Packaged operation {} ({}, recipe {}, at {}) remains pending", this.id, this.adapterId, this.recipeId, this.position, exception);
+                this.nextErrorLog = level.getGameTime() + 1200;
+            }
             return true;
         } finally {
             this.activeLevel = null;
@@ -153,6 +162,34 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         return this.complete;
     }
 
+    public boolean machineReleased() {
+        return this.machineReleased;
+    }
+
+    /** Server-thread recovery of detached custody; outputs stay owned here after world claims end. */
+    public boolean recoverDetached(ServerLevel level, PackagedMachineAdapter adapter) {
+        if (this.machineReleased) return false;
+        PackagedMachineClaims.get(level).retireOperation(this.id);
+        if (this.occupiedPositions.stream().anyMatch(position -> !level.isLoaded(position))) return false;
+        boolean changed = recoverRemoved(level, adapter);
+        if (this.complete) {
+            releaseMachine(level);
+            return true;
+        }
+        return changed;
+    }
+
+    /** Releases physical ownership once, only after native work has finished or been recovered. */
+    public void releaseMachine(ServerLevel level) {
+        if (this.machineReleased) return;
+        if (!this.complete) throw new IllegalStateException("Cannot release an unfinished packaged machine");
+        var claims = PackagedMachineClaims.get(level);
+        if (claims.structureRemoved(this.id)) claims.acknowledgeRemoval(this.id);
+        else claims.releaseAll(this.occupiedPositions, this.id);
+        PackagedRecoveryJournal.get(level).release(this.id);
+        this.machineReleased = true;
+    }
+
     /** Immutable evidence of actual collected assets; reading does not transfer or duplicate ownership. */
     public ObjectList<GenericStack> collectedOutputs() {
         var result = new ObjectArrayList<GenericStack>();
@@ -167,6 +204,25 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         this.inputs.clear();
         this.complete = true;
         return true;
+    }
+
+    /** Recovers adapter-owned world assets before settling a removed structure. */
+    public boolean recoverRemoved(ServerLevel level, PackagedMachineAdapter adapter) {
+        if (this.complete) return false;
+        this.activeLevel = level;
+        this.changed = false;
+        try {
+            if (adapter.recoverRemoved(this)) return retireRemovedStructure();
+            return this.changed;
+        } catch (RuntimeException exception) {
+            if (level.getGameTime() >= this.nextErrorLog) {
+                Data_Energistics.LOGGER.error("Packaged recovery {} ({}, recipe {}, at {}) remains pending", this.id, this.adapterId, this.recipeId, this.position, exception);
+                this.nextErrorLog = level.getGameTime() + 1200;
+            }
+            return true;
+        } finally {
+            this.activeLevel = null;
+        }
     }
 
     @Override
@@ -221,6 +277,7 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         tag.put("inputs", PackagedAmounts.save(this.inputs, registries));
         tag.put("outputs", PackagedAmounts.save(this.outputs, registries));
         tag.putBoolean("complete", this.complete);
+        tag.putBoolean("machine_released", this.machineReleased);
         return tag;
     }
 
@@ -230,15 +287,15 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         var inputs = PackagedAmounts.load(tag.getList("inputs", Tag.TAG_COMPOUND), registries);
         boolean complete = tag.getBoolean("complete");
         var occupied = new ObjectArrayList<BlockPos>();
-        if (tag.contains("occupied", Tag.TAG_LONG_ARRAY)) {
-            for (long position : tag.getLongArray("occupied")) occupied.add(BlockPos.of(position));
-        } else {
-            occupied.add(BlockPos.of(tag.getLong("position")));
-        }
+        if (!tag.contains("occupied", Tag.TAG_LONG_ARRAY)) throw new IllegalArgumentException("Missing packaged operation reservations");
+        for (long position : tag.getLongArray("occupied")) occupied.add(BlockPos.of(position));
         if (complete && !inputs.isEmpty()) throw new IllegalArgumentException("Completed packaged task still owns inputs");
-        return new PackagedOperationState(tag.getUUID("id"), ResourceLocation.parse(tag.getString("adapter")),
+        var operation = new PackagedOperationState(tag.getUUID("id"), ResourceLocation.parse(tag.getString("adapter")),
                 ResourceLocation.parse(tag.getString("recipe")), BlockPos.of(tag.getLong("position")), face,
                 tag.getCompound("progress").copy(), inputs,
                 PackagedAmounts.load(tag.getList("outputs", Tag.TAG_COMPOUND), registries), complete, occupied);
+        operation.machineReleased = tag.getBoolean("machine_released");
+        if (operation.machineReleased && !complete) throw new IllegalArgumentException("Released packaged machine still has unfinished work");
+        return operation;
     }
 }

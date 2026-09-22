@@ -10,9 +10,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -22,8 +20,7 @@ import java.util.UUID;
 public final class PackagedEntityCapture {
 
     private static final String OWNER = "data_energistics_packaged_operation";
-    private static final ThreadLocal<Scope> CURRENT = new ThreadLocal<>();
-    private static final Reference2ObjectOpenHashMap<ServerLevel, PackagedMachineClaims> CLAIMS = new Reference2ObjectOpenHashMap<>();
+    private static final ThreadLocal<@Nullable Scope> CURRENT = new ThreadLocal<>();
 
     private PackagedEntityCapture() {}
 
@@ -31,9 +28,15 @@ public final class PackagedEntityCapture {
         withScope(new Scope(level, operation), action);
     }
 
+    /** Keeps pre-installed player assets outside an enclosing operation-owned removal callback. */
+    public static void unowned(Runnable action) {
+        withScope(null, action);
+    }
+
     public static void machineTick(ServerLevel level, BlockPos position, Runnable tick) {
-        var claims = CLAIMS.get(level);
-        var owner = claims == null ? null : claims.owner(position);
+        // Resolve the claim at the tick boundary. A cached LevelEvent.Load view can be stale
+        // during world reloads, which would let native drops escape without an operation owner.
+        var owner = PackagedMachineClaims.get(level).owner(position);
         withScope(owner == null ? null : new Scope(level, owner), tick);
     }
 
@@ -53,31 +56,25 @@ public final class PackagedEntityCapture {
         return operation.equals(owner(entity));
     }
 
+    /** Binds a native machine drop after the machine created it outside the tick capture scope. */
+    public static void claim(ItemEntity entity, UUID operation) {
+        entity.getPersistentData().putUUID(OWNER, operation);
+        entity.setUnlimitedLifetime();
+    }
+
     public static @Nullable UUID owner(ItemEntity entity) {
         var data = entity.getPersistentData();
         return data.hasUUID(OWNER) ? data.getUUID(OWNER) : null;
     }
 
-    @SubscribeEvent
-    public static void loaded(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) CLAIMS.put(level, PackagedMachineClaims.get(level));
-    }
-
-    @SubscribeEvent
-    public static void unloaded(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level) CLAIMS.remove(level);
-    }
-
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void spawned(EntityJoinLevelEvent event) {
-        var scope = CURRENT.get();
-        if (scope == null || event.isCanceled() || event.loadedFromDisk() || event.getLevel() != scope.level() ||
+        if (event.isCanceled() || event.loadedFromDisk() || !(event.getLevel() instanceof ServerLevel level) ||
                 !(event.getEntity() instanceof ItemEntity item) || owner(item) != null)
             return;
-        item.getPersistentData().putUUID(OWNER, scope.operation());
-        // A provider can be offline longer than the vanilla five-minute item lifetime.
-        // These physical inputs/products remain owned until the operation collects them.
-        item.setUnlimitedLifetime();
+        var scope = CURRENT.get();
+        if (scope == null || scope.level() != level) return;
+        claim(item, scope.operation());
     }
 
     private record Scope(ServerLevel level, UUID operation) {}

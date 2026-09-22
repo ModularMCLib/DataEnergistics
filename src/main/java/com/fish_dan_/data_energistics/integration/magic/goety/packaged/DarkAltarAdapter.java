@@ -31,13 +31,11 @@ import com.Polarice3.Goety.common.blocks.entities.CursedCageBlockEntity;
 import com.Polarice3.Goety.common.blocks.entities.DarkAltarBlockEntity;
 import com.Polarice3.Goety.common.blocks.entities.PedestalBlockEntity;
 import com.Polarice3.Goety.common.crafting.RitualRecipe;
-import com.Polarice3.Goety.common.research.ResearchList;
 import com.Polarice3.Goety.common.ritual.CraftItemRitual;
 import com.Polarice3.Goety.common.ritual.EnchantItemRitual;
 import com.Polarice3.Goety.common.ritual.LocateRitual;
 import com.Polarice3.Goety.common.ritual.RitualRequirements;
 import com.Polarice3.Goety.config.MainConfig;
-import com.Polarice3.Goety.utils.SEHelper;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -134,8 +132,8 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
             RitualRecipe recipe = recipe(operation);
             if (altar.getCurrentRitualRecipe() != null || !altar.itemStackHandler.getStackInSlot(0).isEmpty()) return false;
             ItemStack activation = read(operation, "activation");
-            ServerPlayer player = ritualPlayer(operation, recipe);
-            if (player == null || !validResources(operation, altar, recipe, activation, player)) return false;
+            ServerPlayer player = ritualPlayer(operation);
+            if (!validResources(operation, altar, recipe, activation, player)) return false;
             AEItemKey activationKey = AEItemKey.of(activation);
             ListTag list = progress.getList("ingredients", Tag.TAG_COMPOUND);
             int delivered = progress.getInt("ingredients_delivered");
@@ -212,9 +210,7 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
         return true;
     }
 
-    private static @Nullable ServerPlayer ritualPlayer(PackagedMachineOperation operation, RitualRecipe recipe) {
-        if (!(operation.level().getBlockEntity(operation.position().below()) instanceof CursedCageBlockEntity cage)) return null;
-        if (recipe.getRitual() instanceof EnchantItemRitual) return null;
+    private static ServerPlayer ritualPlayer(PackagedMachineOperation operation) {
         var player = FakePlayerFactory.get(operation.level(), profile(operation.id()));
         player.setPos(operation.position().getX() + 0.5, operation.position().getY() + 1, operation.position().getZ() + 0.5);
         return player;
@@ -292,13 +288,7 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
         if (cage.getSouls() <= 0 || cage.getSouls() < recipe.getSoulCost()) return false;
         if (!RitualRequirements.getProperStructure(recipe.getCraftType(), player, altar, operation.position(), operation.level())) return false;
         if (recipe.getRitual() instanceof EnchantItemRitual enchant) {
-            if (!MainConfig.RitualEnchants.get() || !enchant.compatibleEnchant(activation) || player.experienceLevel < enchant.getLevelCost(activation)) return false;
-        }
-        String researchName = recipe.getResearch();
-        if (researchName != null && !researchName.isEmpty()) {
-            if (researchName.contains(ResearchList.FORBIDDEN.getId()) && !MainConfig.LichScrollRequirement.get()) return true;
-            var research = ResearchList.getResearch(researchName);
-            if (research != null && !SEHelper.hasResearch(player, research)) return false;
+            if (!MainConfig.RitualEnchants.get() || !enchant.compatibleEnchant(activation)) return false;
         }
         return true;
     }

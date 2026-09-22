@@ -8,10 +8,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.ItemStack;
 
 import com.Polarice3.Goety.common.blocks.entities.CursedCageBlockEntity;
 import com.Polarice3.Goety.common.blocks.entities.DarkAltarBlockEntity;
 import com.Polarice3.Goety.common.ritual.EnchantItemRitual;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,9 +42,14 @@ public abstract class DarkAltarResourceWaitMixin {
         if (!(level.getBlockEntity(altar.getBlockPos().below()) instanceof CursedCageBlockEntity cage) || cage.getItem().isEmpty() || cage.getSouls() <= 0 || level.getGameTime() % 20 == 0 && cage.getSouls() < recipe.getSoulCost()) {
             callback.cancel();
         }
-        if (recipe.getRitual() instanceof EnchantItemRitual enchant && altar.castingPlayer != null && altar.experienceTaken < enchant.getLevelCost(altar.itemStackHandler.getStackInSlot(0)) && altar.castingPlayer.experienceLevel <= 1) {
-            callback.cancel();
-        }
+    }
+
+    /** Both the native XP debit and completion gate use this cost; packaged rituals owe no XP. */
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lcom/Polarice3/Goety/common/ritual/EnchantItemRitual;getLevelCost(Lnet/minecraft/world/item/ItemStack;)I"), require = 2)
+    private int dataEnergistics$packagedExperienceCost(EnchantItemRitual ritual, ItemStack stack, Operation<Integer> original) {
+        var altar = (DarkAltarBlockEntity) (Object) this;
+        if (altar.getLevel() instanceof ServerLevel level && PackagedMachineClaims.get(level).owner(altar.getBlockPos()) != null) return 0;
+        return original.call(ritual, stack);
     }
 
     @Inject(method = "tick", at = @At("RETURN"))

@@ -100,6 +100,28 @@ public final class PackagedReusableState {
         frozen = true;
     }
 
+    /** Detached sessions retain their accounting, but cannot keep recovered world machines reserved. */
+    public boolean recoverDetached(ServerLevel level) {
+        boolean changed = false;
+        for (Entry entry : entries.values()) {
+            NativeWork work = entry.work;
+            if (work == null || work.released) continue;
+            var adapter = machine(entry);
+            if (adapter == null) continue;
+            if (!work.machine.completed()) work.machine.progress().putBoolean("removed_structure", true);
+            changed |= work.machine.recoverDetached(level, adapter);
+            if (work.machine.machineReleased()) {
+                work.released = true;
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    public boolean hasReservedMachines() {
+        return entries.values().stream().anyMatch(entry -> entry.work != null && !entry.work.released);
+    }
+
     public ReusableCraftingProviderAdapter adapter(ServerLevel level, ObjectList<ConnectorLink> links,
                                                    Predicate<IPatternDetails> available, Runnable changed, Consumer<IPatternDetails> success) {
         return new Access(level, links, available, changed, success);

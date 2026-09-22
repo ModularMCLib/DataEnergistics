@@ -11,7 +11,6 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.Packaged
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryStore;
 
 import appeng.api.crafting.IPatternDetails;
@@ -435,16 +434,16 @@ public final class PackagedDispatchState {
             var operation = this.operations.get(this.tickCursor);
             var adapter = catalog.adapter(operation.adapterId());
             var claims = PackagedMachineClaims.get(level);
-            if (claims.structureRemoved(operation.id())) {
-                changed |= adapter == null ? operation.retireRemovedStructure() : operation.recoverRemoved(level, adapter);
-            } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) {
-                changed |= operation.advance(level, adapter);
+            if (!operation.machineReleased()) {
+                if (claims.structureRemoved(operation.id())) {
+                    changed |= adapter == null ? operation.retireRemovedStructure() : operation.recoverRemoved(level, adapter);
+                } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) {
+                    changed |= operation.advance(level, adapter);
+                }
             }
             changed |= operation.flush(returns, source);
             if (operation.settled()) {
-                if (claims.structureRemoved(operation.id())) claims.acknowledgeRemoval(operation.id());
-                else claims.releaseAll(operation.occupiedPositions(), operation.id());
-                PackagedRecoveryJournal.get(level).release(operation.id());
+                operation.releaseMachine(level);
                 this.operations.remove(this.tickCursor);
                 changed = true;
             } else {
@@ -452,6 +451,20 @@ public final class PackagedDispatchState {
             }
         }
         return changed;
+    }
+
+    /** Recovers physical assets for escrow without requiring a player to redeem its voucher. */
+    public boolean recoverDetached(ServerLevel level, PackagedRecipeCatalog catalog) {
+        boolean changed = this.reusable.recoverDetached(level);
+        for (var operation : this.operations) {
+            var adapter = catalog.adapter(operation.adapterId());
+            if (adapter != null) changed |= operation.recoverDetached(level, adapter);
+        }
+        return changed;
+    }
+
+    public boolean hasReservedMachines() {
+        return this.operations.stream().anyMatch(operation -> !operation.machineReleased()) || this.reusable.hasReservedMachines();
     }
 
     public void save(CompoundTag tag, HolderLookup.Provider registries) {

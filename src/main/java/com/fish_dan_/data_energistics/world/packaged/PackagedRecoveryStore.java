@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.world.packaged;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedDispatchState;
+import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -8,6 +12,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
@@ -18,6 +23,40 @@ public final class PackagedRecoveryStore extends SavedData {
 
     private static final Factory<PackagedRecoveryStore> FACTORY = new Factory<>(PackagedRecoveryStore::new, PackagedRecoveryStore::load);
     private final Object2ObjectLinkedOpenHashMap<UUID, CompoundTag> entries = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectLinkedOpenHashMap<UUID, PackagedDispatchState> recovering = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2LongOpenHashMap<UUID> retryAfter = new Object2LongOpenHashMap<>();
+
+    /** Advances escrowed physical recovery on the server thread independently of voucher possession. */
+    public void tick(ServerLevel level) {
+        for (var entry : this.entries.object2ObjectEntrySet()) {
+            UUID id = entry.getKey();
+            var payload = entry.getValue();
+            if (payload.getBoolean("machines_recovered") || level.getGameTime() < this.retryAfter.getLong(id)) continue;
+            try {
+                var state = this.recovering.computeIfAbsent(id, key -> PackagedDispatchState.load(payload.getCompound("state"), level.registryAccess()));
+                try {
+                    state.recoverDetached(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting());
+                } finally {
+                    // Preserve earlier recoveries even when a later operation in the same voucher fails.
+                    var saved = new CompoundTag();
+                    state.save(saved, level.registryAccess());
+                    if (!saved.equals(payload.getCompound("state"))) {
+                        payload.put("state", saved);
+                        setDirty();
+                    }
+                }
+                if (!state.hasReservedMachines()) {
+                    payload.putBoolean("machines_recovered", true);
+                    this.recovering.remove(id);
+                    this.retryAfter.removeLong(id);
+                    setDirty();
+                }
+            } catch (RuntimeException exception) {
+                this.retryAfter.put(id, level.getGameTime() + 1200);
+                Data_Energistics.LOGGER.error("Packaged escrow {} in {} could not finish physical recovery; custody retained", id, level.dimension().location(), exception);
+            }
+        }
+    }
 
     public static PackagedRecoveryStore get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(FACTORY, "data_energistics_packaged_recovery");
@@ -42,6 +81,8 @@ public final class PackagedRecoveryStore extends SavedData {
 
     public void redeem(UUID id) {
         if (this.entries.remove(id) == null) throw new IllegalStateException("Packaged recovery receipt has already been redeemed");
+        this.recovering.remove(id);
+        this.retryAfter.removeLong(id);
         setDirty();
     }
 

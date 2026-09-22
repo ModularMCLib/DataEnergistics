@@ -106,8 +106,12 @@ public final class PackagedMachineClaims extends SavedData {
         UUID operation = this.owners.get(position.asLong());
         if (operation == null) return;
         if (operation.equals(this.nativeMutation)) return;
-        this.removedStructures.add(operation);
-        setDirty();
+        retireOperation(operation);
+    }
+
+    /** Stops a detached provider's work from resuming before physical recovery has finished. */
+    public void retireOperation(UUID operation) {
+        if (this.removedStructures.add(operation)) setDirty();
     }
 
     /** Keeps old and escrowed tasks from reacquiring parts of a newly placed structure. */

@@ -85,6 +85,7 @@
 		"magic.naturesaura.WoodStandRitualPersistenceMixin",
 		"magic.neovitae.HellfireForgeDropMixin",
 		"magic.neovitae.TabulaVitaeDropMixin",
+		"technology.embers.AlchemyTabletRecipeMixin",
 		"minecraft.accessor.ExperienceOrbAccessor",
 		"minecraft.accessor.LivingEntityDropInvoker",
 		"minecraft.entity.OrbitalDeathNotificationMixin",

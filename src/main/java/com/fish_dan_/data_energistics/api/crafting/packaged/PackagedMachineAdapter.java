@@ -90,4 +90,13 @@ public interface PackagedMachineAdapter {
      * leaves the operation pending; adapter exceptions stop that operation at the provider boundary.
      */
     boolean advance(PackagedMachineOperation operation);
+
+    /**
+     * Recovers physical assets after dismantling, on the server thread. Return false while recovery
+     * requires loaded world state; only return true after all recoverable assets have been transferred.
+     * The dispatcher then returns undelivered inputs. Never return copies of assets still in the world.
+     */
+    default boolean recoverRemoved(PackagedMachineOperation operation) {
+        return true;
+    }
 }

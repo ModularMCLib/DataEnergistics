@@ -38,6 +38,25 @@ public final class PackagedIngredientAssignment {
         return assign(ingredients, keys, counts, slots, budget) ? slots : null;
     }
 
+    /** Matches one recipe after dividing a counted batch into identical per-craft ingredient sets. */
+    public static @Nullable ObjectList<ItemStack> matchBatch(ObjectList<Ingredient> ingredients, KeyCounter[] inputs,
+                                                             long batch) {
+        if (batch <= 0) return null;
+        var normalized = new KeyCounter[inputs.length];
+        for (int index = 0; index < inputs.length; index++) {
+            normalized[index] = new KeyCounter();
+            for (var entry : inputs[index]) {
+                long amount = entry.getLongValue();
+                if (amount <= 0 || amount % batch != 0) return null;
+                normalized[index].add(entry.getKey(), amount / batch);
+            }
+        }
+        var matched = match(ingredients, normalized);
+        if (matched == null) return null;
+        for (var stack : matched) stack.setCount(Math.toIntExact(Math.multiplyExact(stack.getCount(), batch)));
+        return matched;
+    }
+
     private static boolean assign(ObjectList<Ingredient> ingredients, ObjectList<AEItemKey> keys, long[] counts,
                                   ObjectList<ItemStack> slots, int[] budget) {
         if (slots.size() == ingredients.size()) return true;

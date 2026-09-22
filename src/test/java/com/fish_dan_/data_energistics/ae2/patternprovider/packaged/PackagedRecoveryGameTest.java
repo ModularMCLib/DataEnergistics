@@ -195,6 +195,7 @@ public final class PackagedRecoveryGameTest {
 
     private static PackagedDispatchState state(GameTestHelper helper, PackagedOperationState operation) {
         var payload = new CompoundTag();
+        new PackagedDispatchState().save(payload, helper.getLevel().registryAccess());
         var operations = new ListTag();
         operations.add(operation.save(helper.getLevel().registryAccess()));
         payload.put("operations", operations);

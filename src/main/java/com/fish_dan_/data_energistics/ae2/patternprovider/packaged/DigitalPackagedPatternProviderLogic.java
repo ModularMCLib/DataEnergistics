@@ -38,6 +38,7 @@ import appeng.core.settings.TickRates;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -63,7 +64,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
         if (!(owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return null;
         var access = (PatternProviderLogicFieldAccessor) (Object) this;
         var links = new ObjectArrayList<ConnectorLink>();
-        for (var side : access.dataEnergistics$invokeGetActiveSides()) links.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
+        for (var side : Direction.values()) links.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
         return dispatch.reusable().adapter(level, links,
                 pattern -> node.isActive() && !owner.getBlockEntity().isRemoved() && !isBusy() && getCraftingLockedReason() == LockCraftingMode.NONE && access.dataEnergistics$getPatterns().contains(pattern),
                 this::onReturnInventoryChanged, access::dataEnergistics$invokeOnPushPatternSuccess);
@@ -74,7 +75,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
         if (!(owner.getBlockEntity().getLevel() instanceof ServerLevel level)) return null;
         var access = (PatternProviderLogicFieldAccessor) (Object) this;
         var adjacent = new ObjectArrayList<ConnectorLink>();
-        for (var side : access.dataEnergistics$invokeGetActiveSides()) adjacent.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
+        for (var side : Direction.values()) adjacent.add(new ConnectorLink(owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
         var lock = getConfigManager().getSetting(Settings.LOCK_CRAFTING_MODE);
         long bounded = lock == LockCraftingMode.LOCK_UNTIL_RESULT || lock == LockCraftingMode.LOCK_UNTIL_PULSE ? 1 : count;
         return dispatch.prepareBatch(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(), pattern, prototype, bounded,
@@ -228,7 +229,7 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
                 !(this.owner.getBlockEntity().getLevel() instanceof ServerLevel level))
             return false;
         var adjacent = new ObjectArrayList<ConnectorLink>();
-        for (var side : access.dataEnergistics$invokeGetActiveSides()) {
+        for (var side : Direction.values()) {
             adjacent.add(new ConnectorLink(this.owner.getBlockEntity().getBlockPos().relative(side), side.getOpposite()));
         }
         if (!this.dispatch.dispatch(level, DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(),

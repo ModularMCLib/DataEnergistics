@@ -60,14 +60,20 @@ public final class ReusableInputPlanningExpansionGameTest {
         var result = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(), rules, 8,
                 TrinityPlanningControl.unbounded());
         helper.assertTrue(result instanceof ReusableInputPlanningExpansion.Captured, "Complete contextual capture should fit");
-        helper.assertValueEqual(((ReusableInputPlanningExpansion.Captured) result).bindings().size(), 8,
-                "State-dependent custom input matching retains its exact transitions for each material assignment");
+        helper.assertValueEqual(((ReusableInputPlanningExpansion.Captured) result).bindings().size(), 2,
+                "Lifetime compression retains one binding for each complete material assignment");
         for (List<TrinityBoundPatternInput> assignment : ((ReusableInputPlanningExpansion.Captured) result).bindings()) {
             ReusableInputRule rule = assignment.getFirst().reusableRule();
             helper.assertTrue(rule != null, "Tool slot retains its explicit rule");
             ReusableInputRule.Kind expected = assignment.get(1).template().what().equals(redstone) ?
                     ReusableInputRule.Kind.FIXED_DAMAGE : ReusableInputRule.Kind.UNCHANGED;
             helper.assertValueEqual(rule.kind(), expected, "No Cartesian cross-assignment rule reuse is permitted");
+            var toolBinding = assignment.getFirst();
+            helper.assertValueEqual(toolBinding.lifetimeBudget(), expected == ReusableInputRule.Kind.FIXED_DAMAGE,
+                    "Only the fixed-wear assignment receives a lifetime budget");
+            helper.assertValueEqual(toolBinding.remainingKey(),
+                    expected == ReusableInputRule.Kind.FIXED_DAMAGE ? tool(1) : tool(0),
+                    "Compressed bindings still retain their actual one-use successor");
         }
         helper.succeed();
     }
@@ -85,10 +91,13 @@ public final class ReusableInputPlanningExpansionGameTest {
         helper.assertValueEqual(legacy.bindings().size(), 1, "Unknown inventory-only variants are not guessed");
         var known = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(),
                 input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamageFast(
-                        RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4, ObjectList.of())) : Optional.empty(),
+                        RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4,
+                        ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 1L)))) : Optional.empty(),
                 4, TrinityPlanningControl.unbounded());
         helper.assertTrue(known instanceof ReusableInputPlanningExpansion.Captured, "Known states should be captured");
         var bounded = (ReusableInputPlanningExpansion.Captured) known;
+        helper.assertTrue(bounded.bindings().stream().noneMatch(assignment -> assignment.getFirst().lifetimeBudget()),
+                "Exhaustion byproducts require discrete transitions subject to the original IInput contract");
         helper.assertValueEqual(bounded.bindings().size(), 2, "Original IInput rejects Damage 2 as a future input");
         helper.assertValueEqual(binding(bounded, tool(1)).remainingKey(), tool(2),
                 "Rejected future input is still retained as the physical one-use output");

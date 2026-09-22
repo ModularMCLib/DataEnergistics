@@ -120,7 +120,9 @@ public final class PackagedDispatchState {
         this.policies.put(group, policy);
     }
 
-    /** Read-only capacity preparation; commit revalidates and owns the fixed machine and complete scaled envelope. */
+    /**
+     * Read-only capacity preparation; commit revalidates every selected machine and owns the complete scaled envelope.
+     */
     public @Nullable CountedCraftingAdmission prepareBatch(ServerLevel level, PackagedRecipeCatalog catalog,
                                                            IPatternDetails pattern, KeyCounter[] prototype, long requestedCount,
                                                            ObjectList<ConnectorLink> remote, ObjectList<ConnectorLink> adjacent,
@@ -140,69 +142,215 @@ public final class PackagedDispatchState {
         var claims = PackagedMachineClaims.get(level);
         for (var links : ObjectList.of(remote, adjacent)) {
             for (var adapter : catalog.forType(reference.recipeTypeId())) {
-                var candidates = candidates(links);
-                if (candidates.isEmpty()) continue;
                 var routing = routePolicy == null ? policy(adapter.id()) : routePolicy;
-                int start = routing == ConnectorPolicy.ROUND_ROBIN ? Math.floorMod(this.cursors.getInt(adapter.id()), candidates.size()) : 0;
-                for (int offset = 0; offset < candidates.size(); offset++) {
-                    int index = (start + offset) % candidates.size();
-                    var link = candidates.get(index);
-                    if (!level.isLoaded(link.position()) || !adapter.recognizes(level, link.position()) || !claims.available(link.position())) continue;
-                    long count = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, prototype, bounded);
-                    if (count < 0 || count > bounded) throw new IllegalStateException("Invalid packaged machine batch capacity");
-                    if (count == 0) continue;
-                    IPatternDetails batch = count == 1 ? pattern : new PackagedBatchPattern(pattern, count);
-                    var inputs = scaledInputs(prototype, count);
-                    var preparation = adapter.prepare(level, link.position(), link.side(), recipe, batch, inputs);
-                    if (preparation == null) continue;
-                    var occupied = adapter.occupiedPositions(level, link.position(), preparation);
-                    if (occupied.stream().anyMatch(position -> !level.isLoaded(position) || !claims.available(position))) continue;
-                    int next = (index + 1) % candidates.size();
-                    return new CountedCraftingAdmission() {
-
-                        private boolean attempted;
-                        private boolean transferred;
-
-                        @Override
-                        public long count() {
-                            return count;
-                        }
-
-                        @Override
-                        public boolean hasTransferredInputOwnership() {
-                            return transferred;
-                        }
-
-                        @Override
-                        public boolean commit(KeyCounter[] supplied) {
-                            if (attempted || supplied != prototype) throw new IllegalStateException("Packaged admission must commit its original prototype once");
-                            attempted = true;
-                            if (recoveryReceipt != null || !available.getAsBoolean() || !level.isLoaded(link.position()) ||
-                                    !adapter.recognizes(level, link.position()) || !claims.available(link.position()))
-                                return false;
-                            var actualInputs = scaledInputs(supplied, count);
-                            if (!sameInputs(inputs, actualInputs)) return false;
-                            long currentCapacity = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, supplied, count);
-                            if (currentCapacity != count) return false;
-                            var current = adapter.prepare(level, link.position(), link.side(), recipe, batch, actualInputs);
-                            if (current == null) return false;
-                            var positions = adapter.occupiedPositions(level, link.position(), current);
-                            if (positions.stream().anyMatch(position -> !level.isLoaded(position))) return false;
-                            PackagedOutputMatching.save(batch, current, level.registryAccess());
-                            var operation = new PackagedOperationState(adapter.id(), recipe, link.position(), link.side(), current, actualInputs, positions);
-                            if (!claims.acquireAll(positions, operation.id())) return false;
-                            transferred = true;
-                            operations.add(operation);
-                            for (var input : supplied) input.clear();
-                            cursors.put(adapter.id(), next);
-                            success.run();
-                            return true;
-                        }
-                    };
-                }
+                var admission = prepareSplitBatch(level, adapter, recipe, pattern, prototype, bounded, links,
+                        routing, claims, available, success);
+                if (admission != null) return admission;
             }
         }
         return null;
+    }
+
+    /** Builds one admission that spreads a counted request over every available remote machine. */
+    private @Nullable CountedCraftingAdmission prepareSplitBatch(ServerLevel level, PackagedMachineAdapter adapter,
+                                                                 ResourceLocation recipe, IPatternDetails pattern,
+                                                                 KeyCounter[] prototype, long requestedCount,
+                                                                 ObjectList<ConnectorLink> links, ConnectorPolicy routing,
+                                                                 PackagedMachineClaims claims, BooleanSupplier available,
+                                                                 Runnable success) {
+        var candidates = candidates(links);
+        if (candidates.isEmpty()) return null;
+        int start = routing == ConnectorPolicy.ROUND_ROBIN ?
+                Math.floorMod(this.cursors.getInt(adapter.id()), candidates.size()) : 0;
+        long[] capacities = new long[candidates.size()];
+        for (int offset = 0; offset < candidates.size(); offset++) {
+            int index = (start + offset) % candidates.size();
+            var link = candidates.get(index);
+            if (!level.isLoaded(link.position()) || !adapter.recognizes(level, link.position()) ||
+                    !claims.available(link.position()))
+                continue;
+            long capacity = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, prototype, requestedCount);
+            if (capacity < 0 || capacity > requestedCount) throw new IllegalStateException("Invalid packaged machine batch capacity");
+            capacities[index] = capacity;
+        }
+        if (routing != ConnectorPolicy.ROUND_ROBIN) {
+            int selected = -1;
+            for (int offset = 0; offset < capacities.length; offset++) {
+                int index = (start + offset) % capacities.length;
+                if (capacities[index] > 0) {
+                    selected = index;
+                    break;
+                }
+            }
+            for (int index = 0; index < capacities.length; index++) if (index != selected) capacities[index] = 0;
+        }
+        while (true) {
+            long[] allocation = allocateCounts(capacities, start, requestedCount);
+            long admitted = 0;
+            for (long count : allocation) admitted = Math.addExact(admitted, count);
+            if (admitted == 0) return null;
+            var prepared = new ObjectArrayList<PreparedTarget>();
+            boolean retry = false;
+            for (int offset = 0; offset < candidates.size(); offset++) {
+                int index = (start + offset) % candidates.size();
+                long count = allocation[index];
+                if (count == 0) continue;
+                var link = candidates.get(index);
+                IPatternDetails batch = count == 1 ? pattern : new PackagedBatchPattern(pattern, count);
+                var inputs = scaledInputs(prototype, count);
+                var preparation = adapter.prepare(level, link.position(), link.side(), recipe, batch, inputs);
+                if (preparation == null) {
+                    capacities[index] = 0;
+                    retry = true;
+                    break;
+                }
+                var occupied = adapter.occupiedPositions(level, link.position(), preparation);
+                if (occupied.stream().anyMatch(position -> !level.isLoaded(position) || !claims.available(position))) {
+                    capacities[index] = 0;
+                    retry = true;
+                    break;
+                }
+                prepared.add(new PreparedTarget(index, link, count, batch, inputs));
+            }
+            if (retry) continue;
+            int next = (prepared.getLast().candidateIndex() + 1) % candidates.size();
+            return new SplitAdmission(level, adapter, recipe, pattern, prototype, prepared, next, claims, available, success);
+        }
+    }
+
+    private static long[] allocateCounts(long[] capacities, int start, long requestedCount) {
+        var allocation = new long[capacities.length];
+        long remaining = requestedCount;
+        for (int offset = 0; offset < capacities.length && remaining > 0; offset++) {
+            int index = (start + offset) % capacities.length;
+            if (capacities[index] > 0) {
+                allocation[index] = 1;
+                remaining--;
+            }
+        }
+        while (remaining > 0) {
+            boolean changed = false;
+            for (int offset = 0; offset < capacities.length && remaining > 0; offset++) {
+                int index = (start + offset) % capacities.length;
+                long available = capacities[index] - allocation[index];
+                if (available <= 0) continue;
+                long count = Math.min(available, remaining);
+                allocation[index] += count;
+                remaining -= count;
+                changed = true;
+            }
+            if (!changed) break;
+        }
+        return allocation;
+    }
+
+    private record PreparedTarget(int candidateIndex, ConnectorLink link, long count, IPatternDetails pattern,
+                                  KeyCounter[] inputs) {}
+
+    private final class SplitAdmission implements CountedCraftingAdmission {
+
+        private final ServerLevel level;
+        private final PackagedMachineAdapter adapter;
+        private final ResourceLocation recipe;
+        private final IPatternDetails originalPattern;
+        private final KeyCounter[] prototype;
+        private final long count;
+        private final ObjectList<PreparedTarget> prepared;
+        private final int nextCursor;
+        private final PackagedMachineClaims claims;
+        private final BooleanSupplier available;
+        private final Runnable success;
+        private boolean attempted;
+        private boolean transferred;
+
+        private SplitAdmission(ServerLevel level, PackagedMachineAdapter adapter, ResourceLocation recipe,
+                               IPatternDetails originalPattern, KeyCounter[] prototype,
+                               ObjectList<PreparedTarget> prepared, int nextCursor,
+                               PackagedMachineClaims claims, BooleanSupplier available, Runnable success) {
+            this.level = level;
+            this.adapter = adapter;
+            this.recipe = recipe;
+            this.originalPattern = originalPattern;
+            this.prototype = prototype;
+            this.count = prepared.stream().mapToLong(PreparedTarget::count).sum();
+            this.prepared = prepared;
+            this.nextCursor = nextCursor;
+            this.claims = claims;
+            this.available = available;
+            this.success = success;
+        }
+
+        @Override
+        public long count() {
+            return this.count;
+        }
+
+        @Override
+        public boolean hasTransferredInputOwnership() {
+            return this.transferred;
+        }
+
+        @Override
+        public boolean commit(KeyCounter[] supplied) {
+            if (this.attempted || supplied != this.prototype)
+                throw new IllegalStateException("Packaged admission must commit its original prototype once");
+            this.attempted = true;
+            if (PackagedDispatchState.this.recoveryReceipt != null || !this.available.getAsBoolean()) return false;
+            var committed = new ObjectArrayList<PackagedOperationState>();
+            try {
+                for (var target : this.prepared) {
+                    var link = target.link();
+                    if (!this.level.isLoaded(link.position()) || !this.adapter.recognizes(this.level, link.position()) ||
+                            !this.claims.available(link.position())) {
+                        releaseClaims(committed);
+                        return false;
+                    }
+                    var actualInputs = scaledInputs(supplied, target.count());
+                    if (!sameInputs(target.inputs(), actualInputs)) {
+                        releaseClaims(committed);
+                        return false;
+                    }
+                    long currentCapacity = this.adapter.batchCapacity(this.level, link.position(), link.side(),
+                            this.recipe, this.originalPattern, supplied, target.count());
+                    if (currentCapacity != target.count()) {
+                        releaseClaims(committed);
+                        return false;
+                    }
+                    var current = this.adapter.prepare(this.level, link.position(), link.side(), this.recipe,
+                            target.pattern(), actualInputs);
+                    if (current == null) {
+                        releaseClaims(committed);
+                        return false;
+                    }
+                    var positions = this.adapter.occupiedPositions(this.level, link.position(), current);
+                    if (positions.stream().anyMatch(position -> !this.level.isLoaded(position) || !this.claims.available(position))) {
+                        releaseClaims(committed);
+                        return false;
+                    }
+                    PackagedOutputMatching.save(target.pattern(), current, this.level.registryAccess());
+                    var operation = new PackagedOperationState(this.adapter.id(), this.recipe, link.position(), link.side(),
+                            current, actualInputs, positions);
+                    if (!this.claims.acquireAll(positions, operation.id(), operation.progress().getLongArray("changing_positions"))) {
+                        releaseClaims(committed);
+                        return false;
+                    }
+                    committed.add(operation);
+                }
+                PackagedDispatchState.this.operations.addAll(committed);
+                this.transferred = true;
+                for (var input : supplied) input.clear();
+                PackagedDispatchState.this.cursors.put(this.adapter.id(), this.nextCursor);
+                this.success.run();
+                return true;
+            } catch (RuntimeException exception) {
+                releaseClaims(committed);
+                throw exception;
+            }
+        }
+
+        private void releaseClaims(ObjectList<PackagedOperationState> committed) {
+            for (var operation : committed) this.claims.releaseAll(operation.occupiedPositions(), operation.id());
+        }
     }
 
     private static KeyCounter[] scaledInputs(KeyCounter[] prototype, long count) {
@@ -268,7 +416,7 @@ public final class PackagedDispatchState {
             if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) continue;
             PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
             var operation = new PackagedOperationState(adapter.id(), recipe, link.position(), link.side(), preparation, inputs, occupied);
-            if (!claims.acquireAll(operation.occupiedPositions(), operation.id())) continue;
+            if (!claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) continue;
             this.operations.add(operation);
             for (var input : inputs) input.clear();
             this.cursors.put(adapter.id(), (index + 1) % candidates.size());
@@ -286,15 +434,16 @@ public final class PackagedDispatchState {
             var operation = this.operations.get(this.tickCursor);
             var adapter = catalog.adapter(operation.adapterId());
             var claims = PackagedMachineClaims.get(level);
-            if (claims.structureRemoved(operation.id())) {
-                changed |= operation.retireRemovedStructure();
-            } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id())) {
-                changed |= operation.advance(level, adapter);
+            if (!operation.machineReleased()) {
+                if (claims.structureRemoved(operation.id())) {
+                    changed |= adapter == null ? operation.retireRemovedStructure() : operation.recoverRemoved(level, adapter);
+                } else if (adapter != null && claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) {
+                    changed |= operation.advance(level, adapter);
+                }
             }
             changed |= operation.flush(returns, source);
             if (operation.settled()) {
-                if (claims.structureRemoved(operation.id())) claims.acknowledgeRemoval(operation.id());
-                else claims.releaseAll(operation.occupiedPositions(), operation.id());
+                operation.releaseMachine(level);
                 this.operations.remove(this.tickCursor);
                 changed = true;
             } else {
@@ -302,6 +451,20 @@ public final class PackagedDispatchState {
             }
         }
         return changed;
+    }
+
+    /** Recovers physical assets for escrow without requiring a player to redeem its voucher. */
+    public boolean recoverDetached(ServerLevel level, PackagedRecipeCatalog catalog) {
+        boolean changed = this.reusable.recoverDetached(level);
+        for (var operation : this.operations) {
+            var adapter = catalog.adapter(operation.adapterId());
+            if (adapter != null) changed |= operation.recoverDetached(level, adapter);
+        }
+        return changed;
+    }
+
+    public boolean hasReservedMachines() {
+        return this.operations.stream().anyMatch(operation -> !operation.machineReleased()) || this.reusable.hasReservedMachines();
     }
 
     public void save(CompoundTag tag, HolderLookup.Provider registries) {
@@ -325,7 +488,9 @@ public final class PackagedDispatchState {
 
     public static PackagedDispatchState load(CompoundTag tag, HolderLookup.Provider registries) {
         var state = new PackagedDispatchState();
-        if (tag.contains("reusable", Tag.TAG_COMPOUND)) state.reusable = PackagedReusableState.load(tag.getCompound("reusable"), registries);
+        if (tag.isEmpty()) return state;
+        if (!tag.contains("reusable", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Missing packaged reusable state");
+        state.reusable = PackagedReusableState.load(tag.getCompound("reusable"), registries);
         if (tag.contains("recovery_receipt")) {
             if (!tag.hasUUID("recovery_receipt")) throw new IllegalArgumentException("Invalid packaged recovery receipt");
             state.recoveryReceipt = tag.getUUID("recovery_receipt");

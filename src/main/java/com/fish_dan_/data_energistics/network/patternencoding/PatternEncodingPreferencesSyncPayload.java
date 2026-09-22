@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.network.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.menu.patternencoding.PackagedPatternInputTransfer;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
@@ -219,6 +220,9 @@ public record PatternEncodingPreferencesSyncPayload(
             PatternEncodingSourceHelper.applyPatternSource(sourceAware, null);
             if (menu instanceof PatternEncodingTermMenu patternMenu) {
                 PatternEncodingSourceHelper.applyPendingTransferRecipeMetadata(patternMenu);
+                if (payload.recipeId != null && payload.rankingContext != null) {
+                    PackagedPatternInputTransfer.complete(patternMenu, payload.rankingContext.recipeTypeId(), payload.recipeId);
+                }
             }
         }
 

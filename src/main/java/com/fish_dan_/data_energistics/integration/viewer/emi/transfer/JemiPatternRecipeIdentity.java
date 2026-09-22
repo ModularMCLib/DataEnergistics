@@ -19,7 +19,8 @@ final class JemiPatternRecipeIdentity {
         if (!(recipe instanceof JemiRecipe<?> jemi)) return recipe.getId();
         var level = Minecraft.getInstance().level;
         var nativeId = ViewerRecipeIdentity.resolve(jemi.recipe,
-                level == null ? ObjectList.of() : level.getRecipeManager().getRecipes());
+                level == null ? ObjectList.of() : level.getRecipeManager().getRecipes(),
+                level == null ? null : level.registryAccess());
         return nativeId == null ? jemi.originalId : nativeId;
     }
 }

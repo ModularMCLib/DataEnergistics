@@ -36,7 +36,11 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
             requirements.add(infusion.input);
             spirits = infusion.spirits;
         } else if (recipe instanceof SpiritFocusingRecipe focusing) {
-            if (!installedMain || !focusing.input.test(installed)) return null;
+            if (installedMain) {
+                if (!focusing.input.test(installed)) return null;
+            } else {
+                requirements.add(new SizedIngredient(focusing.input, 1));
+            }
             spirits = focusing.spirits;
         } else return null;
         for (SpiritIngredient spirit : spirits) {

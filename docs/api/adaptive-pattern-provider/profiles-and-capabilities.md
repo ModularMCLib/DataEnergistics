@@ -14,7 +14,7 @@
 
 不要在 definition 外继续修改用于构造 profile 的 icon、component 或 capability set，也不要依赖对象 identity。消费行为应通过 profile 的值和 `supports(capability)` 判断。
 
-`recipeCategoryIds` 和 `workstationItemIds` 用于配方编码界面的供应器自动搜索。配方查看器提供当前配方的类别和工作方块，供应器 profile 声明自己能够处理的类别和工作方块；两侧匹配后，供应器才会被标记为当前上传目标。
+`recipeCategoryIds` 和 `workstationItemIds` 是自适应供应器的静态匹配声明，适用于支持范围不随目标机器变化的 provider。配方查看器提供当前配方的类别和工作方块，两侧匹配后，供应器才会被标记为当前上传目标。
 
 第三方自适应供应器可以直接在 profile 中声明这些集合：
 
@@ -34,7 +34,7 @@ return new AdaptivePatternProviderProfile(
         capabilities);
 ```
 
-`PackagedMachineAdapter` 另外提供默认的 `workstationItemIds()`。封包机器的配方类别继续来自 `recipeTypes()`，工作方块物品 ID 应在对应模组的 integration adapter 中声明。通用供应器逻辑只聚合这些声明，不维护模组 ID 映射表。
+`PackagedMachineAdapter` 另外提供默认的 `workstationItemIds()`。封包机器的配方类别继续来自 `recipeTypes()`，工作方块物品 ID 应在对应模组的 integration adapter 中声明。封包供应器不会把这些声明直接当成全局支持范围，而是检查自己当前相邻且已加载的机器，只返回实际识别到的 adapter 元数据；通用供应器逻辑不维护模组 ID 映射表。
 
 ## 内置 capability IDs
 

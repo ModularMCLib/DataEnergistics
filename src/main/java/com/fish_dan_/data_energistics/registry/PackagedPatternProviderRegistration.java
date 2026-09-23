@@ -7,12 +7,12 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
-import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 
 import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
@@ -42,14 +42,13 @@ public final class PackagedPatternProviderRegistration implements DataEnergistic
         if (terminalIcon == null) {
             throw new IllegalStateException("Adaptive pattern provider item has no AE item key");
         }
-        var packagedCrafting = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting();
         return new AdaptivePatternProviderProfile(
                 36,
                 icon,
                 terminalIcon,
                 icon.getHoverName(),
-                packagedCrafting.recipeCategoryIds(),
-                packagedCrafting.workstationItemIds(),
+                ObjectList.of(),
+                ObjectList.of(),
                 AdaptivePatternProviderRegistrationFactory.capabilities());
     }
 }

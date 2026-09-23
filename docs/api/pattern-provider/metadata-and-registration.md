@@ -83,9 +83,9 @@ registry.patternProviders().registerWorkstationSource(
 ## 运行时匹配元数据来源
 
 终端可见但没有稳定 `ProviderIdentityDescriptor` 的 provider，可以实现
-`PatternProviderMatchingMetadataSource`，直接提供不可变 fastutil `ObjectList<ResourceLocation>`：
+`PatternProviderMatchingMetadataSource`，通过 `matchingMetadata(recipeCategoryId)` 返回当前实例的不可变匹配快照：
 
-- `recipeCategoryIds()` 使用配方查看器或对应 integration adapter 的注册 ID；
-- `workstationItemIds()` 使用工作方块的物品注册 ID。
+- `recipeCategoryIds` 使用配方查看器或对应 integration adapter 的注册 ID；
+- `workstationItemIds` 使用工作方块的物品注册 ID。
 
-这个接口只提供上传搜索所需的声明，不参与 provider 的输入输出、调度或主动抽取逻辑。返回值不能依赖世界访问，不能在读取后继续修改。数字化封包供应器使用该来源读取已经注册的 `PackagedMachineAdapter` 聚合结果；具体模组的类别和工作方块映射仍必须写在对应 integration adapter 中。
+这个接口只提供上传搜索所需的声明，不参与 provider 的输入输出、调度或主动抽取逻辑。动态 provider 可以在服务器线程只读检查已经加载的目标位置，但不能加载区块或修改状态。数字化封包供应器使用该来源检查相邻机器，只返回被 `PackagedMachineAdapter.recognizes(...)` 识别的 adapter 声明；具体模组的类别和工作方块映射仍必须写在对应 integration adapter 中。

@@ -96,9 +96,9 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
         addSlot(this.boosterSlot, SlotSemantics.STORAGE);
         this.boosterSlot.setEmptyTooltip(() -> Tooltips.slotTooltip(ButtonToolTips.PlaceWirelessBooster.text()));
         registerClientAction(ACTION_FOCUS_TARGET, TargetAction.class, this::onFocusTarget);
-        registerClientAction(ACTION_SET_RANGE_VISIBLE, Boolean.class, this::setRangeVisible);
-        registerClientAction(ACTION_SET_CONNECTION_MODE, Integer.class, this::setConnectionMode);
-        registerClientAction(ACTION_SET_RANGE_ADJUSTMENT_MODE, Boolean.class, this::setRangeAdjustmentMode);
+        registerClientAction(ACTION_SET_RANGE_VISIBLE, boolean.class, this::setRangeVisible);
+        registerClientAction(ACTION_SET_CONNECTION_MODE, int.class, this::setConnectionMode);
+        registerClientAction(ACTION_SET_RANGE_ADJUSTMENT_MODE, boolean.class, this::setRangeAdjustmentMode);
         registerClientAction(ACTION_SET_TARGET_TRANSFER_MODE, TargetTransferModeAction.class, this::setTargetTransferMode);
         registerClientAction(
                 ACTION_SET_VIRTUAL_DEVICE_DISABLED,
@@ -251,7 +251,7 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
     }
 
     private void onFocusTarget(TargetAction action) {
-        if (action == null || action.targetSnapshotRevision() == null || action.dimensionId() == null || action.x() == null || action.y() == null || action.z() == null || action.teleport() == null || action.targetSnapshotRevision() < 0L) {
+        if (action == null || action.dimensionId() == null || action.targetSnapshotRevision() < 0L) {
             logRejectedTargetAction("with an incomplete target payload", action);
             return;
         }
@@ -332,8 +332,8 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
                 action == null ? null : action.teleport());
     }
 
-    private void setRangeVisible(Boolean visible) {
-        if (visible == null || this.host == null) {
+    private void setRangeVisible(boolean visible) {
+        if (this.host == null) {
             return;
         }
 
@@ -341,8 +341,8 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
         broadcastChanges();
     }
 
-    private void setConnectionMode(Integer connectionMode) {
-        if (connectionMode == null || this.host == null) {
+    private void setConnectionMode(int connectionMode) {
+        if (this.host == null) {
             return;
         }
 
@@ -351,8 +351,8 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
         broadcastChanges();
     }
 
-    private void setRangeAdjustmentMode(Boolean scopeMode) {
-        if (scopeMode == null || this.host == null) {
+    private void setRangeAdjustmentMode(boolean scopeMode) {
+        if (this.host == null) {
             return;
         }
 
@@ -363,7 +363,7 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
 
     private void setTargetTransferMode(TargetTransferModeAction action) {
         DataDistributionTowerBlockEntity tower = this.host;
-        if (action == null || tower == null || !action.complete()) {
+        if (action == null || tower == null || action.targetSnapshotRevision() < 0L || action.ownerDimensionId() == null || action.bindingDimensionId() == null) {
             logRejectedTargetTransferModeAction("with an incomplete target payload", action);
             return;
         }
@@ -385,7 +385,7 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
             return;
         }
 
-        if (!ownerDimensionId.equals(level.dimension().location()) || !bindingDimensionId.equals(level.dimension().location())) {
+        if (!ownerDimensionId.equals(level.dimension().location())) {
             logRejectedTargetTransferModeAction("for a different dimension", action);
             return;
         }
@@ -418,7 +418,7 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
     /** Validates and applies one per-device disable action against the current server snapshot. */
     private void setVirtualDeviceDisabled(VirtualDeviceDisabledAction action) {
         DataDistributionTowerBlockEntity tower = this.host;
-        if (action == null || tower == null || !action.complete()) {
+        if (action == null || tower == null || action.targetSnapshotRevision() < 0L || action.ownerDimensionId() == null || action.bindingDimensionId() == null || action.deviceDimensionId() == null || action.nodeType() == null || action.nodeType().isBlank() || action.side() < -1 || action.side() > 5 || action.occurrence() < 0) {
             logRejectedVirtualDeviceAction("with an incomplete payload", action);
             return;
         }
@@ -434,7 +434,7 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
             return;
         }
         var level = tower.getLevel();
-        if (level == null || !ownerDimension.equals(level.dimension().location()) || !bindingDimension.equals(level.dimension().location())) {
+        if (level == null || !ownerDimension.equals(level.dimension().location())) {
             logRejectedVirtualDeviceAction("for a different tower dimension", action);
             return;
         }
@@ -462,9 +462,8 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
         broadcastChanges();
     }
 
-    private record TargetAction(@Nullable Long targetSnapshotRevision, @Nullable String dimensionId,
-                                @Nullable Integer x, @Nullable Integer y, @Nullable Integer z,
-                                @Nullable Boolean teleport) {}
+    private record TargetAction(long targetSnapshotRevision, String dimensionId,
+                                int x, int y, int z, boolean teleport) {}
 
     private void logRejectedTargetTransferModeAction(String reason, @Nullable TargetTransferModeAction action) {
         Data_Energistics.LOGGER.warn(
@@ -475,46 +474,36 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
     }
 
     private record TargetTransferModeAction(
-                                            @Nullable Long targetSnapshotRevision,
-                                            @Nullable String ownerDimensionId,
-                                            @Nullable Integer ownerX,
-                                            @Nullable Integer ownerY,
-                                            @Nullable Integer ownerZ,
-                                            @Nullable String bindingDimensionId,
-                                            @Nullable Integer bindingX,
-                                            @Nullable Integer bindingY,
-                                            @Nullable Integer bindingZ,
-                                            @Nullable Integer mode) {
-
-        private boolean complete() {
-            return this.targetSnapshotRevision != null && this.ownerDimensionId != null && this.ownerX != null && this.ownerY != null && this.ownerZ != null && this.bindingDimensionId != null && this.bindingX != null && this.bindingY != null && this.bindingZ != null && this.mode != null;
-        }
-    }
+                                            long targetSnapshotRevision,
+                                            String ownerDimensionId,
+                                            int ownerX,
+                                            int ownerY,
+                                            int ownerZ,
+                                            String bindingDimensionId,
+                                            int bindingX,
+                                            int bindingY,
+                                            int bindingZ,
+                                            int mode) {}
 
     private record VirtualDeviceDisabledAction(
-                                               @Nullable Long targetSnapshotRevision,
-                                               @Nullable String ownerDimensionId,
-                                               @Nullable Integer ownerX,
-                                               @Nullable Integer ownerY,
-                                               @Nullable Integer ownerZ,
-                                               @Nullable String bindingDimensionId,
-                                               @Nullable Integer bindingX,
-                                               @Nullable Integer bindingY,
-                                               @Nullable Integer bindingZ,
-                                               @Nullable String deviceDimensionId,
-                                               @Nullable Boolean devicePositioned,
-                                               @Nullable Integer deviceX,
-                                               @Nullable Integer deviceY,
-                                               @Nullable Integer deviceZ,
-                                               @Nullable Integer side,
-                                               @Nullable String nodeType,
-                                               @Nullable Integer occurrence,
-                                               @Nullable Boolean disabled) {
-
-        private boolean complete() {
-            return this.targetSnapshotRevision != null && this.ownerDimensionId != null && this.ownerX != null && this.ownerY != null && this.ownerZ != null && this.bindingDimensionId != null && this.bindingX != null && this.bindingY != null && this.bindingZ != null && this.deviceDimensionId != null && this.devicePositioned != null && this.deviceX != null && this.deviceY != null && this.deviceZ != null && this.side != null && this.nodeType != null && this.occurrence != null && this.disabled != null;
-        }
-    }
+                                               long targetSnapshotRevision,
+                                               String ownerDimensionId,
+                                               int ownerX,
+                                               int ownerY,
+                                               int ownerZ,
+                                               String bindingDimensionId,
+                                               int bindingX,
+                                               int bindingY,
+                                               int bindingZ,
+                                               String deviceDimensionId,
+                                               boolean devicePositioned,
+                                               int deviceX,
+                                               int deviceY,
+                                               int deviceZ,
+                                               int side,
+                                               String nodeType,
+                                               int occurrence,
+                                               boolean disabled) {}
 
     private void logRejectedVirtualDeviceAction(
                                                 String reason, @Nullable VirtualDeviceDisabledAction action) {

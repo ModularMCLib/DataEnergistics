@@ -57,9 +57,12 @@ import appeng.api.stacks.AEItemKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -609,6 +612,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                 this.grid);
     }
 
+    @Nullable
+    private static ServerLevel resolveBindingLevel(ServerLevel ownerLevel, ResourceLocation dimensionId) {
+        return ownerLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
+    }
+
     private List<TowerWork> dataEnergistics$resolveTowers() {
         ObjectArrayList<TowerNetworkParticipant> orderedTowers = new ObjectArrayList<>(this.towers.values());
         orderedTowers.sort(Comparator.comparing(TowerNetworkParticipant::towerKey));
@@ -631,16 +639,17 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             Map<IGrid, BindingTargetWork> bindingByTarget = new Reference2ReferenceOpenHashMap<>();
             for (TowerBinding binding : orderedBindings) {
                 TowerTargetResolution resolution;
-                if (!participant.towerAllowsAe() || !participant.towerLevel().dimension().location().equals(binding.dimensionId()) || !participant.towerLevel().isLoaded(binding.anchor())) {
+                ServerLevel targetLevel = resolveBindingLevel(participant.towerLevel(), binding.dimensionId());
+                if (!participant.towerAllowsAe() || targetLevel == null || !targetLevel.isLoaded(binding.anchor())) {
                     resolution = new TowerTargetResolution(List.of(), List.of());
                 } else {
                     TowerTargetDiscoveryMode discoveryMode = binding.source() == TowerBindingSource.MANUAL ? TowerTargetDiscoveryMode.POINT : TowerTargetDiscoveryMode.SCOPE;
                     TargetResolutionKey resolutionKey = new TargetResolutionKey(
-                            participant.towerLevel().dimension().location(), binding.anchor(), discoveryMode);
+                            binding.dimensionId(), binding.anchor(), discoveryMode);
                     resolution = resolutionCache.computeIfAbsent(
                             resolutionKey,
                             ignored -> resolutionRound.resolve(
-                                    participant.towerLevel(), binding.anchor(), this.grid, discoveryMode));
+                                    targetLevel, binding.anchor(), this.grid, discoveryMode));
                 }
                 boolean hasEnergyEndpoint = energyLocations.contains(
                         new EnergyLocationKey(binding.dimensionId(), binding.anchor()));

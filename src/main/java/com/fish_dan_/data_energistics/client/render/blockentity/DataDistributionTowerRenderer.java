@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -27,12 +26,8 @@ import com.mojang.math.Axis;
 public class DataDistributionTowerRenderer implements BlockEntityRenderer<DataDistributionTowerBlockEntity> {
 
     private static final float CRYSTAL_BASE_Y = 3.6875f;
-    private static final float CRYSTAL_ONLINE_FLOAT_RANGE = 0.14f;
-    private static final float CRYSTAL_ONLINE_FLOAT_SPEED = 0.14f;
-    private static final float CRYSTAL_ONLINE_ROTATION_SPEED = 6.0f;
-    private static final float CRYSTAL_ONLINE_TILT_BASE = 14.0f;
-    private static final float CRYSTAL_ONLINE_TILT_RANGE = 6.0f;
-    private static final float CRYSTAL_ONLINE_TILT_SPEED = 0.05f;
+    private static final float CRYSTAL_ONLINE_FLOAT_AMPLITUDE = 0.08f;
+    private static final float CRYSTAL_ONLINE_FLOAT_SPEED = 0.08f;
     private static final float CRYSTAL_MODEL_OFFSET_X = -0.5f;
     private static final float CRYSTAL_MODEL_OFFSET_Y = -1.75f;
     private static final float CRYSTAL_MODEL_OFFSET_Z = -0.5f;
@@ -72,22 +67,14 @@ public class DataDistributionTowerRenderer implements BlockEntityRenderer<DataDi
                 || (state.hasProperty(DataDistributionTowerBlock.ACTIVE)
                 && state.getValue(DataDistributionTowerBlock.ACTIVE));
         BakedModel model = minecraft.getModelManager().getModel(online ? CRYSTAL_ONLINE_MODEL : CRYSTAL_OFFLINE_MODEL);
-        float bobOffset = 0.0f;
-        float outerRotation = 0.0f;
-        float tiltRotation = 0.0f;
-        if (online) {
-            float phase = (Util.getMillis() * 0.001f) * (CRYSTAL_ONLINE_FLOAT_SPEED * 20.0f);
-            bobOffset = (Mth.sin(phase) * 0.5f + 0.5f) * CRYSTAL_ONLINE_FLOAT_RANGE;
-            float animationTime = blockEntity.getLevel().getGameTime() + partialTick;
-            outerRotation = animationTime * CRYSTAL_ONLINE_ROTATION_SPEED;
-            tiltRotation = CRYSTAL_ONLINE_TILT_BASE
-                    + Mth.sin(animationTime * CRYSTAL_ONLINE_TILT_SPEED) * CRYSTAL_ONLINE_TILT_RANGE;
-        }
+        float animationTime = blockEntity.getLevel().getGameTime() + partialTick;
+        float bobOffset = online
+                ? Mth.sin(animationTime * CRYSTAL_ONLINE_FLOAT_SPEED) * CRYSTAL_ONLINE_FLOAT_AMPLITUDE
+                : 0.0f;
 
         poseStack.pushPose();
         poseStack.translate(0.5f, CRYSTAL_BASE_Y + bobOffset, 0.5f);
-        poseStack.mulPose(Axis.YP.rotationDegrees(getCrystalYRotation(state) + outerRotation));
-        poseStack.mulPose(Axis.XP.rotationDegrees(tiltRotation));
+        poseStack.mulPose(Axis.YP.rotationDegrees(getCrystalYRotation(state)));
         poseStack.translate(CRYSTAL_MODEL_OFFSET_X, CRYSTAL_MODEL_OFFSET_Y, CRYSTAL_MODEL_OFFSET_Z);
         renderModel(blockRenderer, model, state, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();

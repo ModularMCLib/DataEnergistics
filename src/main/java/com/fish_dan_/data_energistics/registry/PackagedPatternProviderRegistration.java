@@ -13,8 +13,9 @@ import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.world.item.ItemStack;
 
-import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /** Registers the digital packaged provider as one adaptive profile handling all installed machine adapters. */
 @DataEnergisticsEntrypoint
@@ -31,8 +32,8 @@ public final class PackagedPatternProviderRegistration implements DataEnergistic
     }
 
     private static @Nullable AdaptivePatternProviderProfile resolveProfile(
-                                                                 Predicate<ItemStack> matcher,
-                                                                 ItemStack providerStack) {
+                                                                           Predicate<ItemStack> matcher,
+                                                                           ItemStack providerStack) {
         if (!matcher.test(providerStack)) {
             return null;
         }

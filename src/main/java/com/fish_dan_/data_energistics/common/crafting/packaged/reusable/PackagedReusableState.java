@@ -396,6 +396,25 @@ public final class PackagedReusableState {
                 }
 
                 @Override
+                public Optional<NativeResult> cancel(Binding binding, Operation operation) {
+                    NativeWork active = entry.work;
+                    boolean sameOperation = active != null && binding.identity().sessionId().equals(active.session)
+                            && operation.id() == active.operation;
+                    if (!sameOperation) {
+                        if (active != null && !active.machine.completed()) return Optional.empty();
+                        return Optional.of(NativeResult.paused());
+                    }
+                    if (!active.machine.canAbortBeforeDelivery()) return Optional.empty();
+                    var claims = PackagedMachineClaims.get(level);
+                    if (claims.structureRemoved(active.machine.id())) claims.acknowledgeRemoval(active.machine.id());
+                    else claims.releaseAll(active.machine.occupiedPositions(), active.machine.id());
+                    PackagedRecoveryJournal.get(level).release(active.machine.id());
+                    entry.work = null;
+                    changed.run();
+                    return Optional.of(NativeResult.paused());
+                }
+
+                @Override
                 public Optional<NativeResult> completedCheckpoint(Binding binding, Operation operation) {
                     NativeWork work = entry.work;
                     if (work == null || !work.released || !work.machine.completed() ||

@@ -388,6 +388,16 @@ public final class ReusableCpuSessionLedger {
         sessions.values().stream().filter(session -> session.jobId.equals(jobId)).forEach(session -> session.closing = true);
     }
 
+    /** Removes a cancelled session after a provider has accepted independent custody and recovery responsibility. */
+    public void detach(UUID sessionId) {
+        Session session = requireSession(sessionId);
+        if (!session.closing || uncertainSessions.contains(sessionId) || session.submissions.values().stream().anyMatch(submission -> !submission.transferred())) {
+            throw new IllegalStateException("Cannot detach reusable custody before provider ownership is complete");
+        }
+        sessions.remove(sessionId);
+        replanningJobs.remove(session.jobId);
+    }
+
     /**
      * Validates the receipt before any callback. The recipient must atomically deposit the actual assets and apply
      * cancellation accounting in its owning CPU state. Replays acknowledge without invoking the callback again.

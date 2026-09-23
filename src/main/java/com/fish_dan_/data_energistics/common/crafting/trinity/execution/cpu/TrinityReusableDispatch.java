@@ -333,6 +333,11 @@ final class TrinityReusableDispatch {
                             amount -> owner.completeReusableOutputs(session.jobId(), entry.submission(), amount));
                 }
                 for (SlotStack tool : located.view().heldToolsFast()) owner.wakeReusableTool(tool.stack().what());
+                boolean detached = session.closing() && !owner.ownsReusableJob(session.jobId());
+                if (detached && adapter.detachReusableSession(session.id())) {
+                    ledger.detach(session.id());
+                    continue;
+                }
                 if (session.closing() || !owner.ownsReusableJob(session.jobId()) || located.view().state() == State.FAULTED) {
                     ledger.close(session.id());
                     adapter.closeReusableSession(session.id());
@@ -360,7 +365,7 @@ final class TrinityReusableDispatch {
         int observed = 0;
         for (Located located : found) {
             Session session = located.session();
-            if (session.settled()) continue;
+            if (session.settled() || ledger.session(session.id()) == null) continue;
             observed++;
             var view = located.view();
             Int2ObjectOpenHashMap<BigInteger> bySlot = new Int2ObjectOpenHashMap<>();

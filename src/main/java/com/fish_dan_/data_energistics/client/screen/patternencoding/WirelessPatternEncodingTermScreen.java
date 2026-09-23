@@ -116,6 +116,7 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     private final Scrollbar previewScrollbar = new Scrollbar(Scrollbar.SMALL);
     private final FractionalScrollbarWheel previewWheel = new FractionalScrollbarWheel();
     private boolean previewVisible;
+    private boolean previewOpenPending;
     private boolean renderingPreviewTooltip;
     private float previewPartialTicks;
     private boolean previewScrollbarDragging;
@@ -191,7 +192,7 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
             }
         }
         if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() && !this.previewVisible) {
-            openPreviewPanel();
+            this.previewOpenPending = true;
         }
         updateProviderSearchBox();
         updateProviderRenameBox();
@@ -475,9 +476,17 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
 
     @Override
     public void renderPreviewForeground(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (!this.previewVisible && this.previewOpenPending) {
+            this.previewOpenPending = false;
+            invalidatePreviewLayout();
+            openPreviewPanel();
+            updateProviderSearchBox();
+            updateProviderRenameBox();
+            updatePreviewDragButton();
+            updatePreviewScrollbar();
+        }
         if (!this.previewVisible) return;
         // Native widget updates have finished; all foreground drawing and hit tests share these final bounds.
-        invalidatePreviewLayout();
         restorePreviewLayerWidgets();
         if (isPreviewLayerAt(mouseX, mouseY)) this.hoveredSlot = null;
         graphics.flush();
@@ -986,6 +995,7 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
 
     private void closePreviewPanels() {
         this.previewVisible = false;
+        this.previewOpenPending = false;
         this.leafPanel.close();
         this.providerSearchContext = PatternProviderSearchContext.resolve(null);
         this.previewWheel.reset();

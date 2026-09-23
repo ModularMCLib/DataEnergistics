@@ -64,9 +64,7 @@ public class DataDistributionTowerRenderer implements BlockEntityRenderer<DataDi
         Minecraft minecraft = Minecraft.getInstance();
         BlockRenderDispatcher blockRenderer = minecraft.getBlockRenderer();
         BlockState state = blockEntity.getBlockState();
-        boolean online = blockEntity.isNetworkNodeOnline()
-                || (state.hasProperty(DataDistributionTowerBlock.ACTIVE)
-                && state.getValue(DataDistributionTowerBlock.ACTIVE));
+        boolean online = blockEntity.isNetworkNodeOnline() || (state.hasProperty(DataDistributionTowerBlock.ACTIVE) && state.getValue(DataDistributionTowerBlock.ACTIVE));
         BakedModel model = minecraft.getModelManager().getModel(online ? CRYSTAL_ONLINE_MODEL : CRYSTAL_OFFLINE_MODEL);
         float phase = (Util.getMillis() * 0.001f) * (CRYSTAL_ONLINE_FLOAT_SPEED * 20.0f);
         float bobOffset = online ? Mth.sin(phase) * CRYSTAL_ONLINE_FLOAT_AMPLITUDE : 0.0f;

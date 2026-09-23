@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public final class JsonPatternEncodingClientPreferences implements PatternEncodingClientPreferences {
 
-    public static final int SCHEMA_VERSION = 4;
+    public static final int SCHEMA_VERSION = 5;
     public static final int MAX_STATISTICS_PER_PROFILE = 2048;
     public static final int MAX_STATISTICS_TOTAL = 8192;
     public static final int MAX_SERVER_PROFILES = 32;
@@ -65,6 +65,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     private boolean loaded;
     private boolean writesDisabled;
     private boolean uploadEnabled = true;
+    private boolean previewPanelPinned;
     private boolean patternSourceEnabled = true;
     @Nullable
     private ResourceLocation lastWorkstation;
@@ -95,6 +96,22 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     public void setUploadEnabled(boolean enabled) {
         ensureLoaded();
         this.uploadEnabled = enabled;
+        if (!enabled) {
+            this.previewPanelPinned = false;
+        }
+        save();
+    }
+
+    @Override
+    public boolean previewPanelPinned() {
+        ensureLoaded();
+        return this.previewPanelPinned;
+    }
+
+    @Override
+    public void setPreviewPanelPinned(boolean pinned) {
+        ensureLoaded();
+        this.previewPanelPinned = pinned && this.uploadEnabled;
         save();
     }
 
@@ -277,6 +294,9 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             if (preferences.has("uploadEnabled")) {
                 this.uploadEnabled = readRequiredBoolean(preferences, "uploadEnabled");
             }
+            if (preferences.has("previewPanelPinned")) {
+                this.previewPanelPinned = readRequiredBoolean(preferences, "previewPanelPinned");
+            }
             if (preferences.has("patternSourceEnabled")) {
                 this.patternSourceEnabled = readRequiredBoolean(preferences, "patternSourceEnabled");
             }
@@ -300,6 +320,9 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
                 this.providerDetailPanelRelativeY = readRequiredInt(providerDetailPanel, "relativeY");
                 validatePanelOffset(this.providerDetailPanelRelativeX, this.providerDetailPanelRelativeY);
                 this.providerDetailPanelPresent = true;
+            }
+            if (!this.uploadEnabled) {
+                this.previewPanelPinned = false;
             }
         }
         JsonObject profiles = readOptionalObject(root, "serverProfiles");
@@ -392,6 +415,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
 
     private void resetToDefaults() {
         this.uploadEnabled = true;
+        this.previewPanelPinned = false;
         this.patternSourceEnabled = true;
         this.lastWorkstation = null;
         this.previewPanelOffsetX = 0;
@@ -454,6 +478,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         root.addProperty("schemaVersion", SCHEMA_VERSION);
         JsonObject preferences = new JsonObject();
         preferences.addProperty("uploadEnabled", this.uploadEnabled);
+        preferences.addProperty("previewPanelPinned", this.previewPanelPinned);
         preferences.addProperty("patternSourceEnabled", this.patternSourceEnabled);
         if (this.lastWorkstation == null) {
             preferences.add("lastWorkstation", null);

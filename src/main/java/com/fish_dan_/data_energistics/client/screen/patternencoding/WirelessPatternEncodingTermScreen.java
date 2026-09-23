@@ -160,6 +160,9 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         invalidatePreviewLayout();
         super.init();
         PatternEncodingPreferencesClient.initializeMenu(this.menu);
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
+            openPreviewPanel();
+        }
         this.encodePatternWidget = resolveEncodePatternWidget();
         if (this.originalEncodePatternMessage == null && this.encodePatternWidget != null) {
             this.originalEncodePatternMessage = this.encodePatternWidget.getMessage();
@@ -182,6 +185,14 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
+        if (!isUploadEnabled()) {
+            if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
+                PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, false);
+            }
+            if (this.previewVisible) {
+                closePreviewPanels();
+            }
+        }
         updateProviderSearchBox();
         updateProviderRenameBox();
         updateRecipeTypeToggleButton();
@@ -207,6 +218,10 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 1 && hasShiftDown() && isPreviewPanelGearButton(mouseX, mouseY)) {
+            togglePreviewPanelPin();
+            return true;
+        }
         if (this.leafPanel.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
@@ -704,11 +719,16 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
 
     private void drawProviderButtons(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Rect2i previewBounds = getPreviewPanelBounds();
+        int titleX = previewBounds.getX() + PANEL_CONTENT_X;
+        int titleY = previewBounds.getY() + PANEL_TITLE_Y;
         guiGraphics.drawString(this.font, PANEL_TITLE,
-                previewBounds.getX() + PANEL_CONTENT_X,
-                previewBounds.getY() + PANEL_TITLE_Y,
+                titleX,
+                titleY,
                 PANEL_TITLE_COLOR,
                 false);
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
+            drawPinnedMarker(guiGraphics, titleX + this.font.width(PANEL_TITLE) + 3, titleY + 1);
+        }
 
         ObjectList<PatternEncodingPreviewMenu.SyncedPatternProvider> providers = getVisibleProviders();
         if (providers.isEmpty()) {
@@ -975,6 +995,29 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         this.previewVisible = true;
         this.previewWheel.reset();
         refreshProviderSearchContext(true);
+    }
+
+    private void togglePreviewPanelPin() {
+        boolean pinned = !PatternEncodingPreferencesClient.isPreviewPanelPinned();
+        if (!isUploadEnabled()) {
+            pinned = false;
+        }
+        PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, pinned);
+        if (pinned && !this.previewVisible) {
+            openPreviewPanel();
+        }
+    }
+
+    private boolean isPreviewPanelGearButton(double mouseX, double mouseY) {
+        return this.previewVisible && this.previewDragButton != null && this.previewDragButton.visible &&
+                this.previewDragButton.isMouseOver(mouseX, mouseY);
+    }
+
+    private void drawPinnedMarker(GuiGraphics guiGraphics, int x, int y) {
+        guiGraphics.fill(x + 2, y, x + 5, y + 2, PANEL_TITLE_COLOR);
+        guiGraphics.fill(x + 1, y + 2, x + 6, y + 4, PANEL_TITLE_COLOR);
+        guiGraphics.fill(x + 3, y + 4, x + 4, y + 7, PANEL_TITLE_COLOR);
+        guiGraphics.fill(x, y + 7, x + 7, y + 8, PANEL_TITLE_COLOR);
     }
 
     private void refreshProviderSearchContext(boolean force) {

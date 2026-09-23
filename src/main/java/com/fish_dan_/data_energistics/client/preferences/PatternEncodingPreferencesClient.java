@@ -134,6 +134,22 @@ public final class PatternEncodingPreferencesClient {
     }
 
     /**
+     * Persists the upload-panel default-open preference. Disabling upload always clears this preference at the
+     * repository boundary, so re-enabling upload never resurrects a previous pin.
+     */
+    public static void setPreviewPanelPinned(AbstractContainerMenu menu, boolean pinned) {
+        Interfaces.require(menu);
+        PatternEncodingClientPreferencesAccess.get().setPreviewPanelPinned(pinned);
+    }
+
+    /**
+     * Returns the current client preference used when a pattern-encoding terminal is initialized.
+     */
+    public static boolean isPreviewPanelPinned() {
+        return PatternEncodingClientPreferencesAccess.get().previewPanelPinned();
+    }
+
+    /**
      * Persists and synchronizes recipe-type recording while retaining the existing preference key.
      */
     public static void setPatternSourceEnabled(AbstractContainerMenu menu, boolean enabled) {

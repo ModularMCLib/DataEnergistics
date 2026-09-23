@@ -173,6 +173,9 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         invalidatePreviewLayout();
         super.init();
         PatternEncodingPreferencesClient.initializeMenu(this.menu);
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
+            openPreviewPanel();
+        }
         this.encodePatternWidget = resolveEncodePatternWidget();
         if (this.originalEncodePatternMessage == null && this.encodePatternWidget != null) {
             this.originalEncodePatternMessage = this.encodePatternWidget.getMessage();
@@ -196,6 +199,14 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
     @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
+        if (!isUploadEnabled()) {
+            if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
+                PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, false);
+            }
+            if (this.previewVisible) {
+                closePreviewPanels();
+            }
+        }
         updateProviderSearchBox();
         updateProviderRenameBox();
         updateRecipeTypeToggleButton();
@@ -210,6 +221,10 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 1 && hasShiftDown() && isPreviewPanelGearButton(mouseX, mouseY)) {
+            togglePreviewPanelPin();
+            return true;
+        }
         if (this.leafPanel.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
@@ -720,11 +735,14 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
 
     private void drawProviderButtons(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Rect2i previewBounds = getPreviewPanelBounds();
-        guiGraphics.drawString(this.font, PANEL_TITLE,
-                previewBounds.getX() + getPanelContentX(),
-                previewBounds.getY() + getPanelTitleY(),
+        int titleX = previewBounds.getX() + getPanelContentX();
+        int titleY = previewBounds.getY() + getPanelTitleY();
+        guiGraphics.drawString(this.font, PANEL_TITLE, titleX, titleY,
                 COLOR_PANEL_TITLE,
                 false);
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
+            drawPinnedMarker(guiGraphics, titleX + this.font.width(PANEL_TITLE) + 3, titleY + 1);
+        }
 
         ObjectList<PatternEncodingPreviewMenu.SyncedPatternProvider> visibleProviders = getVisibleProviders();
         if (visibleProviders.isEmpty()) {
@@ -1011,6 +1029,29 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         this.previewVisible = true;
         this.previewWheel.reset();
         refreshProviderSearchContext(true);
+    }
+
+    private void togglePreviewPanelPin() {
+        boolean pinned = !PatternEncodingPreferencesClient.isPreviewPanelPinned();
+        if (!isUploadEnabled()) {
+            pinned = false;
+        }
+        PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, pinned);
+        if (pinned && !this.previewVisible) {
+            openPreviewPanel();
+        }
+    }
+
+    private boolean isPreviewPanelGearButton(double mouseX, double mouseY) {
+        return this.previewVisible && this.previewDragButton != null && this.previewDragButton.visible &&
+                this.previewDragButton.isMouseOver(mouseX, mouseY);
+    }
+
+    private void drawPinnedMarker(GuiGraphics guiGraphics, int x, int y) {
+        guiGraphics.fill(x + 2, y, x + 5, y + 2, COLOR_PANEL_TITLE);
+        guiGraphics.fill(x + 1, y + 2, x + 6, y + 4, COLOR_PANEL_TITLE);
+        guiGraphics.fill(x + 3, y + 4, x + 4, y + 7, COLOR_PANEL_TITLE);
+        guiGraphics.fill(x, y + 7, x + 7, y + 8, COLOR_PANEL_TITLE);
     }
 
     private void refreshProviderSearchContext(boolean force) {

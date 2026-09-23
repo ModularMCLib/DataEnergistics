@@ -1369,7 +1369,7 @@
 	"screen.data_energistics.page.previous": "Previous Page",
 	"screen.data_energistics.pattern_provider.workstation_variant": "%s [%s]",
 	"screen.data_energistics.pattern_provider.workstation_variants": "%s [Mixed: %s]",
-	"screen.data_energistics.pattern_writer_preview.drag_handle": "Drag upload panel; right-click to reset position",
+	"screen.data_energistics.pattern_writer_preview.drag_handle": "Drag upload panel; right-click to reset position; Shift+right-click to pin default display",
 	"screen.data_energistics.pattern_writer_preview.empty_state": "No available providers found",
 	"screen.data_energistics.pattern_writer_preview.encode_button_hint": "Encode Pattern\n[Left/Right Click] to open the upload panel\nShift+[Left/Right Click] to close the upload panel",
 	"screen.data_energistics.pattern_writer_preview.leaf_drag_handle": "Drag provider group panel; right-click to close",

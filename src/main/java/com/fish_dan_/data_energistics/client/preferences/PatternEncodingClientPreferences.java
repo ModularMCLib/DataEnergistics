@@ -32,6 +32,16 @@ public interface PatternEncodingClientPreferences {
     void setUploadEnabled(boolean enabled);
 
     /**
+     * Returns whether opening a pattern-encoding terminal should show the upload panel by default.
+     */
+    boolean previewPanelPinned();
+
+    /**
+     * Persists the upload-panel default-open preference immediately.
+     */
+    void setPreviewPanelPinned(boolean pinned);
+
+    /**
      * Returns the local source-writing preference, defaulting to enabled when absent.
      */
     boolean patternSourceEnabled();

@@ -205,8 +205,8 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         if (this.kind == MalumMachineKind.CRUCIBLE && operation.progress().getLong("cycles") == 1) {
             ItemStack remaining = layout.main().getStackInSlot(0);
             if (!remaining.isEmpty()) {
-                layout.main().extractItem(0, remaining.getCount(), false);
-                operation.returned(AEItemKey.of(remaining), remaining.getCount());
+                ItemStack recovered = layout.main().extractItem(0, remaining.getCount(), false);
+                if (!recovered.isEmpty()) operation.returned(AEItemKey.of(recovered), recovered.getCount());
             }
         }
         if (layout.tile() instanceof SpiritAltarBlockEntity altar) resetAltarState(altar);

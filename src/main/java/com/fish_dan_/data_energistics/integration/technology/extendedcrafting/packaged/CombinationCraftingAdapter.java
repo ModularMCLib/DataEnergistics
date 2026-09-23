@@ -54,6 +54,11 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "crafting_core"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return layout(level, position) != null;
     }

@@ -51,6 +51,15 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "basic_auto_table"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "advanced_auto_table"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "elite_auto_table"),
+                ResourceLocation.fromNamespaceAndPath("extendedcrafting", "ultimate_auto_table"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return machine(level, position) != null;
     }

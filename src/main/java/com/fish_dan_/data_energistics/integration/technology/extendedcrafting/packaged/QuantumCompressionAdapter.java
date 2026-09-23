@@ -52,6 +52,11 @@ public final class QuantumCompressionAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", "compressor"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return machine(level, position) != null;
     }

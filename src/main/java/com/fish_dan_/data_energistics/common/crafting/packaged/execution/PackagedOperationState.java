@@ -166,6 +166,11 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         return this.machineReleased;
     }
 
+    /** True only while no native input has been delivered to the physical machine. */
+    public boolean canAbortBeforeDelivery() {
+        return !this.complete && !this.progress.getBoolean("delivery_started");
+    }
+
     /** Server-thread recovery of detached custody; outputs stay owned here after world claims end. */
     public boolean recoverDetached(ServerLevel level, PackagedMachineAdapter adapter) {
         if (this.machineReleased) return false;
@@ -241,6 +246,7 @@ public final class PackagedOperationState implements PackagedMachineOperation {
         if (amount <= 0) throw new IllegalArgumentException("Delivered amount must be positive");
         var remaining = available(key).subtract(BigInteger.valueOf(amount));
         if (remaining.signum() < 0) throw new IllegalStateException("Packaged input overdraft");
+        this.progress.putBoolean("delivery_started", true);
         if (remaining.signum() == 0) this.inputs.remove(key);
         else this.inputs.put(key, remaining);
         changed();

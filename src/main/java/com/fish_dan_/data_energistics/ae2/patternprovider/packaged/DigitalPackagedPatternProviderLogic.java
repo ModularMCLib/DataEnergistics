@@ -151,6 +151,12 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
     }
 
     @Override
+    public boolean detachReusableSession(UUID id) {
+        var adapter = reusableAdapter();
+        return adapter != null && adapter.detachReusableSession(id);
+    }
+
+    @Override
     public boolean requestReusableYield(ReusableCraftingRequest request) {
         var adapter = reusableAdapter();
         return adapter != null && adapter.requestReusableYield(request);

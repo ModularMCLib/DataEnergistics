@@ -156,6 +156,14 @@ public final class PersistentReusableCraftingEndpoint {
         }
 
         /**
+         * Attempts to cancel a pending operation only when the host can prove that native input delivery has
+         * not started. Empty keeps the existing escrow pending because physical effects remain uncertain.
+         */
+        default Optional<NativeResult> cancel(Binding binding, Operation operation) {
+            return Optional.empty();
+        }
+
+        /**
          * Read-only recovery evidence on the server thread. Return a completed actual result only when
          * persisted physical work matches this session, operation and append sequence. Never start or
          * advance work, release ownership, or publish outputs. Empty means evidence is unavailable and
@@ -514,6 +522,19 @@ public final class PersistentReusableCraftingEndpoint {
         }
         reconcileRecorded(entry, host);
         State before = visibleState(entry);
+        if (entry.recordedResult != null && entry.recordedResult.result().pending()) {
+            Operation operation = entry.session.activeOperation();
+            if (operation == null) throw new IllegalStateException("Pending native result has no active operation");
+            host.cancel(entry.binding, operation).ifPresent(result -> {
+                if (result.pending()) throw new IllegalArgumentException("Cancellation cannot return a pending native result");
+                if (result.executed()) complete(entry, operation, result);
+                else entry.session.abortOperation(operation.id());
+                entry.recordedResult = null;
+                entry.asynchronousDiagnostic = "";
+                publishOutputs(entry, host);
+                changed(entry, host);
+            });
+        }
         entry.session.close();
         if (before != visibleState(entry)) {
             changed(entry, host);

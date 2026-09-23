@@ -69,11 +69,6 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public boolean supportsReusableInputs() {
-        return this.kind == MalumMachineKind.CRUCIBLE;
-    }
-
-    @Override
     public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         var result = new ObjectArrayList<BlockPos>();
         result.add(position);
@@ -87,7 +82,7 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
         Layout layout = layout(level, position);
-        if (layout == null || !layout.ready(this.kind)) return null;
+        if (layout == null || (!layout.ready(this.kind) && !continuingCruciblePreparation(layout))) return null;
         Recipe<?> recipe = recipe(level, recipeId);
         if (recipe == null) return null;
         var plan = MalumRecipePlan.prepare(level, recipe, layout.main().getStackInSlot(0), pattern, inputs);
@@ -210,8 +205,8 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
         if (this.kind == MalumMachineKind.CRUCIBLE && operation.progress().getLong("cycles") == 1) {
             ItemStack remaining = layout.main().getStackInSlot(0);
             if (!remaining.isEmpty()) {
-                layout.main().extractItem(0, remaining.getCount(), false);
-                operation.returned(AEItemKey.of(remaining), remaining.getCount());
+                ItemStack recovered = layout.main().extractItem(0, remaining.getCount(), false);
+                if (!recovered.isEmpty()) operation.returned(AEItemKey.of(recovered), recovered.getCount());
             }
         }
         if (layout.tile() instanceof SpiritAltarBlockEntity altar) resetAltarState(altar);
@@ -242,9 +237,12 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     private boolean continuingCrucible(Layout layout, CompoundTag progress) {
-        if (this.kind != MalumMachineKind.CRUCIBLE || !progress.getBoolean("installed") || !(layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible))
-            return false;
-        return !layout.main().isEmpty() && layout.spirits().isEmpty() && !crucible.isCrafting;
+        return this.kind == MalumMachineKind.CRUCIBLE && progress.getBoolean("installed") && continuingCruciblePreparation(layout);
+    }
+
+    private boolean continuingCruciblePreparation(Layout layout) {
+        if (this.kind != MalumMachineKind.CRUCIBLE || !(layout.tile() instanceof SpiritCrucibleCoreBlockEntity crucible)) return false;
+        return !Layout.empty(layout.main()) && Layout.empty(layout.spirits()) && crucible.recipe == null && !crucible.isCrafting;
     }
 
     private static void insert(PackagedMachineOperation operation, LodestoneBlockEntityInventory inventory, int slot, ItemStack stack) {

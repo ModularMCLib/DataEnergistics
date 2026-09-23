@@ -62,6 +62,15 @@ public interface ReusableCraftingProviderAdapter extends CountedCraftingProvider
     void closeReusableSession(UUID sessionId);
 
     /**
+     * Transfers a cancelled session to provider-owned recovery. A provider returning {@code true} must continue
+     * tracking and settling the session without a CPU callback; returning {@code false} keeps the normal CPU settlement
+     * path in place.
+     */
+    default boolean detachReusableSession(UUID sessionId) {
+        return false;
+    }
+
+    /**
      * Signals one explicit, runnable contender for an already occupied concrete native target. Implementations
      * validate the current recipe/mode/rule binding and reject the owner itself or unrelated targets. A true result
      * latches the owner's first request time; repeated signals cannot extend its twenty-tick safe-point deadline.

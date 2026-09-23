@@ -74,6 +74,12 @@ public final class BotaniaMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        if (this.kind != BotaniaMachineKind.TERRA) return ObjectSet.of();
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("botania", "terrestrial_agglomeration_plate"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return level.isLoaded(position) && this.kind.accepts(level.getBlockEntity(position));
     }

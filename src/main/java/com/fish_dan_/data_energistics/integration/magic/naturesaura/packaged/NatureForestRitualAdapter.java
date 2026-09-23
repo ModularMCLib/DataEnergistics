@@ -67,6 +67,11 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("naturesaura", "wood_stand"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos anchor) {
         if (!level.isLoaded(anchor) || level.getBlockState(anchor).isAir()) return false;
         for (BlockPos stand : positions(anchor, 'W')) {

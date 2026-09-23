@@ -65,6 +65,11 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return level.isLoaded(position) && level.getBlockEntity(position) instanceof HephaestusForgeBlockEntity && level.getBlockState(position).getBlock() instanceof HephaestusForgeBlock;
     }

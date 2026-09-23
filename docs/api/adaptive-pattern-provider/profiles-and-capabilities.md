@@ -8,9 +8,33 @@
 | `mainMenuIcon` | 非空 `ItemStack`；构造和读取时都会复制 |
 | `terminalIcon` | 非空 `AEItemKey` |
 | `displayName` | 非空 `Component`；构造和读取时都会复制 |
+| `recipeCategoryIds` | 供应器理解的配方类别 ID；构造时去重、排序并冻结 |
+| `workstationItemIds` | 供应器理解的工作方块物品 ID；构造时去重、排序并冻结 |
 | `capabilities` | 非空 fastutil `ObjectSet<ResourceLocation>`；构造时复制并冻结 |
 
 不要在 definition 外继续修改用于构造 profile 的 icon、component 或 capability set，也不要依赖对象 identity。消费行为应通过 profile 的值和 `supports(capability)` 判断。
+
+`recipeCategoryIds` 和 `workstationItemIds` 用于配方编码界面的供应器自动搜索。配方查看器提供当前配方的类别和工作方块，供应器 profile 声明自己能够处理的类别和工作方块；两侧匹配后，供应器才会被标记为当前上传目标。
+
+第三方自适应供应器可以直接在 profile 中声明这些集合：
+
+```java
+var recipeCategoryIds = ObjectArrayList.of(
+        ResourceLocation.fromNamespaceAndPath("example_mod", "ritual"));
+var workstationItemIds = ObjectArrayList.of(
+        ResourceLocation.fromNamespaceAndPath("example_mod", "ritual_table"));
+
+return new AdaptivePatternProviderProfile(
+        9,
+        icon,
+        terminalIcon,
+        icon.getHoverName(),
+        recipeCategoryIds,
+        workstationItemIds,
+        capabilities);
+```
+
+`PackagedMachineAdapter` 另外提供默认的 `workstationItemIds()`。封包机器的配方类别继续来自 `recipeTypes()`，工作方块物品 ID 应在对应模组的 integration adapter 中声明。通用供应器逻辑只聚合这些声明，不维护模组 ID 映射表。
 
 ## 内置 capability IDs
 

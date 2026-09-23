@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import appeng.api.stacks.AEItemKey;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 AdaptivePatternProviderRegistration registration = new AdaptivePatternProviderRegistration(
@@ -29,6 +30,10 @@ AdaptivePatternProviderRegistration registration = new AdaptivePatternProviderRe
                     icon,
                     terminalIcon,
                     icon.getHoverName(),
+                    ObjectArrayList.of(
+                            ResourceLocation.fromNamespaceAndPath("example_mod", "ritual")),
+                    ObjectArrayList.of(
+                            ResourceLocation.fromNamespaceAndPath("example_mod", "ritual_table")),
                     new ObjectOpenHashSet<>());
         });
 

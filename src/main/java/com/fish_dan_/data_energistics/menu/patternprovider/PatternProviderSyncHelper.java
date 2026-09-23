@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderDisplayHelper;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationCompatibility;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationVariant;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderWorkstationSource;
@@ -692,9 +693,12 @@ public final class PatternProviderSyncHelper {
                 matchingWorkstationIds = resolveMatchingWorkstationIds(metadata, rankingContext);
             } else {
                 aggregationKey = PatternProviderAggregationKey.NetworkGroup.from(container.getTerminalGroup());
-                exactContextMatch = false;
-                supportedRecipeTypeIds = List.of();
-                matchingWorkstationIds = List.of();
+                var profile = container instanceof AdaptivePatternProviderHost adaptiveHost ?
+                        AdaptivePatternProviderResolver.resolveProviderProfile(adaptiveHost.getProviderStack()) : null;
+                exactContextMatch = profile != null && rankingContext != null &&
+                        profile.recipeCategoryIds().contains(rankingContext.recipeTypeId());
+                supportedRecipeTypeIds = profile == null ? ObjectList.of() : profile.recipeCategoryIds();
+                matchingWorkstationIds = exactContextMatch ? profile.workstationItemIds() : ObjectList.of();
             }
             PatternProviderUploadWorkstations.Inspection workstationInspection = PatternProviderUploadWorkstations.inspect(
                     patternContext.player(),

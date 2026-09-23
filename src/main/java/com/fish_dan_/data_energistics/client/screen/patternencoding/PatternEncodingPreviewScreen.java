@@ -191,13 +191,6 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         updatePreviewDragButton();
         updatePreviewScrollbar();
         syncPreferenceSnapshotIfProvidersChanged();
-        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
-            openPreviewPanel();
-            updateProviderSearchBox();
-            updateProviderRenameBox();
-            updatePreviewDragButton();
-            updatePreviewScrollbar();
-        }
     }
 
     @Override
@@ -210,6 +203,9 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
             if (this.previewVisible) {
                 closePreviewPanels();
             }
+        }
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() && !this.previewVisible) {
+            openPreviewPanel();
         }
         updateProviderSearchBox();
         updateProviderRenameBox();

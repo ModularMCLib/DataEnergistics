@@ -43,6 +43,11 @@ public final class RunicWorkbenchAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("malum", "runic_workbench"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return level.isLoaded(position) && level.getBlockEntity(position) instanceof RunicWorkbenchBlockEntity;
     }

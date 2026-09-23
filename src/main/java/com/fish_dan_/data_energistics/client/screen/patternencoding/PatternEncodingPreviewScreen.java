@@ -173,9 +173,6 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         invalidatePreviewLayout();
         super.init();
         PatternEncodingPreferencesClient.initializeMenu(this.menu);
-        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
-            openPreviewPanel();
-        }
         this.encodePatternWidget = resolveEncodePatternWidget();
         if (this.originalEncodePatternMessage == null && this.encodePatternWidget != null) {
             this.originalEncodePatternMessage = this.encodePatternWidget.getMessage();
@@ -194,6 +191,13 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         updatePreviewDragButton();
         updatePreviewScrollbar();
         syncPreferenceSnapshotIfProvidersChanged();
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
+            openPreviewPanel();
+            updateProviderSearchBox();
+            updateProviderRenameBox();
+            updatePreviewDragButton();
+            updatePreviewScrollbar();
+        }
     }
 
     @Override

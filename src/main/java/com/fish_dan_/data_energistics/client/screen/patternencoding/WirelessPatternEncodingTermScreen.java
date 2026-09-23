@@ -160,9 +160,6 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         invalidatePreviewLayout();
         super.init();
         PatternEncodingPreferencesClient.initializeMenu(this.menu);
-        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
-            openPreviewPanel();
-        }
         this.encodePatternWidget = resolveEncodePatternWidget();
         if (this.originalEncodePatternMessage == null && this.encodePatternWidget != null) {
             this.originalEncodePatternMessage = this.encodePatternWidget.getMessage();
@@ -180,6 +177,13 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         updateRecipeTypeToggleButton();
         updatePreviewDragButton();
         updatePreviewScrollbar();
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled()) {
+            openPreviewPanel();
+            updateProviderSearchBox();
+            updateProviderRenameBox();
+            updatePreviewDragButton();
+            updatePreviewScrollbar();
+        }
     }
 
     @Override

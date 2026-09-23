@@ -26,7 +26,6 @@ import appeng.menu.slot.RestrictedInputSlot.PlacableItemType;
 import appeng.util.ConfigInventory;
 import appeng.util.ConfigMenuInventory;
 
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -54,7 +53,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
     public static final String ACTION_CONFIGURE_SLOT = "configure_slot";
     public static final String ACTION_SET_PAGE = "set_page";
-    public static final String ACTION_SET_ACTIVE_PULL_SIDE = "set_active_pull_side";
     public static final int CONFIG_SLOT_COUNT = DataSanctumInterfaceConstants.CONFIG_SLOTS_PER_PAGE;
     public static final int STOCK_SLOT_COUNT = DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     public static final int RETURN_SLOT_COUNT = DataSanctumInterfaceConstants.RETURN_SLOTS_PER_PAGE;
@@ -109,8 +107,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     public int pageIndex;
     @GuiSync(861)
     public int totalPages = DataSanctumInterfaceConstants.BASE_PAGE_COUNT;
-    @GuiSync(862)
-    public int activePullSidesMask;
     @GuiSync(863)
     public int unlimitedSlotsMask;
     @GuiSync(864)
@@ -125,7 +121,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         super(DEMenus.DATA_SANCTUM_LARGE_INTERFACE.get(), id, playerInventory, host);
         registerClientAction(ACTION_CONFIGURE_SLOT, SlotConfiguration.class, this::applySlotConfiguration);
         registerClientAction(ACTION_SET_PAGE, Integer.class, this::setPage);
-        registerClientAction(ACTION_SET_ACTIVE_PULL_SIDE, String.class, this::setActivePullSide);
     }
 
     @Override
@@ -174,7 +169,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         if (isServerSide()) {
             this.totalPages = this.getHost().getUnlockedPageCount();
             this.pageIndex = clampPage(this.pageIndex);
-            this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
             this.unlimitedSlotsMask = 0;
             this.prioritySlotsMask = 0;
             var config = (DataSanctumInterfaceInventory) getHost().getConfig();
@@ -241,23 +235,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     public void sendSetPage(int page) {
         this.pageIndex = clampPage(page);
         sendClientAction(ACTION_SET_PAGE, this.pageIndex);
-    }
-
-    public List<Direction> getActivePullSides() {
-        List<Direction> sides = new ObjectArrayList<>();
-        for (Direction side : Direction.values()) {
-            if ((this.activePullSidesMask & (1 << side.ordinal())) != 0) {
-                sides.add(side);
-            }
-        }
-        return sides;
-    }
-
-    public void sendSetActivePullSide(Direction side, boolean enabled) {
-        if (side == null) {
-            return;
-        }
-        sendClientAction(ACTION_SET_ACTIVE_PULL_SIDE, side.getName() + ":" + enabled);
     }
 
     @Override
@@ -420,45 +397,12 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         broadcastChanges();
     }
 
-    private void setActivePullSide(String payload) {
-        if (payload == null || this.getHost() == null) {
-            return;
-        }
-
-        int separator = payload.indexOf(':');
-        if (separator <= 0 || separator >= payload.length() - 1) {
-            return;
-        }
-
-        Direction side = Direction.byName(payload.substring(0, separator));
-        boolean enabled = Boolean.parseBoolean(payload.substring(separator + 1));
-        Direction targetSide = side;
-        if (!this.getHost().hasActivePullSideSelection()) {
-            targetSide = this.getHost().getSingleActivePullSide();
-        }
-        if (targetSide == null) {
-            return;
-        }
-
-        this.getHost().setActivePullSideEnabled(targetSide, enabled);
-        this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
-        broadcastChanges();
-    }
-
     private int clampPage(int page) {
         int pages = Math.max(1, this.totalPages);
         if (isServerSide() && this.getHost() != null) {
             pages = Math.max(1, this.getHost().getUnlockedPageCount());
         }
         return Math.max(0, Math.min(page, pages - 1));
-    }
-
-    private static int encodeSides(Iterable<Direction> sides) {
-        int mask = 0;
-        for (Direction side : sides) {
-            mask |= 1 << side.ordinal();
-        }
-        return mask;
     }
 
     private static final class PagedMenuInventory extends ConfigMenuInventory {

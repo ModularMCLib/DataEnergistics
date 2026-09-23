@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.screen.sanctum.InterfaceSlotSettingsScreen;
-import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
 
 import appeng.api.config.FuzzyMode;
@@ -23,7 +22,6 @@ import appeng.menu.slot.FakeSlot;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
@@ -39,8 +37,6 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
     private final SettingToggleButton<FuzzyMode> fuzzyMode;
     private final ToggleButton previousPageButton;
     private final ToggleButton nextPageButton;
-    private final OutputSideActionButton activePullToggleButton;
-    private final OutputSideActionButton activePullConfigButton;
     private final List<Button> amountButtons = new ObjectArrayList<>();
     private @Nullable Slot pressedSlot;
     private boolean draggingAcrossSlots;
@@ -69,14 +65,6 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         addToLeftToolbar(this.previousPageButton);
         addToLeftToolbar(this.nextPageButton);
 
-        this.activePullToggleButton = new OutputSideActionButton(button -> toggleActivePull());
-        this.addToLeftToolbar(this.activePullToggleButton);
-
-        this.activePullConfigButton = new OutputSideActionButton(
-                button -> openActivePullConfig(),
-                "gui.data_energistics.set_active_pull_sides.open");
-        this.addToLeftToolbar(this.activePullConfigButton);
-
         for (int i = 0; i < menu.getConfigSlots().size(); i++) {
             var button = new SetAmountButton(btn -> {
                 int index = amountButtons.indexOf(btn);
@@ -91,38 +79,6 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         }
     }
 
-    private void toggleActivePull() {
-        if (this.menu.getHost() == null) {
-            return;
-        }
-
-        List<Direction> activePullSides = this.menu.getActivePullSides();
-        if (activePullSides.isEmpty()) {
-            this.menu.sendSetActivePullSide(this.menu.getHost().getDefaultActivePullSide(), true);
-            return;
-        }
-
-        for (Direction side : activePullSides) {
-            this.menu.sendSetActivePullSide(side, false);
-        }
-    }
-
-    private void openActivePullConfig() {
-        if (this.menu.getHost() == null || !this.menu.getHost().hasActivePullSideSelection()) {
-            return;
-        }
-
-        if (this.menu.getActivePullSides().isEmpty()) {
-            return;
-        }
-
-        this.switchToScreen(new DataSanctumActivePullSideScreen(
-                this,
-                this.menu.getHost(),
-                this.menu.getActivePullSides(),
-                this.menu::sendSetActivePullSide));
-    }
-
     @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
@@ -134,10 +90,6 @@ public class DataSanctumLargeInterfaceScreen extends UpgradeableScreen<DataSanct
         this.nextPageButton.visible = multiplePages;
         this.previousPageButton.active = multiplePages && this.menu.pageIndex > 0;
         this.nextPageButton.active = multiplePages && this.menu.pageIndex + 1 < this.menu.totalPages;
-        boolean activePullEnabled = !this.menu.getActivePullSides().isEmpty();
-        this.activePullToggleButton.setIconName(activePullEnabled ? "POWER_UNIT_YES" : "POWER_UNIT_NO");
-        this.activePullToggleButton.setMessageKey(activePullEnabled ? "gui.data_energistics.set_active_pull_sides.enable" : "gui.data_energistics.set_active_pull_sides.disable");
-        this.activePullConfigButton.visible = activePullEnabled && this.menu.getHost() != null && this.menu.getHost().hasActivePullSideSelection();
         setTextContent("page_info", Component.translatable(
                 "screen.data_energistics.page",
                 this.menu.pageIndex + 1,

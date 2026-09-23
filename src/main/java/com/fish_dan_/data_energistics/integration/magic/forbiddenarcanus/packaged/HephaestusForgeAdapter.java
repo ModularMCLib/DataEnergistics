@@ -61,7 +61,10 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(TYPE, ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_smithing"));
+        return ObjectSet.of(
+                TYPE,
+                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_smithing"),
+                ResourceLocation.fromNamespaceAndPath("forbidden_arcanus", "hephaestus_forge_upgrading"));
     }
 
     @Override

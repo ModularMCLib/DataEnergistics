@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProv
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderMetadata;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.ProviderIdentityDescriptor;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentitySource;
+import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderBinding;
@@ -693,12 +694,22 @@ public final class PatternProviderSyncHelper {
                 matchingWorkstationIds = resolveMatchingWorkstationIds(metadata, rankingContext);
             } else {
                 aggregationKey = PatternProviderAggregationKey.NetworkGroup.from(container.getTerminalGroup());
-                var profile = container instanceof AdaptivePatternProviderHost adaptiveHost ?
-                        AdaptivePatternProviderResolver.resolveProviderProfile(adaptiveHost.getProviderStack()) : null;
-                exactContextMatch = profile != null && rankingContext != null &&
-                        profile.recipeCategoryIds().contains(rankingContext.recipeTypeId());
-                supportedRecipeTypeIds = profile == null ? ObjectList.of() : profile.recipeCategoryIds();
-                matchingWorkstationIds = exactContextMatch ? profile.workstationItemIds() : ObjectList.of();
+                if (container instanceof AdaptivePatternProviderHost adaptiveHost) {
+                    var profile = AdaptivePatternProviderResolver.resolveProviderProfile(adaptiveHost.getProviderStack());
+                    exactContextMatch = profile != null && rankingContext != null &&
+                            profile.recipeCategoryIds().contains(rankingContext.recipeTypeId());
+                    supportedRecipeTypeIds = profile == null ? ObjectList.of() : profile.recipeCategoryIds();
+                    matchingWorkstationIds = exactContextMatch ? profile.workstationItemIds() : ObjectList.of();
+                } else if (container instanceof PatternProviderMatchingMetadataSource metadataSource) {
+                    supportedRecipeTypeIds = metadataSource.recipeCategoryIds();
+                    exactContextMatch = rankingContext != null &&
+                            supportedRecipeTypeIds.contains(rankingContext.recipeTypeId());
+                    matchingWorkstationIds = exactContextMatch ? metadataSource.workstationItemIds() : ObjectList.of();
+                } else {
+                    exactContextMatch = false;
+                    supportedRecipeTypeIds = ObjectList.of();
+                    matchingWorkstationIds = ObjectList.of();
+                }
             }
             PatternProviderUploadWorkstations.Inspection workstationInspection = PatternProviderUploadWorkstations.inspect(
                     patternContext.player(),

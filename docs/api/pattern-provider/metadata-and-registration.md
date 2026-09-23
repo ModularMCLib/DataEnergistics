@@ -79,3 +79,13 @@ registry.patternProviders().registerWorkstationSource(
 同一类声明的 `registrationId` 和 `providerIdentity` 都必须唯一。provider behavior 与 workstation source 可以使用同一个 identity family，但两个 workstation source 不能重复声明该 identity。冲突会使当前插件的整个 staging transaction 失败，而不是覆盖已有声明。
 
 运行时 identity 和 counted factory 说明见[运行时绑定与 counted dispatch](runtime-and-counted-dispatch.md)，回调结果语义见[菜单和提交回调](callbacks.md)。
+
+## 运行时匹配元数据来源
+
+终端可见但没有稳定 `ProviderIdentityDescriptor` 的 provider，可以实现
+`PatternProviderMatchingMetadataSource`，直接提供不可变 fastutil `ObjectList<ResourceLocation>`：
+
+- `recipeCategoryIds()` 使用配方查看器或对应 integration adapter 的注册 ID；
+- `workstationItemIds()` 使用工作方块的物品注册 ID。
+
+这个接口只提供上传搜索所需的声明，不参与 provider 的输入输出、调度或主动抽取逻辑。返回值不能依赖世界访问，不能在读取后继续修改。数字化封包供应器使用该来源读取已经注册的 `PackagedMachineAdapter` 聚合结果；具体模组的类别和工作方块映射仍必须写在对应 integration adapter 中。

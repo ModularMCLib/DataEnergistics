@@ -3551,7 +3551,9 @@ final class TrinityDataCoreCpuLogic {
         return this.job != null;
     }
 
-    /** Recovery custody remains occupied until its provider accepts independent custody or local settlement completes. */
+    /**
+     * Recovery custody remains occupied until its provider accepts independent custody or local settlement completes.
+     */
     boolean isBusy() {
         return this.job != null || this.reusableLedger.hasUnsettled() || this.quarantinedReusableState != null;
     }

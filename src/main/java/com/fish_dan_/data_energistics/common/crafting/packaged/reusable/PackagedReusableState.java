@@ -160,7 +160,9 @@ public final class PackagedReusableState {
         return dirty[0];
     }
 
-    /** Provider-owned cancellation sink: returned tools and undelivered inputs re-enter this provider's output queue. */
+    /**
+     * Provider-owned cancellation sink: returned tools and undelivered inputs re-enter this provider's output queue.
+     */
     private boolean acceptDetachedSettlement(Settlement settlement) {
         for (GenericStack returned : settlement.returnedAssetsFast()) {
             outputs.merge(returned.what(), BigInteger.valueOf(returned.amount()), BigInteger::add);
@@ -445,8 +447,7 @@ public final class PackagedReusableState {
                 @Override
                 public Optional<NativeResult> cancel(Binding binding, Operation operation) {
                     NativeWork active = entry.work;
-                    boolean sameOperation = active != null && binding.identity().sessionId().equals(active.session)
-                            && operation.id() == active.operation;
+                    boolean sameOperation = active != null && binding.identity().sessionId().equals(active.session) && operation.id() == active.operation;
                     if (!sameOperation) {
                         if (active != null && !active.machine.completed()) return Optional.empty();
                         return Optional.of(NativeResult.paused());

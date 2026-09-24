@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Performs active FE balancing for a Data Distribution Tower cluster.
+ * Performs active FE balancing for one Data Distribution Tower's range targets.
  *
  * <p>
  * The engine owns transfer scan caches, simulated extraction caches, and round-robin cursors so the block entity
@@ -69,7 +69,7 @@ public final class TowerEnergyTransferEngine {
     }
 
     /**
-     * Runs one active range transfer tick for the cluster coordinator.
+     * Runs one active range transfer tick.
      *
      * @return true when at least one FE transfer completed
      */

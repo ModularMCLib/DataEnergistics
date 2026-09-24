@@ -11,7 +11,6 @@ import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEne
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointId;
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBinding;
-import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingKind;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingRuntimeSnapshot;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingSource;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerRuntimeKey;
@@ -528,7 +527,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                                                                      TowerDomainEnergyEndpoint endpoint, List<TowerWork> towerWorks) {
         for (TowerWork work : towerWorks) {
             for (BindingWork binding : work.bindings()) {
-                if (!binding.binding().anchor().equals(endpoint.location().position()) || !binding.binding().dimensionId().equals(endpoint.location().level().dimension().location()) || binding.binding().kind() != TowerBindingKind.TARGET) {
+                if (!binding.binding().anchor().equals(endpoint.location().position()) || !binding.binding().dimensionId().equals(endpoint.location().level().dimension().location())) {
                     continue;
                 }
                 EnergyTransferDirection selected = binding.binding().energyDirection();

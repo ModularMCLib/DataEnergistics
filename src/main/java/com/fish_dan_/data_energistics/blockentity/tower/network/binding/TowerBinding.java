@@ -11,12 +11,10 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Set;
 
 /**
- * Persistent tower link that either claims an ordinary transfer target or joins one peer tower to a logical tower
- * network.
+ * Persistent request to claim one ordinary transfer target.
  *
  * @param dimensionId        anchor dimension
  * @param anchor             clicked or automatically discovered anchor
- * @param kind               ordinary transfer target or peer-tower membership edge
  * @param source             manual or automatic provenance
  * @param fifoSequence       first-application sequence within the tower
  * @param enabled            binding-wide state retained for legacy target disabling
@@ -24,7 +22,6 @@ import java.util.Set;
  */
 public record TowerBinding(ResourceLocation dimensionId,
                            BlockPos anchor,
-                           TowerBindingKind kind,
                            TowerBindingSource source,
                            long fifoSequence,
                            boolean enabled,
@@ -32,17 +29,17 @@ public record TowerBinding(ResourceLocation dimensionId,
                            EnergyTransferDirection energyDirection,
                            int targetSide) {
 
-    public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingKind kind,
-                        TowerBindingSource source, long fifoSequence, boolean enabled,
+    public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingSource source,
+                        long fifoSequence, boolean enabled,
                         Set<TowerDeviceKey> disabledDeviceKeys) {
-        this(dimensionId, anchor, kind, source, fifoSequence, enabled, disabledDeviceKeys,
+        this(dimensionId, anchor, source, fifoSequence, enabled, disabledDeviceKeys,
                 EnergyTransferDirection.INPUT, -1);
     }
 
-    public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingKind kind,
-                        TowerBindingSource source, long fifoSequence, boolean enabled,
+    public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingSource source,
+                        long fifoSequence, boolean enabled,
                         Set<TowerDeviceKey> disabledDeviceKeys, EnergyTransferDirection energyDirection) {
-        this(dimensionId, anchor, kind, source, fifoSequence, enabled, disabledDeviceKeys, energyDirection, -1);
+        this(dimensionId, anchor, source, fifoSequence, enabled, disabledDeviceKeys, energyDirection, -1);
     }
 
     /**
@@ -67,7 +64,6 @@ public record TowerBinding(ResourceLocation dimensionId,
         return new TowerBinding(
                 this.dimensionId,
                 this.anchor,
-                this.kind,
                 this.source,
                 this.fifoSequence,
                 nextEnabled,
@@ -92,7 +88,6 @@ public record TowerBinding(ResourceLocation dimensionId,
         return new TowerBinding(
                 this.dimensionId,
                 this.anchor,
-                this.kind,
                 this.source,
                 this.fifoSequence,
                 this.enabled,
@@ -100,31 +95,13 @@ public record TowerBinding(ResourceLocation dimensionId,
                 this.energyDirection, this.targetSide);
     }
 
-    /**
-     * Returns a copy with the binding classified as an ordinary target or peer tower.
-     *
-     * @param nextKind new binding kind
-     * @return updated binding
-     */
-    public TowerBinding withKind(TowerBindingKind nextKind) {
-        return new TowerBinding(
-                this.dimensionId,
-                this.anchor,
-                nextKind,
-                this.source,
-                this.fifoSequence,
-                this.enabled,
-                this.disabledDeviceKeys,
-                this.energyDirection, this.targetSide);
-    }
-
     public TowerBinding withEnergyDirection(EnergyTransferDirection direction) {
-        return new TowerBinding(this.dimensionId, this.anchor, this.kind, this.source, this.fifoSequence,
+        return new TowerBinding(this.dimensionId, this.anchor, this.source, this.fifoSequence,
                 this.enabled, this.disabledDeviceKeys, direction, this.targetSide);
     }
 
     public TowerBinding withTargetSide(int side) {
-        return new TowerBinding(this.dimensionId, this.anchor, this.kind, this.source, this.fifoSequence,
+        return new TowerBinding(this.dimensionId, this.anchor, this.source, this.fifoSequence,
                 this.enabled, this.disabledDeviceKeys, this.energyDirection, side);
     }
 }

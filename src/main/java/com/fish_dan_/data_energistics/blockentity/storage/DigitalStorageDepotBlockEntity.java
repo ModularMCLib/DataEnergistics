@@ -1686,8 +1686,9 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
                 if (tank.getFluid().isEmpty() && !conflictsWithOtherTanks(i, resource)) {
                     FluidStack remaining = resource.copy();
                     remaining.shrink(filled);
-                    filled += tank.fill(remaining, action);
-                    if (filled >= resource.getAmount()) {
+                    int inserted = tank.fill(remaining, action);
+                    filled += inserted;
+                    if (inserted > 0 || filled >= resource.getAmount()) {
                         return filled;
                     }
                 }

@@ -46,7 +46,7 @@ public abstract class AEBaseMenuMixin {
     @Inject(method = "clicked", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$transferContainerContent(int slotId, int button, ClickType clickType, Player player,
                                                           CallbackInfo ci) {
-        if (ContainerSlotInteraction.tryClicked((AEBaseMenu) (Object) this, slotId, clickType, player)) {
+        if (ContainerSlotInteraction.tryClicked((AEBaseMenu) (Object) this, slotId, button, clickType, player)) {
             ci.cancel();
         }
     }

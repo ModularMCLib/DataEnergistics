@@ -276,6 +276,7 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
                 slot,
                 inventory.getDelegate(),
                 inventory.backingSlot(),
+                button,
                 player)) {
             broadcastChanges();
             return;

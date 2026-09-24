@@ -44,7 +44,7 @@ public final class ContainerSlotInteraction {
      *
      * @return {@code true} only when content was transferred and the original click must be cancelled
      */
-    public static boolean tryClicked(AEBaseMenu menu, int slotId, ClickType clickType, Player player) {
+    public static boolean tryClicked(AEBaseMenu menu, int slotId, int button, ClickType clickType, Player player) {
         if (clickType != ClickType.PICKUP || menu.isClientSide() || slotId < 0 || slotId >= menu.slots.size()) {
             return false;
         }
@@ -54,7 +54,7 @@ public final class ContainerSlotInteraction {
             return false;
         }
 
-        return tryClicked(menu, appEngSlot, configInventory.getDelegate(), appEngSlot.getContainerSlot(), player);
+        return tryClicked(menu, appEngSlot, configInventory.getDelegate(), appEngSlot.getContainerSlot(), button, player);
     }
 
     /**
@@ -62,7 +62,7 @@ public final class ContainerSlotInteraction {
      * This is used by paged menus whose visible slot always has container index zero.
      */
     public static boolean tryClicked(AEBaseMenu menu, AppEngSlot slot, GenericStackInv inventory, int inventorySlot,
-                                     Player player) {
+                                     int button, Player player) {
         if (menu.isClientSide() || menu.isPlayerSideSlot(slot) || slot instanceof FakeSlot || !slot.isActive() || inventory.getMode() != GenericStackInv.Mode.STORAGE) {
             return false;
         }
@@ -72,19 +72,19 @@ public final class ContainerSlotInteraction {
             return false;
         }
 
-        ContainerItemContext context = ContainerItemStrategies.findCarriedContext(null, player, menu);
-        if (context == null) {
-            return false;
-        }
-
-        GenericStack contained = context.getExtractableContent();
         long transferred;
-        if (contained != null && contained.what() != null && contained.amount() > 0) {
-            transferred = transferIntoSlot(target, context, contained.what(), contained.amount(), player, false);
-        } else {
+        if (button == 0) {
             GenericStack current = target.stack();
             ContainerItemContext fillingContext = current == null || !isTransferKey(current.what()) ? null : ContainerItemStrategies.findCarriedContextForKey(current.what(), player, menu);
             transferred = fillingContext == null ? 0 : transferIntoContainer(target, fillingContext, player, false);
+        } else {
+            ContainerItemContext context = ContainerItemStrategies.findCarriedContext(null, player, menu);
+            if (context == null) {
+                return false;
+            }
+
+            GenericStack contained = context.getExtractableContent();
+            transferred = contained == null || contained.what() == null || contained.amount() <= 0 ? 0 : transferIntoSlot(target, context, contained.what(), contained.amount(), player, false);
         }
 
         if (transferred <= 0) {

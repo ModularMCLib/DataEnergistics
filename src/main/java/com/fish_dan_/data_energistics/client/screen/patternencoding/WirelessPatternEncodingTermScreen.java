@@ -479,6 +479,7 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         if (!this.previewVisible && this.previewOpenPending) {
             this.previewOpenPending = false;
             invalidatePreviewLayout();
+            getPreviewPanelBounds();
             openPreviewPanel();
             updateProviderSearchBox();
             updateProviderRenameBox();

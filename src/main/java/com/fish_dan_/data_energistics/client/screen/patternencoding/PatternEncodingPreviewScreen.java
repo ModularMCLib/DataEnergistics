@@ -481,6 +481,7 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         if (!this.previewVisible && this.previewOpenPending) {
             this.previewOpenPending = false;
             invalidatePreviewLayout();
+            getPreviewPanelBounds();
             openPreviewPanel();
             updateProviderSearchBox();
             updateProviderRenameBox();

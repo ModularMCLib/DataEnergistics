@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBin
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -27,6 +28,13 @@ record TowerConnectorEndpoint(DataDistributionTowerBlockEntity tower, RemoteLink
                     binding.energyDirection() == EnergyTransferDirection.INPUT ? ConnectorMode.INPUT : ConnectorMode.PULL));
         }
         return links;
+    }
+
+    @Override
+    public boolean isLinkInDimension(ResourceLocation dimensionId, ConnectorLink link) {
+        return this.tower.allConnectorBindings().stream()
+                .filter(binding -> binding.anchor().equals(link.position()))
+                .anyMatch(binding -> binding.dimensionId().equals(dimensionId));
     }
 
     @Override

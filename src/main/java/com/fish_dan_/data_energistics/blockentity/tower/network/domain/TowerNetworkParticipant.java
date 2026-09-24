@@ -5,9 +5,12 @@ import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerRun
 import com.fish_dan_.data_energistics.blockentity.tower.network.energy.TowerEnergyLocation;
 
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridNode;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
 
 import net.minecraft.server.level.ServerLevel;
+
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,6 +39,31 @@ public interface TowerNetworkParticipant {
 
     /** @return persisted manual and automatic bindings */
     List<TowerBinding> towerBindings();
+
+    /**
+     * Returns the loaded logical tower cluster that should be reconciled by one deterministic primary grid.
+     *
+     * <p>
+     * A peer link is a logical membership edge. It must not be represented as a virtual AE grid target because
+     * reciprocal peer links would create a bridge cycle. The cluster snapshot lets the selected primary domain carry
+     * the ordinary bindings and energy locations of every member while the physical grids remain independent.
+     * </p>
+     *
+     * @return immutable loaded cluster participants, including this participant
+     */
+    default List<? extends TowerNetworkParticipant> towerNetworkCluster() {
+        return List.of(this);
+    }
+
+    /**
+     * Returns the physical tower node that must stay active when this peer grid is attached to a cluster primary.
+     *
+     * @return tower node, or {@code null} while the grid is not ready
+     */
+    @Nullable
+    default IGridNode towerNetworkNode() {
+        return null;
+    }
 
     /** @return loaded FE candidate locations discovered by this tower */
     List<TowerEnergyLocation> towerEnergyLocations();

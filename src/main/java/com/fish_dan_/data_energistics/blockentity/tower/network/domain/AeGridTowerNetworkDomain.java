@@ -104,8 +104,10 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     private final IGrid grid;
     private final Reference2LongMap<IGridNode> registrationOrders = new Reference2LongOpenHashMap<>();
     private final Map<TowerRuntimeKey, TowerNetworkParticipant> towers = new Object2ObjectLinkedOpenHashMap<>();
+    private final Map<TowerRuntimeKey, TowerNetworkParticipant> managedParticipants = new Object2ObjectLinkedOpenHashMap<>();
     private final Map<TowerRuntimeKey, TowerNetworkTowerSnapshot> towerSnapshots = new Object2ObjectOpenHashMap<>();
     private final Set<IGrid> attachedTargets = new ReferenceOpenHashSet<>();
+    private final Set<IGrid> attachedPeerGrids = new ReferenceOpenHashSet<>();
     private final Map<IGrid, TowerRuntimeKey> attachedOwners = new Reference2ReferenceOpenHashMap<>();
     private final Reference2LongMap<IGrid> lastBridgeFailureLogTicks = new Reference2LongOpenHashMap<>();
     private final CapabilityExposedTowerAeTargetResolver targetResolver = new CapabilityExposedTowerAeTargetResolver();
@@ -199,7 +201,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             return;
         }
         this.towers.remove(tower.towerKey());
+        this.managedParticipants.remove(tower.towerKey());
         this.towerSnapshots.remove(tower.towerKey());
+        if (this.towers.isEmpty()) {
+            dataEnergistics$clearPeerGridAttachments();
+        }
         MinecraftServer server = tower.towerLevel().getServer();
         TowerGridOwnershipRegistry.markTowerUnavailable(server, tower.towerKey());
         for (IGrid targetGrid : List.copyOf(this.attachedTargets)) {
@@ -213,6 +219,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     @Override
     public Optional<TowerNetworkTowerSnapshot> towerSnapshot(TowerRuntimeKey towerKey) {
         return Optional.ofNullable(this.towerSnapshots.get(towerKey));
+    }
+
+    @Override
+    public boolean managesTower(TowerRuntimeKey towerKey) {
+        return this.managedParticipants.containsKey(towerKey);
     }
 
     @Override
@@ -238,7 +249,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     }
 
     private boolean canAccessSharedEnergy(TowerRuntimeKey towerKey) {
-        TowerNetworkParticipant tower = this.towers.get(towerKey);
+        TowerNetworkParticipant tower = this.managedParticipants.get(towerKey);
         return tower != null && tower.isTowerNetworkActive() && tower.towerAllowsFe();
     }
 
@@ -263,13 +274,19 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
 
     @Override
     public void onServerEndTick() {
-        if (this.reconciling || this.grid.isEmpty() || ((VirtualGridBridge) this.grid).virtualPrimaryGrid() != null) {
+        if (this.reconciling || this.grid.isEmpty()) {
+            return;
+        }
+        if (((VirtualGridBridge) this.grid).virtualPrimaryGrid() != null) {
+            dataEnergistics$clearPeerGridAttachments();
+            this.managedParticipants.clear();
             return;
         }
         long gameTime = this.grid.getPivot().getLevel().getGameTime();
         MinecraftServer server = this.grid.getPivot().getLevel().getServer();
-        VirtualChannelCapacity capacity = dataEnergistics$currentCapacity();
-        long physicalUsage = this.grid.getPathingService().getUsedChannels();
+        List<TowerNetworkParticipant> participants = dataEnergistics$resolveDomainParticipants();
+        VirtualChannelCapacity capacity = dataEnergistics$currentCapacity(participants);
+        long physicalUsage = dataEnergistics$physicalChannelUsage(participants);
         long ownershipRevision = TowerGridOwnershipRegistry.revision(server);
         boolean safetyRescanDue = this.lastSafetyRescanTick == Long.MIN_VALUE || gameTime - this.lastSafetyRescanTick >= SAFETY_RESCAN_INTERVAL_TICKS;
         boolean reconcileDue = this.reconciledRevision != this.revision || this.lastPhysicalUsage != physicalUsage || this.lastOwnershipRevision != ownershipRevision || !this.lastCapacity.equals(capacity) || safetyRescanDue;
@@ -277,7 +294,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             long reconciliationRevision = this.revision;
             this.reconciling = true;
             try {
-                dataEnergistics$reconcile(capacity, physicalUsage, gameTime);
+                dataEnergistics$reconcile(capacity, physicalUsage, gameTime, participants);
                 this.lastCapacity = capacity;
                 this.lastPhysicalUsage = physicalUsage;
                 this.lastOwnershipRevision = TowerGridOwnershipRegistry.revision(server);
@@ -294,9 +311,27 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     }
 
     private void dataEnergistics$reconcile(
-                                           VirtualChannelCapacity capacity, long physicalUsage, long gameTime) {
+                                           VirtualChannelCapacity capacity,
+                                           long physicalUsage,
+                                           long gameTime,
+                                           List<TowerNetworkParticipant> participants) {
         MinecraftServer server = this.grid.getPivot().getLevel().getServer();
-        List<TowerWork> towerWorks = dataEnergistics$resolveTowers();
+        List<TowerWork> towerWorks = dataEnergistics$resolveTowers(participants);
+        this.managedParticipants.clear();
+        for (TowerNetworkParticipant participant : participants) {
+            this.managedParticipants.put(participant.towerKey(), participant);
+        }
+        this.towerSnapshots.keySet().removeIf(towerKey -> !this.managedParticipants.containsKey(towerKey));
+
+        List<PeerGridWork> peerGridWorks = dataEnergistics$resolvePeerGridWorks(participants);
+        List<IGridNode> activePeerNodes = dataEnergistics$selectActivePeerNodes(peerGridWorks, capacity, physicalUsage);
+        int pendingPeerChannelCount = 0;
+        for (IGridNode node : activePeerNodes) {
+            if (!node.isActive()) {
+                pendingPeerChannelCount++;
+            }
+        }
+        dataEnergistics$syncPeerGridAttachments(peerGridWorks, activePeerNodes, gameTime);
         for (TowerWork towerWork : towerWorks) {
             Set<IGrid> candidateTargets = new ReferenceOpenHashSet<>();
             candidateTargets.addAll(towerWork.bindingByTarget().keySet());
@@ -344,7 +379,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
 
         List<DeviceWork> orderedDevices = dataEnergistics$orderedDevices(ownedTargets);
         VirtualChannelLedger<DeviceLeaseKey, IGridNode> ledger = new FifoVirtualChannelLedger<>(capacity);
-        ledger.setPhysicalChannelUsage(physicalUsage);
+        ledger.setPhysicalChannelUsage(dataEnergistics$saturatingAdd(physicalUsage, pendingPeerChannelCount));
         Map<DeviceLeaseKey, DeviceWork> devicesByLease = new Object2ObjectLinkedOpenHashMap<>();
         long manualOrder = 0;
         long automaticOrder = 0;
@@ -617,8 +652,194 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
         return ownerLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
     }
 
-    private List<TowerWork> dataEnergistics$resolveTowers() {
-        ObjectArrayList<TowerNetworkParticipant> orderedTowers = new ObjectArrayList<>(this.towers.values());
+    private List<TowerNetworkParticipant> dataEnergistics$resolveDomainParticipants() {
+        Map<TowerRuntimeKey, TowerNetworkParticipant> participants = new Object2ObjectLinkedOpenHashMap<>();
+        for (TowerNetworkParticipant localTower : this.towers.values()) {
+            List<? extends TowerNetworkParticipant> cluster = localTower.towerNetworkCluster();
+            if (cluster.isEmpty()) {
+                cluster = List.of(localTower);
+            }
+            TowerNetworkParticipant root = null;
+            for (TowerNetworkParticipant candidate : cluster) {
+                IGrid candidateGrid = dataEnergistics$participantGrid(candidate);
+                if (candidateGrid == null || ((VirtualGridBridge) candidateGrid).virtualPrimaryGrid() != null) {
+                    continue;
+                }
+                if (root == null || candidate.towerKey().compareTo(root.towerKey()) < 0) {
+                    root = candidate;
+                }
+            }
+            if (root == null) {
+                continue;
+            }
+            if (dataEnergistics$participantGrid(root) != this.grid) {
+                continue;
+            }
+            for (TowerNetworkParticipant participant : cluster) {
+                if (dataEnergistics$participantGrid(participant) != null) {
+                    participants.putIfAbsent(participant.towerKey(), participant);
+                }
+            }
+        }
+        ObjectArrayList<TowerNetworkParticipant> ordered = new ObjectArrayList<>(participants.values());
+        ordered.sort(Comparator.comparing(TowerNetworkParticipant::towerKey));
+        return List.copyOf(ordered);
+    }
+
+    @Nullable
+    private static IGrid dataEnergistics$participantGrid(TowerNetworkParticipant participant) {
+        IGridNode node = participant.towerNetworkNode();
+        if (node != null) {
+            return node.getGrid();
+        }
+        return null;
+    }
+
+    private VirtualChannelCapacity dataEnergistics$currentCapacity(List<TowerNetworkParticipant> participants) {
+        Set<IGrid> grids = new ReferenceOpenHashSet<>();
+        long totalCapacity = 0;
+        for (TowerNetworkParticipant participant : participants) {
+            IGrid participantGrid = participant.towerGrid();
+            if (!grids.add(participantGrid)) {
+                continue;
+            }
+            if (participantGrid.getPathingService().getChannelMode() == ChannelMode.INFINITE) {
+                return VirtualChannelCapacity.unlimited();
+            }
+            totalCapacity = dataEnergistics$saturatingAdd(totalCapacity, this.capacityCalculator.calculate(participantGrid));
+        }
+        return VirtualChannelCapacity.limited(totalCapacity);
+    }
+
+    private long dataEnergistics$physicalChannelUsage(List<TowerNetworkParticipant> participants) {
+        Set<IGrid> grids = new ReferenceOpenHashSet<>();
+        long totalUsage = 0;
+        for (TowerNetworkParticipant participant : participants) {
+            IGrid participantGrid = participant.towerGrid();
+            if (!grids.add(participantGrid)) {
+                continue;
+            }
+            totalUsage = dataEnergistics$saturatingAdd(totalUsage, participantGrid.getPathingService().getUsedChannels());
+        }
+        return totalUsage;
+    }
+
+    private List<PeerGridWork> dataEnergistics$resolvePeerGridWorks(
+                                                                    List<TowerNetworkParticipant> participants) {
+        Map<IGrid, ObjectArrayList<IGridNode>> towerNodesByGrid = new Reference2ReferenceOpenHashMap<>();
+        Map<IGrid, TowerRuntimeKey> firstTowerKeys = new Reference2ReferenceOpenHashMap<>();
+        for (TowerNetworkParticipant participant : participants) {
+            IGrid participantGrid = dataEnergistics$participantGrid(participant);
+            if (participantGrid == null) {
+                continue;
+            }
+            if (participantGrid == this.grid) {
+                continue;
+            }
+            IGridNode towerNode = participant.towerNetworkNode();
+            if (towerNode == null) {
+                continue;
+            }
+            towerNodesByGrid.computeIfAbsent(participantGrid, ignored -> new ObjectArrayList<>()).add(towerNode);
+            firstTowerKeys.merge(
+                    participantGrid,
+                    participant.towerKey(),
+                    (left, right) -> left.compareTo(right) <= 0 ? left : right);
+        }
+
+        ObjectArrayList<PeerGridWork> works = new ObjectArrayList<>(towerNodesByGrid.size());
+        for (Map.Entry<IGrid, ObjectArrayList<IGridNode>> entry : towerNodesByGrid.entrySet()) {
+            ObjectArrayList<IGridNode> allNodes = new ObjectArrayList<>();
+            for (IGridNode node : entry.getKey().getNodes()) {
+                allNodes.add(node);
+            }
+            works.add(new PeerGridWork(
+                    entry.getKey(),
+                    List.copyOf(allNodes),
+                    List.copyOf(entry.getValue()),
+                    firstTowerKeys.get(entry.getKey())));
+        }
+        works.sort(Comparator.comparing(PeerGridWork::firstTowerKey));
+        return List.copyOf(works);
+    }
+
+    private static List<IGridNode> dataEnergistics$selectActivePeerNodes(
+                                                                         List<PeerGridWork> peerGridWorks,
+                                                                         VirtualChannelCapacity capacity,
+                                                                         long physicalUsage) {
+        ObjectArrayList<IGridNode> alreadyActive = new ObjectArrayList<>();
+        ObjectArrayList<IGridNode> pending = new ObjectArrayList<>();
+        for (PeerGridWork work : peerGridWorks) {
+            for (IGridNode node : work.towerNodes()) {
+                if (node.isActive()) {
+                    alreadyActive.add(node);
+                } else {
+                    pending.add(node);
+                }
+            }
+        }
+        long available = capacity.isUnlimited() ? pending.size() : Math.max(0, capacity.finiteLimit().orElseThrow() - physicalUsage);
+        int pendingCount = Math.toIntExact(Math.min(pending.size(), available));
+        alreadyActive.addAll(pending.subList(0, pendingCount));
+        return List.copyOf(alreadyActive);
+    }
+
+    private void dataEnergistics$syncPeerGridAttachments(
+                                                         List<PeerGridWork> peerGridWorks,
+                                                         List<IGridNode> activePeerNodes,
+                                                         long gameTime) {
+        Set<IGrid> currentPeerGrids = new ReferenceOpenHashSet<>();
+        for (PeerGridWork work : peerGridWorks) {
+            currentPeerGrids.add(work.grid());
+        }
+        for (IGrid previousPeerGrid : List.copyOf(this.attachedPeerGrids)) {
+            if (!currentPeerGrids.contains(previousPeerGrid)) {
+                if (((VirtualGridBridge) previousPeerGrid).virtualPrimaryGrid() == this.grid) {
+                    try {
+                        ((VirtualGridBridge) previousPeerGrid).clearVirtualMembers();
+                    } catch (VirtualGridBridgeException exception) {
+                        dataEnergistics$logBridgeFailure(previousPeerGrid, gameTime, "detach peer", exception);
+                    }
+                }
+                this.attachedPeerGrids.remove(previousPeerGrid);
+            }
+        }
+
+        Set<IGridNode> activeNodes = new ReferenceOpenHashSet<>(activePeerNodes);
+        for (PeerGridWork work : peerGridWorks) {
+            ObjectArrayList<IGridNode> workActiveNodes = new ObjectArrayList<>();
+            for (IGridNode node : work.towerNodes()) {
+                if (activeNodes.contains(node)) {
+                    workActiveNodes.add(node);
+                }
+            }
+            try {
+                ((VirtualGridBridge) work.grid()).replaceVirtualMembers(this.grid, work.allNodes(), workActiveNodes);
+                this.attachedPeerGrids.add(work.grid());
+                this.lastBridgeFailureLogTicks.removeLong(work.grid());
+            } catch (VirtualGridBridgeException exception) {
+                dataEnergistics$logBridgeFailure(work.grid(), gameTime, "attach peer", exception);
+            }
+        }
+    }
+
+    private void dataEnergistics$clearPeerGridAttachments() {
+        for (IGrid peerGrid : List.copyOf(this.attachedPeerGrids)) {
+            if (((VirtualGridBridge) peerGrid).virtualPrimaryGrid() != this.grid) {
+                this.attachedPeerGrids.remove(peerGrid);
+                continue;
+            }
+            try {
+                ((VirtualGridBridge) peerGrid).clearVirtualMembers();
+            } catch (VirtualGridBridgeException exception) {
+                dataEnergistics$logBridgeFailure(peerGrid, this.grid.getPivot().getLevel().getGameTime(), "detach peer", exception);
+            }
+            this.attachedPeerGrids.remove(peerGrid);
+        }
+    }
+
+    private List<TowerWork> dataEnergistics$resolveTowers(List<TowerNetworkParticipant> participants) {
+        ObjectArrayList<TowerNetworkParticipant> orderedTowers = new ObjectArrayList<>(participants);
         orderedTowers.sort(Comparator.comparing(TowerNetworkParticipant::towerKey));
         ObjectArrayList<TowerWork> result = new ObjectArrayList<>(orderedTowers.size());
         Map<TargetResolutionKey, TowerTargetResolution> resolutionCache = new Object2ObjectOpenHashMap<>();
@@ -936,13 +1157,6 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                 exception);
     }
 
-    private VirtualChannelCapacity dataEnergistics$currentCapacity() {
-        if (this.grid.getPathingService().getChannelMode() == ChannelMode.INFINITE) {
-            return VirtualChannelCapacity.unlimited();
-        }
-        return VirtualChannelCapacity.limited(this.capacityCalculator.calculate(this.grid));
-    }
-
     private record DeviceLeaseKey(TowerRuntimeKey towerKey,
                                   BlockPos bindingAnchor,
                                   TowerDeviceKey deviceKey,
@@ -1017,6 +1231,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     private record TowerWork(TowerNetworkParticipant participant,
                              List<BindingWork> bindings,
                              Map<IGrid, BindingTargetWork> bindingByTarget) {}
+
+    private record PeerGridWork(IGrid grid,
+                                List<IGridNode> allNodes,
+                                List<IGridNode> towerNodes,
+                                TowerRuntimeKey firstTowerKey) {}
 
     private record BindingTargetWork(BindingWork bindingWork, TowerResolvedGrid resolvedGrid) {}
 

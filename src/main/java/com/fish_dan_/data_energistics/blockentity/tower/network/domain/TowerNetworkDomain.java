@@ -84,6 +84,15 @@ public interface TowerNetworkDomain extends IGridService {
     Optional<TowerNetworkTowerSnapshot> towerSnapshot(TowerRuntimeKey towerKey);
 
     /**
+     * Tests whether this domain currently coordinates the supplied tower, including a linked peer hosted by another
+     * physical grid.
+     *
+     * @param towerKey tower identity
+     * @return whether this domain owns the current reconciliation snapshot for that tower
+     */
+    boolean managesTower(TowerRuntimeKey towerKey);
+
+    /**
      * Returns the shared FE capability state visible through one active tower on this primary Grid.
      *
      * @param towerKey         requesting tower identity

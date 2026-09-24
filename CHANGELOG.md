@@ -1,5 +1,65 @@
 # ChangeLog
 
+## Version [v3.3.0](https://github.com/ModularMCLib/DataEnergistics/compare/v3.2.2-1.21...v3.3.0-1.21)
+### Added
+
+- 提高三位一体规划默认上限以适配大型整合包 by @QiuYe-123 in [#296](https://github.com/ModularMCLib/DataEnergistics/pull/296)
+- 修复合成确认界面 JEI/EMI 收藏缺失材料 by @QiuYe-123 in [#297](https://github.com/ModularMCLib/DataEnergistics/pull/297)
+- 重构陨石集群世界生成 by @QiuYe-123 in [#298](https://github.com/ModularMCLib/DataEnergistics/pull/298)
+- 扩展 AE2 合成数量输入与校验 by @QiuYe-123 in [#299](https://github.com/ModularMCLib/DataEnergistics/pull/299)
+- 实现轨道武器链路与战术火控，移除新增设备配方 by @QiuYe-123 in [#226](https://github.com/ModularMCLib/DataEnergistics/pull/226)
+- 重制数位化三模式武器，加入磁盘供弹、弹药效果与铰接动画 by @QiuYe-123 in [#292](https://github.com/ModularMCLib/DataEnergistics/pull/292)
+- 完善远程连接器与极限承载接口虚拟库存 by @QiuYe-123 in [#305](https://github.com/ModularMCLib/DataEnergistics/pull/305)
+- 添加 ProjectE 可复用物品兼容 by @QiuYe-123 in [#313](https://github.com/ModularMCLib/DataEnergistics/pull/313)
+- 修正远程连接线的传输模式配色 by @QiuYe-123 in [#314](https://github.com/ModularMCLib/DataEnergistics/pull/314)
+- 添加支持长整型转移与并行搬运的数据 IO 端口 by @QiuYe-123 in [#315](https://github.com/ModularMCLib/DataEnergistics/pull/315)
+- 补充 Trinity 驱动与聚能弩界面纹理 by @fish1145 in [#318](https://github.com/ModularMCLib/DataEnergistics/pull/318)
+- 重构数据框架链接纹理资源 by @QiuYe-123 in [#320](https://github.com/ModularMCLib/DataEnergistics/pull/320)
+- 统一存储核心与数据均分塔配方调整 by @fish1145 in [#321](https://github.com/ModularMCLib/DataEnergistics/pull/321)
+- 重排数位化三态武器界面并统一名称配色 by @QiuYe-123 in [#322](https://github.com/ModularMCLib/DataEnergistics/pull/322)
+- 重构均分塔能量注解集成并接入 Industrial Foregoing by @QiuYe-123 in [#326](https://github.com/ModularMCLib/DataEnergistics/pull/326)
+- 接入数位化武器专用音效 by @QiuYe-123 in [#327](https://github.com/ModularMCLib/DataEnergistics/pull/327)
+- 修复三位一体配方组件材料匹配与校验缓存 by @QiuYe-123 in [#330](https://github.com/ModularMCLib/DataEnergistics/pull/330)
+- 扩大 ME 吸尘器吸取范围至 5×5×7 by @QiuYe-123 in [#334](https://github.com/ModularMCLib/DataEnergistics/pull/334)
+- 修复三位一体超大数量诊断并拆分日志配置 by @QiuYe-123 in [#335](https://github.com/ModularMCLib/DataEnergistics/pull/335)
+- 优化三位一体规划捕获与循环模型并统一时间预算 by @QiuYe-123 in [#337](https://github.com/ModularMCLib/DataEnergistics/pull/337)
+- 支持三位一体 CPU BigInteger 派发与精确回传 by @QiuYe-123 in [#343](https://github.com/ModularMCLib/DataEnergistics/pull/343)
+- 修复开放问题并集中注册三位一体恢复命令 by @QiuYe-123 in [#347](https://github.com/ModularMCLib/DataEnergistics/pull/347)
+- 新增数字化封包供应器与真实机器兼容层 by @QiuYe-123 in [#341](https://github.com/ModularMCLib/DataEnergistics/pull/341)
+- 扩展原生机器封包兼容并完善发配与资产恢复 by @QiuYe-123 in [#355](https://github.com/ModularMCLib/DataEnergistics/pull/355)
+
+### Fixed
+
+- 修复 AECS 机器发配容量重复计算 by @QiuYe-123 in [#301](https://github.com/ModularMCLib/DataEnergistics/pull/301)
+- 修复 Trinity CPU 超大物品取消时的崩溃与卡顿 by @QiuYe-123 in [#303](https://github.com/ModularMCLib/DataEnergistics/pull/303)
+- 修复替换计划时的计时类型转换错误 by @QiuYe-123 in [#307](https://github.com/ModularMCLib/DataEnergistics/pull/307)
+- 修复客户端渲染依赖配对与 Xaero 版本限制 by @QiuYe-123 in [#308](https://github.com/ModularMCLib/DataEnergistics/pull/308)
+- 修复 Xaero World Map 与 XaeroLib 兼容性 by @QiuYe-123 in [#309](https://github.com/ModularMCLib/DataEnergistics/pull/309)
+- 暂时停止在开发运行环境加载 ExtendedAE Plus by @QiuYe-123 in [#310](https://github.com/ModularMCLib/DataEnergistics/pull/310)
+- 统一返回库存 AE long 容量与远程能力 by @QiuYe-123 in [#328](https://github.com/ModularMCLib/DataEnergistics/pull/328)
+- 固定三位一体样板管理界面滚动滑块尺寸 by @QiuYe-123 in [#329](https://github.com/ModularMCLib/DataEnergistics/pull/329)
+- 修复三位一体缩点图前驱与后继编号排序 by @QiuYe-123 in [#332](https://github.com/ModularMCLib/DataEnergistics/pull/332)
+- 修复三位一体超大数量诊断并拆分日志配置 by @QiuYe-123 in [#335](https://github.com/ModularMCLib/DataEnergistics/pull/335)
+- 修复三位一体数据核心恢复存档时重入区块加载 by @QiuYe-123 in [#338](https://github.com/ModularMCLib/DataEnergistics/pull/338)
+- 优化三位一体规划捕获与循环模型并统一时间预算 by @QiuYe-123 in [#337](https://github.com/ModularMCLib/DataEnergistics/pull/337)
+- 修复三位一体自动搭建首次冲突判定 by @QiuYe-123 in [#342](https://github.com/ModularMCLib/DataEnergistics/pull/342)
+- 修复均分塔点对点链接清理与客户端同步 by @QiuYe-123 in [#345](https://github.com/ModularMCLib/DataEnergistics/pull/345)
+- 修复开放问题并集中注册三位一体恢复命令 by @QiuYe-123 in [#347](https://github.com/ModularMCLib/DataEnergistics/pull/347)
+- 修复退出世界时区块卸载循环与均分塔扫描 by @QiuYe-123 in [#350](https://github.com/ModularMCLib/DataEnergistics/pull/350)
+
+### Changed
+
+- 整理陨石生成与三位一体迁移实现 by @QiuYe-123 in [#302](https://github.com/ModularMCLib/DataEnergistics/pull/302)
+- 升级依赖并迁移弃用 API by @QiuYe-123 in [#306](https://github.com/ModularMCLib/DataEnergistics/pull/306)
+- 修复处理槽位忽略标记与双向传播 by @QiuYe-123 in [#312](https://github.com/ModularMCLib/DataEnergistics/pull/312)
+- 统一分支相关集合实现为 FastUtil by @QiuYe-123 in [#311](https://github.com/ModularMCLib/DataEnergistics/pull/311)
+- 统一 API FastUtil 过渡与工具包 by @QiuYe-123 in [#317](https://github.com/ModularMCLib/DataEnergistics/pull/317)
+- 重构均分塔能量注解集成并接入 Industrial Foregoing by @QiuYe-123 in [#326](https://github.com/ModularMCLib/DataEnergistics/pull/326)
+- 支持三位一体 BigInteger 合批发配并统一 FastUtil 集合链路 by @QiuYe-123 in [#331](https://github.com/ModularMCLib/DataEnergistics/pull/331)
+- 重构三位一体样板核心并修复迁移死锁 by @QiuYe-123 in [#336](https://github.com/ModularMCLib/DataEnergistics/pull/336)
+- 按模组类别整理集成与 Mixin 目录 by @QiuYe-123 in [#351](https://github.com/ModularMCLib/DataEnergistics/pull/351)
+
+ 
 ## Version [v3.2.2](https://github.com/fish1145/DataEnergistics/compare/v3.2.1-1.21...v3.2.2-1.21)
 ### Added
 

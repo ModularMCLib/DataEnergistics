@@ -32,6 +32,16 @@ public interface PatternEncodingClientPreferences {
     void setUploadEnabled(boolean enabled);
 
     /**
+     * Returns whether opening a pattern-encoding terminal should show the upload panel by default.
+     */
+    boolean previewPanelPinned();
+
+    /**
+     * Persists the upload-panel default-open preference immediately.
+     */
+    void setPreviewPanelPinned(boolean pinned);
+
+    /**
      * Returns the local source-writing preference, defaulting to enabled when absent.
      */
     boolean patternSourceEnabled();
@@ -53,19 +63,29 @@ public interface PatternEncodingClientPreferences {
     void setLastWorkstation(@Nullable ResourceLocation workstation);
 
     /**
-     * Returns the shared preview panel horizontal offset.
+     * Returns the persisted absolute upload-panel position, or empty when automatic placement is active.
      */
-    int previewPanelOffsetX();
+    Optional<PreviewPanelPosition> previewPanelPosition();
 
     /**
-     * Returns the shared preview panel vertical offset.
+     * Returns a legacy relative position waiting for first stable screen layout migration.
      */
-    int previewPanelOffsetY();
+    Optional<PreviewPanelOffset> pendingPreviewPanelOffset();
 
     /**
-     * Persists the shared preview panel offset immediately.
+     * Persists an absolute upload-panel position immediately and clears any pending legacy position.
      */
-    void setPreviewPanelOffset(int offsetX, int offsetY);
+    void setPreviewPanelPosition(int x, int y);
+
+    /**
+     * Persists the absolute position produced by one legacy relative-position migration.
+     */
+    void migratePreviewPanelOffset(int x, int y);
+
+    /**
+     * Clears the absolute upload-panel position and restores automatic placement.
+     */
+    void clearPreviewPanelPosition();
 
     /**
      * Returns the optional screen-local provider-detail panel position shared by encoding terminals.
@@ -98,6 +118,10 @@ public interface PatternEncodingClientPreferences {
      */
     void recordUpload(PatternEncodingRankingContext context, String providerDigest,
                       long absoluteCount, long successEpochMillis);
+
+    record PreviewPanelPosition(int x, int y) {}
+
+    record PreviewPanelOffset(int x, int y) {}
 
     record ProviderDetailPanelPosition(int relativeX, int relativeY) {}
 }

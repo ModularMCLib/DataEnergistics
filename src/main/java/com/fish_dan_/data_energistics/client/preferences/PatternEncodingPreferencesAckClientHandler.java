@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.client.preferences;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
 import com.fish_dan_.data_energistics.network.patternencoding.PatternEncodingPreferencesAckPayload;
 
@@ -22,7 +21,7 @@ public final class PatternEncodingPreferencesAckClientHandler {
      */
     public static void handle(PatternEncodingPreferencesAckPayload payload, Player player) {
         AbstractContainerMenu menu = player.containerMenu;
-        if (menu.containerId != payload.containerId() || !(menu instanceof PatternEncodingPreferenceMenu preferenceMenu) || !(menu instanceof PatternEncodingSourceAware) || !(menu instanceof PatternEncodingPreviewLayoutAware)) {
+        if (menu.containerId != payload.containerId() || !(menu instanceof PatternEncodingPreferenceMenu preferenceMenu) || !(menu instanceof PatternEncodingSourceAware)) {
             Data_Energistics.LOGGER.warn("Ignored pattern preference acknowledgement for stale container {}",
                     payload.containerId());
             return;

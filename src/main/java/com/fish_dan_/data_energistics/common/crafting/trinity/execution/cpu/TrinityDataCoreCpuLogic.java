@@ -144,7 +144,6 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
@@ -455,9 +454,7 @@ final class TrinityDataCoreCpuLogic {
             return;
         }
         if (this.proposalRetryAt > currentTick) {
-            if (!this.proposalCoordinator.hasActionableProposal()) {
-                return;
-            }
+            this.proposalCoordinator.hasActionableProposal();
         } else {
             this.proposalRetryAt = -1L;
         }
@@ -468,11 +465,8 @@ final class TrinityDataCoreCpuLogic {
                 this.reusableLedger.hasUncertainOwnership() || !this.reusableDispatch.custodyCovered() || this.reusableMutationDepth != 0) {
             return false;
         }
-        if (this.job.link.isCanceled() ||
-                (this.proposalRetryAt > currentTick && !this.proposalCoordinator.hasActionableProposal())) {
-            return false;
-        }
-        return true;
+        return !this.job.link.isCanceled() &&
+                (this.proposalRetryAt <= currentTick || this.proposalCoordinator.hasActionableProposal());
     }
 
     private CraftingDispatchStepResult stepResult(WorkerProgressSnapshot before,
@@ -1361,8 +1355,8 @@ final class TrinityDataCoreCpuLogic {
             proposalDecision = TrinityWorkerProposalCoordinator.Empty.INSTANCE;
             synchronousFallback = true;
         }
-        CraftingDispatchProposal selectedProposal = proposalDecision instanceof TrinityWorkerProposalCoordinator.Ready ready ?
-                ready.proposal() : null;
+        CraftingDispatchProposal selectedProposal = proposalDecision instanceof TrinityWorkerProposalCoordinator.Ready(CraftingDispatchProposal proposal) ?
+                proposal : null;
         boolean asynchronousSelection = selectedProposal != null;
 
         ExtractedPatternInputs prototype;
@@ -1450,8 +1444,7 @@ final class TrinityDataCoreCpuLogic {
         while (inspectedSnapshots < candidateLimit &&
                 physicalAttempts < physicalCallLimit &&
                 !dispatchWindow.isExhausted()) {
-            boolean usingSelectedProposal = asynchronousSelection;
-            DispatchCapacitySlicePlan candidatePlan = usingSelectedProposal ?
+            DispatchCapacitySlicePlan candidatePlan = asynchronousSelection ?
                     new DispatchCapacitySlicePlan(ObjectList.of(new DispatchCapacitySlicePlan.Slice(
                             selectedProposal.target(),
                             Math.min(selectedProposal.logicalCrafts(), maximumCount),
@@ -1471,7 +1464,7 @@ final class TrinityDataCoreCpuLogic {
             if (!inspectedTargets.add(snapshot)) {
                 break;
             }
-            boolean candidateNativeFallback = !usingSelectedProposal && nativeSingleCraftFallback;
+            boolean candidateNativeFallback = !asynchronousSelection && nativeSingleCraftFallback;
             long prototypeOffer = offeredCount(snapshot, slice, maximumCount);
             ICraftingProvider provider = resolveCurrentProvider(
                     candidateNativeFallback,
@@ -1773,7 +1766,9 @@ final class TrinityDataCoreCpuLogic {
                         additionalInputs.rollback();
                         break;
                     }
-                    EnergyCharge energyCharge = chargeEnergy(energyService, powerPerCraft * count);
+                    // One successful provider submission is one physical batch. Charge its single pattern
+                    // fee once; the logical craft count is only an inventory/accounting quantity.
+                    EnergyCharge energyCharge = chargeEnergy(energyService, powerPerCraft);
                     if (energyCharge == null) {
                         additionalInputs.rollback();
                         return settleProposal(
@@ -1797,12 +1792,11 @@ final class TrinityDataCoreCpuLogic {
                                 false,
                                 new ProviderDispatchOutcome(physicalAttempts, false));
                     }
-                    PatternInputTransaction acceptedInputs = inputTransaction;
                     CraftingDispatchAccountingDelta accounting = CraftingDispatchAccountingDelta.create(
                             count,
                             () -> commitAcceptedDispatch(
                                     currentJob,
-                                    acceptedInputs,
+                                    inputTransaction,
                                     additionalInputs,
                                     energyCharge,
                                     commit,
@@ -1824,7 +1818,7 @@ final class TrinityDataCoreCpuLogic {
                             accounting));
                     if (result.physicalAttempted()) {
                         physicalAttempts = Math.incrementExact(physicalAttempts);
-                        this.capacitySliceCursor = usingSelectedProposal ?
+                        this.capacitySliceCursor = asynchronousSelection ?
                                 selectedProposal.nextCursor() :
                                 slice.nextCursor();
                     }
@@ -1840,7 +1834,7 @@ final class TrinityDataCoreCpuLogic {
                                 new ProviderDispatchOutcome(physicalAttempts, false));
                     }
                     if (result.dispatched()) {
-                        if (usingSelectedProposal || physicalAttempts >= physicalCallLimit) {
+                        if (asynchronousSelection || physicalAttempts >= physicalCallLimit) {
                             return settleProposal(
                                     workIdentity,
                                     asynchronousSelection,
@@ -1922,15 +1916,18 @@ final class TrinityDataCoreCpuLogic {
                     exception);
             return ProviderDispatchOutcome.NONE;
         }
-        if (replacement instanceof TrinityWorkerProposalCoordinator.Pending) {
-            return ProviderDispatchOutcome.AWAITING_PROPOSAL;
-        }
-        if (replacement instanceof TrinityWorkerProposalCoordinator.Deferred) {
-            this.proposalRetryAt = Math.addExact(currentTick, dispatchBudget.retryBackoffTicks());
-            return ProviderDispatchOutcome.DEFERRED;
-        }
-        if (replacement instanceof TrinityWorkerProposalCoordinator.Fallback) {
-            return ProviderDispatchOutcome.NONE;
+        switch (replacement) {
+            case TrinityWorkerProposalCoordinator.Pending pending -> {
+                return ProviderDispatchOutcome.AWAITING_PROPOSAL;
+            }
+            case TrinityWorkerProposalCoordinator.Deferred deferred -> {
+                this.proposalRetryAt = Math.addExact(currentTick, dispatchBudget.retryBackoffTicks());
+                return ProviderDispatchOutcome.DEFERRED;
+            }
+            case TrinityWorkerProposalCoordinator.Fallback fallback -> {
+                return ProviderDispatchOutcome.NONE;
+            }
+            default -> {}
         }
         throw new IllegalStateException("A replacement Trinity dispatch proposal returned an impossible decision");
     }
@@ -2235,7 +2232,7 @@ final class TrinityDataCoreCpuLogic {
         BigInteger offered = maximum;
         try (TrinityExactInputTransaction extra = TrinityExactInputTransaction.withdraw(
                 this.exactWorkingInventory, this.inventory, additional)) {
-            EnergyCharge charge = chargeEnergy(energy, exactEnergy(power, count));
+            EnergyCharge charge = chargeEnergy(energy, power);
             if (charge == null) {
                 return exactDispatchRejected(provider, pattern, snapshot.route(), window, CraftingDispatchStatus.NO_CAPACITY);
             }
@@ -2277,20 +2274,17 @@ final class TrinityDataCoreCpuLogic {
         return result;
     }
 
-    private static double exactEnergy(double perCraft, BigInteger count) {
-        return BigDecimal.valueOf(perCraft).multiply(new BigDecimal(count)).doubleValue();
-    }
-
     private static BigInteger limitExactByEnergy(double perCraft, BigInteger maximum, IEnergyService energy) {
         if (perCraft < 0 || !Double.isFinite(perCraft) || maximum.signum() <= 0) return BigInteger.ZERO;
         if (perCraft == 0) return maximum;
-        double requested = Math.min(Double.MAX_VALUE, exactEnergy(perCraft, maximum));
+        // A BigInteger logical batch is still one provider submission. Its energy check is deliberately
+        // independent of the logical item count so a double-sized energy value cannot cap BigInteger work.
         double available;
         try {
-            available = energy.extractAEPower(requested, Actionable.SIMULATE, PowerMultiplier.CONFIG);
+            available = energy.extractAEPower(perCraft, Actionable.SIMULATE, PowerMultiplier.CONFIG);
         } catch (RuntimeException failure) {
             Data_Energistics.LOGGER.error("Trinity Data Core CPU failed while checking {} AE for an exact dispatch",
-                    requested, failure);
+                    perCraft, failure);
             return BigInteger.ZERO;
         }
         if (!Double.isFinite(available) || available < 0) {
@@ -2298,8 +2292,7 @@ final class TrinityDataCoreCpuLogic {
                     available);
             return BigInteger.ZERO;
         }
-        return maximum.min(BigDecimal.valueOf(Math.min(available, requested))
-                .divideToIntegralValue(BigDecimal.valueOf(perCraft)).toBigIntegerExact());
+        return available >= perCraft - ENERGY_TOLERANCE ? maximum : BigInteger.ZERO;
     }
 
     private static CraftingDispatchResult exactDispatchRejected(ICraftingProvider provider, IPatternDetails pattern,
@@ -2482,21 +2475,18 @@ final class TrinityDataCoreCpuLogic {
         if (powerPerCraft == 0.0D) {
             return maximumCount;
         }
-        long finiteCount = Math.min(maximumCount, (long) Math.floor(Double.MAX_VALUE / powerPerCraft));
-        if (finiteCount <= 0L) {
-            return 0L;
-        }
-        double requestedPower = powerPerCraft * finiteCount;
+        // Energy is charged once per successful provider batch. Do not narrow a long-sized logical offer
+        // merely because per-craft multiplication would overflow a double.
         double availablePower;
         try {
             availablePower = energyService.extractAEPower(
-                    requestedPower,
+                    powerPerCraft,
                     Actionable.SIMULATE,
                     PowerMultiplier.CONFIG);
         } catch (RuntimeException exception) {
             Data_Energistics.LOGGER.error(
                     "Trinity Data Core CPU failed while checking {} AE for a counted pattern dispatch",
-                    requestedPower,
+                    powerPerCraft,
                     exception);
             return 0L;
         }
@@ -2506,14 +2496,7 @@ final class TrinityDataCoreCpuLogic {
                     availablePower);
             return 0L;
         }
-        if (availablePower >= requestedPower - ENERGY_TOLERANCE) {
-            return finiteCount;
-        }
-        double affordableCount = Math.floor((availablePower + ENERGY_TOLERANCE) / powerPerCraft);
-        if (affordableCount <= 0.0D) {
-            return 0L;
-        }
-        return Math.min(finiteCount, (long) affordableCount);
+        return availablePower >= powerPerCraft - ENERGY_TOLERANCE ? maximumCount : 0L;
     }
 
     @Nullable

@@ -6,7 +6,9 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchTarget;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
+import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedDispatchState;
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedProviderMatchingMetadataResolver;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 
 import appeng.api.crafting.IPatternDetails;
@@ -14,6 +16,7 @@ import appeng.api.crafting.IPatternDetails;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
@@ -23,6 +26,20 @@ import org.jspecify.annotations.Nullable;
 
 /** Same-dimension remote automation selected by installing the digital packaged provider in an adaptive host. */
 public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispatch {
+
+    @Override
+    public PatternProviderMatchingMetadata matchingMetadata(AdaptivePatternProviderDispatchTarget target,
+                                                            @Nullable ResourceLocation recipeCategoryId) {
+        if (!(target.level() instanceof ServerLevel level)) {
+            return PatternProviderMatchingMetadata.empty();
+        }
+        return PackagedProviderMatchingMetadataResolver.resolve(
+                level,
+                DataEnergisticsEntrypointLoader.snapshot().packagedCrafting(),
+                target.providerPos(),
+                target.targetSidesFast(),
+                recipeCategoryId);
+    }
 
     @Override
     public @Nullable CountedCraftingProviderAdapter countedAdapter(AdaptivePatternProviderDispatchTarget target) {

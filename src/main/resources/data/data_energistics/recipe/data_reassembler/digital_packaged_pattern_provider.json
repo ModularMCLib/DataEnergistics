@@ -3,11 +3,14 @@
 	"inputs": {
 		"items": [
 			{
-				"item": "ae2:pattern_provider"
+				"tag": "data_energistics:interface"
 			},
 			{
 				"item": "data_energistics:data_processor",
-				"count": 2
+				"count": 14
+			},
+			{
+				"item": "data_energistics:complexified_biochips"
 			},
 			{
 				"item": "data_energistics:data_framework"

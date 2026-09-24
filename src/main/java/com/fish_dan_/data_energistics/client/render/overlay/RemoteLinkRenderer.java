@@ -101,6 +101,9 @@ public final class RemoteLinkRenderer {
             }
             for (int index = 0; index < targets.size(); index++) {
                 var target = targets.get(index);
+                if (!endpoint.isLinkInDimension(level.dimension().location(), target)) {
+                    continue;
+                }
                 boolean selectedLink = data.allLinksSelected() || index == selected;
                 Color color = !level.isLoaded(target.position()) ? UNLOADED : level.getBlockState(target.position()).isAir() ? MISSING : currentColor(target.mode(), selectedLink);
                 // Client capabilities may legitimately be absent for server-only inventories. The synchronized

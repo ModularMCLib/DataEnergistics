@@ -43,7 +43,7 @@ public final class TrinityExecutionNbtCodec {
      * The released 3.2.2 schema; later current data uses {@link #SCHEMA}.
      */
     private static final int SCHEMA_3_2_2 = 9;
-    private static final int SCHEMA = 10;
+    private static final int SCHEMA = 11;
     private static final String PRODUCTION_RETIRED_TAG = "production_retired";
     private static final String EXACT_BINDINGS_TAG = "exact_bindings";
     private static final int MAX_BIG_INTEGER_BYTES = 512;
@@ -69,6 +69,7 @@ public final class TrinityExecutionNbtCodec {
     private static final String LEDGER_TAG = "borrowing_ledger";
     private static final String SAVED_AT_TICK_TAG = "saved_at_tick";
     private static final String BUDGET_RETRY_AT_TAG = "budget_retry_at";
+    private static final String STREAMING_DAG_TAG = "streaming_dag";
 
     private static final String INDEX_TAG = "index";
     private static final String CYCLE_TAG = "cycle";
@@ -103,7 +104,7 @@ public final class TrinityExecutionNbtCodec {
     private static final String KEY_TAG = "key";
     private static final String AMOUNT_TAG = "amount";
 
-    private static final Set<String> ROOT_FIELDS = Set.of(
+    private static final Set<String> ROOT_FIELDS_3_2_2 = Set.of(
             SCHEMA_TAG,
             PLAN_KIND_TAG,
             CATALOG_REVISION_TAG,
@@ -125,6 +126,30 @@ public final class TrinityExecutionNbtCodec {
             LEDGER_TAG,
             SAVED_AT_TICK_TAG,
             BUDGET_RETRY_AT_TAG);
+    private static final Set<String> ROOT_FIELDS = Set.of(
+            SCHEMA_TAG,
+            PLAN_KIND_TAG,
+            CATALOG_REVISION_TAG,
+            QUANTITY_MODE_TAG,
+            SAME_ITEM_POLICY_TAG,
+            TARGET_KEY_TAG,
+            TARGET_AMOUNT_TAG,
+            STATUS_TAG,
+            FAILURE_REASON_TAG,
+            GENERATION_TAG,
+            STAGES_TAG,
+            STAGE_ORDER_TAG,
+            REPEAT_BLOCKS_TAG,
+            SEED_RESERVE_TAG,
+            COMPLETION_SEALED_TAG,
+            COMPLETION_BUFFER_TAG,
+            ACTUAL_FINAL_OUTPUTS_TAG,
+            DELIVERY_REMAINING_TAG,
+            LEDGER_TAG,
+            SAVED_AT_TICK_TAG,
+            BUDGET_RETRY_AT_TAG,
+            STREAMING_DAG_TAG);
+    private static final Set<String> RETIRED_ROOT_FIELDS_3_2_2;
     private static final Set<String> STAGE_FIELDS = Set.of(
             INDEX_TAG,
             CYCLE_TAG,
@@ -154,6 +179,9 @@ public final class TrinityExecutionNbtCodec {
     private static final Set<String> RETIRED_ROOT_FIELDS;
 
     static {
+        ObjectOpenHashSet<String> oldFields = new ObjectOpenHashSet<>(ROOT_FIELDS_3_2_2);
+        oldFields.add(PRODUCTION_RETIRED_TAG);
+        RETIRED_ROOT_FIELDS_3_2_2 = ObjectSets.unmodifiable(oldFields);
         ObjectOpenHashSet<String> fields = new ObjectOpenHashSet<>(ROOT_FIELDS);
         fields.add(PRODUCTION_RETIRED_TAG);
         RETIRED_ROOT_FIELDS = ObjectSets.unmodifiable(fields);
@@ -192,6 +220,7 @@ public final class TrinityExecutionNbtCodec {
         root.put(LEDGER_TAG, TrinityBorrowingLedgerNbtCodec.encode(snapshot.borrowingEntries(), registries));
         root.putLong(SAVED_AT_TICK_TAG, snapshot.savedAtTick());
         root.putLong(BUDGET_RETRY_AT_TAG, snapshot.budgetRetryAt());
+        root.putBoolean(STREAMING_DAG_TAG, snapshot.streamingDag());
         return root;
     }
 
@@ -208,7 +237,7 @@ public final class TrinityExecutionNbtCodec {
         if (schema != SCHEMA_3_2_2 && schema != SCHEMA) {
             throw new IllegalArgumentException("Unsupported Trinity execution schema");
         }
-        requireFields(tag, RETIRED_ROOT_FIELDS, "execution root");
+        requireFields(tag, schema == SCHEMA ? RETIRED_ROOT_FIELDS : RETIRED_ROOT_FIELDS_3_2_2, "execution root");
         requireType(tag, PRODUCTION_RETIRED_TAG, Tag.TAG_BYTE, "production retirement marker");
         requireType(tag, PLAN_KIND_TAG, Tag.TAG_STRING, "execution plan kind");
         requireType(tag, CATALOG_REVISION_TAG, Tag.TAG_LONG, "execution catalog revision");
@@ -227,6 +256,9 @@ public final class TrinityExecutionNbtCodec {
         requireType(tag, LEDGER_TAG, Tag.TAG_COMPOUND, "execution borrowing ledger");
         requireType(tag, SAVED_AT_TICK_TAG, Tag.TAG_LONG, "execution save tick");
         requireType(tag, BUDGET_RETRY_AT_TAG, Tag.TAG_LONG, "execution budget retry");
+        if (schema == SCHEMA) {
+            requireType(tag, STREAMING_DAG_TAG, Tag.TAG_BYTE, "execution streaming mode");
+        }
         if (!PLAN_KIND.equals(tag.getString(PLAN_KIND_TAG))) {
             throw new IllegalArgumentException("Unsupported Trinity execution plan kind");
         }
@@ -251,6 +283,7 @@ public final class TrinityExecutionNbtCodec {
                 TrinityBorrowingLedgerNbtCodec.decode(tag.getCompound(LEDGER_TAG), registries),
                 nonNegative(tag.getLong(SAVED_AT_TICK_TAG), "save tick"),
                 tag.getLong(BUDGET_RETRY_AT_TAG),
+                schema == SCHEMA && tag.getBoolean(STREAMING_DAG_TAG),
                 tag.getBoolean(PRODUCTION_RETIRED_TAG));
     }
 
@@ -538,7 +571,7 @@ public final class TrinityExecutionNbtCodec {
 
     private static TrinitySameItemPolicy readSameItemPolicy(CompoundTag tag,
                                                             HolderLookup.Provider registries) {
-        if (tag.getInt(SCHEMA_TAG) >= 10)
+        if (tag.getInt(SCHEMA_TAG) == SCHEMA)
             return TrinitySameItemPolicy.load(tag.getList(SAME_ITEM_POLICY_TAG, Tag.TAG_COMPOUND), registries);
         var representatives = new ObjectArrayList<AEItemKey>();
         for (var key : readKeys(tag, SAME_ITEM_POLICY_TAG, registries, "same-item representative")) {

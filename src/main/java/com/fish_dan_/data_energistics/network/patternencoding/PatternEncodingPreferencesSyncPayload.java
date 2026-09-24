@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.menu.patternencoding.PackagedPatternInputTransfer;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
@@ -44,8 +43,6 @@ public record PatternEncodingPreferencesSyncPayload(
                                                     long sequence,
                                                     boolean uploadEnabled,
                                                     boolean patternSourceEnabled,
-                                                    int previewPanelOffsetX,
-                                                    int previewPanelOffsetY,
                                                     @Nullable PatternEncodingRankingContext rankingContext,
                                                     @Nullable ResourceLocation recipeId,
                                                     List<LeafStatistic> statistics)
@@ -69,7 +66,6 @@ public record PatternEncodingPreferencesSyncPayload(
         if (sequence <= 0L) {
             throw new IllegalArgumentException("Pattern preference sequence must be positive");
         }
-        validateOffset(previewPanelOffsetX, previewPanelOffsetY);
         statistics = List.copyOf(statistics);
         if (statistics.size() > MAX_STATISTICS) {
             throw new IllegalArgumentException("Pattern preference statistics exceed " + MAX_STATISTICS);
@@ -111,8 +107,6 @@ public record PatternEncodingPreferencesSyncPayload(
                 decoded.sequence,
                 decoded.uploadEnabled,
                 decoded.patternSourceEnabled,
-                decoded.previewPanelOffsetX,
-                decoded.previewPanelOffsetY,
                 decoded.rankingContext,
                 decoded.recipeId,
                 decoded.statistics);
@@ -123,8 +117,6 @@ public record PatternEncodingPreferencesSyncPayload(
         buffer.writeVarLong(this.sequence);
         buffer.writeBoolean(this.uploadEnabled);
         buffer.writeBoolean(this.patternSourceEnabled);
-        buffer.writeInt(this.previewPanelOffsetX);
-        buffer.writeInt(this.previewPanelOffsetY);
         writeContext(buffer, this.rankingContext);
         writeRecipeId(buffer, this.recipeId);
         buffer.writeVarInt(this.statistics.size());
@@ -152,7 +144,7 @@ public record PatternEncodingPreferencesSyncPayload(
             return;
         }
         AbstractContainerMenu menu = serverPlayer.containerMenu;
-        if (menu.containerId != payload.containerId || !(menu instanceof PatternEncodingPreferenceMenu preferenceMenu) || !(menu instanceof PatternEncodingSourceAware sourceAware) || !(menu instanceof PatternEncodingPreviewLayoutAware layoutAware) || !(menu instanceof PatternEncodingPreviewMenu previewMenu)) {
+        if (menu.containerId != payload.containerId || !(menu instanceof PatternEncodingPreferenceMenu preferenceMenu) || !(menu instanceof PatternEncodingSourceAware sourceAware) || !(menu instanceof PatternEncodingPreviewMenu previewMenu)) {
             Data_Energistics.LOGGER.warn("Rejected pattern preference snapshot for stale or incompatible container {}",
                     payload.containerId);
             return;
@@ -209,7 +201,6 @@ public record PatternEncodingPreferencesSyncPayload(
 
         sourceAware.data_energistics$setUploadEnabled(payload.uploadEnabled);
         sourceAware.data_energistics$setPatternSourceEnabled(payload.patternSourceEnabled);
-        layoutAware.data_energistics$setPreviewPanelOffset(payload.previewPanelOffsetX, payload.previewPanelOffsetY);
         Object2LongMap<String> leafCounts = new Object2LongOpenHashMap<>(payload.statistics.size());
         for (LeafStatistic statistic : payload.statistics) {
             leafCounts.put(statistic.providerDigest(), statistic.count());
@@ -230,12 +221,6 @@ public record PatternEncodingPreferencesSyncPayload(
                 payload.containerId,
                 payload.sequence,
                 sourceAware.data_energistics$getLastEncodedPatternSource()));
-    }
-
-    private static void validateOffset(int x, int y) {
-        if (x < -8192 || x > 8192 || y < -8192 || y > 8192) {
-            throw new IllegalArgumentException("Pattern preference preview offset is outside [-8192, 8192]");
-        }
     }
 
     private static void validateDigest(String digest) {
@@ -277,8 +262,6 @@ public record PatternEncodingPreferencesSyncPayload(
         long sequence = buffer.readVarLong();
         boolean uploadEnabled = buffer.readBoolean();
         boolean patternSourceEnabled = buffer.readBoolean();
-        int previewPanelOffsetX = buffer.readInt();
-        int previewPanelOffsetY = buffer.readInt();
         PatternEncodingRankingContext rankingContext = readContext(buffer);
         ResourceLocation recipeId = readRecipeId(buffer);
         List<LeafStatistic> statistics = readStatistics(buffer);
@@ -288,8 +271,6 @@ public record PatternEncodingPreferencesSyncPayload(
                 sequence,
                 uploadEnabled,
                 patternSourceEnabled,
-                previewPanelOffsetX,
-                previewPanelOffsetY,
                 rankingContext,
                 recipeId,
                 statistics);
@@ -318,8 +299,6 @@ public record PatternEncodingPreferencesSyncPayload(
                            long sequence,
                            boolean uploadEnabled,
                            boolean patternSourceEnabled,
-                           int previewPanelOffsetX,
-                           int previewPanelOffsetY,
                            @Nullable PatternEncodingRankingContext rankingContext,
                            @Nullable ResourceLocation recipeId,
                            List<LeafStatistic> statistics) {}

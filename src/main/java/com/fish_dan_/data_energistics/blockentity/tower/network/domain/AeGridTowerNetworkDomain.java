@@ -11,7 +11,6 @@ import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEne
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointId;
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBinding;
-import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingKind;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingRuntimeSnapshot;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingSource;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerRuntimeKey;
@@ -57,9 +56,12 @@ import appeng.api.stacks.AEItemKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -291,7 +293,9 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     }
 
     private void dataEnergistics$reconcile(
-                                           VirtualChannelCapacity capacity, long physicalUsage, long gameTime) {
+                                           VirtualChannelCapacity capacity,
+                                           long physicalUsage,
+                                           long gameTime) {
         MinecraftServer server = this.grid.getPivot().getLevel().getServer();
         List<TowerWork> towerWorks = dataEnergistics$resolveTowers();
         for (TowerWork towerWork : towerWorks) {
@@ -523,7 +527,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                                                                      TowerDomainEnergyEndpoint endpoint, List<TowerWork> towerWorks) {
         for (TowerWork work : towerWorks) {
             for (BindingWork binding : work.bindings()) {
-                if (!binding.binding().anchor().equals(endpoint.location().position()) || !binding.binding().dimensionId().equals(endpoint.location().level().dimension().location()) || binding.binding().kind() != TowerBindingKind.TARGET) {
+                if (!binding.binding().anchor().equals(endpoint.location().position()) || !binding.binding().dimensionId().equals(endpoint.location().level().dimension().location())) {
                     continue;
                 }
                 EnergyTransferDirection selected = binding.binding().energyDirection();
@@ -609,6 +613,18 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                 this.grid);
     }
 
+    @Nullable
+    private static ServerLevel resolveBindingLevel(ServerLevel ownerLevel, ResourceLocation dimensionId) {
+        return ownerLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
+    }
+
+    private VirtualChannelCapacity dataEnergistics$currentCapacity() {
+        if (this.grid.getPathingService().getChannelMode() == ChannelMode.INFINITE) {
+            return VirtualChannelCapacity.unlimited();
+        }
+        return VirtualChannelCapacity.limited(this.capacityCalculator.calculate(this.grid));
+    }
+
     private List<TowerWork> dataEnergistics$resolveTowers() {
         ObjectArrayList<TowerNetworkParticipant> orderedTowers = new ObjectArrayList<>(this.towers.values());
         orderedTowers.sort(Comparator.comparing(TowerNetworkParticipant::towerKey));
@@ -631,16 +647,17 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             Map<IGrid, BindingTargetWork> bindingByTarget = new Reference2ReferenceOpenHashMap<>();
             for (TowerBinding binding : orderedBindings) {
                 TowerTargetResolution resolution;
-                if (!participant.towerAllowsAe() || !participant.towerLevel().dimension().location().equals(binding.dimensionId()) || !participant.towerLevel().isLoaded(binding.anchor())) {
+                ServerLevel targetLevel = resolveBindingLevel(participant.towerLevel(), binding.dimensionId());
+                if (!participant.towerAllowsAe() || targetLevel == null || !targetLevel.isLoaded(binding.anchor())) {
                     resolution = new TowerTargetResolution(List.of(), List.of());
                 } else {
                     TowerTargetDiscoveryMode discoveryMode = binding.source() == TowerBindingSource.MANUAL ? TowerTargetDiscoveryMode.POINT : TowerTargetDiscoveryMode.SCOPE;
                     TargetResolutionKey resolutionKey = new TargetResolutionKey(
-                            participant.towerLevel().dimension().location(), binding.anchor(), discoveryMode);
+                            binding.dimensionId(), binding.anchor(), discoveryMode);
                     resolution = resolutionCache.computeIfAbsent(
                             resolutionKey,
                             ignored -> resolutionRound.resolve(
-                                    participant.towerLevel(), binding.anchor(), this.grid, discoveryMode));
+                                    targetLevel, binding.anchor(), this.grid, discoveryMode));
                 }
                 boolean hasEnergyEndpoint = energyLocations.contains(
                         new EnergyLocationKey(binding.dimensionId(), binding.anchor()));
@@ -925,13 +942,6 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                 targetGrid,
                 this.grid,
                 exception);
-    }
-
-    private VirtualChannelCapacity dataEnergistics$currentCapacity() {
-        if (this.grid.getPathingService().getChannelMode() == ChannelMode.INFINITE) {
-            return VirtualChannelCapacity.unlimited();
-        }
-        return VirtualChannelCapacity.limited(this.capacityCalculator.calculate(this.grid));
     }
 
     private record DeviceLeaseKey(TowerRuntimeKey towerKey,

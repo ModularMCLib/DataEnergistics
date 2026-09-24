@@ -1,12 +1,12 @@
 {
 	"type": "minecraft:crafting_shaped",
-	"pattern": ["ABA", "CDE", "ABA"],
+	"pattern": ["ABA", "CDE", "AFA"],
 	"key": {
 		"A": {
 			"tag": "c:dusts/data_dust"
 		},
 		"B": {
-			"item": "data_energistics:budding_data_crystal_0"
+			"item": "data_energistics:radix_containment_sphere"
 		},
 		"C": {
 			"item": "ae2:annihilation_core"
@@ -16,6 +16,9 @@
 		},
 		"E": {
 			"item": "ae2:formation_core"
+		},
+		"F": {
+			"item": "data_energistics:solidified_obsidian"
 		}
 	},
 	"result": {

@@ -127,6 +127,10 @@ public class DataRipperReassemblerScreen<M extends DataRipperReassemblerMenu> ex
 
     @Override
     public @Nullable StackWithBounds dataEnergistics$getGenericStackUnderMouse(double mouseX, double mouseY) {
+        if (isMutableGenericInputSlot(this.hoveredSlot)) {
+            return null;
+        }
+
         GenericStack stack = getDisplayedGenericStack(this.hoveredSlot);
         if (stack == null) {
             return null;
@@ -134,6 +138,24 @@ public class DataRipperReassemblerScreen<M extends DataRipperReassemblerMenu> ex
         return new StackWithBounds(
                 stack,
                 new Rect2i(this.leftPos + this.hoveredSlot.x, this.topPos + this.hoveredSlot.y, 16, 16));
+    }
+
+    @Override
+    public @Nullable StackWithBounds getStackUnderMouse(double mouseX, double mouseY) {
+        if (isMutableGenericInputSlot(this.hoveredSlot)) {
+            return null;
+        }
+        return super.getStackUnderMouse(mouseX, mouseY);
+    }
+
+    protected boolean isMutableGenericInputSemantic(SlotSemantic semantic) {
+        return semantic == SlotSemantics.STORAGE ||
+                semantic == DataRipperReassemblerMenu.FLUID_INPUT_B ||
+                semantic == DataRipperReassemblerMenu.KEY_INPUT;
+    }
+
+    private boolean isMutableGenericInputSlot(@Nullable Slot slot) {
+        return slot != null && slot.isActive() && isMutableGenericInputSemantic(this.menu.getSlotSemantic(slot));
     }
 
     private boolean isActiveGenericSlot(@Nullable Slot slot) {

@@ -73,6 +73,12 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath(
+                "avaritia", tier.name().toLowerCase(Locale.ROOT) + "_crafting_table"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return table(level, position) != null;
     }

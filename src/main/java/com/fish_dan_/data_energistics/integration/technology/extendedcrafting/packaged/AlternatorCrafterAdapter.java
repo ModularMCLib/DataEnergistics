@@ -57,6 +57,12 @@ public final class AlternatorCrafterAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath(
+                "extendedcrafting", this.flux ? "flux_crafter" : "ender_crafter"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return inventory(level, position) != null;
     }

@@ -25,9 +25,9 @@ public final class ProcessingMatchModeButton extends IconButton {
     @Override
     protected Icon getIcon() {
         return switch (mode.get()) {
-            case EXACT -> Icon.FUZZY_PERCENT_99;
-            case ID -> Icon.FUZZY_IGNORE;
-            case TAG -> Icon.PRIORITY;
+            case EXACT -> Icon.FUZZY_IGNORE;
+            case ID -> Icon.FUZZY_PERCENT_99;
+            case TAG -> Icon.FUZZY_PERCENT_75;
         };
     }
 

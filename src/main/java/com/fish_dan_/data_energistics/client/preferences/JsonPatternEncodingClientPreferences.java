@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public final class JsonPatternEncodingClientPreferences implements PatternEncodingClientPreferences {
 
-    public static final int SCHEMA_VERSION = 5;
+    public static final int SCHEMA_VERSION = 6;
     public static final int MAX_STATISTICS_PER_PROFILE = 2048;
     public static final int MAX_STATISTICS_TOTAL = 8192;
     public static final int MAX_SERVER_PROFILES = 32;
@@ -69,8 +69,10 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     private boolean patternSourceEnabled = true;
     @Nullable
     private ResourceLocation lastWorkstation;
-    private int previewPanelOffsetX;
-    private int previewPanelOffsetY;
+    @Nullable
+    private PreviewPanelPosition previewPanelPosition;
+    @Nullable
+    private PreviewPanelOffset pendingPreviewPanelOffset;
     private boolean providerDetailPanelPresent;
     private int providerDetailPanelRelativeX;
     private int providerDetailPanelRelativeY;
@@ -142,23 +144,40 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     }
 
     @Override
-    public int previewPanelOffsetX() {
+    public Optional<PreviewPanelPosition> previewPanelPosition() {
         ensureLoaded();
-        return this.previewPanelOffsetX;
+        return Optional.ofNullable(this.previewPanelPosition);
     }
 
     @Override
-    public int previewPanelOffsetY() {
+    public Optional<PreviewPanelOffset> pendingPreviewPanelOffset() {
         ensureLoaded();
-        return this.previewPanelOffsetY;
+        return Optional.ofNullable(this.pendingPreviewPanelOffset);
     }
 
     @Override
-    public void setPreviewPanelOffset(int offsetX, int offsetY) {
+    public void setPreviewPanelPosition(int x, int y) {
         ensureLoaded();
-        validatePanelOffset(offsetX, offsetY);
-        this.previewPanelOffsetX = offsetX;
-        this.previewPanelOffsetY = offsetY;
+        validatePanelOffset(x, y);
+        this.previewPanelPosition = new PreviewPanelPosition(x, y);
+        this.pendingPreviewPanelOffset = null;
+        save();
+    }
+
+    @Override
+    public void migratePreviewPanelOffset(int x, int y) {
+        ensureLoaded();
+        validatePanelOffset(x, y);
+        this.previewPanelPosition = new PreviewPanelPosition(x, y);
+        this.pendingPreviewPanelOffset = null;
+        save();
+    }
+
+    @Override
+    public void clearPreviewPanelPosition() {
+        ensureLoaded();
+        this.previewPanelPosition = null;
+        this.pendingPreviewPanelOffset = null;
         save();
     }
 
@@ -310,9 +329,28 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             }
             if (preferences.has("previewPanel")) {
                 JsonObject previewPanel = readRequiredObject(preferences, "previewPanel");
-                this.previewPanelOffsetX = readRequiredInt(previewPanel, "offsetX");
-                this.previewPanelOffsetY = readRequiredInt(previewPanel, "offsetY");
-                validatePanelOffset(this.previewPanelOffsetX, this.previewPanelOffsetY);
+                if (previewPanel.has("position")) {
+                    JsonObject position = readRequiredObject(previewPanel, "position");
+                    int x = readRequiredInt(position, "x");
+                    int y = readRequiredInt(position, "y");
+                    validatePanelOffset(x, y);
+                    this.previewPanelPosition = new PreviewPanelPosition(x, y);
+                } else if (previewPanel.has("legacyOffset")) {
+                    JsonObject offset = readRequiredObject(previewPanel, "legacyOffset");
+                    int x = readRequiredInt(offset, "x");
+                    int y = readRequiredInt(offset, "y");
+                    validatePanelOffset(x, y);
+                    if (x != 0 || y != 0) {
+                        this.pendingPreviewPanelOffset = new PreviewPanelOffset(x, y);
+                    }
+                } else if (schemaVersion < SCHEMA_VERSION && previewPanel.has("offsetX") && previewPanel.has("offsetY")) {
+                    int x = readRequiredInt(previewPanel, "offsetX");
+                    int y = readRequiredInt(previewPanel, "offsetY");
+                    validatePanelOffset(x, y);
+                    if (x != 0 || y != 0) {
+                        this.pendingPreviewPanelOffset = new PreviewPanelOffset(x, y);
+                    }
+                }
             }
             if (preferences.has("providerDetailPanel")) {
                 JsonObject providerDetailPanel = readRequiredObject(preferences, "providerDetailPanel");
@@ -418,8 +456,8 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         this.previewPanelPinned = false;
         this.patternSourceEnabled = true;
         this.lastWorkstation = null;
-        this.previewPanelOffsetX = 0;
-        this.previewPanelOffsetY = 0;
+        this.previewPanelPosition = null;
+        this.pendingPreviewPanelOffset = null;
         this.providerDetailPanelRelativeX = 0;
         this.providerDetailPanelRelativeY = 0;
         this.providerDetailPanelPresent = false;
@@ -486,8 +524,18 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             preferences.addProperty("lastWorkstation", this.lastWorkstation.toString());
         }
         JsonObject previewPanel = new JsonObject();
-        previewPanel.addProperty("offsetX", this.previewPanelOffsetX);
-        previewPanel.addProperty("offsetY", this.previewPanelOffsetY);
+        if (this.previewPanelPosition != null) {
+            JsonObject position = new JsonObject();
+            position.addProperty("x", this.previewPanelPosition.x());
+            position.addProperty("y", this.previewPanelPosition.y());
+            previewPanel.add("position", position);
+        }
+        if (this.pendingPreviewPanelOffset != null) {
+            JsonObject legacyOffset = new JsonObject();
+            legacyOffset.addProperty("x", this.pendingPreviewPanelOffset.x());
+            legacyOffset.addProperty("y", this.pendingPreviewPanelOffset.y());
+            previewPanel.add("legacyOffset", legacyOffset);
+        }
         preferences.add("previewPanel", previewPanel);
         if (this.providerDetailPanelPresent) {
             JsonObject providerDetailPanel = new JsonObject();

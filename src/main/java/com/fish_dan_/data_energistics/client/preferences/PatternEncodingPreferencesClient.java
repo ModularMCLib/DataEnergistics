@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
@@ -44,8 +43,6 @@ public final class PatternEncodingPreferencesClient {
         interfaces.sourceAware().data_energistics$setUploadEnabled(preferences.uploadEnabled());
         interfaces.sourceAware().data_energistics$setPatternSourceEnabled(preferences.patternSourceEnabled());
         interfaces.sourceAware().data_energistics$setLastEncodedPatternSource(preferences.lastWorkstation());
-        interfaces.layoutAware().data_energistics$setPreviewPanelOffset(
-                preferences.previewPanelOffsetX(), preferences.previewPanelOffsetY());
         PatternEncodingPreferenceSession session = interfaces.preferenceMenu().data_energistics$getPreferenceSession();
         restoreEncodedPattern(menu, interfaces);
         if (session.rankingContext() == null && !session.hasDeferredSnapshot()) {
@@ -149,6 +146,31 @@ public final class PatternEncodingPreferencesClient {
         return PatternEncodingClientPreferencesAccess.get().previewPanelPinned();
     }
 
+    /** Returns the locally persisted absolute upload-panel position, when one exists. */
+    public static Optional<PatternEncodingClientPreferences.PreviewPanelPosition> previewPanelPosition() {
+        return PatternEncodingClientPreferencesAccess.get().previewPanelPosition();
+    }
+
+    /** Returns the nonzero legacy relative position awaiting first stable layout migration. */
+    public static Optional<PatternEncodingClientPreferences.PreviewPanelOffset> pendingPreviewPanelOffset() {
+        return PatternEncodingClientPreferencesAccess.get().pendingPreviewPanelOffset();
+    }
+
+    /** Persists one absolute upload-panel position without involving a menu or server. */
+    public static void setPreviewPanelPosition(int x, int y) {
+        PatternEncodingClientPreferencesAccess.get().setPreviewPanelPosition(x, y);
+    }
+
+    /** Converts one legacy relative position into the supplied absolute screen position. */
+    public static void migratePreviewPanelOffset(int x, int y) {
+        PatternEncodingClientPreferencesAccess.get().migratePreviewPanelOffset(x, y);
+    }
+
+    /** Removes the saved absolute position and restores automatic placement. */
+    public static void clearPreviewPanelPosition() {
+        PatternEncodingClientPreferencesAccess.get().clearPreviewPanelPosition();
+    }
+
     /**
      * Persists and synchronizes recipe-type recording while retaining the existing preference key.
      */
@@ -166,16 +188,6 @@ public final class PatternEncodingPreferencesClient {
                     session.recipeId());
             interfaces.sourceAware().data_energistics$setPendingPatternSource(null);
         }
-        sendSnapshot(menu);
-    }
-
-    /**
-     * Persists and synchronizes the shared preview-panel offset.
-     */
-    public static void setPreviewPanelOffset(AbstractContainerMenu menu, int offsetX, int offsetY) {
-        Interfaces interfaces = Interfaces.require(menu);
-        PatternEncodingClientPreferencesAccess.get().setPreviewPanelOffset(offsetX, offsetY);
-        interfaces.layoutAware().data_energistics$setPreviewPanelOffset(offsetX, offsetY);
         sendSnapshot(menu);
     }
 
@@ -218,8 +230,6 @@ public final class PatternEncodingPreferencesClient {
                 session.nextOutgoingSequence(),
                 preferences.uploadEnabled(),
                 preferences.patternSourceEnabled(),
-                preferences.previewPanelOffsetX(),
-                preferences.previewPanelOffsetY(),
                 rankingContext,
                 session.recipeId(),
                 statistics));
@@ -242,14 +252,13 @@ public final class PatternEncodingPreferencesClient {
 
     private record Interfaces(PatternEncodingPreferenceMenu preferenceMenu,
                               PatternEncodingPreviewMenu previewMenu,
-                              PatternEncodingSourceAware sourceAware,
-                              PatternEncodingPreviewLayoutAware layoutAware) {
+                              PatternEncodingSourceAware sourceAware) {
 
         private static Interfaces require(AbstractContainerMenu menu) {
-            if (!(menu instanceof PatternEncodingPreferenceMenu preferenceMenu) || !(menu instanceof PatternEncodingPreviewMenu previewMenu) || !(menu instanceof PatternEncodingSourceAware sourceAware) || !(menu instanceof PatternEncodingPreviewLayoutAware layoutAware)) {
+            if (!(menu instanceof PatternEncodingPreferenceMenu preferenceMenu) || !(menu instanceof PatternEncodingPreviewMenu previewMenu) || !(menu instanceof PatternEncodingSourceAware sourceAware)) {
                 throw new IllegalArgumentException("Menu does not support pattern encoding preferences: " + menu);
             }
-            return new Interfaces(preferenceMenu, previewMenu, sourceAware, layoutAware);
+            return new Interfaces(preferenceMenu, previewMenu, sourceAware);
         }
     }
 }

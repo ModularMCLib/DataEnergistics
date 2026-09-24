@@ -290,11 +290,9 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         var key = backing.getKey(index);
         var carried = getCarried();
         if (type == ClickType.PICKUP && !carried.isEmpty()) {
-            AEItemKey carriedKey = AEItemKey.of(carried);
-            if (carriedKey != null && (key == null || key instanceof AEItemKey)) {
-                long inserted = backing.insert(index, carriedKey, button == 1 ? 1 : carried.getCount(), Actionable.MODULATE);
-                carried.shrink((int) inserted); // A real cursor stack is bounded by Minecraft's stack size.
-                setCarried(carried);
+            if (tryInsertCarriedGenericStack(inventory, index, button)) {
+                broadcastChanges();
+                return;
             } else if (button == 0) {
                 handleFillingHeldItem((amount, mode) -> backing.extract(index, key, amount, mode), key, false);
             } else {
@@ -316,8 +314,74 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             } else {
                 setCarried(taken);
             }
+        } else if (type == ClickType.PICKUP && tryExtractNonItemStack(backing, index, button)) {
+            broadcastChanges();
+            return;
         }
         broadcastChanges();
+    }
+
+    /**
+     * Inserts an ordinary item or an AE2 wrapped generic stack from the cursor into the selected storage slot.
+     *
+     * <p>
+     * The base AE2 inventory already knows how to decode wrapped non-item keys. The menu must use that same
+     * conversion instead of calling {@code AEItemKey.of} directly, otherwise fluid and third-party key types are
+     * silently rejected before {@link GenericStackInv#insert(int, AEKey, long, Actionable)} can validate them.
+     * </p>
+     */
+    private boolean tryInsertCarriedGenericStack(PagedMenuInventory inventory, int index, int button) {
+        ItemStack carried = getCarried();
+        GenericStack converted = inventory.convertToSuitableStack(carried);
+        if (converted == null || converted.what() == null || converted.amount() <= 0) {
+            return false;
+        }
+
+        long requested = button == 1 ? Math.min(converted.amount(), Math.max(1, converted.what().getAmountPerUnit())) : converted.amount();
+        long inserted = inventory.getDelegate().insert(index, converted.what(), requested, Actionable.MODULATE);
+        if (inserted <= 0) {
+            return false;
+        }
+
+        long remaining = converted.amount() - inserted;
+        if (remaining <= 0) {
+            setCarried(ItemStack.EMPTY);
+        } else if (GenericStack.unwrapItemStack(carried) != null) {
+            setCarried(wrapGenericStack(converted.what(), remaining));
+        } else {
+            ItemStack remainder = carried.copy();
+            remainder.shrink((int) Math.min((long) remainder.getCount(), inserted));
+            setCarried(remainder);
+        }
+        return true;
+    }
+
+    /** Returns a non-item key to the cursor as an AE2 wrapped generic stack. */
+    private boolean tryExtractNonItemStack(GenericStackInv backing, int index, int button) {
+        if (!getCarried().isEmpty()) {
+            return false;
+        }
+
+        GenericStack current = backing.getStack(index);
+        if (current == null || current.what() == null || current.what() instanceof AEItemKey || current.amount() <= 0) {
+            return false;
+        }
+
+        long requested = button == 1 ? Math.min(current.amount(), Math.max(1, current.what().getAmountPerUnit())) : current.amount();
+        long extracted = backing.extract(index, current.what(), requested, Actionable.MODULATE);
+        if (extracted <= 0) {
+            return false;
+        }
+
+        setCarried(wrapGenericStack(current.what(), extracted));
+        return true;
+    }
+
+    private static ItemStack wrapGenericStack(AEKey key, long amount) {
+        if (key instanceof AEItemKey itemKey && amount <= Integer.MAX_VALUE) {
+            return itemKey.toStack((int) amount);
+        }
+        return GenericStack.wrapInItemStack(new GenericStack(key, amount));
     }
 
     private void applySlotConfiguration(@Nullable SlotConfiguration request) {

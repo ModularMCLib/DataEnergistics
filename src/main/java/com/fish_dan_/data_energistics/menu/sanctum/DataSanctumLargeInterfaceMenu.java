@@ -1,12 +1,14 @@
 package com.fish_dan_.data_energistics.menu.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.ae2.menu.ContainerSlotInteraction;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
+import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.config.Actionable;
 import appeng.api.config.Settings;
 import appeng.api.stacks.AEItemKey;
@@ -201,6 +203,9 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
         if (isClientSide() || slotIndex < 0 || slotIndex >= slots.size()) return ItemStack.EMPTY;
+        if (ContainerSlotInteraction.tryQuickMove(this, slotIndex, player, appEngSlot -> appEngSlot.getInventory() instanceof PagedMenuInventory paged ? paged.backingSlot() : appEngSlot.getContainerSlot())) {
+            return ItemStack.EMPTY;
+        }
         var source = slots.get(slotIndex);
         if (isPlayerSideSlot(source) && getQuickMoveDestinationSlots(source.getItem(), true).isEmpty()) {
             // AE2 otherwise falls back to writing an empty filter slot when real destinations are unavailable.
@@ -266,13 +271,26 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             return;
         }
         if (isClientSide()) return; // Server performs transfers; slot snapshots are display data only.
+        if (type == ClickType.PICKUP && ContainerSlotInteraction.tryClicked(
+                this,
+                slot,
+                inventory.getDelegate(),
+                inventory.backingSlot(),
+                player)) {
+            broadcastChanges();
+            return;
+        }
+        if (type == ClickType.PICKUP && !getCarried().isEmpty() && ContainerItemStrategies.findCarriedContext(null, player, this) != null) {
+            // A registered container must never fall through to the item-key branch when this slot cannot accept it.
+            return;
+        }
         var backing = inventory.getDelegate();
         int index = inventory.backingSlot();
         var key = backing.getKey(index);
         var carried = getCarried();
         if (type == ClickType.PICKUP && !carried.isEmpty()) {
             AEItemKey carriedKey = AEItemKey.of(carried);
-            if (key == null || key instanceof AEItemKey) {
+            if (carriedKey != null && (key == null || key instanceof AEItemKey)) {
                 long inserted = backing.insert(index, carriedKey, button == 1 ? 1 : carried.getCount(), Actionable.MODULATE);
                 carried.shrink((int) inserted); // A real cursor stack is bounded by Minecraft's stack size.
                 setCarried(carried);
@@ -467,7 +485,9 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         }
 
         @Override
-        public void onTake(Player player, ItemStack stack) {}
+        public void onTake(Player player, ItemStack stack) {
+            super.onTake(player, stack);
+        }
 
         @Override
         public void increase(ItemStack stack) {

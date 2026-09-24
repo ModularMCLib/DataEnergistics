@@ -189,6 +189,7 @@ public final class TrinityPlanExecution {
     private BigInteger completionBuffer = BigInteger.ZERO;
     private BigInteger deliveryRemaining;
     private final Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> actualFinalOutputs = new Object2ObjectLinkedOpenHashMap<>();
+    private boolean streamingDag;
 
     private TrinityPlanExecution(AEKey targetKey,
                                  BigInteger targetAmount,
@@ -250,6 +251,7 @@ public final class TrinityPlanExecution {
         restored.completionBuffer = snapshot.completionBuffer();
         restored.deliveryRemaining = snapshot.deliveryRemaining();
         restored.actualFinalOutputs.putAll(snapshot.actualFinalOutputs());
+        restored.streamingDag = snapshot.streamingDag();
         restored.budgetRetryAt = rebaseRetryAt(
                 snapshot.budgetRetryAt(),
                 snapshot.savedAtTick(),
@@ -297,7 +299,7 @@ public final class TrinityPlanExecution {
         }
         restored.validatePersistedStatusShape(persistedStatus);
 
-        if (restored.recomputeRestoredDependencies()) {
+        if (!restored.streamingDag && restored.recomputeRestoredDependencies()) {
             restored.markDurableMutation();
             restored.validateInstalledPlan();
         }
@@ -1235,11 +1237,13 @@ public final class TrinityPlanExecution {
                 this.borrowingLedger.entries(),
                 currentTick,
                 this.budgetRetryAt,
+                this.streamingDag,
                 this.productionRetired);
     }
 
     private void installPlan(TrinityCraftingPlan plan) {
         this.productionRetired = false;
+        this.streamingDag = true;
         this.catalogRevision = plan.catalogRevision();
         this.quantityMode = plan.quantityMode();
         this.sameItemPolicy = plan.sameItemPolicy();
@@ -1706,7 +1710,7 @@ public final class TrinityPlanExecution {
             return false;
         }
         if (!stage.cycle) {
-            return dependenciesComplete(stage, null);
+            return this.streamingDag || dependenciesComplete(stage, null);
         }
         RepeatState repeat = requireRepeat(stage.index);
         return repeat.remainingRepetitions.signum() > 0 && repeat.stageOrder.getInt(repeat.cursor) == stage.index &&

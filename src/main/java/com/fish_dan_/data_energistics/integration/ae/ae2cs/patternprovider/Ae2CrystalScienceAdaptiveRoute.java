@@ -16,9 +16,9 @@ import appeng.api.storage.MEStorage;
 import appeng.helpers.patternprovider.PatternProviderTarget;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -261,9 +261,9 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
 
     @Override
     public void writeState(
-            AdaptivePatternProviderDispatchTarget target,
-            CompoundTag tag,
-            HolderLookup.Provider registries) {
+                           AdaptivePatternProviderDispatchTarget target,
+                           CompoundTag tag,
+                           HolderLookup.Provider registries) {
         ListTag sendList = new ListTag();
         for (PendingSend pending : state(target).pending) {
             if (pending.amount() <= 0L) {
@@ -286,9 +286,9 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
 
     @Override
     public void readState(
-            AdaptivePatternProviderDispatchTarget target,
-            CompoundTag tag,
-            HolderLookup.Provider registries) {
+                          AdaptivePatternProviderDispatchTarget target,
+                          CompoundTag tag,
+                          HolderLookup.Provider registries) {
         State state = state(target);
         state.pending.clear();
         if (!tag.contains(NBT_SEND_LIST, Tag.TAG_LIST)) {
@@ -323,8 +323,8 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
 
     @Override
     public void addDropsFast(
-            AdaptivePatternProviderDispatchTarget target,
-            ObjectList<ItemStack> drops) {
+                             AdaptivePatternProviderDispatchTarget target,
+                             ObjectList<ItemStack> drops) {
         for (PendingSend pending : state(target).pending) {
             if (pending.amount() > 0L) {
                 pending.key().addDrops(
@@ -343,10 +343,10 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
     }
 
     private static void queueRemainder(
-            AdaptivePatternProviderDispatchTarget target,
-            ResolvedTarget resolvedTarget,
-            AEKey key,
-            long amount) {
+                                       AdaptivePatternProviderDispatchTarget target,
+                                       ResolvedTarget resolvedTarget,
+                                       AEKey key,
+                                       long amount) {
         if (key == null || amount <= 0L) {
             return;
         }
@@ -363,8 +363,8 @@ public final class Ae2CrystalScienceAdaptiveRoute implements AdaptivePatternProv
     }
 
     private static boolean flushPending(
-            AdaptivePatternProviderDispatchTarget context,
-            ServerLevel sourceLevel) {
+                                        AdaptivePatternProviderDispatchTarget context,
+                                        ServerLevel sourceLevel) {
         State state = state(context);
         if (state.pending.isEmpty()) {
             return false;

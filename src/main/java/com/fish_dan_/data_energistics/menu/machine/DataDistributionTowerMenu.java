@@ -96,9 +96,9 @@ public class DataDistributionTowerMenu extends AEBaseMenu implements DataDistrib
         addSlot(this.boosterSlot, SlotSemantics.STORAGE);
         this.boosterSlot.setEmptyTooltip(() -> Tooltips.slotTooltip(ButtonToolTips.PlaceWirelessBooster.text()));
         registerClientAction(ACTION_FOCUS_TARGET, TargetAction.class, this::onFocusTarget);
-        registerClientAction(ACTION_SET_RANGE_VISIBLE, boolean.class, this::setRangeVisible);
-        registerClientAction(ACTION_SET_CONNECTION_MODE, int.class, this::setConnectionMode);
-        registerClientAction(ACTION_SET_RANGE_ADJUSTMENT_MODE, boolean.class, this::setRangeAdjustmentMode);
+        registerClientAction(ACTION_SET_RANGE_VISIBLE, Boolean.class, this::setRangeVisible);
+        registerClientAction(ACTION_SET_CONNECTION_MODE, Integer.class, this::setConnectionMode);
+        registerClientAction(ACTION_SET_RANGE_ADJUSTMENT_MODE, Boolean.class, this::setRangeAdjustmentMode);
         registerClientAction(ACTION_SET_TARGET_TRANSFER_MODE, TargetTransferModeAction.class, this::setTargetTransferMode);
         registerClientAction(
                 ACTION_SET_VIRTUAL_DEVICE_DISABLED,

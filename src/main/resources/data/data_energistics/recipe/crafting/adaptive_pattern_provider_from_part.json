@@ -1,0 +1,12 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"ingredients": [
+		{
+			"item": "data_energistics:adaptive_pattern_provider_part"
+		}
+	],
+	"result": {
+		"id": "data_energistics:adaptive_pattern_provider",
+		"count": 1
+	}
+}

@@ -1,0 +1,18 @@
+{
+	"type": "ae2:transform",
+	"circumstance": {
+		"type": "explosion"
+	},
+	"ingredients": [
+		{
+			"item": "data_energistics:data_meteorite_0"
+		},
+		{
+			"item": "data_energistics:data_crystal_block"
+		}
+	],
+	"result": {
+		"count": 1,
+		"id": "data_energistics:data_meteorite_1"
+	}
+}

@@ -10,16 +10,12 @@
 				"count": 18
 			},
 			{
-				"tag": "c:ingots/digisidian_memorize",
-				"count": 24
-			},
-			{
 				"item": "ae2:chest",
 				"count": 4
 			},
 			{
 				"item": "minecraft:wind_charge",
-				"count": 46
+				"count": 12
 			}
 		]
 	},

@@ -117,6 +117,7 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     private final FractionalScrollbarWheel previewWheel = new FractionalScrollbarWheel();
     private boolean previewVisible;
     private boolean previewOpenPending;
+    private boolean previewOpenReady;
     private boolean renderingPreviewTooltip;
     private float previewPartialTicks;
     private boolean previewScrollbarDragging;
@@ -158,6 +159,8 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
 
     @Override
     public void init() {
+        this.previewOpenPending = false;
+        this.previewOpenReady = false;
         invalidatePreviewLayout();
         super.init();
         PatternEncodingPreferencesClient.initializeMenu(this.menu);
@@ -187,12 +190,18 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
             if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
                 PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, false);
             }
+            this.previewOpenPending = false;
+            this.previewOpenReady = false;
             if (this.previewVisible) {
                 closePreviewPanels();
             }
         }
-        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() && !this.previewVisible) {
+        if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() &&
+                !this.previewVisible && !this.previewOpenPending && !this.previewOpenReady) {
             this.previewOpenPending = true;
+        } else if (!PatternEncodingPreferencesClient.isPreviewPanelPinned() && !this.previewVisible) {
+            this.previewOpenPending = false;
+            this.previewOpenReady = false;
         }
         updateProviderSearchBox();
         updateProviderRenameBox();
@@ -461,7 +470,9 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.previewPartialTicks = partialTicks;
-        invalidatePreviewLayout();
+        if (!this.previewOpenReady) {
+            invalidatePreviewLayout();
+        }
         deferPreviewLayerWidgets();
         try {
             super.render(guiGraphics, mouseX, mouseY, partialTicks);
@@ -480,6 +491,11 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
             this.previewOpenPending = false;
             invalidatePreviewLayout();
             getPreviewPanelBounds();
+            this.previewOpenReady = true;
+            return;
+        }
+        if (!this.previewVisible && this.previewOpenReady) {
+            this.previewOpenReady = false;
             openPreviewPanel();
             updateProviderSearchBox();
             updateProviderRenameBox();
@@ -997,12 +1013,15 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     private void closePreviewPanels() {
         this.previewVisible = false;
         this.previewOpenPending = false;
+        this.previewOpenReady = false;
         this.leafPanel.close();
         this.providerSearchContext = PatternProviderSearchContext.resolve(null);
         this.previewWheel.reset();
     }
 
     private void openPreviewPanel() {
+        this.previewOpenPending = false;
+        this.previewOpenReady = false;
         this.previewVisible = true;
         this.previewWheel.reset();
         refreshProviderSearchContext(true);

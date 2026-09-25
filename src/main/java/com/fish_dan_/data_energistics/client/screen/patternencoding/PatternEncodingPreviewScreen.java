@@ -212,9 +212,6 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() &&
                 !this.previewVisible && !this.previewOpenPending && !this.previewOpenReady) {
             this.previewOpenPending = true;
-        } else if (!PatternEncodingPreferencesClient.isPreviewPanelPinned() && !this.previewVisible) {
-            this.previewOpenPending = false;
-            this.previewOpenReady = false;
         }
         updateProviderSearchBox();
         updateProviderRenameBox();
@@ -583,7 +580,7 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
     @Override
     public List<Rect2i> getExclusionZones() {
         ObjectArrayList<Rect2i> zones = new ObjectArrayList<>(super.getExclusionZones());
-        if (this.previewVisible) {
+        if (this.previewVisible || this.previewOpenPending || this.previewOpenReady) {
             zones.addAll(getPreviewInteractiveBounds());
             zones.addAll(this.leafPanel.getInteractiveBounds());
         }
@@ -1267,7 +1264,11 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
     private void savePreviewPanelPosition(double mouseX, double mouseY) {
         updatePreviewPanelDragOffset(mouseX, mouseY);
         Rect2i previewBounds = getPreviewPanelBounds();
-        PatternEncodingPreferencesClient.setPreviewPanelPosition(previewBounds.getX(), previewBounds.getY());
+        PatternEncodingPreferencesClient.setPreviewPanelPosition(
+                PatternEncodingPreviewPlacement.horizontalPercent(
+                        previewBounds.getX(), getPreviewPanelWidth(), this.width),
+                PatternEncodingPreviewPlacement.verticalPercent(
+                        previewBounds.getY(), getPreviewPanelHeight(), this.height));
     }
 
     private void syncPreferenceSnapshotIfProvidersChanged() {
@@ -1433,28 +1434,19 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         var savedPosition = PatternEncodingPreferencesClient.previewPanelPosition();
         if (savedPosition.isPresent()) {
             var position = savedPosition.orElseThrow();
-            Rect2i clamped = clampPreviewPanelBounds(position.x(), position.y(), panelWidth, panelHeight);
-            if (clamped.getX() != position.x() || clamped.getY() != position.y()) {
-                PatternEncodingPreferencesClient.setPreviewPanelPosition(clamped.getX(), clamped.getY());
+            Rect2i savedBounds = PatternEncodingPreviewPlacement.fromPercent(
+                    position.xPercent(), position.yPercent(), panelWidth, panelHeight, this.width, this.height);
+            if (!PatternEncodingPreviewPlacement.overlapsAny(savedBounds, getOccupiedPreviewAnchorZones())) {
+                this.previewPanelBounds = savedBounds;
+                return this.previewPanelBounds;
             }
-            this.previewPanelBounds = clamped;
+            // A persisted position can become occupied after JEI or another screen overlay changes size.
+            // Reuse the automatic candidates for this screen instead of leaving the upload panel underneath it.
+            this.previewPanelBounds = getDefaultPreviewPanelBounds();
             return this.previewPanelBounds;
         }
 
         Rect2i defaultBounds = getDefaultPreviewPanelBounds();
-        var pendingOffset = PatternEncodingPreferencesClient.pendingPreviewPanelOffset();
-        if (pendingOffset.isPresent()) {
-            var offset = pendingOffset.orElseThrow();
-            Rect2i migrated = clampPreviewPanelBounds(
-                    defaultBounds.getX() + offset.x(),
-                    defaultBounds.getY() + offset.y(),
-                    panelWidth,
-                    panelHeight);
-            PatternEncodingPreferencesClient.migratePreviewPanelOffset(migrated.getX(), migrated.getY());
-            this.previewPanelBounds = migrated;
-            return this.previewPanelBounds;
-        }
-
         this.previewPanelBounds = defaultBounds;
         return this.previewPanelBounds;
     }

@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public final class JsonPatternEncodingClientPreferences implements PatternEncodingClientPreferences {
 
-    public static final int SCHEMA_VERSION = 6;
+    public static final int SCHEMA_VERSION = 7;
     public static final int MAX_STATISTICS_PER_PROFILE = 2048;
     public static final int MAX_STATISTICS_TOTAL = 8192;
     public static final int MAX_SERVER_PROFILES = 32;
@@ -71,8 +71,6 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     private ResourceLocation lastWorkstation;
     @Nullable
     private PreviewPanelPosition previewPanelPosition;
-    @Nullable
-    private PreviewPanelOffset pendingPreviewPanelOffset;
     private boolean providerDetailPanelPresent;
     private int providerDetailPanelRelativeX;
     private int providerDetailPanelRelativeY;
@@ -150,26 +148,10 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     }
 
     @Override
-    public Optional<PreviewPanelOffset> pendingPreviewPanelOffset() {
+    public void setPreviewPanelPosition(double xPercent, double yPercent) {
         ensureLoaded();
-        return Optional.ofNullable(this.pendingPreviewPanelOffset);
-    }
-
-    @Override
-    public void setPreviewPanelPosition(int x, int y) {
-        ensureLoaded();
-        validatePanelOffset(x, y);
-        this.previewPanelPosition = new PreviewPanelPosition(x, y);
-        this.pendingPreviewPanelOffset = null;
-        save();
-    }
-
-    @Override
-    public void migratePreviewPanelOffset(int x, int y) {
-        ensureLoaded();
-        validatePanelOffset(x, y);
-        this.previewPanelPosition = new PreviewPanelPosition(x, y);
-        this.pendingPreviewPanelOffset = null;
+        validatePanelPercentage(xPercent, yPercent);
+        this.previewPanelPosition = new PreviewPanelPosition(xPercent, yPercent);
         save();
     }
 
@@ -177,7 +159,6 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     public void clearPreviewPanelPosition() {
         ensureLoaded();
         this.previewPanelPosition = null;
-        this.pendingPreviewPanelOffset = null;
         save();
     }
 
@@ -331,24 +312,11 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
                 JsonObject previewPanel = readRequiredObject(preferences, "previewPanel");
                 if (previewPanel.has("position")) {
                     JsonObject position = readRequiredObject(previewPanel, "position");
-                    int x = readRequiredInt(position, "x");
-                    int y = readRequiredInt(position, "y");
-                    validatePanelOffset(x, y);
-                    this.previewPanelPosition = new PreviewPanelPosition(x, y);
-                } else if (previewPanel.has("legacyOffset")) {
-                    JsonObject offset = readRequiredObject(previewPanel, "legacyOffset");
-                    int x = readRequiredInt(offset, "x");
-                    int y = readRequiredInt(offset, "y");
-                    validatePanelOffset(x, y);
-                    if (x != 0 || y != 0) {
-                        this.pendingPreviewPanelOffset = new PreviewPanelOffset(x, y);
-                    }
-                } else if (schemaVersion < SCHEMA_VERSION && previewPanel.has("offsetX") && previewPanel.has("offsetY")) {
-                    int x = readRequiredInt(previewPanel, "offsetX");
-                    int y = readRequiredInt(previewPanel, "offsetY");
-                    validatePanelOffset(x, y);
-                    if (x != 0 || y != 0) {
-                        this.pendingPreviewPanelOffset = new PreviewPanelOffset(x, y);
+                    if (position.has("xPercent") && position.has("yPercent")) {
+                        double xPercent = readRequiredDouble(position, "xPercent");
+                        double yPercent = readRequiredDouble(position, "yPercent");
+                        validatePanelPercentage(xPercent, yPercent);
+                        this.previewPanelPosition = new PreviewPanelPosition(xPercent, yPercent);
                     }
                 }
             }
@@ -457,7 +425,6 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         this.patternSourceEnabled = true;
         this.lastWorkstation = null;
         this.previewPanelPosition = null;
-        this.pendingPreviewPanelOffset = null;
         this.providerDetailPanelRelativeX = 0;
         this.providerDetailPanelRelativeY = 0;
         this.providerDetailPanelPresent = false;
@@ -526,15 +493,9 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         JsonObject previewPanel = new JsonObject();
         if (this.previewPanelPosition != null) {
             JsonObject position = new JsonObject();
-            position.addProperty("x", this.previewPanelPosition.x());
-            position.addProperty("y", this.previewPanelPosition.y());
+            position.addProperty("xPercent", this.previewPanelPosition.xPercent());
+            position.addProperty("yPercent", this.previewPanelPosition.yPercent());
             previewPanel.add("position", position);
-        }
-        if (this.pendingPreviewPanelOffset != null) {
-            JsonObject legacyOffset = new JsonObject();
-            legacyOffset.addProperty("x", this.pendingPreviewPanelOffset.x());
-            legacyOffset.addProperty("y", this.pendingPreviewPanelOffset.y());
-            previewPanel.add("legacyOffset", legacyOffset);
         }
         preferences.add("previewPanel", previewPanel);
         if (this.providerDetailPanelPresent) {
@@ -667,6 +628,13 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         }
     }
 
+    private static void validatePanelPercentage(double xPercent, double yPercent) {
+        if (!Double.isFinite(xPercent) || !Double.isFinite(yPercent) ||
+                xPercent < 0.0 || xPercent > 1.0 || yPercent < 0.0 || yPercent > 1.0) {
+            throw new IllegalArgumentException("Preview panel position percentages must be finite values in [0, 1]");
+        }
+    }
+
     private static void validateProfileDigest(String profileDigest) {
         if (!PROFILE_DIGEST.matcher(profileDigest).matches()) {
             throw new IllegalArgumentException("Invalid server profile digest: " + profileDigest);
@@ -722,6 +690,22 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             throw new IllegalArgumentException("JSON integer is out of range: " + key);
         }
         return (int) value;
+    }
+
+    private static double readRequiredDouble(JsonObject parent, String key) {
+        if (!parent.has(key) || !parent.get(key).isJsonPrimitive() ||
+                !parent.getAsJsonPrimitive(key).isNumber()) {
+            throw new IllegalArgumentException("JSON field must be a number: " + key);
+        }
+        try {
+            double value = parent.get(key).getAsDouble();
+            if (!Double.isFinite(value)) {
+                throw new IllegalArgumentException("JSON number must be finite: " + key);
+            }
+            return value;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("JSON field must be a number: " + key, exception);
+        }
     }
 
     private static long readRequiredLong(JsonObject parent, String key) {

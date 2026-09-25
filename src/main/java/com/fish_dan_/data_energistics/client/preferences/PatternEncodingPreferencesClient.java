@@ -146,27 +146,17 @@ public final class PatternEncodingPreferencesClient {
         return PatternEncodingClientPreferencesAccess.get().previewPanelPinned();
     }
 
-    /** Returns the locally persisted absolute upload-panel position, when one exists. */
+    /** Returns the locally persisted percentage upload-panel position, when one exists. */
     public static Optional<PatternEncodingClientPreferences.PreviewPanelPosition> previewPanelPosition() {
         return PatternEncodingClientPreferencesAccess.get().previewPanelPosition();
     }
 
-    /** Returns the nonzero legacy relative position awaiting first stable layout migration. */
-    public static Optional<PatternEncodingClientPreferences.PreviewPanelOffset> pendingPreviewPanelOffset() {
-        return PatternEncodingClientPreferencesAccess.get().pendingPreviewPanelOffset();
+    /** Persists one percentage upload-panel position without involving a menu or server. */
+    public static void setPreviewPanelPosition(double xPercent, double yPercent) {
+        PatternEncodingClientPreferencesAccess.get().setPreviewPanelPosition(xPercent, yPercent);
     }
 
-    /** Persists one absolute upload-panel position without involving a menu or server. */
-    public static void setPreviewPanelPosition(int x, int y) {
-        PatternEncodingClientPreferencesAccess.get().setPreviewPanelPosition(x, y);
-    }
-
-    /** Converts one legacy relative position into the supplied absolute screen position. */
-    public static void migratePreviewPanelOffset(int x, int y) {
-        PatternEncodingClientPreferencesAccess.get().migratePreviewPanelOffset(x, y);
-    }
-
-    /** Removes the saved absolute position and restores automatic placement. */
+    /** Removes the saved percentage position and restores automatic placement. */
     public static void clearPreviewPanelPosition() {
         PatternEncodingClientPreferencesAccess.get().clearPreviewPanelPosition();
     }

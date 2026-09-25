@@ -63,27 +63,16 @@ public interface PatternEncodingClientPreferences {
     void setLastWorkstation(@Nullable ResourceLocation workstation);
 
     /**
-     * Returns the persisted absolute upload-panel position, or empty when automatic placement is active.
+     * Returns the persisted upload-panel position as percentages of the available screen area, or empty when
+     * automatic placement is active.
      */
     Optional<PreviewPanelPosition> previewPanelPosition();
 
-    /**
-     * Returns a legacy relative position waiting for first stable screen layout migration.
-     */
-    Optional<PreviewPanelOffset> pendingPreviewPanelOffset();
+    /** Persists an upload-panel position as horizontal and vertical percentages in the range {@code [0, 1]}. */
+    void setPreviewPanelPosition(double xPercent, double yPercent);
 
     /**
-     * Persists an absolute upload-panel position immediately and clears any pending legacy position.
-     */
-    void setPreviewPanelPosition(int x, int y);
-
-    /**
-     * Persists the absolute position produced by one legacy relative-position migration.
-     */
-    void migratePreviewPanelOffset(int x, int y);
-
-    /**
-     * Clears the absolute upload-panel position and restores automatic placement.
+     * Clears the percentage upload-panel position and restores automatic placement.
      */
     void clearPreviewPanelPosition();
 
@@ -119,9 +108,7 @@ public interface PatternEncodingClientPreferences {
     void recordUpload(PatternEncodingRankingContext context, String providerDigest,
                       long absoluteCount, long successEpochMillis);
 
-    record PreviewPanelPosition(int x, int y) {}
-
-    record PreviewPanelOffset(int x, int y) {}
+    record PreviewPanelPosition(double xPercent, double yPercent) {}
 
     record ProviderDetailPanelPosition(int relativeX, int relativeY) {}
 }

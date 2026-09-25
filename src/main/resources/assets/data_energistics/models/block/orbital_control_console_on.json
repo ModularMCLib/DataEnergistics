@@ -6,7 +6,7 @@
 	"texture_size": [64, 64],
 	"textures": {
 		"1": "data_energistics:block/orbital/orbital_control_console",
-		"2": "data_energistics:block/orbital/screen_off",
+		"2": "data_energistics:block/orbital/screen_on",
 		"particle": "data_energistics:block/orbital/orbital_control_console"
 	},
 	"elements": [

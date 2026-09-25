@@ -1,5 +1,11 @@
 # ChangeLog
 
+## Version [v3.3.1](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.0-1.21...v3.3.1-1.21)
+### Fixed
+
+- 修复上传面板打开、定位与自动避让 by @QiuYe-123 in [#361](https://github.com/ModularMCLib/DataEnergistics/pull/361)
+
+ 
 ## Version [v3.3.0](https://github.com/ModularMCLib/DataEnergistics/compare/v3.2.2-1.21...v3.3.0-1.21)
 ### Added
 

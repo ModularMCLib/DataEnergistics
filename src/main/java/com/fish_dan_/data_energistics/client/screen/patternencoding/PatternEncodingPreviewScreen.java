@@ -212,9 +212,6 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
         if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() &&
                 !this.previewVisible && !this.previewOpenPending && !this.previewOpenReady) {
             this.previewOpenPending = true;
-        } else if (!PatternEncodingPreferencesClient.isPreviewPanelPinned() && !this.previewVisible) {
-            this.previewOpenPending = false;
-            this.previewOpenReady = false;
         }
         updateProviderSearchBox();
         updateProviderRenameBox();

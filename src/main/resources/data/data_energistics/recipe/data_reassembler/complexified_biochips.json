@@ -4,11 +4,11 @@
 		"items": [
 			{
 				"item": "minecraft:fermented_spider_eye",
-				"count": 72
+				"count": 36
 			},
 			{
 				"item": "minecraft:rotten_flesh",
-				"count": 114
+				"count": 29
 			},
 			{
 				"item": "minecraft:nether_star",
@@ -16,7 +16,7 @@
 			},
 			{
 				"tag": "c:gems/data_crystal",
-				"count": 47
+				"count": 24
 			},
 			{
 				"item": "ae2:advanced_card",
@@ -24,18 +24,18 @@
 			},
 			{
 				"item": "ae2:logic_processor",
-				"count": 127
+				"count": 38
 			},
 			{
 				"item": "ae2:calculation_processor",
-				"count": 86
+				"count": 29
 			},
 			{
 				"item": "data_energistics:mob_data_carrier"
 			},
 			{
 				"item": "data_energistics:fluix_aggregate_crystal_processor",
-				"count": 42
+				"count": 27
 			}
 		],
 		"fluids": [

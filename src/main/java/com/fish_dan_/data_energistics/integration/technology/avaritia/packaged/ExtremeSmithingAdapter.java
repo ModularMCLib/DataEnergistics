@@ -52,6 +52,11 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("avaritia", "extreme_smithing_table"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return level.isLoaded(position) && level.getBlockState(position).getBlock() instanceof ExtremeSmithingTableBlock;
     }

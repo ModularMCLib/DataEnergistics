@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.api.registry.adaptive;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
+import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
@@ -10,6 +11,7 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
@@ -80,6 +82,25 @@ public interface AdaptivePatternProviderDispatch {
     /** Whether this route validates a whole machine instead of the connector's ordinary inventory capacity. */
     default boolean validatesMachineCapacity() {
         return false;
+    }
+
+    /**
+     * Resolves upload-search declarations for the machines currently adjacent to this adaptive provider.
+     *
+     * <p>
+     * The callback must only inspect already loaded runtime state. Returning {@code null} keeps the profile's
+     * static metadata as the compatibility fallback; returning an empty declaration means that no current target
+     * is recognized.
+     * </p>
+     *
+     * @param target           current provider runtime target
+     * @param recipeCategoryId current viewer category, or {@code null} when no category is selected
+     * @return live matching metadata, or {@code null} when this registration has no dynamic declarations
+     */
+    default @Nullable PatternProviderMatchingMetadata matchingMetadata(
+                                                                       AdaptivePatternProviderDispatchTarget target,
+                                                                       @Nullable ResourceLocation recipeCategoryId) {
+        return null;
     }
 
     /** Read-only recognition of a loaded machine main block that need not expose an inventory capability. */

@@ -26,6 +26,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
+import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
@@ -1239,6 +1240,19 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private AdaptivePatternProviderRuntimeTarget runtimeTarget(AdaptivePatternProviderRegistration registration) {
         return this.dispatchTargets.computeIfAbsent(registration.registrationId(),
                 ignored -> new AdaptivePatternProviderRuntimeTarget(this, registration));
+    }
+
+    /**
+     * Resolves upload-search declarations through the selected adaptive registration.
+     *
+     * <p>
+     * The registration owns the machine-specific lookup. A {@code null} result means that the registration keeps
+     * using its static profile metadata.
+     * </p>
+     */
+    public @Nullable PatternProviderMatchingMetadata resolveMatchingMetadata(@Nullable ResourceLocation recipeCategoryId) {
+        AdaptivePatternProviderRuntimeTarget target = activeDispatchTarget();
+        return target == null ? null : target.dispatch().matchingMetadata(target, recipeCategoryId);
     }
 
     private void restoreDispatchState(AdaptivePatternProviderRegistration registration, CompoundTag tag,

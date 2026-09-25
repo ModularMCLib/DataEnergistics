@@ -540,6 +540,9 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     }
 
     private int getExtraProviderSlotsFromCapacityCards() {
+        if (this.upgrades == null) {
+            return 0;
+        }
         return Math.max(0, this.upgrades.getInstalledUpgrades(AEItems.CAPACITY_CARD)) * AdaptivePatternProviderState.EXTRA_PROVIDER_SLOTS_PER_CAPACITY_CARD;
     }
 

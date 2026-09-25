@@ -62,6 +62,14 @@ public final class DataAsynchronousProcessingFactoryScreen
     }
 
     @Override
+    protected boolean isMutableGenericInputSemantic(SlotSemantic semantic) {
+        return super.isMutableGenericInputSemantic(semantic) ||
+                semantic == DataAsynchronousProcessingFactoryMenu.FLUID_INPUT_LEFT ||
+                semantic == DataAsynchronousProcessingFactoryMenu.FLUID_INPUT_RIGHT ||
+                isKeyInputSemantic(semantic);
+    }
+
+    @Override
     protected Component getEmptySlotTooltip(SlotSemantic semantic) {
         if (isKeyInputSemantic(semantic) || isKeyOutputSemantic(semantic)) {
             return Component.translatable("screen.data_energistics.data_reassembler.key.empty");

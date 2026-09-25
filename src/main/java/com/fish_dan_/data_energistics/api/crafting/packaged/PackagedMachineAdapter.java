@@ -29,6 +29,15 @@ public interface PackagedMachineAdapter {
     ObjectSet<ResourceLocation> recipeTypes();
 
     /**
+     * Immutable item registry IDs for physical workstations represented by this adapter.
+     * The IDs identify the workstation item, rather than its block entity or recipe category.
+     * Adapters that do not expose a viewer workstation use the empty set.
+     */
+    default ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of();
+    }
+
+    /**
      * Adds countable activation materials and real returned containers before a processing pattern is committed.
      * Called on the server with the exact viewer recipe ID. The input stack is not modified; return it unchanged
      * when this machine needs no augmentation, or null when the referenced recipe cannot be encoded correctly.

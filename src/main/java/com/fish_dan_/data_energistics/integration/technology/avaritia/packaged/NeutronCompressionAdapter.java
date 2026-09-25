@@ -54,6 +54,15 @@ public final class NeutronCompressionAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(
+                ResourceLocation.fromNamespaceAndPath("avaritia", "neutron_compressor"),
+                ResourceLocation.fromNamespaceAndPath("avaritia", "dense_neutron_compressor"),
+                ResourceLocation.fromNamespaceAndPath("avaritia", "denser_neutron_compressor"),
+                ResourceLocation.fromNamespaceAndPath("avaritia", "densest_neutron_compressor"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return machine(level, position) != null;
     }

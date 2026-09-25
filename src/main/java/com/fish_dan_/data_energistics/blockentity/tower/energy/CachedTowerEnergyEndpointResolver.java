@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.blockentity.tower.energy;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegrationRegistry;
 import com.fish_dan_.data_energistics.util.ThrowableIsolation;
@@ -75,17 +74,6 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
     }
 
     @Override
-    public List<TowerEnergyEndpoint> collectEnergyEndpoints(List<DataDistributionTowerBlockEntity> towers,
-                                                            boolean forReceive) {
-        return filterByDirection(resolveDirectionalEndpoints(resolveTopologyEndpoints(towers)), forReceive);
-    }
-
-    @Override
-    public List<TowerEnergyEndpoint> collectClusterEnergyEndpoints(boolean forReceive) {
-        return getCachedResolvedEnergyEndpoints(forReceive);
-    }
-
-    @Override
     public List<TowerEnergyEndpoint> getCachedResolvedEnergyEndpoints(boolean forReceive) {
         Level level = this.context.level();
         if (level == null) {
@@ -93,7 +81,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         }
 
         if (!this.topologyResolutionValid) {
-            this.cachedTopologyEndpoints = resolveTopologyEndpoints(this.context.collectTowerCluster());
+            this.cachedTopologyEndpoints = resolveTopologyEndpoints();
             this.topologyResolutionValid = true;
         }
 
@@ -138,23 +126,20 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         this.reusableEndpointFilter.clear();
     }
 
-    private List<TowerEnergyEndpointCandidate> resolveTopologyEndpoints(
-                                                                        List<DataDistributionTowerBlockEntity> towers) {
+    private List<TowerEnergyEndpointCandidate> resolveTopologyEndpoints() {
         Object2ObjectLinkedOpenHashMap<TowerEnergyEndpointKey, TowerEnergyEndpointCandidate> endpoints = new Object2ObjectLinkedOpenHashMap<>();
-        for (DataDistributionTowerBlockEntity tower : towers) {
-            for (BlockPos pos : this.context.cachedEndpointPositions(tower)) {
-                if (!this.context.targetAllowsFe(tower, pos)) {
-                    continue;
-                }
+        for (BlockPos pos : this.context.cachedEndpointPositions()) {
+            if (!this.context.targetAllowsFe(pos)) {
+                continue;
+            }
 
-                boolean receiveExcluded = this.context.isDedicatedAeGridTarget(tower, pos);
-                for (TowerEnergyEndpointCandidate endpoint : resolveEndpointCandidates(pos)) {
-                    TowerEnergyEndpointCandidate candidate = endpoint.withReceiveExcluded(receiveExcluded);
-                    endpoints.merge(
-                            new TowerEnergyEndpointKey(candidate.pos(), candidate.side()),
-                            candidate,
-                            TowerEnergyEndpointCandidate::mergeReceiveAccess);
-                }
+            boolean receiveExcluded = this.context.isDedicatedAeGridTarget(pos);
+            for (TowerEnergyEndpointCandidate endpoint : resolveEndpointCandidates(pos)) {
+                TowerEnergyEndpointCandidate candidate = endpoint.withReceiveExcluded(receiveExcluded);
+                endpoints.merge(
+                        new TowerEnergyEndpointKey(candidate.pos(), candidate.side()),
+                        candidate,
+                        TowerEnergyEndpointCandidate::mergeReceiveAccess);
             }
         }
         return List.copyOf(endpoints.values());

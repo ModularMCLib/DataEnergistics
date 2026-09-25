@@ -23,8 +23,8 @@ import java.util.function.LongSupplier;
  * Exposes one primary Grid's reconciled cross-dimensional FE topology as a direct capability port.
  *
  * <p>
- * The port is server-thread confined. It preserves stable endpoint order, simulates every mutation first, isolates a
- * failing route, and never reaches back into the obsolete position-only tower cluster.
+ * The port is server-thread confined. It preserves stable endpoint order, simulates every mutation first, and
+ * isolates a failing route.
  * </p>
  */
 public final class SharedTowerEnergyPort {

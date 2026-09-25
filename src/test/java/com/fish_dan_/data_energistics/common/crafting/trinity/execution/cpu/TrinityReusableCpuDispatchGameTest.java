@@ -312,9 +312,9 @@ public final class TrinityReusableCpuDispatchGameTest {
                 KeyCounter[] sample = { new KeyCounter(), new KeyCounter() };
                 sample[0].add(tool(), 1L);
                 sample[1].add(material(), 1L);
-                double minimumCharge = PowerMultiplier.CONFIG.multiply(CraftingCpuHelper.calculatePatternPower(sample) * requested);
+                double minimumCharge = PowerMultiplier.CONFIG.multiply(CraftingCpuHelper.calculatePatternPower(sample) * admissions);
                 helper.assertTrue(powerAtSubmit - power + 0.00001D >= minimumCharge,
-                        "Resident optimization must not reduce per-operation CPU energy charges");
+                        "Every physical reusable admission must pay one CPU energy charge");
                 close();
                 helper.succeed();
             }

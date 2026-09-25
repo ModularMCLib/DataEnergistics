@@ -12,8 +12,6 @@ import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingInheri
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingMultiblockTransferState;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutHelper;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
@@ -83,7 +81,6 @@ import java.util.Objects;
 @Mixin(value = PatternEncodingTermMenu.class, priority = 900)
 public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
                                                    implements PatternEncodingPreviewMenu, PatternEncodingSourceAware, PatternEncodingTransferKeyAware,
-                                                   PatternEncodingPreviewLayoutAware,
                                                    BlankPatternProxyMenu, PatternEncodingMultiblockTransferTarget,
                                                    PatternEncodingPreferenceMenu, PatternEncodingInheritedState,
                                                    PatternOutputMatchMenu {
@@ -108,12 +105,6 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
     private static final String DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE = "dataEnergistics$clearPatternSourceState";
     @Unique
     private static final String DATA_ENERGISTICS_ACTION_SET_PROCESSING_MATCH_MODE = "dataEnergistics$setProcessingMatchMode";
-    @GuiSync(795)
-    @Unique
-    public int dataEnergistics$previewPanelOffsetX;
-    @GuiSync(796)
-    @Unique
-    public int dataEnergistics$previewPanelOffsetY;
     @GuiSync(794)
     @Unique
     public boolean dataEnergistics$uploadEnabled = true;
@@ -991,35 +982,6 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
         this.dataEnergistics$uploadEnabled = enabled;
     }
 
-    @Override
-    public int data_energistics$getPreviewPanelOffsetX() {
-        return this.dataEnergistics$previewPanelOffsetX;
-    }
-
-    @Override
-    public int data_energistics$getPreviewPanelOffsetY() {
-        return this.dataEnergistics$previewPanelOffsetY;
-    }
-
-    @Override
-    public void data_energistics$setPreviewPanelOffset(int offsetX, int offsetY) {
-        if (this.isClientSide()) {
-            sendClientAction(PatternEncodingPreviewLayoutHelper.ACTION_SET_PREVIEW_PANEL_OFFSET,
-                    offsetX + "," + offsetY);
-        }
-        this.dataEnergistics$previewPanelOffsetX = offsetX;
-        this.dataEnergistics$previewPanelOffsetY = offsetY;
-    }
-
-    @Override
-    public void data_energistics$resetPreviewPanelOffset() {
-        if (this.isClientSide()) {
-            sendClientAction(PatternEncodingPreviewLayoutHelper.ACTION_RESET_PREVIEW_PANEL_OFFSET);
-        }
-        this.dataEnergistics$previewPanelOffsetX = 0;
-        this.dataEnergistics$previewPanelOffsetY = 0;
-    }
-
     @Inject(
             method = "<init>(Lnet/minecraft/world/inventory/MenuType;ILnet/minecraft/world/entity/player/Inventory;Lappeng/helpers/IPatternTerminalMenuHost;Z)V",
             at = @At("RETURN"))
@@ -1076,10 +1038,6 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu
         });
         registerClientAction(DATA_ENERGISTICS_ACTION_CLEAR_PATTERN_SOURCE_STATE,
                 this::data_energistics$clearPatternSourceState);
-        registerClientAction(PatternEncodingPreviewLayoutHelper.ACTION_SET_PREVIEW_PANEL_OFFSET, String.class,
-                payload -> PatternEncodingPreviewLayoutHelper.applySetOffsetAction(this, payload));
-        registerClientAction(PatternEncodingPreviewLayoutHelper.ACTION_RESET_PREVIEW_PANEL_OFFSET,
-                this::data_energistics$resetPreviewPanelOffset);
         registerClientAction(DATA_ENERGISTICS_ACTION_DEPOSIT_CARRIED_BLANK_PATTERNS, Boolean.class,
                 this::dataEnergistics$depositCarriedBlankPatternsFromClient);
         registerClientAction(DATA_ENERGISTICS_ACTION_PICKUP_BLANK_PATTERNS, Boolean.class,

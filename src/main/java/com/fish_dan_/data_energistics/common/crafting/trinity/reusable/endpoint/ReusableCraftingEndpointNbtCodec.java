@@ -67,27 +67,22 @@ public final class ReusableCraftingEndpointNbtCodec {
         requireType(tag, "schema", Tag.TAG_INT);
         requireType(tag, "target", Tag.TAG_STRING);
         int schema = tag.getInt("schema");
-        if (schema < 1 || schema > SCHEMA) {
+        if (schema < 2 || schema > SCHEMA) {
             throw new IllegalArgumentException("Unsupported native reusable endpoint schema");
         }
         List<EntrySnapshot> snapshots = new ObjectArrayList<>();
         for (Tag encoded : compounds(tag, "sessions")) {
             CompoundTag entry = (CompoundTag) encoded;
             requireType(entry, "session", Tag.TAG_COMPOUND);
-            RecordedNativeResult recorded = null;
-            if (schema >= 2) {
-                requireType(entry, "native_result", Tag.TAG_COMPOUND);
-                CompoundTag nativeResult = entry.getCompound("native_result");
-                if (schema >= 3 && !nativeResult.isEmpty()) {
-                    requireType(nativeResult, "pending", Tag.TAG_BYTE);
-                    requireType(nativeResult, "asynchronous", Tag.TAG_BYTE);
-                }
-                recorded = decodeResult(nativeResult, registries);
-                if (schema < 3 && recorded != null && (recorded.asynchronous() || recorded.result().pending())) {
-                    throw new IllegalArgumentException("Legacy native checkpoint cannot resume asynchronously");
-                }
-            } else if (entry.contains("native_result")) {
-                throw new IllegalArgumentException("Legacy endpoint schema cannot contain a native result checkpoint");
+            requireType(entry, "native_result", Tag.TAG_COMPOUND);
+            CompoundTag nativeResult = entry.getCompound("native_result");
+            if (schema >= 3 && !nativeResult.isEmpty()) {
+                requireType(nativeResult, "pending", Tag.TAG_BYTE);
+                requireType(nativeResult, "asynchronous", Tag.TAG_BYTE);
+            }
+            RecordedNativeResult recorded = decodeResult(nativeResult, registries);
+            if (schema < 3 && recorded != null && (recorded.asynchronous() || recorded.result().pending())) {
+                throw new IllegalArgumentException("3.2.2 native checkpoint cannot resume asynchronously");
             }
             ReusableInputSession session = schema >= 3 && recorded != null && recorded.asynchronous() ?
                     ReusableInputSessionNbtCodec.decodeWithNativeCheckpoint(entry.getCompound("session"), registries, recorded.operationId()) :

@@ -50,6 +50,11 @@ public final class BotanicalBreweryAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("botania", "botanical_brewery"));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return level.isLoaded(position) && level.getBlockEntity(position) instanceof BotanicalBreweryBlockEntity;
     }

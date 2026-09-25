@@ -1667,21 +1667,34 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
                 return 0;
             }
 
+            int filled = 0;
             for (int i = 0; i < FLUID_SLOTS; i++) {
                 FluidTank tank = getTank(i);
-                if (!tank.getFluid().isEmpty() && FluidStack.isSameFluidSameComponents(tank.getFluid(), resource)) {
-                    return tank.fill(resource, action);
+                if (tank.getFluid().isEmpty() || !FluidStack.isSameFluidSameComponents(tank.getFluid(), resource)) {
+                    continue;
+                }
+                FluidStack remaining = resource.copy();
+                remaining.shrink(filled);
+                filled += tank.fill(remaining, action);
+                if (filled >= resource.getAmount()) {
+                    return filled;
                 }
             }
 
             for (int i = 0; i < FLUID_SLOTS; i++) {
                 FluidTank tank = getTank(i);
                 if (tank.getFluid().isEmpty() && !conflictsWithOtherTanks(i, resource)) {
-                    return tank.fill(resource, action);
+                    FluidStack remaining = resource.copy();
+                    remaining.shrink(filled);
+                    int inserted = tank.fill(remaining, action);
+                    filled += inserted;
+                    if (inserted > 0 || filled >= resource.getAmount()) {
+                        return filled;
+                    }
                 }
             }
 
-            return 0;
+            return filled;
         }
 
         @Override
@@ -1690,24 +1703,54 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
                 return FluidStack.EMPTY;
             }
 
+            FluidStack drainedTotal = FluidStack.EMPTY;
             for (int i = 0; i < FLUID_SLOTS; i++) {
-                FluidStack drained = getTank(i).drain(resource, action);
-                if (!drained.isEmpty()) {
-                    return drained;
+                if (drainedTotal.getAmount() >= resource.getAmount()) {
+                    break;
+                }
+                FluidStack remaining = resource.copy();
+                remaining.shrink(drainedTotal.getAmount());
+                FluidStack drained = getTank(i).drain(remaining, action);
+                if (drained.isEmpty()) {
+                    continue;
+                }
+                if (drainedTotal.isEmpty()) {
+                    drainedTotal = drained.copy();
+                } else {
+                    drainedTotal.grow(drained.getAmount());
                 }
             }
-            return FluidStack.EMPTY;
+            return drainedTotal;
         }
 
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
+            if (maxDrain <= 0) {
+                return FluidStack.EMPTY;
+            }
+
+            FluidStack drainedTotal = FluidStack.EMPTY;
             for (int i = 0; i < FLUID_SLOTS; i++) {
-                FluidStack drained = getTank(i).drain(maxDrain, action);
+                FluidStack stored = getTank(i).getFluid();
+                if (stored.isEmpty()) {
+                    continue;
+                }
+                if (drainedTotal.isEmpty()) {
+                    drainedTotal = stored.copyWithAmount(0);
+                } else if (!FluidStack.isSameFluidSameComponents(stored, drainedTotal)) {
+                    continue;
+                }
+
+                int remaining = maxDrain - drainedTotal.getAmount();
+                if (remaining <= 0) {
+                    break;
+                }
+                FluidStack drained = getTank(i).drain(remaining, action);
                 if (!drained.isEmpty()) {
-                    return drained;
+                    drainedTotal.grow(drained.getAmount());
                 }
             }
-            return FluidStack.EMPTY;
+            return drainedTotal;
         }
 
         private FluidTank getTank(int tank) {

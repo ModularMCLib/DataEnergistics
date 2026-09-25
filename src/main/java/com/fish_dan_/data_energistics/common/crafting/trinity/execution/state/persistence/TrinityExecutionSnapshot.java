@@ -48,6 +48,7 @@ import java.util.Set;
  * @param borrowingEntries   ownership-preserving dynamic borrowing history
  * @param savedAtTick        non-negative server tick used to convert retry deadlines across a restart
  * @param budgetRetryAt      next tick after a physical budget exhaustion, or {@code -1}
+ * @param streamingDag       whether non-cyclic stages may start from available material before predecessors finish
  * @param productionRetired  whether recovery explicitly retired production while retaining output delivery ownership
  */
 public record TrinityExecutionSnapshot(
@@ -70,6 +71,7 @@ public record TrinityExecutionSnapshot(
                                        Map<AEKey, TrinityBorrowingLedger.Balances> borrowingEntries,
                                        long savedAtTick,
                                        long budgetRetryAt,
+                                       boolean streamingDag,
                                        boolean productionRetired) {
 
     /**

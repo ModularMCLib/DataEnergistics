@@ -25,6 +25,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -64,7 +65,7 @@ public class RemoteLinkConnectorItem extends Item {
             return InteractionResultHolder.success(stack);
         }
         if (data.targetType() == ConnectorHostType.TOWER && !player.isShiftKeyDown()) {
-            DataDistributionTowerBlockEntity tower = resolveSelectedTower(level, data);
+            DataDistributionTowerBlockEntity tower = level instanceof ServerLevel serverLevel ? resolveSelectedTower(serverLevel.getServer(), data) : resolveSelectedTower(level, data);
             if (tower == null || !tower.connectionMode().allowsFeTargets()) {
                 return InteractionResultHolder.pass(stack);
             }
@@ -124,9 +125,9 @@ public class RemoteLinkConnectorItem extends Item {
             return bindAdaptiveProvider(stack, player, level, clickedPos);
         }
         RemoteLinkConnectorData selection = getConnectorData(stack);
-        if (player.isShiftKeyDown() && selection.targetType() == ConnectorHostType.TOWER && selection.hasSelection() && !clickedState.is(DEBlocks.DATA_DISTRIBUTION_TOWER.get())) {
-            DataDistributionTowerBlockEntity tower = resolveSelectedTower(level, selection);
-            if (tower != null && tower.removeTargetFromConnector(clickedPos)) {
+        if (player.isShiftKeyDown() && selection.targetType() == ConnectorHostType.TOWER && selection.hasSelection()) {
+            DataDistributionTowerBlockEntity tower = level instanceof ServerLevel serverLevel ? resolveSelectedTower(serverLevel.getServer(), selection) : resolveSelectedTower(level, selection);
+            if (tower != null && level instanceof ServerLevel targetLevel && tower.removeTargetFromConnector(targetLevel, clickedPos)) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".unbound_target"), true);
                 return InteractionResult.SUCCESS;
             }
@@ -242,32 +243,15 @@ public class RemoteLinkConnectorItem extends Item {
             return connectAdaptiveProvider(stack, player, level, clickedPos, clickedFace, showFailureMessages);
         }
 
-        if (!level.dimension().location().toString().equals(data.dimensionId())) {
+        if (!(level instanceof ServerLevel targetLevel)) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".tower_missing"), true);
             }
             return InteractionResult.FAIL;
         }
 
-        ResourceKey<Level> dimensionKey = ResourceKey.create(Registries.DIMENSION,
-                ResourceLocation.parse(data.dimensionId()));
-        if (!level.dimension().equals(dimensionKey)) {
-            if (showFailureMessages) {
-                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".tower_missing"), true);
-            }
-            return InteractionResult.FAIL;
-        }
-
-        BlockPos towerPos = data.getTowerPos();
-        if (!level.isLoaded(towerPos)) {
-            if (showFailureMessages) {
-                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".tower_missing"), true);
-            }
-            return InteractionResult.FAIL;
-        }
-
-        BlockEntity blockEntity = level.getBlockEntity(towerPos);
-        if (!(blockEntity instanceof DataDistributionTowerBlockEntity tower)) {
+        DataDistributionTowerBlockEntity tower = resolveSelectedTower(targetLevel.getServer(), data);
+        if (tower == null) {
             stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(), data.clear());
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".tower_missing"), true);
@@ -282,7 +266,7 @@ public class RemoteLinkConnectorItem extends Item {
         }
 
         DataDistributionTowerBlockEntity.ConnectorBindResult result = tower.bindTargetFromConnector(
-                clickedPos, data.energyDirection(), clickedFace.get3DDataValue());
+                targetLevel, clickedPos, data.energyDirection(), clickedFace.get3DDataValue());
         if (!result.success()) {
             if (showFailureMessages) {
                 player.displayClientMessage(Component.translatable(switch (result.failure()) {
@@ -383,6 +367,20 @@ public class RemoteLinkConnectorItem extends Item {
         return level.getBlockEntity(data.getTowerPos()) instanceof DataDistributionTowerBlockEntity tower ? tower : null;
     }
 
+    @Nullable
+    private static DataDistributionTowerBlockEntity resolveSelectedTower(
+                                                                         MinecraftServer server, RemoteLinkConnectorData data) {
+        ResourceLocation dimensionId = ResourceLocation.tryParse(data.dimensionId());
+        if (dimensionId == null) {
+            return null;
+        }
+        ServerLevel towerLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
+        if (towerLevel == null || !towerLevel.isLoaded(data.getTowerPos())) {
+            return null;
+        }
+        return towerLevel.getBlockEntity(data.getTowerPos()) instanceof DataDistributionTowerBlockEntity tower ? tower : null;
+    }
+
     private InteractionResult connectInterface(ItemStack stack, Player player, Level level, BlockPos target,
                                                Direction side, boolean feedback) {
         var data = getConnectorData(stack);
@@ -409,7 +407,7 @@ public class RemoteLinkConnectorItem extends Item {
 
     public static @Nullable ConnectorEndpoint resolveEndpoint(Level level, RemoteLinkConnectorData data) {
         if (data.targetType() == ConnectorHostType.TOWER) {
-            DataDistributionTowerBlockEntity tower = resolveSelectedTower(level, data);
+            DataDistributionTowerBlockEntity tower = level instanceof ServerLevel serverLevel ? resolveSelectedTower(serverLevel.getServer(), data) : resolveSelectedTower(level, data);
             return tower == null ? null : new TowerConnectorEndpoint(tower, data);
         }
         if (!data.hasSelection() || data.providerSide() != -1 || !level.dimension().location().toString().equals(data.providerDimensionId()) ||

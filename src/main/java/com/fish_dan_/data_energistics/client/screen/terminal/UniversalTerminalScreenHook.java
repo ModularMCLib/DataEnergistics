@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.util.ReflectionAccess;
 
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.AESubScreen;
 import appeng.client.gui.widgets.VerticalButtonBar;
 import appeng.menu.AEBaseMenu;
 
@@ -52,6 +53,10 @@ public final class UniversalTerminalScreenHook {
         if (!(event.getScreen() instanceof AEBaseScreen<?> screen)) {
             return;
         }
+        if (isExcludedSubScreen(screen)) {
+            detachExistingControls(screen);
+            return;
+        }
 
         AEBaseMenu menu = screen.getMenu();
         boolean supportsUniversalTerminal = UniversalTerminalClientHelper.supportsUniversalTerminal(menu);
@@ -71,6 +76,10 @@ public final class UniversalTerminalScreenHook {
         if (!(event.getScreen() instanceof AEBaseScreen<?> screen)) {
             return;
         }
+        if (isExcludedSubScreen(screen)) {
+            detachExistingControls(screen);
+            return;
+        }
 
         AEBaseMenu menu = screen.getMenu();
         if (!UniversalTerminalClientHelper.supportsUniversalTerminal(menu)) {
@@ -86,6 +95,10 @@ public final class UniversalTerminalScreenHook {
 
     public static void onContainerForeground(ContainerScreenEvent.Render.Foreground event) {
         var screen = event.getContainerScreen();
+        if (screen instanceof AESubScreen<?, ?> subScreen) {
+            detachExistingControls(subScreen);
+            return;
+        }
         UniversalTerminalSelectorPanel panel = SELECTOR_PANELS.get(screen);
         if (panel == null || !panel.isOpen()) {
             return;
@@ -110,10 +123,17 @@ public final class UniversalTerminalScreenHook {
     }
 
     public static void onRenderTooltip(RenderTooltipEvent.Pre event) {
+        if (Minecraft.getInstance().screen instanceof AESubScreen<?, ?>) {
+            return;
+        }
         UniversalTerminalSelectorPanel panel = SELECTOR_PANELS.get(Minecraft.getInstance().screen);
         if (panel != null && panel.isMouseOver(event.getX(), event.getY())) {
             event.setCanceled(true);
         }
+    }
+
+    private static boolean isExcludedSubScreen(AEBaseScreen<?> screen) {
+        return screen instanceof AESubScreen<?, ?>;
     }
 
     static void rememberSelectorState(boolean open, int page) {

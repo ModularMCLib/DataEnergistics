@@ -71,7 +71,7 @@ public record UniversalTerminalItemData(String activeTerminal, List<TerminalEntr
         return tag;
     }
 
-    /** Reads the current part representation used by both release 3.1.3 and current terminal parts. */
+    /** Reads the current part representation used by release 3.2.2 and current terminal parts. */
     public static UniversalTerminalItemData fromPartTag(CompoundTag tag, HolderLookup.Provider registries) {
         List<TerminalEntryData> entries = new ObjectArrayList<>();
         ListTag terminalList = tag.getList(TAG_TERMINALS, CompoundTag.TAG_COMPOUND);

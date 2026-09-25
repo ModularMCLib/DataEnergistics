@@ -25,6 +25,7 @@ public final class DECreativeTabs {
                     .title(Component.translatable("itemGroup." + Data_Energistics.MODID))
                     .icon(DEItems.DATA_CRYSTAL::toStack)
                     .displayItems((parameters, output) -> {
+                        // Storage cells and storage components.
                         output.accept(DEItems.DIGITAL_STORAGE_CELL_1K);
                         output.accept(DEItems.DIGITAL_STORAGE_CELL_4K);
                         output.accept(DEItems.DIGITAL_STORAGE_CELL_16K);
@@ -58,20 +59,47 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DATA_STORAGE_COMPONENT_16M);
                         output.accept(DEItems.DATA_STORAGE_COMPONENT_64M);
                         output.accept(DEItems.DATA_STORAGE_COMPONENT_256M);
+                        output.accept(DEItems.DIGITAL_STORAGE_DEPOT);
+                        output.accept(DEItems.DATA_ENERGY_CELL);
+                        output.accept(DEItems.DATA_FLOW_COMPONENT_HOUSING);
 
+                        // Data processing and network machines.
+                        output.accept(DEItems.DATA_FRAMEWORK);
+                        output.accept(DEItems.DATA_CHARGER);
+                        output.accept(DEItems.EXTENDED_DATA_CHARGER);
+                        output.accept(DEItems.DATA_INTEGRATED_CHARGER);
+                        output.accept(DEItems.DATA_IO_PORT);
+                        output.accept(DEItems.DATA_EXTRACTOR);
+                        output.accept(DEItems.DATA_RIPPER_REASSEMBLER);
+                        output.accept(DEItems.DATA_ASYNCHRONOUS_PROCESSING_FACTORY);
+                        output.accept(DEItems.DATA_MIMETIC_FIELD);
+                        output.accept(DEItems.DATA_DISTRIBUTION_TOWER);
+                        output.accept(DEItems.DATA_DISTRIBUTION_CONNECTOR);
+                        output.accept(DEItems.DATA_TELEPORT_ANCHOR);
+
+                        // Pattern providers, interfaces, and terminals.
+                        output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER);
+                        output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER_PART);
+                        output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER_UPGRADE);
+                        output.accept(DEItems.DIGITAL_PACKAGED_PATTERN_PROVIDER);
+                        output.accept(DEItems.DATA_SANCTUM);
+                        output.accept(DEItems.DATA_SANCTUM_INTERFACE);
+                        output.accept(DEItems.DATA_SANCTUM_INTERFACE_PART);
+                        output.accept(DEItems.DATA_SANCTUM_INTERFACE_UPGRADE);
+                        output.accept(DEItems.UNIVERSAL_TERMINAL);
+                        output.accept(DEItems.ORDER_PACKAGE);
+
+                        // Solar power and beam tools.
                         output.accept(DEItems.DATA_SOLAR_PANEL);
+                        output.accept(DEItems.ME_DATA_SOLAR_PANEL);
+                        output.accept(DEItems.ME_SOLAR_PANEL_PART);
+                        output.accept(DEItems.ME_DATA_SOLAR_PANEL_PART);
                         output.accept(DEItems.ME_BEAM_FORMER_PART);
                         output.accept(DEItems.ME_BEAM_FORMER);
                         output.accept(DEItems.ME_OMNI_BEAM_FORMER);
                         output.accept(DEItems.BEAM_BINDING_TOOL);
-                        output.accept(DEItems.ME_DATA_SOLAR_PANEL);
-                        output.accept(DEItems.DATA_EXTRACTOR);
-                        output.accept(DEItems.DATA_RIPPER_REASSEMBLER);
-                        output.accept(DEItems.DATA_ASYNCHRONOUS_PROCESSING_FACTORY);
-                        output.accept(DEItems.DATA_FRAMEWORK);
-                        output.accept(DEItems.DATA_DISTRIBUTION_TOWER);
-                        output.accept(DEItems.DATA_MIMETIC_FIELD);
-                        output.accept(DEItems.DATA_TELEPORT_ANCHOR);
+
+                        // Astronomy and orbital equipment.
                         output.accept(DEItems.ORBITAL_CONTROL_CONSOLE);
                         output.accept(DEItems.ORBITAL_UPLINK_BEACON);
                         output.accept(DEItems.ORBITAL_CONTROL_TERMINAL);
@@ -80,26 +108,18 @@ public final class DECreativeTabs {
                         output.accept(DEItems.ASTRONOMICAL_MIRROR);
                         output.accept(DEItems.ASTRONOMICAL_MIRROR_PANEL);
                         output.accept(DEItems.CELESTIAL_WAVEGUIDE);
-                        output.accept(DEItems.DATA_SANCTUM);
-                        output.accept(DEItems.DATA_SANCTUM_INTERFACE);
-                        output.accept(DEItems.DATA_CHARGER);
-                        output.accept(DEItems.EXTENDED_DATA_CHARGER);
-                        output.accept(DEItems.DATA_INTEGRATED_CHARGER);
-                        output.accept(DEItems.DATA_IO_PORT);
-                        output.accept(DEItems.DATA_ENERGY_CELL);
-                        output.accept(DEItems.DATA_SANCTUM_INTERFACE_PART);
-                        output.accept(DEItems.DATA_SANCTUM_INTERFACE_UPGRADE);
-                        output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER);
-                        output.accept(DEItems.DIGITAL_PACKAGED_PATTERN_PROVIDER);
-                        output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER_UPGRADE);
-                        output.accept(DEItems.TNT_CONFIGURABLE);
-                        output.accept(DEItems.DATA_NUKE);
-                        output.accept(DEItems.RESIDUAL_DATA_ORE);
-                        output.accept(DEItems.ENDER_COHESION_METEORITE_0);
-                        output.accept(DEItems.ENDER_COHESION_METEORITE_1);
-                        output.accept(DEItems.ENDER_COHESION_METEORITE_2);
-                        output.accept(DEItems.DATA_METEORITE_COMPASS);
+
+                        // Data and resonance crystals.
                         output.accept(DEItems.DATA_CRYSTAL_BLOCK);
+                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_0);
+                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_1);
+                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_2);
+                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_3);
+                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_4);
+                        output.accept(DEItems.SMALL_DATA_CRYSTAL_BUD);
+                        output.accept(DEItems.MEDIUM_DATA_CRYSTAL_BUD);
+                        output.accept(DEItems.LARGE_DATA_CRYSTAL_BUD);
+                        output.accept(DEItems.DATA_CRYSTAL_CLUSTER);
                         output.accept(DEItems.TUNING_FORK_BASE);
                         output.accept(DEItems.RESONANCE_DIGITALIZATION_CORE);
                         output.accept(DEItems.AMETHYST_TUNING_FORK);
@@ -111,21 +131,9 @@ public final class DECreativeTabs {
                         output.accept(DEItems.LARGE_RESONANCE_CRYSTAL_BUD);
                         output.accept(DEItems.RESONANCE_CRYSTAL_CLUSTER);
                         output.accept(DEItems.RESONANCE_CRYSTAL);
-                        output.accept(DEItems.DIGITAL_STORAGE_DEPOT);
-                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_0);
-                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_1);
-                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_2);
-                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_3);
-                        output.accept(DEItems.BUDDING_DATA_CRYSTAL_4);
-                        output.accept(DEItems.SMALL_DATA_CRYSTAL_BUD);
-                        output.accept(DEItems.MEDIUM_DATA_CRYSTAL_BUD);
-                        output.accept(DEItems.LARGE_DATA_CRYSTAL_BUD);
-                        output.accept(DEItems.DATA_CRYSTAL_CLUSTER);
-                        output.accept(DEItems.ADAPTIVE_PATTERN_PROVIDER_PART);
-                        output.accept(DEItems.ME_SOLAR_PANEL_PART);
-                        output.accept(DEItems.ME_DATA_SOLAR_PANEL_PART);
-                        output.accept(DEItems.UNIVERSAL_TERMINAL);
                         output.accept(DEItems.DATA_CRYSTAL);
+
+                        // Tools, weapons, and ammunition.
                         output.accept(DEItems.DATA_CRYSTAL_SWORD);
                         output.accept(DEItems.DATA_CRYSTAL_AXE);
                         output.accept(DEItems.DATA_CRYSTAL_PICKAXE);
@@ -136,6 +144,13 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DATA_SANCTIFIER);
                         output.accept(DEItems.CARD_SABER_ENERGY);
                         output.accept(DEItems.REDSTONE_TUNING_CARD);
+                        output.accept(DEItems.MATTER_CONVERGING_CROSSBOW);
+                        output.accept(DEItems.DATA_RIPPER);
+                        output.accept(DEItems.ME_VACUUM);
+                        output.accept(DEItems.TNT_CONFIGURABLE);
+                        output.accept(DEItems.DATA_NUKE);
+
+                        // Materials, fluids, carriers, and processing parts.
                         output.accept(DEItems.SOLIDIFIED_OBSIDIAN);
                         output.accept(DEItems.DATA_DUST);
                         output.accept(DEItems.AMETHYST_DUST);
@@ -148,10 +163,6 @@ public final class DECreativeTabs {
                         output.accept(DEItems.CROP_DATA_CARRIER);
                         output.accept(DEItems.ORE_DATA_CARRIER);
                         output.accept(DEItems.TIME_CORE);
-                        output.accept(DEItems.ME_VACUUM);
-                        output.accept(DEItems.ORDER_PACKAGE);
-                        output.accept(DEItems.DATA_FLOW_COMPONENT_HOUSING);
-                        output.accept(DEItems.DATA_DISTRIBUTION_CONNECTOR);
                         output.accept(DEItems.DATA_INSCRIBER_TEMPLATE);
                         output.accept(DEItems.DATA_CIRCUIT_BOARD);
                         output.accept(DEItems.DATA_PROCESSOR);
@@ -160,8 +171,13 @@ public final class DECreativeTabs {
                         output.accept(DEItems.DIGISIDIAN_MEMORIZE_INGOT);
                         output.accept(DEItems.SINGULARITY_BLOCK);
                         output.accept(DEItems.RADIX_CONTAINMENT_SPHERE);
-                        output.accept(DEItems.MATTER_CONVERGING_CROSSBOW);
-                        output.accept(DEItems.DATA_RIPPER);
+
+                        // Meteorites and special items.
+                        output.accept(DEItems.RESIDUAL_DATA_ORE);
+                        output.accept(DEItems.ENDER_COHESION_METEORITE_0);
+                        output.accept(DEItems.ENDER_COHESION_METEORITE_1);
+                        output.accept(DEItems.ENDER_COHESION_METEORITE_2);
+                        output.accept(DEItems.DATA_METEORITE_COMPASS);
                         output.accept(DEItems.FISH_DAN);
                         output.accept(DEItems.QIUYEQAQ2024);
                         output.accept(DEItems.TED_XENON);

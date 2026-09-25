@@ -1,12 +1,14 @@
 package com.fish_dan_.data_energistics.menu.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.ae2.menu.ContainerSlotInteraction;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceConstants;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumInterfaceInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
+import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.config.Actionable;
 import appeng.api.config.Settings;
 import appeng.api.stacks.AEItemKey;
@@ -26,7 +28,6 @@ import appeng.menu.slot.RestrictedInputSlot.PlacableItemType;
 import appeng.util.ConfigInventory;
 import appeng.util.ConfigMenuInventory;
 
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -54,7 +55,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
 
     public static final String ACTION_CONFIGURE_SLOT = "configure_slot";
     public static final String ACTION_SET_PAGE = "set_page";
-    public static final String ACTION_SET_ACTIVE_PULL_SIDE = "set_active_pull_side";
     public static final int CONFIG_SLOT_COUNT = DataSanctumInterfaceConstants.CONFIG_SLOTS_PER_PAGE;
     public static final int STOCK_SLOT_COUNT = DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE;
     public static final int RETURN_SLOT_COUNT = DataSanctumInterfaceConstants.RETURN_SLOTS_PER_PAGE;
@@ -109,8 +109,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     public int pageIndex;
     @GuiSync(861)
     public int totalPages = DataSanctumInterfaceConstants.BASE_PAGE_COUNT;
-    @GuiSync(862)
-    public int activePullSidesMask;
     @GuiSync(863)
     public int unlimitedSlotsMask;
     @GuiSync(864)
@@ -125,7 +123,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         super(DEMenus.DATA_SANCTUM_LARGE_INTERFACE.get(), id, playerInventory, host);
         registerClientAction(ACTION_CONFIGURE_SLOT, SlotConfiguration.class, this::applySlotConfiguration);
         registerClientAction(ACTION_SET_PAGE, Integer.class, this::setPage);
-        registerClientAction(ACTION_SET_ACTIVE_PULL_SIDE, String.class, this::setActivePullSide);
     }
 
     @Override
@@ -174,7 +171,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         if (isServerSide()) {
             this.totalPages = this.getHost().getUnlockedPageCount();
             this.pageIndex = clampPage(this.pageIndex);
-            this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
             this.unlimitedSlotsMask = 0;
             this.prioritySlotsMask = 0;
             var config = (DataSanctumInterfaceInventory) getHost().getConfig();
@@ -207,6 +203,9 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
         if (isClientSide() || slotIndex < 0 || slotIndex >= slots.size()) return ItemStack.EMPTY;
+        if (ContainerSlotInteraction.tryQuickMove(this, slotIndex, player, appEngSlot -> appEngSlot.getInventory() instanceof PagedMenuInventory paged ? paged.backingSlot() : appEngSlot.getContainerSlot())) {
+            return ItemStack.EMPTY;
+        }
         var source = slots.get(slotIndex);
         if (isPlayerSideSlot(source) && getQuickMoveDestinationSlots(source.getItem(), true).isEmpty()) {
             // AE2 otherwise falls back to writing an empty filter slot when real destinations are unavailable.
@@ -243,23 +242,6 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         sendClientAction(ACTION_SET_PAGE, this.pageIndex);
     }
 
-    public List<Direction> getActivePullSides() {
-        List<Direction> sides = new ObjectArrayList<>();
-        for (Direction side : Direction.values()) {
-            if ((this.activePullSidesMask & (1 << side.ordinal())) != 0) {
-                sides.add(side);
-            }
-        }
-        return sides;
-    }
-
-    public void sendSetActivePullSide(Direction side, boolean enabled) {
-        if (side == null) {
-            return;
-        }
-        sendClientAction(ACTION_SET_ACTIVE_PULL_SIDE, side.getName() + ":" + enabled);
-    }
-
     @Override
     public void doAction(ServerPlayer player, InventoryAction action, int slotId, long id) {
         if (slotId >= 0 && slotId < slots.size() && slots.get(slotId) instanceof AppEngSlot slot && !(slot instanceof FakeSlot) && slot.getInventory() instanceof PagedMenuInventory inventory) {
@@ -289,16 +271,28 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             return;
         }
         if (isClientSide()) return; // Server performs transfers; slot snapshots are display data only.
+        if (type == ClickType.PICKUP && ContainerSlotInteraction.tryClicked(
+                this,
+                slot,
+                inventory.getDelegate(),
+                inventory.backingSlot(),
+                button,
+                player)) {
+            broadcastChanges();
+            return;
+        }
+        if (type == ClickType.PICKUP && !getCarried().isEmpty() && ContainerItemStrategies.findCarriedContext(null, player, this) != null) {
+            // A registered container must never fall through to the item-key branch when this slot cannot accept it.
+            return;
+        }
         var backing = inventory.getDelegate();
         int index = inventory.backingSlot();
         var key = backing.getKey(index);
         var carried = getCarried();
         if (type == ClickType.PICKUP && !carried.isEmpty()) {
-            AEItemKey carriedKey = AEItemKey.of(carried);
-            if (key == null || key instanceof AEItemKey) {
-                long inserted = backing.insert(index, carriedKey, button == 1 ? 1 : carried.getCount(), Actionable.MODULATE);
-                carried.shrink((int) inserted); // A real cursor stack is bounded by Minecraft's stack size.
-                setCarried(carried);
+            if (tryInsertCarriedGenericStack(inventory, index, button)) {
+                broadcastChanges();
+                return;
             } else if (button == 0) {
                 handleFillingHeldItem((amount, mode) -> backing.extract(index, key, amount, mode), key, false);
             } else {
@@ -320,8 +314,74 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
             } else {
                 setCarried(taken);
             }
+        } else if (type == ClickType.PICKUP && tryExtractNonItemStack(backing, index, button)) {
+            broadcastChanges();
+            return;
         }
         broadcastChanges();
+    }
+
+    /**
+     * Inserts an ordinary item or an AE2 wrapped generic stack from the cursor into the selected storage slot.
+     *
+     * <p>
+     * The base AE2 inventory already knows how to decode wrapped non-item keys. The menu must use that same
+     * conversion instead of calling {@code AEItemKey.of} directly, otherwise fluid and third-party key types are
+     * silently rejected before {@link GenericStackInv#insert(int, AEKey, long, Actionable)} can validate them.
+     * </p>
+     */
+    private boolean tryInsertCarriedGenericStack(PagedMenuInventory inventory, int index, int button) {
+        ItemStack carried = getCarried();
+        GenericStack converted = inventory.convertToSuitableStack(carried);
+        if (converted == null || converted.what() == null || converted.amount() <= 0) {
+            return false;
+        }
+
+        long requested = button == 1 ? Math.min(converted.amount(), Math.max(1, converted.what().getAmountPerUnit())) : converted.amount();
+        long inserted = inventory.getDelegate().insert(index, converted.what(), requested, Actionable.MODULATE);
+        if (inserted <= 0) {
+            return false;
+        }
+
+        long remaining = converted.amount() - inserted;
+        if (remaining <= 0) {
+            setCarried(ItemStack.EMPTY);
+        } else if (GenericStack.unwrapItemStack(carried) != null) {
+            setCarried(wrapGenericStack(converted.what(), remaining));
+        } else {
+            ItemStack remainder = carried.copy();
+            remainder.shrink((int) Math.min((long) remainder.getCount(), inserted));
+            setCarried(remainder);
+        }
+        return true;
+    }
+
+    /** Returns a non-item key to the cursor as an AE2 wrapped generic stack. */
+    private boolean tryExtractNonItemStack(GenericStackInv backing, int index, int button) {
+        if (!getCarried().isEmpty()) {
+            return false;
+        }
+
+        GenericStack current = backing.getStack(index);
+        if (current == null || current.what() == null || current.what() instanceof AEItemKey || current.amount() <= 0) {
+            return false;
+        }
+
+        long requested = button == 1 ? Math.min(current.amount(), Math.max(1, current.what().getAmountPerUnit())) : current.amount();
+        long extracted = backing.extract(index, current.what(), requested, Actionable.MODULATE);
+        if (extracted <= 0) {
+            return false;
+        }
+
+        setCarried(wrapGenericStack(current.what(), extracted));
+        return true;
+    }
+
+    private static ItemStack wrapGenericStack(AEKey key, long amount) {
+        if (key instanceof AEItemKey itemKey && amount <= Integer.MAX_VALUE) {
+            return itemKey.toStack((int) amount);
+        }
+        return GenericStack.wrapInItemStack(new GenericStack(key, amount));
     }
 
     private void applySlotConfiguration(@Nullable SlotConfiguration request) {
@@ -420,45 +480,12 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         broadcastChanges();
     }
 
-    private void setActivePullSide(String payload) {
-        if (payload == null || this.getHost() == null) {
-            return;
-        }
-
-        int separator = payload.indexOf(':');
-        if (separator <= 0 || separator >= payload.length() - 1) {
-            return;
-        }
-
-        Direction side = Direction.byName(payload.substring(0, separator));
-        boolean enabled = Boolean.parseBoolean(payload.substring(separator + 1));
-        Direction targetSide = side;
-        if (!this.getHost().hasActivePullSideSelection()) {
-            targetSide = this.getHost().getSingleActivePullSide();
-        }
-        if (targetSide == null) {
-            return;
-        }
-
-        this.getHost().setActivePullSideEnabled(targetSide, enabled);
-        this.activePullSidesMask = encodeSides(this.getHost().getActivePullSides());
-        broadcastChanges();
-    }
-
     private int clampPage(int page) {
         int pages = Math.max(1, this.totalPages);
         if (isServerSide() && this.getHost() != null) {
             pages = Math.max(1, this.getHost().getUnlockedPageCount());
         }
         return Math.max(0, Math.min(page, pages - 1));
-    }
-
-    private static int encodeSides(Iterable<Direction> sides) {
-        int mask = 0;
-        for (Direction side : sides) {
-            mask |= 1 << side.ordinal();
-        }
-        return mask;
     }
 
     private static final class PagedMenuInventory extends ConfigMenuInventory {
@@ -523,7 +550,9 @@ public class DataSanctumLargeInterfaceMenu extends UpgradeableMenu<DataSanctumLa
         }
 
         @Override
-        public void onTake(Player player, ItemStack stack) {}
+        public void onTake(Player player, ItemStack stack) {
+            super.onTake(player, stack);
+        }
 
         @Override
         public void increase(ItemStack stack) {

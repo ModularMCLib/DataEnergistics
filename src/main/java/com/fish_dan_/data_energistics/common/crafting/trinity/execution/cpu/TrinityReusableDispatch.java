@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.State;
+import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolution;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CraftingDispatchWindow;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
@@ -115,7 +116,7 @@ final class TrinityReusableDispatch {
         }
         IPatternDetails delegate = pattern instanceof RoutedCraftingPatternDetails routed ? routed.delegate() : pattern;
         var recipeId = delegate instanceof IMolecularAssemblerSupportedPattern nativePattern ?
-                DataEnergisticsEntrypointLoader.snapshot().trinityPatternRecipes().resolve(nativePattern).map(value -> value.recipeId()) :
+                DataEnergisticsEntrypointLoader.snapshot().trinityPatternRecipes().resolve(nativePattern).map(TrinityPatternRecipeIdResolution::recipeId) :
                 Optional.ofNullable(EncodedPatternRecipeReference.getProcessingRecipeId(delegate.getDefinition().toStack()));
         TrinityReusableRecipe recipe = new TrinityReusableRecipe(pattern, work.exactBindings(), recipeId);
         var outputs = owner.reusableOutputs(job, pattern, recipe);
@@ -227,7 +228,9 @@ final class TrinityReusableDispatch {
                 return false;
             }
             TrinityBorrowingTransaction borrowed = borrowing.orElseThrow();
-            TrinityDataCoreCpuLogic.EnergyCharge charge = TrinityDataCoreCpuLogic.chargeEnergy(energy, unitPower * admission.count());
+            // One reusable admission is one physical provider batch. Charge the unit pattern fee once,
+            // regardless of how many logical operations the admission covers.
+            TrinityDataCoreCpuLogic.EnergyCharge charge = TrinityDataCoreCpuLogic.chargeEnergy(energy, unitPower);
             try {
                 if (charge == null || !owner.reusableWorkCurrent(job, work)) {
                     return false;
@@ -240,7 +243,7 @@ final class TrinityReusableDispatch {
                     if (opened) ledger.discardUnopened(id);
                     return false;
                 }
-                long sequence = ledger.prepare(id, new Submission(work, admission.count(), request.requestedCount(), unitPower * admission.count(),
+                long sequence = ledger.prepare(id, new Submission(work, admission.count(), request.requestedCount(), unitPower,
                         outputs, physical, false, false, false, 0L));
                 if (sequence != request.sequence()) {
                     throw new IllegalStateException("Reusable CPU append sequence changed during physical extraction");
@@ -333,6 +336,11 @@ final class TrinityReusableDispatch {
                             amount -> owner.completeReusableOutputs(session.jobId(), entry.submission(), amount));
                 }
                 for (SlotStack tool : located.view().heldToolsFast()) owner.wakeReusableTool(tool.stack().what());
+                boolean detached = session.closing() && !owner.ownsReusableJob(session.jobId());
+                if (detached && adapter.detachReusableSession(session.id())) {
+                    ledger.detach(session.id());
+                    continue;
+                }
                 if (session.closing() || !owner.ownsReusableJob(session.jobId()) || located.view().state() == State.FAULTED) {
                     ledger.close(session.id());
                     adapter.closeReusableSession(session.id());
@@ -360,7 +368,7 @@ final class TrinityReusableDispatch {
         int observed = 0;
         for (Located located : found) {
             Session session = located.session();
-            if (session.settled()) continue;
+            if (session.settled() || ledger.session(session.id()) == null) continue;
             observed++;
             var view = located.view();
             Int2ObjectOpenHashMap<BigInteger> bySlot = new Int2ObjectOpenHashMap<>();

@@ -1,14 +1,20 @@
 package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.ae2.menu.ContainerSlotInteraction;
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
+import appeng.api.behaviors.ContainerItemStrategies;
+import appeng.api.config.Actionable;
 import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.inventories.InternalInventory;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.util.IConfigManager;
+import appeng.helpers.externalstorage.GenericStackInv;
 import appeng.menu.SlotSemantic;
 import appeng.menu.SlotSemantics;
 import appeng.menu.guisync.GuiSync;
@@ -16,10 +22,13 @@ import appeng.menu.implementations.UpgradeableMenu;
 import appeng.menu.interfaces.IProgressProvider;
 import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.OutputSlot;
+import appeng.util.ConfigMenuInventory;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -171,6 +180,97 @@ public class DataRipperReassemblerMenu extends UpgradeableMenu<DataRipperReassem
             };
             this.addSlot(new ReassemblerOutputSlot(storage, this.getHost().getItemOutputStartSlot() + i), semantic);
         }
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (slotId < 0 || slotId >= this.slots.size() ||
+                !(this.slots.get(slotId) instanceof PatternInputSlot slot) ||
+                !(slot.getInventory() instanceof ConfigMenuInventory inventory)) {
+            super.clicked(slotId, button, type, player);
+            return;
+        }
+
+        if (this.isClientSide()) {
+            return;
+        }
+
+        if (type == ClickType.PICKUP && ContainerSlotInteraction.tryClicked(
+                this,
+                slot,
+                inventory.getDelegate(),
+                slot.getContainerSlot(),
+                button,
+                player)) {
+            this.broadcastChanges();
+            return;
+        }
+
+        if (type != ClickType.PICKUP) {
+            super.clicked(slotId, button, type, player);
+            return;
+        }
+
+        if (!this.getCarried().isEmpty()) {
+            if (this.tryInsertCarriedGenericStack(inventory, slot.getContainerSlot(), button)) {
+                this.broadcastChanges();
+                return;
+            }
+
+            // A registered container that cannot transfer into this slot must not fall through to vanilla's item
+            // branch, which would otherwise replace or clear a generic stack incorrectly.
+            if (ContainerItemStrategies.findCarriedContext(null, player, this) != null) {
+                return;
+            }
+        } else if (this.tryExtractGenericStack(inventory.getDelegate(), slot.getContainerSlot(), button)) {
+            this.broadcastChanges();
+            return;
+        }
+
+        super.clicked(slotId, button, type, player);
+    }
+
+    private boolean tryInsertCarriedGenericStack(ConfigMenuInventory inventory, int index, int button) {
+        ItemStack carried = this.getCarried();
+        GenericStack converted = inventory.convertToSuitableStack(carried);
+        if (converted == null || converted.what() == null || converted.amount() <= 0L) {
+            return false;
+        }
+
+        long requested = button == 1 ? Math.min(converted.amount(), Math.max(1L, converted.what().getAmountPerUnit())) : converted.amount();
+        GenericStackInv delegate = inventory.getDelegate();
+        long inserted = delegate.insert(index, converted.what(), requested, Actionable.MODULATE);
+        if (inserted <= 0L) {
+            return false;
+        }
+
+        long remaining = converted.amount() - inserted;
+        if (remaining <= 0L) {
+            this.setCarried(ItemStack.EMPTY);
+        } else if (GenericStack.unwrapItemStack(carried) != null) {
+            this.setCarried(GenericStack.wrapInItemStack(new GenericStack(converted.what(), remaining)));
+        } else {
+            ItemStack remainder = carried.copy();
+            remainder.shrink((int) Math.min((long) remainder.getCount(), inserted));
+            this.setCarried(remainder);
+        }
+        return true;
+    }
+
+    private boolean tryExtractGenericStack(GenericStackInv backing, int index, int button) {
+        GenericStack current = backing.getStack(index);
+        if (current == null || current.what() == null || current.what() instanceof AEItemKey || current.amount() <= 0L) {
+            return false;
+        }
+
+        long requested = button == 1 ? Math.min(current.amount(), Math.max(1L, current.what().getAmountPerUnit())) : current.amount();
+        long extracted = backing.extract(index, current.what(), requested, Actionable.MODULATE);
+        if (extracted <= 0L) {
+            return false;
+        }
+
+        this.setCarried(GenericStack.wrapInItemStack(new GenericStack(current.what(), extracted)));
+        return true;
     }
 
     @Override

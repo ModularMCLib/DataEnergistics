@@ -52,7 +52,7 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("26.9.13");
+        PayloadRegistrar registrar = event.registrar("26.9.24");
         registrar.playToServer(CannonChargePayload.TYPE, CannonChargePayload.STREAM_CODEC, CannonChargePayload::handle);
         registrar.playToClient(RailChainPayload.TYPE, RailChainPayload.STREAM_CODEC, RailChainPayload::handle);
         registrar.playToClient(ChromaticGlowPayload.TYPE, ChromaticGlowPayload.STREAM_CODEC, ChromaticGlowPayload::handle);

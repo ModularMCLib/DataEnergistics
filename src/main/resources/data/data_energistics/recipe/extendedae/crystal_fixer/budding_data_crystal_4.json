@@ -1,0 +1,23 @@
+{
+	"neoforge:conditions": [
+		{
+			"type": "neoforge:mod_loaded",
+			"modid": "extendedae"
+		}
+	],
+	"type": "extendedae:crystal_fixer",
+	"chance": 300,
+	"fuel": {
+		"ingredient": {
+			"tag": "c:gems/data_crystal"
+		}
+	},
+	"input": {
+		"count": 1,
+		"id": "data_energistics:budding_data_crystal_3"
+	},
+	"output": {
+		"count": 1,
+		"id": "data_energistics:budding_data_crystal_4"
+	}
+}

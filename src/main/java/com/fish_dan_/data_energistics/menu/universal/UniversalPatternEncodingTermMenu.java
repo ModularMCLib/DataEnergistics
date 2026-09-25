@@ -8,8 +8,6 @@ import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencod
 import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingInheritedState;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutAware;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewLayoutHelper;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
@@ -67,7 +65,7 @@ import java.util.List;
 
 public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
                                               implements UniversalTerminalMenuBridge, PatternEncodingPreviewMenu, PatternEncodingSourceAware,
-                                              PatternEncodingPreviewLayoutAware, PatternEncodingPreferenceMenu {
+                                              PatternEncodingPreferenceMenu {
 
     private static final String ACTION_TRANSFER_ENCODED_PATTERN_TO_PROVIDER = "transferEncodedPatternToProvider";
     private static final String ACTION_OPEN_PATTERN_PROVIDER_MENU = "openPatternProviderMenu";
@@ -98,11 +96,6 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
     public ResourceLocation lastEncodedPatternSource;
     @GuiSync(896)
     public boolean uploadEnabled = true;
-    @GuiSync(897)
-    public int previewPanelOffsetX;
-    @GuiSync(898)
-    public int previewPanelOffsetY;
-
     private final Reference2LongOpenHashMap<PatternContainer> syncedPatternProviderIds = new Reference2LongOpenHashMap<>();
     private final Long2ObjectOpenHashMap<ObjectList<PatternContainer>> syncedPatternProvidersById = new Long2ObjectOpenHashMap<>();
     private final PatternProviderSyncTracker patternProviderSyncTracker = new PatternProviderSyncTracker();
@@ -562,35 +555,6 @@ public class UniversalPatternEncodingTermMenu extends PatternEncodingTermMenu
         }
         this.uploadEnabled = enabled;
         writeFallbackUploadEnabled(enabled);
-    }
-
-    @Override
-    public int data_energistics$getPreviewPanelOffsetX() {
-        return this.previewPanelOffsetX;
-    }
-
-    @Override
-    public int data_energistics$getPreviewPanelOffsetY() {
-        return this.previewPanelOffsetY;
-    }
-
-    @Override
-    public void data_energistics$setPreviewPanelOffset(int offsetX, int offsetY) {
-        if (this.isClientSide()) {
-            sendClientAction(PatternEncodingPreviewLayoutHelper.ACTION_SET_PREVIEW_PANEL_OFFSET,
-                    offsetX + "," + offsetY);
-        }
-        this.previewPanelOffsetX = offsetX;
-        this.previewPanelOffsetY = offsetY;
-    }
-
-    @Override
-    public void data_energistics$resetPreviewPanelOffset() {
-        if (this.isClientSide()) {
-            sendClientAction(PatternEncodingPreviewLayoutHelper.ACTION_RESET_PREVIEW_PANEL_OFFSET);
-        }
-        this.previewPanelOffsetX = 0;
-        this.previewPanelOffsetY = 0;
     }
 
     @Override

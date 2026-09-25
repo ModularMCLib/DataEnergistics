@@ -72,6 +72,18 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public ObjectSet<ResourceLocation> workstationItemIds() {
+        String workstation = switch (this.tier) {
+            case 1 -> "basic_table";
+            case 2 -> "advanced_table";
+            case 3 -> "elite_table";
+            case 4 -> "ultimate_table";
+            default -> throw new IllegalStateException("Unsupported Extended Crafting table tier: " + this.tier);
+        };
+        return ObjectSet.of(ResourceLocation.fromNamespaceAndPath("extendedcrafting", workstation));
+    }
+
+    @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return table(level, position) != null;
     }

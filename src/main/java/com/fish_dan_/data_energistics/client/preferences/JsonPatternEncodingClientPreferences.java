@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public final class JsonPatternEncodingClientPreferences implements PatternEncodingClientPreferences {
 
-    public static final int SCHEMA_VERSION = 4;
+    public static final int SCHEMA_VERSION = 7;
     public static final int MAX_STATISTICS_PER_PROFILE = 2048;
     public static final int MAX_STATISTICS_TOTAL = 8192;
     public static final int MAX_SERVER_PROFILES = 32;
@@ -65,11 +65,12 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     private boolean loaded;
     private boolean writesDisabled;
     private boolean uploadEnabled = true;
+    private boolean previewPanelPinned;
     private boolean patternSourceEnabled = true;
     @Nullable
     private ResourceLocation lastWorkstation;
-    private int previewPanelOffsetX;
-    private int previewPanelOffsetY;
+    @Nullable
+    private PreviewPanelPosition previewPanelPosition;
     private boolean providerDetailPanelPresent;
     private int providerDetailPanelRelativeX;
     private int providerDetailPanelRelativeY;
@@ -95,6 +96,22 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     public void setUploadEnabled(boolean enabled) {
         ensureLoaded();
         this.uploadEnabled = enabled;
+        if (!enabled) {
+            this.previewPanelPinned = false;
+        }
+        save();
+    }
+
+    @Override
+    public boolean previewPanelPinned() {
+        ensureLoaded();
+        return this.previewPanelPinned;
+    }
+
+    @Override
+    public void setPreviewPanelPinned(boolean pinned) {
+        ensureLoaded();
+        this.previewPanelPinned = pinned && this.uploadEnabled;
         save();
     }
 
@@ -125,23 +142,23 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     }
 
     @Override
-    public int previewPanelOffsetX() {
+    public Optional<PreviewPanelPosition> previewPanelPosition() {
         ensureLoaded();
-        return this.previewPanelOffsetX;
+        return Optional.ofNullable(this.previewPanelPosition);
     }
 
     @Override
-    public int previewPanelOffsetY() {
+    public void setPreviewPanelPosition(double xPercent, double yPercent) {
         ensureLoaded();
-        return this.previewPanelOffsetY;
+        validatePanelPercentage(xPercent, yPercent);
+        this.previewPanelPosition = new PreviewPanelPosition(xPercent, yPercent);
+        save();
     }
 
     @Override
-    public void setPreviewPanelOffset(int offsetX, int offsetY) {
+    public void clearPreviewPanelPosition() {
         ensureLoaded();
-        validatePanelOffset(offsetX, offsetY);
-        this.previewPanelOffsetX = offsetX;
-        this.previewPanelOffsetY = offsetY;
+        this.previewPanelPosition = null;
         save();
     }
 
@@ -277,6 +294,9 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             if (preferences.has("uploadEnabled")) {
                 this.uploadEnabled = readRequiredBoolean(preferences, "uploadEnabled");
             }
+            if (preferences.has("previewPanelPinned")) {
+                this.previewPanelPinned = readRequiredBoolean(preferences, "previewPanelPinned");
+            }
             if (preferences.has("patternSourceEnabled")) {
                 this.patternSourceEnabled = readRequiredBoolean(preferences, "patternSourceEnabled");
             }
@@ -290,9 +310,15 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             }
             if (preferences.has("previewPanel")) {
                 JsonObject previewPanel = readRequiredObject(preferences, "previewPanel");
-                this.previewPanelOffsetX = readRequiredInt(previewPanel, "offsetX");
-                this.previewPanelOffsetY = readRequiredInt(previewPanel, "offsetY");
-                validatePanelOffset(this.previewPanelOffsetX, this.previewPanelOffsetY);
+                if (previewPanel.has("position")) {
+                    JsonObject position = readRequiredObject(previewPanel, "position");
+                    if (position.has("xPercent") && position.has("yPercent")) {
+                        double xPercent = readRequiredDouble(position, "xPercent");
+                        double yPercent = readRequiredDouble(position, "yPercent");
+                        validatePanelPercentage(xPercent, yPercent);
+                        this.previewPanelPosition = new PreviewPanelPosition(xPercent, yPercent);
+                    }
+                }
             }
             if (preferences.has("providerDetailPanel")) {
                 JsonObject providerDetailPanel = readRequiredObject(preferences, "providerDetailPanel");
@@ -300,6 +326,9 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
                 this.providerDetailPanelRelativeY = readRequiredInt(providerDetailPanel, "relativeY");
                 validatePanelOffset(this.providerDetailPanelRelativeX, this.providerDetailPanelRelativeY);
                 this.providerDetailPanelPresent = true;
+            }
+            if (!this.uploadEnabled) {
+                this.previewPanelPinned = false;
             }
         }
         JsonObject profiles = readOptionalObject(root, "serverProfiles");
@@ -392,10 +421,10 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
 
     private void resetToDefaults() {
         this.uploadEnabled = true;
+        this.previewPanelPinned = false;
         this.patternSourceEnabled = true;
         this.lastWorkstation = null;
-        this.previewPanelOffsetX = 0;
-        this.previewPanelOffsetY = 0;
+        this.previewPanelPosition = null;
         this.providerDetailPanelRelativeX = 0;
         this.providerDetailPanelRelativeY = 0;
         this.providerDetailPanelPresent = false;
@@ -454,6 +483,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         root.addProperty("schemaVersion", SCHEMA_VERSION);
         JsonObject preferences = new JsonObject();
         preferences.addProperty("uploadEnabled", this.uploadEnabled);
+        preferences.addProperty("previewPanelPinned", this.previewPanelPinned);
         preferences.addProperty("patternSourceEnabled", this.patternSourceEnabled);
         if (this.lastWorkstation == null) {
             preferences.add("lastWorkstation", null);
@@ -461,8 +491,12 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             preferences.addProperty("lastWorkstation", this.lastWorkstation.toString());
         }
         JsonObject previewPanel = new JsonObject();
-        previewPanel.addProperty("offsetX", this.previewPanelOffsetX);
-        previewPanel.addProperty("offsetY", this.previewPanelOffsetY);
+        if (this.previewPanelPosition != null) {
+            JsonObject position = new JsonObject();
+            position.addProperty("xPercent", this.previewPanelPosition.xPercent());
+            position.addProperty("yPercent", this.previewPanelPosition.yPercent());
+            previewPanel.add("position", position);
+        }
         preferences.add("previewPanel", previewPanel);
         if (this.providerDetailPanelPresent) {
             JsonObject providerDetailPanel = new JsonObject();
@@ -594,6 +628,13 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         }
     }
 
+    private static void validatePanelPercentage(double xPercent, double yPercent) {
+        if (!Double.isFinite(xPercent) || !Double.isFinite(yPercent) ||
+                xPercent < 0.0 || xPercent > 1.0 || yPercent < 0.0 || yPercent > 1.0) {
+            throw new IllegalArgumentException("Preview panel position percentages must be finite values in [0, 1]");
+        }
+    }
+
     private static void validateProfileDigest(String profileDigest) {
         if (!PROFILE_DIGEST.matcher(profileDigest).matches()) {
             throw new IllegalArgumentException("Invalid server profile digest: " + profileDigest);
@@ -649,6 +690,22 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             throw new IllegalArgumentException("JSON integer is out of range: " + key);
         }
         return (int) value;
+    }
+
+    private static double readRequiredDouble(JsonObject parent, String key) {
+        if (!parent.has(key) || !parent.get(key).isJsonPrimitive() ||
+                !parent.getAsJsonPrimitive(key).isNumber()) {
+            throw new IllegalArgumentException("JSON field must be a number: " + key);
+        }
+        try {
+            double value = parent.get(key).getAsDouble();
+            if (!Double.isFinite(value)) {
+                throw new IllegalArgumentException("JSON number must be finite: " + key);
+            }
+            return value;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("JSON field must be a number: " + key, exception);
+        }
     }
 
     private static long readRequiredLong(JsonObject parent, String key) {

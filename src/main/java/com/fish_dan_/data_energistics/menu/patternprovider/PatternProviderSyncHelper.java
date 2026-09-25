@@ -4,12 +4,16 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderDisplayHelper;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationCompatibility;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationVariant;
 import com.fish_dan_.data_energistics.api.registry.provider.callback.PatternProviderWorkstationSource;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderMetadata;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.ProviderIdentityDescriptor;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderIdentitySource;
+import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
+import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.ResolvedProviderBinding;
@@ -677,6 +681,8 @@ public final class PatternProviderSyncHelper {
         boolean exactContextMatch;
         List<ResourceLocation> supportedRecipeTypeIds;
         List<ResourceLocation> matchingWorkstationIds;
+        @Nullable
+        PatternProviderMatchingMetadata liveMatchingMetadata = null;
         try {
             ProviderPresentation presentation = resolveProviderPresentation(container);
             displayName = presentation.displayName();
@@ -692,18 +698,54 @@ public final class PatternProviderSyncHelper {
                 matchingWorkstationIds = resolveMatchingWorkstationIds(metadata, rankingContext);
             } else {
                 aggregationKey = PatternProviderAggregationKey.NetworkGroup.from(container.getTerminalGroup());
-                exactContextMatch = false;
-                supportedRecipeTypeIds = List.of();
-                matchingWorkstationIds = List.of();
+                if (container instanceof AdaptivePatternProviderHost adaptiveHost) {
+                    var profile = AdaptivePatternProviderResolver.resolveProviderProfile(adaptiveHost.getProviderStack());
+                    @Nullable
+                    ResourceLocation recipeCategoryId = rankingContext == null ? null : rankingContext.recipeTypeId();
+                    PatternProviderMatchingMetadata liveMetadata = adaptiveHost.getLogic() instanceof AdaptivePatternProviderLogic adaptiveLogic ?
+                            adaptiveLogic.resolveMatchingMetadata(recipeCategoryId) : null;
+                    if (liveMetadata != null) {
+                        liveMatchingMetadata = liveMetadata;
+                        supportedRecipeTypeIds = liveMetadata.recipeCategoryIds();
+                        exactContextMatch = rankingContext != null &&
+                                supportedRecipeTypeIds.contains(rankingContext.recipeTypeId());
+                        matchingWorkstationIds = exactContextMatch ? liveMetadata.workstationItemIds() : ObjectList.of();
+                    } else {
+                        exactContextMatch = profile != null && rankingContext != null &&
+                                profile.recipeCategoryIds().contains(rankingContext.recipeTypeId());
+                        supportedRecipeTypeIds = profile == null ? ObjectList.of() : profile.recipeCategoryIds();
+                        matchingWorkstationIds = exactContextMatch ? profile.workstationItemIds() : ObjectList.of();
+                    }
+                } else if (container instanceof PatternProviderMatchingMetadataSource metadataSource) {
+                    @Nullable
+                    ResourceLocation recipeCategoryId = rankingContext == null ? null : rankingContext.recipeTypeId();
+                    PatternProviderMatchingMetadata liveMetadata = metadataSource.matchingMetadata(recipeCategoryId);
+                    liveMatchingMetadata = liveMetadata;
+                    supportedRecipeTypeIds = liveMetadata.recipeCategoryIds();
+                    exactContextMatch = rankingContext != null &&
+                            supportedRecipeTypeIds.contains(rankingContext.recipeTypeId());
+                    matchingWorkstationIds = exactContextMatch ? liveMetadata.workstationItemIds() : ObjectList.of();
+                } else {
+                    exactContextMatch = false;
+                    supportedRecipeTypeIds = ObjectList.of();
+                    matchingWorkstationIds = ObjectList.of();
+                }
             }
-            PatternProviderUploadWorkstations.Inspection workstationInspection = PatternProviderUploadWorkstations.inspect(
-                    patternContext.player(),
-                    container,
-                    identity,
-                    PatternProviderRuntimeBindings.resolveWorkstationSource(identity),
-                    patternContext.patternDetails(),
-                    patternContext.recipeTypeId(),
-                    patternContext.recipeId());
+            if (liveMatchingMetadata != null && !liveMatchingMetadata.workstationItemIds().isEmpty()) {
+                iconItemId = liveMatchingMetadata.workstationItemIds().getFirst();
+            }
+            PatternProviderUploadWorkstations.Inspection declaredWorkstationInspection = resolveDeclaredWorkstationInspection(
+                    liveMatchingMetadata);
+            PatternProviderUploadWorkstations.Inspection workstationInspection = mergeWorkstationInspections(
+                    declaredWorkstationInspection,
+                    PatternProviderUploadWorkstations.inspect(
+                            patternContext.player(),
+                            container,
+                            identity,
+                            PatternProviderRuntimeBindings.resolveWorkstationSource(identity),
+                            patternContext.patternDetails(),
+                            patternContext.recipeTypeId(),
+                            patternContext.recipeId()));
             if (workstationInspection.classified()) {
                 aggregationKey = PatternProviderAggregationKey.WorkstationVariants.from(
                         aggregationKey,
@@ -937,6 +979,58 @@ public final class PatternProviderSyncHelper {
                 "screen.data_energistics.pattern_provider.workstation_variants",
                 providerName,
                 variantNames);
+    }
+
+    private static PatternProviderUploadWorkstations.Inspection resolveDeclaredWorkstationInspection(
+                                                                                                     @Nullable PatternProviderMatchingMetadata metadata) {
+        if (metadata == null || metadata.workstationItemIds().isEmpty()) {
+            return PatternProviderUploadWorkstations.Inspection.NONE;
+        }
+        ObjectArrayList<PatternUploadWorkstationVariant> variants = new ObjectArrayList<>(
+                metadata.workstationItemIds().size());
+        for (ResourceLocation workstationId : metadata.workstationItemIds()) {
+            variants.add(new PatternUploadWorkstationVariant(
+                    workstationId,
+                    PatternEncodingSourceHelper.resolveWorkstationDisplayName(workstationId)));
+        }
+        return new PatternProviderUploadWorkstations.Inspection(
+                ObjectLists.unmodifiable(variants),
+                PatternUploadWorkstationCompatibility.UNKNOWN,
+                true);
+    }
+
+    private static PatternProviderUploadWorkstations.Inspection mergeWorkstationInspections(
+                                                                                            PatternProviderUploadWorkstations.Inspection declared,
+                                                                                            PatternProviderUploadWorkstations.Inspection observed) {
+        if (!declared.classified()) {
+            return observed;
+        }
+        if (!observed.classified()) {
+            return declared;
+        }
+        Object2ObjectLinkedOpenHashMap<ResourceLocation, PatternUploadWorkstationVariant> variants = new Object2ObjectLinkedOpenHashMap<>();
+        declared.variants().forEach(variant -> variants.put(variant.id(), variant));
+        observed.variants().forEach(variant -> variants.put(variant.id(), variant));
+        ObjectArrayList<PatternUploadWorkstationVariant> merged = new ObjectArrayList<>(variants.values());
+        merged.sort(Comparator.comparing(variant -> variant.id().toString()));
+        return new PatternProviderUploadWorkstations.Inspection(
+                ObjectLists.unmodifiable(merged),
+                combineWorkstationCompatibility(declared.compatibility(), observed.compatibility()),
+                true);
+    }
+
+    private static PatternUploadWorkstationCompatibility combineWorkstationCompatibility(
+                                                                                         PatternUploadWorkstationCompatibility left,
+                                                                                         PatternUploadWorkstationCompatibility right) {
+        if (left == PatternUploadWorkstationCompatibility.INCOMPATIBLE ||
+                right == PatternUploadWorkstationCompatibility.INCOMPATIBLE) {
+            return PatternUploadWorkstationCompatibility.INCOMPATIBLE;
+        }
+        if (left == PatternUploadWorkstationCompatibility.UNKNOWN ||
+                right == PatternUploadWorkstationCompatibility.UNKNOWN) {
+            return PatternUploadWorkstationCompatibility.UNKNOWN;
+        }
+        return PatternUploadWorkstationCompatibility.COMPATIBLE;
     }
 
     /**

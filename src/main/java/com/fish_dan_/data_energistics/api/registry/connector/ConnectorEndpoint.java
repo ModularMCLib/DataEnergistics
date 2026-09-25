@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.api.registry.connector;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -33,6 +34,23 @@ public interface ConnectorEndpoint {
     default ObjectList<ConnectorLink> bindingsFast() {
         List<ConnectorLink> legacy = bindings();
         return legacy instanceof ObjectList<?> fast ? (ObjectList<ConnectorLink>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
+    }
+
+    /**
+     * Tests whether a link belongs to the dimension currently being rendered.
+     *
+     * <p>
+     * A connector can retain a host in one dimension while its persisted links point into another. World-space
+     * rendering has no valid cross-dimensional segment, so hosts that retain dimension metadata can reject those
+     * links without changing the common link shape or the editing API. Existing endpoints are local by default.
+     * </p>
+     *
+     * @param dimensionId dimension whose world is currently being rendered
+     * @param link        candidate link
+     * @return whether the link may be represented in this world
+     */
+    default boolean isLinkInDimension(ResourceLocation dimensionId, ConnectorLink link) {
+        return true;
     }
 
     /** Returns the default mode for the next link; existing links retain their own modes. */

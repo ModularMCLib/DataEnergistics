@@ -81,20 +81,6 @@ final class TrinityDataCoreElapsedTimeTracker {
     }
 
     /**
-     * Migrates a 3.1.3 active save. Its existing started work is the already-dispatched prefix, while the
-     * execution cursor supplies the exact undispatched suffix.
-     *
-     * @param pendingOutputs exact undispatched outputs restored with the execution cursor
-     */
-    void restorePlanBaseline(Map<AEKey, BigInteger> pendingOutputs) {
-        if (this.planBaseline) {
-            return;
-        }
-        mergeBigIntegerWork(pendingOutputs, this.startedWorkByType);
-        this.planBaseline = true;
-    }
-
-    /**
      * Replaces only the undispatched portion of an established plan baseline after deterministic replanning.
      *
      * @param previousPending outputs removed with the old remaining plan
@@ -277,8 +263,13 @@ final class TrinityDataCoreElapsedTimeTracker {
                                           Reference2ObjectMap<AEKeyType, BigInteger> output) {
         for (AEKeyType keyType : AEKeyTypes.getAll()) {
             String field = keyType.getId().toString();
-            BigInteger amount = tag.contains(field, Tag.TAG_BYTE_ARRAY) ?
-                    readBigInteger(tag.getByteArray(field)) : BigInteger.valueOf(tag.getLong(field));
+            if (!tag.contains(field)) {
+                continue;
+            }
+            if (!tag.contains(field, Tag.TAG_BYTE_ARRAY)) {
+                throw new IllegalArgumentException("Trinity progress work requires an exact amount");
+            }
+            BigInteger amount = readBigInteger(tag.getByteArray(field));
             output.put(keyType, amount);
         }
     }

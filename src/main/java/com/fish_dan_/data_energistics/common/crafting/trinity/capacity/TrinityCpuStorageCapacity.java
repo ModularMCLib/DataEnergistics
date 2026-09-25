@@ -6,15 +6,6 @@ import java.math.BigInteger;
 public sealed interface TrinityCpuStorageCapacity
                                                   permits TrinityCpuStorageCapacity.Finite, TrinityCpuStorageCapacity.Unlimited {
 
-    /** Decodes the 3.1.3 long representation for direct upgrades to typed capacities. */
-    static TrinityCpuStorageCapacity fromEncodedLong(long storageBytes) {
-        if (storageBytes < 0L) {
-            throw new IllegalArgumentException("A 3.1.3 Trinity CPU storage capacity cannot be negative");
-        }
-        return storageBytes == Long.MAX_VALUE ? Unlimited.INSTANCE :
-                new Finite(BigInteger.valueOf(storageBytes));
-    }
-
     /** Creates an exact finite capacity from a non-negative component contribution. */
     static TrinityCpuStorageCapacity finite(long storageBytes) {
         return new Finite(BigInteger.valueOf(storageBytes));

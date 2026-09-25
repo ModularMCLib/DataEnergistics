@@ -32,6 +32,16 @@ public interface PatternEncodingClientPreferences {
     void setUploadEnabled(boolean enabled);
 
     /**
+     * Returns whether opening a pattern-encoding terminal should show the upload panel by default.
+     */
+    boolean previewPanelPinned();
+
+    /**
+     * Persists the upload-panel default-open preference immediately.
+     */
+    void setPreviewPanelPinned(boolean pinned);
+
+    /**
      * Returns the local source-writing preference, defaulting to enabled when absent.
      */
     boolean patternSourceEnabled();
@@ -53,19 +63,18 @@ public interface PatternEncodingClientPreferences {
     void setLastWorkstation(@Nullable ResourceLocation workstation);
 
     /**
-     * Returns the shared preview panel horizontal offset.
+     * Returns the persisted upload-panel position as percentages of the available screen area, or empty when
+     * automatic placement is active.
      */
-    int previewPanelOffsetX();
+    Optional<PreviewPanelPosition> previewPanelPosition();
+
+    /** Persists an upload-panel position as horizontal and vertical percentages in the range {@code [0, 1]}. */
+    void setPreviewPanelPosition(double xPercent, double yPercent);
 
     /**
-     * Returns the shared preview panel vertical offset.
+     * Clears the percentage upload-panel position and restores automatic placement.
      */
-    int previewPanelOffsetY();
-
-    /**
-     * Persists the shared preview panel offset immediately.
-     */
-    void setPreviewPanelOffset(int offsetX, int offsetY);
+    void clearPreviewPanelPosition();
 
     /**
      * Returns the optional screen-local provider-detail panel position shared by encoding terminals.
@@ -98,6 +107,8 @@ public interface PatternEncodingClientPreferences {
      */
     void recordUpload(PatternEncodingRankingContext context, String providerDigest,
                       long absoluteCount, long successEpochMillis);
+
+    record PreviewPanelPosition(double xPercent, double yPercent) {}
 
     record ProviderDetailPanelPosition(int relativeX, int relativeY) {}
 }

@@ -64,6 +64,23 @@ record MalumRecipePlan(ItemStack main, ObjectList<ItemStack> spirits, ObjectList
                 counts.add(entry.getKey(), entry.getLongValue());
             }
         }
+        if (installedMain) {
+            AEItemKey installedKey = AEItemKey.of(installed);
+            AEItemKey ignored = counts.get(installedKey) > 0 ? installedKey : null;
+            if (ignored == null) {
+                for (var entry : counts) {
+                    if (entry.getKey() instanceof AEItemKey candidate && candidate.toStack(1).is(installed.getItem())) {
+                        ignored = candidate;
+                        break;
+                    }
+                }
+            }
+            if (ignored != null) {
+                long remaining = counts.get(ignored);
+                counts.set(ignored, remaining - 1);
+                total--;
+            }
+        }
         if (total == 0 || total % cycleSize != 0) return null;
         long cycles = total / cycleSize;
         var keys = new ObjectArrayList<AEItemKey>();

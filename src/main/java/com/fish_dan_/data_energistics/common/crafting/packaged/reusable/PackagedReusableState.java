@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.AppendReceipt;
+import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.Settlement;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedOperationState;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
@@ -54,6 +55,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -133,6 +136,14 @@ public final class PackagedReusableState {
         var access = new Access(level, ObjectList.of(), pattern -> true, () -> dirty[0] = true, pattern -> dirty[0] = true);
         for (Entry entry : entries.values()) {
             entry.endpoint.tick(level.getGameTime(), 1, access.host(entry));
+            var pendingDetached = entry.pendingDetachedSessions.iterator();
+            while (pendingDetached.hasNext()) {
+                UUID sessionId = pendingDetached.next();
+                if (entry.endpoint.settle(sessionId, this::acceptDetachedSettlement, access.host(entry))) {
+                    pendingDetached.remove();
+                    dirty[0] = true;
+                }
+            }
         }
         var iterator = outputs.object2ObjectEntrySet().iterator();
         while (iterator.hasNext()) {
@@ -147,6 +158,20 @@ public final class PackagedReusableState {
             dirty[0] = true;
         }
         return dirty[0];
+    }
+
+    /**
+     * Provider-owned cancellation sink: returned tools and undelivered inputs re-enter this provider's output queue.
+     */
+    private boolean acceptDetachedSettlement(Settlement settlement) {
+        for (GenericStack returned : settlement.returnedAssetsFast()) {
+            outputs.merge(returned.what(), BigInteger.valueOf(returned.amount()), BigInteger::add);
+        }
+        for (var released : settlement.releasedMachineToolsFast()) {
+            GenericStack stack = released.stack();
+            outputs.merge(stack.what(), BigInteger.valueOf(stack.amount()), BigInteger::add);
+        }
+        return true;
     }
 
     private String target(BlockPos position) {
@@ -282,7 +307,19 @@ public final class PackagedReusableState {
         public ReusableCraftingCustodyCensus reusableCustody(String cpuOwner) {
             var sources = new ObjectArrayList<ReusableCraftingCustodyCensus>();
             if (!frozen) for (Entry entry : entries.values()) sources.add(entry.endpoint.reusableCustody(cpuOwner));
-            return custody.census(cpuOwner, !frozen, sources);
+            var census = custody.census(cpuOwner, !frozen, sources);
+            if (census.sessionsFast().isEmpty()) return census;
+            // Detached sessions belong to this provider after the CPU handoff. Keep their historical endpoint
+            // evidence private to the provider so the former CPU does not quarantine an intentional handoff.
+            var detached = new ObjectOpenHashSet<UUID>();
+            for (Entry entry : entries.values()) detached.addAll(entry.detachedSessions);
+            if (detached.isEmpty()) return census;
+            var visible = new ObjectArrayList<ReusableCraftingCustodyCensus.Entry>();
+            for (var session : census.sessionsFast()) {
+                if (!detached.contains(session.sessionId())) visible.add(session);
+            }
+            return visible.size() == census.sessionsFast().size() ? census :
+                    new ReusableCraftingCustodyCensus(census.loadedEpoch(), census.revision(), census.complete(), visible);
         }
 
         @Override
@@ -295,6 +332,18 @@ public final class PackagedReusableState {
         public void closeReusableSession(UUID sessionId) {
             Entry entry = locate(sessionId);
             if (entry != null) entry.endpoint.close(sessionId, host(entry));
+        }
+
+        @Override
+        public boolean detachReusableSession(UUID sessionId) {
+            Entry entry = locate(sessionId);
+            if (entry == null) return false;
+            if (entry.detachedSessions.contains(sessionId)) return true;
+            entry.endpoint.close(sessionId, host(entry));
+            entry.detachedSessions.add(sessionId);
+            entry.pendingDetachedSessions.add(sessionId);
+            changed.run();
+            return true;
         }
 
         @Override
@@ -393,6 +442,24 @@ public final class PackagedReusableState {
                         changed.run();
                     }
                     return result;
+                }
+
+                @Override
+                public Optional<NativeResult> cancel(Binding binding, Operation operation) {
+                    NativeWork active = entry.work;
+                    boolean sameOperation = active != null && binding.identity().sessionId().equals(active.session) && operation.id() == active.operation;
+                    if (!sameOperation) {
+                        if (active != null && !active.machine.completed()) return Optional.empty();
+                        return Optional.of(NativeResult.paused());
+                    }
+                    if (!active.machine.canAbortBeforeDelivery()) return Optional.empty();
+                    var claims = PackagedMachineClaims.get(level);
+                    if (claims.structureRemoved(active.machine.id())) claims.acknowledgeRemoval(active.machine.id());
+                    else claims.releaseAll(active.machine.occupiedPositions(), active.machine.id());
+                    PackagedRecoveryJournal.get(level).release(active.machine.id());
+                    entry.work = null;
+                    changed.run();
+                    return Optional.of(NativeResult.paused());
                 }
 
                 @Override
@@ -495,6 +562,8 @@ public final class PackagedReusableState {
             saved.putString("face", entry.face.getName());
             saved.putString("adapter", entry.adapter.toString());
             saved.put("endpoint", ReusableCraftingEndpointNbtCodec.encode(entry.endpoint, registries));
+            saved.put("detached", encodeSessionIds(entry.detachedSessions));
+            saved.put("detached_pending", encodeSessionIds(entry.pendingDetachedSessions));
             if (entry.work != null) {
                 saved.putUUID("session", entry.work.session);
                 saved.putLong("operation", entry.work.operation);
@@ -527,6 +596,22 @@ public final class PackagedReusableState {
             var entry = new Entry(BlockPos.of(saved.getLong("position")), face, ResourceLocation.parse(saved.getString("adapter")), endpoint);
             if (!endpoint.targetIdentity().equals(state.target(entry.position)) || state.entries.putIfAbsent(endpoint.targetIdentity(), entry) != null)
                 throw new IllegalArgumentException("Invalid reusable machine target identity");
+            var detached = saved.getList("detached", Tag.TAG_COMPOUND);
+            for (int detachedIndex = 0; detachedIndex < detached.size(); detachedIndex++) {
+                var marker = detached.getCompound(detachedIndex);
+                if (!marker.hasUUID("session") || endpoint.query(marker.getUUID("session")).isEmpty() ||
+                        !entry.detachedSessions.add(marker.getUUID("session")))
+                    throw new IllegalArgumentException("Invalid detached reusable session evidence");
+            }
+            var pendingDetached = saved.contains("detached_pending", Tag.TAG_LIST) ?
+                    saved.getList("detached_pending", Tag.TAG_COMPOUND) : detached;
+            for (int pendingIndex = 0; pendingIndex < pendingDetached.size(); pendingIndex++) {
+                var marker = pendingDetached.getCompound(pendingIndex);
+                if (!marker.hasUUID("session") || !entry.detachedSessions.contains(marker.getUUID("session")) ||
+                        endpoint.query(marker.getUUID("session")).isEmpty() ||
+                        !entry.pendingDetachedSessions.add(marker.getUUID("session")))
+                    throw new IllegalArgumentException("Invalid pending detached reusable session evidence");
+            }
             if (saved.contains("machine", Tag.TAG_COMPOUND)) {
                 var work = new NativeWork(saved.getUUID("session"), saved.getLong("operation"), saved.getLong("sequence"),
                         PackagedOperationState.load(saved.getCompound("machine"), registries), saved.getBoolean("released"));
@@ -554,6 +639,8 @@ public final class PackagedReusableState {
         final Direction face;
         final ResourceLocation adapter;
         final PersistentReusableCraftingEndpoint endpoint;
+        final ObjectSet<UUID> detachedSessions = new ObjectOpenHashSet<>();
+        final ObjectSet<UUID> pendingDetachedSessions = new ObjectOpenHashSet<>();
         @Nullable
         NativeWork work;
 
@@ -563,6 +650,16 @@ public final class PackagedReusableState {
             this.adapter = adapter;
             this.endpoint = endpoint;
         }
+    }
+
+    private static ListTag encodeSessionIds(ObjectSet<UUID> sessions) {
+        var encoded = new ListTag();
+        for (UUID session : sessions) {
+            var marker = new CompoundTag();
+            marker.putUUID("session", session);
+            encoded.add(marker);
+        }
+        return encoded;
     }
 
     /** Identity and physical evidence are constructed together, including across provider recovery. */

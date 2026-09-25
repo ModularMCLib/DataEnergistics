@@ -580,7 +580,7 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     @Override
     public List<Rect2i> getExclusionZones() {
         ObjectArrayList<Rect2i> zones = new ObjectArrayList<>(super.getExclusionZones());
-        if (this.previewVisible) {
+        if (this.previewVisible || this.previewOpenPending || this.previewOpenReady) {
             zones.addAll(getPreviewInteractiveBounds());
             zones.addAll(this.leafPanel.getInteractiveBounds());
         }
@@ -1208,8 +1208,15 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         var savedPosition = PatternEncodingPreferencesClient.previewPanelPosition();
         if (savedPosition.isPresent()) {
             var position = savedPosition.orElseThrow();
-            this.previewPanelBounds = PatternEncodingPreviewPlacement.fromPercent(
+            Rect2i savedBounds = PatternEncodingPreviewPlacement.fromPercent(
                     position.xPercent(), position.yPercent(), panelWidth, panelHeight, this.width, this.height);
+            if (!PatternEncodingPreviewPlacement.overlapsAny(savedBounds, getOccupiedPreviewAnchorZones())) {
+                this.previewPanelBounds = savedBounds;
+                return this.previewPanelBounds;
+            }
+            // A persisted position can become occupied after JEI or another screen overlay changes size.
+            // Reuse the automatic candidates for this screen instead of leaving the upload panel underneath it.
+            this.previewPanelBounds = getDefaultPreviewPanelBounds();
             return this.previewPanelBounds;
         }
 

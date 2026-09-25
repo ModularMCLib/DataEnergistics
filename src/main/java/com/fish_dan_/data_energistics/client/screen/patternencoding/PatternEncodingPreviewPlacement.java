@@ -66,6 +66,15 @@ final class PatternEncodingPreviewPlacement {
         return percent(y, minY, maxY);
     }
 
+    static boolean overlapsAny(Rect2i candidate, List<Rect2i> occupiedZones) {
+        for (Rect2i occupiedZone : occupiedZones) {
+            if (computeOverlapArea(candidate, occupiedZone) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void addCandidate(List<Rect2i> candidates, int x, int y, int width, int height,
                                      int screenWidth, int screenHeight) {
         candidates.add(clamp(x, y, width, height, screenWidth, screenHeight));

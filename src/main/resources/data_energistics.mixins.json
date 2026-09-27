@@ -64,6 +64,7 @@
 		"ae.appliedcreate.AppliedCreatePatternProviderBlockEntityMixin",
 		"ae.appliedcreate.AppliedCreatePatternProviderLogicMixin",
 		"ae.extendedae.ExtendedAeInfinityCellInventoryMixin",
+		"ae.extendedae.ExtendedAePatternProviderBlockEntityMixin",
 		"ae.extendedae.ExtendedAePatternProviderPartMixin",
 		"ae.extendedae.ExtendedInscriberThreadMixin",
 		"ae.extendedaeplus.EaepPatternEncodingTermMenuMixin",

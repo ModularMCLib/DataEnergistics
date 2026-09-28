@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.patternprovider;
 
-import com.fish_dan_.data_energistics.accessor.patternprovider.NativePatternDispatchHost;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchAccess;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchBridge;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
@@ -95,7 +94,7 @@ public abstract class PatternProviderLogicMixin
             throw new IllegalArgumentException("Crafting dispatch target availability must not be null");
         }
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
-        if (this.dataEnergistics$requiresNativeDispatch(logic)) {
+        if (logic.getClass() != PatternProviderLogic.class) {
             CraftingDispatchTarget target = CraftingDispatchTarget.provider();
             if (!targetAvailability.canAttempt(target)) {
                 return CountedCraftingPreparation.rejected(
@@ -121,7 +120,7 @@ public abstract class PatternProviderLogicMixin
                                                              long requestedCount,
                                                              CraftingDispatchTargetAvailability targetAvailability) {
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
-        if (this.dataEnergistics$requiresNativeDispatch(logic)) {
+        if (logic.getClass() != PatternProviderLogic.class) {
             return CountedCraftingPreparation.rejected(
                     CraftingDispatchRejection.scoped(CraftingDispatchStatus.REJECTED));
         }
@@ -196,7 +195,7 @@ public abstract class PatternProviderLogicMixin
                                                            long capacityRevision,
                                                            long captureTick) {
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
-        if (this.dataEnergistics$requiresNativeDispatch(logic)) {
+        if (logic.getClass() != PatternProviderLogic.class) {
             return List.of(new ProviderCapacitySnapshot(
                     providerId,
                     CraftingDispatchTarget.provider(),
@@ -230,7 +229,7 @@ public abstract class PatternProviderLogicMixin
                                                           long requestedCount,
                                                           CraftingDispatchTarget target) {
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
-        if (this.dataEnergistics$requiresNativeDispatch(logic)) {
+        if (logic.getClass() != PatternProviderLogic.class) {
             return target.equals(CraftingDispatchTarget.provider()) ?
                     PatternProviderBatching.prepareSingle(logic, patternDetails, prototype, requestedCount) :
                     null;
@@ -254,7 +253,7 @@ public abstract class PatternProviderLogicMixin
                                                                     long requestedCount,
                                                                     CraftingDispatchTarget target) {
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
-        if (this.dataEnergistics$requiresNativeDispatch(logic)) {
+        if (logic.getClass() != PatternProviderLogic.class) {
             return null;
         }
         return PatternProviderBatching.prepareStandardBatchForTarget(
@@ -266,11 +265,6 @@ public abstract class PatternProviderLogicMixin
                 requestedCount,
                 this::dataEnergistics$afterCountedPush,
                 target);
-    }
-
-    @Unique
-    private boolean dataEnergistics$requiresNativeDispatch(PatternProviderLogic logic) {
-        return logic.getClass() != PatternProviderLogic.class || this.host instanceof NativePatternDispatchHost;
     }
 
     @Inject(method = "pushPattern", at = @At("RETURN"))

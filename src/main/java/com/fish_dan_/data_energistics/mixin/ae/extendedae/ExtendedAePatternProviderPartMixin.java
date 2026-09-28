@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.mixin.ae.extendedae;
 
-import com.fish_dan_.data_energistics.accessor.patternprovider.NativePatternDispatchHost;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningInventoryHelper;
@@ -21,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PartExPatternProvider.class)
-public abstract class ExtendedAePatternProviderPartMixin implements PatternProviderHostAccessor, NativePatternDispatchHost {
+public abstract class ExtendedAePatternProviderPartMixin implements PatternProviderHostAccessor {
 
     @Unique
     private static final String DATA_ENERGISTICS_REDSTONE_TUNING_TAG = "data_energistics_redstone_tuning_mode";

@@ -232,8 +232,7 @@ public final class CraftingDispatchWindow {
         validateProvider(provider);
         validatePattern(pattern);
         ProviderState state = this.states.get(provider);
-        return hasCompletedGlobalCapacity() &&
-                this.serverBudget.canStart(0L) &&
+        return hasSubmissionCapacity() &&
                 (state == null || state.canAttempt(pattern, null, this.limits.maxAttemptsPerProvider()));
     }
 
@@ -284,8 +283,7 @@ public final class CraftingDispatchWindow {
         validatePattern(pattern);
         validateTarget(target);
         ProviderState state = this.states.get(provider);
-        return hasCompletedGlobalCapacity() &&
-                this.serverBudget.canStart(0L) &&
+        return hasSubmissionCapacity() &&
                 (state == null || state.canAttempt(pattern, target, providerAttemptLimit));
     }
 
@@ -314,8 +312,7 @@ public final class CraftingDispatchWindow {
         }
         int providerAttemptLimit = this.limits.maxAttemptsPerProvider();
         ProviderState state = this.states.get(provider);
-        if (!hasCompletedGlobalCapacity() ||
-                !this.serverBudget.canStart(0L) ||
+        if (!hasSubmissionCapacity() ||
                 (state != null && !state.canAttempt(pattern, null, providerAttemptLimit))) {
             return null;
         }
@@ -450,6 +447,9 @@ public final class CraftingDispatchWindow {
         if (this.attemptCount >= this.limits.maxAttemptsPerGrid()) {
             return CraftingDispatchExhaustion.GRID_CALL_BUDGET;
         }
+        if (canCompleteFirstAttempt()) {
+            return CraftingDispatchExhaustion.NONE;
+        }
         long activeDispatchNanos = activeDispatchNanos();
         if (currentServerWorkNanos() >= this.limits.maxServerSubmissionNanos()) {
             return CraftingDispatchExhaustion.SERVER_TIME_BUDGET;
@@ -504,6 +504,16 @@ public final class CraftingDispatchWindow {
                 completedServerWorkNanos() < this.limits.maxServerSubmissionNanos();
     }
 
+    private boolean hasSubmissionCapacity() {
+        return (hasCompletedGlobalCapacity() && this.serverBudget.canStart(0L)) || canCompleteFirstAttempt();
+    }
+
+    private boolean canCompleteFirstAttempt() {
+        return this.attemptCount == 0 &&
+                (this.activeCapacityCapture != null || this.capacityCaptureCount > 0 || this.activeSubmission != null) &&
+                this.serverBudget.canCompleteFirstAttempt();
+    }
+
     private long completedServerWorkNanos() {
         return Math.addExact(this.serverSubmissionNanos, this.capacityCaptureNanos);
     }
@@ -525,6 +535,9 @@ public final class CraftingDispatchWindow {
      * Verifies an active scope still has time before acquiring another irreversible physical call.
      */
     private boolean hasServerSubmissionTime(MeasuredSubmissionScope submission) {
+        if (canCompleteFirstAttempt()) {
+            return true;
+        }
         long activeNanos = submission.elapsedNanos();
         long projectedNanos = Math.addExact(completedServerWorkNanos(), activeNanos);
         return projectedNanos < this.limits.maxServerSubmissionNanos() &&
@@ -605,6 +618,7 @@ public final class CraftingDispatchWindow {
             if (!state.routeAvailable(this.pattern, target)) {
                 return Acquisition.ROUTE_UNAVAILABLE;
             }
+            serverBudget.recordPhysicalAttempt();
             state.attemptCount = Math.incrementExact(state.attemptCount);
             attemptCount = Math.incrementExact(attemptCount);
             return Acquisition.ACQUIRED;

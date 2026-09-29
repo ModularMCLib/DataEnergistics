@@ -9,8 +9,6 @@ import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
-import com.bawnorton.mixinsquared.MixinSquaredBootstrap;
-import com.bawnorton.mixinsquared.canceller.MixinCancellerRegistrar;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -25,11 +23,6 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     private static final String MIXIN_PACKAGE = "com.fish_dan_.data_energistics.mixin.";
     private static final Map<String, String> MOD_COMPAT_MIXINS = new Object2ObjectOpenHashMap<>();
-    private static final Set<String> CANCELLED_MIXIN_CLASS_NAMES = Set.of(
-            "com.extendedae_plus.mixin.ae2.autopattern.PatternProviderLogicContainsModifyMixin",
-            "com.extendedae_plus.mixin.ae2.autopattern.PatternProviderLogicContainsRedirectMixin");
-    private static final DataEnergisticsMixinCanceller MIXIN_CANCELLER = new DataEnergisticsMixinCanceller(CANCELLED_MIXIN_CLASS_NAMES);
-
     static {
         addModCompatMixin("advancedae", "ae.advancedae.");
         addModCompatMixin("ae2ct", "ae.ae2ct.");
@@ -75,10 +68,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
     }
 
     @Override
-    public void onLoad(String mixinPackage) {
-        MixinSquaredBootstrap.init();
-        MixinCancellerRegistrar.register(MIXIN_CANCELLER);
-    }
+    public void onLoad(String mixinPackage) {}
 
     @Override
     public @Nullable String getRefMapperConfig() {
@@ -123,7 +113,6 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public @Nullable List<String> getMixins() {
-        MixinSquaredBootstrap.reOrderExtensions();
         return null;
     }
 

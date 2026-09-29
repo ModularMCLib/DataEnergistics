@@ -12,8 +12,6 @@ dependencies {
     jarJar(api(forge.mdlib.get()))
     jarJar(api(libs.ojalgo.get()))
     jarJar(api(forge.configuration.get()))
-    compileOnly(annotationProcessor(libs.mixinsquared.common.get()))
-    implementation(jarJar(libs.mixinsquared.neoforge.get()))
     additionalRuntimeClasspath(libs.ojalgo)
 
     // Misc libraries

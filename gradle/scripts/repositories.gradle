@@ -15,7 +15,6 @@ repositories {
             includeGroup("io.netty")
         }
     }
-    maven { url = "https://maven.bawnorton.com/releases" }
     exclusiveContent { // Mystical Agriculture and Cucumber
         forRepository { maven { url = "https://maven.blakesmods.com" } }
         filter {

@@ -1,5 +1,11 @@
 # ChangeLog
 
+## Version [v3.3.2](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.1-1.21...v3.3.2-1.21)
+### Fixed
+
+- 修复 Trinity CPU 容量显示与 AE2 兼容 by @QiuYe-123 in [#364](https://github.com/ModularMCLib/DataEnergistics/pull/364)
+
+ 
 ## Version [v3.3.1](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.0-1.21...v3.3.1-1.21)
 ### Fixed
 

@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -159,24 +160,114 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
     }
 
     @Override
+    public boolean recoverRemoved(PackagedMachineOperation operation) {
+        var level = operation.level();
+        for (var position : occupiedPositions(level, operation.position(), operation.progress())) {
+            if (!level.isLoaded(position)) return false;
+        }
+
+        var progress = operation.progress();
+        if (level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center &&
+                center.ritualActive && center.getCurrentRitualRecipe() != null &&
+                !center.getCurrentRitualRecipe().id().equals(operation.recipeId())) {
+            return false;
+        }
+        if (!progress.getBoolean("recovery_inspected")) {
+            if (progress.getBoolean("delivery_started") &&
+                    level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center) {
+                var current = center.getCurrentRitualRecipe();
+                if (current == null || !center.ritualActive) {
+                    // Native interruption drops these only while the recipe is still resolvable.
+                    for (ItemStack consumed : center.consumedIngredients) {
+                        if (!consumed.isEmpty()) operation.returned(AEItemKey.of(consumed), consumed.getCount());
+                    }
+                    center.consumedIngredients.clear();
+                    center.setChanged();
+                }
+                if (center.ritualActive) {
+                    PackagedEntityCapture.run(level, operation.id(), () -> center.stopRitual(false));
+                    center.setChanged();
+                }
+            }
+            progress.putBoolean("recovery_inspected", true);
+            operation.changed();
+        }
+
+        if (!progress.getBoolean("recovery_collected")) {
+            if (progress.getBoolean("delivery_started")) {
+                if (level.getBlockEntity(operation.position()) instanceof SacrificialBowlBlockEntity center) {
+                    if (!recoverStack(operation, center, read(operation, progress, "activation"), true)) return false;
+                }
+                var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
+                for (int index = 0; index < slots.size(); index++) {
+                    var slot = slots.getCompound(index);
+                    var position = BlockPos.of(slot.getLong("position"));
+                    if (level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl) {
+                        if (!recoverStack(operation, bowl, read(operation, slot, "input"), true)) return false;
+                    }
+                }
+                if (progress.contains("output_bowl", Tag.TAG_LONG)) {
+                    var output = BlockPos.of(progress.getLong("output_bowl"));
+                    if (level.getBlockEntity(output) instanceof SacrificialBowlBlockEntity bowl) {
+                        if (!recoverStack(operation, bowl, read(operation, progress, "result"), false)) return false;
+                    }
+                }
+                if (!progress.getBoolean("recovery_use_settled")) {
+                    RitualNativeActions.returnHeld(operation);
+                    progress.remove("use_item");
+                    progress.putBoolean("recovery_use_settled", true);
+                }
+            }
+            progress.putBoolean("recovery_collected", true);
+            operation.changed();
+        }
+
+        for (var drop : ownedDrops(operation)) {
+            ItemStack stack = drop.getItem().copy();
+            drop.discard();
+            operation.returned(AEItemKey.of(stack), stack.getCount());
+        }
+        operation.changed();
+        return true;
+    }
+
+    @Override
     public boolean advance(PackagedMachineOperation operation) {
+        var progress = operation.progress();
+        if (progress.getLong("cycles") <= 0) throw new IllegalArgumentException("Invalid persisted ritual cycle count");
+        ItemStack expected = read(operation, progress, "result");
+        var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
+        // delivery_started persists across cycles; physical assets identify a partial current cycle.
+        if (!progress.getBoolean("delivered") && progress.getBoolean("delivery_started") &&
+                hasPendingCycleAssets(operation, slots, expected)) {
+            return retireInterrupted(operation);
+        }
+        if (progress.getBoolean("delivered")) {
+            for (var position : occupiedPositions(operation.level(), operation.position(), progress)) {
+                if (!operation.level().isLoaded(position)) return false;
+            }
+            if (!(operation.level().getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center)) {
+                return retireInterrupted(operation);
+            }
+            var active = center.getCurrentRitualRecipe();
+            if (active != null) {
+                if (!center.ritualActive || !active.id().equals(operation.recipeId())) return retireInterrupted(operation);
+                return RitualNativeActions.advance(operation, center);
+            }
+            return collect(operation, center, slots, expected);
+        }
+
         RecipeHolder<RitualRecipe> holder = recipe(operation.level(), operation.recipeId());
         if (holder == null) throw new IllegalStateException("Occultism ritual recipe is no longer supported");
         Layout layout = layout(operation.level(), operation.position(), holder.value());
         if (layout == null) return false;
-        var progress = operation.progress();
-        if (progress.getLong("cycles") <= 0) throw new IllegalArgumentException("Invalid persisted ritual cycle count");
         boolean hasOutput = progress.contains("output_bowl", Tag.TAG_LONG);
         if (hasOutput != (layout.output() != null) || hasOutput &&
                 progress.getLong("output_bowl") != layout.output().getBlockPos().asLong())
             return false;
-        ItemStack expected = read(operation, progress, "result");
-        var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
-        if (progress.getBoolean("delivered")) {
-            if (layout.center().getCurrentRitualRecipe() != null) return RitualNativeActions.advance(operation, layout.center());
-            return collect(operation, layout, slots, expected);
+        if (!layout.empty()) {
+            return progress.getBoolean("delivery_started") ? retireInterrupted(operation) : false;
         }
-        if (!layout.empty()) return false;
         ItemStack activation = read(operation, progress, "activation");
         var targets = new ObjectArrayList<SacrificialBowlBlockEntity>();
         var inputs = new ObjectArrayList<ItemStack>();
@@ -231,39 +322,47 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         if (!rejected.isEmpty()) throw new IllegalStateException("Occultism bowl refused an accepted ingredient");
     }
 
-    private static boolean collect(PackagedMachineOperation operation, Layout layout, ListTag slots, ItemStack expected) {
-        if (layout.center().getCurrentRitualRecipe() != null || layout.center().ritualActive) return false;
-        if (!layout.center().itemStackHandler.getStackInSlot(0).isEmpty()) {
-            throw new IllegalStateException("Occultism ritual ended without consuming activation item");
+    private static boolean collect(PackagedMachineOperation operation, GoldenSacrificialBowlBlockEntity center,
+                                   ListTag slots, ItemStack expected) {
+        if (center.ritualActive) return retireInterrupted(operation);
+        if (!center.itemStackHandler.getStackInSlot(0).isEmpty()) {
+            return retireInterrupted(operation);
         }
         for (int index = 0; index < slots.size(); index++) {
             BlockPos position = BlockPos.of(slots.getCompound(index).getLong("position"));
-            var bowl = layout.inputs().stream().filter(candidate -> candidate.getBlockPos().equals(position)).findFirst();
-            if (bowl.isEmpty()) return false;
-            if (!bowl.get().itemStackHandler.getStackInSlot(0).isEmpty()) {
-                throw new IllegalStateException("Occultism ritual left unconsumed materials");
+            if (!(operation.level().getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl)) {
+                return retireInterrupted(operation);
+            }
+            if (!bowl.itemStackHandler.getStackInSlot(0).isEmpty()) {
+                return retireInterrupted(operation);
             }
         }
-        if (layout.output() != null) {
-            var inventory = layout.output().itemStackHandler;
+        if (operation.progress().contains("output_bowl", Tag.TAG_LONG)) {
+            BlockPos outputPosition = BlockPos.of(operation.progress().getLong("output_bowl"));
+            if (!(operation.level().getBlockEntity(outputPosition) instanceof SacrificialBowlBlockEntity output) ||
+                    !output.getBlockState().hasProperty(BlockStateProperties.FACING) ||
+                    output.getBlockState().getValue(BlockStateProperties.FACING) != Direction.DOWN) {
+                return retireInterrupted(operation);
+            }
+            var inventory = output.itemStackHandler;
             ItemStack actual = inventory.getStackInSlot(0);
-            if (actual.isEmpty()) return false;
-            if (!PackagedOutputMatching.matches(operation, expected, actual)) throw new IllegalStateException("Unexpected Occultism output bowl contents");
+            if (actual.isEmpty()) return ownedDrops(operation).isEmpty() ? false : retireInterrupted(operation);
+            if (!PackagedOutputMatching.matches(operation, expected, actual)) return retireInterrupted(operation);
+            if (!ownedDrops(operation).isEmpty()) return retireInterrupted(operation);
             ItemStack extracted = inventory.extractItem(0, actual.getCount(), false);
             if (!extracted.isEmpty()) operation.returned(AEItemKey.of(extracted), extracted.getCount());
             if (!ItemStack.matches(extracted, actual)) throw new IllegalStateException("Incomplete Occultism output extraction");
         } else {
-            var drops = operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(8),
-                    item -> PackagedEntityCapture.ownedBy(item, operation.id()));
+            var drops = ownedDrops(operation);
             if (drops.isEmpty()) return false;
             int count = 0;
             for (ItemEntity drop : drops) {
                 if (!PackagedOutputMatching.sameKey(operation, expected, drop.getItem())) {
-                    throw new IllegalStateException("Occultism ritual returned interrupted inputs or unexpected results");
+                    return retireInterrupted(operation);
                 }
                 count = Math.addExact(count, drop.getItem().getCount());
             }
-            if (count != expected.getCount()) throw new IllegalStateException("Occultism ritual output quantity differs");
+            if (count != expected.getCount()) return retireInterrupted(operation);
             for (ItemEntity drop : drops) {
                 ItemStack actual = drop.getItem().copy();
                 drop.discard();
@@ -344,6 +443,58 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
     private static ItemStack read(PackagedMachineOperation operation, CompoundTag tag, String key) {
         return ItemStack.parse(operation.level().registryAccess(), tag.getCompound(key))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid persisted ritual " + key));
+    }
+
+    private static boolean retireInterrupted(PackagedMachineOperation operation) {
+        PackagedMachineClaims.get(operation.level()).retireOperation(operation.id());
+        return true;
+    }
+
+    private static boolean hasPendingCycleAssets(PackagedMachineOperation operation, ListTag slots, ItemStack expected) {
+        var level = operation.level();
+        if (level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center &&
+                (center.ritualActive || center.getCurrentRitualRecipe() != null ||
+                        matchesSaved(center.itemStackHandler.getStackInSlot(0), read(operation, operation.progress(), "activation")))) {
+            return true;
+        }
+        for (int index = 0; index < slots.size(); index++) {
+            var slot = slots.getCompound(index);
+            BlockPos position = BlockPos.of(slot.getLong("position"));
+            if (level.isLoaded(position) && level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl &&
+                    matchesSaved(bowl.itemStackHandler.getStackInSlot(0), read(operation, slot, "input"))) {
+                return true;
+            }
+        }
+        if (operation.progress().contains("output_bowl", Tag.TAG_LONG)) {
+            BlockPos position = BlockPos.of(operation.progress().getLong("output_bowl"));
+            if (level.isLoaded(position) && level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl &&
+                    bowl.itemStackHandler.getStackInSlot(0).is(expected.getItem())) {
+                return true;
+            }
+        }
+        return !ownedDrops(operation).isEmpty();
+    }
+
+    private static boolean matchesSaved(ItemStack current, ItemStack expected) {
+        return !current.isEmpty() && current.getCount() <= expected.getCount() &&
+                AEItemKey.of(current).equals(AEItemKey.of(expected));
+    }
+
+    private static List<ItemEntity> ownedDrops(PackagedMachineOperation operation) {
+        return operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(16),
+                item -> PackagedEntityCapture.ownedBy(item, operation.id()));
+    }
+
+    private static boolean recoverStack(PackagedMachineOperation operation, SacrificialBowlBlockEntity bowl,
+                                        ItemStack expected, boolean exactKey) {
+        ItemStack current = bowl.itemStackHandler.getStackInSlot(0).copy();
+        if (current.isEmpty() || current.getCount() > expected.getCount() ||
+                (exactKey ? !matchesSaved(current, expected) : !current.is(expected.getItem()))) {
+            return true;
+        }
+        ItemStack stack = bowl.itemStackHandler.extractItem(0, current.getCount(), false);
+        if (!stack.isEmpty()) operation.returned(AEItemKey.of(stack), stack.getCount());
+        return ItemStack.matches(stack, current);
     }
 
     private record Layout(GoldenSacrificialBowlBlockEntity center, ObjectList<SacrificialBowlBlockEntity> inputs,

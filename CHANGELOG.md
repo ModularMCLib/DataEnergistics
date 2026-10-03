@@ -1,5 +1,12 @@
 # ChangeLog
 
+## Version [v3.3.3](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.2-1.21...v3.3.3-1.21)
+### Fixed
+
+- 修复封包神秘学仪式中断后的回收 by @QiuYe-123 in [#366](https://github.com/ModularMCLib/DataEnergistics/pull/366)
+- 修复样板供应器向 AE2CS 机器发配 by @QiuYe-123 in [#363](https://github.com/ModularMCLib/DataEnergistics/pull/363)
+
+ 
 ## Version [v3.3.2](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.1-1.21...v3.3.2-1.21)
 ### Fixed
 

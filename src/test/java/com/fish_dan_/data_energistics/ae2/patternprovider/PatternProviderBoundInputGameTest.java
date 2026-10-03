@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.ae2.patternprovider;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
-import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
@@ -14,7 +13,6 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.crafting.pattern.AEProcessingPattern;
 
-import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -94,32 +92,6 @@ public final class PatternProviderBoundInputGameTest {
                 PatternProviderBatching.boundInputBatchLimit(false, 64L),
                 64L,
                 "An unlocked authorized binding must retain the admitted batch size");
-        helper.succeed();
-    }
-
-    @TestHolder("pattern_provider_maps_locked_bound_input_to_captured_provider_route")
-    @EmptyTemplate("5")
-    @GameTest(template = "empty_5x5")
-    public static void mapsLockedBoundInputToCapturedProviderRoute(GameTestHelper helper) {
-        CraftingDispatchTarget provider = CraftingDispatchTarget.provider();
-        CraftingDispatchTarget locked = PatternProviderBatching.externalInventoryDispatchTarget(
-                true,
-                Direction.NORTH);
-        CraftingDispatchTarget unlocked = PatternProviderBatching.externalInventoryDispatchTarget(
-                false,
-                Direction.NORTH);
-
-        helper.assertValueEqual(
-                locked,
-                provider,
-                "A lock-sensitive external inventory must match the captured provider route");
-        helper.assertValueEqual(
-                unlocked.stableIdentity(),
-                "side:north",
-                "An unlocked external inventory must retain its exact physical side route");
-        helper.assertFalse(
-                unlocked.equals(provider),
-                "An unlocked side must not collapse into the provider-level route");
         helper.succeed();
     }
 

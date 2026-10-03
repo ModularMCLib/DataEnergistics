@@ -32,6 +32,7 @@ final class MeasuredCraftingServerDispatchBudget implements CraftingServerDispat
     private long previousNonTrinityNanos;
     private long currentDispatchNanos;
     private long lastCompletedDispatchNanos;
+    private boolean physicalAttempted;
     private boolean tickActive;
 
     MeasuredCraftingServerDispatchBudget(
@@ -77,9 +78,22 @@ final class MeasuredCraftingServerDispatchBudget implements CraftingServerDispat
         }
     }
 
+    @Override
+    public boolean canCompleteFirstAttempt() {
+        return this.tickActive && !this.physicalAttempted;
+    }
+
+    @Override
+    public void recordPhysicalAttempt() {
+        if (this.tickActive) {
+            this.physicalAttempted = true;
+        }
+    }
+
     void beginTick() {
         this.tickStartedAtNanos = this.nanoClock.getAsLong();
         this.currentDispatchNanos = 0L;
+        this.physicalAttempted = false;
         this.tickActive = true;
     }
 
@@ -97,6 +111,7 @@ final class MeasuredCraftingServerDispatchBudget implements CraftingServerDispat
         this.previousNonTrinityNanos = 0L;
         this.currentDispatchNanos = 0L;
         this.lastCompletedDispatchNanos = 0L;
+        this.physicalAttempted = false;
         this.tickActive = false;
     }
 

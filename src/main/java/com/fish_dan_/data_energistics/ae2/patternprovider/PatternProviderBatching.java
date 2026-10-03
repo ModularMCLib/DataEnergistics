@@ -241,7 +241,9 @@ public final class PatternProviderBatching {
             long count = simulateCapacity(inventoryTarget.target(), prototype, requestedCount);
             if (count > 0L) {
                 var adjacentPosition = inventoryTarget.position();
-                var adjacentSide = inventoryTarget.direction();
+                var adjacentSide = inventoryTarget.remote() ?
+                        inventoryTarget.direction() :
+                        inventoryTarget.direction().getOpposite();
                 Observation observation = CraftingMachineCapacityAdapters.capture(
                         level,
                         adjacentPosition,
@@ -609,10 +611,6 @@ public final class PatternProviderBatching {
             return new CraftingDispatchTarget("connector:" + pos.asLong() + ":" + inventory.direction().get3DDataValue());
         }
         return targetFor(target.direction());
-    }
-
-    static CraftingDispatchTarget externalInventoryDispatchTarget(boolean singleCraftPath, Direction direction) {
-        return singleCraftPath ? CraftingDispatchTarget.provider() : targetFor(direction);
     }
 
     private static MachineTargetId machineTargetId(

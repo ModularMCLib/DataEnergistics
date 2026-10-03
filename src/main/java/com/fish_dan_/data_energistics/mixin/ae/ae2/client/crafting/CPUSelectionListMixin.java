@@ -19,6 +19,7 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -46,7 +47,7 @@ import java.util.List;
  * the innermost operation wrapper so it can enforce the Trinity unlimited label immediately before the real
  * {@link InfoBar} call.
  */
-@Mixin(value = CPUSelectionList.class, priority = 1100)
+@Mixin(value = CPUSelectionList.class, priority = 2000)
 public abstract class CPUSelectionListMixin {
 
     @Unique
@@ -126,14 +127,24 @@ public abstract class CPUSelectionListMixin {
         return cpu;
     }
 
-    @Inject(method = "formatStorage", at = @At("HEAD"), cancellable = true)
-    private void dataEnergistics$formatTrinityCpuStorage(CraftingStatusMenu.CraftingCpuListEntry cpu,
-                                                         CallbackInfoReturnable<String> cir) {
-        if (dataEnergistics$isTrinityCpu(cpu)) {
-            cir.setReturnValue(cpu.storage() == Long.MAX_VALUE ?
-                    dataEnergistics$unlimited().getString() :
-                    AmountFormatter.format(cpu.storage()));
+    @ModifyExpressionValue(
+                           method = "drawBackgroundLayer",
+                           at = @At(
+                                    value = "INVOKE",
+                                    target = "Lappeng/core/localization/Tooltips$Amount;toString()Ljava/lang/String;",
+                                    ordinal = 0),
+                           slice = @Slice(
+                                          from = @At(
+                                                     value = "INVOKE",
+                                                     target = "Lappeng/core/localization/Tooltips;getByteAmount(J)Lappeng/core/localization/Tooltips$Amount;")),
+                           require = 1)
+    private String dataEnergistics$formatTrinityCpuStorage(String storageAmount,
+                                                           @Local(name = "cpu") CraftingStatusMenu.CraftingCpuListEntry cpu) {
+        if (!dataEnergistics$isTrinityCpu(cpu)) {
+            return storageAmount;
         }
+        return cpu.storage() == Long.MAX_VALUE ?
+                dataEnergistics$unlimited().getString() : AmountFormatter.format(cpu.storage());
     }
 
     @WrapOperation(

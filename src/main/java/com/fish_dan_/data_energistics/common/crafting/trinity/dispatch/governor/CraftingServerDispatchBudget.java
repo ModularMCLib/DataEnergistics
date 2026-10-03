@@ -43,6 +43,22 @@ public interface CraftingServerDispatchBudget {
     boolean canStart(long activeDispatchNanos);
 
     /**
+     * Allows an already-started capture or submission to reach the first physical call even if preparation exhausted
+     * the measured time allowance. Only the server thread may query this boundary; it does not mutate the budget.
+     *
+     * @return whether the first physical attempt has not yet started in this tick
+     */
+    default boolean canCompleteFirstAttempt() {
+        return false;
+    }
+
+    /**
+     * Records final admission immediately before the provider call. Only the server thread may call it, and each
+     * admitted physical attempt must be recorded even if the provider later rejects the input.
+     */
+    default void recordPhysicalAttempt() {}
+
+    /**
      * Accounts completed server-thread dispatch work.
      *
      * @param elapsedNanos non-negative measured duration

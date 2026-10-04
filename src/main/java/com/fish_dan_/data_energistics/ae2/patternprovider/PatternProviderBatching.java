@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachi
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineScope;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.AdaptiveLinkAllocationPlanner;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
@@ -138,51 +139,49 @@ public final class PatternProviderBatching {
             return rejected(CraftingDispatchStatus.OFFLINE);
         }
 
+        if (logic instanceof AdaptivePatternProviderLogic adaptive && adaptive.hasConnectorBindings()) {
+            return prepareAdaptiveConnectorBatch(
+                    adaptive,
+                    access,
+                    patternDetails,
+                    extractionDetails,
+                    prototype,
+                    requestedCount,
+                    afterCommit,
+                    targetAvailability,
+                    level);
+        }
+
         var possibleTargets = new ObjectArrayList<PushTarget>();
         var machineTargets = new ObjectArrayList<MachinePushTarget>();
-        List<ConnectorLink> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
-        for (ConnectorLink binding : connectorBindings) {
-            if (!binding.mode().supportsInput()) {
+        for (Direction direction : access.dataEnergistics$invokeGetActiveSides()) {
+            var adjacentPosition = blockEntity.getBlockPos().relative(direction);
+            var adjacentSide = direction.getOpposite();
+            var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
+            boolean dedicatedCraftingMachine = craftingMachine != null && craftingMachine.acceptsPlans();
+            if (!singleCraftPath && dedicatedCraftingMachine && craftingMachine instanceof CountedCraftingMachine machine) {
+                machineTargets.add(new MachinePushTarget(direction, machine));
                 continue;
             }
-            if (!patternDetails.supportsPushInputsToExternalInventory()) {
+            if (requiresSingleCraftPath(LockCraftingMode.NONE, dedicatedCraftingMachine)) {
+                if (targetAvailability.canAttempt(CraftingDispatchTarget.provider())) {
+                    return prepareSingle(
+                            logic,
+                            patternDetails,
+                            prototype,
+                            requestedCount,
+                            targetAvailability);
+                }
+                // A proposal may have selected another exact side from the same complete capacity capture. The
+                // provider-scoped dedicated-machine route is not that target, so continue scanning rather than
+                // allowing one adjacent crafting machine to hide every external processing route.
                 continue;
             }
-            var target = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
-            if (target != null) {
-                possibleTargets.add(new InventoryPushTarget(binding.side(), binding.position(), target, true));
-            }
-        }
-        if (connectorBindings.isEmpty()) {
-            for (Direction direction : access.dataEnergistics$invokeGetActiveSides()) {
-                var adjacentPosition = blockEntity.getBlockPos().relative(direction);
-                var adjacentSide = direction.getOpposite();
-                var craftingMachine = ICraftingMachine.of(level, adjacentPosition, adjacentSide);
-                boolean dedicatedCraftingMachine = craftingMachine != null && craftingMachine.acceptsPlans();
-                if (!singleCraftPath && dedicatedCraftingMachine && craftingMachine instanceof CountedCraftingMachine machine) {
-                    machineTargets.add(new MachinePushTarget(direction, machine));
-                    continue;
-                }
-                if (requiresSingleCraftPath(LockCraftingMode.NONE, dedicatedCraftingMachine)) {
-                    if (targetAvailability.canAttempt(CraftingDispatchTarget.provider())) {
-                        return prepareSingle(
-                                logic,
-                                patternDetails,
-                                prototype,
-                                requestedCount,
-                                targetAvailability);
-                    }
-                    // A proposal may have selected another exact side from the same complete capacity capture. The
-                    // provider-scoped dedicated-machine route is not that target, so continue scanning rather than
-                    // allowing one adjacent crafting machine to hide every external processing route.
-                    continue;
-                }
 
-                if (patternDetails.supportsPushInputsToExternalInventory()) {
-                    var target = access.dataEnergistics$invokeFindAdapter(direction);
-                    if (target != null) {
-                        possibleTargets.add(new InventoryPushTarget(direction, adjacentPosition, target, false));
-                    }
+            if (patternDetails.supportsPushInputsToExternalInventory()) {
+                var target = access.dataEnergistics$invokeFindAdapter(direction);
+                if (target != null) {
+                    possibleTargets.add(new InventoryPushTarget(direction, adjacentPosition, target, false));
                 }
             }
         }
@@ -193,7 +192,7 @@ public final class PatternProviderBatching {
 
         List<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
         boolean priority = logic instanceof AdaptivePatternProviderLogic adaptive &&
-                adaptive.connectorPolicy() == ConnectorPolicy.PRIORITY;
+                adaptive.getConnectorPolicy() == ConnectorPolicy.PRIORITY;
         int roundRobinIndex = priority ? 0 : access.dataEnergistics$getRoundRobinIndex();
         int inventoryRoundRobin = rearrangeRoundRobin(
                 possibleTargets,
@@ -285,6 +284,130 @@ public final class PatternProviderBatching {
         return CountedCraftingPreparation.rejected(rejections);
     }
 
+    /** Prepares one aggregate admission for every configured adaptive connector link. */
+    private static CountedCraftingPreparation prepareAdaptiveConnectorBatch(
+                                                                            AdaptivePatternProviderLogic adaptive,
+                                                                            PatternProviderBatchAccess access,
+                                                                            IPatternDetails patternDetails,
+                                                                            IPatternDetails extractionDetails,
+                                                                            KeyCounter[] prototype,
+                                                                            long requestedCount,
+                                                                            Runnable afterCommit,
+                                                                            CraftingDispatchTargetAvailability targetAvailability,
+                                                                            Level level) {
+        if (!patternDetails.supportsPushInputsToExternalInventory()) {
+            return rejected(CraftingDispatchStatus.REJECTED);
+        }
+
+        ObjectArrayList<AdaptiveConnectorCandidate> candidates = captureAdaptiveConnectorCandidates(
+                adaptive, access, patternDetails, prototype, requestedCount, level, targetAvailability);
+        long[] capacities = new long[candidates.size()];
+        ObjectArrayList<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
+        for (int index = 0; index < candidates.size(); index++) {
+            AdaptiveConnectorCandidate candidate = candidates.get(index);
+            capacities[index] = candidate.capacity();
+            if (candidate.capacity() == 0L) {
+                rejections.add(CraftingDispatchRejection.targeted(
+                        candidate.blocked() ? CraftingDispatchStatus.BLOCKED : CraftingDispatchStatus.NO_CAPACITY,
+                        candidate.route()));
+            }
+        }
+
+        var allocation = AdaptiveLinkAllocationPlanner.plan(
+                capacities,
+                requestedCount,
+                adaptive.getConnectorCursor(),
+                adaptive.getConnectorPolicy());
+        long[] counts = allocation.counts();
+        long admitted = 0L;
+        for (long count : counts) {
+            admitted = Math.addExact(admitted, count);
+        }
+        if (admitted == 0L) {
+            return rejections.isEmpty() ? rejected(CraftingDispatchStatus.NO_CAPACITY) :
+                    CountedCraftingPreparation.rejected(rejections);
+        }
+
+        return CountedCraftingPreparation.accepted(
+                ownershipAwareAdmission(admitted, prototype, (committedPrototype, transferOwnership) -> {
+                    for (int index = 0; index < counts.length; index++) {
+                        long count = counts[index];
+                        if (count == 0L) {
+                            continue;
+                        }
+                        AdaptiveConnectorCandidate candidate = candidates.get(index);
+                        InventoryPushTarget target = candidate.target();
+                        long currentCapacity = simulateCapacity(target.target(), committedPrototype, count);
+                        Observation currentObservation = currentCapacity > 0L ? CraftingMachineCapacityAdapters.capture(
+                                level,
+                                target.position(),
+                                target.direction(),
+                                patternDetails,
+                                committedPrototype,
+                                currentCapacity) : null;
+                        if (!targetAvailability.canAttempt(candidate.route()) ||
+                                isBlockedByTargetContents(adaptive.isBlocking(), target.target(), access.dataEnergistics$getPatternInputs()) ||
+                                currentCapacity < count ||
+                                currentObservation != null && currentObservation.remainingLogicalCrafts() < count) {
+                            return false;
+                        }
+                    }
+                    for (int index = 0; index < counts.length; index++) {
+                        long count = counts[index];
+                        if (count > 0L) {
+                            pushExpandedToTarget(
+                                    extractionDetails,
+                                    committedPrototype,
+                                    count,
+                                    candidates.get(index).target().target(),
+                                    transferOwnership);
+                        }
+                    }
+                    adaptive.setConnectorRoundRobinIndex(allocation.nextCursor());
+                    afterCommit.run();
+                    return true;
+                }),
+                CraftingDispatchTarget.provider(),
+                rejections);
+    }
+
+    private static ObjectArrayList<AdaptiveConnectorCandidate> captureAdaptiveConnectorCandidates(
+                                                                                                  AdaptivePatternProviderLogic adaptive,
+                                                                                                  PatternProviderBatchAccess access,
+                                                                                                  IPatternDetails patternDetails,
+                                                                                                  KeyCounter[] prototype,
+                                                                                                  long requestedCount,
+                                                                                                  Level level,
+                                                                                                  CraftingDispatchTargetAvailability targetAvailability) {
+        ObjectArrayList<AdaptiveConnectorCandidate> candidates = new ObjectArrayList<>();
+        for (ConnectorLink binding : adaptive.adaptiveConnectorBindings()) {
+            CraftingDispatchTarget route = new CraftingDispatchTarget(
+                    "connector:" + binding.position().asLong() + ":" + binding.side().get3DDataValue());
+            if (!binding.mode().supportsInput() || !targetAvailability.canAttempt(route)) {
+                continue;
+            }
+            PatternProviderTarget target = adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side());
+            if (target == null) {
+                continue;
+            }
+            boolean blocked = isBlockedByTargetContents(adaptive.isBlocking(), target, access.dataEnergistics$getPatternInputs());
+            long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
+            if (capacity > 0L) {
+                Observation observation = CraftingMachineCapacityAdapters.capture(
+                        level, binding.position(), binding.side(), patternDetails, prototype, capacity);
+                if (observation != null) {
+                    capacity = Math.min(capacity, observation.remainingLogicalCrafts());
+                }
+            }
+            candidates.add(new AdaptiveConnectorCandidate(
+                    new InventoryPushTarget(binding.side(), binding.position(), target, true),
+                    capacity,
+                    blocked,
+                    route));
+        }
+        return candidates;
+    }
+
     /**
      * Captures every ordinary AE2 side target without advancing the provider's round-robin cursor.
      *
@@ -338,28 +461,30 @@ public final class PatternProviderBatching {
         ObjectArrayList<ProviderCapacitySnapshot> snapshots = new ObjectArrayList<>();
         boolean providerRouteCaptured = false;
         if (patternDetails.supportsPushInputsToExternalInventory()) {
-            List<ConnectorLink> connectorBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
-            for (ConnectorLink binding : connectorBindings) {
-                if (!binding.mode().supportsInput()) {
-                    continue;
-                }
-                PatternProviderTarget target = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.dataEnergistics$invokeExternalTarget(binding.position(), binding.side()) : null;
-                if (target == null) {
-                    continue;
-                }
-                boolean blocked = isBlockedByTargetContents(logic.isBlocking(), target, access.dataEnergistics$getPatternInputs());
-                long capacity = blocked ? 0L : simulateCapacity(target, prototype, requestedCount);
-                Observation observation = capacity > 0L ? CraftingMachineCapacityAdapters.capture(level, binding.position(), binding.side(), patternDetails, prototype, capacity) : null;
-                if (observation != null) {
-                    capacity = Math.min(capacity, observation.remainingLogicalCrafts());
+            if (logic instanceof AdaptivePatternProviderLogic adaptive && adaptive.hasConnectorBindings()) {
+                var candidates = captureAdaptiveConnectorCandidates(
+                        adaptive,
+                        access,
+                        patternDetails,
+                        prototype,
+                        requestedCount,
+                        level,
+                        CraftingDispatchTargetAvailability.all());
+                long totalCapacity = 0L;
+                for (AdaptiveConnectorCandidate candidate : candidates) {
+                    totalCapacity = Math.addExact(totalCapacity, Math.min(candidate.capacity(), requestedCount - totalCapacity));
                 }
                 snapshots.add(new ProviderCapacitySnapshot(
                         providerId,
-                        new CraftingDispatchTarget("connector:" + binding.position().asLong() + ":" + binding.side().get3DDataValue()),
-                        Optional.of(machineTargetId(observation, level, binding.position(), binding.side())),
-                        patternIdentity, publicationRevision, capacityRevision, captureTick,
-                        ProviderRoutingMode.TARGETED,
-                        new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
+                        CraftingDispatchTarget.provider(),
+                        Optional.empty(),
+                        patternIdentity,
+                        publicationRevision,
+                        capacityRevision,
+                        captureTick,
+                        ProviderRoutingMode.AGGREGATE,
+                        new DispatchCapacity.Known(totalCapacity),
+                        new DispatchCapacity.Known(totalCapacity)));
             }
         }
         List<ConnectorLink> configuredBindings = logic instanceof AdaptivePatternProviderLogic adaptive ? adaptive.adaptiveConnectorBindings() : List.of();
@@ -833,6 +958,11 @@ public final class PatternProviderBatching {
     private record InventoryPushTarget(Direction direction, BlockPos position, PatternProviderTarget target,
                                        boolean remote)
             implements PushTarget {}
+
+    private record AdaptiveConnectorCandidate(InventoryPushTarget target,
+                                              long capacity,
+                                              boolean blocked,
+                                              CraftingDispatchTarget route) {}
 
     private record MachinePushTarget(Direction direction, CountedCraftingMachine machine) implements PushTarget {}
 

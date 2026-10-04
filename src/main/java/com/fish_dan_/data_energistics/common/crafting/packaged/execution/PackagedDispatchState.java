@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOu
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.PackagedReusableState;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.AdaptiveLinkAllocationPlanner;
 import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryStore;
@@ -34,6 +35,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -48,11 +50,8 @@ public final class PackagedDispatchState {
     private final Object2ObjectLinkedOpenHashMap<ResourceLocation, ConnectorPolicy> policies = new Object2ObjectLinkedOpenHashMap<>();
     private int tickCursor;
     private @Nullable UUID recoveryReceipt;
+    @Getter
     private PackagedReusableState reusable = new PackagedReusableState();
-
-    public PackagedReusableState reusable() {
-        return this.reusable;
-    }
 
     public int pendingOperations() {
         return this.operations.size() + this.reusable.pendingOperations();
@@ -173,19 +172,13 @@ public final class PackagedDispatchState {
             if (capacity < 0 || capacity > requestedCount) throw new IllegalStateException("Invalid packaged machine batch capacity");
             capacities[index] = capacity;
         }
-        if (routing != ConnectorPolicy.ROUND_ROBIN) {
-            int selected = -1;
-            for (int offset = 0; offset < capacities.length; offset++) {
-                int index = (start + offset) % capacities.length;
-                if (capacities[index] > 0) {
-                    selected = index;
-                    break;
-                }
-            }
-            for (int index = 0; index < capacities.length; index++) if (index != selected) capacities[index] = 0;
-        }
         while (true) {
-            long[] allocation = allocateCounts(capacities, start, requestedCount);
+            var allocationPlan = AdaptiveLinkAllocationPlanner.plan(
+                    capacities,
+                    requestedCount,
+                    start,
+                    routing);
+            long[] allocation = allocationPlan.counts();
             long admitted = 0;
             for (long count : allocation) admitted = Math.addExact(admitted, count);
             if (admitted == 0) return null;
@@ -213,35 +206,10 @@ public final class PackagedDispatchState {
                 prepared.add(new PreparedTarget(index, link, count, batch, inputs));
             }
             if (retry) continue;
-            int next = (prepared.getLast().candidateIndex() + 1) % candidates.size();
-            return new SplitAdmission(level, adapter, recipe, pattern, prototype, prepared, next, claims, available, success);
+            return new SplitAdmission(level, adapter, recipe, pattern, prototype, prepared,
+                    allocationPlan.nextCursor(),
+                    claims, available, success);
         }
-    }
-
-    private static long[] allocateCounts(long[] capacities, int start, long requestedCount) {
-        var allocation = new long[capacities.length];
-        long remaining = requestedCount;
-        for (int offset = 0; offset < capacities.length && remaining > 0; offset++) {
-            int index = (start + offset) % capacities.length;
-            if (capacities[index] > 0) {
-                allocation[index] = 1;
-                remaining--;
-            }
-        }
-        while (remaining > 0) {
-            boolean changed = false;
-            for (int offset = 0; offset < capacities.length && remaining > 0; offset++) {
-                int index = (start + offset) % capacities.length;
-                long available = capacities[index] - allocation[index];
-                if (available <= 0) continue;
-                long count = Math.min(available, remaining);
-                allocation[index] += count;
-                remaining -= count;
-                changed = true;
-            }
-            if (!changed) break;
-        }
-        return allocation;
     }
 
     private record PreparedTarget(int candidateIndex, ConnectorLink link, long count, IPatternDetails pattern,

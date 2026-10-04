@@ -231,8 +231,8 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     }
 
     @Override
-    public ConnectorPolicy connectorPolicy() {
-        return this.logic.connectorPolicy();
+    public ConnectorPolicy getConnectorPolicy() {
+        return this.logic.getConnectorPolicy();
     }
 
     @Override

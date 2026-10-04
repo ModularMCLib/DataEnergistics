@@ -229,7 +229,7 @@ public interface AdaptivePatternProviderDispatchTarget {
      * Current host connector ordering on the server thread, without side effects.
      * Legacy registrations retain round-robin behavior until they expose a host policy.
      */
-    default ConnectorPolicy connectorPolicy() {
+    default ConnectorPolicy getConnectorPolicy() {
         return ConnectorPolicy.ROUND_ROBIN;
     }
 

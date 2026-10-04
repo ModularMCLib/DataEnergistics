@@ -20,8 +20,9 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
      * Plans at most one physical call per selected snapshot.
      *
      * <p>
-     * Known zero capacity is skipped. Unknown capacity, unknown single-batch capacity, and routing modes other than
-     * {@code TARGETED} are limited to one logical craft so snapshot uncertainty never invents counted semantics.
+     * Known zero capacity is skipped. Unknown capacity or unknown single-batch capacity remains limited to one logical
+     * craft so snapshot uncertainty never invents counted semantics. Known aggregate routes may retain their reported
+     * counted capacity because their provider contract owns the complete admission.
      * </p>
      *
      * @param snapshots         immutable provider target observations in stable provider order
@@ -102,7 +103,7 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
         if (isKnownZero(capacity) || isKnownZero(maximumSingleBatch)) {
             return 0L;
         }
-        if (snapshot.routingMode() != ProviderRoutingMode.TARGETED ||
+        if ((snapshot.routingMode() != ProviderRoutingMode.TARGETED && snapshot.routingMode() != ProviderRoutingMode.AGGREGATE) ||
                 !(capacity instanceof DispatchCapacity.Known(long knownCapacity)) ||
                 !(maximumSingleBatch instanceof DispatchCapacity.Known(long knownMaximum))) {
             return 1L;

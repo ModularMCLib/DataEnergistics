@@ -78,9 +78,20 @@ final class CachedDispatchProposalCandidatePlanner implements DispatchProposalCa
     private static long offeredCount(ProviderCapacitySnapshot target, long maximumCount) {
         return switch (target.routingMode()) {
             case TARGETED -> Math.min(effectiveTargetCapacity(target), maximumCount);
-            case AGGREGATE -> maximumCount;
+            case AGGREGATE -> Math.min(effectiveAggregateCapacity(target, maximumCount), maximumCount);
             case ORDERED, UNKNOWN -> 1L;
         };
+    }
+
+    private static long effectiveAggregateCapacity(ProviderCapacitySnapshot target, long maximumCount) {
+        if (isKnownZero(target.capacity()) || isKnownZero(target.maximumSingleBatch())) {
+            return 0L;
+        }
+        if (!(target.capacity() instanceof DispatchCapacity.Known(long capacity)) ||
+                !(target.maximumSingleBatch() instanceof DispatchCapacity.Known(long maximumSingleBatch))) {
+            return maximumCount;
+        }
+        return Math.min(capacity, maximumSingleBatch);
     }
 
     private static long effectiveTargetCapacity(ProviderCapacitySnapshot target) {

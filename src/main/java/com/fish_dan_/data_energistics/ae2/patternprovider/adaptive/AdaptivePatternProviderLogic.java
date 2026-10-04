@@ -143,8 +143,11 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     private final IManagedGridNode mainNode;
     private final IActionSource actionSource;
     private int localRoundRobinIndex;
+    @Getter
     private ConnectorMode connectorMode = ConnectorMode.INPUT;
+    @Getter
     private ConnectorPolicy connectorPolicy = ConnectorPolicy.ROUND_ROBIN;
+    @Getter
     private int connectorCursor;
     private int connectorPullCursor;
     private int connectorPullSlotCursor;
@@ -323,12 +326,12 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
     }
 
-    public ConnectorMode connectorMode() {
-        return this.connectorMode;
-    }
-
-    public ConnectorPolicy connectorPolicy() {
-        return this.connectorPolicy;
+    /** Commits the next connector cursor after one aggregate adaptive admission succeeds. */
+    public void setConnectorRoundRobinIndex(int index) {
+        if (this.connectorPolicy == ConnectorPolicy.PRIORITY || this.connectorTargets.isEmpty()) {
+            return;
+        }
+        this.connectorCursor = Math.floorMod(index, this.connectorTargets.size());
     }
 
     public void setConnectorMode(ConnectorMode mode) {

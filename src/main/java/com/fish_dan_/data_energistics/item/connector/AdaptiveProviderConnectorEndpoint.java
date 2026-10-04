@@ -20,7 +20,7 @@ record AdaptiveProviderConnectorEndpoint(AdaptivePatternProviderLogic logic) imp
 
     @Override
     public ConnectorMode mode() {
-        return logic.connectorMode();
+        return logic.getConnectorMode();
     }
 
     @Override

@@ -418,8 +418,8 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
 
     private void syncConnectorState() {
         if (this.logic instanceof AdaptivePatternProviderLogic adaptiveLogic) {
-            this.connectorMode = adaptiveLogic.connectorMode().ordinal();
-            this.connectorPolicy = adaptiveLogic.connectorPolicy().ordinal();
+            this.connectorMode = adaptiveLogic.getConnectorMode().ordinal();
+            this.connectorPolicy = adaptiveLogic.getConnectorPolicy().ordinal();
             this.connectorBound = adaptiveLogic.hasConnectorBindings();
         }
     }

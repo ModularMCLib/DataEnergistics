@@ -75,6 +75,8 @@ import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
+import appeng.api.upgrades.IUpgradeInventory;
+import appeng.api.upgrades.IUpgradeableObject;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
@@ -92,14 +94,18 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -127,6 +133,7 @@ import java.util.function.Consumer;
 public class AdaptivePatternProviderLogic extends PatternProviderLogic
                                           implements PatternProviderLogicAccessor, TargetedCountedCraftingProvider, BoundPatternInputProvider, ReusableCraftingProviderAdapter {
 
+    private static final ResourceLocation APPFLUX_INDUCTION_CARD = ResourceLocation.fromNamespaceAndPath("appflux", "induction_card");
     private static final int EXPANDED_RETURN_SLOTS = 18;
     private static final int CONNECTOR_PULL_KEYS_PER_TICK = 32;
     private static final long CONNECTOR_PULL_AMOUNT_PER_KEY = Long.MAX_VALUE;
@@ -1734,10 +1741,14 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     int adaptiveInstalledSpeedCardCount() {
+        return adaptiveInstalledUpgradeCount(AEItems.SPEED_CARD);
+    }
+
+    int adaptiveInstalledUpgradeCount(ItemLike upgradeCard) {
         if (!(this.host instanceof AdaptivePatternProviderHost adaptiveHost)) {
             return 0;
         }
-        return Math.max(0, adaptiveHost.getUpgrades().getInstalledUpgrades(AEItems.SPEED_CARD));
+        return Math.max(0, adaptiveHost.getUpgrades().getInstalledUpgrades(upgradeCard));
     }
 
     boolean adaptiveIsSelected(AdaptivePatternProviderRegistration registration) {
@@ -1870,6 +1881,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     public void onHostStateChanged() {
+        refreshOptionalUpgradeEffects();
         var target = activeDispatchTarget();
         if (target != null) {
             target.dispatch().onProviderStateChanged(target);
@@ -1883,6 +1895,36 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             this.host.saveChanges();
         }
         this.mainNode.ifPresent((grid, node) -> grid.getTickManager().alertDevice(node));
+    }
+
+    /** Re-applies optional provider integrations after the adaptive upgrade inventory has been loaded. */
+    public void refreshOptionalUpgradeEffects() {
+        syncAppFluxInductionCard();
+    }
+
+    private void syncAppFluxInductionCard() {
+        if (!(this instanceof IUpgradeableObject appFluxProvider) || !(this.host instanceof AdaptivePatternProviderHost adaptiveHost)) {
+            return;
+        }
+
+        Item inductionCard = BuiltInRegistries.ITEM.get(APPFLUX_INDUCTION_CARD);
+        if (inductionCard == Items.AIR) {
+            return;
+        }
+
+        IUpgradeInventory appFluxUpgrades = appFluxProvider.getUpgrades();
+        if (appFluxUpgrades.size() <= 0) {
+            return;
+        }
+
+        boolean shouldBeInstalled = adaptiveHost.getUpgrades().getInstalledUpgrades(inductionCard) > 0;
+        ItemStack current = appFluxUpgrades.getStackInSlot(0);
+        boolean isInstalled = !current.isEmpty() && current.is(inductionCard) && current.getCount() == 1;
+        if (shouldBeInstalled == isInstalled && (shouldBeInstalled || current.isEmpty())) {
+            return;
+        }
+
+        appFluxUpgrades.setItemDirect(0, shouldBeInstalled ? new ItemStack(inductionCard) : ItemStack.EMPTY);
     }
 
     private void dataEnergistics$afterPushPattern() {

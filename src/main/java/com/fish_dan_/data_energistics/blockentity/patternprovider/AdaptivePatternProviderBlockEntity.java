@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnFluidHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnItemHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderState;
-import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -44,8 +44,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,7 +58,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEntity implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
@@ -69,7 +68,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
 
     @Nullable
     private AdaptivePatternProviderState adaptiveState;
-    private final IUpgradeInventory upgrades;
+    private final AdaptivePatternProviderUpgradeInventory upgrades;
     private final IItemHandler externalReturnItemHandler = new AdaptivePatternProviderReturnItemHandler(this::getAdaptiveLogic);
     private final IFluidHandler externalReturnFluidHandler = new AdaptivePatternProviderReturnFluidHandler(this::getAdaptiveLogic);
     private int syncedPatternSlotCount = 0;
@@ -262,6 +261,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
     public void loadTag(CompoundTag data, HolderLookup.Provider registries) {
         super.loadTag(data, registries);
         getAdaptiveState().readFromNBT(data, registries, this.upgrades);
+        this.upgrades.refreshProviderRules();
         readRedstoneTuningMode(data);
         AdaptivePatternProviderLogic logic = getAdaptiveLogic();
         if (logic != null) {
@@ -271,6 +271,7 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
             } else {
                 logic.updatePatterns();
             }
+            logic.refreshOptionalUpgradeEffects();
         }
         this.syncedPatternSlotCount = getConfiguredPatternSlotCount();
     }
@@ -429,6 +430,9 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         boolean providerInventoryChanged = inv == getAdaptiveState().getProviderInventory();
         AdaptivePatternProviderLogic logic = getAdaptiveLogic();
 
+        if (providerInventoryChanged) {
+            this.upgrades.refreshProviderRules();
+        }
         if (inv == this.upgrades) {
             getAdaptiveState().refreshProviderSlotLimit();
         }
@@ -592,11 +596,12 @@ public class AdaptivePatternProviderBlockEntity extends PatternProviderBlockEnti
         }
     }
 
-    private IUpgradeInventory createUpgradeInventory() {
-        return new FixedSizeMachineUpgradeInventory(
-                (Supplier<Item>) () -> {
+    private AdaptivePatternProviderUpgradeInventory createUpgradeInventory() {
+        return new AdaptivePatternProviderUpgradeInventory(
+                getProviderBlock().get(),
+                () -> {
                     ItemStack providerStack = getProviderStack();
-                    return providerStack.isEmpty() ? getProviderBlock().get().asItem() : providerStack.getItem();
+                    return providerStack.isEmpty() ? Items.AIR : providerStack.getItem();
                 },
                 AdaptivePatternProviderState.BASE_UPGRADE_SLOTS,
                 this::onUpgradesChanged);

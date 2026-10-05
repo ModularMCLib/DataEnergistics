@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnFluidHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderReturnItemHandler;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderState;
-import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
@@ -45,8 +45,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 
@@ -54,7 +54,6 @@ import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 public class AdaptivePatternProviderPart extends PatternProviderPart implements InternalInventoryHost, IUpgradeableObject, AdaptivePatternProviderHost, RedstoneTuningAwareHost {
 
@@ -80,7 +79,7 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
 
     @Nullable
     private AdaptivePatternProviderState adaptiveState;
-    private final IUpgradeInventory upgrades;
+    private final AdaptivePatternProviderUpgradeInventory upgrades;
     @Getter
     private final IItemHandler externalReturnItemHandler = new AdaptivePatternProviderReturnItemHandler(this::getLogic);
     @Getter
@@ -261,6 +260,7 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
         super.readFromNBT(data, registries);
         getAdaptiveState().readFromNBT(data, registries, this.upgrades);
+        this.upgrades.refreshProviderRules();
         readRedstoneTuningMode(data);
         if (this.getLogic().reconcileConfiguredPatternSlots()) {
             this.saveChanges();
@@ -268,6 +268,7 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         } else {
             this.getLogic().updatePatterns();
         }
+        this.getLogic().refreshOptionalUpgradeEffects();
     }
 
     @Override
@@ -406,6 +407,9 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
     @Override
     public void saveChangedInventory(AppEngInternalInventory inv) {
         boolean providerInventoryChanged = inv == getAdaptiveState().getProviderInventory();
+        if (providerInventoryChanged) {
+            this.upgrades.refreshProviderRules();
+        }
         if (inv == this.upgrades) {
             getAdaptiveState().refreshProviderSlotLimit();
         }
@@ -559,11 +563,12 @@ public class AdaptivePatternProviderPart extends PatternProviderPart implements 
         this.getLogic().onHostStateChanged();
     }
 
-    private IUpgradeInventory createUpgradeInventory() {
-        return new FixedSizeMachineUpgradeInventory(
-                (Supplier<Item>) () -> {
+    private AdaptivePatternProviderUpgradeInventory createUpgradeInventory() {
+        return new AdaptivePatternProviderUpgradeInventory(
+                getPartItem(),
+                () -> {
                     ItemStack providerStack = getProviderStack();
-                    return providerStack.isEmpty() ? getPartItem().asItem() : providerStack.getItem();
+                    return providerStack.isEmpty() ? Items.AIR : providerStack.getItem();
                 },
                 AdaptivePatternProviderState.BASE_UPGRADE_SLOTS,
                 this::onUpgradesChanged);

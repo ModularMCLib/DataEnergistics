@@ -142,7 +142,7 @@ public final class PackagedDispatchState {
         for (var links : ObjectList.of(remote, adjacent)) {
             for (var adapter : catalog.forType(reference.recipeTypeId())) {
                 var routing = routePolicy == null ? policy(adapter.id()) : routePolicy;
-                var admission = prepareSplitBatch(level, adapter, recipe, pattern, prototype, bounded, links,
+                var admission = prepareSplitBatch(level, adapter, reference.recipeTypeId(), recipe, pattern, prototype, bounded, links,
                         routing, claims, available, success);
                 if (admission != null) return admission;
             }
@@ -152,7 +152,8 @@ public final class PackagedDispatchState {
 
     /** Builds one admission that spreads a counted request over every available remote machine. */
     private @Nullable CountedCraftingAdmission prepareSplitBatch(ServerLevel level, PackagedMachineAdapter adapter,
-                                                                 ResourceLocation recipe, IPatternDetails pattern,
+                                                                 ResourceLocation recipeTypeId, ResourceLocation recipe,
+                                                                 IPatternDetails pattern,
                                                                  KeyCounter[] prototype, long requestedCount,
                                                                  ObjectList<ConnectorLink> links, ConnectorPolicy routing,
                                                                  PackagedMachineClaims claims, BooleanSupplier available,
@@ -165,7 +166,8 @@ public final class PackagedDispatchState {
         for (int offset = 0; offset < candidates.size(); offset++) {
             int index = (start + offset) % candidates.size();
             var link = candidates.get(index);
-            if (!level.isLoaded(link.position()) || !adapter.recognizes(level, link.position()) ||
+            if (!level.isLoaded(link.position()) || !adapter.supportsRecipe(level, link.position(),
+                    recipeTypeId, recipe) ||
                     !claims.available(link.position()))
                 continue;
             long capacity = adapter.batchCapacity(level, link.position(), link.side(), recipe, pattern, prototype, requestedCount);
@@ -206,7 +208,7 @@ public final class PackagedDispatchState {
                 prepared.add(new PreparedTarget(index, link, count, batch, inputs));
             }
             if (retry) continue;
-            return new SplitAdmission(level, adapter, recipe, pattern, prototype, prepared,
+            return new SplitAdmission(level, adapter, recipeTypeId, recipe, pattern, prototype, prepared,
                     allocationPlan.nextCursor(),
                     claims, available, success);
         }
@@ -219,6 +221,7 @@ public final class PackagedDispatchState {
 
         private final ServerLevel level;
         private final PackagedMachineAdapter adapter;
+        private final ResourceLocation recipeTypeId;
         private final ResourceLocation recipe;
         private final IPatternDetails originalPattern;
         private final KeyCounter[] prototype;
@@ -231,12 +234,14 @@ public final class PackagedDispatchState {
         private boolean attempted;
         private boolean transferred;
 
-        private SplitAdmission(ServerLevel level, PackagedMachineAdapter adapter, ResourceLocation recipe,
+        private SplitAdmission(ServerLevel level, PackagedMachineAdapter adapter, ResourceLocation recipeTypeId,
+                               ResourceLocation recipe,
                                IPatternDetails originalPattern, KeyCounter[] prototype,
                                ObjectList<PreparedTarget> prepared, int nextCursor,
                                PackagedMachineClaims claims, BooleanSupplier available, Runnable success) {
             this.level = level;
             this.adapter = adapter;
+            this.recipeTypeId = recipeTypeId;
             this.recipe = recipe;
             this.originalPattern = originalPattern;
             this.prototype = prototype;
@@ -268,7 +273,8 @@ public final class PackagedDispatchState {
             try {
                 for (var target : this.prepared) {
                     var link = target.link();
-                    if (!this.level.isLoaded(link.position()) || !this.adapter.recognizes(this.level, link.position()) ||
+                    if (!this.level.isLoaded(link.position()) || !this.adapter.supportsRecipe(this.level,
+                            link.position(), this.recipeTypeId, this.recipe) ||
                             !this.claims.available(link.position())) {
                         releaseClaims(committed);
                         return false;
@@ -356,17 +362,18 @@ public final class PackagedDispatchState {
         if (reference == null || recipe == null) return false;
         var claims = PackagedMachineClaims.get(level);
         for (var adapter : catalog.forType(reference.recipeTypeId())) {
-            if (dispatchGroup(level, adapter, claims, recipe, pattern, inputs, remote))
+            if (dispatchGroup(level, adapter, reference.recipeTypeId(), claims, recipe, pattern, inputs, remote))
                 return true;
         }
         for (var adapter : catalog.forType(reference.recipeTypeId())) {
-            if (dispatchGroup(level, adapter, claims, recipe, pattern, inputs, adjacent))
+            if (dispatchGroup(level, adapter, reference.recipeTypeId(), claims, recipe, pattern, inputs, adjacent))
                 return true;
         }
         return false;
     }
 
-    private boolean dispatchGroup(ServerLevel level, PackagedMachineAdapter adapter, PackagedMachineClaims claims,
+    private boolean dispatchGroup(ServerLevel level, PackagedMachineAdapter adapter, ResourceLocation recipeTypeId,
+                                  PackagedMachineClaims claims,
                                   ResourceLocation recipe, IPatternDetails pattern, KeyCounter[] inputs,
                                   ObjectList<ConnectorLink> links) {
         // Keep unloaded links in the ordering so loading a chunk cannot move the round-robin cursor.
@@ -376,7 +383,9 @@ public final class PackagedDispatchState {
         for (int offset = 0; offset < candidates.size(); offset++) {
             int index = (start + offset) % candidates.size();
             var link = candidates.get(index);
-            if (!level.isLoaded(link.position()) || !adapter.recognizes(level, link.position())) continue;
+            if (!level.isLoaded(link.position()) || !adapter.supportsRecipe(level, link.position(),
+                    recipeTypeId, recipe))
+                continue;
             if (!claims.available(link.position())) continue;
             var preparation = adapter.prepare(level, link.position(), link.side(), recipe, pattern, inputs);
             if (preparation == null) continue;

@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
+import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderUpgradeInventory;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarAction;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarActions;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderToolbarMenu;
@@ -51,6 +52,8 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.shorts.ShortSet;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternProviderMenuAccessor, AdaptivePatternProviderToolbarMenu {
 
@@ -278,6 +281,14 @@ public class AdaptivePatternProviderMenu extends AEBaseMenu implements PatternPr
 
     public IUpgradeInventory getUpgrades() {
         return this.host != null ? this.host.getUpgrades() : UpgradeInventories.empty();
+    }
+
+    public List<Component> getCompatibleUpgradeTooltipLines() {
+        IUpgradeInventory upgrades = getUpgrades();
+        if (upgrades instanceof AdaptivePatternProviderUpgradeInventory adaptiveUpgrades) {
+            return adaptiveUpgrades.getCompatibleUpgradeTooltipLines();
+        }
+        return Upgrades.getTooltipLinesForMachine(upgrades.getUpgradableItem());
     }
 
     public boolean isAdvancedAeProviderSelected() {

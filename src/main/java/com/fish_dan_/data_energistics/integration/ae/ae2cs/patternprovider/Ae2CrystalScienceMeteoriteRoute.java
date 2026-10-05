@@ -15,11 +15,15 @@ import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -44,6 +48,7 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
     private static final int ENERGY_PER_WORK = 50;
     private static final double ENERGY_TOLERANCE = 1.0e-9;
     private static final int MAX_WORKS_PER_ROUND = 8;
+    private static final ResourceLocation OVERLOAD_CARD = ResourceLocation.fromNamespaceAndPath("ae2cs", "overload_card");
     private static final String NBT_CRAFTED_CONTENTS = "adaptive_crafted_contents";
 
     @Override
@@ -102,13 +107,25 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
     /** Returns the reusable operation budget for the current provider upgrades. */
     @Override
     public int reusableWorkLimit(AdaptivePatternProviderDispatchTarget target) {
-        return MAX_WORKS_PER_ROUND << Math.min(4, target.installedSpeedCardCount());
+        return (MAX_WORKS_PER_ROUND << effectiveSpeedCardCount(target)) + 128 * overloadCardCount(target);
     }
 
     /** Returns the per-operation energy cost for the current provider upgrades. */
     @Override
     public double reusableEnergyPerWork(AdaptivePatternProviderDispatchTarget target) {
-        return (double) (ENERGY_PER_WORK << Math.min(4, target.installedSpeedCardCount()));
+        return (double) (ENERGY_PER_WORK << effectiveSpeedCardCount(target));
+    }
+
+    private static int effectiveSpeedCardCount(AdaptivePatternProviderDispatchTarget target) {
+        return overloadCardCount(target) > 0 ? 0 : Math.min(4, target.installedSpeedCardCount());
+    }
+
+    private static int overloadCardCount(AdaptivePatternProviderDispatchTarget target) {
+        Item overloadCard = BuiltInRegistries.ITEM.get(OVERLOAD_CARD);
+        if (overloadCard == Items.AIR) {
+            return 0;
+        }
+        return Math.min(4, target.installedUpgradeCount(overloadCard));
     }
 
     /** Returns whether buffered outputs or route work keep the provider awake. */

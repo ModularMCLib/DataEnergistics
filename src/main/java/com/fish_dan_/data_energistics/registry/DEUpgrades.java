@@ -177,8 +177,6 @@ public final class DEUpgrades {
         registerDataSanctumInterfaceUpgrade(AEItems.FUZZY_CARD, 1);
         Upgrades.add(AEItems.CAPACITY_CARD, DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get(), 3, ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
         Upgrades.add(AEItems.CAPACITY_CARD, DEItems.ADAPTIVE_PATTERN_PROVIDER_PART.get(), 3, ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
-        Upgrades.add(AEItems.SPEED_CARD, DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get(), 4, ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
-        Upgrades.add(AEItems.SPEED_CARD, DEItems.ADAPTIVE_PATTERN_PROVIDER_PART.get(), 4, ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
         Upgrades.add(AEItems.ENERGY_CARD, DEItems.MATTER_CONVERGING_CROSSBOW.get(), 2,
                 "item.data_energistics.star_shard");
         Upgrades.add(AEItems.FUZZY_CARD, DEItems.MATTER_CONVERGING_CROSSBOW.get(), 1,
@@ -200,7 +198,6 @@ public final class DEUpgrades {
         registerExternalRedstoneTuningCardCompat();
         registerExternalDataSanctumInterfaceCompat();
         registerAppliedFluxAdaptivePatternProviderCompat();
-        registerAe2CrystalScienceAdaptivePatternProviderCompat();
         StorageCells.addCellHandler(DigitalStorageCellHandler.INSTANCE);
         StorageCells.addCellHandler(InfiniteDataCellHandler.INSTANCE);
     }
@@ -234,7 +231,6 @@ public final class DEUpgrades {
     private static void registerExternalDataSanctumInterfaceCompat() {
         registerExternalDataSanctumInterfaceUpgrade("ae2cs", "crystal_growth_card", 1);
         registerExternalDataSanctumInterfaceUpgrade("appflux", "induction_card", 1);
-        registerExternalDataSanctumInterfaceUpgrade("extendedae_plus", "channel_card", 1);
     }
 
     private static void registerExternalDataSanctumInterfaceUpgrade(String namespace, String path, int maxInstalled) {
@@ -253,18 +249,6 @@ public final class DEUpgrades {
 
         Upgrades.add(inductionCard, DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get(), 1, ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
         Upgrades.add(inductionCard, DEItems.ADAPTIVE_PATTERN_PROVIDER_PART.get(), 1, ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
-    }
-
-    private static void registerAe2CrystalScienceAdaptivePatternProviderCompat() {
-        Item crystalGrowthCard = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("ae2cs", "crystal_growth_card"));
-        if (crystalGrowthCard == null || crystalGrowthCard == Items.AIR) {
-            return;
-        }
-
-        Upgrades.add(crystalGrowthCard, DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get(), 1,
-                ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
-        Upgrades.add(crystalGrowthCard, DEItems.ADAPTIVE_PATTERN_PROVIDER_PART.get(), 1,
-                ADAPTIVE_PATTERN_PROVIDER_UPGRADE_TOOLTIP_GROUP);
     }
 
     private static void registerExternalRedstoneTuningCardCompat() {
@@ -301,7 +285,6 @@ public final class DEUpgrades {
         registerExternalRedstoneTuningItemTarget("extendedae", "ex_pattern_provider_part",
                 "block.extendedae.ex_pattern_provider");
         registerExternalRedstoneTuningTarget("megacells", "mega_pattern_provider", "block.megacells.mega_pattern_provider");
-        registerExternalRedstoneTuningTarget("extendedae_plus", "mirror_pattern_provider", "block.extendedae_plus.mirror_pattern_provider");
     }
 
     private static void registerExternalRedstoneTuningTarget(String namespace, String path, String tooltipKey) {

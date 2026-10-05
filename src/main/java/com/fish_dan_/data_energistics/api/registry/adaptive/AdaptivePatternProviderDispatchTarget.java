@@ -17,6 +17,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -207,6 +208,18 @@ public interface AdaptivePatternProviderDispatchTarget {
 
     /** Returns the installed speed-card count used by a registered reusable route. */
     int installedSpeedCardCount();
+
+    /**
+     * Returns the installed count for one upgrade card in the adaptive provider's effective inventory.
+     *
+     * <p>
+     * The card must be a registered item and the call runs on the host level thread. Unsupported cards return
+     * zero; the result excludes physical cards that are currently disabled by the selected provider.
+     * </p>
+     */
+    default int installedUpgradeCount(ItemLike upgradeCard) {
+        return 0;
+    }
 
     /**
      * Returns the provider-owned connector links in stable configured order.

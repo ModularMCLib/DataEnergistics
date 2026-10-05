@@ -20,6 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -223,6 +224,11 @@ final class AdaptivePatternProviderRuntimeTarget implements AdaptivePatternProvi
     @Override
     public int installedSpeedCardCount() {
         return this.logic.adaptiveInstalledSpeedCardCount();
+    }
+
+    @Override
+    public int installedUpgradeCount(ItemLike upgradeCard) {
+        return this.logic.adaptiveInstalledUpgradeCount(upgradeCard);
     }
 
     @Override

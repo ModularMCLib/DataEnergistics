@@ -56,6 +56,8 @@ dependencies {
 
     // AE2 addons
     compileOnly(forge.eae)
+    compileOnly(forge.glodium)
+    compileOnly(forge.ae2addonlib)
     compileOnly(forge.aecs)
     compileOnly(forge.actually.additions)
     compileOnly(forge.applied.flux)

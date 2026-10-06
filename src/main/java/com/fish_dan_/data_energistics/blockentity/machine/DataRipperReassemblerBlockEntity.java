@@ -1232,40 +1232,43 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
                 }
             }
         }
-        for (RecipeHolder<DataRipperReassemblerRecipe> holder : getAdditionalProcessingRecipes(level)) {
-            if (excludedRecipeIds.contains(holder.id())) {
-                continue;
-            }
-            for (int color : colors) {
-                if (holder.value().matches(createRecipeInput(channel, color), level)) {
-                    return new ColorMatchedRecipe(holder, color);
-                }
+        for (int color : colors) {
+            DataRipperReassemblerRecipeInput input = createRecipeInput(channel, color);
+            RecipeHolder<DataRipperReassemblerRecipe> holder = findAdditionalProcessingRecipe(
+                    level, input, excludedRecipeIds);
+            if (holder != null && holder.value().matches(input, level)) {
+                return new ColorMatchedRecipe(holder, color);
             }
         }
         return null;
     }
 
     /**
-     * Supplies machine-specific recipes that have been normalized to the data reassembler contract.
+     * Finds a machine-specific recipe directly from its owning integration's recipe table.
      *
      * <p>
-     * The base machine only returns its native data reassembler recipes. Specializations may add
-     * recipes from compatible external machines without duplicating processing, reservation, or output logic.
+     * The base machine has no external recipe table. Specializations may query compatible external machines
+     * without making the base machine depend on optional recipe classes.
      * </p>
      */
-    protected Iterable<RecipeHolder<DataRipperReassemblerRecipe>> getAdditionalProcessingRecipes(Level level) {
-        return List.of();
+    protected @Nullable RecipeHolder<DataRipperReassemblerRecipe> findAdditionalProcessingRecipe(
+                                                                                                 Level level,
+                                                                                                 DataRipperReassemblerRecipeInput input,
+                                                                                                 Set<ResourceLocation> excludedRecipeIds) {
+        return null;
     }
 
     /**
-     * Resolves an active machine-specific recipe after its normalized identifier was persisted.
+     * Resolves a persisted machine-specific recipe by reading its owning integration's recipe table.
      *
      * <p>
-     * Returning {@code null} means that the active recipe is no longer available after a reload.
+     * Returning {@code null} means that the active recipe is no longer available after a reload. The identifier
+     * is the normalized recipe identifier persisted by the processing channel.
      * </p>
      */
-    protected @Nullable RecipeHolder<DataRipperReassemblerRecipe> getAdditionalProcessingRecipeById(Level level,
-                                                                                                    ResourceLocation recipeId) {
+    protected @Nullable RecipeHolder<DataRipperReassemblerRecipe> findAdditionalProcessingRecipeById(
+                                                                                                     Level level,
+                                                                                                     ResourceLocation recipeId) {
         return null;
     }
 
@@ -1339,7 +1342,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     private @Nullable RecipeHolder<DataRipperReassemblerRecipe> getRecipeById(Level level, ResourceLocation recipeId) {
         RecipeHolder<?> holder = level.getRecipeManager().byKey(recipeId).orElse(null);
         if (holder == null || !(holder.value() instanceof DataRipperReassemblerRecipe)) {
-            return getAdditionalProcessingRecipeById(level, recipeId);
+            return findAdditionalProcessingRecipeById(level, recipeId);
         }
 
         @SuppressWarnings("unchecked")

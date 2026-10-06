@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.integration.crafting.DataRipperReassemblerRecipeSources;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerIngredient;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 
@@ -11,6 +12,7 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -77,6 +79,15 @@ public final class DataRipperReassemblerRecipeView {
                 recipe.getProcessTicks(),
                 recipe.getKeyInput(),
                 recipe.getKeyOutput());
+    }
+
+    /**
+     * Creates the shared XEI views from the current native recipe tables, including loaded optional integrations.
+     */
+    public static List<DataRipperReassemblerRecipeView> fromRecipeManager(RecipeManager recipeManager) {
+        return DataRipperReassemblerRecipeSources.all(recipeManager).stream()
+                .map(DataRipperReassemblerRecipeView::from)
+                .toList();
     }
 
     public List<ItemStack> itemOutputs() {

@@ -251,9 +251,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
                     worldInteractionRecipes);
             registration.addRecipes(
                     DataRipperReassemblerRecipeCategory.RECIPE_TYPE,
-                    level.getRecipeManager().getAllRecipesFor(DERecipes.DATA_RIPPER_REASSEMBLER_TYPE.get()).stream()
-                            .map(DataRipperReassemblerRecipeView::from)
-                            .toList());
+                    DataRipperReassemblerRecipeView.fromRecipeManager(level.getRecipeManager()));
             registerRecipeType(
                     registration,
                     DataChargerRecipeCategory.RECIPE_TYPE,

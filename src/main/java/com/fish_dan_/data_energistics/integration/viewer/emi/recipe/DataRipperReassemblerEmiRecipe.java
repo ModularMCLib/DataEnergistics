@@ -40,7 +40,7 @@ public final class DataRipperReassemblerEmiRecipe extends ModularUIEMIRecipe {
         this(DataRipperReassemblerRecipeView.from(holder));
     }
 
-    private DataRipperReassemblerEmiRecipe(DataRipperReassemblerRecipeView recipe) {
+    public DataRipperReassemblerEmiRecipe(DataRipperReassemblerRecipeView recipe) {
         super(ignored -> UI_PROVIDER.createModularUI(recipe));
         this.recipe = recipe;
     }

@@ -1,9 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
-import com.fish_dan_.data_energistics.integration.crafting.DataRipperReassemblerRecipeSources;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipeInput;
+import com.fish_dan_.data_energistics.integration.crafting.AsynchronousProcessingRecipeResolver;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 
@@ -14,15 +12,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-
-import org.jspecify.annotations.Nullable;
-
-import java.util.Set;
 
 public final class DataAsynchronousProcessingFactoryBlockEntity extends DataRipperReassemblerBlockEntity
                                                                 implements CountedCraftingMachine {
@@ -39,7 +30,10 @@ public final class DataAsynchronousProcessingFactoryBlockEntity extends DataRipp
 
     public DataAsynchronousProcessingFactoryBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_ASYNCHRONOUS_PROCESSING_FACTORY_BLOCK_ENTITY.get(),
-                DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get(), blockPos, blockState);
+                DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get(),
+                AsynchronousProcessingRecipeResolver.INSTANCE,
+                blockPos,
+                blockState);
     }
 
     /** Returns complete logical input groups that fit in this factory's shared, color-separated input buffers. */
@@ -61,21 +55,6 @@ public final class DataAsynchronousProcessingFactoryBlockEntity extends DataRipp
     @Override
     protected boolean usesPatternInputColors() {
         return true;
-    }
-
-    @Override
-    protected @Nullable RecipeHolder<DataRipperReassemblerRecipe> findAdditionalProcessingRecipe(
-                                                                                                 Level level,
-                                                                                                 DataRipperReassemblerRecipeInput input,
-                                                                                                 Set<ResourceLocation> excludedRecipeIds) {
-        return DataRipperReassemblerRecipeSources.find(level, input, excludedRecipeIds);
-    }
-
-    @Nullable
-    @Override
-    protected RecipeHolder<DataRipperReassemblerRecipe> findAdditionalProcessingRecipeById(Level level,
-                                                                                           ResourceLocation recipeId) {
-        return DataRipperReassemblerRecipeSources.findById(level, recipeId);
     }
 
     @Override

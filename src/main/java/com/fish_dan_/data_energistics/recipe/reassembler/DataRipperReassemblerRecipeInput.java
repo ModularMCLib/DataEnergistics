@@ -5,10 +5,12 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeInput;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 
 public record DataRipperReassemblerRecipeInput(List<ItemStack> items, List<GenericStack> fluidInputs,
-                                               List<GenericStack> keyInputs)
+                                               List<@Nullable GenericStack> keyInputs)
         implements RecipeInput {
 
     @Override

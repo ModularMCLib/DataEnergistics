@@ -20,30 +20,22 @@ import net.neoforged.neoforge.fluids.crafting.FluidIngredient;
 import com.glodblock.github.extendedae.recipe.CrystalAssemblerRecipe;
 import com.glodblock.github.glodium.recipe.stack.IngredientStack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
+/** Resolves ExtendedAE's native crystal-assembler recipes for the asynchronous factory. */
+public final class ExtendedAeReassemblerRecipeResolver {
 
-/** Reads ExtendedAE's native crystal-assembler table for the data reassembler and its viewers. */
-public final class ExtendedAeReassemblerRecipeSource {
-
-    private ExtendedAeReassemblerRecipeSource() {}
-
-    /** Returns all ExtendedAE recipes represented by the data reassembler contract. */
-    public static void appendRecipes(RecipeManager recipeManager,
-                                     List<RecipeHolder<DataRipperReassemblerRecipe>> destination) {
-        for (RecipeHolder<CrystalAssemblerRecipe> holder : recipeManager.getAllRecipesFor(CrystalAssemblerRecipe.TYPE)) {
-            destination.addAll(adapt(holder));
-        }
-    }
+    private ExtendedAeReassemblerRecipeResolver() {}
 
     /** Returns the first native ExtendedAE recipe that matches the supplied factory inputs. */
     public static @Nullable RecipeHolder<DataRipperReassemblerRecipe> findRecipe(
                                                                                  RecipeManager recipeManager,
                                                                                  DataRipperReassemblerRecipeInput input,
                                                                                  Level level,
-                                                                                 Set<ResourceLocation> excludedRecipeIds) {
+                                                                                 ObjectSet<ResourceLocation> excludedRecipeIds) {
         for (RecipeHolder<CrystalAssemblerRecipe> holder : recipeManager.getAllRecipesFor(CrystalAssemblerRecipe.TYPE)) {
             for (RecipeHolder<DataRipperReassemblerRecipe> adapted : adapt(holder)) {
                 if (!excludedRecipeIds.contains(adapted.id()) && adapted.value().matches(input, level)) {
@@ -57,10 +49,12 @@ public final class ExtendedAeReassemblerRecipeSource {
     /** Resolves a persisted factory recipe identifier from ExtendedAE's current native table. */
     public static @Nullable RecipeHolder<DataRipperReassemblerRecipe> findById(
                                                                                RecipeManager recipeManager,
-                                                                               ResourceLocation recipeId) {
+                                                                               ResourceLocation recipeId,
+                                                                               DataRipperReassemblerRecipeInput input,
+                                                                               Level level) {
         for (RecipeHolder<CrystalAssemblerRecipe> holder : recipeManager.getAllRecipesFor(CrystalAssemblerRecipe.TYPE)) {
             for (RecipeHolder<DataRipperReassemblerRecipe> adapted : adapt(holder)) {
-                if (adapted.id().equals(recipeId)) {
+                if (adapted.id().equals(recipeId) && adapted.value().matches(input, level)) {
                     return adapted;
                 }
             }
@@ -68,7 +62,7 @@ public final class ExtendedAeReassemblerRecipeSource {
         return null;
     }
 
-    private static List<RecipeHolder<DataRipperReassemblerRecipe>> adapt(RecipeHolder<CrystalAssemblerRecipe> holder) {
+    private static ObjectList<RecipeHolder<DataRipperReassemblerRecipe>> adapt(RecipeHolder<CrystalAssemblerRecipe> holder) {
         try {
             CrystalAssemblerRecipe source = holder.value();
             ItemStack output = source.output;
@@ -76,7 +70,7 @@ public final class ExtendedAeReassemblerRecipeSource {
                 throw new IllegalArgumentException("Crystal assembler output must not be empty");
             }
 
-            List<DataRipperReassemblerIngredient> itemInputs = new ObjectArrayList<>();
+            ObjectList<DataRipperReassemblerIngredient> itemInputs = new ObjectArrayList<>();
             for (IngredientStack.Item input : source.getInputs()) {
                 if (!input.isEmpty()) {
                     itemInputs.add(new DataRipperReassemblerIngredient(input.getIngredient(), input.getAmount()));
@@ -84,50 +78,43 @@ public final class ExtendedAeReassemblerRecipeSource {
             }
 
             IngredientStack.@Nullable Fluid fluid = source.getFluid();
-            List<List<GenericStack>> fluidVariants = createFluidVariants(fluid);
-            List<RecipeHolder<DataRipperReassemblerRecipe>> variants = new ObjectArrayList<>(fluidVariants.size());
-            for (int variantIndex = 0; variantIndex < fluidVariants.size(); variantIndex++) {
+            ObjectList<ObjectList<GenericStack>> fluidVariants = createFluidVariants(fluid);
+            ObjectList<RecipeHolder<DataRipperReassemblerRecipe>> variants = new ObjectArrayList<>(fluidVariants.size());
+            for (ObjectList<GenericStack> fluidVariant : fluidVariants) {
                 DataRipperReassemblerRecipe recipe = new DataRipperReassemblerRecipe(
                         itemInputs,
-                        fluidVariants.get(variantIndex),
-                        List.of(new DataReassemblerItemOutput(output.copy(), null)),
-                        List.of(),
+                        fluidVariant,
+                        ObjectLists.singleton(new DataReassemblerItemOutput(output.copy(), null)),
+                        ObjectLists.emptyList(),
                         DataRipperReassemblerRecipe.PROCESS_TICKS,
                         null,
                         null);
-                variants.add(new RecipeHolder<>(adaptedId(holder.id(), variantIndex), recipe));
+                variants.add(new RecipeHolder<>((holder.id()), recipe));
             }
-            return variants;
+            return ObjectLists.unmodifiable(variants);
         } catch (IllegalArgumentException exception) {
             Data_Energistics.LOGGER.warn(
                     "Skipped ExtendedAE crystal assembler recipe {} because it cannot be represented by the data reassembler: {}",
                     holder.id(), exception.getMessage());
-            return List.of();
+            return ObjectLists.emptyList();
         }
     }
 
-    private static List<List<GenericStack>> createFluidVariants(
-                                                                IngredientStack.@Nullable Fluid fluid) {
+    private static ObjectList<ObjectList<GenericStack>> createFluidVariants(
+                                                                            IngredientStack.@Nullable Fluid fluid) {
         if (fluid == null || fluid.isEmpty()) {
-            return List.of(List.of());
+            return ObjectLists.singleton(ObjectLists.emptyList());
         }
         FluidIngredient ingredient = fluid.getIngredient();
-        List<List<GenericStack>> variants = new ObjectArrayList<>();
+        ObjectList<ObjectList<GenericStack>> variants = new ObjectArrayList<>();
         for (FluidStack candidate : ingredient.getStacks()) {
             if (!candidate.isEmpty()) {
-                variants.add(List.of(new GenericStack(AEFluidKey.of(candidate), fluid.getAmount())));
+                variants.add(ObjectLists.singleton(new GenericStack(AEFluidKey.of(candidate), fluid.getAmount())));
             }
         }
         if (variants.isEmpty()) {
             throw new IllegalArgumentException("Crystal assembler fluid ingredient has no registered fluids");
         }
-        return variants;
-    }
-
-    private static ResourceLocation adaptedId(ResourceLocation sourceRecipeId, int variantIndex) {
-        return ResourceLocation.fromNamespaceAndPath(
-                Data_Energistics.MODID,
-                "asynchronous_factory/eae_crystal/" + sourceRecipeId.getNamespace() + "/" +
-                        sourceRecipeId.getPath() + "/" + variantIndex);
+        return ObjectLists.unmodifiable(variants);
     }
 }

@@ -64,7 +64,8 @@ public interface PatternEncodingClientPreferences {
 
     /**
      * Returns the persisted upload-panel position as percentages of the available screen area, or empty when
-     * automatic placement is active.
+     * automatic placement is active. A missing JSON position keeps the calculated automatic x/y as an in-memory
+     * default and is not persisted until an explicit position is set.
      */
     Optional<PreviewPanelPosition> previewPanelPosition();
 

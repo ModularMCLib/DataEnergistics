@@ -21,10 +21,6 @@ public final class MOD {
         return isLoaded("ae2wtlib");
     }
 
-    public static boolean isAe2WtLibWirelessPatternEncodingSupportLoaded() {
-        return isAe2WtLibLoaded();
-    }
-
     public static boolean isCuriosLoaded() {
         return isLoaded("curios");
     }

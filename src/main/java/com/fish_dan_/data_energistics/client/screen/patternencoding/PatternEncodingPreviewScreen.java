@@ -199,9 +199,6 @@ public class PatternEncodingPreviewScreen<T extends PatternEncodingTermMenu> ext
     protected void updateBeforeRender() {
         super.updateBeforeRender();
         if (!isUploadEnabled()) {
-            if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
-                PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, false);
-            }
             this.previewOpenPending = false;
             this.previewOpenReady = false;
             this.previewLayoutDirty = false;

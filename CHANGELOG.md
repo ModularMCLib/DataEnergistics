@@ -1,5 +1,17 @@
 # ChangeLog
 
+## Version [v3.3.4](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.3-1.21...v3.3.4-1.21)
+### Fixed
+
+- 修复 AE2WTLib 无线样板编码上传面板与默认偏好 by @QiuYe-123 in [#371](https://github.com/ModularMCLib/DataEnergistics/pull/371)
+- 修复封包神秘学仪式嵌套祭坛处理 by @QiuYe-123 in [#370](https://github.com/ModularMCLib/DataEnergistics/pull/370)
+
+### Changed
+
+- 统一自适应链接批量轮询发配 by @QiuYe-123 in [#368](https://github.com/ModularMCLib/DataEnergistics/pull/368)
+- 修复自适应供应器升级卡规则与兼容效果 by @QiuYe-123 in [#369](https://github.com/ModularMCLib/DataEnergistics/pull/369)
+
+ 
 ## Version [v3.3.3](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.2-1.21...v3.3.3-1.21)
 ### Fixed
 

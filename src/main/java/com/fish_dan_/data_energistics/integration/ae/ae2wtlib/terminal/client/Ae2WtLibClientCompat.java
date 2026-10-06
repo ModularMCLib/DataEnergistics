@@ -10,12 +10,13 @@ import net.minecraft.client.gui.screens.Screen;
 
 import de.mari_023.ae2wtlib.wet.WETMenu;
 import de.mari_023.ae2wtlib.wet.WETScreen;
+import org.jspecify.annotations.Nullable;
 
 public final class Ae2WtLibClientCompat {
 
     private Ae2WtLibClientCompat() {}
 
-    public static Object maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
+    public static @Nullable Screen maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
         if (!(currentScreen instanceof Screen screen)) {
             return null;
         }

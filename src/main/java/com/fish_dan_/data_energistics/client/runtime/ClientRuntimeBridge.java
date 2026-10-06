@@ -23,6 +23,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.entity.player.Player;
 
 import guideme.document.block.LytBlock;
+import org.jspecify.annotations.Nullable;
 
 public final class ClientRuntimeBridge implements DataEnergisticsClientBridge {
 
@@ -99,8 +100,8 @@ public final class ClientRuntimeBridge implements DataEnergisticsClientBridge {
     }
 
     @Override
-    public Object maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
-        if (!MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+    public @Nullable Screen maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
+        if (!MOD.isAe2WtLibLoaded()) {
             return null;
         }
         return Ae2WtLibClientCompatHolder.maybeReplaceWirelessPatternEncodingScreen(currentScreen, applyImmediately);
@@ -110,7 +111,7 @@ public final class ClientRuntimeBridge implements DataEnergisticsClientBridge {
 
         private Ae2WtLibClientCompatHolder() {}
 
-        private static Object maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
+        private static @Nullable Screen maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
             return Ae2WtLibClientCompat.maybeReplaceWirelessPatternEncodingScreen(currentScreen, applyImmediately);
         }
     }

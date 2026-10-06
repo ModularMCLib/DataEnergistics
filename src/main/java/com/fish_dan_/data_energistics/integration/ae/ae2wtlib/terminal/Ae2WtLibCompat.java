@@ -12,7 +12,7 @@ public final class Ae2WtLibCompat {
 
     @SuppressWarnings("unchecked")
     public static <T> T maybeReplaceWirelessPatternEncodingScreen(Object currentScreen, boolean applyImmediately) {
-        if (FMLEnvironment.dist != Dist.CLIENT || currentScreen == null || !MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (FMLEnvironment.dist != Dist.CLIENT || currentScreen == null || !MOD.isAe2WtLibLoaded()) {
             return null;
         }
 

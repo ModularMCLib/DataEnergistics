@@ -17,6 +17,7 @@ import appeng.crafting.pattern.EncodedProcessingPattern;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -36,6 +37,7 @@ import com.klikli_dev.occultism.crafting.recipe.RitualRecipe;
 import com.klikli_dev.occultism.crafting.recipe.conditionextension.RitualRecipeConditionContext;
 import com.klikli_dev.occultism.registry.OccultismBlocks;
 import com.klikli_dev.occultism.registry.OccultismRecipes;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -64,6 +66,16 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
     @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         return level.isLoaded(position) && level.getBlockEntity(position) instanceof GoldenSacrificialBowlBlockEntity;
+    }
+
+    @Override
+    public boolean supportsRecipe(ServerLevel level, BlockPos position, ResourceLocation recipeTypeId,
+                                  ResourceLocation recipeId) {
+        if (!TYPE.equals(recipeTypeId)) return false;
+        var holder = recipe(level, recipeId);
+        if (holder == null) return false;
+        var layout = layout(level, position, holder.value());
+        return layout != null && layout.centerEmpty();
     }
 
     @Override
@@ -98,11 +110,10 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         RecipeHolder<RitualRecipe> holder = recipe(level, recipeId);
         if (holder == null) return null;
         Layout layout = layout(level, position, holder.value());
-        if (layout == null || !layout.empty()) return null;
+        if (layout == null || !layout.centerEmpty()) return null;
         var ingredients = new ObjectArrayList<Ingredient>();
         ingredients.add(holder.value().getActivationItem());
         ingredients.addAll(holder.value().getIngredients());
-        if (ingredients.size() > layout.inputs().size() + 1) return null;
         int bowlIngredients = ingredients.size();
         if (holder.value().requiresItemUse()) ingredients.add(holder.value().getItemToUse());
         KeyCounter totals = new KeyCounter();
@@ -125,27 +136,39 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         }
         var assigned = PackagedIngredientAssignment.match(ingredients, new KeyCounter[] { perCycle });
         if (assigned == null) return null;
-        if (!holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), assigned.subList(1, bowlIngredients))) return null;
-        if (!choosesRecipe(level, position, recipeId, assigned.getFirst(), assigned.subList(1, bowlIngredients))) return null;
-        ItemStack result = RitualItemResult.preview(level, holder.value(), assigned.getFirst(), assigned.subList(1, bowlIngredients));
+        var additional = assigned.subList(1, bowlIngredients);
+        if (!holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), additional)) return null;
+        var selected = selectInputs(level, layout, additional);
+        if (selected == null) return null;
+        if (!nativeInputSelection(layout, selected, holder.value().getIngredients())) return null;
+        if (!choosesRecipe(level, position, recipeId, assigned.getFirst(), selected)) return null;
+        ItemStack result = RitualItemResult.preview(level, holder.value(), assigned.getFirst(), additional);
         if (result.isEmpty() || cycles > Long.MAX_VALUE / result.getCount() || pattern.getOutputs().size() != 1) return null;
         if (!PackagedOutputMatching.matches(pattern, result, cycles * result.getCount())) return null;
         var slots = new ListTag();
-        for (int index = 1; index < bowlIngredients; index++) {
-            var bowl = layout.inputs().get(index - 1);
-            if (!bowl.itemStackHandler.insertItem(0, assigned.get(index), true).isEmpty()) return null;
+        for (int index = 0; index < selected.size(); index++) {
+            var binding = selected.get(index);
+            var bowl = binding.bowl();
             var slot = new CompoundTag();
             slot.putLong("position", bowl.getBlockPos().asLong());
-            slot.put("input", assigned.get(index).save(level.registryAccess()));
+            slot.putString("role", "input");
+            slot.putInt("index", index);
+            slot.putString("bowl", bowlFingerprint(bowl));
+            slot.put("input", binding.stack().save(level.registryAccess()));
             slots.add(slot);
         }
         var progress = new CompoundTag();
+        progress.putString("ritual_recipe_type", TYPE.toString());
+        progress.putString("ritual_recipe", recipeId.toString());
+        progress.putString("pentacle_id", holder.value().getPentacleId().toString());
+        progress.putString("dimension", level.dimension().location().toString());
+        progress.putString("layout_fingerprint", fingerprint(level, position, holder.value(), selected));
         progress.put("bowls", slots);
         progress.put("activation", assigned.getFirst().save(level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
         progress.putLong("cycles", cycles);
         if (holder.value().requiresItemUse()) progress.put("use_item", assigned.getLast().save(level.registryAccess()));
-        if (layout.output() != null) progress.putLong("output_bowl", layout.output().getBlockPos().asLong());
+        progress.put("output_candidates", saveOutputCandidates(layout.outputCandidates()));
         return progress;
     }
 
@@ -155,7 +178,6 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         positions.add(position);
         var slots = preparation.getList("bowls", Tag.TAG_COMPOUND);
         for (int index = 0; index < slots.size(); index++) positions.add(BlockPos.of(slots.getCompound(index).getLong("position")));
-        if (preparation.contains("output_bowl", Tag.TAG_LONG)) positions.add(BlockPos.of(preparation.getLong("output_bowl")));
         return positions;
     }
 
@@ -167,16 +189,14 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         }
 
         var progress = operation.progress();
-        if (level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center &&
-                center.ritualActive && center.getCurrentRitualRecipe() != null &&
-                !center.getCurrentRitualRecipe().id().equals(operation.recipeId())) {
-            return false;
-        }
+        var holder = recipe(level, operation.recipeId());
+        if (holder == null) return false;
+        var center = level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity golden ? golden : null;
+        var active = center == null ? null : center.getCurrentRitualRecipe();
+        if (center != null && center.ritualActive && (active == null || !active.id().equals(operation.recipeId()))) return false;
         if (!progress.getBoolean("recovery_inspected")) {
-            if (progress.getBoolean("delivery_started") &&
-                    level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center) {
-                var current = center.getCurrentRitualRecipe();
-                if (current == null || !center.ritualActive) {
+            if (progress.getBoolean("delivery_started")) {
+                if (center != null && (active == null || !center.ritualActive)) {
                     // Native interruption drops these only while the recipe is still resolvable.
                     for (ItemStack consumed : center.consumedIngredients) {
                         if (!consumed.isEmpty()) operation.returned(AEItemKey.of(consumed), consumed.getCount());
@@ -184,7 +204,7 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
                     center.consumedIngredients.clear();
                     center.setChanged();
                 }
-                if (center.ritualActive) {
+                if (center != null && center.ritualActive) {
                     PackagedEntityCapture.run(level, operation.id(), () -> center.stopRitual(false));
                     center.setChanged();
                 }
@@ -195,23 +215,20 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
 
         if (!progress.getBoolean("recovery_collected")) {
             if (progress.getBoolean("delivery_started")) {
-                if (level.getBlockEntity(operation.position()) instanceof SacrificialBowlBlockEntity center) {
-                    if (!recoverStack(operation, center, read(operation, progress, "activation"), true)) return false;
-                }
+                if (center != null && !recoverStack(operation, center, read(operation, progress, "activation"))) return false;
                 var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
                 for (int index = 0; index < slots.size(); index++) {
                     var slot = slots.getCompound(index);
                     var position = BlockPos.of(slot.getLong("position"));
+                    if (!"input".equals(slot.getString("role")) || slot.getInt("index") != index) return false;
                     if (level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl) {
-                        if (!recoverStack(operation, bowl, read(operation, slot, "input"), true)) return false;
+                        if (bowl instanceof GoldenSacrificialBowlBlockEntity ||
+                                !bowlFingerprint(bowl).equals(slot.getString("bowl")))
+                            return false;
+                        if (!recoverStack(operation, bowl, read(operation, slot, "input"))) return false;
                     }
                 }
-                if (progress.contains("output_bowl", Tag.TAG_LONG)) {
-                    var output = BlockPos.of(progress.getLong("output_bowl"));
-                    if (level.getBlockEntity(output) instanceof SacrificialBowlBlockEntity bowl) {
-                        if (!recoverStack(operation, bowl, read(operation, progress, "result"), false)) return false;
-                    }
-                }
+                if (!recoverOutput(operation, read(operation, progress, "result"))) return false;
                 if (!progress.getBoolean("recovery_use_settled")) {
                     RitualNativeActions.returnHeld(operation);
                     progress.remove("use_item");
@@ -222,12 +239,13 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
             operation.changed();
         }
 
-        for (var drop : ownedDrops(operation)) {
+        var drops = ownedDrops(operation);
+        for (var drop : drops) if (!knownRitualStack(operation, drop.getItem())) return false;
+        for (var drop : drops) {
             ItemStack stack = drop.getItem().copy();
             drop.discard();
             operation.returned(AEItemKey.of(stack), stack.getCount());
         }
-        operation.changed();
         return true;
     }
 
@@ -237,6 +255,8 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         if (progress.getLong("cycles") <= 0) throw new IllegalArgumentException("Invalid persisted ritual cycle count");
         ItemStack expected = read(operation, progress, "result");
         var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
+        RecipeHolder<RitualRecipe> holder = recipe(operation.level(), operation.recipeId());
+        if (holder == null) throw new IllegalStateException("Occultism ritual recipe is no longer supported");
         // delivery_started persists across cycles; physical assets identify a partial current cycle.
         if (!progress.getBoolean("delivered") && progress.getBoolean("delivery_started") &&
                 hasPendingCycleAssets(operation, slots, expected)) {
@@ -246,42 +266,44 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
             for (var position : occupiedPositions(operation.level(), operation.position(), progress)) {
                 if (!operation.level().isLoaded(position)) return false;
             }
-            if (!(operation.level().getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center)) {
-                return retireInterrupted(operation);
-            }
+            var layout = persistedLayout(operation, holder.value(), false);
+            if (layout == null) return retireInterrupted(operation);
+            var center = layout.center();
             var active = center.getCurrentRitualRecipe();
             if (active != null) {
                 if (!center.ritualActive || !active.id().equals(operation.recipeId())) return retireInterrupted(operation);
                 return RitualNativeActions.advance(operation, center);
             }
-            return collect(operation, center, slots, expected);
+            return collect(operation, layout, expected);
         }
 
-        RecipeHolder<RitualRecipe> holder = recipe(operation.level(), operation.recipeId());
-        if (holder == null) throw new IllegalStateException("Occultism ritual recipe is no longer supported");
-        Layout layout = layout(operation.level(), operation.position(), holder.value());
+        var layout = persistedLayout(operation, holder.value(), true);
         if (layout == null) return false;
-        boolean hasOutput = progress.contains("output_bowl", Tag.TAG_LONG);
-        if (hasOutput != (layout.output() != null) || hasOutput &&
-                progress.getLong("output_bowl") != layout.output().getBlockPos().asLong())
-            return false;
-        if (!layout.empty()) {
-            return progress.getBoolean("delivery_started") ? retireInterrupted(operation) : false;
+        if (!layout.centerEmpty()) {
+            return progress.getBoolean("delivery_started") && retireInterrupted(operation);
         }
         ItemStack activation = read(operation, progress, "activation");
         var targets = new ObjectArrayList<SacrificialBowlBlockEntity>();
         var inputs = new ObjectArrayList<ItemStack>();
+        var bindings = new ObjectArrayList<InputBinding>();
         var required = new KeyCounter();
         required.add(AEItemKey.of(activation), activation.getCount());
+        if (slots.size() != holder.value().getIngredients().size()) return false;
         for (int index = 0; index < slots.size(); index++) {
             CompoundTag slot = slots.getCompound(index);
             var position = BlockPos.of(slot.getLong("position"));
-            var bowl = layout.inputs().stream().filter(candidate -> candidate.getBlockPos().equals(position)).findFirst();
+            var bowl = layout.bowls().stream().filter(candidate -> candidate.getBlockPos().equals(position)).findFirst();
             if (bowl.isEmpty() || targets.contains(bowl.get())) return false;
+            if (!"input".equals(slot.getString("role")) || slot.getInt("index") != index ||
+                    !bowlFingerprint(bowl.get()).equals(slot.getString("bowl")))
+                return false;
             ItemStack stack = read(operation, slot, "input");
-            if (stack.getCount() != 1 || !bowl.get().itemStackHandler.insertItem(0, stack, true).isEmpty()) return false;
+            if (stack.getCount() != 1 || isSpiritFireInput(operation.level(), bowl.get()) ||
+                    !bowl.get().itemStackHandler.insertItem(0, stack, true).isEmpty())
+                return false;
             targets.add(bowl.get());
             inputs.add(stack);
+            bindings.add(new InputBinding(bowl.get(), stack));
             required.add(AEItemKey.of(stack), stack.getCount());
         }
         for (var entry : required) {
@@ -292,11 +314,15 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         if (!PackagedOutputMatching.matches(operation, expected, RitualItemResult.preview(operation.level(), holder.value(), activation, inputs))) {
             throw new IllegalStateException("Occultism ritual result changed after preparation");
         }
+        var nativeItems = nativeItems(layout.bowls(), bindings);
         if (activation.getCount() != 1 || !holder.value().getActivationItem().test(activation) ||
-                !holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), inputs)) {
+                !holder.value().getRitual().matchesAdditionalIngredients(holder.value().getIngredients(), nativeItems)) {
             throw new IllegalStateException("Occultism ritual inputs changed after preparation");
         }
-        if (!choosesRecipe(operation.level(), operation.position(), operation.recipeId(), activation, inputs)) return false;
+        if (!nativeInputSelection(layout, bindings, holder.value().getIngredients())) {
+            throw new IllegalStateException("Occultism ritual would consume an unowned sacrificial bowl");
+        }
+        if (!choosesRecipe(operation.level(), operation.position(), operation.recipeId(), activation, bindings)) return false;
         for (int index = 0; index < targets.size(); index++) {
             insert(operation, targets.get(index), inputs.get(index));
         }
@@ -322,60 +348,25 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         if (!rejected.isEmpty()) throw new IllegalStateException("Occultism bowl refused an accepted ingredient");
     }
 
-    private static boolean collect(PackagedMachineOperation operation, GoldenSacrificialBowlBlockEntity center,
-                                   ListTag slots, ItemStack expected) {
+    private static boolean collect(PackagedMachineOperation operation, Layout layout, ItemStack expected) {
+        if (!(operation.level().getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity center) ||
+                layout.center() != center)
+            return retireInterrupted(operation);
         if (center.ritualActive) return retireInterrupted(operation);
         if (!center.itemStackHandler.getStackInSlot(0).isEmpty()) {
             return retireInterrupted(operation);
         }
+        var slots = operation.progress().getList("bowls", Tag.TAG_COMPOUND);
         for (int index = 0; index < slots.size(); index++) {
-            BlockPos position = BlockPos.of(slots.getCompound(index).getLong("position"));
-            if (!(operation.level().getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl)) {
-                return retireInterrupted(operation);
-            }
-            if (!bowl.itemStackHandler.getStackInSlot(0).isEmpty()) {
+            var slot = slots.getCompound(index);
+            var bowl = layout.bowls().stream()
+                    .filter(candidate -> candidate.getBlockPos().asLong() == slot.getLong("position"))
+                    .findFirst();
+            if (bowl.isEmpty() || !bowl.get().itemStackHandler.getStackInSlot(0).isEmpty()) {
                 return retireInterrupted(operation);
             }
         }
-        if (operation.progress().contains("output_bowl", Tag.TAG_LONG)) {
-            BlockPos outputPosition = BlockPos.of(operation.progress().getLong("output_bowl"));
-            if (!(operation.level().getBlockEntity(outputPosition) instanceof SacrificialBowlBlockEntity output) ||
-                    !output.getBlockState().hasProperty(BlockStateProperties.FACING) ||
-                    output.getBlockState().getValue(BlockStateProperties.FACING) != Direction.DOWN) {
-                return retireInterrupted(operation);
-            }
-            var inventory = output.itemStackHandler;
-            ItemStack actual = inventory.getStackInSlot(0);
-            if (actual.isEmpty()) return ownedDrops(operation).isEmpty() ? false : retireInterrupted(operation);
-            if (!PackagedOutputMatching.matches(operation, expected, actual)) return retireInterrupted(operation);
-            if (!ownedDrops(operation).isEmpty()) return retireInterrupted(operation);
-            ItemStack extracted = inventory.extractItem(0, actual.getCount(), false);
-            if (!extracted.isEmpty()) operation.returned(AEItemKey.of(extracted), extracted.getCount());
-            if (!ItemStack.matches(extracted, actual)) throw new IllegalStateException("Incomplete Occultism output extraction");
-        } else {
-            var drops = ownedDrops(operation);
-            if (drops.isEmpty()) return false;
-            int count = 0;
-            for (ItemEntity drop : drops) {
-                if (!PackagedOutputMatching.sameKey(operation, expected, drop.getItem())) {
-                    return retireInterrupted(operation);
-                }
-                count = Math.addExact(count, drop.getItem().getCount());
-            }
-            if (count != expected.getCount()) return retireInterrupted(operation);
-            for (ItemEntity drop : drops) {
-                ItemStack actual = drop.getItem().copy();
-                drop.discard();
-                operation.returned(AEItemKey.of(actual), actual.getCount());
-            }
-        }
-        long cycles = operation.progress().getLong("cycles") - 1;
-        RitualNativeActions.returnHeld(operation);
-        operation.progress().putLong("cycles", cycles);
-        operation.progress().putBoolean("delivered", false);
-        operation.changed();
-        if (cycles == 0) operation.complete();
-        return true;
+        return collectOutput(operation, expected, outputCandidates(operation, layout), ownedDrops(operation));
     }
 
     private static @Nullable RecipeHolder<RitualRecipe> recipe(ServerLevel level, ResourceLocation recipeId) {
@@ -388,26 +379,75 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
     }
 
     private static boolean choosesRecipe(ServerLevel level, BlockPos position, ResourceLocation expected,
-                                         ItemStack activation, List<ItemStack> inputs) {
+                                         ItemStack activation, List<InputBinding> selected) {
         for (var candidate : level.getRecipeManager().getAllRecipesFor(OccultismRecipes.RITUAL_TYPE.get())) {
             RitualRecipe recipe = candidate.value();
-            if (!recipe.getActivationItem().test(activation) ||
-                    !recipe.getRitual().matchesAdditionalIngredients(recipe.getIngredients(), inputs))
-                continue;
+            if (!recipe.getActivationItem().test(activation)) continue;
             var pentacle = recipe.getPentacle();
-            if (pentacle == null || pentacle.getSize().getX() > 32 || pentacle.getSize().getZ() > 32) return false;
-            int radius = Math.max(pentacle.getSize().getX(), pentacle.getSize().getZ());
-            for (int x = (position.getX() - radius) >> 4; x <= (position.getX() + radius) >> 4; x++) {
-                for (int z = (position.getZ() - radius) >> 4; z <= (position.getZ() + radius) >> 4; z++) {
-                    if (!level.hasChunk(x, z)) return false;
-                }
-            }
+            if (pentacle == null) continue;
+            var bowls = recipe.getRitual().getSacrificialBowls(level, position);
+            var items = nativeItems(bowls, selected);
+            if (!recipe.getRitual().matchesAdditionalIngredients(recipe.getIngredients(), items)) continue;
             if (pentacle.validate(level, position) != null) return candidate.id().equals(expected);
         }
         return false;
     }
 
+    private static boolean collectOutput(PackagedMachineOperation operation, ItemStack expected,
+                                         @Nullable ObjectList<OutputBinding> candidates,
+                                         List<ItemEntity> drops) {
+        if (candidates == null) return false;
+        SacrificialBowlBlockEntity output = null;
+        ItemStack bowlStack = ItemStack.EMPTY;
+        boolean blockedByEmptyCandidate = false;
+        for (var candidate : candidates) {
+            if (!candidate.emptyAtPreparation()) continue;
+            var current = candidate.bowl().itemStackHandler.getStackInSlot(0);
+            if (current.isEmpty()) {
+                blockedByEmptyCandidate = true;
+                break;
+            }
+            if (PackagedOutputMatching.sameKey(operation, expected, current)) {
+                output = candidate.bowl();
+                bowlStack = current.copy();
+                break;
+            }
+        }
+        if (blockedByEmptyCandidate && !drops.isEmpty()) return retireInterrupted(operation);
+        int count = bowlStack.getCount();
+        for (ItemEntity drop : drops) {
+            if (!PackagedOutputMatching.sameKey(operation, expected, drop.getItem())) return retireInterrupted(operation);
+            count = Math.addExact(count, drop.getItem().getCount());
+        }
+        if (count == 0 || count < expected.getCount()) return false;
+        if (count > expected.getCount()) return retireInterrupted(operation);
+        if (!bowlStack.isEmpty()) {
+            if (output == null) return false;
+            ItemStack extracted = output.itemStackHandler.extractItem(0, bowlStack.getCount(), false);
+            if (extracted.isEmpty() || !ItemStack.matches(extracted, bowlStack))
+                throw new IllegalStateException("Incomplete Occultism output extraction");
+            operation.returned(AEItemKey.of(extracted), extracted.getCount());
+        }
+        for (ItemEntity drop : drops) {
+            ItemStack actual = drop.getItem().copy();
+            drop.discard();
+            operation.returned(AEItemKey.of(actual), actual.getCount());
+        }
+        long cycles = operation.progress().getLong("cycles") - 1;
+        RitualNativeActions.returnHeld(operation);
+        operation.progress().putLong("cycles", cycles);
+        operation.progress().putBoolean("delivered", false);
+        operation.changed();
+        if (cycles == 0) operation.complete();
+        return true;
+    }
+
     private static @Nullable Layout layout(ServerLevel level, BlockPos position, RitualRecipe recipe) {
+        return layout(level, position, recipe, true);
+    }
+
+    private static @Nullable Layout layout(ServerLevel level, BlockPos position, RitualRecipe recipe,
+                                           boolean checkCondition) {
         if (!level.isLoaded(position) || !(level.getBlockEntity(position) instanceof GoldenSacrificialBowlBlockEntity center)) return null;
         var pentacle = recipe.getPentacle();
         if (pentacle == null) return null;
@@ -420,24 +460,186 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
             }
         }
         if (pentacle.validate(level, position) == null) return null;
-        if (recipe.getCondition() != null && !recipe.getCondition().test(RitualRecipeConditionContext.of(center))) return null;
-        SacrificialBowlBlockEntity output = null;
+        if (checkCondition && recipe.getCondition() != null &&
+                !recipe.getCondition().test(RitualRecipeConditionContext.of(center)))
+            return null;
+        var outputCandidates = new ObjectArrayList<SacrificialBowlBlockEntity>();
         for (int height = 1; height <= 3; height++) {
             if (level.getBlockEntity(position.above(height)) instanceof SacrificialBowlBlockEntity bowl &&
-                    !(bowl instanceof GoldenSacrificialBowlBlockEntity) && bowl.getBlockState().hasProperty(BlockStateProperties.FACING) &&
+                    bowl.getBlockState().hasProperty(BlockStateProperties.FACING) &&
                     bowl.getBlockState().getValue(BlockStateProperties.FACING) == Direction.DOWN) {
-                output = bowl;
-                break;
+                outputCandidates.add(bowl);
             }
         }
-        var inputs = new ObjectArrayList<SacrificialBowlBlockEntity>();
-        for (var bowl : recipe.getRitual().getSacrificialBowls(level, position)) {
-            if (bowl == output) continue;
-            var below = level.getBlockState(bowl.getBlockPos().below());
-            if (below.getBlock() instanceof SpiritFireBlock || below.is(OccultismBlocks.SPIRIT_CAMPFIRE.get())) return null;
-            inputs.add(bowl);
+        return new Layout(center, new ObjectArrayList<>(recipe.getRitual().getSacrificialBowls(level, position)),
+                outputCandidates);
+    }
+
+    private static @Nullable Layout persistedLayout(PackagedMachineOperation operation, RitualRecipe recipe,
+                                                    boolean checkCondition) {
+        var progress = operation.progress();
+        if (!TYPE.toString().equals(progress.getString("ritual_recipe_type")) ||
+                !operation.recipeId().toString().equals(progress.getString("ritual_recipe")) ||
+                !operation.level().dimension().location().toString().equals(progress.getString("dimension")) ||
+                !recipe.getPentacleId().toString().equals(progress.getString("pentacle_id")))
+            return null;
+        var layout = layout(operation.level(), operation.position(), recipe, checkCondition);
+        var currentFingerprint = fingerprint(operation.level(), operation.position(), recipe, progress);
+        if (layout == null || currentFingerprint == null ||
+                !currentFingerprint.equals(progress.getString("layout_fingerprint")))
+            return null;
+        var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
+        if (slots.size() != recipe.getIngredients().size()) return null;
+        var inputPositions = new LongOpenHashSet();
+        for (int index = 0; index < slots.size(); index++) {
+            var slot = slots.getCompound(index);
+            if (!"input".equals(slot.getString("role")) || slot.getInt("index") != index ||
+                    !slot.contains("position", Tag.TAG_LONG))
+                return null;
+            long position = slot.getLong("position");
+            if (!inputPositions.add(position) || layout.outputCandidates().stream()
+                    .anyMatch(candidate -> candidate.getBlockPos().asLong() == position))
+                return null;
+            var bowl = layout.bowls().stream()
+                    .filter(candidate -> candidate.getBlockPos().asLong() == position)
+                    .findFirst();
+            if (bowl.isEmpty() || bowl.get() instanceof GoldenSacrificialBowlBlockEntity ||
+                    !bowlFingerprint(bowl.get()).equals(slot.getString("bowl")))
+                return null;
         }
-        return new Layout(center, inputs, output);
+        return layout;
+    }
+
+    private static @Nullable ObjectList<InputBinding> selectInputs(ServerLevel level, Layout layout,
+                                                                   List<ItemStack> assigned) {
+        var selected = new ObjectArrayList<InputBinding>();
+        for (ItemStack stack : assigned) {
+            SacrificialBowlBlockEntity chosen = null;
+            for (var bowl : layout.bowls()) {
+                if (selected.stream().anyMatch(binding -> binding.bowl().getBlockPos().equals(bowl.getBlockPos())) ||
+                        layout.outputCandidates().stream().anyMatch(candidate -> candidate.getBlockPos().equals(bowl.getBlockPos())) ||
+                        !bowl.itemStackHandler.getStackInSlot(0).isEmpty() || isSpiritFireInput(level, bowl))
+                    continue;
+                chosen = bowl;
+                break;
+            }
+            if (chosen == null) return null;
+            selected.add(new InputBinding(chosen, stack.copy()));
+        }
+        return selected;
+    }
+
+    /**
+     * Replays native first-match consumption and ensures every consumed bowl belongs to this operation.
+     * Extra bowls remain visible to recipe matching, but a matching extra item may not be consumed silently.
+     */
+    private static boolean nativeInputSelection(Layout layout, List<InputBinding> selected,
+                                                List<Ingredient> ingredients) {
+        if (selected.size() != ingredients.size()) return false;
+        boolean[] consumed = new boolean[layout.bowls().size()];
+        for (int ingredientIndex = 0; ingredientIndex < ingredients.size(); ingredientIndex++) {
+            var expected = selected.get(ingredientIndex).bowl().getBlockPos();
+            int found = -1;
+            for (int bowlIndex = 0; bowlIndex < layout.bowls().size(); bowlIndex++) {
+                if (consumed[bowlIndex]) continue;
+                var bowl = layout.bowls().get(bowlIndex);
+                var planned = selected.stream()
+                        .filter(binding -> binding.bowl().getBlockPos().equals(bowl.getBlockPos()))
+                        .findFirst()
+                        .map(InputBinding::stack)
+                        .orElseGet(() -> bowl.itemStackHandler.getStackInSlot(0));
+                if (ingredients.get(ingredientIndex).test(planned)) {
+                    found = bowlIndex;
+                    break;
+                }
+            }
+            if (found < 0 || !layout.bowls().get(found).getBlockPos().equals(expected)) return false;
+            consumed[found] = true;
+        }
+        return true;
+    }
+
+    private static boolean isSpiritFireInput(ServerLevel level, SacrificialBowlBlockEntity bowl) {
+        var below = level.getBlockState(bowl.getBlockPos().below());
+        return below.getBlock() instanceof SpiritFireBlock || below.is(OccultismBlocks.SPIRIT_CAMPFIRE.get());
+    }
+
+    private static List<ItemStack> nativeItems(List<SacrificialBowlBlockEntity> bowls,
+                                               List<InputBinding> selected) {
+        var items = new ObjectArrayList<ItemStack>();
+        for (var bowl : bowls) {
+            var assigned = selected.stream()
+                    .filter(binding -> binding.bowl().getBlockPos().equals(bowl.getBlockPos()))
+                    .findFirst();
+            if (assigned.isPresent()) {
+                items.add(assigned.get().stack().copy());
+            } else {
+                var stack = bowl.itemStackHandler.getStackInSlot(0);
+                if (!stack.isEmpty()) items.add(stack.copy());
+            }
+        }
+        return items;
+    }
+
+    private static ListTag saveOutputCandidates(ObjectList<SacrificialBowlBlockEntity> candidates) {
+        var result = new ListTag();
+        for (int index = 0; index < candidates.size(); index++) {
+            var bowl = candidates.get(index);
+            var entry = new CompoundTag();
+            entry.putString("role", "output");
+            entry.putInt("index", index);
+            entry.putLong("position", bowl.getBlockPos().asLong());
+            entry.putString("bowl", bowlFingerprint(bowl));
+            entry.putBoolean("empty", bowl.itemStackHandler.getStackInSlot(0).isEmpty());
+            result.add(entry);
+        }
+        return result;
+    }
+
+    private static @Nullable ObjectList<OutputBinding> outputCandidates(PackagedMachineOperation operation,
+                                                                        Layout layout) {
+        var progress = operation.progress();
+        var saved = progress.getList("output_candidates", Tag.TAG_COMPOUND);
+        var result = new ObjectArrayList<OutputBinding>();
+        for (int index = 0; index < saved.size(); index++) {
+            var entry = saved.getCompound(index);
+            if (!"output".equals(entry.getString("role")) || entry.getInt("index") != index ||
+                    !entry.contains("position", Tag.TAG_LONG))
+                return null;
+            var bowl = layout.outputCandidates().stream()
+                    .filter(candidate -> candidate.getBlockPos().asLong() == entry.getLong("position"))
+                    .findFirst();
+            if (bowl.isEmpty() || !bowlFingerprint(bowl.get()).equals(entry.getString("bowl"))) continue;
+            result.add(new OutputBinding(bowl.get(), entry.getBoolean("empty")));
+        }
+        return result;
+    }
+
+    private static String fingerprint(ServerLevel level, BlockPos position, RitualRecipe recipe,
+                                      ObjectList<InputBinding> selected) {
+        var result = new StringBuilder(recipe.getPentacleId().toString())
+                .append('|').append(level.dimension().location())
+                .append('|').append(position.asLong());
+        appendFingerprint(result, (SacrificialBowlBlockEntity) level.getBlockEntity(position));
+        for (var binding : selected) appendFingerprint(result, binding.bowl());
+        return result.toString();
+    }
+
+    private static @Nullable String fingerprint(ServerLevel level, BlockPos position, RitualRecipe recipe,
+                                                CompoundTag progress) {
+        if (!(level.getBlockEntity(position) instanceof GoldenSacrificialBowlBlockEntity center)) return null;
+        var result = new StringBuilder(recipe.getPentacleId().toString())
+                .append('|').append(level.dimension().location())
+                .append('|').append(position.asLong());
+        appendFingerprint(result, center);
+        var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
+        for (int index = 0; index < slots.size(); index++) {
+            var slot = slots.getCompound(index);
+            if (!slot.contains("position", Tag.TAG_LONG)) return null;
+            if (!(level.getBlockEntity(BlockPos.of(slot.getLong("position"))) instanceof SacrificialBowlBlockEntity bowl)) return null;
+            appendFingerprint(result, bowl);
+        }
+        return result.toString();
     }
 
     private static ItemStack read(PackagedMachineOperation operation, CompoundTag tag, String key) {
@@ -465,11 +667,16 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
                 return true;
             }
         }
-        if (operation.progress().contains("output_bowl", Tag.TAG_LONG)) {
-            BlockPos position = BlockPos.of(operation.progress().getLong("output_bowl"));
-            if (level.isLoaded(position) && level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl &&
-                    bowl.itemStackHandler.getStackInSlot(0).is(expected.getItem())) {
-                return true;
+        var holder = recipe(level, operation.recipeId());
+        if (holder != null) {
+            var layout = layout(level, operation.position(), holder.value(), false);
+            var candidates = layout == null ? null : outputCandidates(operation, layout);
+            if (candidates != null) {
+                for (var candidate : candidates) {
+                    if (candidate.emptyAtPreparation() &&
+                            matchesOutput(operation, candidate.bowl().itemStackHandler.getStackInSlot(0), expected))
+                        return true;
+                }
             }
         }
         return !ownedDrops(operation).isEmpty();
@@ -481,15 +688,21 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
     }
 
     private static List<ItemEntity> ownedDrops(PackagedMachineOperation operation) {
-        return operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(16),
+        var holder = recipe(operation.level(), operation.recipeId());
+        int radius = 16;
+        if (holder != null && holder.value().getPentacle() != null) {
+            var size = holder.value().getPentacle().getSize();
+            radius = Math.max(radius, Math.max(size.getX(), size.getZ()) + 2);
+        }
+        return operation.level().getEntitiesOfClass(ItemEntity.class, new AABB(operation.position()).inflate(radius),
                 item -> PackagedEntityCapture.ownedBy(item, operation.id()));
     }
 
     private static boolean recoverStack(PackagedMachineOperation operation, SacrificialBowlBlockEntity bowl,
-                                        ItemStack expected, boolean exactKey) {
+                                        ItemStack expected) {
         ItemStack current = bowl.itemStackHandler.getStackInSlot(0).copy();
         if (current.isEmpty() || current.getCount() > expected.getCount() ||
-                (exactKey ? !matchesSaved(current, expected) : !current.is(expected.getItem()))) {
+                !matchesSaved(current, expected)) {
             return true;
         }
         ItemStack stack = bowl.itemStackHandler.extractItem(0, current.getCount(), false);
@@ -497,14 +710,75 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         return ItemStack.matches(stack, current);
     }
 
-    private record Layout(GoldenSacrificialBowlBlockEntity center, ObjectList<SacrificialBowlBlockEntity> inputs,
-                          @Nullable SacrificialBowlBlockEntity output) {
+    private static boolean matchesOutput(PackagedMachineOperation operation, ItemStack current, ItemStack expected) {
+        return !current.isEmpty() && current.getCount() <= expected.getCount() &&
+                PackagedOutputMatching.sameKey(operation, expected, current);
+    }
 
-        boolean empty() {
-            return !this.center.ritualActive && this.center.currentRitualRecipe == null && this.center.currentRitualRecipeId == null &&
-                    this.center.itemStackHandler.getStackInSlot(0).isEmpty() &&
-                    (this.output == null || this.output.itemStackHandler.getStackInSlot(0).isEmpty()) &&
-                    this.inputs.stream().allMatch(bowl -> bowl.itemStackHandler.getStackInSlot(0).isEmpty());
+    private static boolean recoverOutput(PackagedMachineOperation operation, ItemStack expected) {
+        var level = operation.level();
+        var saved = operation.progress().getList("output_candidates", Tag.TAG_COMPOUND);
+        for (int index = 0; index < saved.size(); index++) {
+            var entry = saved.getCompound(index);
+            if (!"output".equals(entry.getString("role")) || entry.getInt("index") != index ||
+                    !entry.contains("position", Tag.TAG_LONG))
+                return false;
+            if (!entry.getBoolean("empty")) continue;
+            var position = BlockPos.of(entry.getLong("position"));
+            if (!level.isLoaded(position)) return false;
+            if (!(level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl) ||
+                    !bowlFingerprint(bowl).equals(entry.getString("bowl")))
+                continue;
+            ItemStack current = bowl.itemStackHandler.getStackInSlot(0).copy();
+            if (!matchesOutput(operation, current, expected)) continue;
+            ItemStack extracted = bowl.itemStackHandler.extractItem(0, current.getCount(), false);
+            if (extracted.isEmpty() || !ItemStack.matches(extracted, current)) return false;
+            operation.returned(AEItemKey.of(extracted), extracted.getCount());
+            break;
         }
+        return true;
+    }
+
+    private static boolean knownRitualStack(PackagedMachineOperation operation, ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        var progress = operation.progress();
+        if (matchesSaved(stack, read(operation, progress, "activation"))) return true;
+        var expected = read(operation, progress, "result");
+        if (matchesOutput(operation, stack, expected)) return true;
+        var slots = progress.getList("bowls", Tag.TAG_COMPOUND);
+        for (int index = 0; index < slots.size(); index++) {
+            if (matchesSaved(stack, read(operation, slots.getCompound(index), "input"))) return true;
+        }
+        var useItem = progress.contains("use_item", Tag.TAG_COMPOUND) ? read(operation, progress, "use_item") : ItemStack.EMPTY;
+        return !useItem.isEmpty() && matchesSaved(stack, useItem);
+    }
+
+    private record Layout(GoldenSacrificialBowlBlockEntity center,
+                          ObjectList<SacrificialBowlBlockEntity> bowls,
+                          ObjectList<SacrificialBowlBlockEntity> outputCandidates) {
+
+        boolean centerEmpty() {
+            return !this.center.ritualActive && this.center.currentRitualRecipe == null &&
+                    this.center.currentRitualRecipeId == null &&
+                    this.center.itemStackHandler.getStackInSlot(0).isEmpty();
+        }
+    }
+
+    private record InputBinding(SacrificialBowlBlockEntity bowl, ItemStack stack) {}
+
+    private record OutputBinding(SacrificialBowlBlockEntity bowl, boolean emptyAtPreparation) {}
+
+    private static void appendFingerprint(StringBuilder result, SacrificialBowlBlockEntity bowl) {
+        var state = bowl.getBlockState();
+        result.append('|').append(bowl.getBlockPos().asLong())
+                .append(':').append(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+        if (state.hasProperty(BlockStateProperties.FACING))
+            result.append(':').append(state.getValue(BlockStateProperties.FACING).getName());
+    }
+
+    private static String bowlFingerprint(SacrificialBowlBlockEntity bowl) {
+        var result = new StringBuilder();
+        appendFingerprint(result, bowl);
+        return result.toString();
     }
 }

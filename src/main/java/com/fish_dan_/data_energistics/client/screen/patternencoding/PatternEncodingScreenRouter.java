@@ -19,7 +19,7 @@ public final class PatternEncodingScreenRouter {
 
     public static void onScreenInitPost(ScreenEvent.Init.Post event) {
         maybeReplaceNativePatternEncodingScreen(event.getScreen(), true);
-        if (MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (MOD.isAe2WtLibLoaded()) {
             Ae2WtLibCompat.maybeReplaceWirelessPatternEncodingScreen(event.getScreen(), true);
         }
     }
@@ -29,7 +29,7 @@ public final class PatternEncodingScreenRouter {
             return null;
         }
         Screen replacement = maybeReplaceNativePatternEncodingScreen(currentScreen, false);
-        if (replacement == null && MOD.isAe2WtLibWirelessPatternEncodingSupportLoaded()) {
+        if (replacement == null && MOD.isAe2WtLibLoaded()) {
             replacement = Ae2WtLibCompat.maybeReplaceWirelessPatternEncodingScreen(currentScreen, false);
         }
         return replacement;

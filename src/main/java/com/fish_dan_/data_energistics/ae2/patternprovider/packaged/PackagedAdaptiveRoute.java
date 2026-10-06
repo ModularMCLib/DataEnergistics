@@ -49,7 +49,7 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
             for (var side : target.targetSidesFast()) adjacent.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));
             var catalog = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting();
             var state = state(target);
-            return state.prepareBatch(level, catalog, pattern, prototype, requested, target.connectorBindingsFast(), adjacent, target.connectorPolicy(),
+            return state.prepareBatch(level, catalog, pattern, prototype, requested, target.connectorBindingsFast(), adjacent, target.getConnectorPolicy(),
                     () -> target.isSelected() && target.isActive() && !target.isBusy() && !target.isCraftingLocked() && target.hasPattern(pattern),
                     () -> {
                         target.patternSuccess(pattern);
@@ -64,7 +64,7 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
         if (!(target.level() instanceof ServerLevel level)) return null;
         var links = new ObjectArrayList<>(target.connectorBindingsFast());
         for (var side : target.targetSidesFast()) links.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));
-        return state(target).reusable().adapter(level, links,
+        return state(target).getReusable().adapter(level, links,
                 pattern -> target.isSelected() && target.isActive() && !target.isBusy() && !target.isCraftingLocked() && target.hasPattern(pattern),
                 () -> {
                     target.saveChanges();
@@ -112,7 +112,7 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
         }
         var catalog = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting();
         var dispatch = state(target);
-        for (var adapter : catalog.adapters()) dispatch.policy(adapter.id(), target.connectorPolicy());
+        for (var adapter : catalog.adapters()) dispatch.policy(adapter.id(), target.getConnectorPolicy());
         boolean accepted = dispatch.dispatch(level, catalog,
                 context.patternDetails(), context.inputHolder(), target.connectorBindingsFast(), adjacent);
         if (accepted) {

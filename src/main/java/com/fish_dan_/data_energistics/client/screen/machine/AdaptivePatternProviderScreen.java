@@ -12,7 +12,6 @@ import appeng.api.client.AEKeyRendering;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
-import appeng.api.upgrades.Upgrades;
 import appeng.client.Point;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.ICompositeWidget;
@@ -141,7 +140,7 @@ public class AdaptivePatternProviderScreen extends AEBaseScreen<AdaptivePatternP
     private List<Component> getCompatibleUpgrades() {
         ObjectArrayList<Component> list = new ObjectArrayList<>();
         list.add(GuiText.CompatibleUpgrades.text());
-        list.addAll(Upgrades.getTooltipLinesForMachine(this.menu.getUpgrades().getUpgradableItem()));
+        list.addAll(this.menu.getCompatibleUpgradeTooltipLines());
         return list;
     }
 

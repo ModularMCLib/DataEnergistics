@@ -6,9 +6,9 @@ import com.fish_dan_.data_energistics.block.machine.DataChargerBlock;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipe;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeInput;
+import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DERecipes;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -45,6 +45,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -73,6 +74,7 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
     private final Object2ObjectLinkedOpenHashMap<RecipeLookupKey, RecipeLookup> recipeLookupCache = new Object2ObjectLinkedOpenHashMap<>(RECIPE_LOOKUP_CACHE_LIMIT, 0.75F);
     private long recipeLookupCacheEpoch = Long.MIN_VALUE;
     private long storedDataFlow;
+    @Getter
     private boolean working;
 
     public DataChargerBlockEntity(BlockPos pos, BlockState state) {
@@ -141,32 +143,8 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
         return Math.min(this.storedDataFlow, getDataFlowCapacity());
     }
 
-    public boolean isWorking() {
-        return this.working;
-    }
-
     public boolean isOnline() {
         return this.getMainNode().isOnline();
-    }
-
-    public boolean hasChargeablePowerItem() {
-        int activeSlotCount = getActiveSlotCount();
-        for (int slot = 0; slot < activeSlotCount; slot++) {
-            if (supportsAePower(this.storage.getStackInSlot(slot))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean hasChargeableDataFlowItem() {
-        int activeSlotCount = getActiveSlotCount();
-        for (int slot = 0; slot < activeSlotCount; slot++) {
-            if (supportsDataFlow(this.storage.getStackInSlot(slot))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public boolean tryInsertDisplayStack(ItemStack source) {
@@ -482,7 +460,7 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
     private static RecipeLookup computeRecipeLookup(Level level, ItemStack stack) {
         ResourceLocation dataChargerRecipeId = null;
         DataChargerRecipeInput input = new DataChargerRecipeInput(stack);
-        for (RecipeHolder<DataChargerRecipe> holder : level.getRecipeManager().getAllRecipesFor(DERecipes.DATA_CHARGER_TYPE.get())) {
+        for (RecipeHolder<DataChargerRecipe> holder : DataChargerRecipeRegistry.dataChargerRecipes(level.getRecipeManager())) {
             if (holder.value().matches(input, level)) {
                 dataChargerRecipeId = holder.id();
                 break;
@@ -577,7 +555,7 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
         if (this.getInternalCurrentPower() > this.getInternalMaxPower()) {
             this.extractAEPower(this.getInternalCurrentPower() - this.getInternalMaxPower(), Actionable.MODULATE, PowerMultiplier.ONE);
         }
-        this.storedDataFlow = Math.min(Math.max(0L, this.storedDataFlow), getDataFlowCapacity());
+        this.storedDataFlow = Math.clamp(this.storedDataFlow, 0L, getDataFlowCapacity());
     }
 
     private double getPowerRefillPerTick() {

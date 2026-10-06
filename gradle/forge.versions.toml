@@ -54,12 +54,15 @@ modernfix = "5HLHxQ2F" # 5.27.24+mc1.21.1
 bhc = "1.21.1-1.4.1"
 
 ## cursemaven ##
+moonlight-lib = "9066398"
+targetdummy = "8903254"
 projecte = "6611984"
 ato = "7825464"
 titanium = "8760562"
 if = "8370717"
 spark = "6225208"
 glodium = "5821676"
+ae2addonlib = "7222312"
 ae2ji = "7727898"
 ae2ct = "7182163"
 eae = "8811572"
@@ -94,7 +97,7 @@ athena = "dJgL278E"
 mdlib = "0.0.1"
 
 [libraries]
-configuration         = { module = "dev.toma.configuration:configuration-1.21.1", version.ref = "configuration" }
+configuration       = { module = "dev.toma.configuration:configuration-1.21.1", version.ref = "configuration" }
 create              = { module = "com.simibubi.create:create-1.21.1", version.ref = "create" }
 ponder              = { module = "net.createmod.ponder:Ponder-NeoForge-1.21.1", version.ref = "ponder" }
 guideme             = { module = "org.appliedenergistics:guideme", version.ref = "guideme" }
@@ -148,11 +151,14 @@ iris                = { module = "maven.modrinth:iris", version.ref = "iris" }
 modernfix           = { module = "maven.modrinth:modernfix", version.ref = "modernfix" }
 bhc                 = { module = "maven.modrinth:baubley-heart-canisters", version.ref = "bhc" }
 
+moonlight-lib       = { module = "curse.maven:selene-499980", version.ref = "moonlight-lib" }
+targetdummy         = { module = "curse.maven:mmmmmmmmmmmm-225738", version.ref = "targetdummy" }
 projecte            = { module = "curse.maven:projecte-226410", version.ref = "projecte" }
 ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }
 if                  = { module = "curse.maven:industrial-foregoing-266515", version.ref = "if" }
 glodium             = { module = "curse.maven:glodium-957920", version.ref = "glodium" }
+ae2addonlib         = { module = "curse.maven:ae2addonlib-1366135", version.ref = "ae2addonlib" }
 ae2ji               = { module = "curse.maven:ae2-jei-integration-1074338", version.ref = "ae2ji" }
 ae2ct               = { module = "curse.maven:ae2-crafting-tree-1086241", version.ref = "ae2ct" }
 eae                 = { module = "curse.maven:ex-pattern-provider-892005", version.ref = "eae"}

@@ -51,6 +51,16 @@ public interface PackagedMachineAdapter {
     boolean recognizes(ServerLevel level, BlockPos position);
 
     /**
+     * Checks a live machine against the concrete processing recipe selected by a pattern.
+     * Adapters with recipe-specific structures should override this instead of making every
+     * machine of the same recipe category appear interchangeable.
+     */
+    default boolean supportsRecipe(ServerLevel level, BlockPos position, ResourceLocation recipeTypeId,
+                                   ResourceLocation recipeId) {
+        return this.recipeTypes().contains(recipeTypeId) && this.recognizes(level, position);
+    }
+
+    /**
      * Reads the maximum currently safe logical batch for one concrete machine, bounded by requestedCount.
      * Prototype counters and pattern describe one logical craft and must not be mutated. Called only for
      * loaded, recognized, unclaimed machines on the server thread. Return zero when unavailable; the default

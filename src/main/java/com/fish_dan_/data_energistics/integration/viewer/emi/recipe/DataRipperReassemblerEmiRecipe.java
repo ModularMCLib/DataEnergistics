@@ -5,14 +5,12 @@ import com.fish_dan_.data_energistics.integration.viewer.emi.ingredient.EmiDataR
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataReassemblerLayout;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeUiProvider;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeView;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import com.lowdragmc.lowdraglib2.integration.xei.emi.ModularUIEMIRecipe;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.RecipeHolder;
 
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.stack.EmiStack;
@@ -36,11 +34,7 @@ public final class DataRipperReassemblerEmiRecipe extends ModularUIEMIRecipe {
 
     private final DataRipperReassemblerRecipeView recipe;
 
-    public DataRipperReassemblerEmiRecipe(RecipeHolder<DataRipperReassemblerRecipe> holder) {
-        this(DataRipperReassemblerRecipeView.from(holder));
-    }
-
-    private DataRipperReassemblerEmiRecipe(DataRipperReassemblerRecipeView recipe) {
+    public DataRipperReassemblerEmiRecipe(DataRipperReassemblerRecipeView recipe) {
         super(ignored -> UI_PROVIDER.createModularUI(recipe));
         this.recipe = recipe;
     }
@@ -53,6 +47,11 @@ public final class DataRipperReassemblerEmiRecipe extends ModularUIEMIRecipe {
     @Override
     public ResourceLocation getId() {
         return this.recipe.id();
+    }
+
+    /** Returns the stable identity that the processing pattern must persist for this viewer entry. */
+    public ResourceLocation patternRecipeId() {
+        return this.recipe.patternRecipeId();
     }
 
     @Override

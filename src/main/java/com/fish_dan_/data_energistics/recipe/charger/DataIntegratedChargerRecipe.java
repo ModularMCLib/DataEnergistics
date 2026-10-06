@@ -13,32 +13,31 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.util.List;
-import java.util.Objects;
 
-/** A multi-input recipe executed by the data integrated charger's inscribing mode. */
-public final class DataIntegratedChargerRecipe implements Recipe<DataIntegratedChargerRecipeInput> {
+/**
+ * A multi-input recipe executed by the data integrated charger's inscribing mode.
+ */
+public record DataIntegratedChargerRecipe(List<DataChargePressIngredient> inputs,
+                                          ItemStack result)
+        implements Recipe<DataIntegratedChargerRecipeInput> {
 
     public static final int MIN_ITEM_INPUT_COUNT = 1;
     public static final int MAX_ITEM_INPUT_COUNT = 3;
 
-    private final List<DataChargePressIngredient> inputs;
-    private final ItemStack result;
-
     public DataIntegratedChargerRecipe(List<DataChargePressIngredient> inputs, ItemStack result) {
-        Objects.requireNonNull(inputs, "inputs");
-        Objects.requireNonNull(result, "result");
         if (inputs.isEmpty() || inputs.size() > MAX_ITEM_INPUT_COUNT) {
             throw new IllegalArgumentException(
                     "Data integrated charger recipes require between " + MIN_ITEM_INPUT_COUNT + " and " +
                             MAX_ITEM_INPUT_COUNT + " inputs: " + inputs.size());
         }
-        inputs.forEach(input -> Objects.requireNonNull(input, "input"));
         if (result.isEmpty()) {
             throw new IllegalArgumentException("Data integrated charger result must not be empty");
         }
-        this.inputs = List.copyOf(inputs);
+        this.inputs = ObjectLists.unmodifiable(new ObjectArrayList<>(inputs));
         this.result = result.copy();
     }
 
@@ -67,21 +66,31 @@ public final class DataIntegratedChargerRecipe implements Recipe<DataIntegratedC
         return NonNullList.copyOf(this.inputs.stream().map(DataChargePressIngredient::ingredient).toList());
     }
 
-    public List<DataChargePressIngredient> getInputs() {
-        return this.inputs;
-    }
-
-    public ItemStack getResult() {
+    @Override
+    public ItemStack result() {
         return this.result.copy();
     }
 
-    /** Finds distinct input slots and their required consumption counts in recipe order. */
+    /**
+     * Finds distinct input slots and their required consumption counts in recipe order.
+     */
     public List<InputSlot> findMatchingInputSlots(List<ItemStack> availableInputs) {
-        List<InputSlot> matches = new ObjectArrayList<>(this.inputs.size());
-        if (findMatchingInputSlots(availableInputs, 0, new boolean[availableInputs.size()], matches)) {
-            return List.copyOf(matches);
+        ObjectList<InputSlot> matches = new ObjectArrayList<>(this.inputs.size());
+        boolean[] usedSlots = new boolean[availableInputs.size()];
+        if (findMatchingInputSlots(availableInputs, 0, usedSlots, matches) &&
+                hasNoUnassignedInputs(availableInputs, usedSlots)) {
+            return ObjectLists.unmodifiable(matches);
         }
-        return List.of();
+        return ObjectLists.emptyList();
+    }
+
+    private static boolean hasNoUnassignedInputs(List<ItemStack> inputs, boolean[] usedSlots) {
+        for (int slot = 0; slot < inputs.size(); slot++) {
+            if (!inputs.get(slot).isEmpty() && !usedSlots[slot]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean findMatchingInputSlots(List<ItemStack> availableInputs, int ingredientIndex,
@@ -123,6 +132,8 @@ public final class DataIntegratedChargerRecipe implements Recipe<DataIntegratedC
         return true;
     }
 
-    /** One physical input slot selected for this operation and the number of items to consume from it. */
+    /**
+     * One physical input slot selected for this operation and the number of items to consume from it.
+     */
     public record InputSlot(int slot, int count) {}
 }

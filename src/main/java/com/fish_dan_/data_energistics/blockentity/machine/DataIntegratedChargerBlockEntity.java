@@ -17,13 +17,13 @@ import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipe;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipe;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeInput;
+import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerPatternModeResolver;
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerRecipe;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DERecipes;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
@@ -90,6 +90,9 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
@@ -113,7 +116,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     public static final int STORAGE_SLOTS = LEGACY_MACHINE_MODULE_SLOT + 1;
     public static final int ITEM_SLOT_CAPACITY = 512;
     public static final int FLUID_CAPACITY = 512_000;
-    public static final int MAX_SPEED_CARDS = 4;
     public static final int MAX_ENERGY_CARDS = 2;
     public static final int UPGRADE_SLOTS = 6;
     public static final int MAX_PROGRESS = 200;
@@ -152,9 +154,9 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     private final InternalInventory externalOutput = createExternalOutput();
     @Getter
     private final InternalInventory externalInventory = new CombinedInternalInventory(this.externalInput, this.externalOutput);
-    private final List<FluidTank> fluidTanks = createFluidTanks();
+    private final ObjectList<FluidTank> fluidTanks = createFluidTanks();
     private final IFluidHandler externalFluidInput = new FluidInputHandler();
-    private final List<GenericStackInv> fluidMenuInventories = createFluidMenuInventories();
+    private final ObjectList<GenericStackInv> fluidMenuInventories = createFluidMenuInventories();
     private final ConfigManager configManager = new ConfigManager(this::onConfigChanged);
     private boolean syncingFluidMenus;
     private final Set<Direction> outputSides = EnumSet.allOf(Direction.class);
@@ -330,7 +332,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     public static int computeParallel(int energyCardCount) {
-        int installedCards = Math.min(MAX_ENERGY_CARDS, Math.max(0, energyCardCount));
+        int installedCards = Math.clamp(energyCardCount, 0, MAX_ENERGY_CARDS);
         return installedCards == 0 ? BASE_PARALLEL : BASE_PARALLEL * installedCards * PARALLEL_MULTIPLIER_PER_ENERGY_CARD;
     }
 
@@ -346,16 +348,15 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         return this.getInternalMaxPower();
     }
 
-    public boolean setMachineMode(MachineMode mode) {
+    public void setMachineMode(MachineMode mode) {
         if (this.machineMode == mode) {
-            return false;
+            return;
         }
         this.machineMode = mode;
         this.processingMode = mode;
         resetProgress();
         saveChanges();
         markForClientUpdate();
-        return true;
     }
 
     /**
@@ -753,7 +754,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             return eaeCircuitCutterOperation;
         }
 
-        List<ItemStack> inputs = new ObjectArrayList<>(ITEM_INPUT_SLOT_COUNT);
+        ObjectList<ItemStack> inputs = new ObjectArrayList<>(ITEM_INPUT_SLOT_COUNT);
         for (int slot = 0; slot < ITEM_INPUT_SLOT_COUNT; slot++) {
             inputs.add(this.storage.getStackInSlot(slot));
         }
@@ -772,7 +773,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                     if (DataChargePressRecipeSupport.matchesFluid(getFluidTank(tank, this.fluidTanks).getFluid())) {
                         return new DataChargePressOperation(result, tank,
                                 DataChargePressRecipeSupport.DATA_CORROSION_AMOUNT,
-                                List.of(new DataChargePressRecipe.InputSlot(materialSlot,
+                                ObjectLists.singleton(new DataChargePressRecipe.InputSlot(materialSlot,
                                         DataChargePressRecipeSupport.CIRCUIT_BOARD_MATERIAL_COUNT)));
                     }
                 }
@@ -807,7 +808,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
                 if (DataChargePressRecipeSupport.matchesFluid(getFluidTank(tank, this.fluidTanks).getFluid(), fluidAmount)) {
                     return new DataChargePressOperation(result, tank, fluidAmount,
-                            List.of(new DataChargePressRecipe.InputSlot(inputSlot, 1)));
+                            ObjectLists.singleton(new DataChargePressRecipe.InputSlot(inputSlot, 1)));
                 }
             }
         }
@@ -827,21 +828,21 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             return null;
         }
 
-        List<ItemStack> inputs = new ObjectArrayList<>(ITEM_INPUT_SLOT_COUNT);
+        ObjectList<ItemStack> inputs = new ObjectArrayList<>(ITEM_INPUT_SLOT_COUNT);
         for (int slot = 0; slot < ITEM_INPUT_SLOT_COUNT; slot++) {
             inputs.add(this.storage.getStackInSlot(slot));
         }
-        for (RecipeHolder<DataChargePressRecipe> holder : this.level.getRecipeManager()
-                .getAllRecipesFor(DERecipes.DATA_CHARGE_PRESS_TYPE.get())) {
+        for (RecipeHolder<DataChargePressRecipe> holder : DataChargerRecipeRegistry.chargePressMatchingOrder(
+                this.level.getRecipeManager())) {
             DataChargePressRecipe recipe = holder.value();
             List<DataChargePressRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
-            ItemStack result = recipe.getResult();
+            ItemStack result = recipe.result();
             if (inputSlots.isEmpty() || findOutputSlot(result) < 0) {
                 continue;
             }
             for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
                 if (recipe.matchesMachineInputs(inputs, getFluidTank(tank, this.fluidTanks).getFluid())) {
-                    return new DataChargePressOperation(result, tank, recipe.getFluidAmount(), inputSlots);
+                    return new DataChargePressOperation(result, tank, recipe.fluidAmount(), inputSlots);
                 }
             }
         }
@@ -875,8 +876,8 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         }
 
         DataChargerRecipeInput recipeInput = new DataChargerRecipeInput(input);
-        for (RecipeHolder<DataChargerRecipe> holder : this.level.getRecipeManager()
-                .getAllRecipesFor(DERecipes.DATA_CHARGER_TYPE.get())) {
+        for (RecipeHolder<DataChargerRecipe> holder : DataChargerRecipeRegistry.dataChargerRecipes(
+                this.level.getRecipeManager())) {
             if (holder.value().matches(recipeInput, this.level)) {
                 return holder.value();
             }
@@ -889,15 +890,15 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             return null;
         }
 
-        List<ItemStack> inputs = new ObjectArrayList<>(ITEM_INPUT_SLOT_COUNT);
+        ObjectList<ItemStack> inputs = new ObjectArrayList<>(ITEM_INPUT_SLOT_COUNT);
         for (int slot = 0; slot < ITEM_INPUT_SLOT_COUNT; slot++) {
             inputs.add(this.storage.getStackInSlot(slot));
         }
-        for (RecipeHolder<DataIntegratedChargerRecipe> holder : this.level.getRecipeManager()
-                .getAllRecipesFor(DERecipes.DATA_INTEGRATED_CHARGER_TYPE.get())) {
+        for (RecipeHolder<DataIntegratedChargerRecipe> holder : DataChargerRecipeRegistry.integratedChargerMatchingOrder(
+                this.level.getRecipeManager())) {
             DataIntegratedChargerRecipe recipe = holder.value();
             List<DataIntegratedChargerRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
-            ItemStack result = recipe.getResult();
+            ItemStack result = recipe.result();
             if (!inputSlots.isEmpty() && findOutputSlot(result) >= 0) {
                 return new DataIntegratedChargerOperation(result, inputSlots);
             }
@@ -1473,19 +1474,19 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         return new CombinedInternalInventory(outputs);
     }
 
-    private List<FluidTank> createFluidTanks() {
-        List<FluidTank> tanks = new ObjectArrayList<>(FLUID_TANK_COUNT);
+    private ObjectList<FluidTank> createFluidTanks() {
+        ObjectList<FluidTank> tanks = new ObjectArrayList<>(FLUID_TANK_COUNT);
         for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
             tanks.add(new IntegratedFluidTank());
         }
         return tanks;
     }
 
-    private List<GenericStackInv> createFluidMenuInventories() {
-        List<GenericStackInv> inventories = new ObjectArrayList<>(FLUID_TANK_COUNT);
+    private ObjectList<GenericStackInv> createFluidMenuInventories() {
+        ObjectList<GenericStackInv> inventories = new ObjectArrayList<>(FLUID_TANK_COUNT);
         for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
             int fluidTank = tank;
-            var inventory = new GenericStackInv(Set.of(AEKeyType.fluids()),
+            var inventory = new GenericStackInv(ObjectSets.singleton(AEKeyType.fluids()),
                     () -> syncTankFromMenuFluid(fluidTank), GenericStackInv.Mode.STORAGE, 1);
             inventory.setCapacity(AEKeyType.fluids(), FLUID_CAPACITY);
             inventories.add(inventory);
@@ -1530,7 +1531,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         }
     }
 
-    private static FluidTank getFluidTank(int tank, List<FluidTank> tanks) {
+    private static FluidTank getFluidTank(int tank, ObjectList<FluidTank> tanks) {
         if (tank < 0 || tank >= tanks.size()) {
             throw new IndexOutOfBoundsException("Invalid Data Integrated Charger fluid tank: " + tank);
         }
@@ -1597,7 +1598,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     private record DataIntegratedChargerOperation(ItemStack result,
                                                   List<DataIntegratedChargerRecipe.InputSlot> inputSlots) {}
 
-    private final class StorageFilter implements IAEItemFilter {
+    private static final class StorageFilter implements IAEItemFilter {
 
         @Override
         public boolean allowInsert(InternalInventory inventory, int slot, ItemStack stack) {
@@ -1742,7 +1743,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             }
 
             int currentAmount = inSlot.isEmpty() ? 0 : inSlot.getCount();
-            int inserted = Math.min(stack.getCount(), Math.max(0, getSlotLimit(slot) - currentAmount));
+            int inserted = Math.clamp(getSlotLimit(slot) - currentAmount, 0, stack.getCount());
             if (inserted <= 0) {
                 return stack;
             }

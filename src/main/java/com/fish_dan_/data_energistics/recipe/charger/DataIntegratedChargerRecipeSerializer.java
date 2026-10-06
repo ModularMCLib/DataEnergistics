@@ -30,8 +30,8 @@ public final class DataIntegratedChargerRecipeSerializer implements RecipeSerial
                     DataResult.success(stack),
             DataResult::success);
     private static final MapCodec<DataIntegratedChargerRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            INPUTS_CODEC.fieldOf("inputs").forGetter(DataIntegratedChargerRecipe::getInputs),
-            RESULT_CODEC.fieldOf("result").forGetter(DataIntegratedChargerRecipe::getResult))
+            INPUTS_CODEC.fieldOf("inputs").forGetter(DataIntegratedChargerRecipe::inputs),
+            RESULT_CODEC.fieldOf("result").forGetter(DataIntegratedChargerRecipe::result))
             .apply(instance, DataIntegratedChargerRecipe::new));
     private static final StreamCodec<RegistryFriendlyByteBuf, DataIntegratedChargerRecipe> STREAM_CODEC = StreamCodec.of(
             DataIntegratedChargerRecipeSerializer::writeRecipe,
@@ -44,8 +44,8 @@ public final class DataIntegratedChargerRecipeSerializer implements RecipeSerial
     }
 
     private static void writeRecipe(RegistryFriendlyByteBuf buffer, DataIntegratedChargerRecipe recipe) {
-        DataChargePressIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.getInputs());
-        ItemStack.STREAM_CODEC.encode(buffer, recipe.getResult());
+        DataChargePressIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.inputs());
+        ItemStack.STREAM_CODEC.encode(buffer, recipe.result());
     }
 
     @Override

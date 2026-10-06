@@ -21,10 +21,6 @@ public final class MOD {
         return isLoaded("ae2wtlib");
     }
 
-    public static boolean isAe2WtLibWirelessPatternEncodingSupportLoaded() {
-        return isAe2WtLibLoaded();
-    }
-
     public static boolean isCuriosLoaded() {
         return isLoaded("curios");
     }
@@ -47,6 +43,14 @@ public final class MOD {
 
     public static boolean isNeoEcoAeLoaded() {
         return isLoaded("neoecoae");
+    }
+
+    public static boolean isExtendedAeLoaded() {
+        return isLoaded("extendedae");
+    }
+
+    public static boolean isAdvancedAeLoaded() {
+        return isLoaded("advanced_ae");
     }
 
     private static boolean isLoaded(String modId) {

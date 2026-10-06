@@ -28,8 +28,9 @@ public interface CapacitySlicePlanner {
      * Plans at most one physical call per selected snapshot.
      *
      * <p>
-     * Known zero capacity is skipped. Unknown capacity, unknown single-batch capacity, and routing modes other than
-     * {@code TARGETED} are limited to one logical craft so snapshot uncertainty never invents counted semantics.
+     * Known zero capacity is skipped. Unknown capacity or unknown single-batch capacity remains limited to one logical
+     * craft so snapshot uncertainty never invents counted semantics. Known aggregate routes retain their reported
+     * counted capacity because their provider contract owns the complete admission.
      * </p>
      *
      * @param snapshots         immutable provider target observations in stable provider order

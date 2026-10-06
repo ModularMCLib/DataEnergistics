@@ -115,22 +115,16 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, DataChargePressRecipeView view, IFocusGroup focuses) {
-        if (view instanceof DataChargePressRecipeView.ChargerView chargerView) {
-            setChargerRecipe(builder, chargerView);
-        } else if (view instanceof DataChargePressRecipeView.InscriberView inscriberView) {
-            setInscriberRecipe(builder, inscriberView);
-        } else if (view instanceof DataChargePressRecipeView.PowderView powderView) {
-            setPowderRecipe(builder, powderView);
-        } else if (view instanceof DataChargePressRecipeView.DataChargerView dataChargerView) {
-            setDataChargerRecipe(builder, dataChargerView);
-        } else if (view instanceof DataChargePressRecipeView.IntegratedChargerView integratedChargerView) {
-            setIntegratedChargerRecipe(builder, integratedChargerView);
-        } else if (view instanceof DataChargePressRecipeView.CircuitBoardView circuitBoardView) {
-            setCircuitBoardRecipe(builder, circuitBoardView);
-        } else if (view instanceof DataChargePressRecipeView.EaeCircuitCutterView circuitCutterView) {
-            setEaeCircuitCutterRecipe(builder, circuitCutterView);
-        } else if (view instanceof DataChargePressRecipeView.CustomView customView) {
-            setCustomRecipe(builder, customView);
+        switch (view) {
+            case DataChargePressRecipeView.ChargerView chargerView -> setChargerRecipe(builder, chargerView);
+            case DataChargePressRecipeView.InscriberView inscriberView -> setInscriberRecipe(builder, inscriberView);
+            case DataChargePressRecipeView.PowderView powderView -> setPowderRecipe(builder, powderView);
+            case DataChargePressRecipeView.DataChargerView dataChargerView -> setDataChargerRecipe(builder, dataChargerView);
+            case DataChargePressRecipeView.IntegratedChargerView integratedChargerView -> setIntegratedChargerRecipe(builder, integratedChargerView);
+            case DataChargePressRecipeView.CircuitBoardView circuitBoardView -> setCircuitBoardRecipe(builder, circuitBoardView);
+            case DataChargePressRecipeView.EaeCircuitCutterView circuitCutterView -> setEaeCircuitCutterRecipe(builder, circuitCutterView);
+            case DataChargePressRecipeView.CustomView customView -> setCustomRecipe(builder, customView);
+            default -> {}
         }
     }
 
@@ -164,8 +158,8 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
 
     private static void setIntegratedChargerRecipe(IRecipeLayoutBuilder builder,
                                                    DataChargePressRecipeView.IntegratedChargerView view) {
-        addIntegratedChargerItemInputs(builder, view.holder().value().getInputs());
-        builder.addOutputSlot(OUTPUT_X, OUTPUT_Y).addItemStack(view.holder().value().getResult());
+        addIntegratedChargerItemInputs(builder, view.holder().value().inputs());
+        builder.addOutputSlot(OUTPUT_X, OUTPUT_Y).addItemStack(view.holder().value().result());
     }
 
     private static void addIntegratedChargerItemInputs(IRecipeLayoutBuilder builder,
@@ -204,10 +198,10 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
 
     private static void setCustomRecipe(IRecipeLayoutBuilder builder, DataChargePressRecipeView.CustomView view) {
         var recipe = view.holder().value();
-        addCustomItemInputs(builder, recipe.getInputs());
+        addCustomItemInputs(builder, recipe.inputs());
         addFluidInput(builder, recipe.getFluidInput());
         builder.addOutputSlot(OUTPUT_X, OUTPUT_Y)
-                .addItemStack(recipe.getResult());
+                .addItemStack(recipe.result());
     }
 
     private static void addCustomItemInputs(IRecipeLayoutBuilder builder, List<DataChargePressIngredient> inputs) {

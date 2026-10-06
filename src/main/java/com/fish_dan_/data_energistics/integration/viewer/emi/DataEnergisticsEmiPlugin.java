@@ -24,6 +24,7 @@ import com.fish_dan_.data_energistics.integration.viewer.emi.ui.OrderPackageEmiD
 import com.fish_dan_.data_energistics.integration.viewer.emi.ui.UniversalTerminalEmiExclusionArea;
 import com.fish_dan_.data_energistics.integration.viewer.xei.ingredient.DataResourceKey;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataChargePressRecipeView;
+import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.PoweredRepairRecipeFilter;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.UniversalTerminalCombineRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
@@ -161,8 +162,8 @@ public final class DataEnergisticsEmiPlugin implements EmiPlugin {
         registry.addWorkstation(DataRipperReassemblerEmiRecipe.CATEGORY, EmiStack.of(DEBlocks.DATA_RIPPER_REASSEMBLER.get()));
         registry.addWorkstation(DataRipperReassemblerEmiRecipe.CATEGORY,
                 EmiStack.of(DEBlocks.DATA_ASYNCHRONOUS_PROCESSING_FACTORY.get()));
-        registry.addDeferredRecipes(consumer -> registry.getRecipeManager()
-                .getAllRecipesFor(DERecipes.DATA_RIPPER_REASSEMBLER_TYPE.get()).stream()
+        registry.addDeferredRecipes(consumer -> DataRipperReassemblerRecipeView
+                .fromRecipeManager(registry.getRecipeManager()).stream()
                 .map(DataRipperReassemblerEmiRecipe::new)
                 .forEach(consumer));
         registry.addDeferredRecipes(consumer -> registerExternalFactoryWorkstations(registry));

@@ -15,30 +15,28 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.util.List;
-import java.util.Objects;
 
-/** A normalized crystal-growth operation with one to three item inputs and a fixed process fluid and module. */
-public final class DataChargePressRecipe implements Recipe<DataChargePressRecipeInput> {
+/**
+ * A normalized crystal-growth operation with one to three item inputs and a fixed process fluid and module.
+ */
+public record DataChargePressRecipe(List<DataChargePressIngredient> inputs, int fluidAmount,
+                                    ItemStack result)
+        implements Recipe<DataChargePressRecipeInput> {
 
     public static final int MIN_ITEM_INPUT_COUNT = 1;
     public static final int MAX_ITEM_INPUT_COUNT = 3;
     public static final int MAX_FLUID_AMOUNT = 51_200;
 
-    private final List<DataChargePressIngredient> inputs;
-    private final int fluidAmount;
-    private final ItemStack result;
-
     public DataChargePressRecipe(List<DataChargePressIngredient> inputs, int fluidAmount, ItemStack result) {
-        Objects.requireNonNull(inputs, "inputs");
-        Objects.requireNonNull(result, "result");
         if (inputs.isEmpty() || inputs.size() > MAX_ITEM_INPUT_COUNT) {
             throw new IllegalArgumentException(
                     "Data charge press recipes require between " + MIN_ITEM_INPUT_COUNT + " and " +
                             MAX_ITEM_INPUT_COUNT + " inputs: " + inputs.size());
         }
-        inputs.forEach(input -> Objects.requireNonNull(input, "input"));
         if (fluidAmount <= 0 || fluidAmount > MAX_FLUID_AMOUNT) {
             throw new IllegalArgumentException(
                     "Data charge press fluid amount must be between 1 and " + MAX_FLUID_AMOUNT + ": " + fluidAmount);
@@ -46,7 +44,7 @@ public final class DataChargePressRecipe implements Recipe<DataChargePressRecipe
         if (result.isEmpty()) {
             throw new IllegalArgumentException("Data charge press result must not be empty");
         }
-        this.inputs = List.copyOf(inputs);
+        this.inputs = ObjectLists.unmodifiable(new ObjectArrayList<>(inputs));
         this.fluidAmount = fluidAmount;
         this.result = result.copy();
     }
@@ -76,36 +74,43 @@ public final class DataChargePressRecipe implements Recipe<DataChargePressRecipe
         return NonNullList.copyOf(this.inputs.stream().map(DataChargePressIngredient::ingredient).toList());
     }
 
-    public List<DataChargePressIngredient> getInputs() {
-        return this.inputs;
-    }
-
     public GenericStack getFluidInput() {
         return DataChargePressRecipeSupport.getFluidInput(this.fluidAmount);
-    }
-
-    public int getFluidAmount() {
-        return this.fluidAmount;
     }
 
     public Ingredient getModule() {
         return DataChargePressRecipeSupport.CRYSTAL_GROWTH_MODULES;
     }
 
-    public ItemStack getResult() {
+    @Override
+    public ItemStack result() {
         return this.result.copy();
     }
 
-    /** Finds distinct input slots and their required consumption counts in recipe order. */
+    /**
+     * Finds distinct input slots and their required consumption counts in recipe order.
+     */
     public List<InputSlot> findMatchingInputSlots(List<ItemStack> inputs) {
-        List<InputSlot> matches = new ObjectArrayList<>(this.inputs.size());
-        if (findMatchingInputSlots(inputs, 0, new boolean[inputs.size()], matches)) {
-            return List.copyOf(matches);
+        ObjectList<InputSlot> matches = new ObjectArrayList<>(this.inputs.size());
+        boolean[] usedSlots = new boolean[inputs.size()];
+        if (findMatchingInputSlots(inputs, 0, usedSlots, matches) && hasNoUnassignedInputs(inputs, usedSlots)) {
+            return ObjectLists.unmodifiable(matches);
         }
-        return List.of();
+        return ObjectLists.emptyList();
     }
 
-    /** Matches the consumable inputs after a machine has already selected its crystal-growth mode. */
+    private static boolean hasNoUnassignedInputs(List<ItemStack> inputs, boolean[] usedSlots) {
+        for (int slot = 0; slot < inputs.size(); slot++) {
+            if (!inputs.get(slot).isEmpty() && !usedSlots[slot]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Matches the consumable inputs after a machine has already selected its crystal-growth mode.
+     */
     public boolean matchesMachineInputs(List<ItemStack> items, FluidStack fluid) {
         return matchesFluid(fluid) && !findMatchingInputSlots(items).isEmpty();
     }
@@ -153,6 +158,8 @@ public final class DataChargePressRecipe implements Recipe<DataChargePressRecipe
         return true;
     }
 
-    /** One physical input slot selected for this operation and the number of items to consume from it. */
+    /**
+     * One physical input slot selected for this operation and the number of items to consume from it.
+     */
     public record InputSlot(int slot, int count) {}
 }

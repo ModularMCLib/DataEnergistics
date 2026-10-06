@@ -185,9 +185,6 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
     protected void updateBeforeRender() {
         super.updateBeforeRender();
         if (!isUploadEnabled()) {
-            if (PatternEncodingPreferencesClient.isPreviewPanelPinned()) {
-                PatternEncodingPreferencesClient.setPreviewPanelPinned(this.menu, false);
-            }
             this.previewOpenPending = false;
             this.previewOpenReady = false;
             this.previewLayoutDirty = false;
@@ -198,9 +195,6 @@ public class WirelessPatternEncodingTermScreen extends WETScreen
         if (PatternEncodingPreferencesClient.isPreviewPanelPinned() && isUploadEnabled() &&
                 !this.previewVisible && !this.previewOpenPending && !this.previewOpenReady) {
             this.previewOpenPending = true;
-        } else if (!PatternEncodingPreferencesClient.isPreviewPanelPinned() && !this.previewVisible) {
-            this.previewOpenPending = false;
-            this.previewOpenReady = false;
         }
         updateProviderSearchBox();
         updateProviderRenameBox();

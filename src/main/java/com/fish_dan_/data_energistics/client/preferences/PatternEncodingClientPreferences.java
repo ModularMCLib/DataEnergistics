@@ -32,7 +32,9 @@ public interface PatternEncodingClientPreferences {
     void setUploadEnabled(boolean enabled);
 
     /**
-     * Returns whether opening a pattern-encoding terminal should show the upload panel by default.
+     * Returns whether opening a pattern-encoding terminal should show the upload panel by default. Missing values
+     * default to open while upload is enabled; reading this default does not persist it. Explicit JSON values take
+     * precedence, and disabling upload suppresses the panel without changing those values during loading.
      */
     boolean previewPanelPinned();
 

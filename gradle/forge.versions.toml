@@ -54,6 +54,8 @@ modernfix = "5HLHxQ2F" # 5.27.24+mc1.21.1
 bhc = "1.21.1-1.4.1"
 
 ## cursemaven ##
+moonlight-lib = "9066398"
+targetdummy = "8903254"
 projecte = "6611984"
 ato = "7825464"
 titanium = "8760562"
@@ -95,7 +97,7 @@ athena = "dJgL278E"
 mdlib = "0.0.1"
 
 [libraries]
-configuration         = { module = "dev.toma.configuration:configuration-1.21.1", version.ref = "configuration" }
+configuration       = { module = "dev.toma.configuration:configuration-1.21.1", version.ref = "configuration" }
 create              = { module = "com.simibubi.create:create-1.21.1", version.ref = "create" }
 ponder              = { module = "net.createmod.ponder:Ponder-NeoForge-1.21.1", version.ref = "ponder" }
 guideme             = { module = "org.appliedenergistics:guideme", version.ref = "guideme" }
@@ -149,6 +151,8 @@ iris                = { module = "maven.modrinth:iris", version.ref = "iris" }
 modernfix           = { module = "maven.modrinth:modernfix", version.ref = "modernfix" }
 bhc                 = { module = "maven.modrinth:baubley-heart-canisters", version.ref = "bhc" }
 
+moonlight-lib       = { module = "curse.maven:selene-499980", version.ref = "moonlight-lib" }
+targetdummy         = { module = "curse.maven:mmmmmmmmmmmm-225738", version.ref = "targetdummy" }
 projecte            = { module = "curse.maven:projecte-226410", version.ref = "projecte" }
 ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }

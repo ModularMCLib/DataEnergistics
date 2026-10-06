@@ -1,6 +1,6 @@
 repositories {
-    flatDir {
-        dir "gradle/libs"
+    maven {
+        url = uri("gradle/libs")
     }
     mavenLocal()
     mavenCentral()

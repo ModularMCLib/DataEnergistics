@@ -50,7 +50,6 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     public static final long MAX_FILE_BYTES = 4L * 1024L * 1024L;
     public static final int MIN_PANEL_OFFSET = -8192;
     public static final int MAX_PANEL_OFFSET = 8192;
-    private static final boolean DEFAULT_PREVIEW_PANEL_PINNED = true;
     private static final Pattern PROFILE_DIGEST = Pattern.compile("sha256:[0-9a-f]{64}");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Comparator<PatternProviderClickStatistic> EVICTION_ORDER = Comparator
@@ -66,9 +65,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     private boolean loaded;
     private boolean writesDisabled;
     private boolean uploadEnabled = true;
-    // An absent JSON field must stay absent when unrelated preferences are saved.
-    @Nullable
-    private Boolean previewPanelPinned;
+    private boolean previewPanelPinned;
     private boolean patternSourceEnabled = true;
     @Nullable
     private ResourceLocation lastWorkstation;
@@ -108,8 +105,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     @Override
     public boolean previewPanelPinned() {
         ensureLoaded();
-        return this.uploadEnabled &&
-                (this.previewPanelPinned == null ? DEFAULT_PREVIEW_PANEL_PINNED : this.previewPanelPinned.booleanValue());
+        return this.previewPanelPinned;
     }
 
     @Override
@@ -331,6 +327,9 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
                 validatePanelOffset(this.providerDetailPanelRelativeX, this.providerDetailPanelRelativeY);
                 this.providerDetailPanelPresent = true;
             }
+            if (!this.uploadEnabled) {
+                this.previewPanelPinned = false;
+            }
         }
         JsonObject profiles = readOptionalObject(root, "serverProfiles");
         if (profiles == null) {
@@ -422,7 +421,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
 
     private void resetToDefaults() {
         this.uploadEnabled = true;
-        this.previewPanelPinned = null;
+        this.previewPanelPinned = false;
         this.patternSourceEnabled = true;
         this.lastWorkstation = null;
         this.previewPanelPosition = null;
@@ -484,9 +483,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         root.addProperty("schemaVersion", SCHEMA_VERSION);
         JsonObject preferences = new JsonObject();
         preferences.addProperty("uploadEnabled", this.uploadEnabled);
-        if (this.previewPanelPinned != null) {
-            preferences.addProperty("previewPanelPinned", this.previewPanelPinned);
-        }
+        preferences.addProperty("previewPanelPinned", this.previewPanelPinned);
         preferences.addProperty("patternSourceEnabled", this.patternSourceEnabled);
         if (this.lastWorkstation == null) {
             preferences.add("lastWorkstation", null);

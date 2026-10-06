@@ -32,9 +32,7 @@ public interface PatternEncodingClientPreferences {
     void setUploadEnabled(boolean enabled);
 
     /**
-     * Returns whether opening a pattern-encoding terminal should show the upload panel by default. Missing values
-     * default to open while upload is enabled; reading this default does not persist it. Explicit JSON values take
-     * precedence, and disabling upload suppresses the panel without changing those values during loading.
+     * Returns whether opening a pattern-encoding terminal should show the upload panel by default.
      */
     boolean previewPanelPinned();
 
@@ -66,7 +64,8 @@ public interface PatternEncodingClientPreferences {
 
     /**
      * Returns the persisted upload-panel position as percentages of the available screen area, or empty when
-     * automatic placement is active.
+     * automatic placement is active. A missing JSON position keeps the calculated automatic x/y as an in-memory
+     * default and is not persisted until an explicit position is set.
      */
     Optional<PreviewPanelPosition> previewPanelPosition();
 

@@ -191,8 +191,7 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         var progress = operation.progress();
         var holder = recipe(level, operation.recipeId());
         if (holder == null) return false;
-        var center = level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity golden
-                ? golden : null;
+        var center = level.getBlockEntity(operation.position()) instanceof GoldenSacrificialBowlBlockEntity golden ? golden : null;
         var active = center == null ? null : center.getCurrentRitualRecipe();
         if (center != null && center.ritualActive && (active == null || !active.id().equals(operation.recipeId()))) return false;
         if (!progress.getBoolean("recovery_inspected")) {
@@ -224,7 +223,8 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
                     if (!"input".equals(slot.getString("role")) || slot.getInt("index") != index) return false;
                     if (level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl) {
                         if (bowl instanceof GoldenSacrificialBowlBlockEntity ||
-                                !bowlFingerprint(bowl).equals(slot.getString("bowl"))) return false;
+                                !bowlFingerprint(bowl).equals(slot.getString("bowl")))
+                            return false;
                         if (!recoverStack(operation, bowl, read(operation, slot, "input"))) return false;
                     }
                 }
@@ -721,12 +721,14 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
         for (int index = 0; index < saved.size(); index++) {
             var entry = saved.getCompound(index);
             if (!"output".equals(entry.getString("role")) || entry.getInt("index") != index ||
-                    !entry.contains("position", Tag.TAG_LONG)) return false;
+                    !entry.contains("position", Tag.TAG_LONG))
+                return false;
             if (!entry.getBoolean("empty")) continue;
             var position = BlockPos.of(entry.getLong("position"));
             if (!level.isLoaded(position)) return false;
             if (!(level.getBlockEntity(position) instanceof SacrificialBowlBlockEntity bowl) ||
-                    !bowlFingerprint(bowl).equals(entry.getString("bowl"))) continue;
+                    !bowlFingerprint(bowl).equals(entry.getString("bowl")))
+                continue;
             ItemStack current = bowl.itemStackHandler.getStackInSlot(0).copy();
             if (!matchesOutput(operation, current, expected)) continue;
             ItemStack extracted = bowl.itemStackHandler.extractItem(0, current.getCount(), false);

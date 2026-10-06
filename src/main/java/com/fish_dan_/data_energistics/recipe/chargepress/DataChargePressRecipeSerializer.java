@@ -33,9 +33,9 @@ public final class DataChargePressRecipeSerializer implements RecipeSerializer<D
             stack -> stack.isEmpty() ? DataResult.error(() -> "Data charge press result must not be empty") : DataResult.success(stack),
             DataResult::success);
     private static final MapCodec<DataChargePressRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            INPUTS_CODEC.fieldOf("inputs").forGetter(DataChargePressRecipe::getInputs),
-            FLUID_AMOUNT_CODEC.fieldOf("fluid_amount").forGetter(DataChargePressRecipe::getFluidAmount),
-            RESULT_CODEC.fieldOf("result").forGetter(DataChargePressRecipe::getResult))
+            INPUTS_CODEC.fieldOf("inputs").forGetter(DataChargePressRecipe::inputs),
+            FLUID_AMOUNT_CODEC.fieldOf("fluid_amount").forGetter(DataChargePressRecipe::fluidAmount),
+            RESULT_CODEC.fieldOf("result").forGetter(DataChargePressRecipe::result))
             .apply(instance, DataChargePressRecipe::new));
     private static final StreamCodec<RegistryFriendlyByteBuf, DataChargePressRecipe> STREAM_CODEC = StreamCodec.of(
             DataChargePressRecipeSerializer::writeRecipe, DataChargePressRecipeSerializer::readRecipe);
@@ -48,9 +48,9 @@ public final class DataChargePressRecipeSerializer implements RecipeSerializer<D
     }
 
     private static void writeRecipe(RegistryFriendlyByteBuf buffer, DataChargePressRecipe recipe) {
-        DataChargePressIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.getInputs());
-        ByteBufCodecs.VAR_INT.encode(buffer, recipe.getFluidAmount());
-        ItemStack.STREAM_CODEC.encode(buffer, recipe.getResult());
+        DataChargePressIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.inputs());
+        ByteBufCodecs.VAR_INT.encode(buffer, recipe.fluidAmount());
+        ItemStack.STREAM_CODEC.encode(buffer, recipe.result());
     }
 
     @Override

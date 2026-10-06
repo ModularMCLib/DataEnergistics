@@ -157,7 +157,7 @@ public final class DataIntegratedChargerPatternModeResolver {
             }
             case DataChargePressRecipeView.IntegratedChargerView integrated -> {
                 var recipe = integrated.holder().value();
-                yield matches(signature, requirements(recipe.getInputs()), null, recipe.getResult());
+                yield matches(signature, requirements(recipe.inputs()), null, recipe.result());
             }
             case DataChargePressRecipeView.CircuitBoardView circuitBoard -> {
                 InscriberRecipe recipe = circuitBoard.holder().value();
@@ -170,7 +170,7 @@ public final class DataIntegratedChargerPatternModeResolver {
             }
             case DataChargePressRecipeView.CustomView custom -> {
                 var recipe = custom.holder().value();
-                yield matches(signature, requirements(recipe.getInputs()), recipe.getFluidInput(), recipe.getResult());
+                yield matches(signature, requirements(recipe.inputs()), recipe.getFluidInput(), recipe.result());
             }
             case DataChargePressRecipeView.EaeCircuitCutterView circuitCutter -> {
                 ItemStack sourceOutput = circuitCutter.recipe().output();
@@ -349,7 +349,6 @@ public final class DataIntegratedChargerPatternModeResolver {
 
             ObjectList<AEItemKey> itemKeys = new ObjectArrayList<>(inputs.size());
             LongList itemAmounts = new LongArrayList(inputs.size());
-            @Nullable
             AEKey auxiliaryInput = null;
             long auxiliaryAmount = 0L;
             for (Object2LongMap.Entry<AEKey> entry : inputs.object2LongEntrySet()) {

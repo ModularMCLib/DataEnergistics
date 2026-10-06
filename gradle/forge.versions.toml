@@ -60,6 +60,7 @@ titanium = "8760562"
 if = "8370717"
 spark = "6225208"
 glodium = "5821676"
+ae2addonlib = "7222312"
 ae2ji = "7727898"
 ae2ct = "7182163"
 eae = "8811572"
@@ -153,6 +154,7 @@ ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }
 if                  = { module = "curse.maven:industrial-foregoing-266515", version.ref = "if" }
 glodium             = { module = "curse.maven:glodium-957920", version.ref = "glodium" }
+ae2addonlib         = { module = "curse.maven:ae2addonlib-1366135", version.ref = "ae2addonlib" }
 ae2ji               = { module = "curse.maven:ae2-jei-integration-1074338", version.ref = "ae2ji" }
 ae2ct               = { module = "curse.maven:ae2-crafting-tree-1086241", version.ref = "ae2ct" }
 eae                 = { module = "curse.maven:ex-pattern-provider-892005", version.ref = "eae"}

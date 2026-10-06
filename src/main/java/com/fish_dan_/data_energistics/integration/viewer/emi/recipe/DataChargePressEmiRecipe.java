@@ -24,6 +24,7 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.TankWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
 
@@ -72,23 +73,19 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     public DataChargePressEmiRecipe(DataChargePressRecipeView view) {
         super(CATEGORY, emiRecipeId(view), WIDTH, HEIGHT);
         this.view = view;
-        if (view instanceof DataChargePressRecipeView.ChargerView chargerView) {
-            this.inputs.add(EmiIngredient.of(chargerView.holder().value().getIngredient()));
-            this.outputs.add(EmiStack.of(chargerView.holder().value().getResultItem()));
-        } else if (view instanceof DataChargePressRecipeView.InscriberView inscriberView) {
-            addInscriberRecipe(inscriberView.holder().value());
-        } else if (view instanceof DataChargePressRecipeView.PowderView powderView) {
-            addPowderRecipe(powderView.holder().value());
-        } else if (view instanceof DataChargePressRecipeView.DataChargerView dataChargerView) {
-            addDataChargerRecipe(dataChargerView);
-        } else if (view instanceof DataChargePressRecipeView.IntegratedChargerView integratedChargerView) {
-            addIntegratedChargerRecipe(integratedChargerView);
-        } else if (view instanceof DataChargePressRecipeView.CircuitBoardView circuitBoardView) {
-            addCircuitBoardRecipe(circuitBoardView.holder().value());
-        } else if (view instanceof DataChargePressRecipeView.EaeCircuitCutterView circuitCutterView) {
-            addEaeCircuitCutterRecipe(circuitCutterView);
-        } else if (view instanceof DataChargePressRecipeView.CustomView customView) {
-            addCustomRecipe(customView);
+        switch (view) {
+            case DataChargePressRecipeView.ChargerView chargerView -> {
+                this.inputs.add(EmiIngredient.of(chargerView.holder().value().getIngredient()));
+                this.outputs.add(EmiStack.of(chargerView.holder().value().getResultItem()));
+            }
+            case DataChargePressRecipeView.InscriberView inscriberView -> addInscriberRecipe(inscriberView.holder().value());
+            case DataChargePressRecipeView.PowderView powderView -> addPowderRecipe(powderView.holder().value());
+            case DataChargePressRecipeView.DataChargerView dataChargerView -> addDataChargerRecipe(dataChargerView);
+            case DataChargePressRecipeView.IntegratedChargerView integratedChargerView -> addIntegratedChargerRecipe(integratedChargerView);
+            case DataChargePressRecipeView.CircuitBoardView circuitBoardView -> addCircuitBoardRecipe(circuitBoardView.holder().value());
+            case DataChargePressRecipeView.EaeCircuitCutterView circuitCutterView -> addEaeCircuitCutterRecipe(circuitCutterView);
+            case DataChargePressRecipeView.CustomView customView -> addCustomRecipe(customView);
+            default -> {}
         }
     }
 
@@ -101,22 +98,16 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     public void addWidgets(WidgetHolder widgets) {
         addMachineBackground(widgets);
         addModeIcon(widgets);
-        if (this.view instanceof DataChargePressRecipeView.ChargerView chargerView) {
-            addChargerWidgets(widgets, chargerView);
-        } else if (this.view instanceof DataChargePressRecipeView.InscriberView inscriberView) {
-            addInscriberWidgets(widgets, inscriberView.holder().value());
-        } else if (this.view instanceof DataChargePressRecipeView.PowderView powderView) {
-            addPowderWidgets(widgets, powderView.holder().value());
-        } else if (this.view instanceof DataChargePressRecipeView.DataChargerView dataChargerView) {
-            addDataChargerWidgets(widgets, dataChargerView);
-        } else if (this.view instanceof DataChargePressRecipeView.IntegratedChargerView integratedChargerView) {
-            addIntegratedChargerWidgets(widgets, integratedChargerView);
-        } else if (this.view instanceof DataChargePressRecipeView.CircuitBoardView circuitBoardView) {
-            addCircuitBoardWidgets(widgets, circuitBoardView.holder().value());
-        } else if (this.view instanceof DataChargePressRecipeView.EaeCircuitCutterView circuitCutterView) {
-            addEaeCircuitCutterWidgets(widgets, circuitCutterView);
-        } else if (this.view instanceof DataChargePressRecipeView.CustomView customView) {
-            addCustomWidgets(widgets, customView);
+        switch (this.view) {
+            case DataChargePressRecipeView.ChargerView chargerView -> addChargerWidgets(widgets, chargerView);
+            case DataChargePressRecipeView.InscriberView inscriberView -> addInscriberWidgets(widgets, inscriberView.holder().value());
+            case DataChargePressRecipeView.PowderView powderView -> addPowderWidgets(widgets, powderView.holder().value());
+            case DataChargePressRecipeView.DataChargerView dataChargerView -> addDataChargerWidgets(widgets, dataChargerView);
+            case DataChargePressRecipeView.IntegratedChargerView integratedChargerView -> addIntegratedChargerWidgets(widgets, integratedChargerView);
+            case DataChargePressRecipeView.CircuitBoardView circuitBoardView -> addCircuitBoardWidgets(widgets, circuitBoardView.holder().value());
+            case DataChargePressRecipeView.EaeCircuitCutterView circuitCutterView -> addEaeCircuitCutterWidgets(widgets, circuitCutterView);
+            case DataChargePressRecipeView.CustomView customView -> addCustomWidgets(widgets, customView);
+            default -> {}
         }
     }
 
@@ -140,8 +131,8 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
 
     private void addIntegratedChargerRecipe(DataChargePressRecipeView.IntegratedChargerView view) {
         var recipe = view.holder().value();
-        recipe.getInputs().forEach(input -> this.inputs.add(EmiIngredient.of(input.ingredient(), input.count())));
-        this.outputs.add(EmiStack.of(recipe.getResult()));
+        recipe.inputs().forEach(input -> this.inputs.add(EmiIngredient.of(input.ingredient(), input.count())));
+        this.outputs.add(EmiStack.of(recipe.result()));
     }
 
     private void addCircuitBoardRecipe(InscriberRecipe recipe) {
@@ -163,11 +154,11 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
 
     private void addCustomRecipe(DataChargePressRecipeView.CustomView view) {
         var recipe = view.holder().value();
-        recipe.getInputs().forEach(input -> this.inputs.add(EmiIngredient.of(input.ingredient(), input.count())));
+        recipe.inputs().forEach(input -> this.inputs.add(EmiIngredient.of(input.ingredient(), input.count())));
         if (recipe.getFluidInput().what() instanceof AEFluidKey fluidKey) {
             this.inputs.add(EmiStack.of(fluidKey.getFluid(), recipe.getFluidInput().amount()));
         }
-        this.outputs.add(EmiStack.of(recipe.getResult()));
+        this.outputs.add(EmiStack.of(recipe.result()));
     }
 
     private void addOptionalInscriberIngredient(InscriberRecipe recipe, Ingredient ingredient) {
@@ -214,8 +205,8 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     private void addIntegratedChargerWidgets(WidgetHolder widgets,
                                              DataChargePressRecipeView.IntegratedChargerView view) {
         var recipe = view.holder().value();
-        for (int index = 0; index < recipe.getInputs().size(); index++) {
-            var input = recipe.getInputs().get(index);
+        for (int index = 0; index < recipe.inputs().size(); index++) {
+            var input = recipe.inputs().get(index);
             int y = switch (index) {
                 case 0 -> FIRST_INPUT_Y;
                 case 1 -> SECOND_INPUT_Y;
@@ -225,7 +216,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
             };
             widgets.addSlot(EmiIngredient.of(input.ingredient(), input.count()), FIRST_INPUT_X, y).drawBack(false);
         }
-        widgets.addSlot(EmiStack.of(recipe.getResult()), OUTPUT_X, OUTPUT_Y).drawBack(false).recipeContext(this);
+        widgets.addSlot(EmiStack.of(recipe.result()), OUTPUT_X, OUTPUT_Y).drawBack(false).recipeContext(this);
     }
 
     private void addCircuitBoardWidgets(WidgetHolder widgets, InscriberRecipe recipe) {
@@ -251,11 +242,11 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
 
     private void addCustomWidgets(WidgetHolder widgets, DataChargePressRecipeView.CustomView view) {
         var recipe = view.holder().value();
-        addCustomItemWidgets(widgets, recipe.getInputs());
+        addCustomItemWidgets(widgets, recipe.inputs());
         if (recipe.getFluidInput().what() instanceof AEFluidKey fluidKey) {
             addFluidTank(widgets, fluidKey, recipe.getFluidInput().amount());
         }
-        widgets.addSlot(EmiStack.of(recipe.getResult()), OUTPUT_X, OUTPUT_Y).drawBack(false).recipeContext(this);
+        widgets.addSlot(EmiStack.of(recipe.result()), OUTPUT_X, OUTPUT_Y).drawBack(false).recipeContext(this);
     }
 
     private static void addCustomItemWidgets(WidgetHolder widgets, List<DataChargePressIngredient> inputs) {
@@ -317,7 +308,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
                 indicator.sourceX(), indicator.sourceY(), 16, 16,
                 indicator.textureSize(), indicator.textureSize());
         widgets.addTooltipText(
-                List.of(
+                ObjectArrayList.of(
                         Component.translatable("button.data_energistics.data_integrated_charger.machine_mode"),
                         Component.translatable("button.data_energistics.data_integrated_charger.machine_mode." +
                                 indicator.translationKey())),

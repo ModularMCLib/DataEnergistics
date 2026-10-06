@@ -45,6 +45,14 @@ public final class MOD {
         return isLoaded("neoecoae");
     }
 
+    public static boolean isExtendedAeLoaded() {
+        return isLoaded("extendedae");
+    }
+
+    public static boolean isAdvancedAeLoaded() {
+        return isLoaded("advanced_ae");
+    }
+
     private static boolean isLoaded(String modId) {
         return Data_Energistics.isModLoaded(modId);
     }

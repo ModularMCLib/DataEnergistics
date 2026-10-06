@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.integration.ae.extendedae.catalog.EaeCircu
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipe;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipe;
+import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerRecipe;
-import com.fish_dan_.data_energistics.registry.DERecipes;
 
 import appeng.recipes.AERecipeTypes;
 import appeng.recipes.handlers.ChargerRecipe;
@@ -20,8 +20,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** One entry in the data integrated charger's unified recipe viewer category. */
 public sealed interface DataChargePressRecipeView permits DataChargePressRecipeView.ChargerView,
@@ -95,8 +94,8 @@ public sealed interface DataChargePressRecipeView permits DataChargePressRecipeV
      * Circuit boards and powders have dedicated machine modes, so they must not be presented as normal inscriber
      * operations.
      */
-    static List<DataChargePressRecipeView> fromRecipeManager(RecipeManager recipeManager) {
-        List<DataChargePressRecipeView> views = new ObjectArrayList<>();
+    static ObjectList<DataChargePressRecipeView> fromRecipeManager(RecipeManager recipeManager) {
+        ObjectList<DataChargePressRecipeView> views = new ObjectArrayList<>();
 
         recipeManager.getAllRecipesFor(AERecipeTypes.CHARGER).stream()
                 .map(ChargerView::new)
@@ -113,14 +112,14 @@ public sealed interface DataChargePressRecipeView permits DataChargePressRecipeV
             }
         }
 
-        recipeManager.getAllRecipesFor(DERecipes.DATA_CHARGER_TYPE.get()).stream()
+        DataChargerRecipeRegistry.dataChargerRecipes(recipeManager).stream()
                 .map(DataChargerView::new)
                 .forEach(views::add);
 
-        recipeManager.getAllRecipesFor(DERecipes.DATA_INTEGRATED_CHARGER_TYPE.get()).stream()
+        DataChargerRecipeRegistry.integratedChargerRecipes(recipeManager).stream()
                 .map(IntegratedChargerView::new)
                 .forEach(views::add);
-        recipeManager.getAllRecipesFor(DERecipes.DATA_CHARGE_PRESS_TYPE.get()).stream()
+        DataChargerRecipeRegistry.chargePressRecipes(recipeManager).stream()
                 .map(CustomView::new)
                 .forEach(views::add);
 

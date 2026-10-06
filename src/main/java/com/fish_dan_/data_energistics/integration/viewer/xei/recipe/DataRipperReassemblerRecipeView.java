@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.recipe.reassembler.DataReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerIngredient;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 
@@ -11,7 +12,11 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jspecify.annotations.Nullable;
@@ -26,13 +31,16 @@ public final class DataRipperReassemblerRecipeView {
 
     @Getter
     private final ResourceLocation id;
+    /** Stable identity persisted in a processing pattern; integration fluid variants share this value. */
     @Getter
-    private final List<DataRipperReassemblerIngredient> itemInputs;
+    private final ResourceLocation patternRecipeId;
     @Getter
-    private final List<GenericStack> fluidInputs;
-    private final List<ItemStack> itemOutputs;
+    private final ObjectList<DataRipperReassemblerIngredient> itemInputs;
     @Getter
-    private final List<GenericStack> fluidOutputs;
+    private final ObjectList<GenericStack> fluidInputs;
+    private final ObjectList<ItemStack> itemOutputs;
+    @Getter
+    private final ObjectList<GenericStack> fluidOutputs;
     @Getter
     private final int processTicks;
     @Getter
@@ -51,6 +59,7 @@ public final class DataRipperReassemblerRecipeView {
                                             @Nullable GenericStack keyInput,
                                             @Nullable GenericStack keyOutput) {
         this.id = id;
+        this.patternRecipeId = id;
         this.itemInputs = validateItemInputs(itemInputs);
         this.fluidInputs = validateFluidStacks(fluidInputs, DataRipperReassemblerRecipe.FLUID_INPUT_SLOTS, "fluid inputs");
         this.itemOutputs = validateItemOutputs(itemOutputs);
@@ -79,12 +88,28 @@ public final class DataRipperReassemblerRecipeView {
                 recipe.getKeyOutput());
     }
 
-    public List<ItemStack> itemOutputs() {
+    /**
+     * Creates the data reassembler views from recipes authored for the data reassembler itself.
+     *
+     * <p>
+     * Optional machine integrations remain executable by the asynchronous factory, but their converted views are
+     * deliberately kept out of this category. Their owning mods already provide the authoritative recipe display.
+     * </p>
+     */
+    public static ObjectList<DataRipperReassemblerRecipeView> fromRecipeManager(RecipeManager recipeManager) {
+        ObjectList<DataRipperReassemblerRecipeView> views = new ObjectArrayList<>();
+        for (RecipeHolder<DataRipperReassemblerRecipe> holder : DataReassemblerRecipeResolver.INSTANCE.recipes(recipeManager)) {
+            views.add(from(holder));
+        }
+        return ObjectLists.unmodifiable(views);
+    }
+
+    public ObjectList<ItemStack> itemOutputs() {
         return copyItemStacks(this.itemOutputs);
     }
 
-    private static List<DataRipperReassemblerIngredient> validateItemInputs(
-                                                                            List<DataRipperReassemblerIngredient> inputs) {
+    private static ObjectList<DataRipperReassemblerIngredient> validateItemInputs(
+                                                                                  List<DataRipperReassemblerIngredient> inputs) {
         if (inputs.size() > DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS) {
             throw validationError(
                     "Data reassembler item inputs exceed " + DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS + ": " + inputs.size());
@@ -97,10 +122,10 @@ public final class DataRipperReassemblerRecipeView {
                 throw validationError("Data reassembler item input must resolve to at least one item");
             }
         }
-        return List.copyOf(inputs);
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(inputs));
     }
 
-    private static List<ItemStack> validateItemOutputs(List<ItemStack> outputs) {
+    private static ObjectList<ItemStack> validateItemOutputs(List<ItemStack> outputs) {
         if (outputs.size() > DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS) {
             throw validationError(
                     "Data reassembler item outputs exceed " + DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS + ": " + outputs.size());
@@ -110,10 +135,10 @@ public final class DataRipperReassemblerRecipeView {
                 throw validationError("Data reassembler item output amount must be positive");
             }
         }
-        return copyItemStacks(outputs);
+        return ObjectLists.unmodifiable(copyItemStacks(outputs));
     }
 
-    private static List<GenericStack> validateFluidStacks(List<GenericStack> stacks, int limit, String description) {
+    private static ObjectList<GenericStack> validateFluidStacks(List<GenericStack> stacks, int limit, String description) {
         if (stacks.size() > limit) {
             throw validationError("Data reassembler " + description + " exceed " + limit + ": " + stacks.size());
         }
@@ -123,7 +148,7 @@ public final class DataRipperReassemblerRecipeView {
                 throw validationError("Data reassembler " + description + " only accept fluid keys: " + stack.what());
             }
         }
-        return List.copyOf(stacks);
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(stacks));
     }
 
     @Nullable
@@ -151,7 +176,11 @@ public final class DataRipperReassemblerRecipeView {
         return new IllegalArgumentException(message);
     }
 
-    private static List<ItemStack> copyItemStacks(List<ItemStack> stacks) {
-        return stacks.stream().map(ItemStack::copy).toList();
+    private static ObjectList<ItemStack> copyItemStacks(List<ItemStack> stacks) {
+        ObjectList<ItemStack> copies = new ObjectArrayList<>(stacks.size());
+        for (ItemStack stack : stacks) {
+            copies.add(stack.copy());
+        }
+        return copies;
     }
 }

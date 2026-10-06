@@ -1,0 +1,9 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>dev</groupId>
+    <artifactId>mdlib-1.21.1</artifactId>
+    <version>0.0.1</version>
+
+    <packaging>jar</packaging>
+</project>

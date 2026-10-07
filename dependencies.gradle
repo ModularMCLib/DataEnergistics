@@ -21,6 +21,7 @@ dependencies {
     compileOnly(forge.mystical.agriculture)
     compileOnly(forge.ato)
     compileOnly(forge.projecte)
+    compileOnly(forge.appliede)
 
     // Magic integrations and their API libraries
     compileOnly(forge.botania)
@@ -135,6 +136,8 @@ dependencies {
     localRuntime(forge.if)
     localRuntime(forge.titanium)
     localRuntime(forge.projecte)
+    localRuntime(forge.appliede)
+    localRuntime(forge.projectexpansion)
 
     extraLocalRuntime(forge.sut)
     extraLocalRuntime(forge.cucumber)

@@ -22,7 +22,7 @@ modern-industrialization = "2.5.8"
 mystical-agriculture = "1.21.1-8.0.28"
 cucumber = "1.21.1-8.0.16"
 extendedcrafting = "1.21.1-7.0.9"
-botania = "455-20260821.172952-52"
+botania = "457-SNAPSHOT"
 ars-nouveau = "5.11.6.1353"
 occultism = "1.205.0"
 modonomicon = "1.117.2"
@@ -57,6 +57,8 @@ bhc = "1.21.1-1.4.1"
 moonlight-lib = "9066398"
 targetdummy = "8903254"
 projecte = "6611984"
+projectexpansion = "7641689"
+appliede = "6500056"
 ato = "7825464"
 titanium = "8760562"
 if = "8370717"
@@ -154,6 +156,8 @@ bhc                 = { module = "maven.modrinth:baubley-heart-canisters", versi
 moonlight-lib       = { module = "curse.maven:selene-499980", version.ref = "moonlight-lib" }
 targetdummy         = { module = "curse.maven:mmmmmmmmmmmm-225738", version.ref = "targetdummy" }
 projecte            = { module = "curse.maven:projecte-226410", version.ref = "projecte" }
+projectexpansion    = { module = "curse.maven:project-expansion-579177", version.ref = "projectexpansion"}
+appliede            = { module = "curse.maven:appliede-1009940", version.ref = "appliede"}
 ato                 = { module = "curse.maven:ato-405593", version.ref = "ato" }
 titanium            = { module = "curse.maven:titanium-287342", version.ref = "titanium" }
 if                  = { module = "curse.maven:industrial-foregoing-266515", version.ref = "if" }

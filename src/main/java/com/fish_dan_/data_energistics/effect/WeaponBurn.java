@@ -14,10 +14,11 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import org.jspecify.annotations.Nullable;
 
-/** Persisted weapon burn; refreshing its duration never resets its damage cadence. */
+/** Persisted weapon burn; refreshing its duration never resets cadence, and expiry leaves a brief vanilla-fire recovery. */
 public final class WeaponBurn {
 
     private static final String KEY = "DataEnergisticsWeaponBurn";
+    private static final int VANILLA_RECOVERY_TICKS = 20;
 
     public static void apply(LivingEntity target, @Nullable Entity owner, int duration, float damage) {
         if (target.level().isClientSide || target.fireImmune() || target.hasEffect(MobEffects.FIRE_RESISTANCE) || target.isInWaterRainOrBubble()) return;
@@ -49,7 +50,7 @@ public final class WeaponBurn {
         }
         if (remaining <= 0) {
             data.remove(KEY);
-            target.clearFire();
+            target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), VANILLA_RECOVERY_TICKS));
         } else {
             burn.putInt("Remaining", remaining);
             burn.putInt("Cadence", cadence);

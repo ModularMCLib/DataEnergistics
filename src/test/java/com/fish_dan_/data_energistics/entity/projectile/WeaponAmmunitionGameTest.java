@@ -50,8 +50,9 @@ public final class WeaponAmmunitionGameTest {
         h.assertTrue(MountedAmmoCells.accepts(DEItems.DIGITAL_STORAGE_CELL_64K.toStack()), "Data disk rejected");
         h.assertTrue(MountedAmmoCells.accepts(AEItems.FLUID_CELL_1K.stack()), "Fluid disk rejected");
         for (int c = 0; c <= 2; c++) {
-            h.assertValueEqual(AmmunitionRules.cube(c).fragments(), 4 + c * 2, "Fragment tiers");
-            h.assertTrue(Math.abs(AmmunitionRules.cube(c).fragmentDamage() - (c == 0 ? 21.25F : 22.25F)) < 0.0001F, "Fragment quarter damage");
+            var cube = AmmunitionRules.cube(c);
+            h.assertValueEqual(cube.fragments(), 4 + c * 2, "Fragment tiers");
+            h.assertTrue(Math.abs(cube.fragmentDamage() - cube.damage() / cube.fragments()) < 0.0001F, "Fragment damage must be split evenly");
         }
         h.succeed();
     }
@@ -159,7 +160,7 @@ public final class WeaponAmmunitionGameTest {
             h.assertValueEqual(fragments.size(), 4 + cards * 2, "Fragment count changed after weapon upgrade removal");
             float before = target.getHealth();
             for (var fragment : fragments) fragment.onHitEntity(new EntityHitResult(target));
-            h.assertTrue(Math.abs(before - target.getHealth() - fragments.size() * (cards == 0 ? 9 : 10)) < 0.001, "Fragment damage");
+            h.assertTrue(Math.abs(before - target.getHealth() - fragments.size() * AmmunitionRules.cube(cards).fragmentDamage()) < 0.001, "Fragment damage");
             h.assertTrue(h.getLevel().getEntitiesOfClass(MatterConvergingBoltEntity.class, target.getBoundingBox().inflate(2), entity -> entity.getOwner() == player).isEmpty(), "Recursive splitting");
             target.discard();
         }

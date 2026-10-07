@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.item.powered;
 
 import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
-import com.fish_dan_.data_energistics.entity.projectile.ThrownLightSaberEntity;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.ElementalGrenade;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.GrenadePayload;
@@ -41,7 +40,6 @@ import appeng.menu.locator.MenuLocators;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -54,15 +52,12 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow.Pickup;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.ChargedProjectiles;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -96,9 +91,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     private static final int CHARGE_DURATION_TICKS = 20;
     private static final int MAX_UPGRADES = 6;
     private static final int MAX_SPEED_UPGRADES = 4;
-    private static final double SPECIAL_LIGHT_SABER_ENERGY = 20_000.0D;
-    private static final long MAX_STORED_DATA = 512L;
-    private static final String TAG_STORED_DATA = "StoredData";
 
     public MatterConvergingCrossbowItem(Item.Properties properties) {
         super(properties.stacksTo(1));
@@ -153,8 +145,12 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         MountedAmmoCells.migrateLegacy(stack);
         if (!this.isChargedAmmoSupported(stack)) return;
         if (!isCharged(stack)) {
-            if (!this.hasAmmo(stack)) this.tryStoreAmmoFromPlayer(stack, player);
-            if (!this.hasAmmo(stack) || this.getAECurrentPower(stack) < this.getEnergyPerShot(stack, this.peekAmmo(stack))) return;
+            ItemStack ammo = this.peekAmmo(stack);
+            if (ammo.isEmpty()) {
+                this.tryStoreAmmoFromPlayer(stack, player);
+                ammo = this.peekAmmo(stack);
+            }
+            if (ammo.isEmpty() || this.getAECurrentPower(stack) < this.getEnergyPerShot(stack, ammo)) return;
         }
         stack.set(DEDataComponents.CANNON_CHARGE.get(), new CannonCharge(player.level().getGameTime(), getChargeDuration(stack, player),
                 mode(stack), hand, player.getUUID(), player.level().dimension().location()));
@@ -174,16 +170,14 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         Vec3 muzzle = player.getEyePosition().add(muzzleOffset);
         if (level.clip(new ClipContext(player.getEyePosition(), muzzle, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player)).getType() != HitResult.Type.MISS) return;
         if (!this.isChargedAmmoSupported(stack) || !isCharged(stack) && !this.tryLoadProjectile(player, stack)) return;
-        ChargedProjectiles loaded = stack.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
-        if (loaded == null || loaded.isEmpty()) return;
+        ChargedProjectiles loaded = this.takeChargedProjectiles(stack);
+        if (loaded.isEmpty()) return;
+        float projectileSpeed = this.getProjectileSpeed(stack);
         for (ItemStack ammo : loaded.getItems()) {
-            float ammoSpeed = this.getProjectileSpeed(stack, ammo);
-            CannonShot shot = new CannonShot(charge.mode(), fraction, ammoSpeed);
-            Projectile projectile = this.createProjectile(level, player, stack, ammo, false);
-            if (projectile instanceof MatterConvergingBoltEntity bolt) bolt.configureCannonShot(shot);
-            else if (projectile instanceof ThrownLightSaberEntity saber) saber.configureCannonShot(shot);
-            else throw new IllegalStateException("Unsupported cannon projectile: " + projectile.getType());
-            Vec3 velocity = CannonBallistics.launchVelocity(charge.mode(), fraction, direction, ammoSpeed);
+            CannonShot shot = new CannonShot(charge.mode(), fraction, projectileSpeed);
+            MatterConvergingBoltEntity projectile = this.createProjectile(level, player, stack, ammo, false);
+            projectile.configureCannonShot(shot);
+            Vec3 velocity = CannonBallistics.launchVelocity(charge.mode(), fraction, direction, projectileSpeed);
             projectile.setPos(muzzle);
             projectile.shoot(velocity.x, velocity.y, velocity.z, (float) velocity.length(), 0.0F);
             projectile.setDeltaMovement(velocity);
@@ -204,13 +198,12 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         };
     }
 
-    /** Shared with the preview; loading uses the same next/previously charged ammunition. */
+    /** Shared with the preview; every supported ammunition type uses the same base projectile speed. */
     public float cannonAmmoSpeed(ItemStack stack) {
-        ChargedProjectiles loaded = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
-        return this.getProjectileSpeed(stack, loaded.isEmpty() ? this.peekAmmo(stack) : loaded.getItems().getFirst());
+        return this.getProjectileSpeed(stack);
     }
 
-    public boolean cannonUsesSaberAmmo(ItemStack stack) {
+    public boolean cannonAmmoIgnoresWaterDrag(ItemStack stack) {
         ChargedProjectiles loaded = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
         return this.isDataDustAmmo(loaded.isEmpty() ? this.peekAmmo(stack) : loaded.getItems().getFirst());
     }
@@ -272,16 +265,17 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         ChargedProjectiles charged = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
         if (!charged.isEmpty()) {
             if (!this.isChargedAmmoSupported(stack)) return InteractionResultHolder.fail(stack);
-            this.performShooting(level, player, hand, stack, this.getProjectileSpeed(stack, charged.getItems().getFirst()), 1.0F, null);
+            this.performShooting(level, player, stack, 1.0F, null);
             return InteractionResultHolder.consume(stack);
         }
 
-        if (!this.hasAmmo(stack)) {
+        ItemStack nextAmmo = this.peekAmmo(stack);
+        if (nextAmmo.isEmpty()) {
             this.tryStoreAmmoFromPlayer(stack, player);
+            nextAmmo = this.peekAmmo(stack);
         }
 
-        ItemStack nextAmmo = this.peekAmmo(stack);
-        if (this.hasAmmo(stack) && this.getAECurrentPower(stack) >= this.getEnergyPerShot(stack, nextAmmo)) {
+        if (!nextAmmo.isEmpty() && this.getAECurrentPower(stack) >= this.getEnergyPerShot(stack, nextAmmo)) {
             player.startUsingItem(hand);
             return InteractionResultHolder.consume(stack);
         }
@@ -306,11 +300,8 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         if (!level.isClientSide) {
             float progress = (float) (stack.getUseDuration(livingEntity) - remainingUseTicks) / (float) getChargeDuration(stack, livingEntity);
             if (this.hasMaxSpeedCards(stack) && progress >= 1.0F && !isCharged(stack) && this.tryLoadProjectile(livingEntity, stack)) {
-                ItemStack loadedAmmo = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY).getItems().getFirst();
-                this.performShooting(level, livingEntity, livingEntity.getUsedItemHand(), stack,
-                        this.getProjectileSpeed(stack, loadedAmmo), 1.0F, null);
+                this.performShooting(level, livingEntity, stack, 1.0F, null);
                 livingEntity.stopUsingItem();
-                return;
             }
         }
     }
@@ -380,7 +371,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         return Mth.hsvToRgb(1.0F / 3.0F, 1.0F, 1.0F);
     }
 
-    public void performShooting(Level level, LivingEntity shooter, InteractionHand hand, ItemStack stack, float power,
+    public void performShooting(Level level, LivingEntity shooter, ItemStack stack,
                                 float inaccuracy, @Nullable LivingEntity target) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
@@ -392,18 +383,16 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             return;
         }
 
-        ChargedProjectiles charged = stack.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
-        if (charged == null || charged.isEmpty()) {
-            return;
-        }
+        ChargedProjectiles charged = this.takeChargedProjectiles(stack);
+        if (charged.isEmpty()) return;
 
         stack.set(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), stack.getOrDefault(DEDataComponents.CANNON_SHOT_SEQUENCE.get(), 0) + 1);
 
-        float projectileSpeed = this.getProjectileSpeed(stack, charged.getItems().getFirst());
+        float projectileSpeed = this.getProjectileSpeed(stack);
         float spread = EnchantmentHelper.processProjectileSpread(serverLevel, stack, shooter, 0);
         List<ItemStack> ammunition = charged.getItems();
         for (int index = 0; index < ammunition.size(); index++) {
-            Projectile projectile = this.createProjectile(level, shooter, stack, ammunition.get(index), shooter instanceof Player);
+            MatterConvergingBoltEntity projectile = this.createProjectile(level, shooter, stack, ammunition.get(index), shooter instanceof Player);
             var direction = BowShotPattern.direction(shooter, projectile, BowShotPattern.angle(index, ammunition.size(), spread), target);
             projectile.shoot(direction.x, direction.y, direction.z, projectileSpeed, inaccuracy);
             serverLevel.addFreshEntity(projectile);
@@ -435,19 +424,8 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         return true;
     }
 
-    protected Projectile createProjectile(Level level, LivingEntity shooter, ItemStack weaponStack, ItemStack ammoStack,
-                                          boolean isCrit) {
-        if (this.isDataDustAmmo(ammoStack)) {
-            ItemStack thrownStack = new ItemStack(DEItems.DATA_LIGHT_SABER.get());
-            ThrownLightSaberEntity projectile = new ThrownLightSaberEntity(level, shooter, thrownStack);
-            projectile.pickup = ammoStack.is(DEItems.DATA_RESIDUAL_CRYSTAL.get()) ? Pickup.DISALLOWED : Pickup.ALLOWED;
-            projectile.setConsumableCrystal(ammoStack.is(DEItems.DATA_RESIDUAL_CRYSTAL.get()));
-            projectile.setWeaponStack(weaponStack);
-            projectile.setDataDustDamageRatio(this.getDataDustDamagePercentForChargedShot(weaponStack) / 100.0F);
-            projectile.setHoming(this.hasRedstoneCard(weaponStack));
-            return projectile;
-        }
-
+    protected MatterConvergingBoltEntity createProjectile(Level level, LivingEntity shooter, ItemStack weaponStack,
+                                                          ItemStack ammoStack, boolean isCrit) {
         MatterConvergingBoltEntity projectile = new MatterConvergingBoltEntity(level, shooter, ammoStack.copyWithCount(1));
         projectile.setWeaponStack(weaponStack);
         projectile.setModernEffects(ammoStack.getOrDefault(DEDataComponents.CANNON_MODERN_AMMO.get(), false));
@@ -465,6 +443,12 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     private boolean isBlockedBowEnchantment(Holder<Enchantment> enchantment) {
         return enchantment.is(Enchantments.FLAME) || enchantment.is(Enchantments.INFINITY);
+    }
+
+    private ChargedProjectiles takeChargedProjectiles(ItemStack stack) {
+        ChargedProjectiles charged = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
+        stack.remove(DataComponents.CHARGED_PROJECTILES);
+        return charged;
     }
 
     private List<ItemStack> extractAmmoForLoading(ItemStack weaponStack, Player player) {
@@ -494,12 +478,8 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         return projectiles;
     }
 
-    private boolean hasAmmo(ItemStack weaponStack) {
-        return !this.peekAmmo(weaponStack).isEmpty();
-    }
-
-    private boolean tryStoreAmmoFromPlayer(ItemStack weaponStack, Player player) {
-        if (MountedAmmoCells.cell(weaponStack, mode(weaponStack)).isEmpty()) return false;
+    private void tryStoreAmmoFromPlayer(ItemStack weaponStack, Player player) {
+        if (MountedAmmoCells.cell(weaponStack, mode(weaponStack)).isEmpty()) return;
 
         var playerInventory = player.getInventory();
         for (int i = 0; i < playerInventory.getContainerSize(); i++) {
@@ -517,11 +497,9 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
                     new PlayerSource(player), Actionable.MODULATE);
             if (inserted > 0) {
                 candidate.shrink((int) inserted);
-                return true;
+                return;
             }
         }
-
-        return false;
     }
 
     private Component getDisplayedAmmoName(ItemStack weaponStack) {
@@ -618,33 +596,22 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         return this.getUpgrades(stack).getInstalledUpgrades(AEItems.SPEED_CARD) >= MAX_SPEED_UPGRADES;
     }
 
-    private float getProjectileSpeed(ItemStack stack, ItemStack ammoStack) {
+    private float getProjectileSpeed(ItemStack stack) {
         int speedCards = Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(AEItems.SPEED_CARD));
-        if (this.isDataDustAmmo(ammoStack)) {
-            return PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
-        }
-        return PROJECTILE_SPEED + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
+        return PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
     }
 
     private ItemStack peekAmmo(ItemStack weaponStack) {
         return MountedAmmoCells.peek(weaponStack, mode(weaponStack));
     }
 
-    public static boolean isSpecialLightSaberAmmo(ItemStack ammoStack) {
-        return !ammoStack.isEmpty() && ammoStack.is(DEItems.DATA_LIGHT_SABER.get()) && Math.abs(ammoStack.getOrDefault(AEComponents.STORED_ENERGY, 0.0D) - SPECIAL_LIGHT_SABER_ENERGY) < 1.0E-4D;
-    }
-
     private boolean isDataDustAmmo(ItemStack ammoStack) {
-        return ammoStack.is(DEItems.DATA_RESIDUAL_CRYSTAL.get()) || isSpecialLightSaberAmmo(ammoStack);
+        return ammoStack.is(DEItems.DATA_RESIDUAL_CRYSTAL.get());
     }
 
     private boolean isChargedAmmoSupported(ItemStack weaponStack) {
         return weaponStack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY).getItems()
-                .stream().allMatch(ammo -> this.isSupportedAmmo(weaponStack, ammo) || isSpecialLightSaberAmmo(ammo) || ammo.is(AEItems.MATTER_BALL.asItem()) || ammo.is(AEItems.SINGULARITY.asItem()) || ammo.getItem() instanceof PaintBallItem);
-    }
-
-    private boolean isSupportedAmmo(ItemStack weaponStack, ItemStack ammoStack) {
-        return supportsAmmo(mode(weaponStack), ammoStack);
+                .stream().allMatch(ammo -> supportsAmmo(mode(weaponStack), ammo) || ammo.is(AEItems.MATTER_BALL.asItem()) || ammo.is(AEItems.SINGULARITY.asItem()) || ammo.getItem() instanceof PaintBallItem);
     }
 
     /** Ammo filtering applies to a mode's installed disk without modifying its other stored contents. */
@@ -671,12 +638,8 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     }
 
     private void applyDataDustShotData(ItemStack weaponStack, ItemStack ammoStack) {
-        float ratio = this.getDataDustDamagePercentForChargedShot(weaponStack) / 100.0F;
+        float ratio = this.getDataDustDamagePercentForShot(weaponStack) / 100.0F;
         ammoStack.set(DEDataComponents.MATTER_CONVERGING_BOLT_DAMAGE_RATIO.get(), ratio);
-    }
-
-    private int getDataDustDamagePercentForChargedShot(ItemStack stack) {
-        return this.getDataDustDamagePercentForShot(stack);
     }
 
     private double getDataDustExtraEnergyFromCards(ItemStack stack) {
@@ -708,28 +671,5 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         if (changed) {
             stack.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.of(updatedProjectiles));
         }
-    }
-
-    private long getStoredDataAmount(ItemStack weaponStack) {
-        Long stored = weaponStack.get(DEDataComponents.MATTER_CONVERGING_CROSSBOW_STORED_DATA.get());
-        if (stored != null) {
-            return Math.max(0L, stored);
-        }
-        CompoundTag tag = weaponStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        return Math.max(0L, tag.getLong(TAG_STORED_DATA));
-    }
-
-    public long insertStoredData(ItemStack weaponStack, long amount) {
-        if (amount <= 0L) {
-            return 0L;
-        }
-        long current = this.getStoredDataAmount(weaponStack);
-        long accepted = Math.min(amount, MAX_STORED_DATA - current);
-        if (accepted <= 0L) {
-            return 0L;
-        }
-        long updated = current + accepted;
-        weaponStack.set(DEDataComponents.MATTER_CONVERGING_CROSSBOW_STORED_DATA.get(), updated);
-        return accepted;
     }
 }

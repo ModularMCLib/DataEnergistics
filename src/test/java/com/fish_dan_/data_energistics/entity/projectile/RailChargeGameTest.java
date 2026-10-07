@@ -347,7 +347,7 @@ public final class RailChargeGameTest {
     private static MatterConvergingBoltEntity round(GameTestHelper h, Player owner, RailShot shot) {
         var entity = new MatterConvergingBoltEntity(h.getLevel(), owner, new ItemStack(Items.BLAZE_ROD));
         entity.configureCannonShot(new CannonShot(MatterConvergingCrossbowMode.RAIL, shot.charge(), 3.15F));
-        entity.configureRailShot(shot);
+        entity.setRailShot(shot);
         return entity;
     }
 
@@ -433,9 +433,11 @@ public final class RailChargeGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void spawnData(GameTestHelper h) {
-        var source = new RailRoundEntity(h.getLevel(), player(h), new ItemStack(Items.HEAVY_CORE));
+        var source = new MatterConvergingBoltEntity(h.getLevel(), player(h), new ItemStack(Items.HEAVY_CORE));
+        source.configureCannonShot(new CannonShot(MatterConvergingCrossbowMode.RAIL, 1.0F, 14.3F));
+        source.setRailShot(new RailShot(RailAmmunition.HEAVY, 0, 1.0F));
         source.setDeltaMovement(0, 0, 14.3);
-        var receiver = new RailRoundEntity(DEEntities.RAIL_ROUND.get(), h.getLevel());
+        var receiver = new MatterConvergingBoltEntity(DEEntities.MATTER_CONVERGING_BOLT.get(), h.getLevel());
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), h.getLevel().registryAccess(), ConnectionType.NEOFORGE);
         try {
             source.writeSpawnData(buffer);

@@ -22,8 +22,8 @@ public final class CannonBallistics {
     }
 
     /** Vanilla projectiles first move by velocity, then apply medium drag and gravity. */
-    public static Vec3 nextVelocity(Vec3 velocity, MatterConvergingCrossbowMode mode, boolean inWater, boolean saberAmmo) {
-        double drag = inWater && !saberAmmo ? (double) 0.8F : (double) 0.99F;
+    public static Vec3 nextVelocity(Vec3 velocity, MatterConvergingCrossbowMode mode, boolean inWater, boolean ignoresWaterDrag) {
+        double drag = inWater && !ignoresWaterDrag ? (double) 0.8F : (double) 0.99F;
         return velocity.scale(drag).add(0.0D, mode == MatterConvergingCrossbowMode.GRENADE ? -GRENADE_GRAVITY : 0.0D, 0.0D);
     }
 

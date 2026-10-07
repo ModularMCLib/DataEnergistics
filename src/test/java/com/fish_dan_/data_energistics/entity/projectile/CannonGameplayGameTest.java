@@ -26,7 +26,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ChargedProjectiles;
@@ -56,30 +55,22 @@ public final class CannonGameplayGameTest {
     public static void projectileFlightMatchesPreview(GameTestHelper helper) {
         for (MatterConvergingCrossbowMode mode : new MatterConvergingCrossbowMode[] { MatterConvergingCrossbowMode.GRENADE, MatterConvergingCrossbowMode.RAIL }) {
             for (float fraction : new float[] { 0.05F, 0.25F, 0.5F, 1.0F }) {
-                for (boolean saber : new boolean[] { false, true }) {
+                for (boolean residualCrystal : new boolean[] { false, true }) {
                     for (float ammoSpeed : new float[] { 3.15F, 7.15F }) {
                         CannonShot shot = new CannonShot(mode, fraction, ammoSpeed);
-                        Projectile projectile;
-                        if (saber) {
-                            ThrownLightSaberEntity arrow = new ThrownLightSaberEntity(DEEntities.THROWN_LIGHT_SABER.get(), helper.getLevel());
-                            arrow.configureCannonShot(shot);
-                            projectile = arrow;
-                        } else {
-                            MatterConvergingBoltEntity bolt = new MatterConvergingBoltEntity(DEEntities.MATTER_CONVERGING_BOLT.get(), helper.getLevel());
-                            bolt.setItem(AEItems.MATTER_BALL.stack());
-                            bolt.configureCannonShot(shot);
-                            projectile = bolt;
-                        }
+                        MatterConvergingBoltEntity projectile = new MatterConvergingBoltEntity(DEEntities.MATTER_CONVERGING_BOLT.get(), helper.getLevel());
+                        projectile.setItem(residualCrystal ? DEItems.DATA_RESIDUAL_CRYSTAL.toStack() : AEItems.MATTER_BALL.stack());
+                        projectile.configureCannonShot(shot);
                         Vec3 position = Vec3.atCenterOf(helper.absolutePos(new BlockPos(2, 90, 2)));
                         Vec3 velocity = CannonBallistics.launchVelocity(mode, fraction, new Vec3(0, 0.25, 1), ammoSpeed);
                         projectile.setPos(position);
                         projectile.setDeltaMovement(velocity);
                         for (int tick = 0; tick < 12; tick++) {
                             position = position.add(velocity);
-                            velocity = CannonBallistics.nextVelocity(velocity, mode, false, saber);
+                            velocity = CannonBallistics.nextVelocity(velocity, mode, false, residualCrystal);
                             projectile.tick();
-                            helper.assertTrue(projectile.position().distanceTo(position) < 1E-5D, "Flight position differs from preview: " + mode + " saber=" + saber + " tick=" + tick);
-                            helper.assertTrue(projectile.getDeltaMovement().distanceTo(velocity) < 1E-6D, "Flight velocity differs from preview: " + mode + " saber=" + saber + " tick=" + tick);
+                            helper.assertTrue(projectile.position().distanceTo(position) < 1E-5D, "Flight position differs from preview: " + mode + " residualCrystal=" + residualCrystal + " tick=" + tick);
+                            helper.assertTrue(projectile.getDeltaMovement().distanceTo(velocity) < 1E-6D, "Flight velocity differs from preview: " + mode + " residualCrystal=" + residualCrystal + " tick=" + tick);
                         }
                         projectile.discard();
                     }

@@ -14,21 +14,19 @@ import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEEntities;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
-import appeng.api.ids.AEComponents;
 import appeng.api.upgrades.UpgradeInventories;
 import appeng.core.definitions.AEItems;
 import appeng.items.misc.PaintBallItem;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -40,7 +38,6 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -48,6 +45,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.entity.PartEntity;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -56,13 +54,13 @@ import lombok.Setter;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
-public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
+public class MatterConvergingBoltEntity extends ThrowableItemProjectile implements IEntityWithComplexSpawn {
 
     private static final float MATTER_BALL_DAMAGE = 10.0F;
     private static final float SINGULARITY_DAMAGE = 25.0F;
     private static final float DEFAULT_DATA_DUST_DAMAGE_RATIO = 0.01F;
     private static final float DATA_DUST_BASE_DAMAGE = 10.0F;
-    private static final double SPECIAL_LIGHT_SABER_ENERGY = 20_000.0D;
+    private static final float DATA_DUST_MAX_DAMAGE_RATIO = 0.10F;
     private static final float CRIT_DAMAGE_BONUS = 1.5F;
     private static final double MAX_TRAVEL_DISTANCE = 256.0D;
     private static final double HOMING_RANGE = 24.0D;
@@ -74,9 +72,9 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     private static final EntityDataAccessor<Integer> DATA_COLOR = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_PIERCE_LEVEL = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_HOMING = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> DATA_SABER_ENERGY_CARD_COUNT = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
-    private static final String TAG_DATA_DUST_DAMAGE_RATIO = "DataDustDamageRatio";
+    private static final EntityDataAccessor<Integer> DATA_ENERGY_CARD_COUNT = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
     private static final String TAG_CONSUMED_PIERCE_COUNT = "ConsumedPierceCount";
+    private static final String TAG_ENERGY_CARD_COUNT = "EnergyCardCount";
     private static final EntityDataAccessor<Integer> DATA_FIRING_MODE = SynchedEntityData.defineId(MatterConvergingBoltEntity.class, EntityDataSerializers.INT);
 
     private double traveledDistance;
@@ -86,12 +84,9 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     @Setter
     private boolean critical;
     private CannonShot cannonShot = CannonShot.CROSSBOW;
+    @Setter
     private @Nullable RailShot railShot;
-
-    public void configureRailShot(RailShot shot) {
-        this.railShot = shot;
-    }
-
+    @Setter
     private boolean modernEffects;
     private float fragmentDamage;
     private int singularityTicks;
@@ -108,12 +103,50 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     }
 
     @Override
+    public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
+        ItemStack.STREAM_CODEC.encode(buffer, this.getItem());
+        Vec3 velocity = this.getDeltaMovement();
+        buffer.writeDouble(velocity.x);
+        buffer.writeDouble(velocity.y);
+        buffer.writeDouble(velocity.z);
+        CompoundTag shot = new CompoundTag();
+        this.cannonShot.save(shot);
+        buffer.writeNbt(shot);
+        RailShot railShot = this.railShot;
+        buffer.writeBoolean(railShot != null);
+        if (railShot == null) return;
+        CompoundTag railData = new CompoundTag();
+        railShot.save(railData);
+        buffer.writeNbt(railData);
+    }
+
+    @Override
+    public void readSpawnData(RegistryFriendlyByteBuf buffer) {
+        this.setItem(ItemStack.STREAM_CODEC.decode(buffer));
+        Vec3 velocity = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+        if (!Double.isFinite(velocity.x) || !Double.isFinite(velocity.y) || !Double.isFinite(velocity.z)) {
+            throw new IllegalArgumentException("Invalid projectile spawn velocity");
+        }
+        CompoundTag shot = buffer.readNbt();
+        if (shot == null) throw new IllegalArgumentException("Missing cannon shot spawn data");
+        this.configureCannonShot(CannonShot.load(shot));
+        if (!buffer.readBoolean()) {
+            this.setRailShot(null);
+        } else {
+            CompoundTag railData = buffer.readNbt();
+            if (railData == null) throw new IllegalArgumentException("Missing rail shot spawn data");
+            this.setRailShot(RailShot.load(railData));
+        }
+        this.setDeltaMovement(velocity);
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_COLOR, -1);
         builder.define(DATA_PIERCE_LEVEL, 0);
         builder.define(DATA_HOMING, false);
-        builder.define(DATA_SABER_ENERGY_CARD_COUNT, 0);
+        builder.define(DATA_ENERGY_CARD_COUNT, 0);
         builder.define(DATA_FIRING_MODE, MatterConvergingCrossbowMode.CROSSBOW.id());
     }
 
@@ -125,9 +158,10 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         }
         Vec3 previousPosition = this.position();
         if (!this.level().isClientSide && this.isHoming()) {
-            this.applyHoming();
-            if (this.tryForceHomingHit()) {
-                return;
+            LivingEntity homingTarget = this.findNearestHomingTarget();
+            if (homingTarget != null) {
+                this.applyHoming(homingTarget);
+                if (this.tryForceHomingHit(homingTarget)) return;
             }
         }
         super.tick();
@@ -170,7 +204,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     public void setWeaponStack(ItemStack stack) {
         this.modernEffects = true;
         this.weaponStack = stack.copy();
-        this.getEntityData().set(DATA_SABER_ENERGY_CARD_COUNT, this.getSaberEnergyCardCount(stack));
+        this.getEntityData().set(DATA_ENERGY_CARD_COUNT, this.getEnergyCardCount(stack));
     }
 
     public void setPierceLevel(int pierceLevel) {
@@ -201,7 +235,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         if (this.railShot != null) {
             CompoundTag shot = new CompoundTag();
             this.railShot.save(shot);
-            tag.put("RailRound", shot);
+            tag.put("RailShot", shot);
         }
         tag.putBoolean("ModernEffects", this.modernEffects);
         tag.putFloat("FragmentDamage", this.fragmentDamage);
@@ -212,7 +246,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         tag.putInt(TAG_CONSUMED_PIERCE_COUNT, this.consumedPierceCount);
         tag.putBoolean("Homing", this.isHoming());
         tag.putBoolean("Critical", this.critical);
-        tag.putInt("SaberEnergyCardCount", this.getSaberEnergyCardCount());
+        tag.putInt(TAG_ENERGY_CARD_COUNT, this.getEnergyCardCount());
         if (!this.weaponStack.isEmpty()) {
             tag.put("WeaponStack", this.weaponStack.save(this.registryAccess()));
         }
@@ -221,7 +255,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.railShot = tag.contains("RailRound", 10) ? RailShot.load(tag.getCompound("RailRound")) : null;
+        this.railShot = tag.contains("RailShot", 10) ? RailShot.load(tag.getCompound("RailShot")) : null;
         this.modernEffects = tag.getBoolean("ModernEffects");
         this.fragmentDamage = Math.max(0, tag.getFloat("FragmentDamage"));
         this.singularityTicks = Math.clamp(tag.getInt("SingularityTicks"), 0, 10);
@@ -230,7 +264,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         this.getEntityData().set(DATA_PIERCE_LEVEL, tag.getInt("PierceLevel"));
         this.consumedPierceCount = Math.max(0, tag.getInt(TAG_CONSUMED_PIERCE_COUNT));
         this.getEntityData().set(DATA_HOMING, tag.getBoolean("Homing"));
-        this.getEntityData().set(DATA_SABER_ENERGY_CARD_COUNT, Math.max(0, tag.getInt("SaberEnergyCardCount")));
+        this.getEntityData().set(DATA_ENERGY_CARD_COUNT, Math.max(0, tag.getInt(TAG_ENERGY_CARD_COUNT)));
         this.critical = tag.getBoolean("Critical");
         if (tag.contains("WeaponStack", 10)) {
             this.weaponStack = ItemStack.parse(this.registryAccess(), tag.getCompound("WeaponStack"))
@@ -239,7 +273,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
             this.weaponStack = ItemStack.EMPTY;
         }
         if (!this.weaponStack.isEmpty()) {
-            this.getEntityData().set(DATA_SABER_ENERGY_CARD_COUNT, this.getSaberEnergyCardCount(this.weaponStack));
+            this.getEntityData().set(DATA_ENERGY_CARD_COUNT, this.getEnergyCardCount(this.weaponStack));
         }
         this.configureCannonShot(CannonShot.load(tag));
     }
@@ -263,10 +297,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         if (this.isDataDustAmmo() && livingTarget != null) {
             DamageSource damageSource = owner instanceof LivingEntity livingOwner ? this.damageSources().mobProjectile(this, livingOwner) : this.damageSources().thrown(this, owner);
             float baseDamage = this.getDataDustBaseDamage();
-            this.resetTargetInvulnerability(target);
-            if (livingTarget != target) {
-                this.resetTargetInvulnerability(livingTarget);
-            }
+            this.resetTargetInvulnerability(livingTarget);
             if (baseDamage > 0.0F) {
                 livingTarget.hurt(damageSource, baseDamage);
                 this.resetTargetInvulnerability(livingTarget);
@@ -320,35 +351,38 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     }
 
     private boolean detonatePayload(HitResult result) {
-        if (this.modernEffects && this.firingMode() == MatterConvergingCrossbowMode.GRENADE && ElementalGrenade.accepts(this.getItem())) {
-            if (!this.isRemoved() && this.level() instanceof ServerLevel serverLevel) {
-                this.discard();
-                ElementalGrenade.detonate(serverLevel, this.getItem(), result.getLocation(),
-                        this.getOwner() instanceof LivingEntity living ? living : null, this.focusingCards());
-            }
+        ItemStack ammo = this.getItem();
+        boolean grenade = this.firingMode() == MatterConvergingCrossbowMode.GRENADE;
+        boolean elemental = this.modernEffects && grenade && ElementalGrenade.accepts(ammo);
+        boolean explosive = grenade && GrenadePayload.isExplosive(ammo);
+        if (!elemental && !explosive) return false;
+        if (this.isRemoved() || !(this.level() instanceof ServerLevel serverLevel)) return true;
+
+        this.discard();
+        if (elemental) {
+            ElementalGrenade.detonate(serverLevel, ammo, result.getLocation(),
+                    this.getOwner() instanceof LivingEntity living ? living : null, this.focusingCards());
             return true;
         }
-        if (this.firingMode() != MatterConvergingCrossbowMode.GRENADE || !GrenadePayload.isExplosive(this.getItem())) return false;
-        if (!this.isRemoved() && this.level() instanceof ServerLevel serverLevel) {
-            this.discard();
-            Vec3 impact = result.getLocation();
-            BlockHitResult blockHit = result instanceof BlockHitResult hit ? hit : null;
-            if (blockHit != null) {
-                impact = impact.add(Vec3.atLowerCornerOf(blockHit.getDirection().getNormal()).scale(0.001D));
-            }
-            GrenadePayload.detonate(serverLevel, this.getItem(), impact, blockHit == null ? null : blockHit.getDirection(),
-                    this.getOwner() instanceof LivingEntity livingOwner ? livingOwner : null);
+
+        Vec3 impact = result.getLocation();
+        BlockHitResult blockHit = result instanceof BlockHitResult hit ? hit : null;
+        if (blockHit != null) {
+            impact = impact.add(Vec3.atLowerCornerOf(blockHit.getDirection().getNormal()).scale(0.001D));
         }
+        GrenadePayload.detonate(serverLevel, ammo, impact, blockHit == null ? null : blockHit.getDirection(),
+                this.getOwner() instanceof LivingEntity livingOwner ? livingOwner : null);
         return true;
     }
 
     private boolean railImpact(HitResult result) {
-        if (this.railShot == null) return false;
-        if (!this.isRemoved() && this.level() instanceof ServerLevel level) {
-            this.discard();
-            LivingEntity target = result instanceof EntityHitResult hit ? this.resolveLivingTarget(hit.getEntity()) : null;
-            RailImpact.apply(level, this.railShot, result.getLocation(), target, this.getOwner());
-        }
+        RailShot railShot = this.railShot;
+        if (railShot == null) return false;
+        if (this.isRemoved() || !(this.level() instanceof ServerLevel level)) return true;
+
+        this.discard();
+        LivingEntity target = result instanceof EntityHitResult hit ? this.resolveLivingTarget(hit.getEntity()) : null;
+        RailImpact.apply(level, railShot, result.getLocation(), target, this.getOwner());
         return true;
     }
 
@@ -357,12 +391,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     }
 
     private int focusingCards() {
-        return Math.clamp(this.getSaberEnergyCardCount(), 0, 2);
-    }
-
-    /** Legacy preloaded projectiles retain their original one-shot payload behavior. */
-    public void setModernEffects(boolean modernEffects) {
-        this.modernEffects = modernEffects;
+        return Math.clamp(this.getEnergyCardCount(), 0, 2);
     }
 
     private void splitCube(Vec3 center, AmmunitionRules.Cube cube) {
@@ -410,7 +439,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     }
 
     private boolean isDataDustAmmo() {
-        return this.getItem().is(DEItems.DATA_LIGHT_SABER.get()) && Math.abs(this.getItem().getOrDefault(AEComponents.STORED_ENERGY, 0.0D) - SPECIAL_LIGHT_SABER_ENERGY) < 1.0E-4D;
+        return this.getItem().is(DEItems.DATA_RESIDUAL_CRYSTAL.get());
     }
 
     public int getColor() {
@@ -419,7 +448,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
 
     private float getDamageForAmmo() {
         float baseDamage = this.isSingularityAmmo() ? SINGULARITY_DAMAGE : MATTER_BALL_DAMAGE;
-        return baseDamage * this.getSaberEnergyDamageMultiplier();
+        return baseDamage * this.getEnergyDamageMultiplier();
     }
 
     private float getImpactDamage() {
@@ -511,24 +540,19 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         return 0xD8D8D8;
     }
 
-    private void applyHoming() {
+    private void applyHoming(LivingEntity target) {
         Vec3 velocity = this.getDeltaMovement();
         double speed = velocity.length();
         if (speed < 1.0E-6D) {
             return;
         }
 
-        LivingEntity target = this.findNearestHomingTarget();
-        if (target == null) {
+        Vec3 desiredDirection = target.getBoundingBox().getCenter().subtract(this.position());
+        double distanceSquared = desiredDirection.lengthSqr();
+        if (distanceSquared < 1.0E-6D) {
             return;
         }
-
-        Vec3 toTarget = target.getBoundingBox().getCenter().subtract(this.position());
-        double distance = toTarget.length();
-        Vec3 desiredDirection = toTarget;
-        if (desiredDirection.lengthSqr() < 1.0E-6D) {
-            return;
-        }
+        double distance = Math.sqrt(distanceSquared);
 
         Vec3 currentDirection = velocity.normalize();
         Vec3 desiredNormalized = desiredDirection.normalize();
@@ -550,7 +574,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     private LivingEntity findNearestHomingTarget() {
         Entity owner = this.getOwner();
         return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(HOMING_RANGE),
-                entity -> entity.isAlive() && !entity.isRemoved() && !(entity instanceof Player) && !(entity instanceof ServerPlayer) && entity != owner && !this.piercedEntityIds.contains(entity.getId()))
+                entity -> entity.isAlive() && !(entity instanceof Player) && entity != owner && !this.piercedEntityIds.contains(entity.getId()))
                 .stream()
                 .min((left, right) -> Double.compare(this.distanceToSqr(left), this.distanceToSqr(right)))
                 .orElse(null);
@@ -563,10 +587,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
         }
 
         DamageSource damageSource = owner instanceof Player player ? this.damageSources().playerAttack(player) : owner instanceof LivingEntity livingOwner ? this.damageSources().mobAttack(livingOwner) : this.damageSources().magic();
-        target.invulnerableTime = 0;
-        target.hurtTime = 0;
-        target.hurtDuration = 0;
-        target.lastHurt = 0.0F;
+        this.resetTargetInvulnerability(target);
         target.setHealth(Math.max(0.0F, target.getHealth() - damage));
         target.hurt(damageSource, 0.0F);
         if (target.getHealth() <= 0.0F) {
@@ -575,42 +596,33 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile {
     }
 
     private float getDataDustDamageRatio() {
-        Float ratio = this.getItem().get(DEDataComponents.MATTER_CONVERGING_BOLT_DAMAGE_RATIO.get());
-        if (ratio != null) {
-            return Mth.clamp(ratio, DEFAULT_DATA_DUST_DAMAGE_RATIO, 0.05F);
-        }
-        CompoundTag tag = this.getItem().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        return Mth.clamp(tag.getFloat(TAG_DATA_DUST_DAMAGE_RATIO), DEFAULT_DATA_DUST_DAMAGE_RATIO, 0.05F);
+        float ratio = this.getItem().getOrDefault(DEDataComponents.MATTER_CONVERGING_BOLT_DAMAGE_RATIO.get(), DEFAULT_DATA_DUST_DAMAGE_RATIO);
+        return Mth.clamp(ratio, DEFAULT_DATA_DUST_DAMAGE_RATIO, DATA_DUST_MAX_DAMAGE_RATIO);
     }
 
     private float getDataDustBaseDamage() {
-        float damage = DATA_DUST_BASE_DAMAGE * this.getSaberEnergyDamageMultiplier() * this.cannonShot.damageSpeed((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
+        float damage = DATA_DUST_BASE_DAMAGE * this.getEnergyDamageMultiplier() * this.cannonShot.damageSpeed((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;
         }
         return Mth.clamp(damage, 0.0F, Float.MAX_VALUE);
     }
 
-    private int getSaberEnergyCardCount() {
-        return Math.max(0, this.getEntityData().get(DATA_SABER_ENERGY_CARD_COUNT));
+    private int getEnergyCardCount() {
+        return Math.max(0, this.getEntityData().get(DATA_ENERGY_CARD_COUNT));
     }
 
-    private int getSaberEnergyCardCount(ItemStack stack) {
+    private int getEnergyCardCount(ItemStack stack) {
         return Math.max(0, UpgradeInventories.forItem(stack, 6)
                 .getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()));
     }
 
-    private float getSaberEnergyDamageMultiplier() {
-        int cardCount = this.getSaberEnergyCardCount();
+    private float getEnergyDamageMultiplier() {
+        int cardCount = this.getEnergyCardCount();
         return cardCount > 0 ? cardCount * 2.0F : 1.0F;
     }
 
-    private boolean tryForceHomingHit() {
-        LivingEntity target = this.findNearestHomingTarget();
-        if (target == null) {
-            return false;
-        }
-
+    private boolean tryForceHomingHit(LivingEntity target) {
         Vec3 start = this.position();
         Vec3 end = start.add(this.getDeltaMovement());
         AABB searchBox = this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(HOMING_HIT_MARGIN);

@@ -92,7 +92,7 @@ public final class MatterConvergingCrossbowTrajectoryRenderer {
         CannonCharge charge = stack.get(DEDataComponents.CANNON_CHARGE.get());
         if (charge == null || charge.mode() != MatterConvergingCrossbowMode.GRENADE || !charge.belongsTo(entity, hand, MatterConvergingCrossbowItem.mode(stack))) return;
         MatterConvergingCrossbowItem item = (MatterConvergingCrossbowItem) stack.getItem();
-        boolean saberAmmo = item.cannonUsesSaberAmmo(stack);
+        boolean ignoresWaterDrag = item.cannonAmmoIgnoresWaterDrag(stack);
         Vec3 velocity = CannonBallistics.launchVelocity(charge.mode(), charge.progress(minecraft.level.getGameTime()), direction, item.cannonAmmoSpeed(stack));
         VertexConsumer vertices = minecraft.renderBuffers().bufferSource().getBuffer(RenderType.lines());
         Vec3 previous = start;
@@ -111,7 +111,7 @@ public final class MatterConvergingCrossbowTrajectoryRenderer {
             if (blocked) {
                 break;
             }
-            velocity = CannonBallistics.nextVelocity(velocity, charge.mode(), minecraft.level.isWaterAt(BlockPos.containing(previous)), saberAmmo);
+            velocity = CannonBallistics.nextVelocity(velocity, charge.mode(), minecraft.level.isWaterAt(BlockPos.containing(previous)), ignoresWaterDrag);
             previous = point;
         }
         // The enclosing hand/entity renderer flushes this buffer with its matching projection.

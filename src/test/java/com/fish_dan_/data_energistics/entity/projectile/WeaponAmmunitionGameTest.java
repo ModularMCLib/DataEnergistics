@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.AmmunitionRules;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
 import com.fish_dan_.data_energistics.registry.DEMobEffects;
 
@@ -191,9 +192,9 @@ public final class WeaponAmmunitionGameTest {
     @GameTest(template = "empty_5x5")
     public static void crystalConsumed(GameTestHelper h) {
         Mob target = target(h, new BlockPos(2, 1, 2));
-        ThrownLightSaberEntity crystal = new ThrownLightSaberEntity(h.getLevel(), player(h), DEItems.DATA_LIGHT_SABER.toStack());
-        crystal.setConsumableCrystal(true);
-        crystal.setDataDustDamageRatio(1);
+        ItemStack residualCrystal = DEItems.DATA_RESIDUAL_CRYSTAL.toStack();
+        residualCrystal.set(DEDataComponents.MATTER_CONVERGING_BOLT_DAMAGE_RATIO.get(), 1.0F);
+        MatterConvergingBoltEntity crystal = new MatterConvergingBoltEntity(h.getLevel(), player(h), residualCrystal);
         crystal.setDeltaMovement(Vec3.ZERO);
         crystal.onHitEntity(new EntityHitResult(target));
         h.assertTrue(Math.abs(target.getHealth() - 900) < 0.001, "Crystal ratio did not cap at 10%");

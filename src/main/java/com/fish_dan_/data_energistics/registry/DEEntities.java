@@ -6,7 +6,6 @@ import com.fish_dan_.data_energistics.entity.explosive.TntConfigurablePrimedEnti
 import com.fish_dan_.data_energistics.entity.projectile.LightBladeChargeEntity;
 import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
 import com.fish_dan_.data_energistics.entity.projectile.OrbitalAnnihilatorProjectileEntity;
-import com.fish_dan_.data_energistics.entity.projectile.RailRoundEntity;
 import com.fish_dan_.data_energistics.entity.projectile.ThrownLightSaberEntity;
 import com.fish_dan_.data_energistics.entity.resource.DispersingDataEntity;
 
@@ -31,8 +30,9 @@ public final class DEEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<MatterConvergingBoltEntity>> MATTER_CONVERGING_BOLT = ENTITY_TYPES.register("matter_converging_bolt", () -> EntityType.Builder
             .<MatterConvergingBoltEntity>of(MatterConvergingBoltEntity::new, MobCategory.MISC)
             .sized(0.25F, 0.25F)
-            .clientTrackingRange(4)
-            .updateInterval(10)
+            .clientTrackingRange(8)
+            .updateInterval(1)
+            .setShouldReceiveVelocityUpdates(false)
             .build("matter_converging_bolt"));
     public static final DeferredHolder<EntityType<?>, EntityType<LightBladeChargeEntity>> LIGHT_BLADE_CHARGE = ENTITY_TYPES.register("light_blade_charge", () -> EntityType.Builder
             .<LightBladeChargeEntity>of(LightBladeChargeEntity::new, MobCategory.MISC)
@@ -67,10 +67,6 @@ public final class DEEntities {
             .build("orbital_annihilator_projectile"));
 
     private DEEntities() {}
-
-    public static final DeferredHolder<EntityType<?>, EntityType<RailRoundEntity>> RAIL_ROUND = ENTITY_TYPES.register("star_shard_round", () -> EntityType.Builder
-            .<RailRoundEntity>of(RailRoundEntity::new, MobCategory.MISC)
-            .sized(0.25F, 0.25F).clientTrackingRange(8).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("star_shard_round"));
 
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);

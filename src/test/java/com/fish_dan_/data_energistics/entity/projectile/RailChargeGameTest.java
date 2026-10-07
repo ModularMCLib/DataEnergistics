@@ -114,7 +114,7 @@ public final class RailChargeGameTest {
             var shot = rounds(h, player).getFirst();
             h.assertTrue(shot.getItem().is(Items.HEAVY_CORE), "Core projectile model identity");
             shot.onHitEntity(new EntityHitResult(target));
-            h.assertTrue(Math.abs(target.getHealth() - (1000 - 34 * fraction)) < 0.01, "Partial damage does not follow original charge fraction");
+            h.assertTrue(Math.abs(target.getHealth() - (1000 - 34 * 5 * fraction)) < 0.01, "Partial damage does not follow original charge fraction");
             h.assertTrue(weapon.get(DEDataComponents.RAIL_COOLDOWN_END.get()) - h.getLevel().getGameTime() == 42, "Heavy cooldown must be three times 14 ticks");
             h.succeed();
         });
@@ -278,7 +278,7 @@ public final class RailChargeGameTest {
     @GameTest(template = "empty_5x5")
     public static void impacts(GameTestHelper h) {
         Player player = player(h);
-        float[][] damages = { { 8, 10, 14 }, { 34, 40, 40 }, { 13, 13, 20 } };
+        float[][] damages = { { 40, 50, 70 }, { 170, 200, 200 }, { 65, 65, 100 } };
         var kinds = List.of(RailAmmunition.BLAZE, RailAmmunition.HEAVY, RailAmmunition.DATA);
         for (int k = 0; k < kinds.size(); k++) for (int cards = 0; cards <= 2; cards++) {
             var kind = kinds.get(k);
@@ -291,7 +291,7 @@ public final class RailChargeGameTest {
             restored.readAdditionalSaveData(saved);
             float expected = damages[k][cards];
             if (kind == RailAmmunition.HEAVY && cards == 2) expected += 50;
-            if (kind == RailAmmunition.DATA && cards == 1) expected += 13 * 0.05F;
+            if (kind == RailAmmunition.DATA && cards == 1) expected += 13 * 5 * 0.05F;
             if (kind == RailAmmunition.DATA && cards == 2) expected += 150;
             restored.onHitEntity(new EntityHitResult(target));
             h.assertTrue(Math.abs(target.getHealth() - (800 - expected)) < 0.01, "Wrong full-charge hit " + kind + " cards=" + cards + " health=" + target.getHealth());

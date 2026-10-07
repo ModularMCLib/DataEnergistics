@@ -51,7 +51,7 @@ public final class WeaponAmmunitionGameTest {
         h.assertTrue(MountedAmmoCells.accepts(AEItems.FLUID_CELL_1K.stack()), "Fluid disk rejected");
         for (int c = 0; c <= 2; c++) {
             h.assertValueEqual(AmmunitionRules.cube(c).fragments(), 4 + c * 2, "Fragment tiers");
-            h.assertTrue(AmmunitionRules.cube(c).fragmentDamage() == (c == 0 ? 9 : 10), "Fragment quarter damage");
+            h.assertTrue(Math.abs(AmmunitionRules.cube(c).fragmentDamage() - (c == 0 ? 21.25F : 22.25F)) < 0.0001F, "Fragment quarter damage");
         }
         h.succeed();
     }

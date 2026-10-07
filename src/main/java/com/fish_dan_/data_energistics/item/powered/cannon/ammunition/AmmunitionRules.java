@@ -32,7 +32,7 @@ public final class AmmunitionRules {
 
     public static Cube cube(int cards) {
         checkCards(cards);
-        return new Cube(cards == 0 ? 36 : 40, 4 + 2 * cards);
+        return new Cube(85.0F, 4 + 2 * cards);
     }
 
     public static void checkCards(int cards) {

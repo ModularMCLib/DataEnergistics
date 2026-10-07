@@ -59,7 +59,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     private static final float MATTER_BALL_DAMAGE = 10.0F;
     private static final float SINGULARITY_DAMAGE = 25.0F;
     private static final float DEFAULT_DATA_DUST_DAMAGE_RATIO = 0.01F;
-    private static final float DATA_DUST_BASE_DAMAGE = 10.0F;
+    private static final float DATA_DUST_BASE_DAMAGE = 100.0F;
     private static final float DATA_DUST_MAX_DAMAGE_RATIO = 0.10F;
     private static final float CRIT_DAMAGE_BONUS = 1.5F;
     private static final double MAX_TRAVEL_DISTANCE = 256.0D;
@@ -601,7 +601,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getDataDustBaseDamage() {
-        float damage = DATA_DUST_BASE_DAMAGE * this.cannonShot.baseDamageMultiplier() * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
+        float damage = DATA_DUST_BASE_DAMAGE * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
                 * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;

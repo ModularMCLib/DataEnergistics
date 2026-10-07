@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 public record CannonShot(MatterConvergingCrossbowMode mode, float charge, float speedSnapshot) {
 
     public static final float BASE_DAMAGE_SPEED = 3.15F;
+    public static final float CROSSBOW_BASE_DAMAGE_MULTIPLIER = 3.0F;
     public static final CannonShot CROSSBOW = new CannonShot(MatterConvergingCrossbowMode.CROSSBOW, 1.0F, BASE_DAMAGE_SPEED);
 
     public CannonShot {
@@ -18,6 +19,10 @@ public record CannonShot(MatterConvergingCrossbowMode mode, float charge, float 
 
     public float damageScale() {
         return this.mode == MatterConvergingCrossbowMode.RAIL ? this.charge : 1.0F;
+    }
+
+    public float baseDamageMultiplier() {
+        return this.mode == MatterConvergingCrossbowMode.CROSSBOW ? CROSSBOW_BASE_DAMAGE_MULTIPLIER : 1.0F;
     }
 
     /**

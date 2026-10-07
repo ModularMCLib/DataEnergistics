@@ -14,18 +14,29 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import org.jspecify.annotations.Nullable;
 
-/** Persisted weapon burn; refreshing its duration never resets cadence, and expiry leaves a brief vanilla-fire recovery. */
+/** Persisted weapon burn; refreshing its duration never resets its damage cadence. */
 public final class WeaponBurn {
 
     private static final String KEY = "DataEnergisticsWeaponBurn";
+    private static final String VANILLA_RECOVERY_KEY = "VanillaRecovery";
     private static final int VANILLA_RECOVERY_TICKS = 20;
 
     public static void apply(LivingEntity target, @Nullable Entity owner, int duration, float damage) {
+        apply(target, owner, duration, damage, false);
+    }
+
+    /** Applies a burn that hands damage back to vanilla fire after the custom phase ends. */
+    public static void applyWithVanillaRecovery(LivingEntity target, @Nullable Entity owner, int duration, float damage) {
+        apply(target, owner, duration, damage, true);
+    }
+
+    private static void apply(LivingEntity target, @Nullable Entity owner, int duration, float damage, boolean vanillaRecovery) {
         if (target.level().isClientSide || target.fireImmune() || target.hasEffect(MobEffects.FIRE_RESISTANCE) || target.isInWaterRainOrBubble()) return;
         CompoundTag data = target.getPersistentData();
         CompoundTag burn = data.getCompound(KEY);
         burn.putInt("Remaining", Math.max(duration, burn.getInt("Remaining")));
         burn.putFloat("Damage", Math.max(damage, burn.getFloat("Damage")));
+        burn.putBoolean(VANILLA_RECOVERY_KEY, vanillaRecovery || burn.getBoolean(VANILLA_RECOVERY_KEY));
         if (owner != null) burn.putUUID("Owner", owner.getUUID());
         data.put(KEY, burn);
         target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), duration + 1));
@@ -49,8 +60,13 @@ public final class WeaponBurn {
             cadence = 0;
         }
         if (remaining <= 0) {
+            boolean vanillaRecovery = burn.getBoolean(VANILLA_RECOVERY_KEY);
             data.remove(KEY);
-            target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), VANILLA_RECOVERY_TICKS));
+            if (vanillaRecovery) {
+                target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), VANILLA_RECOVERY_TICKS));
+            } else {
+                target.clearFire();
+            }
         } else {
             burn.putInt("Remaining", remaining);
             burn.putInt("Cadence", cadence);

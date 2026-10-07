@@ -67,11 +67,11 @@ public final class RailLauncher {
         if (ammo == null || ammo == RailAmmunition.HEAVY && RailRecovery.recovering(weapon, level.getGameTime()) || fraction <= 0 || !key.equals(MountedAmmoCells.selectedKey(weapon, MatterConvergingCrossbowMode.RAIL)) || level.clip(new ClipContext(player.getEyePosition(), muzzle, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player)).getType() != HitResult.Type.MISS || item.getAECurrentPower(weapon) < ENERGY_PER_SHOT || MountedAmmoCells.transfer(weapon, key, ammo.cost(), false, Actionable.SIMULATE) != ammo.cost()) return;
         ItemStack display = key instanceof AEItemKey itemKey ? itemKey.toStack(1) : GenericStack.wrapInItemStack(key, 1);
         int cards = Math.clamp(item.getUpgrades(weapon).getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()), 0, 2);
-        float projectileSpeed = item.cannonAmmoSpeed(weapon);
+        float damageSpeed = item.cannonAmmoSpeed(weapon);
         MatterConvergingBoltEntity projectile = new MatterConvergingBoltEntity(level, player, display);
         projectile.setRailShot(new RailShot(ammo, cards, fraction));
-        projectile.configureCannonShot(new CannonShot(MatterConvergingCrossbowMode.RAIL, fraction, projectileSpeed));
-        Vec3 velocity = CannonBallistics.launchVelocity(MatterConvergingCrossbowMode.RAIL, fraction, direction, projectileSpeed);
+        projectile.configureCannonShot(new CannonShot(MatterConvergingCrossbowMode.RAIL, fraction, damageSpeed));
+        Vec3 velocity = CannonBallistics.launchVelocity(MatterConvergingCrossbowMode.RAIL, fraction, direction, damageSpeed);
         projectile.setPos(muzzle);
         projectile.shoot(velocity.x, velocity.y, velocity.z, (float) velocity.length(), 0);
         long removed = MountedAmmoCells.transfer(weapon, key, ammo.cost(), false, Actionable.MODULATE);

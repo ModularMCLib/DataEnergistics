@@ -404,7 +404,8 @@ public final class RailChargeGameTest {
             h.assertTrue(target.getHealth() == 1000, "Release used instant ray damage");
         });
         h.runAfterDelay(24, () -> {
-            h.assertTrue(target.getHealth() == 992, "Real swept projectile did not apply one hit");
+            h.assertTrue(Math.abs(target.getHealth() - (1000 - RailAmmunition.BLAZE.damage(0))) < 0.001,
+                    "Real swept projectile did not apply one hit");
             h.assertTrue(rounds(h, player).isEmpty(), "Spent projectile remained");
             h.succeed();
         });

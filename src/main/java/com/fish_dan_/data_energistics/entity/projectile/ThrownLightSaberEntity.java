@@ -502,7 +502,7 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
     private LivingEntity findNearestHomingTarget() {
         Entity owner = this.getOwner();
         return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(HOMING_RANGE),
-                        entity -> entity.isAlive() && !(entity instanceof Player) && entity != owner)
+                entity -> entity.isAlive() && !(entity instanceof Player) && entity != owner)
                 .stream()
                 .min((left, right) -> Double.compare(this.distanceToSqr(left), this.distanceToSqr(right)))
                 .orElse(null);

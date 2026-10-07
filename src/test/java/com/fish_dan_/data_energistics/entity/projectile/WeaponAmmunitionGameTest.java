@@ -159,7 +159,8 @@ public final class WeaponAmmunitionGameTest {
             h.assertValueEqual(fragments.size(), 4 + cards * 2, "Fragment count changed after weapon upgrade removal");
             float before = target.getHealth();
             for (var fragment : fragments) fragment.onHitEntity(new EntityHitResult(target));
-            h.assertTrue(Math.abs(before - target.getHealth() - fragments.size() * (cards == 0 ? 9 : 10)) < 0.001, "Fragment damage");
+            h.assertTrue(Math.abs(before - target.getHealth() - fragments.size() * AmmunitionRules.cube(cards).fragmentDamage()) < 0.001,
+                    "Fragment damage was blocked by the target's hurt immunity");
             h.assertTrue(h.getLevel().getEntitiesOfClass(MatterConvergingBoltEntity.class, target.getBoundingBox().inflate(2), entity -> entity.getOwner() == player).isEmpty(), "Recursive splitting");
             target.discard();
         }

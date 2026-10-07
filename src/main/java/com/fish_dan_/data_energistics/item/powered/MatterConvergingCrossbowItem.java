@@ -600,9 +600,8 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     private float getProjectileSpeed(ItemStack stack) {
         int speedCards = Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(AEItems.SPEED_CARD));
         return switch (mode(stack)) {
-            case GRENADE -> PROJECTILE_SPEED;
             case RAIL -> PROJECTILE_SPEED + speedCards * RAIL_SPEED_CARD_PROJECTILE_SPEED_BONUS;
-            case CROSSBOW -> PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
+            case GRENADE, CROSSBOW -> PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
         };
     }
 

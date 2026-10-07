@@ -88,6 +88,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     private static final double HOMING_ENERGY_MULTIPLIER = 5.0D;
     private static final float PROJECTILE_SPEED = 3.15F;
     private static final float SPEED_CARD_PROJECTILE_SPEED_BONUS = 1.0F;
+    private static final float RAIL_SPEED_CARD_PROJECTILE_SPEED_BONUS = 4.0F;
     private static final int CHARGE_DURATION_TICKS = 20;
     private static final int MAX_UPGRADES = 6;
     private static final int MAX_SPEED_UPGRADES = 4;
@@ -600,7 +601,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         int speedCards = Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(AEItems.SPEED_CARD));
         return switch (mode(stack)) {
             case GRENADE -> PROJECTILE_SPEED;
-            case RAIL -> PROJECTILE_SPEED + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
+            case RAIL -> PROJECTILE_SPEED + speedCards * RAIL_SPEED_CARD_PROJECTILE_SPEED_BONUS;
             case CROSSBOW -> PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
         };
     }

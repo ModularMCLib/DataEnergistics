@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
 import com.fish_dan_.data_energistics.client.render.overlay.MatterConvergingCrossbowTrajectoryRenderer;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
@@ -87,7 +86,7 @@ final class CrossbowBakedModel extends BakedModelWrapper<BakedModel> {
             this.entity = entity;
             this.stack = stack;
             ChargedProjectiles projectiles = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
-            this.special = !projectiles.isEmpty() && (projectiles.getItems().getFirst().is(DEItems.DATA_RESIDUAL_CRYSTAL.get()) || MatterConvergingCrossbowItem.isSpecialLightSaberAmmo(projectiles.getItems().getFirst()));
+            this.special = !projectiles.isEmpty() && projectiles.getItems().getFirst().is(DEItems.DATA_RESIDUAL_CRYSTAL.get());
             this.quads = foldedQuads;
         }
 

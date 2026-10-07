@@ -21,6 +21,8 @@ import java.util.List;
 /** One collision, one damage/effect settlement. FE branches from that physical impact point. */
 public final class RailImpact {
 
+    private static final float BLAZE_BURN_DAMAGE_RATIO = 0.20F;
+
     private RailImpact() {}
 
     public static void apply(ServerLevel level, RailShot shot, float speedMultiplier, Vec3 center,
@@ -48,7 +50,7 @@ public final class RailImpact {
         if (!WeaponDamage.hurt(target, WeaponDamage.source(target, owner), damage + heavyBonus))
             return;
         switch (ammo) {
-            case BLAZE -> WeaponBurn.apply(target, owner, cards == 0 ? 100 : 200, cards == 2 ? 3 : 1.5F);
+            case BLAZE -> WeaponBurn.applyWithDecay(target, owner, cards == 0 ? 100 : 200, damage * BLAZE_BURN_DAMAGE_RATIO);
             case HEAVY -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, cards == 2 ? 9 : 3));
             case DATA -> {
                 for (int layer = 0; layer < (cards == 0 ? 1 : 2) && target.isAlive(); layer++) {

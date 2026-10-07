@@ -229,6 +229,39 @@ public record TrinityPatternVariant(
         return Collections.unmodifiableMap(remaining);
     }
 
+    /**
+     * Returns outputs that can create a downstream planning dependency.
+     *
+     * <p>
+     * An unchanged reusable binding is physically returned by the recipe, but it is an input reservation rather
+     * than a producer of the material. Treating that remainder as a producer would connect every such recipe through
+     * the retained tool and turn an otherwise acyclic route family into a large artificial cycle. The complete
+     * {@link #outputs()} map remains available for conservation and execution accounting.
+     * </p>
+     *
+     * @return declared and changing remainder outputs, excluding unchanged reusable reservations
+     */
+    public Map<AEKey, BigInteger> dependencyOutputs() {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> dependencyOutputs = new Object2ObjectLinkedOpenHashMap<>(this.outputs);
+        for (TrinityBoundPatternInput binding : this.bindings) {
+            if (binding.lifetimeBudget() || binding.reusableRule() == null || binding.remainingKey() == null ||
+                    !binding.remainingKey().equals(binding.template().what())) {
+                continue;
+            }
+            BigInteger remaining = dependencyOutputs.get(binding.remainingKey());
+            if (remaining == null) {
+                continue;
+            }
+            remaining = remaining.subtract(binding.remainingAmount());
+            if (remaining.signum() > 0) {
+                dependencyOutputs.put(binding.remainingKey(), remaining);
+            } else {
+                dependencyOutputs.remove(binding.remainingKey());
+            }
+        }
+        return Collections.unmodifiableMap(dependencyOutputs);
+    }
+
     @Override
     public int compareTo(TrinityPatternVariant other) {
         int patternOrder = this.patternIdentity.compareTo(other.patternIdentity);

@@ -49,7 +49,7 @@ final class TrinityAcyclicShortagePropagator {
             if (stopped != null) {
                 return TrinityAlgorithmResult.failure(stopped);
             }
-            for (AEKey output : variant.outputs().keySet()) {
+            for (AEKey output : variant.dependencyOutputs().keySet()) {
                 producers.putIfAbsent(output, variant);
                 incoming.putIfAbsent(output, 0);
                 ObjectLinkedOpenHashSet<AEKey> inputs = dependencies.computeIfAbsent(
@@ -85,7 +85,7 @@ final class TrinityAcyclicShortagePropagator {
             BigInteger remaining = required.subtract(available);
             if (remaining.signum() > 0 && producers.containsKey(key)) {
                 TrinityPatternVariant producer = producers.get(key);
-                BigInteger[] division = remaining.divideAndRemainder(producer.outputs().get(key));
+                BigInteger[] division = remaining.divideAndRemainder(producer.dependencyOutputs().get(key));
                 BigInteger count = division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
                 firings.merge(producer, count, BigInteger::add);
                 producer.netChange().forEach((changedKey, amount) -> need.merge(changedKey, amount.multiply(count).negate(), BigInteger::add));

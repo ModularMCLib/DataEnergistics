@@ -28,8 +28,7 @@ public record TrinityPatternIdentity(String definitionEncoding,
      * Rejects partial identities before they can enter an immutable graph.
      */
     public TrinityPatternIdentity {
-        if (definitionEncoding == null || definitionEncoding.isBlank() ||
-                publicationEncoding == null || publicationEncoding.isBlank()) {
+        if (definitionEncoding.isBlank() || publicationEncoding.isBlank()) {
             throw new IllegalArgumentException("A Trinity pattern identity requires both canonical encodings");
         }
     }

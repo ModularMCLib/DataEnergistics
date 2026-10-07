@@ -601,7 +601,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getDataDustBaseDamage() {
-        float damage = DATA_DUST_BASE_DAMAGE * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
+        float damage = DATA_DUST_BASE_DAMAGE * this.cannonShot.baseDamageMultiplier() * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
                 * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;

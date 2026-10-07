@@ -27,7 +27,13 @@ public final class AmmunitionRules {
 
     public static Flame flame(int cards) {
         checkCards(cards);
-        return new Flame(cards == 0 ? 5 : 7, cards == 0 ? 4 : 6, cards == 2 ? 280 : 100, cards == 2 ? 3 : 1.5F);
+        return new Flame(cards == 0 ? 5 : 7, cards == 0 ? 4 : 6, cards == 2 ? 280 : 100,
+                switch (cards) {
+                    case 0 -> 4.0F;
+                    case 1 -> 17.0F;
+                    case 2 -> 34.0F;
+                    default -> throw new IllegalArgumentException("Invalid focusing upgrade count");
+                });
     }
 
     public static Cube cube(int cards) {

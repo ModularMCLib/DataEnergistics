@@ -198,7 +198,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         };
     }
 
-    /** Shared with the preview; every supported ammunition type uses the same base projectile speed. */
+    /** Shared with the preview; the rail mode value is its damage-speed snapshot, not its hitscan flight speed. */
     public float cannonAmmoSpeed(ItemStack stack) {
         return this.getProjectileSpeed(stack);
     }
@@ -598,7 +598,11 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     private float getProjectileSpeed(ItemStack stack) {
         int speedCards = Math.max(0, this.getUpgrades(stack).getInstalledUpgrades(AEItems.SPEED_CARD));
-        return PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
+        return switch (mode(stack)) {
+            case GRENADE -> PROJECTILE_SPEED;
+            case RAIL -> PROJECTILE_SPEED + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
+            case CROSSBOW -> PROJECTILE_SPEED * 1.5F + speedCards * SPEED_CARD_PROJECTILE_SPEED_BONUS;
+        };
     }
 
     private ItemStack peekAmmo(ItemStack weaponStack) {

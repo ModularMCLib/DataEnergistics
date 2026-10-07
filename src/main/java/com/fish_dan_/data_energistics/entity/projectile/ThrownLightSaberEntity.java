@@ -447,7 +447,7 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
     }
 
     private float getSpeedDamageMultiplier() {
-        return this.cannonShot.damageSpeed(Math.max(0.0F, (float) this.getDeltaMovement().length()));
+        return CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier(Math.max(0.0F, (float) this.getDeltaMovement().length()));
     }
 
     private void resetTargetInvulnerability(Entity target) {

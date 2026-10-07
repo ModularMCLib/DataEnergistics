@@ -23,10 +23,11 @@ public final class RailImpact {
 
     private RailImpact() {}
 
-    public static void apply(ServerLevel level, RailShot shot, Vec3 center, @Nullable LivingEntity target, @Nullable Entity owner) {
+    public static void apply(ServerLevel level, RailShot shot, float speedMultiplier, Vec3 center,
+                             @Nullable LivingEntity target, @Nullable Entity owner) {
         var ammo = shot.ammunition();
         int cards = shot.cards();
-        float damage = ammo.damage(cards) * shot.charge();
+        float damage = ammo.damage(cards) * shot.charge() * speedMultiplier;
         if (ammo == RailAmmunition.FE) {
             List<Vec3> points = new ObjectArrayList<>();
             points.add(center);
@@ -43,8 +44,8 @@ public final class RailImpact {
         }
         if (target == null || !target.isAlive()) return;
         float missing = Math.max(0, target.getMaxHealth() - target.getHealth());
-        if (!WeaponDamage.hurt(target, WeaponDamage.source(target, owner),
-                damage + (ammo == RailAmmunition.HEAVY && cards == 2 ? missing * 0.25F * shot.charge() : 0)))
+        float heavyBonus = ammo == RailAmmunition.HEAVY && cards == 2 ? missing * 0.25F * shot.charge() * speedMultiplier : 0.0F;
+        if (!WeaponDamage.hurt(target, WeaponDamage.source(target, owner), damage + heavyBonus))
             return;
         switch (ammo) {
             case BLAZE -> WeaponBurn.apply(target, owner, cards == 0 ? 100 : 200, cards == 2 ? 3 : 1.5F);

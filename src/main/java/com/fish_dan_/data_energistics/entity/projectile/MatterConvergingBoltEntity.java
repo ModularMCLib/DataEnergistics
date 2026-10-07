@@ -382,7 +382,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
 
         this.discard();
         LivingEntity target = result instanceof EntityHitResult hit ? this.resolveLivingTarget(hit.getEntity()) : null;
-        RailImpact.apply(level, railShot, result.getLocation(), target, this.getOwner());
+        RailImpact.apply(level, railShot, this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()), result.getLocation(), target, this.getOwner());
         return true;
     }
 
@@ -452,8 +452,8 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getImpactDamage() {
-        float speed = this.cannonShot.damageSpeed((float) this.getDeltaMovement().length());
-        float damage = this.getDamageForAmmo() * speed;
+        float damage = this.getDamageForAmmo() * CannonShot.BASE_DAMAGE_SPEED
+                * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;
         }
@@ -601,7 +601,8 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getDataDustBaseDamage() {
-        float damage = DATA_DUST_BASE_DAMAGE * this.getEnergyDamageMultiplier() * this.cannonShot.damageSpeed((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
+        float damage = DATA_DUST_BASE_DAMAGE * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
+                * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;
         }

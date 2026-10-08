@@ -16,7 +16,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -493,7 +493,7 @@ public final class TrinityAcyclicRouteOptimizer {
                                                                                TrinityPlanningInventory available,
                                                                                SearchBudget budget,
                                                                                TrinityPlanningControl control) {
-        BigInteger requiredFirings = BigIntegerMath.ceilDivideNonNegative(requiredTargetNet, family.outputPerFiring());
+        BigInteger requiredFirings = AmountMath.ceilDivideNonNegative(requiredTargetNet, family.outputPerFiring());
         BigInteger remainingFirings = requiredFirings;
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> remainingInventory = new Object2ObjectLinkedOpenHashMap<>(available.finiteAmounts());
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();

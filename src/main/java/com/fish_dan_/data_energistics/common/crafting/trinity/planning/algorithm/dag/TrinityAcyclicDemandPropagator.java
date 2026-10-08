@@ -22,7 +22,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -300,7 +300,7 @@ public final class TrinityAcyclicDemandPropagator {
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger outputPerFiring = selected.dependencyOutputs().get(key);
                 BigInteger count = missing.signum() > 0 ?
-                        BigIntegerMath.ceilDivideNonNegative(missing, outputPerFiring) :
+                        AmountMath.ceilDivideNonNegative(missing, outputPerFiring) :
                         BigInteger.ONE;
                 firings.merge(selected, count, BigInteger::add);
                 selected.inputs().forEach((input, amount) -> merge(need, input, amount.multiply(count)));

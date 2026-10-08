@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -207,7 +207,7 @@ public final class TrinityCompressedScheduler {
                     reachable = false;
                     break;
                 }
-                breakpoint = breakpoint.max(BigIntegerMath.ceilDivideNonNegative(shortage, growth));
+                breakpoint = breakpoint.max(AmountMath.ceilDivideNonNegative(shortage, growth));
             }
             if (reachable && breakpoint.signum() > 0 && breakpoint.compareTo(maximum) <= 0) {
                 candidates.add(breakpoint);

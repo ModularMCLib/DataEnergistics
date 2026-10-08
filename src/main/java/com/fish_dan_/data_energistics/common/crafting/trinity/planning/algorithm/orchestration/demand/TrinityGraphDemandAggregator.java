@@ -23,7 +23,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnosti
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -853,7 +853,7 @@ public final class TrinityGraphDemandAggregator {
                 }
                 return TrinityAlgorithmResult.success(StepSuccess.INSTANCE);
             }
-            BigInteger count = BigIntegerMath.ceilDivideNonNegative(outputDemand, selected.outputs().get(key));
+            BigInteger count = AmountMath.ceilDivideNonNegative(outputDemand, selected.outputs().get(key));
             int rank = Math.multiplyExact(this.topologicalPositions.get(outputComponent.index()), 2);
             if (crossBoundaryInput || outputComponent.cyclic()) {
                 rank = Math.subtractExact(rank, 1);

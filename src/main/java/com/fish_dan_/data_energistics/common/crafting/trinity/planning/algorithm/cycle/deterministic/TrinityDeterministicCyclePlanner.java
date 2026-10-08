@@ -15,7 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -84,7 +84,7 @@ public final class TrinityDeterministicCyclePlanner {
         BigInteger requiredNet = quantityMode == CraftingQuantityMode.NET_NEW ?
                 requestedAmount :
                 requestedAmount.subtract(inventory.getOrDefault(target, BigInteger.ZERO)).max(BigInteger.ZERO);
-        BigInteger repetitions = BigIntegerMath.ceilDivideNonNegative(requiredNet, targetEffect);
+        BigInteger repetitions = AmountMath.ceilDivideNonNegative(requiredNet, targetEffect);
         if (quantityMode == CraftingQuantityMode.FINAL_TOTAL) {
             repetitions = repetitions.max(BigInteger.ONE);
         }

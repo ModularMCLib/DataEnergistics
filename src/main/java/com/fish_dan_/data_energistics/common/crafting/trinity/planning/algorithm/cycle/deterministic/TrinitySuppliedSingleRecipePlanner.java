@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityDeterministicRepeatScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -49,7 +49,7 @@ final class TrinitySuppliedSingleRecipePlanner {
             if (gain.signum() <= 0) {
                 return TrinityDeterministicDiagnostics.notApplicable();
             }
-            count = count.max(BigIntegerMath.ceilDivideNonNegative(bound.getValue(), gain));
+            count = count.max(AmountMath.ceilDivideNonNegative(bound.getValue(), gain));
         }
         for (var bound : demand.finalBalanceLowerBounds().entrySet()) {
             AEKey key = bound.getKey();
@@ -62,7 +62,7 @@ final class TrinitySuppliedSingleRecipePlanner {
                 if (gain.signum() <= 0) {
                     return TrinityDeterministicDiagnostics.notApplicable();
                 }
-                count = count.max(BigIntegerMath.ceilDivideNonNegative(missing, gain));
+                count = count.max(AmountMath.ceilDivideNonNegative(missing, gain));
             }
         }
 

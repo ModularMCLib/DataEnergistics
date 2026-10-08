@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.support.TrinityDeterministicFiringMath;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -153,7 +153,7 @@ public final class TrinityDeterministicFiringCalculator {
             }
             BigInteger effect = primitiveNet.getOrDefault(required.getKey(), TrinityDeterministicFiringMath.ZERO);
             if (effect.signum() > 0) {
-                repetitions = repetitions.max(BigIntegerMath.ceilDivideNonNegative(
+                repetitions = repetitions.max(AmountMath.ceilDivideNonNegative(
                         required.getValue(),
                         effect));
             }
@@ -176,7 +176,7 @@ public final class TrinityDeterministicFiringCalculator {
             if (effect.signum() <= 0) {
                 return BigInteger.valueOf(-1L);
             }
-            jump = jump.max(BigIntegerMath.ceilDivideNonNegative(deficit, effect));
+            jump = jump.max(AmountMath.ceilDivideNonNegative(deficit, effect));
         }
         return jump;
     }

@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.acceleration.BatchTickProgression;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
 import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
+import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.item.carrier.BiologyDataCarrierData;
@@ -1517,9 +1518,9 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void convertGeneratedLootToDataFlow(MimeticGeneratedOutput generated) {
-        long amount = saturatedAdd(
-                saturatedMultiply(generated.itemAmount(), DATA_FLOW_PER_CONVERTED_ITEM),
-                saturatedMultiply(Math.max(0L, generated.experience()), DATA_FLOW_PER_CONVERTED_EXPERIENCE));
+        long amount = AmountMath.addNonNegative(
+                AmountMath.multiplyNonNegative(generated.itemAmount(), DATA_FLOW_PER_CONVERTED_ITEM),
+                AmountMath.multiplyNonNegative(Math.max(0L, generated.experience()), DATA_FLOW_PER_CONVERTED_EXPERIENCE));
         if (amount <= 0) {
             return;
         }
@@ -1561,23 +1562,6 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
 
     private boolean hasOverflowDestructionCard() {
         return this.upgrades.getInstalledUpgrades(AEItems.VOID_CARD) > 0;
-    }
-
-    private static long saturatedAdd(long left, long right) {
-        if (right > 0L && left > Long.MAX_VALUE - right) {
-            return Long.MAX_VALUE;
-        }
-        return left + right;
-    }
-
-    private static long saturatedMultiply(long left, long right) {
-        if (left <= 0L || right <= 0L) {
-            return 0L;
-        }
-        if (left > Long.MAX_VALUE / right) {
-            return Long.MAX_VALUE;
-        }
-        return left * right;
     }
 
     private boolean isReceivingRedstonePower() {

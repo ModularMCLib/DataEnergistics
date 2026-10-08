@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -277,7 +277,7 @@ public final class TrinityAcyclicCompetitionPlanner {
 
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger count = missing.signum() > 0 ?
-                        BigIntegerMath.ceilDivideNonNegative(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
+                        AmountMath.ceilDivideNonNegative(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
                 deterministicFirings.merge(selected, count, BigInteger::add);
                 deterministicPatterns.add(selected.patternIdentity());
                 deterministicTouchedKeys.addAll(selected.inputs().keySet());

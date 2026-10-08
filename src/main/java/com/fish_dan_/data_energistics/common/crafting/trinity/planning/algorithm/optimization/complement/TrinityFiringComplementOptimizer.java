@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.TrinityCycleDemand;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
-import com.fish_dan_.data_energistics.util.BigIntegerMath;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -109,7 +109,7 @@ public final class TrinityFiringComplementOptimizer {
                 BigInteger deficit = lowerBounds.getOrDefault(output.getKey(), ZERO)
                         .subtract(net.getOrDefault(output.getKey(), ZERO));
                 if (deficit.signum() > 0) {
-                    count = count.max(BigIntegerMath.ceilDivideNonNegative(deficit, output.getValue()));
+                    count = count.max(AmountMath.ceilDivideNonNegative(deficit, output.getValue()));
                 }
             }
             if (count.compareTo(firingUpperBound.get(variant)) > 0) {

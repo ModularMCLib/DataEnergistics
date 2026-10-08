@@ -15,6 +15,7 @@ import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -144,12 +145,11 @@ public final class AutoBuildMaterialTransaction {
     }
 
     /** Marks published positions as consumed, then returns every remaining actual deduction. */
-    public RefundOutcome settlePublicationFailure(List<BlockPos> published) {
+    public RefundOutcome settlePublicationFailure(LongList published) {
         if (!committed || closed) throw new IllegalStateException("Cannot settle an uncommitted material transaction");
-        for (BlockPos position : published) {
-            long packedPosition = position.asLong();
+        for (long packedPosition : published) {
             Reservation reservation = reservations.remove(packedPosition);
-            if (reservation == null) throw new IllegalArgumentException("Unreserved publication: " + position);
+            if (reservation == null) throw new IllegalArgumentException("Unreserved publication: " + BlockPos.of(packedPosition));
             for (Debit debit : reservation.debits()) {
                 Object2LongMap<AEKey> outstanding = debit.source().outstanding;
                 outstanding.put(reservation.key(), outstanding.getLong(reservation.key()) - debit.amount());

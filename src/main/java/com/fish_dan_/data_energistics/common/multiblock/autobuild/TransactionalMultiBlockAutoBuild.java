@@ -38,6 +38,7 @@ import com.modularmc.mdl.api.multiblock.StructureWorldView;
 import com.modularmc.mdl.api.multiblock.TraceabilityPredicate;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
@@ -159,8 +160,11 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
 
         PublicationOutcome publicationOutcome = publishAll(context, allocation.placements(), stageOutcome);
         if (publicationOutcome.failure() != null) {
-            RefundOutcome refundOutcome = inventory.settlePublicationFailure(
-                    publicationOutcome.consumedPlacements().stream().map(Placement::position).toList());
+            LongArrayList consumedPositions = new LongArrayList(publicationOutcome.consumedPlacements().size());
+            for (Placement placement : publicationOutcome.consumedPlacements()) {
+                consumedPositions.add(placement.position().asLong());
+            }
+            RefundOutcome refundOutcome = inventory.settlePublicationFailure(consumedPositions);
             releaseReplacementDrops(context, publicationOutcome.releasedReplacementDrops());
             if (!refundOutcome.completed()) {
                 Failure publicationFailure = publicationOutcome.failure();

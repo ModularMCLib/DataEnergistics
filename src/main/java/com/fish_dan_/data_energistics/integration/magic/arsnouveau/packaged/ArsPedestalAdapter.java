@@ -297,8 +297,8 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 return null;
         }
         var pedestals = new ObjectArrayList<ArcanePedestalTile>();
-        for (BlockPos pedestalPosition : this.kind.positions(tile)) {
-            if (!(level.getBlockEntity(pedestalPosition) instanceof ArcanePedestalTile pedestal)) return null;
+        for (long packedPedestalPosition : this.kind.positions(tile)) {
+            if (!(level.getBlockEntity(BlockPos.of(packedPedestalPosition)) instanceof ArcanePedestalTile pedestal)) return null;
             pedestals.add(pedestal);
         }
         return new Layout(tile, (Container) tile, pedestals);

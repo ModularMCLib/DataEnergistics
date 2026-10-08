@@ -4,6 +4,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 
 import com.hollingsworth.arsnouveau.common.block.tile.ImbuementTile;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.util.List;
 
@@ -14,7 +19,7 @@ import java.util.List;
 final class ImbuementInputSnapshot extends ImbuementTile {
 
     private final List<ItemStack> pedestalInputs;
-    private final List<BlockPos> pedestalPositions;
+    private final LongList pedestalPositions;
     private final int storedSource;
     private final int sourceCapacity;
 
@@ -22,7 +27,9 @@ final class ImbuementInputSnapshot extends ImbuementTile {
         super(original.getBlockPos(), original.getBlockState());
         this.stack = input.copy();
         this.pedestalInputs = pedestalInputs.stream().map(ItemStack::copy).toList();
-        this.pedestalPositions = List.copyOf(original.getNearbyPedestals());
+        LongArrayList pedestalPositions = new LongArrayList(original.getNearbyPedestals().size());
+        for (BlockPos position : original.getNearbyPedestals()) pedestalPositions.add(position.asLong());
+        this.pedestalPositions = pedestalPositions;
         this.storedSource = original.getSource();
         this.sourceCapacity = original.getMaxSource();
         setLevel(original.getLevel());
@@ -44,8 +51,10 @@ final class ImbuementInputSnapshot extends ImbuementTile {
     }
 
     @Override
-    public List<BlockPos> getNearbyPedestals() {
-        return this.pedestalPositions;
+    public ObjectList<BlockPos> getNearbyPedestals() {
+        ObjectArrayList<BlockPos> positions = new ObjectArrayList<>(this.pedestalPositions.size());
+        for (long packedPosition : this.pedestalPositions) positions.add(BlockPos.of(packedPosition));
+        return ObjectLists.unmodifiable(positions);
     }
 
     @Override

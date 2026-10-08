@@ -36,20 +36,21 @@ import net.minecraft.world.phys.AABB;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * World-level source of truth for confirmed orbital attacks and their resumable warning, delivery and cooldown work.
@@ -101,7 +102,7 @@ public final class OrbitalAttackSavedData extends SavedData {
             OrbitalAttackSavedData::new,
             OrbitalAttackSavedData::load);
 
-    private final Map<UUID, OrbitalAttackRecord> attacks = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<UUID, OrbitalAttackRecord> attacks = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2LongOpenHashMap<UUID> phaseStartedAt = new Object2LongOpenHashMap<>();
     private final Object2ObjectOpenHashMap<UUID, BeamFrame> beamFrames = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<UUID, OrbitalErasureStrike> erasureStrikes = new Object2ObjectOpenHashMap<>();
@@ -121,7 +122,7 @@ public final class OrbitalAttackSavedData extends SavedData {
      * Returns a persisted attack by its immutable ID.
      */
     public Optional<OrbitalAttackRecord> find(UUID attackId) {
-        return Optional.ofNullable(this.attacks.get(attackId));
+        return Optional.of(this.attacks.get(attackId));
     }
 
     /**
@@ -221,19 +222,19 @@ public final class OrbitalAttackSavedData extends SavedData {
      * current {@link StellarErasureDeviceRecord}; this method never exposes the complete attack store to a client.
      * </p>
      */
-    public List<OrbitalAttackRecord> forWeapon(UUID weaponId) {
+    public ObjectList<OrbitalAttackRecord> forWeapon(UUID weaponId) {
         ObjectOpenHashSet<UUID> weaponIds = new ObjectOpenHashSet<>(1);
         weaponIds.add(weaponId);
-        return forWeapons(weaponIds).getOrDefault(weaponId, List.of());
+        return forWeapons(weaponIds).getOrDefault(weaponId, ObjectList.of());
     }
 
     /**
      * Groups attacks for all requested weapon IDs with one traversal of the authoritative attack store.
      * Each returned group is immutable and ordered by stable attack ID.
      */
-    public Map<UUID, List<OrbitalAttackRecord>> forWeapons(ObjectSet<UUID> weaponIds) {
+    public Object2ObjectMap<UUID, ObjectList<OrbitalAttackRecord>> forWeapons(ObjectSet<UUID> weaponIds) {
         if (weaponIds.isEmpty()) {
-            return Map.of();
+            return Object2ObjectMaps.emptyMap();
         }
         Object2ObjectOpenHashMap<UUID, ObjectArrayList<OrbitalAttackRecord>> grouped = new Object2ObjectOpenHashMap<>();
         for (OrbitalAttackRecord attack : this.attacks.values()) {
@@ -241,31 +242,31 @@ public final class OrbitalAttackSavedData extends SavedData {
                 grouped.computeIfAbsent(attack.weaponId(), ignored -> new ObjectArrayList<>()).add(attack);
             }
         }
-        Object2ObjectOpenHashMap<UUID, List<OrbitalAttackRecord>> immutableGroups = new Object2ObjectOpenHashMap<>(
+        Object2ObjectOpenHashMap<UUID, ObjectList<OrbitalAttackRecord>> immutableGroups = new Object2ObjectOpenHashMap<>(
                 grouped.size());
         grouped.forEach((weaponId, attacks) -> {
             attacks.sort(Comparator.comparing(OrbitalAttackRecord::attackId));
-            immutableGroups.put(weaponId, List.copyOf(attacks));
+            immutableGroups.put(weaponId, new ObjectImmutableList<>(attacks));
         });
-        return Map.copyOf(immutableGroups);
+        return Object2ObjectMaps.unmodifiable(immutableGroups);
     }
 
     /** Returns only publicly visible attacks in one dimension for tactical-map marker sampling. */
-    public List<OrbitalAttackRecord> publicForDimension(ResourceLocation dimensionId) {
+    public ObjectList<OrbitalAttackRecord> publicForDimension(ResourceLocation dimensionId) {
         return this.attacks.values().stream()
                 .filter(attack -> attack.dimensionId().equals(dimensionId))
                 .filter(attack -> attack.phase() == OrbitalAttackPhase.RESERVED_WARNING || attack.phase() == OrbitalAttackPhase.COMMITTED || attack.phase() == OrbitalAttackPhase.DELIVERY)
                 .sorted(Comparator.comparing(OrbitalAttackRecord::attackId))
-                .toList();
+                .collect(ObjectArrayList.toList());
     }
 
     /**
      * Builds the public render baseline for one dimension. No owner, reserve, exemption or delegated-role field is
      * included; clients only receive deterministic geometry and coarse progress.
      */
-    public List<OrbitalAttackVisualSnapshot> publicVisuals(ServerLevel level, long gameTime) {
+    public ObjectList<OrbitalAttackVisualSnapshot> publicVisuals(ServerLevel level, long gameTime) {
         DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
-        List<OrbitalAttackVisualSnapshot> visuals = new ObjectArrayList<>();
+        ObjectArrayList<OrbitalAttackVisualSnapshot> visuals = new ObjectArrayList<>();
         for (OrbitalAttackRecord storedAttack : this.attacks.values()) {
             BeamFrame frame = this.beamFrames.get(storedAttack.attackId());
             // Retain the last delivered span for this tick even if the persisted attack just entered cooldown.
@@ -320,7 +321,7 @@ public final class OrbitalAttackSavedData extends SavedData {
         }
         return visuals.stream()
                 .sorted(Comparator.comparing(OrbitalAttackVisualSnapshot::attackId))
-                .toList();
+                .collect(ObjectArrayList.toList());
     }
 
     /**
@@ -640,13 +641,15 @@ public final class OrbitalAttackSavedData extends SavedData {
             setDirty();
         }
         this.terrainWorkScheduler.beginTick(server, settings);
-        Set<UUID> liveSchedulerAttacks = this.attacks.values().stream()
-                .filter(attack -> attack.phase() == OrbitalAttackPhase.COMMITTED || attack.phase() == OrbitalAttackPhase.DELIVERY)
-                .map(OrbitalAttackRecord::attackId)
-                .collect(Collectors.toUnmodifiableSet());
+        ObjectSet<UUID> liveSchedulerAttacks = new ObjectOpenHashSet<>();
+        for (OrbitalAttackRecord attack : this.attacks.values()) {
+            if (attack.phase() == OrbitalAttackPhase.COMMITTED || attack.phase() == OrbitalAttackPhase.DELIVERY) {
+                liveSchedulerAttacks.add(attack.attackId());
+            }
+        }
         this.terrainWorkScheduler.releaseMissing(server, liveSchedulerAttacks);
 
-        List<OrbitalAttackRecord> snapshot = List.copyOf(this.attacks.values());
+        ObjectList<OrbitalAttackRecord> snapshot = new ObjectImmutableList<>(this.attacks.values());
         if (snapshot.isEmpty()) {
             this.roundRobinOffset = 0;
             return;
@@ -812,7 +815,7 @@ public final class OrbitalAttackSavedData extends SavedData {
                 case DIGITAL_ANNIHILATION -> geometry = readDigitalAnnihilationGeometry(tag);
                 default -> throw new IllegalArgumentException("Unsupported orbital attack mode");
             }
-            Set<UUID> exemptions = readDamageExemptions(tag);
+            ObjectSet<UUID> exemptions = readDamageExemptions(tag);
             if (exemptions == null) {
                 return null;
             }
@@ -846,18 +849,18 @@ public final class OrbitalAttackSavedData extends SavedData {
         return tag.hasUUID(ATTACK_ID_TAG) && tag.hasUUID(WEAPON_ID_TAG) && tag.contains(MODE_TAG, Tag.TAG_STRING) && tag.contains(PHASE_TAG, Tag.TAG_STRING) && tag.contains(PHASE_STARTED_AT_TAG, Tag.TAG_LONG) && tag.getLong(PHASE_STARTED_AT_TAG) >= 0L && tag.contains(DIMENSION_TAG, Tag.TAG_STRING) && tag.contains(TARGET_TAG, Tag.TAG_INT_ARRAY) && tag.contains(CONFIGURATION_REVISION_TAG, Tag.TAG_LONG) && tag.contains(WARNING_TICKS_TAG, Tag.TAG_INT) && tag.contains(WORK_CURSOR_TAG, Tag.TAG_LONG) && tag.contains(WORK_STATE_TAG, Tag.TAG_STRING) && (!tag.contains(FAULT_REASON_TAG) || tag.contains(FAULT_REASON_TAG, Tag.TAG_STRING)) && (!tag.contains(PAYLOAD_ENTITY_ID_TAG) || tag.hasUUID(PAYLOAD_ENTITY_ID_TAG)) && tag.contains(PAYLOAD_ARRIVED_TAG, Tag.TAG_BYTE) && tag.contains(IMPACT_APPLIED_TAG, Tag.TAG_BYTE) && tag.contains(COOLDOWN_TICKS_TAG, Tag.TAG_INT) && tag.contains(COOLDOWN_DURATION_TAG, Tag.TAG_INT) && tag.contains(CELESTIAL_ESCROW_TAG, Tag.TAG_LONG) && tag.contains(AE_ESCROW_TAG, Tag.TAG_LONG) && tag.contains(EXEMPTIONS_TAG, Tag.TAG_LIST);
     }
 
-    private static @Nullable Set<UUID> readDamageExemptions(CompoundTag tag) {
+    private static @Nullable ObjectSet<UUID> readDamageExemptions(CompoundTag tag) {
         Tag rawExemptions = tag.get(EXEMPTIONS_TAG);
         if (!(rawExemptions instanceof ListTag exemptionList)) {
             return null;
         }
-        Set<UUID> exemptions = new ObjectOpenHashSet<>();
+        ObjectSet<UUID> exemptions = new ObjectOpenHashSet<>();
         for (Tag rawExemption : exemptionList) {
             if (!(rawExemption instanceof CompoundTag exemption) || !exemption.hasUUID(UUID_TAG) || !exemptions.add(exemption.getUUID(UUID_TAG))) {
                 return null;
             }
         }
-        return Set.copyOf(exemptions);
+        return ObjectSets.unmodifiable(exemptions);
     }
 
     /** Decodes the kinetic geometry boundary, retaining the original profile of pre-upgrade saved attacks. */
@@ -1118,10 +1121,10 @@ public final class OrbitalAttackSavedData extends SavedData {
         if (level.getChunkSource().getChunkNow(targetChunk.x, targetChunk.z) == null) {
             return false;
         }
-        List<OrbitalAnnihilatorProjectileEntity> matches = level.getEntitiesOfClass(
+        ObjectList<OrbitalAnnihilatorProjectileEntity> matches = new ObjectArrayList<>(level.getEntitiesOfClass(
                 OrbitalAnnihilatorProjectileEntity.class,
                 digitalPayloadSearchBounds(level, current.target()),
-                projectile -> current.attackId().equals(projectile.attackId()));
+                projectile -> current.attackId().equals(projectile.attackId())));
         if (matches.size() > 1) {
             fault(server, current, "Multiple digital-annihilation projectiles claimed the same attack");
             return true;
@@ -1142,10 +1145,10 @@ public final class OrbitalAttackSavedData extends SavedData {
         if (level.getChunkSource().getChunkNow(targetChunk.x, targetChunk.z) == null) {
             return false;
         }
-        List<DataNukePrimedEntity> matches = level.getEntitiesOfClass(
+        ObjectList<DataNukePrimedEntity> matches = new ObjectArrayList<>(level.getEntitiesOfClass(
                 DataNukePrimedEntity.class,
                 digitalPayloadSearchBounds(level, current.target()),
-                nuke -> current.attackId().equals(nuke.orbitalAttackId()));
+                nuke -> current.attackId().equals(nuke.orbitalAttackId())));
         if (matches.size() > 1) {
             fault(server, current, "Multiple digital-annihilation fuses claimed the same attack");
             return true;

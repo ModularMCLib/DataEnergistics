@@ -29,10 +29,11 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.JsonOps;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.UUID;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -66,7 +67,7 @@ public final class OrbitalControlTerminalGameTest {
         var namedEntry = new OrbitalControlTerminalSnapshot.WeaponEntry(entry.weaponId(), entry.ownerId(), entry.owner(),
                 entry.delegatedRole(), entry.endpointCount(), entry.lifecycleState(), entry.graceTicksRemaining(),
                 entry.stellarFlux(), entry.aeEnergy(), entry.attacks(), entry.customName(), ownerName);
-        var snapshot = new OrbitalControlTerminalSnapshot(weapon.weaponId(), List.of(namedEntry), false);
+        var snapshot = new OrbitalControlTerminalSnapshot(weapon.weaponId(), ObjectList.of(namedEntry), false);
         helper.assertValueEqual(snapshot.selectedWeapon().orElseThrow().customName(), "天穹二号", "Snapshot must carry the saved name");
         var encoded = OrbitalControlTerminalSnapshot.CODEC.encodeStart(JsonOps.INSTANCE, snapshot).getOrThrow();
         helper.assertValueEqual(OrbitalControlTerminalSnapshot.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow(), snapshot,
@@ -108,7 +109,9 @@ public final class OrbitalControlTerminalGameTest {
         data.authorize(server, delegated.weaponId(), delegated.ownerId(), player.getUUID(), OrbitalAccessRole.OPERATOR);
 
         OrbitalControlTerminalSnapshot initial = OrbitalControlTerminalSnapshot.capture(server, player.getUUID());
-        List<UUID> accessible = initial.weapons().stream().map(OrbitalControlTerminalSnapshot.WeaponEntry::weaponId).toList();
+        ObjectList<UUID> accessible = initial.weapons().stream()
+                .map(OrbitalControlTerminalSnapshot.WeaponEntry::weaponId)
+                .collect(ObjectArrayList.toList());
         helper.assertValueEqual(accessible.size(), 2, "The selector must expose both owned and delegated weapons");
         helper.assertValueEqual(initial.selectedWeaponId(), accessible.getFirst(), "Selection must start at stable first UUID");
 

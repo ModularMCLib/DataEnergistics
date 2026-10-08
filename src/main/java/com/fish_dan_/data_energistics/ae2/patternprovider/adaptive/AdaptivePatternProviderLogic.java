@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningAutoRequestHelper;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.reusable.AdaptiveReusableCraftingState;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
@@ -1956,7 +1956,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
 
         if (tuningHost.dataEnergistics$consumeRedstoneInputPulse() && blockEntity.getLevel() instanceof ServerLevel serverLevel) {
-            RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+            RedstoneTuningUtils.requestPrimaryOutputs(
                     serverLevel,
                     this.host.getGrid(),
                     this.actionSource,
@@ -1975,7 +1975,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             return false;
         }
 
-        RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+        RedstoneTuningUtils.requestPrimaryOutputs(
                 serverLevel,
                 this.host.getGrid(),
                 this.actionSource,

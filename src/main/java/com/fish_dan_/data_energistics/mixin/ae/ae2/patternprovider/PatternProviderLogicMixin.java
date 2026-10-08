@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningAutoRequestHelper;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
@@ -308,7 +308,7 @@ public abstract class PatternProviderLogicMixin
     @Override
     public boolean dataEnergistics$forcePulseUnlock() {
         if (this.host instanceof RedstoneTuningAwareHost accessor && accessor.dataEnergistics$getRedstoneTuningMode() == RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE && this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
-            RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+            RedstoneTuningUtils.requestPrimaryOutputs(
                     serverLevel,
                     this.host.getGrid(),
                     this.actionSource,
@@ -337,7 +337,7 @@ public abstract class PatternProviderLogicMixin
         if (!accessor.dataEnergistics$hasRedstoneTuningCard() || accessor.dataEnergistics$getRedstoneTuningMode() != RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE || !accessor.dataEnergistics$consumeRedstoneInputPulse() || !(this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
-        RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+        RedstoneTuningUtils.requestPrimaryOutputs(
                 serverLevel,
                 this.host.getGrid(),
                 this.actionSource,

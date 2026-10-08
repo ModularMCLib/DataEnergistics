@@ -47,26 +47,26 @@ final class CraftingPlanGraphRecordCodec {
                 ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buffer, header.diagnostic());
             }
             case GraphNode value -> {
-                if (value.node() instanceof Material node) {
+                if (value.node() instanceof Material(int id, AEKey key, BigInteger required, BigInteger stored, BigInteger crafting, BigInteger missing, BigInteger unresolved, int inventoryUsageBasisPoints)) {
                     buffer.writeByte(1);
-                    buffer.writeVarInt(node.id());
-                    AEKey.STREAM_CODEC.encode(buffer, node.key());
-                    amount(buffer, node.required());
-                    amount(buffer, node.stored());
-                    amount(buffer, node.crafting());
-                    amount(buffer, node.missing());
-                    amount(buffer, node.unresolved());
-                    buffer.writeVarInt(node.inventoryUsageBasisPoints());
-                } else if (value.node() instanceof Process node) {
+                    buffer.writeVarInt(id);
+                    AEKey.STREAM_CODEC.encode(buffer, key);
+                    amount(buffer, required);
+                    amount(buffer, stored);
+                    amount(buffer, crafting);
+                    amount(buffer, missing);
+                    amount(buffer, unresolved);
+                    buffer.writeVarInt(inventoryUsageBasisPoints);
+                } else if (value.node() instanceof Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput, BigInteger executions, boolean estimated, IntList cycleIds)) {
                     buffer.writeByte(2);
-                    buffer.writeVarInt(node.id());
-                    buffer.writeVarInt(node.stageIndex());
-                    buffer.writeUtf(node.patternIdentity());
-                    buffer.writeVarInt(node.variantOrdinal());
-                    AEKey.STREAM_CODEC.encode(buffer, node.primaryOutput());
-                    amount(buffer, node.executions());
-                    buffer.writeBoolean(node.estimated());
-                    ids(buffer, node.cycleIds());
+                    buffer.writeVarInt(id);
+                    buffer.writeVarInt(stageIndex);
+                    buffer.writeUtf(patternIdentity);
+                    buffer.writeVarInt(variantOrdinal);
+                    AEKey.STREAM_CODEC.encode(buffer, primaryOutput);
+                    amount(buffer, executions);
+                    buffer.writeBoolean(estimated);
+                    ids(buffer, cycleIds);
                 }
             }
             case GraphEdge value -> {

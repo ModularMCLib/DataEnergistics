@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.util.ItemStackListCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -123,8 +123,8 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
         progress.putInt("width", table.width());
-        progress.put("inputs", ItemStackListCodec.encode(grid, level.registryAccess()));
-        progress.put("remaining", ItemStackListCodec.encode(remaining, level.registryAccess()));
+        progress.put("inputs", NbtCodecs.encodeItemStacks(grid, level.registryAccess()));
+        progress.put("remaining", NbtCodecs.encodeItemStacks(remaining, level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
         return progress;
     }
@@ -164,8 +164,8 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         if (encodedInputs.size() != width * width || encodedRemaining.size() != width * width) {
             throw new IllegalArgumentException("Invalid persisted Extended Crafting table grid");
         }
-        var inputs = ItemStackListCodec.decode(encodedInputs, operation.level().registryAccess());
-        var remaining = ItemStackListCodec.decode(encodedRemaining, operation.level().registryAccess());
+        var inputs = NbtCodecs.decodeItemStacks(encodedInputs, operation.level().registryAccess());
+        var remaining = NbtCodecs.decodeItemStacks(encodedRemaining, operation.level().registryAccess());
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Extended Crafting table output"));
         boolean delivered = progress.getBoolean("delivered");

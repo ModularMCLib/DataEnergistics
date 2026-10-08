@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.util.ItemStackListCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -73,7 +73,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
                 !PackagedOutputMatching.matches(pattern, recipe.resultItem, recipe.resultItem.getCount()))
             return null;
         var result = new CompoundTag();
-        result.put(SLOTS, ItemStackListCodec.encode(slots, level.registryAccess()));
+        result.put(SLOTS, NbtCodecs.encodeItemStacks(slots, level.registryAccess()));
         result.put(OUTPUT, recipe.resultItem.save(level.registryAccess()));
         return result;
     }
@@ -117,7 +117,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
         if (!emptyInputsAndOutput(forge)) return false;
         ForgeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null || !validCosts(recipe)) return false;
-        ObjectList<ItemStack> slots = ItemStackListCodec.decode(
+        ObjectList<ItemStack> slots = NbtCodecs.decodeItemStacks(
                 operation.progress().getList(SLOTS, Tag.TAG_COMPOUND), operation.level().registryAccess());
         if (slots.size() != HellfireForgeBlockEntity.GEM_SLOT) return false;
 

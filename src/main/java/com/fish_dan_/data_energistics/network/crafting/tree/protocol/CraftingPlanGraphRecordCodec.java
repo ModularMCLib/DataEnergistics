@@ -12,7 +12,7 @@ import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPla
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphEdge;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphHeader;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphNode;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -127,11 +127,11 @@ final class CraftingPlanGraphRecordCodec {
     }
 
     private static void amount(RegistryFriendlyByteBuf buffer, BigInteger amount) {
-        buffer.writeByteArray(ExactAmountCodec.encode(amount, "plan graph amount"));
+        buffer.writeByteArray(NbtCodecs.encode(amount, "plan graph amount"));
     }
 
     private static BigInteger amount(RegistryFriendlyByteBuf buffer) {
-        return ExactAmountCodec.decode(buffer.readByteArray(ExactAmountCodec.MAX_BYTES), "plan graph amount");
+        return NbtCodecs.decode(buffer.readByteArray(NbtCodecs.MAX_BYTES), "plan graph amount");
     }
 
     private static int count(RegistryFriendlyByteBuf buffer) {

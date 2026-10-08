@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.custody.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.PersistentReusableCraftingEndpoint.Host;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableSlot;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityPatternCoreTier;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;
@@ -1182,7 +1182,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
                 itemData.putInt(SLOT_TAG, entry.slot());
                 itemData.put(PROTOTYPE_TAG, entry.item().key().toStack(1).saveOptional(registries));
                 itemData.putByteArray(AMOUNT_TAG,
-                        ExactAmountCodec.encode(entry.item().exactAmount(), "retained crafting refund"));
+                        NbtCodecs.encode(entry.item().exactAmount(), "retained crafting refund"));
                 items.add(itemData);
             }
             groupData.put(ITEMS_TAG, items);
@@ -1243,7 +1243,7 @@ public final class PersistentTrinityPatternCore implements TrinityPatternCore {
             throw new IllegalArgumentException("Trinity retained refund entry requires one item prototype");
         }
         return new RetainedRefundEntry(slot, new TrinityItemAmount(AEItemKey.of(prototype),
-                ExactAmountCodec.readTag(data, AMOUNT_TAG, "retained crafting refund")));
+                NbtCodecs.readTag(data, AMOUNT_TAG, "retained crafting refund")));
     }
 
     private static void validateCapacity(int patternCapacity) {

@@ -90,7 +90,7 @@ import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOut
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -170,7 +170,7 @@ final class TrinityDataCoreCpuLogic {
     private static final String REUSABLE_LEDGER_TAG = "reusable_sessions";
     private static final double ENERGY_TOLERANCE = 0.01D;
     private static final BigInteger MAX_EXACT_DISPATCH_AMOUNT = BigInteger.ONE
-            .shiftLeft(ExactAmountCodec.MAX_BYTES * Byte.SIZE - 1).subtract(BigInteger.ONE);
+            .shiftLeft(NbtCodecs.MAX_BYTES * Byte.SIZE - 1).subtract(BigInteger.ONE);
     /** The shared dispatch window, rather than structure co-processors, owns the physical-operation limit. */
     private static final int UNLIMITED_WORKER_OPERATIONS = Integer.MAX_VALUE;
 

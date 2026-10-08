@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.trinity.pattern;
 
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdLookup;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolution;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -424,15 +424,15 @@ public final class TrinityPatternSlot {
                 outputAmounts.merge(AEItemKey.of(remainder), BigInteger.valueOf(remainder.getCount()), BigInteger::add);
             }
         }
-        BigInteger maximumAmount = BigInteger.ONE.shiftLeft(ExactAmountCodec.MAX_BYTES * Byte.SIZE - 1)
+        BigInteger maximumAmount = BigInteger.ONE.shiftLeft(NbtCodecs.MAX_BYTES * Byte.SIZE - 1)
                 .subtract(BigInteger.ONE);
         BigInteger maximumCount = maximumAmount;
         for (BigInteger amount : inputAmounts.values()) {
-            ExactAmountCodec.encode(amount.multiply(count), "queued crafting refund");
+            NbtCodecs.encode(amount.multiply(count), "queued crafting refund");
             maximumCount = maximumCount.min(maximumAmount.divide(amount));
         }
         for (BigInteger amount : outputAmounts.values()) {
-            ExactAmountCodec.encode(amount.multiply(count), "queued crafting output");
+            NbtCodecs.encode(amount.multiply(count), "queued crafting output");
             maximumCount = maximumCount.min(maximumAmount.divide(amount));
         }
         return maximumCount;
@@ -959,7 +959,7 @@ public final class TrinityPatternSlot {
                 CompoundTag outputData = new CompoundTag();
                 outputData.put(PROTOTYPE_TAG, output.key().toStack(1).saveOptional(registries));
                 outputData.putByteArray(AMOUNT_TAG,
-                        ExactAmountCodec.encode(output.exactAmount(), "pending crafting output"));
+                        NbtCodecs.encode(output.exactAmount(), "pending crafting output"));
                 outputs.add(outputData);
             }
             groupData.put(OUTPUTS_TAG, outputs);
@@ -990,7 +990,7 @@ public final class TrinityPatternSlot {
                             "Trinity pending-output prototype must contain exactly one item");
                 }
                 outputs.add(TrinityItemAmount.of(prototype).withAmount(
-                        ExactAmountCodec.readTag(outputData, AMOUNT_TAG, "pending crafting output")));
+                        NbtCodecs.readTag(outputData, AMOUNT_TAG, "pending crafting output")));
             }
             this.pendingOutputs.put(route, outputs);
         }
@@ -1081,7 +1081,7 @@ public final class TrinityPatternSlot {
             TrinityItemAmount previous = outputs.getLast();
             if (previous.key().equals(output.key())) {
                 BigInteger merged = previous.exactAmount().add(output.exactAmount());
-                if (merged.bitLength() < ExactAmountCodec.MAX_BYTES * Byte.SIZE) {
+                if (merged.bitLength() < NbtCodecs.MAX_BYTES * Byte.SIZE) {
                     outputs.set(outputs.size() - 1, previous.withAmount(merged));
                     return;
                 }

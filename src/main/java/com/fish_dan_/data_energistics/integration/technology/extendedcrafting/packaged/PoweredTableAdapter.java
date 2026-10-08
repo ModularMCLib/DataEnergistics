@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.util.ItemStackListCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -94,8 +94,8 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
         if (!PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
         progress.putInt("size", size);
-        progress.put("inputs", ItemStackListCodec.encode(grid, level.registryAccess()));
-        progress.put("remaining", ItemStackListCodec.encode(remaining, level.registryAccess()));
+        progress.put("inputs", NbtCodecs.encodeItemStacks(grid, level.registryAccess()));
+        progress.put("remaining", NbtCodecs.encodeItemStacks(remaining, level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
         return progress;
     }
@@ -113,8 +113,8 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
         var remaining = progress.getList("remaining", Tag.TAG_COMPOUND);
         if (encoded.size() != outputSlot || remaining.size() != outputSlot)
             throw new IllegalArgumentException("Invalid powered table grid");
-        var inputs = ItemStackListCodec.decode(encoded, operation.level().registryAccess());
-        var expectedRemaining = ItemStackListCodec.decode(remaining, operation.level().registryAccess());
+        var inputs = NbtCodecs.decodeItemStacks(encoded, operation.level().registryAccess());
+        var expectedRemaining = NbtCodecs.decodeItemStacks(remaining, operation.level().registryAccess());
         if (!progress.getBoolean("delivered")) {
             if (!empty(tile)) return false;
             for (int slot = 0; slot < outputSlot; slot++) {

@@ -15,7 +15,7 @@ import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityC
 import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftConfirmCycleRecord.InventoryUsage;
 import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftConfirmCycleRecord.Material;
 import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftConfirmCycleRecord.UnresolvedDemand;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -337,12 +337,12 @@ public final class TrinityCraftConfirmCyclePayload implements CustomPacketPayloa
     }
 
     private static void writeBigInteger(RegistryFriendlyByteBuf buffer, BigInteger value) {
-        buffer.writeByteArray(ExactAmountCodec.encode(value, "crafting confirmation integer"));
+        buffer.writeByteArray(NbtCodecs.encode(value, "crafting confirmation integer"));
     }
 
     private static BigInteger readBigInteger(RegistryFriendlyByteBuf buffer) {
-        return ExactAmountCodec.decode(
-                buffer.readByteArray(ExactAmountCodec.MAX_BYTES),
+        return NbtCodecs.decode(
+                buffer.readByteArray(NbtCodecs.MAX_BYTES),
                 "crafting confirmation integer");
     }
 

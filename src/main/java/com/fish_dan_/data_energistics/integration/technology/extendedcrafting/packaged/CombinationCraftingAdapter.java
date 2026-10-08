@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.util.ItemStackListCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -114,8 +114,8 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         var progress = new CompoundTag();
         progress.put("layout", positions(layout.pedestals()));
         progress.put("selected", positions(selected));
-        progress.put("inputs", ItemStackListCodec.encode(assigned, level.registryAccess()));
-        progress.put("remaining", ItemStackListCodec.encode(remaining, level.registryAccess()));
+        progress.put("inputs", NbtCodecs.encodeItemStacks(assigned, level.registryAccess()));
+        progress.put("remaining", NbtCodecs.encodeItemStacks(remaining, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
@@ -140,9 +140,9 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         CompoundTag progress = operation.progress();
         ObjectList<BlockPos> selected = selected(progress.getList("selected", Tag.TAG_LONG), layout.pedestals());
         if (selected == null) return false;
-        ObjectList<ItemStack> assigned = ItemStackListCodec.decode(
+        ObjectList<ItemStack> assigned = NbtCodecs.decodeItemStacks(
                 progress.getList("inputs", Tag.TAG_COMPOUND), operation.level().registryAccess());
-        ObjectList<ItemStack> remaining = ItemStackListCodec.decode(
+        ObjectList<ItemStack> remaining = NbtCodecs.decodeItemStacks(
                 progress.getList("remaining", Tag.TAG_COMPOUND), operation.level().registryAccess());
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Extended Crafting combination output"));

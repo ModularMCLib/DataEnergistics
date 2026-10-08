@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.trinity.pattern.PatternRoute;
 import com.fish_dan_.data_energistics.common.trinity.pattern.RoutedCraftingPatternDetails;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -140,7 +140,7 @@ final class TrinityDataCoreExecutingCraftingJob {
         this.targetPrincipal = readTargetPrincipal(data);
         this.link = new CraftingLink(data.getCompound(LINK_TAG), logic.cpu());
         GenericStack finalOutput = GenericStack.readTag(registries, data.getCompound(FINAL_OUTPUT_TAG));
-        this.remainingAmount = ExactAmountCodec.readTag(data, REMAINING_AMOUNT_TAG, "job delivery remainder");
+        this.remainingAmount = NbtCodecs.readTag(data, REMAINING_AMOUNT_TAG, "job delivery remainder");
         if (this.remainingAmount.signum() < 0 || finalOutput == null) {
             throw new IllegalArgumentException("Persisted crafting job has an invalid delivery remainder");
         }
@@ -199,7 +199,7 @@ final class TrinityDataCoreExecutingCraftingJob {
         CompoundTag data = new CompoundTag();
         data.putBoolean(TARGET_PRINCIPAL_KNOWN_TAG, this.targetPrincipal != null);
         if (this.targetPrincipal != null) {
-            data.putByteArray(TARGET_PRINCIPAL_TAG, ExactAmountCodec.encode(this.targetPrincipal, "target principal"));
+            data.putByteArray(TARGET_PRINCIPAL_TAG, NbtCodecs.encode(this.targetPrincipal, "target principal"));
         }
 
         CompoundTag linkData = new CompoundTag();
@@ -225,7 +225,7 @@ final class TrinityDataCoreExecutingCraftingJob {
                     this.planExecution.save(registries, TickHandler.instance().getCurrentTick()));
         }
 
-        data.putByteArray(REMAINING_AMOUNT_TAG, ExactAmountCodec.encode(this.remainingAmount, "job delivery remainder"));
+        data.putByteArray(REMAINING_AMOUNT_TAG, NbtCodecs.encode(this.remainingAmount, "job delivery remainder"));
         data.putBoolean(SUSPENDED_TAG, this.suspended);
         if (this.playerId != null) {
             data.putInt(PLAYER_ID_TAG, this.playerId);
@@ -429,7 +429,7 @@ final class TrinityDataCoreExecutingCraftingJob {
         if (!data.contains(TARGET_PRINCIPAL_TAG, Tag.TAG_BYTE_ARRAY)) {
             throw new IllegalArgumentException("Known target principal requires an exact amount");
         }
-        BigInteger principal = ExactAmountCodec.decode(data.getByteArray(TARGET_PRINCIPAL_TAG), "target principal");
+        BigInteger principal = NbtCodecs.decode(data.getByteArray(TARGET_PRINCIPAL_TAG), "target principal");
         if (principal.signum() < 0) {
             throw new IllegalArgumentException("Persisted target principal must not be negative");
         }

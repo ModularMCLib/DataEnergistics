@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -68,7 +68,7 @@ public final class TrinityCraftingBatch {
         if (count.signum() <= 0) {
             throw new IllegalArgumentException("Queued crafting count must be positive: " + count);
         }
-        ExactAmountCodec.encode(count, "queued crafting count");
+        NbtCodecs.encode(count, "queued crafting count");
         this.queuedTick = queuedTick;
         this.route = route;
         this.definition = definition;
@@ -211,7 +211,7 @@ public final class TrinityCraftingBatch {
         if (!this.mergeable || !later.mergeable ||
                 this.queuedTick != later.queuedTick || !this.route.equals(later.route) ||
                 this.definition != later.definition ||
-                this.count.add(later.count).bitLength() >= ExactAmountCodec.MAX_BYTES * Byte.SIZE) {
+                this.count.add(later.count).bitLength() >= NbtCodecs.MAX_BYTES * Byte.SIZE) {
             return BigInteger.ZERO;
         }
         return this.inputs.matches(later.inputs) ? later.count : BigInteger.ZERO;
@@ -263,7 +263,7 @@ public final class TrinityCraftingBatch {
 
     CompoundTag writeToTag(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
-        data.putByteArray(COUNT_TAG, ExactAmountCodec.encode(this.count, "queued crafting count"));
+        data.putByteArray(COUNT_TAG, NbtCodecs.encode(this.count, "queued crafting count"));
         data.putLong(DEFINITION_ID_TAG, this.definition.id());
         data.putBoolean(MERGEABLE_TAG, this.mergeable);
         data.putLong(QUEUED_TICK_TAG, this.queuedTick);
@@ -287,7 +287,7 @@ public final class TrinityCraftingBatch {
                 PatternRoute.readFromTag(data.getCompound(ROUTE_TAG)),
                 definition,
                 readInputs(data.getList(INPUTS_TAG, Tag.TAG_COMPOUND), registries),
-                ExactAmountCodec.readTag(data, COUNT_TAG, "queued crafting count"),
+                NbtCodecs.readTag(data, COUNT_TAG, "queued crafting count"),
                 data.getBoolean(MERGEABLE_TAG));
     }
 

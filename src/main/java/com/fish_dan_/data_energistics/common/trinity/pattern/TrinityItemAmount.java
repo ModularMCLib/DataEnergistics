@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.trinity.pattern;
 
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEItemKey;
 
@@ -20,7 +20,7 @@ public record TrinityItemAmount(AEItemKey key, BigInteger exactAmount) {
         if (exactAmount == null || exactAmount.signum() <= 0) {
             throw new IllegalArgumentException("A Trinity item amount must be positive: " + exactAmount);
         }
-        ExactAmountCodec.encode(exactAmount, "pattern item amount");
+        NbtCodecs.encode(exactAmount, "pattern item amount");
     }
 
     /** Retains the long-sized construction boundary used by existing integrations. */

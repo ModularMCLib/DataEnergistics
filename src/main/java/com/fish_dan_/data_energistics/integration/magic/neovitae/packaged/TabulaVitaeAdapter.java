@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.util.ItemStackListCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -74,7 +74,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
                 !PackagedOutputMatching.matches(pattern, recipe.getOutput(), recipe.getOutput().getCount()))
             return null;
         var result = new CompoundTag();
-        result.put(INPUTS, ItemStackListCodec.encode(assigned, level.registryAccess()));
+        result.put(INPUTS, NbtCodecs.encodeItemStacks(assigned, level.registryAccess()));
         result.put(OUTPUT, recipe.getOutput().save(level.registryAccess()));
         return result;
     }
@@ -133,7 +133,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         if (!emptyInputsAndOutput(table) || !safePartner(operation.level(), table)) return false;
         TabulaVitaeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null) return false;
-        ObjectList<ItemStack> inputs = ItemStackListCodec.decode(
+        ObjectList<ItemStack> inputs = NbtCodecs.decodeItemStacks(
                 operation.progress().getList(INPUTS, Tag.TAG_COMPOUND), operation.level().registryAccess());
         if (inputs.size() > TabulaVitaeBlockEntity.ORB_SLOT) return false;
 

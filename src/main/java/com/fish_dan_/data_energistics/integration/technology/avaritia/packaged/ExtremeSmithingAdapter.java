@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
-import com.fish_dan_.data_energistics.util.ItemStackListCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -91,7 +91,7 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         }
         if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
-        progress.put("inputs", ItemStackListCodec.encode(assigned, level.registryAccess()));
+        progress.put("inputs", NbtCodecs.encodeItemStacks(assigned, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
@@ -102,7 +102,7 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         var progress = operation.progress();
         var encoded = progress.getList("inputs", Tag.TAG_COMPOUND);
         if (encoded.size() != 5) throw new IllegalArgumentException("Invalid persisted Avaritia smithing inputs");
-        var inputs = ItemStackListCodec.decode(encoded, operation.level().registryAccess());
+        var inputs = NbtCodecs.decodeItemStacks(encoded, operation.level().registryAccess());
         var result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Avaritia smithing result"));
         var holder = operation.level().getRecipeManager().byKey(operation.recipeId());

@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server.Cr
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuContribution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuPartitionProfile;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuProfile;
-import com.fish_dan_.data_energistics.util.ExactAmountCodec;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.CpuSelectionMode;
@@ -1268,7 +1268,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (!unlimited) {
             data.putByteArray(
                     STORAGE_CAPACITY_TAG,
-                    ExactAmountCodec.encode(
+                    NbtCodecs.encode(
                             ((TrinityCpuStorageCapacity.Finite) capacity).bytes(),
                             "CPU storage capacity"));
         }
@@ -1287,7 +1287,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (!data.contains(STORAGE_CAPACITY_TAG, Tag.TAG_BYTE_ARRAY)) {
             throw new IllegalArgumentException("Persisted finite Trinity CPU storage capacity is missing");
         }
-        return new TrinityCpuStorageCapacity.Finite(ExactAmountCodec.decode(
+        return new TrinityCpuStorageCapacity.Finite(NbtCodecs.decode(
                 data.getByteArray(STORAGE_CAPACITY_TAG),
                 "CPU storage capacity"));
     }

@@ -21,12 +21,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.phys.AABB;
 
 import com.breakinblocks.neovitae.common.blockentity.TabulaVitaeBlockEntity;
 import com.breakinblocks.neovitae.common.recipe.NVRecipes;
 import com.breakinblocks.neovitae.common.recipe.tabulavitae.TabulaVitaeRecipe;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -69,7 +70,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         TabulaVitaeRecipe recipe = recipe(level, recipeId);
         if (recipe == null || recipe.getInput().size() > TabulaVitaeBlockEntity.ORB_SLOT) return null;
         ObjectList<ItemStack> assigned = PackagedIngredientAssignment.match(
-                new ObjectArrayList<Ingredient>(recipe.getInput()), inputs);
+                new ObjectArrayList<>(recipe.getInput()), inputs);
         if (assigned == null) return null;
         if (pattern.getOutputs().size() != 1 ||
                 !PackagedOutputMatching.matches(pattern, recipe.getOutput(), recipe.getOutput().getCount()))
@@ -81,15 +82,15 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         if (level.getBlockEntity(position) instanceof TabulaVitaeBlockEntity table) {
             BlockPos partnerPosition = table.getConnectedPos();
             if (level.isLoaded(partnerPosition) &&
                     level.getBlockEntity(partnerPosition) instanceof TabulaVitaeBlockEntity partner && partner.isSlave() &&
                     partner.getMaster() == table)
-                positions.add(partnerPosition);
+                positions.add(partnerPosition.asLong());
         }
         return positions;
     }

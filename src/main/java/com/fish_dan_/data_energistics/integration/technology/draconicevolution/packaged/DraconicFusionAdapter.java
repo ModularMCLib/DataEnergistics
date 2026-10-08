@@ -27,9 +27,11 @@ import com.brandon3055.draconicevolution.api.DraconicAPI;
 import com.brandon3055.draconicevolution.api.crafting.IFusionRecipe;
 import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingCore;
 import com.brandon3055.draconicevolution.blocks.tileentity.TileFusionCraftingInjector;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -105,12 +107,12 @@ public final class DraconicFusionAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position.immutable());
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         ListTag selected = preparation.getList("selected", Tag.TAG_LONG);
-        for (int index = 0; index < selected.size(); index++) {
-            positions.add(BlockPos.of(((LongTag) selected.get(index)).getAsLong()));
+        for (Tag tag : selected) {
+            positions.add(((LongTag) tag).getAsLong());
         }
         return positions;
     }
@@ -370,11 +372,11 @@ public final class DraconicFusionAdapter implements PackagedMachineAdapter {
                                                                              PackagedMachineOperation operation,
                                                                              Layout layout) {
         ListTag positions = operation.progress().getList("selected", Tag.TAG_LONG);
-        var byPosition = new Object2ObjectLinkedOpenHashMap<BlockPos, TileFusionCraftingInjector>();
-        for (var injector : layout.injectors()) byPosition.put(injector.getBlockPos(), injector);
+        var byPosition = new Long2ObjectLinkedOpenHashMap<TileFusionCraftingInjector>();
+        for (var injector : layout.injectors()) byPosition.put(injector.getBlockPos().asLong(), injector);
         var selected = new ObjectArrayList<TileFusionCraftingInjector>();
-        for (int index = 0; index < positions.size(); index++) {
-            BlockPos position = BlockPos.of(((LongTag) positions.get(index)).getAsLong());
+        for (Tag tag : positions) {
+            long position = ((LongTag) tag).getAsLong();
             var injector = byPosition.get(position);
             if (injector == null || selected.contains(injector)) return null;
             selected.add(injector);
@@ -392,8 +394,8 @@ public final class DraconicFusionAdapter implements PackagedMachineAdapter {
         if (expected.size() != injectors.size()) return false;
         var positions = new LongOpenHashSet();
         for (var injector : injectors) positions.add(injector.getBlockPos().asLong());
-        for (int index = 0; index < expected.size(); index++) {
-            if (!positions.remove(((LongTag) expected.get(index)).getAsLong())) return false;
+        for (Tag tag : expected) {
+            if (!positions.remove(((LongTag) tag).getAsLong())) return false;
         }
         return positions.isEmpty();
     }

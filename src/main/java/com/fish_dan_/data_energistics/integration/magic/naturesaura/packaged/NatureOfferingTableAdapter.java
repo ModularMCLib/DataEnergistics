@@ -32,8 +32,9 @@ import de.ellpeck.naturesaura.blocks.multi.Multiblocks;
 import de.ellpeck.naturesaura.blocks.tiles.BlockEntityOfferingTable;
 import de.ellpeck.naturesaura.recipes.ModRecipes;
 import de.ellpeck.naturesaura.recipes.OfferingRecipe;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
@@ -82,7 +83,7 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
     @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
-        if (!recognizes(level, position) || !(level.getBlockEntity(position) instanceof BlockEntityOfferingTable table) || !table.items.getStackInSlot(0).isEmpty() || !queueEmpty(level, table)) return null;
+        if (!recognizes(level, position) || !(level.getBlockEntity(position) instanceof BlockEntityOfferingTable table) || !table.items.getStackInSlot(0).isEmpty() || !queueEmpty(table)) return null;
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof OfferingRecipe recipe) || recipe.getType() != ModRecipes.OFFERING_TYPE) return null;
         var supplied = new KeyCounter();
@@ -132,10 +133,10 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var occupied = new ObjectArrayList<BlockPos>();
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var occupied = new LongArrayList();
         Multiblocks.OFFERING_TABLE.forEach(position, '\0', (part, matcher) -> {
-            occupied.add(part.immutable());
+            occupied.add(part.asLong());
             return true;
         });
         return occupied;
@@ -147,7 +148,7 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
         var progress = operation.progress();
         if (progress.getString("phase").equals("waiting")) {
             boolean complete = collect(operation, false);
-            if (!complete || !table.items.getStackInSlot(0).isEmpty() || !queueEmpty(operation.level(), table)) return false;
+            if (!complete || !table.items.getStackInSlot(0).isEmpty() || !queueEmpty(table)) return false;
             operation.complete();
             return true;
         }
@@ -230,14 +231,14 @@ public final class NatureOfferingTableAdapter implements PackagedMachineAdapter 
             }
         }
         for (var encoded : queued) {
-            var stack = ItemStack.parse(operation.level().registryAccess(), (CompoundTag) encoded).orElseThrow();
+            var stack = ItemStack.parse(operation.level().registryAccess(), encoded).orElseThrow();
             operation.returned(AEItemKey.of(stack), stack.getCount());
         }
         collect(operation, true);
         return true;
     }
 
-    private static boolean queueEmpty(ServerLevel level, BlockEntityOfferingTable table) {
+    private static boolean queueEmpty(BlockEntityOfferingTable table) {
         return ((OfferingTableQueueAccessor) table).dataEnergistics$queuedOutputs().isEmpty();
     }
 

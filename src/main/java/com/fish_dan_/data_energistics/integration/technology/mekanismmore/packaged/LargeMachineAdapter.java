@@ -19,8 +19,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
 import mekanism.api.Action;
@@ -141,7 +141,7 @@ public final class LargeMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         return kind.occupiedPositions(position, preparation);
     }
 

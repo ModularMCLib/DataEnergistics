@@ -36,6 +36,8 @@ import com.sammy.malum.common.recipe.SpiritInfusionRecipe;
 import com.sammy.malum.core.systems.recipe.SpiritBasedRecipeInput;
 import com.sammy.malum.registry.common.block.MalumBlocks;
 import com.sammy.malum.registry.common.recipe.MalumRecipeTypes;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -69,12 +71,12 @@ public final class MalumMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var result = new ObjectArrayList<BlockPos>();
-        result.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var result = new LongArrayList();
+        result.add(position.asLong());
         var extras = preparation.getList("extras", Tag.TAG_COMPOUND);
-        for (int index = 0; index < extras.size(); index++) result.add(BlockPos.of(extras.getCompound(index).getLong("position")));
-        if (this.kind == MalumMachineKind.CRUCIBLE) result.add(position.above());
+        for (int index = 0; index < extras.size(); index++) result.add(extras.getCompound(index).getLong("position"));
+        if (this.kind == MalumMachineKind.CRUCIBLE) result.add(position.above().asLong());
         return result;
     }
 

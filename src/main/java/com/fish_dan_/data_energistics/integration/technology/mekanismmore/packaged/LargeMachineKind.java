@@ -14,7 +14,9 @@ import com.jerry.meklm.common.tile.machine.TileEntityLargeElectrolyticSeparator;
 import com.jerry.meklm.common.tile.machine.TileEntityLargePigmentMixer;
 import com.jerry.meklm.common.tile.machine.TileEntityLargeRotaryCondensentrator;
 import com.jerry.meklm.common.tile.machine.TileEntityLargeSolarNeutronActivator;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import mekanism.api.chemical.IChemicalTank;
+import mekanism.api.fluid.IExtendedFluidTank;
 import mekanism.api.recipes.MekanismRecipeTypes;
 import mekanism.common.inventory.slot.EnergyInventorySlot;
 import mekanism.common.tile.TileEntityBoundingBlock;
@@ -51,9 +53,10 @@ public enum LargeMachineKind {
         return layout(entity);
     }
 
-    ObjectList<BlockPos> occupiedPositions(BlockPos position, CompoundTag progress) {
-        var main = BlockPos.of(progress.getLong("machine_position"));
-        return main.equals(position) ? ObjectList.of(position) : ObjectList.of(position, main);
+    LongList occupiedPositions(BlockPos position, CompoundTag progress) {
+        long main = progress.getLong("machine_position");
+        long requested = position.asLong();
+        return main == requested ? LongList.of(requested) : LongList.of(requested, main);
     }
 
     @Nullable
@@ -109,7 +112,7 @@ public enum LargeMachineKind {
         boolean empty() {
             if (tile.getSavedOperatingTicks(0) != 0) return false;
             if (tile instanceof TileEntityLargeAntiprotonicNucleosynthesizer n && n.getSavedUsedSoFar(0) != 0) return false;
-            return tile.getInventorySlots(null).stream().allMatch(slot -> slot instanceof EnergyInventorySlot || slot.isEmpty()) && tile.getChemicalTanks(null).stream().allMatch(tank -> tank.isEmpty()) && tile.getFluidTanks(null).stream().allMatch(tank -> tank.isEmpty());
+            return tile.getInventorySlots(null).stream().allMatch(slot -> slot instanceof EnergyInventorySlot || slot.isEmpty()) && tile.getChemicalTanks(null).stream().allMatch(IChemicalTank::isEmpty) && tile.getFluidTanks(null).stream().allMatch(IExtendedFluidTank::isEmpty);
         }
 
         boolean operatingModeValid() {

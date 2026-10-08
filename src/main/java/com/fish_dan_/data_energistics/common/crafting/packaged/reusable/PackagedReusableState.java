@@ -418,7 +418,9 @@ public final class PackagedReusableState {
                         var preparation = machine.prepare(level, entry.position, entry.face, recipeId, pattern, inputs);
                         if (preparation == null) return NativeResult.inFlight();
                         var occupied = machine.occupiedPositions(level, entry.position, preparation);
-                        if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) return NativeResult.inFlight();
+                        for (long occupiedPosition : occupied) {
+                            if (!level.isLoaded(BlockPos.of(occupiedPosition))) return NativeResult.inFlight();
+                        }
                         PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
                         var work = new PackagedOperationState(entry.adapter, recipeId, entry.position, entry.face, preparation, inputs, occupied);
                         if (!claims.acquireAll(occupied, work.id(), work.progress().getLongArray("changing_positions"))) return NativeResult.inFlight();

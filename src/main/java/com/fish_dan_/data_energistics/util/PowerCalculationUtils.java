@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.dataripper;
+package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.registry.DEItems;
@@ -6,38 +6,36 @@ import com.fish_dan_.data_energistics.registry.DEItems;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.core.definitions.AEItems;
 
-public final class DataRipperPowerUtils {
+/** Shared power and data-flow cost calculations for upgrade-driven machines. */
+public final class PowerCalculationUtils {
 
-    private static final int DEFAULT_BASE_COST = 512;
+    private static final int DEFAULT_DATA_RIPPER_BASE_COST = 512;
     private static final double DATA_FLOW_COST_RATIO = 0.00048828125D;
     private static final int MAX_SPEED_CARD_TIERS = 5;
     private static final int MAX_SABER_CARD_TIERS = 5;
     private static final long POWER_SCALE = 1000L;
 
-    private DataRipperPowerUtils() {}
+    private PowerCalculationUtils() {}
 
-    public static int computeProductWithCap(IUpgradeInventory upgrades) {
+    public static int computeDataRipperProductWithCap(IUpgradeInventory upgrades) {
         int speedCardCount = Math.min(upgrades.getInstalledUpgrades(AEItems.SPEED_CARD), MAX_SPEED_CARD_TIERS);
         int saberCardCount = Math.min(upgrades.getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()), MAX_SABER_CARD_TIERS);
         int totalTiers = speedCardCount + saberCardCount;
-        if (totalTiers <= 0) {
-            return 0;
-        }
-        return 1 << totalTiers;
+        return totalTiers <= 0 ? 0 : 1 << totalTiers;
     }
 
-    public static double computeFinalPowerForProduct(int speed, int energyCardCount) {
+    public static double computeDataRipperPower(int speed, int energyCardCount) {
         long basePower = basePowerForSpeed(speed);
         if (basePower <= 0L) {
             return 0.0D;
         }
 
         int configuredBaseCost = DataEnergisticsConfiguration.INSTANCE.machines.dataRipper.baseCost;
-        return (basePower / 4.0D) * getRemainingRatio(energyCardCount) *
-                ((double) configuredBaseCost / DEFAULT_BASE_COST) * DATA_FLOW_COST_RATIO;
+        return (basePower / 4.0D) * remainingDataRipperPowerRatio(energyCardCount) *
+                ((double) configuredBaseCost / DEFAULT_DATA_RIPPER_BASE_COST) * DATA_FLOW_COST_RATIO;
     }
 
-    public static double getRemainingRatio(int energyCardCount) {
+    public static double remainingDataRipperPowerRatio(int energyCardCount) {
         return switch (energyCardCount) {
             case 0 -> 1.0D;
             case 1 -> 0.9D;
@@ -51,7 +49,7 @@ public final class DataRipperPowerUtils {
         };
     }
 
-    public static double getAdjustedExtraMultiplier(double baseMultiplier, int inverterCardCount) {
+    public static double adjustedExtraPowerMultiplier(double baseMultiplier, int inverterCardCount) {
         int cappedCardCount = Math.min(Math.max(inverterCardCount, 0), 5);
         return Math.max(0.0D, baseMultiplier - cappedCardCount * 0.05D);
     }
@@ -61,10 +59,7 @@ public final class DataRipperPowerUtils {
     }
 
     public static long toDataFlowCost(double value) {
-        if (value <= 0.0D) {
-            return 0L;
-        }
-        return (long) Math.ceil(value);
+        return value <= 0.0D ? 0L : (long) Math.ceil(value);
     }
 
     public static String formatDataFlowCost(double value) {

@@ -1,13 +1,14 @@
-package com.fish_dan_.data_energistics.common.dataripper;
+package com.fish_dan_.data_energistics.util;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-public final class DataRipperConfigParsingUtils {
+/** Parses and evaluates reusable regular-expression configuration rules. */
+public final class ConfigParsingUtils {
 
-    private DataRipperConfigParsingUtils() {}
+    private ConfigParsingUtils() {}
 
     public record MultiplierEntry(Pattern pattern, double value) {}
 

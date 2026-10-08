@@ -104,16 +104,27 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import lombok.Getter;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -160,21 +171,22 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     private static final int MAX_ENERGY_STORAGE_VIEWS = 256;
     private static final double BASE_IDLE_POWER_USAGE = 4.0;
     private static final double IDLE_POWER_USAGE_PER_ADDITIONAL_CHUNK = 8.0;
-    private static final Map<ChunkKey, Set<BlockPos>> TOWER_CHUNK_POSITIONS = new Object2ObjectOpenHashMap<>();
-    private static final Map<Level, Map<BlockPos, DataDistributionTowerBlockEntity>> LOADED_TOWERS = new Reference2ReferenceOpenHashMap<>();
+    private static final Map<ChunkKey, LongSet> TOWER_CHUNK_POSITIONS = new Object2ObjectOpenHashMap<>();
+    private static final Reference2ReferenceMap<Level, Long2ObjectMap<DataDistributionTowerBlockEntity>> LOADED_TOWERS = new Reference2ReferenceOpenHashMap<>();
     private static @Nullable MinecraftServer boundServer;
 
     private final TowerCoverageGeometry coverage;
     private final TowerLinkStateGraph linkGraph = new TowerLinkStateGraph();
-    private final Map<BlockPos, TowerBinding> towerBindings = new Object2ObjectLinkedOpenHashMap<>();
+    private final Long2ObjectMap<TowerBinding> towerBindings = new Long2ObjectLinkedOpenHashMap<>();
     private final NeoEcoAeTowerBridge neoEcoAeBridge = new NeoEcoAeTowerBridge();
     private final TowerEnergyEndpointIntegrationRegistry energyIntegrations;
     private final TowerEnergyEndpointResolver energyEndpointResolver;
     private final TowerEnergyTransferEngine energyDistributor;
     private final TowerTargetSummaryResolver targetDisplayResolver;
-    private final Map<BlockPos, TargetTransferMode> targetTransferModes = new Object2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<TargetTransferMode> targetTransferModes = new Long2ObjectOpenHashMap<>();
     private final Object2LongMap<TargetEnergyFailureKey> targetEnergySnapshotFailureLogTicks = new Object2LongOpenHashMap<>();
-    private final Map<@Nullable BlockPos, TowerEnergyStorage> cachedEnergyStorageViews = new Object2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<TowerEnergyStorage> cachedEnergyStorageViews = new Long2ObjectOpenHashMap<>();
+    private static final long NULL_POSITION_KEY = Long.MIN_VALUE;
     private final AppEngInternalInventory wirelessBoosters = new AppEngInternalInventory(this, 1);
     private long bufferedTransferEnergy;
     private long quarantinedTransferEnergy;
@@ -182,11 +194,11 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     private TowerNetworkTowerSnapshot towerNetworkSnapshot = new TowerNetworkTowerSnapshot(
             0,
             new TowerChannelOverview(OptionalLong.of(0), 0, 0, OptionalLong.of(0)),
-            List.of());
+            ObjectList.of());
     @Nullable
     private TowerNetworkDomain registeredTowerDomain;
-    private List<BlockPos> cachedEndpoints = List.of();
-    private List<BlockPos> cachedAeDisplayTargets = List.of();
+    private LongList cachedEndpoints = new LongArrayList();
+    private LongList cachedAeDisplayTargets = new LongArrayList();
     private boolean endpointCacheValid;
     private long targetDisplayStateRevision;
     /**
@@ -328,7 +340,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                     NbtUtils.readBlockPos(compound, "pos").ifPresent(pos -> {
                         TargetTransferMode mode = TargetTransferMode.fromSerializedName(compound.getString("mode"));
                         if (mode != TargetTransferMode.AUTO) {
-                            this.targetTransferModes.put(pos.immutable(), mode);
+                            this.targetTransferModes.put(pos.asLong(), mode);
                         }
                     });
                 }
@@ -345,10 +357,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      */
     private void readTowerBindings(CompoundTag data) {
         for (TowerBinding binding : TOWER_BINDING_PERSISTENCE.read(data)) {
-            this.towerBindings.put(binding.anchor(), binding);
+            this.towerBindings.put(binding.anchor().asLong(), binding);
             this.linkGraph.addLinked(binding.anchor());
             if (!binding.enabled()) {
-                this.targetTransferModes.put(binding.anchor(), TargetTransferMode.DISABLED);
+                this.targetTransferModes.put(binding.anchor().asLong(), TargetTransferMode.DISABLED);
             }
             this.nextBindingFifoSequence = Math.max(
                     this.nextBindingFifoSequence,
@@ -369,12 +381,12 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         TOWER_BINDING_PERSISTENCE.write(data, allConnectorBindings());
 
         ListTag targetTransferModes = new ListTag();
-        for (Map.Entry<BlockPos, TargetTransferMode> entry : this.targetTransferModes.entrySet()) {
+        for (var entry : this.targetTransferModes.long2ObjectEntrySet()) {
             if (entry.getValue() == TargetTransferMode.AUTO) {
                 continue;
             }
             CompoundTag compound = new CompoundTag();
-            compound.put("pos", NbtUtils.writeBlockPos(entry.getKey()));
+            compound.put("pos", NbtUtils.writeBlockPos(BlockPos.of(entry.getLongKey())));
             compound.putString("mode", entry.getValue().getSerializedName());
             targetTransferModes.add(compound);
         }
@@ -525,11 +537,11 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         BlockPos excludedPos = side == null ? null : accessPos.relative(side);
         BlockPos normalizedExcludedPos = normalizeExcludedPos(excludedPos);
         if (normalizedExcludedPos == null) {
-            return this.cachedEnergyStorageViews.computeIfAbsent(null, ignored -> new TowerEnergyStorage(null));
+            return this.cachedEnergyStorageViews.computeIfAbsent(NULL_POSITION_KEY, ignored -> new TowerEnergyStorage(null));
         }
         return this.cachedEnergyStorageViews.computeIfAbsent(
-                normalizedExcludedPos,
-                TowerEnergyStorage::new);
+                normalizedExcludedPos.asLong(),
+                ignored -> new TowerEnergyStorage(normalizedExcludedPos));
     }
 
     public boolean toggleRangeDisplay() {
@@ -548,21 +560,21 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     public TargetTransferMode getTargetTransferMode(BlockPos targetPos) {
-        return this.targetTransferModes.getOrDefault(normalizeTargetPos(targetPos), TargetTransferMode.AUTO);
+        return this.targetTransferModes.getOrDefault(normalizeTargetPos(targetPos).asLong(), TargetTransferMode.AUTO);
     }
 
     public void setTargetTransferMode(BlockPos targetPos, @Nullable TargetTransferMode mode) {
         BlockPos normalizedPos = normalizeTargetPos(targetPos);
         TargetTransferMode normalizedMode = mode == null ? TargetTransferMode.AUTO : mode;
         if (normalizedMode == TargetTransferMode.AUTO) {
-            this.targetTransferModes.remove(normalizedPos);
+            this.targetTransferModes.remove(normalizedPos.asLong());
         } else {
-            this.targetTransferModes.put(normalizedPos, normalizedMode);
+            this.targetTransferModes.put(normalizedPos.asLong(), normalizedMode);
         }
 
-        TowerBinding binding = this.towerBindings.get(normalizedPos);
+        TowerBinding binding = this.towerBindings.get(normalizedPos.asLong());
         if (binding != null) {
-            this.towerBindings.put(normalizedPos, binding.withEnabled(normalizedMode != TargetTransferMode.DISABLED));
+            this.towerBindings.put(normalizedPos.asLong(), binding.withEnabled(normalizedMode != TargetTransferMode.DISABLED));
         }
 
         if (normalizedMode == TargetTransferMode.DISABLED) {
@@ -590,7 +602,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                                                      @Nullable TargetTransferMode mode) {
         BlockPos normalizedPos = targetPos.immutable();
         Level towerLevel = this.level;
-        TowerBinding binding = this.towerBindings.get(normalizedPos);
+        TowerBinding binding = this.towerBindings.get(normalizedPos.asLong());
         if (towerLevel != null && ownerTower.dimensionId().equals(towerLevel.dimension().location()) && ownerTower.position().equals(this.worldPosition) && dimensionId.equals(towerLevel.dimension().location()) && binding != null) {
             setTargetTransferMode(normalizedPos, mode);
             return true;
@@ -608,7 +620,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      */
     public boolean setVirtualDeviceDisabled(BlockPos targetPos, TowerDeviceKey deviceKey, boolean disabled) {
         BlockPos normalizedPos = normalizeTargetPos(targetPos);
-        TowerBinding binding = this.towerBindings.get(normalizedPos);
+        TowerBinding binding = this.towerBindings.get(normalizedPos.asLong());
         if (binding == null) {
             return false;
         }
@@ -619,7 +631,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         if (!knownDevice) {
             return false;
         }
-        this.towerBindings.put(normalizedPos, binding.withDeviceDisabled(deviceKey, disabled));
+        this.towerBindings.put(normalizedPos.asLong(), binding.withDeviceDisabled(deviceKey, disabled));
         invalidateEndpointCache();
         invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
         this.setChanged();
@@ -672,15 +684,16 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         this.markForClientUpdate();
     }
 
-    public ConnectorBindResult bindTargetFromConnector(BlockPos targetPos, EnergyTransferDirection energyDirection) {
-        return bindTargetFromConnector(targetPos, energyDirection, -1);
+    public void bindTargetFromConnector(BlockPos targetPos, EnergyTransferDirection energyDirection) {
+        bindTargetFromConnector(targetPos, energyDirection, -1);
     }
 
-    public ConnectorBindResult bindTargetFromConnector(BlockPos targetPos, EnergyTransferDirection energyDirection, int targetSide) {
+    public void bindTargetFromConnector(BlockPos targetPos, EnergyTransferDirection energyDirection, int targetSide) {
         if (!(this.level instanceof ServerLevel serverLevel)) {
-            return ConnectorBindResult.fail(ConnectorBindFailure.UNSUPPORTED);
+            ConnectorBindResult.fail(ConnectorBindFailure.UNSUPPORTED);
+            return;
         }
-        return bindTargetFromConnector(serverLevel, targetPos, energyDirection, targetSide);
+        bindTargetFromConnector(serverLevel, targetPos, energyDirection, targetSide);
     }
 
     /**
@@ -704,12 +717,12 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return ConnectorBindResult.fail(ConnectorBindFailure.NOT_POINT_MODE);
         }
 
-        TowerBinding existingBinding = this.towerBindings.get(normalizedPos);
+        TowerBinding existingBinding = this.towerBindings.get(normalizedPos.asLong());
         if (existingBinding != null && !existingBinding.dimensionId().equals(targetLevel.dimension().location())) {
             return ConnectorBindResult.fail(ConnectorBindFailure.UNSUPPORTED);
         }
         if (existingBinding != null && existingBinding.energyDirection() != energyDirection && !isLoadedTowerTarget(targetLevel, normalizedPos)) {
-            this.towerBindings.put(normalizedPos, existingBinding.withEnergyDirection(energyDirection));
+            this.towerBindings.put(normalizedPos.asLong(), existingBinding.withEnergyDirection(energyDirection));
             this.invalidateEndpointCache();
             this.invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
             this.setChanged();
@@ -745,9 +758,9 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         }
 
         addTowerBinding(targetLevel, normalizedPos, TowerBindingSource.MANUAL, energyDirection);
-        TowerBinding bound = this.towerBindings.get(normalizedPos);
+        TowerBinding bound = this.towerBindings.get(normalizedPos.asLong());
         if (bound != null && targetSide >= 0 && targetSide <= 5) {
-            this.towerBindings.put(normalizedPos, bound.withTargetSide(targetSide));
+            this.towerBindings.put(normalizedPos.asLong(), bound.withTargetSide(targetSide));
         }
         if (getTargetTransferMode(normalizedPos) == TargetTransferMode.DISABLED) {
             this.linkGraph.transition(
@@ -781,7 +794,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return false;
         }
         BlockPos normalizedPos = normalizeTargetPos(targetLevel, targetPos);
-        TowerBinding binding = this.towerBindings.get(normalizedPos);
+        TowerBinding binding = this.towerBindings.get(normalizedPos.asLong());
         if (binding == null || !binding.dimensionId().equals(targetLevel.dimension().location())) {
             return false;
         }
@@ -825,7 +838,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         }
 
         if (settings.contains(TARGET_TRANSFER_MODES_TAG)) {
-            Map<BlockPos, TargetTransferMode> targetTransferModes = readTargetTransferModes(settings);
+            Long2ObjectMap<TargetTransferMode> targetTransferModes = readTargetTransferModes(settings);
             if (!this.targetTransferModes.equals(targetTransferModes)) {
                 this.targetTransferModes.clear();
                 this.targetTransferModes.putAll(targetTransferModes);
@@ -851,20 +864,20 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private ListTag createTargetTransferModesTag() {
         ListTag targetTransferModes = new ListTag();
-        for (Map.Entry<BlockPos, TargetTransferMode> entry : this.targetTransferModes.entrySet()) {
+        for (var entry : this.targetTransferModes.long2ObjectEntrySet()) {
             if (entry.getValue() == TargetTransferMode.AUTO) {
                 continue;
             }
             CompoundTag compound = new CompoundTag();
-            compound.put("pos", NbtUtils.writeBlockPos(entry.getKey()));
+            compound.put("pos", NbtUtils.writeBlockPos(BlockPos.of(entry.getLongKey())));
             compound.putString("mode", entry.getValue().getSerializedName());
             targetTransferModes.add(compound);
         }
         return targetTransferModes;
     }
 
-    private static Map<BlockPos, TargetTransferMode> readTargetTransferModes(CompoundTag settings) {
-        Map<BlockPos, TargetTransferMode> targetTransferModes = new Object2ObjectOpenHashMap<>();
+    private static Long2ObjectMap<TargetTransferMode> readTargetTransferModes(CompoundTag settings) {
+        Long2ObjectMap<TargetTransferMode> targetTransferModes = new Long2ObjectOpenHashMap<>();
         Tag targetTransferModesTag = settings.get(TARGET_TRANSFER_MODES_TAG);
         if (!(targetTransferModesTag instanceof ListTag list)) {
             return targetTransferModes;
@@ -875,7 +888,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 NbtUtils.readBlockPos(compound, "pos").ifPresent(pos -> {
                     TargetTransferMode transferMode = TargetTransferMode.fromSerializedName(compound.getString("mode"));
                     if (transferMode != TargetTransferMode.AUTO) {
-                        targetTransferModes.put(pos.immutable(), transferMode);
+                        targetTransferModes.put(pos.asLong(), transferMode);
                     }
                 });
             }
@@ -1501,12 +1514,13 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return;
         }
 
-        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(targetPos)));
+        LongSet towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(targetPos)));
         if (towerPositions == null || towerPositions.isEmpty()) {
             return;
         }
 
-        for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
+        for (long packedTowerPos : new LongOpenHashSet(towerPositions)) {
+            BlockPos towerPos = BlockPos.of(packedTowerPos);
             DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
             if (tower == null) {
                 continue;
@@ -1539,16 +1553,17 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         // The chunk index only covers the automatic range. Explicit point-to-point links may be anywhere, so
         // include every loaded tower in this level when a block is removed. The final tracked-target check keeps
         // this event local to towers that actually own the broken anchor.
-        Map<BlockPos, DataDistributionTowerBlockEntity> loadedTowers = LOADED_TOWERS.get(level);
+        Long2ObjectMap<DataDistributionTowerBlockEntity> loadedTowers = LOADED_TOWERS.get(level);
         if (loadedTowers != null) {
             candidates.addAll(loadedTowers.values());
         }
 
         // Keep the indexed lookup as a fallback while a tower is transitioning into or out of the loaded-tower
         // registry. This also avoids losing a removal event during chunk lifecycle callbacks.
-        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(targetPos)));
+        LongSet towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(targetPos)));
         if (towerPositions != null) {
-            for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
+            for (long packedTowerPos : new LongOpenHashSet(towerPositions)) {
+                BlockPos towerPos = BlockPos.of(packedTowerPos);
                 DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
                 if (tower != null) {
                     candidates.add(tower);
@@ -1564,12 +1579,13 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private static void notifyTargetChunkLoaded(Level level, ChunkPos targetChunk) {
-        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, targetChunk));
+        LongSet towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, targetChunk));
         if (towerPositions == null || towerPositions.isEmpty()) {
             return;
         }
 
-        for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
+        for (long packedTowerPos : new LongOpenHashSet(towerPositions)) {
+            BlockPos towerPos = BlockPos.of(packedTowerPos);
             DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
             if (tower != null) {
                 tower.onTargetChunkLoaded(targetChunk);
@@ -1578,12 +1594,13 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private static void notifyTargetChunkUnloaded(Level level, ChunkPos targetChunk) {
-        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, targetChunk));
+        LongSet towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, targetChunk));
         if (towerPositions == null || towerPositions.isEmpty()) {
             return;
         }
 
-        for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
+        for (long packedTowerPos : new LongOpenHashSet(towerPositions)) {
+            BlockPos towerPos = BlockPos.of(packedTowerPos);
             DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
             if (tower != null) {
                 tower.onTargetChunkUnloaded(targetChunk);
@@ -1593,7 +1610,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private void onTargetChunkLoaded(ChunkPos targetChunk) {
         boolean changed = false;
-        for (BlockPos targetPos : this.linkGraph.linkedPositions()) {
+        for (long packedPos : this.linkGraph.linkedPositions()) {
+            BlockPos targetPos = BlockPos.of(packedPos);
             if (!new ChunkPos(targetPos).equals(targetChunk) || this.linkGraph.status(targetPos).state() != TargetLinkState.WAITING_TARGET) {
                 continue;
             }
@@ -1608,7 +1626,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private void onTargetChunkUnloaded(ChunkPos targetChunk) {
         boolean changed = false;
-        for (BlockPos targetPos : this.linkGraph.linkedPositions()) {
+        for (long packedPos : this.linkGraph.linkedPositions()) {
+            BlockPos targetPos = BlockPos.of(packedPos);
             if (new ChunkPos(targetPos).equals(targetChunk) && getTargetTransferMode(targetPos) != TargetTransferMode.DISABLED) {
                 changed |= scheduleTargetUnavailableRetry(targetPos);
             }
@@ -1773,10 +1792,10 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     @Override
-    public List<TowerBinding> towerBindings() {
+    public ObjectList<TowerBinding> towerBindings() {
         return this.towerBindings.values().stream()
                 .filter(binding -> !isLoadedTowerTarget(binding))
-                .toList();
+                .collect(ObjectArrayList.toList());
     }
 
     /**
@@ -1784,16 +1803,17 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      * Network topology intentionally excludes loaded targets from {@link #towerBindings()},
      * while the held connector renderer must still draw those targets.
      */
-    public List<TowerBinding> allConnectorBindings() {
-        return this.towerBindings.values().stream().toList();
+    public ObjectList<TowerBinding> allConnectorBindings() {
+        return this.towerBindings.values().stream().collect(ObjectArrayList.toList());
     }
 
     @Override
-    public List<TowerEnergyLocation> towerEnergyLocations() {
+    public ObjectList<TowerEnergyLocation> towerEnergyLocations() {
         ServerLevel level = towerLevel();
         ObjectArrayList<TowerEnergyLocation> locations = new ObjectArrayList<>();
-        Set<DisplayTargetKey> seenLocations = new ObjectOpenHashSet<>();
-        for (BlockPos position : getCachedEndpoints()) {
+        ObjectSet<DisplayTargetKey> seenLocations = new ObjectOpenHashSet<>();
+        for (long packedPosition : getCachedEndpoints()) {
+            BlockPos position = BlockPos.of(packedPosition);
             if (level.isLoaded(position)) {
                 locations.add(new TowerEnergyLocation(level, position));
                 seenLocations.add(new DisplayTargetKey(level.dimension().location(), position));
@@ -1814,7 +1834,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 }
             }
         }
-        return List.copyOf(locations);
+        return new ObjectImmutableList<>(locations);
     }
 
     @Override
@@ -1934,7 +1954,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return true;
         }
 
-        for (BlockPos pos : getCachedEndpoints()) {
+        for (long packedPos : getCachedEndpoints()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (hasStoredEnergy(pos)) {
                 return true;
             }
@@ -2079,7 +2100,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         for (int chunkX = this.coverage.minChunkX(chunkRadius); chunkX <= this.coverage.maxChunkX(chunkRadius); chunkX++) {
             for (int chunkZ = this.coverage.minChunkZ(chunkRadius); chunkZ <= this.coverage.maxChunkZ(chunkRadius); chunkZ++) {
                 ChunkKey key = new ChunkKey(this.level, chunkX, chunkZ);
-                TOWER_CHUNK_POSITIONS.computeIfAbsent(key, ignored -> new ObjectOpenHashSet<>()).add(this.worldPosition.immutable());
+                TOWER_CHUNK_POSITIONS.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(this.worldPosition.asLong());
             }
         }
     }
@@ -2093,9 +2114,9 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         for (int chunkX = this.coverage.minChunkX(chunkRadius); chunkX <= this.coverage.maxChunkX(chunkRadius); chunkX++) {
             for (int chunkZ = this.coverage.minChunkZ(chunkRadius); chunkZ <= this.coverage.maxChunkZ(chunkRadius); chunkZ++) {
                 ChunkKey key = new ChunkKey(this.level, chunkX, chunkZ);
-                Set<BlockPos> positions = TOWER_CHUNK_POSITIONS.get(key);
+                LongSet positions = TOWER_CHUNK_POSITIONS.get(key);
                 if (positions != null) {
-                    positions.remove(this.worldPosition);
+                    positions.remove(this.worldPosition.asLong());
                     if (positions.isEmpty()) {
                         TOWER_CHUNK_POSITIONS.remove(key);
                     }
@@ -2106,8 +2127,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private void invalidateEndpointCache() {
-        this.cachedEndpoints = List.of();
-        this.cachedAeDisplayTargets = List.of();
+        this.cachedEndpoints = new LongArrayList();
+        this.cachedAeDisplayTargets = new LongArrayList();
         this.endpointCacheValid = false;
         incrementTargetDisplayStateRevision();
         invalidateResolvedEnergyEndpointCache();
@@ -2137,9 +2158,9 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         this.energyDistributor.trimCaches();
     }
 
-    private List<BlockPos> getCachedEndpoints() {
+    private LongList getCachedEndpoints() {
         if (this.level == null) {
-            return List.of();
+            return new LongArrayList();
         }
 
         if (!this.endpointCacheValid) {
@@ -2148,9 +2169,9 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         return this.cachedEndpoints;
     }
 
-    private List<BlockPos> getCachedAeDisplayTargets() {
+    private LongList getCachedAeDisplayTargets() {
         if (this.level == null) {
-            return List.of();
+            return new LongArrayList();
         }
 
         if (!this.endpointCacheValid) {
@@ -2161,15 +2182,15 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private void refreshEndpointCache() {
         if (this.level == null) {
-            this.cachedEndpoints = List.of();
-            this.cachedAeDisplayTargets = List.of();
+            this.cachedEndpoints = new LongArrayList();
+            this.cachedAeDisplayTargets = new LongArrayList();
             return;
         }
 
-        ObjectLinkedOpenHashSet<BlockPos> endpoints = new ObjectLinkedOpenHashSet<>();
-        ObjectLinkedOpenHashSet<BlockPos> aeDisplayTargets = new ObjectLinkedOpenHashSet<>();
-        for (BlockPos pos : getTrackedTargetPositions()) {
-            addLoadedEndpoint(pos, endpoints, aeDisplayTargets);
+        LongSet endpoints = new LongLinkedOpenHashSet();
+        LongSet aeDisplayTargets = new LongLinkedOpenHashSet();
+        for (long packedPos : getTrackedTargetPositions()) {
+            addLoadedEndpoint(BlockPos.of(packedPos), endpoints, aeDisplayTargets);
         }
         if (allowsAutomaticRangeConnections()) {
             for (BlockEntity blockEntity : getNearbyBlockEntities()) {
@@ -2177,14 +2198,14 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             }
         }
 
-        this.cachedEndpoints = List.copyOf(endpoints);
-        this.cachedAeDisplayTargets = List.copyOf(aeDisplayTargets);
+        this.cachedEndpoints = new LongArrayList(endpoints);
+        this.cachedAeDisplayTargets = new LongArrayList(aeDisplayTargets);
         this.endpointCacheValid = true;
     }
 
     private void addLoadedEndpoint(BlockPos targetPos,
-                                   Set<BlockPos> endpoints,
-                                   Set<BlockPos> aeDisplayTargets) {
+                                   LongSet endpoints,
+                                   LongSet aeDisplayTargets) {
         if (this.level == null) {
             return;
         }
@@ -2194,17 +2215,19 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         }
         BlockEntity blockEntity = this.level.getBlockEntity(pos);
         if (allowsFeTargets() && targetAllowsFe(pos) && hasAnyEnergyCapability(pos)) {
-            endpoints.add(pos);
+            endpoints.add(pos.asLong());
         }
         if (allowsAeTargets() && targetAllowsAe(pos) && this.targetDisplayResolver.hasDisplayableAeTarget(pos, blockEntity)) {
-            aeDisplayTargets.add(pos);
+            aeDisplayTargets.add(pos.asLong());
         }
     }
 
-    private List<BlockPos> getTrackedTargetPositions() {
-        ObjectLinkedOpenHashSet<BlockPos> tracked = new ObjectLinkedOpenHashSet<>(this.linkGraph.trackedPositions());
-        tracked.addAll(this.targetTransferModes.keySet());
-        return List.copyOf(tracked);
+    private LongList getTrackedTargetPositions() {
+        LongSet tracked = new LongOpenHashSet(this.linkGraph.trackedPositions());
+        for (long packedPosition : this.targetTransferModes.keySet()) {
+            tracked.add(packedPosition);
+        }
+        return new LongArrayList(tracked);
     }
 
     private List<BlockEntity> getNearbyBlockEntities() {
@@ -2314,27 +2337,31 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     @Override
-    public Set<BlockPos> linkedPositions() {
+    public LongSet linkedPositions() {
         return this.linkGraph.linkedPositions();
     }
 
     @Override
-    public List<BlockPos> trackedPositions() {
+    public LongList trackedPositions() {
         return this.linkGraph.trackedPositions();
     }
 
     @Override
-    public List<BlockPos> configuredTargetPositions() {
-        return List.copyOf(this.targetTransferModes.keySet());
+    public LongList configuredTargetPositions() {
+        LongArrayList positions = new LongArrayList(this.targetTransferModes.size());
+        for (long packedPosition : this.targetTransferModes.keySet()) {
+            positions.add(packedPosition);
+        }
+        return positions;
     }
 
     @Override
-    public List<BlockPos> cachedAeDisplayTargets() {
+    public LongList cachedAeDisplayTargets() {
         return getCachedAeDisplayTargets();
     }
 
     @Override
-    public List<BlockPos> cachedEndpointPositions() {
+    public LongList cachedEndpointPositions() {
         return getCachedEndpoints();
     }
 
@@ -2482,7 +2509,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private boolean queueLink(BlockPos targetPos) {
         BlockPos normalizedPos = normalizeTargetPos(targetPos);
-        TowerBinding binding = this.towerBindings.get(normalizedPos);
+        TowerBinding binding = this.towerBindings.get(normalizedPos.asLong());
         if (binding == null) {
             return false;
         }
@@ -2556,20 +2583,22 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return;
         }
 
-        ObjectLinkedOpenHashSet<BlockPos> invalidPositions = new ObjectLinkedOpenHashSet<>();
-        for (BlockPos pos : this.linkGraph.linkedPositions()) {
+        LongSet invalidPositions = new LongOpenHashSet();
+        for (long packedPos : this.linkGraph.linkedPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (this.level.isLoaded(pos) && this.level.getBlockState(pos).isAir()) {
-                invalidPositions.add(pos);
+                invalidPositions.add(packedPos);
             }
         }
-        for (BlockPos pos : this.targetTransferModes.keySet()) {
+        for (long packedPos : this.targetTransferModes.keySet()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (this.level.isLoaded(pos) && this.level.getBlockState(pos).isAir()) {
-                invalidPositions.add(pos);
+                invalidPositions.add(pos.asLong());
             }
         }
 
-        for (BlockPos pos : invalidPositions) {
-            removeTarget(pos);
+        for (long packedPos : invalidPositions) {
+            removeTarget(BlockPos.of(packedPos));
         }
     }
 
@@ -2580,8 +2609,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     private void removeTargetNormalized(BlockPos normalizedPos) {
         transitionTargetState(normalizedPos, TargetLinkState.INVALID, TargetLinkFailure.NONE, 0);
         this.linkGraph.removeLinked(normalizedPos);
-        this.towerBindings.remove(normalizedPos);
-        this.targetTransferModes.remove(normalizedPos);
+        this.towerBindings.remove(normalizedPos.asLong());
+        this.targetTransferModes.remove(normalizedPos.asLong());
         this.invalidateEndpointCache();
         this.invalidateResolvedEnergyEndpointCache();
         invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
@@ -2594,7 +2623,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private boolean hasTrackedTarget(BlockPos targetPos) {
         BlockPos normalizedPos = normalizeTargetPos(targetPos);
-        return this.linkGraph.containsLinked(normalizedPos) || this.targetTransferModes.containsKey(normalizedPos);
+        return this.linkGraph.containsLinked(normalizedPos) || this.targetTransferModes.containsKey(normalizedPos.asLong());
     }
 
     private void addTowerBinding(BlockPos targetPos, TowerBindingSource source) {
@@ -2616,7 +2645,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             throw new IllegalStateException("Cannot bind a tower target without a server level");
         }
         BlockPos normalizedPos = normalizeTargetPos(targetLevel, targetPos);
-        TowerBinding existing = this.towerBindings.get(normalizedPos);
+        TowerBinding existing = this.towerBindings.get(normalizedPos.asLong());
         if (existing != null && !existing.dimensionId().equals(targetLevel.dimension().location())) {
             return;
         }
@@ -2626,9 +2655,9 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         if (existing != null && (existing.source() == TowerBindingSource.MANUAL || source == TowerBindingSource.AUTOMATIC)) {
             if (!existing.enabled()) {
                 this.towerBindings.put(
-                        normalizedPos,
+                        normalizedPos.asLong(),
                         existing.withEnabled(true));
-                this.targetTransferModes.remove(normalizedPos);
+                this.targetTransferModes.remove(normalizedPos.asLong());
                 invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
                 this.setChanged();
             }
@@ -2646,7 +2675,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 disabledDevices,
                 energyDirection);
         this.nextBindingFifoSequence = Math.incrementExact(this.nextBindingFifoSequence);
-        this.towerBindings.put(normalizedPos, binding);
+        this.towerBindings.put(normalizedPos.asLong(), binding);
         this.linkGraph.addLinked(normalizedPos);
         invalidateTowerDomain(TowerNetworkDomainChange.BINDING);
     }
@@ -2665,7 +2694,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         try {
             resetPersistedLinkRuntimeState();
             boolean changed = false;
-            for (BlockPos pos : this.linkGraph.linkedPositions()) {
+            for (long packedPos : this.linkGraph.linkedPositions()) {
+                BlockPos pos = BlockPos.of(packedPos);
                 if (getTargetTransferMode(pos) == TargetTransferMode.DISABLED) {
                     continue;
                 }
@@ -2681,7 +2711,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
 
     private void resetPersistedLinkRuntimeState() {
         this.linkGraph.resetRuntimeState();
-        for (BlockPos pos : this.linkGraph.linkedPositions()) {
+        for (long packedPos : this.linkGraph.linkedPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (getTargetTransferMode(pos) == TargetTransferMode.DISABLED) {
                 transitionTargetState(pos, TargetLinkState.DISABLED, TargetLinkFailure.NONE, 0);
             }
@@ -2696,7 +2727,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         }
 
         boolean changed = false;
-        for (BlockPos pos : List.copyOf(this.linkGraph.linkedPositions())) {
+        for (long packedPos : this.linkGraph.linkedPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (this.linkGraph.status(pos).state() != TargetLinkState.BOUND) {
                 continue;
             }
@@ -2709,7 +2741,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private void wakeWaitingGridTargets() {
-        for (BlockPos targetPos : this.linkGraph.linkedPositions()) {
+        for (long packedPos : this.linkGraph.linkedPositions()) {
+            BlockPos targetPos = BlockPos.of(packedPos);
             TargetLinkState state = this.linkGraph.status(targetPos).state();
             if (state == TargetLinkState.WAITING_CHANNEL || state == TargetLinkState.CONFLICT || state == TargetLinkState.BRIDGE_ERROR) {
                 queueLink(targetPos);
@@ -2742,13 +2775,13 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         return queued || scanRequested;
     }
 
-    public static List<IGridNode> getConnectableNodes(Level level, BlockPos pos) {
+    public static ObjectList<IGridNode> getConnectableNodes(Level level, BlockPos pos) {
         if (!level.isLoaded(pos)) {
-            return List.of();
+            return ObjectList.of();
         }
         IInWorldGridNodeHost nodeHost = level.getCapability(AECapabilities.IN_WORLD_GRID_NODE_HOST, pos);
         if (nodeHost == null) {
-            return List.of();
+            return ObjectList.of();
         }
         return collectConnectableNodes(nodeHost);
     }
@@ -2764,8 +2797,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      * @param nodeHost host returned by the direction-neutral AE capability query
      * @return immutable nodes in AE direction iteration order, de-duplicated by node identity
      */
-    static List<IGridNode> collectConnectableNodes(IInWorldGridNodeHost nodeHost) {
-        Set<IGridNode> nodes = new ReferenceOpenHashSet<>();
+    static ObjectList<IGridNode> collectConnectableNodes(IInWorldGridNodeHost nodeHost) {
+        ReferenceSet<IGridNode> nodes = new ReferenceOpenHashSet<>();
         ObjectArrayList<IGridNode> orderedNodes = new ObjectArrayList<>();
 
         for (Direction direction : Direction.values()) {
@@ -2776,11 +2809,11 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             }
         }
 
-        return List.copyOf(orderedNodes);
+        return new ObjectImmutableList<>(orderedNodes);
     }
 
-    private static void addConnectableNode(@Nullable IGridNode node, Set<IGridNode> nodes,
-                                           List<IGridNode> orderedNodes) {
+    private static void addConnectableNode(@Nullable IGridNode node, ReferenceSet<IGridNode> nodes,
+                                           ObjectList<IGridNode> orderedNodes) {
         if (node != null && nodes.add(node)) {
             orderedNodes.add(node);
         }
@@ -2802,8 +2835,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     private void registerLoadedTower() {
         Level currentLevel = this.level;
         if (currentLevel != null) {
-            LOADED_TOWERS.computeIfAbsent(currentLevel, ignored -> new Object2ObjectLinkedOpenHashMap<>())
-                    .put(this.worldPosition.immutable(), this);
+            LOADED_TOWERS.computeIfAbsent(currentLevel, ignored -> new Long2ObjectLinkedOpenHashMap<>())
+                    .put(this.worldPosition.asLong(), this);
             invalidateTowerDomain(TowerNetworkDomainChange.TOWER);
         }
     }
@@ -2813,11 +2846,11 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         if (currentLevel == null) {
             return;
         }
-        Map<BlockPos, DataDistributionTowerBlockEntity> loadedTowers = LOADED_TOWERS.get(currentLevel);
-        if (loadedTowers == null || loadedTowers.get(this.worldPosition) != this) {
+        Long2ObjectMap<DataDistributionTowerBlockEntity> loadedTowers = LOADED_TOWERS.get(currentLevel);
+        if (loadedTowers == null || loadedTowers.get(this.worldPosition.asLong()) != this) {
             return;
         }
-        loadedTowers.remove(this.worldPosition);
+        loadedTowers.remove(this.worldPosition.asLong());
         if (loadedTowers.isEmpty()) {
             LOADED_TOWERS.remove(currentLevel);
         }
@@ -2843,12 +2876,13 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private static void invalidateNearbyCaches(Level level, BlockPos changedPos) {
-        Set<BlockPos> towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(changedPos)));
+        LongSet towerPositions = TOWER_CHUNK_POSITIONS.get(new ChunkKey(level, new ChunkPos(changedPos)));
         if (towerPositions == null || towerPositions.isEmpty()) {
             return;
         }
 
-        for (BlockPos towerPos : new ObjectOpenHashSet<>(towerPositions)) {
+        for (long packedTowerPos : new LongOpenHashSet(towerPositions)) {
+            BlockPos towerPos = BlockPos.of(packedTowerPos);
             DataDistributionTowerBlockEntity tower = getLoadedTower(level, towerPos);
             if (tower == null || !tower.isWithinTowerCoverage(changedPos)) {
                 continue;

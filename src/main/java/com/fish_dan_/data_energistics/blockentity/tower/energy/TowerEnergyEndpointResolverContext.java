@@ -3,9 +3,8 @@ package com.fish_dan_.data_energistics.blockentity.tower.energy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Supplies tower-specific state required by {@link CachedTowerEnergyEndpointResolver}.
@@ -28,7 +27,7 @@ public interface TowerEnergyEndpointResolverContext {
      *
      * @return target positions already accepted by tower discovery
      */
-    List<BlockPos> cachedEndpointPositions();
+    LongList cachedEndpointPositions();
 
     /**
      * Checks whether FE interaction with a target is allowed.

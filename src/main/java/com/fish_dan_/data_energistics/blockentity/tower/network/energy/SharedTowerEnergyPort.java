@@ -12,12 +12,12 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
 import java.util.function.LongSupplier;
 
 /**
@@ -36,7 +36,7 @@ public final class SharedTowerEnergyPort {
     private final Object2IntMap<AccessKey> extractionCursors = new Object2IntOpenHashMap<>();
     private final Object2IntMap<AccessKey> insertionCursors = new Object2IntOpenHashMap<>();
     private final Object2LongMap<FailureKey> lastFailureLogTicks = new Object2LongOpenHashMap<>();
-    private final Map<AccessKey, TowerEnergyAccessSnapshot> cachedSnapshots = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<AccessKey, TowerEnergyAccessSnapshot> cachedSnapshots = new Object2ObjectOpenHashMap<>();
     private ObjectList<TowerEnergyTransferEndpoint> endpoints = ObjectList.of();
     private long snapshotTick = Long.MIN_VALUE;
 

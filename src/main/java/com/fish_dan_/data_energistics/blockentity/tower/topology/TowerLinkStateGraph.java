@@ -2,16 +2,15 @@ package com.fish_dan_.data_energistics.blockentity.tower.topology;
 
 import net.minecraft.core.BlockPos;
 
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import it.unimi.dsi.fastutil.longs.Long2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 /**
  * Stores deterministic in-memory AE link state for a Data Distribution Tower.
@@ -81,9 +80,9 @@ public final class TowerLinkStateGraph {
     }
 
     private static final int MAX_RETRY_ATTEMPTS = 30;
-    private final Set<BlockPos> linkedPositions = new ObjectLinkedOpenHashSet<>();
-    private final Map<BlockPos, TargetLinkStatus> targetStatuses = new Object2ObjectLinkedOpenHashMap<>();
-    private final Object2IntMap<BlockPos> retryAttempts = new Object2IntLinkedOpenHashMap<>();
+    private final LongSet linkedPositions = new LongOpenHashSet();
+    private final Long2ObjectMap<TargetLinkStatus> targetStatuses = new Long2ObjectLinkedOpenHashMap<>();
+    private final Long2IntMap retryAttempts = new Long2IntLinkedOpenHashMap();
     private static final TargetLinkStatus INVALID_STATUS = new TargetLinkStatus(
             TargetLinkState.INVALID, TargetLinkFailure.NONE, 0);
 
@@ -102,7 +101,7 @@ public final class TowerLinkStateGraph {
      * @param targetPos target to remember
      */
     public void addLinked(BlockPos targetPos) {
-        BlockPos normalizedPos = targetPos.immutable();
+        long normalizedPos = targetPos.asLong();
         if (this.linkedPositions.add(normalizedPos)) {
             this.targetStatuses.put(normalizedPos, new TargetLinkStatus(
                     TargetLinkState.BOUND, TargetLinkFailure.NONE, 0));
@@ -114,9 +113,12 @@ public final class TowerLinkStateGraph {
      *
      * @param positions targets to add
      */
-    public void addLinkedAll(Collection<BlockPos> positions) {
-        for (BlockPos pos : positions) {
-            addLinked(pos);
+    public void addLinkedAll(LongCollection positions) {
+        for (long pos : positions) {
+            if (this.linkedPositions.add(pos)) {
+                this.targetStatuses.put(pos, new TargetLinkStatus(
+                        TargetLinkState.BOUND, TargetLinkFailure.NONE, 0));
+            }
         }
     }
 
@@ -126,10 +128,10 @@ public final class TowerLinkStateGraph {
      * @param targetPos target to remove
      */
     public void removeLinked(BlockPos targetPos) {
-        BlockPos normalizedPos = targetPos.immutable();
+        long normalizedPos = targetPos.asLong();
         this.linkedPositions.remove(normalizedPos);
         this.targetStatuses.remove(normalizedPos);
-        this.retryAttempts.removeInt(normalizedPos);
+        this.retryAttempts.remove(normalizedPos);
     }
 
     /**
@@ -139,7 +141,7 @@ public final class TowerLinkStateGraph {
      * @return true when the target is linked
      */
     public boolean containsLinked(BlockPos targetPos) {
-        return this.linkedPositions.contains(targetPos);
+        return this.linkedPositions.contains(targetPos.asLong());
     }
 
     /**
@@ -147,8 +149,8 @@ public final class TowerLinkStateGraph {
      *
      * @return immutable linked position snapshot
      */
-    public Set<BlockPos> linkedPositions() {
-        return new ObjectLinkedOpenHashSet<>(this.linkedPositions);
+    public LongSet linkedPositions() {
+        return new LongOpenHashSet(this.linkedPositions);
     }
 
     /**
@@ -157,7 +159,7 @@ public final class TowerLinkStateGraph {
     public void resetRuntimeState() {
         this.targetStatuses.clear();
         this.retryAttempts.clear();
-        for (BlockPos targetPos : this.linkedPositions) {
+        for (long targetPos : this.linkedPositions) {
             this.targetStatuses.put(targetPos, new TargetLinkStatus(
                     TargetLinkState.BOUND, TargetLinkFailure.NONE, 0));
         }
@@ -173,13 +175,13 @@ public final class TowerLinkStateGraph {
      * @return true when the runtime state changed
      */
     public boolean transition(BlockPos targetPos, TargetLinkState state, TargetLinkFailure failure, int retryTicks) {
-        BlockPos normalizedPos = targetPos.immutable();
+        long normalizedPos = targetPos.asLong();
         if (!this.linkedPositions.contains(normalizedPos)) {
             return false;
         }
         TargetLinkStatus nextStatus = new TargetLinkStatus(state, failure, retryTicks);
         TargetLinkStatus previousStatus = this.targetStatuses.put(normalizedPos, nextStatus);
-        this.retryAttempts.removeInt(normalizedPos);
+        this.retryAttempts.remove(normalizedPos);
         return !nextStatus.equals(previousStatus);
     }
 
@@ -204,7 +206,7 @@ public final class TowerLinkStateGraph {
             throw new IllegalArgumentException("Target link retry delays must satisfy 0 < initial <= maximum");
         }
 
-        BlockPos normalizedPos = targetPos.immutable();
+        long normalizedPos = targetPos.asLong();
         if (!this.linkedPositions.contains(normalizedPos)) {
             return false;
         }
@@ -225,7 +227,7 @@ public final class TowerLinkStateGraph {
      * @return current status, or {@link TargetLinkState#INVALID} when the target is not persisted
      */
     public TargetLinkStatus status(BlockPos targetPos) {
-        return this.targetStatuses.getOrDefault(targetPos, INVALID_STATUS);
+        return this.targetStatuses.getOrDefault(targetPos.asLong(), INVALID_STATUS);
     }
 
     /**
@@ -234,13 +236,13 @@ public final class TowerLinkStateGraph {
      * @param elapsedTicks elapsed ticks reported by the AE tick manager
      * @return deterministic snapshot of retry-ready target positions
      */
-    public List<BlockPos> advanceRetryClock(int elapsedTicks) {
+    public LongList advanceRetryClock(int elapsedTicks) {
         if (elapsedTicks < 0) {
             throw new IllegalArgumentException("Target link elapsed ticks must be non-negative: " + elapsedTicks);
         }
 
-        ObjectArrayList<BlockPos> readyTargets = new ObjectArrayList<>();
-        for (Map.Entry<BlockPos, TargetLinkStatus> entry : this.targetStatuses.entrySet()) {
+        LongArrayList readyTargets = new LongArrayList();
+        for (Long2ObjectMap.Entry<TargetLinkStatus> entry : this.targetStatuses.long2ObjectEntrySet()) {
             TargetLinkStatus status = entry.getValue();
             if (!status.isRetryable()) {
                 continue;
@@ -251,10 +253,10 @@ public final class TowerLinkStateGraph {
                 entry.setValue(new TargetLinkStatus(status.state(), status.failure(), remainingTicks));
             }
             if (remainingTicks == 0) {
-                readyTargets.add(entry.getKey());
+                readyTargets.add(entry.getLongKey());
             }
         }
-        return List.copyOf(readyTargets);
+        return readyTargets;
     }
 
     /**
@@ -276,8 +278,8 @@ public final class TowerLinkStateGraph {
      *
      * @return immutable tracked position snapshot
      */
-    public List<BlockPos> trackedPositions() {
-        return List.copyOf(this.linkedPositions);
+    public LongList trackedPositions() {
+        return new LongArrayList(this.linkedPositions);
     }
 
     private static int retryDelay(int initialDelayTicks, int maximumDelayTicks, int retryAttempt) {

@@ -13,11 +13,12 @@ import net.minecraft.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Reads and writes the current tower binding schema.
@@ -33,7 +34,7 @@ public final class VersionedTowerBindingCodec {
      * @param root tower block-entity tag
      * @return immutable bindings ordered by FIFO sequence
      */
-    public List<TowerBinding> read(CompoundTag root) {
+    public ObjectList<TowerBinding> read(CompoundTag root) {
         return readCurrent(root);
     }
 
@@ -43,7 +44,7 @@ public final class VersionedTowerBindingCodec {
      * @param root     tower block-entity tag
      * @param bindings bindings to persist
      */
-    public void write(CompoundTag root, List<TowerBinding> bindings) {
+    public void write(CompoundTag root, ObjectList<TowerBinding> bindings) {
         ObjectArrayList<TowerBinding> orderedBindings = new ObjectArrayList<>(bindings);
         orderedBindings.sort(Comparator.comparingLong(TowerBinding::fifoSequence));
 
@@ -78,7 +79,7 @@ public final class VersionedTowerBindingCodec {
         root.put(BINDINGS_TAG, bindingTags);
     }
 
-    private static List<TowerBinding> readCurrent(CompoundTag root) {
+    private static ObjectList<TowerBinding> readCurrent(CompoundTag root) {
         if (!root.contains(BINDINGS_TAG, Tag.TAG_LIST)) {
             throw new IllegalArgumentException("Versioned tower data is missing its binding list");
         }
@@ -108,7 +109,7 @@ public final class VersionedTowerBindingCodec {
                     dimensionId, anchor, source, fifoSequence, enabled, disabledDeviceKeys, direction, targetSide));
         }
         bindings.sort(Comparator.comparingLong(TowerBinding::fifoSequence));
-        return List.copyOf(bindings);
+        return new ObjectImmutableList<>(bindings);
     }
 
     private static EnergyTransferDirection readEnergyDirection(CompoundTag bindingTag) {

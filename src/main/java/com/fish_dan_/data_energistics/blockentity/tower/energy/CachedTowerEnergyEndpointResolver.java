@@ -128,7 +128,8 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
 
     private List<TowerEnergyEndpointCandidate> resolveTopologyEndpoints() {
         Object2ObjectLinkedOpenHashMap<TowerEnergyEndpointKey, TowerEnergyEndpointCandidate> endpoints = new Object2ObjectLinkedOpenHashMap<>();
-        for (BlockPos pos : this.context.cachedEndpointPositions()) {
+        for (long packedPos : this.context.cachedEndpointPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (!this.context.targetAllowsFe(pos)) {
                 continue;
             }

@@ -6,12 +6,12 @@ import com.fish_dan_.data_energistics.common.multiblock.json.registry.JsonMultiB
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Definition-backed ordered catalog that invokes registered controller factories against one atomic snapshot.
@@ -19,7 +19,7 @@ import java.util.Set;
 public final class DefinitionBackedMultiblockPreviewCatalog implements MultiblockPreviewCatalog {
 
     private final JsonMultiBlockDefinitionRegistry definitionRegistry;
-    private final List<MultiblockPreviewSpecFactory> factories;
+    private final ObjectList<MultiblockPreviewSpecFactory> factories;
 
     /**
      * Captures a stable unique factory order while retaining the live definition registry reload boundary.
@@ -28,12 +28,12 @@ public final class DefinitionBackedMultiblockPreviewCatalog implements Multibloc
      * @param factories          ordered controller factories
      */
     public DefinitionBackedMultiblockPreviewCatalog(JsonMultiBlockDefinitionRegistry definitionRegistry,
-                                                    List<MultiblockPreviewSpecFactory> factories) {
+                                                    ObjectList<MultiblockPreviewSpecFactory> factories) {
         if (definitionRegistry == null || factories == null) {
             throw new IllegalArgumentException("Multiblock preview catalog arguments cannot be null");
         }
-        List<MultiblockPreviewSpecFactory> copy = new ObjectArrayList<>(factories);
-        Set<ResourceLocation> controllerIds = new ObjectOpenHashSet<>();
+        ObjectList<MultiblockPreviewSpecFactory> copy = new ObjectArrayList<>(factories);
+        ObjectSet<ResourceLocation> controllerIds = new ObjectOpenHashSet<>();
         for (MultiblockPreviewSpecFactory factory : copy) {
             if (factory == null || factory.controllerId() == null) {
                 throw new IllegalArgumentException("Multiblock preview factories cannot contain null entries or ids");
@@ -44,13 +44,13 @@ public final class DefinitionBackedMultiblockPreviewCatalog implements Multibloc
             }
         }
         this.definitionRegistry = definitionRegistry;
-        this.factories = List.copyOf(copy);
+        this.factories = ObjectLists.unmodifiable(copy);
     }
 
     @Override
     public MultiblockPreviewCatalogSnapshot snapshot() {
         JsonMultiBlockDefinitionRegistrySnapshot definitions = this.definitionRegistry.snapshot();
-        Map<ResourceLocation, MultiblockPreviewSpec> specs = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<ResourceLocation, MultiblockPreviewSpec> specs = new Object2ObjectLinkedOpenHashMap<>();
         for (MultiblockPreviewSpecFactory factory : this.factories) {
             MultiblockPreviewSpec spec = factory.create(definitions);
             if (!factory.controllerId().equals(spec.controllerId())) {

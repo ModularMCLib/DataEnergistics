@@ -13,11 +13,11 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 /**
@@ -26,10 +26,10 @@ import java.util.stream.IntStream;
 public final class SubstructurePreviewSpec {
 
     private final JsonMultiBlockDefinition definition;
-    private final List<JsonMultiBlockDefinition> variants;
+    private final ObjectList<JsonMultiBlockDefinition> variants;
     private final Component title;
-    private final List<PreviewTierDomain> tierDomains;
-    private final List<List<RepeatRange>> repeatRangesByVariant;
+    private final ObjectList<PreviewTierDomain> tierDomains;
+    private final ObjectList<ObjectList<RepeatRange>> repeatRangesByVariant;
     private final SubstructureSelection defaults;
 
     /**
@@ -42,7 +42,7 @@ public final class SubstructurePreviewSpec {
      */
     public SubstructurePreviewSpec(JsonMultiBlockDefinition definition,
                                    Component title,
-                                   List<PreviewTierDomain> tierDomains,
+                                   ObjectList<PreviewTierDomain> tierDomains,
                                    SubstructureSelection defaults) {
         this(singleVariant(definition), title, tierDomains, defaults);
     }
@@ -55,9 +55,9 @@ public final class SubstructurePreviewSpec {
      * @param tierDomains ordered independent tier categories
      * @param defaults    initial variant, repeat, tier, and candidate choices
      */
-    public SubstructurePreviewSpec(List<JsonMultiBlockDefinition> variants,
+    public SubstructurePreviewSpec(ObjectList<JsonMultiBlockDefinition> variants,
                                    Component title,
-                                   List<PreviewTierDomain> tierDomains,
+                                   ObjectList<PreviewTierDomain> tierDomains,
                                    SubstructureSelection defaults) {
         if (variants == null || title == null || tierDomains == null || defaults == null) {
             throw new IllegalArgumentException("Substructure preview spec arguments cannot be null");
@@ -66,10 +66,15 @@ public final class SubstructurePreviewSpec {
         this.definition = this.variants.getFirst();
         this.title = title.copy();
         this.tierDomains = copyTierDomains(tierDomains);
-        this.repeatRangesByVariant = this.variants.stream()
-                .map(JsonMultiBlockDefinition::pattern)
-                .map(pattern -> pattern.getLayout().units().stream().map(PatternUnit::repeats).toList())
-                .toList();
+        ObjectArrayList<ObjectList<RepeatRange>> repeatRangesByVariant = new ObjectArrayList<>(this.variants.size());
+        for (JsonMultiBlockDefinition variant : this.variants) {
+            ObjectArrayList<RepeatRange> repeatRanges = new ObjectArrayList<>();
+            for (PatternUnit unit : variant.pattern().getLayout().units()) {
+                repeatRanges.add(unit.repeats());
+            }
+            repeatRangesByVariant.add(ObjectLists.unmodifiable(repeatRanges));
+        }
+        this.repeatRangesByVariant = ObjectLists.unmodifiable(repeatRangesByVariant);
         this.defaults = validateSelection(defaults);
     }
 
@@ -90,7 +95,7 @@ public final class SubstructurePreviewSpec {
     /**
      * Returns ordered definitions forming the legal zero-based shape-variant domain.
      */
-    public List<JsonMultiBlockDefinition> variants() {
+    public ObjectList<JsonMultiBlockDefinition> variants() {
         return this.variants;
     }
 
@@ -132,14 +137,14 @@ public final class SubstructurePreviewSpec {
     /**
      * Returns ordered independent tier categories.
      */
-    public List<PreviewTierDomain> tierDomains() {
+    public ObjectList<PreviewTierDomain> tierDomains() {
         return this.tierDomains;
     }
 
     /**
      * Returns repeat ranges for the default variant.
      */
-    public List<RepeatRange> repeatRanges() {
+    public ObjectList<RepeatRange> repeatRanges() {
         return repeatRanges(this.defaults.variantIndex());
     }
 
@@ -149,7 +154,7 @@ public final class SubstructurePreviewSpec {
      * @param variantIndex zero-based shape variant
      * @return immutable repeat ranges for that variant
      */
-    public List<RepeatRange> repeatRanges(int variantIndex) {
+    public ObjectList<RepeatRange> repeatRanges(int variantIndex) {
         definition(variantIndex);
         return this.repeatRangesByVariant.get(variantIndex);
     }
@@ -186,7 +191,7 @@ public final class SubstructurePreviewSpec {
         if (selection == null) {
             throw new IllegalArgumentException("Substructure preview selection cannot be null");
         }
-        List<RepeatRange> repeatRanges = repeatRanges(selection.variantIndex());
+        ObjectList<RepeatRange> repeatRanges = repeatRanges(selection.variantIndex());
         if (selection.repeatCounts().size() != repeatRanges.size()) {
             throw new IllegalArgumentException("Substructure " + id() + " variant " + selection.variantIndex() +
                     " expects " + repeatRanges.size() +
@@ -196,7 +201,7 @@ public final class SubstructurePreviewSpec {
             repeatRanges.get(index).requireValid(selection.repeatCounts().getInt(index));
         }
 
-        Set<String> declaredDomains = new ObjectOpenHashSet<>();
+        ObjectSet<String> declaredDomains = new ObjectOpenHashSet<>();
         for (PreviewTierDomain domain : this.tierDomains) {
             declaredDomains.add(domain.id());
         }
@@ -230,8 +235,8 @@ public final class SubstructurePreviewSpec {
                 selection.candidateSelections());
     }
 
-    private static List<JsonMultiBlockDefinition> copyVariants(List<JsonMultiBlockDefinition> variants) {
-        List<JsonMultiBlockDefinition> copy = new ObjectArrayList<>(variants);
+    private static ObjectList<JsonMultiBlockDefinition> copyVariants(ObjectList<JsonMultiBlockDefinition> variants) {
+        ObjectList<JsonMultiBlockDefinition> copy = new ObjectArrayList<>(variants);
         if (copy.isEmpty()) {
             throw new IllegalArgumentException("Substructure preview spec requires at least one variant");
         }
@@ -248,19 +253,19 @@ public final class SubstructurePreviewSpec {
                         first.key() + " and " + variant.key());
             }
         }
-        return Collections.unmodifiableList(copy);
+        return ObjectLists.unmodifiable(copy);
     }
 
-    private static List<JsonMultiBlockDefinition> singleVariant(JsonMultiBlockDefinition definition) {
+    private static ObjectList<JsonMultiBlockDefinition> singleVariant(JsonMultiBlockDefinition definition) {
         if (definition == null) {
             throw new IllegalArgumentException("Substructure preview definition cannot be null");
         }
-        return List.of(definition);
+        return ObjectList.of(definition);
     }
 
-    private static List<PreviewTierDomain> copyTierDomains(List<PreviewTierDomain> tierDomains) {
-        List<PreviewTierDomain> copy = new ObjectArrayList<>(tierDomains);
-        Set<String> ids = new ObjectOpenHashSet<>();
+    private static ObjectList<PreviewTierDomain> copyTierDomains(ObjectList<PreviewTierDomain> tierDomains) {
+        ObjectList<PreviewTierDomain> copy = new ObjectArrayList<>(tierDomains);
+        ObjectSet<String> ids = new ObjectOpenHashSet<>();
         for (PreviewTierDomain domain : copy) {
             if (domain == null) {
                 throw new IllegalArgumentException("Substructure tier domains cannot contain null");
@@ -269,6 +274,6 @@ public final class SubstructurePreviewSpec {
                 throw new IllegalArgumentException("Duplicate preview tier domain: " + domain.id());
             }
         }
-        return Collections.unmodifiableList(copy);
+        return ObjectLists.unmodifiable(copy);
     }
 }

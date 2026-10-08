@@ -3,9 +3,8 @@ package com.fish_dan_.data_energistics.common.multiblock.preview.catalog;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-
-import java.util.Collections;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 
 /**
  * Immutable ordered preview catalog built from one definition registry revision.
@@ -15,7 +14,7 @@ import java.util.Map;
  */
 public record MultiblockPreviewCatalogSnapshot(
                                                long definitionRevision,
-                                               Map<ResourceLocation, MultiblockPreviewSpec> specs) {
+                                               Object2ObjectMap<ResourceLocation, MultiblockPreviewSpec> specs) {
 
     /**
      * Copies and validates the entire catalog generation before publication to XEI or host UIs.
@@ -25,7 +24,7 @@ public record MultiblockPreviewCatalogSnapshot(
             throw new IllegalArgumentException("Invalid multiblock preview catalog snapshot");
         }
         Object2ObjectLinkedOpenHashMap<ResourceLocation, MultiblockPreviewSpec> copy = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<ResourceLocation, MultiblockPreviewSpec> entry : specs.entrySet()) {
+        for (Object2ObjectMap.Entry<ResourceLocation, MultiblockPreviewSpec> entry : specs.object2ObjectEntrySet()) {
             ResourceLocation controllerId = entry.getKey();
             MultiblockPreviewSpec spec = entry.getValue();
             if (controllerId == null || spec == null || !controllerId.equals(spec.controllerId())) {
@@ -36,7 +35,7 @@ public record MultiblockPreviewCatalogSnapshot(
             }
             copy.put(controllerId, spec);
         }
-        specs = Collections.unmodifiableMap(copy);
+        specs = Object2ObjectMaps.unmodifiable(copy);
     }
 
     /**

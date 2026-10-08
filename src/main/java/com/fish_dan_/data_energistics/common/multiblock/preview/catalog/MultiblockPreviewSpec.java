@@ -8,11 +8,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Revision-bound catalog of named preview substructures owned by one controller item.
@@ -23,7 +22,7 @@ public final class MultiblockPreviewSpec {
     private final Component title;
     private final AEItemKey ownerOutput;
     private final long definitionRevision;
-    private final List<SubstructurePreviewSpec> substructures;
+    private final ObjectList<SubstructurePreviewSpec> substructures;
 
     /**
      * Creates a stable preview catalog from active definitions at one registry revision.
@@ -38,7 +37,7 @@ public final class MultiblockPreviewSpec {
                                  Component title,
                                  AEItemKey ownerOutput,
                                  long definitionRevision,
-                                 List<SubstructurePreviewSpec> substructures) {
+                                 ObjectList<SubstructurePreviewSpec> substructures) {
         if (controllerId == null || title == null || ownerOutput == null || substructures == null) {
             throw new IllegalArgumentException("Multiblock preview spec arguments cannot be null");
         }
@@ -87,7 +86,7 @@ public final class MultiblockPreviewSpec {
     /**
      * Returns named substructures in stable presentation order.
      */
-    public List<SubstructurePreviewSpec> substructures() {
+    public ObjectList<SubstructurePreviewSpec> substructures() {
         return this.substructures;
     }
 
@@ -106,11 +105,11 @@ public final class MultiblockPreviewSpec {
         throw new IllegalArgumentException("Unknown multiblock preview substructure: " + id);
     }
 
-    private static List<SubstructurePreviewSpec> copySubstructures(
-                                                                   ResourceLocation controllerId,
-                                                                   List<SubstructurePreviewSpec> substructures) {
-        List<SubstructurePreviewSpec> copy = new ObjectArrayList<>(substructures);
-        Set<String> ids = new ObjectOpenHashSet<>();
+    private static ObjectList<SubstructurePreviewSpec> copySubstructures(
+                                                                         ResourceLocation controllerId,
+                                                                         ObjectList<SubstructurePreviewSpec> substructures) {
+        ObjectList<SubstructurePreviewSpec> copy = new ObjectArrayList<>(substructures);
+        ObjectSet<String> ids = new ObjectOpenHashSet<>();
         for (SubstructurePreviewSpec substructure : copy) {
             if (substructure == null) {
                 throw new IllegalArgumentException("Multiblock preview substructures cannot contain null");
@@ -123,6 +122,6 @@ public final class MultiblockPreviewSpec {
                 throw new IllegalArgumentException("Duplicate multiblock preview substructure: " + substructure.id());
             }
         }
-        return Collections.unmodifiableList(copy);
+        return ObjectLists.unmodifiable(copy);
     }
 }

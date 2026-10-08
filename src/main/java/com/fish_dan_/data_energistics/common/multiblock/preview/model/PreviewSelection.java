@@ -12,10 +12,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -27,13 +28,13 @@ public final class PreviewSelection {
     private final ResourceLocation controllerId;
     private final String activeSubstructureId;
     private final long definitionRevision;
-    private final Map<String, SubstructureSelection> substructureSelections;
+    private final Object2ObjectMap<String, SubstructureSelection> substructureSelections;
 
     private PreviewSelection(MultiblockPreviewSpec spec,
                              ResourceLocation controllerId,
                              String activeSubstructureId,
                              long definitionRevision,
-                             Map<String, SubstructureSelection> substructureSelections) {
+                             Object2ObjectMap<String, SubstructureSelection> substructureSelections) {
         this.spec = spec;
         this.controllerId = controllerId;
         this.activeSubstructureId = activeSubstructureId;
@@ -49,7 +50,7 @@ public final class PreviewSelection {
      * @return initial immutable session selection
      */
     public static PreviewSelection initial(MultiblockPreviewSpec spec) {
-        Map<String, SubstructureSelection> selections = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<String, SubstructureSelection> selections = new Object2ObjectLinkedOpenHashMap<>();
         for (SubstructurePreviewSpec substructure : spec.substructures()) {
             selections.put(substructure.id(), substructure.defaults());
         }
@@ -94,7 +95,7 @@ public final class PreviewSelection {
     /**
      * Returns all substructure choices in the declaration order of the bound spec.
      */
-    public Map<String, SubstructureSelection> substructureSelections() {
+    public Object2ObjectMap<String, SubstructureSelection> substructureSelections() {
         return this.substructureSelections;
     }
 
@@ -149,7 +150,7 @@ public final class PreviewSelection {
         if (active.variantIndex() == variantIndex) {
             return this;
         }
-        List<RepeatRange> targetRanges = substructure.repeatRanges(variantIndex);
+        ObjectList<RepeatRange> targetRanges = substructure.repeatRanges(variantIndex);
         IntList targetRepeats = new IntArrayList(targetRanges.size());
         for (int unitIndex = 0; unitIndex < targetRanges.size(); unitIndex++) {
             RepeatRange range = targetRanges.get(unitIndex);
@@ -217,10 +218,11 @@ public final class PreviewSelection {
         if (this.definitionRevision != candidateSpec.definitionRevision()) {
             throw new IllegalArgumentException("Preview selection definition revision does not match the supplied spec");
         }
-        List<String> expectedIds = candidateSpec.substructures().stream()
-                .map(SubstructurePreviewSpec::id)
-                .toList();
-        if (!List.copyOf(this.substructureSelections.keySet()).equals(expectedIds)) {
+        ObjectList<String> expectedIds = new ObjectArrayList<>(candidateSpec.substructures().size());
+        for (SubstructurePreviewSpec substructure : candidateSpec.substructures()) {
+            expectedIds.add(substructure.id());
+        }
+        if (!new ObjectArrayList<>(this.substructureSelections.keySet()).equals(expectedIds)) {
             throw new IllegalArgumentException("Preview selection substructures do not match the supplied spec");
         }
         candidateSpec.substructure(this.activeSubstructureId);
@@ -270,7 +272,7 @@ public final class PreviewSelection {
     }
 
     private PreviewSelection withActiveSelection(SubstructureSelection selection) {
-        Map<String, SubstructureSelection> updated = new Object2ObjectLinkedOpenHashMap<>(this.substructureSelections);
+        Object2ObjectMap<String, SubstructureSelection> updated = new Object2ObjectLinkedOpenHashMap<>(this.substructureSelections);
         updated.put(this.activeSubstructureId, selection);
         return new PreviewSelection(
                 this.spec,
@@ -280,15 +282,15 @@ public final class PreviewSelection {
                 updated);
     }
 
-    private static Map<String, SubstructureSelection> immutableSelections(
-                                                                          Map<String, SubstructureSelection> selections) {
-        Map<String, SubstructureSelection> copy = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<String, SubstructureSelection> entry : selections.entrySet()) {
+    private static Object2ObjectMap<String, SubstructureSelection> immutableSelections(
+                                                                                       Object2ObjectMap<String, SubstructureSelection> selections) {
+        Object2ObjectMap<String, SubstructureSelection> copy = new Object2ObjectLinkedOpenHashMap<>();
+        for (Object2ObjectMap.Entry<String, SubstructureSelection> entry : selections.object2ObjectEntrySet()) {
             if (entry.getKey().isBlank()) {
                 throw new IllegalArgumentException("Preview substructure selections cannot contain blank entries");
             }
             copy.put(entry.getKey(), entry.getValue());
         }
-        return Collections.unmodifiableMap(copy);
+        return Object2ObjectMaps.unmodifiable(copy);
     }
 }

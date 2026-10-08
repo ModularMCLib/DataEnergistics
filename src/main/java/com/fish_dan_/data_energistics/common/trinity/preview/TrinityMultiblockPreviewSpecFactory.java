@@ -24,8 +24,7 @@ import com.modularmc.mdl.api.multiblock.RepeatRange;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Declares Trinity's three named structures and reuses its authoritative auto-build tier registrations.
@@ -60,7 +59,7 @@ public final class TrinityMultiblockPreviewSpecFactory implements MultiblockPrev
                 Component.translatable("multiblock.data_energistics.trinity_data_core"),
                 ownerOutput,
                 definitions.revision(),
-                List.of(
+                ObjectList.of(
                         substructure(
                                 main,
                                 "screen.data_energistics.trinity_data_core.auto_build.structure.main",
@@ -84,9 +83,9 @@ public final class TrinityMultiblockPreviewSpecFactory implements MultiblockPrev
                 .mapToInt(RepeatRange::min)
                 .toArray());
         return new SubstructurePreviewSpec(
-                List.of(definition),
+                ObjectList.of(definition),
                 Component.translatable(titleTranslationKey),
-                List.of(tierDomain),
+                ObjectList.of(tierDomain),
                 new SubstructureSelection(
                         0,
                         repeatCounts,
@@ -95,11 +94,11 @@ public final class TrinityMultiblockPreviewSpecFactory implements MultiblockPrev
     }
 
     private static PreviewTierDomain tierDomain(String category) {
-        List<ResourceLocation> blockIds = TrinityAutoBuildBlockMap.categories().get(category);
+        ObjectList<ResourceLocation> blockIds = TrinityAutoBuildBlockMap.categories().get(category);
         if (blockIds == null || blockIds.isEmpty()) {
             throw new IllegalStateException("Trinity preview tier category is not registered: " + category);
         }
-        List<PreviewTierOption> options = new ObjectArrayList<>(blockIds.size());
+        ObjectList<PreviewTierOption> options = new ObjectArrayList<>(blockIds.size());
         for (int index = 0; index < blockIds.size(); index++) {
             ResourceLocation blockId = blockIds.get(index);
             options.add(new PreviewTierOption(

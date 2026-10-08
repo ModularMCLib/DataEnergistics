@@ -104,7 +104,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEntity
@@ -187,9 +186,9 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     private boolean syncingKeyMenu;
     private final ObjectList<@Nullable GenericStack> keyInputStacks = createKeyStacks(getKeyInputSlotCount());
     private final ObjectList<@Nullable GenericStack> keyOutputStacks = createKeyStacks(getKeyOutputSlotCount());
-    private final Set<Direction> itemOutputSides = EnumSet.allOf(Direction.class);
-    private final Set<Direction> fluidOutputSides = EnumSet.allOf(Direction.class);
-    private final Set<Direction> keyOutputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> itemOutputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> fluidOutputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> keyOutputSides = EnumSet.allOf(Direction.class);
     private @Nullable AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
     private AdjacentBlockCapabilityCache<IFluidHandler> adjacentFluidHandlers;
     private AdjacentBlockCapabilityCache<GenericInternalInventory> adjacentKeyInventories;
@@ -271,7 +270,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(orientation.getSide(RelativeSide.FRONT));
         sides.remove(orientation.getSide(RelativeSide.TOP));
@@ -667,8 +666,8 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         return this.configManager.getSetting(Settings.AUTO_EXPORT) == YesNo.YES;
     }
 
-    public Set<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
-        Set<Direction> sides = getOutputSidesInternal(outputType);
+    public EnumSet<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
+        EnumSet<Direction> sides = getOutputSidesInternal(outputType);
         if (sides.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }
@@ -676,7 +675,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     public void setOutputSideEnabled(DigitalStorageDepotOutputType outputType, Direction side, boolean enabled) {
-        Set<Direction> sides = getOutputSidesInternal(outputType);
+        EnumSet<Direction> sides = getOutputSidesInternal(outputType);
         boolean changed = enabled ? sides.add(side) : sides.remove(side);
         if (!changed) {
             return;
@@ -1966,21 +1965,21 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         return remaining;
     }
 
-    private List<IItemHandler> getAdjacentItemHandlers(Set<Direction> outputSides) {
+    private List<IItemHandler> getAdjacentItemHandlers(EnumSet<Direction> outputSides) {
         if (!initializeAdjacentCapabilityCaches()) {
             return ObjectLists.emptyList();
         }
         return this.adjacentItemHandlers.getAll(outputSides);
     }
 
-    private List<IFluidHandler> getAdjacentFluidHandlers(Set<Direction> outputSides) {
+    private List<IFluidHandler> getAdjacentFluidHandlers(EnumSet<Direction> outputSides) {
         if (!initializeAdjacentCapabilityCaches()) {
             return ObjectLists.emptyList();
         }
         return this.adjacentFluidHandlers.getAll(outputSides);
     }
 
-    private List<GenericInternalInventory> getAdjacentKeyInventories(Set<Direction> outputSides) {
+    private List<GenericInternalInventory> getAdjacentKeyInventories(EnumSet<Direction> outputSides) {
         if (!initializeAdjacentCapabilityCaches()) {
             return ObjectLists.emptyList();
         }
@@ -2016,7 +2015,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         return true;
     }
 
-    private Set<Direction> getOutputSidesInternal(DigitalStorageDepotOutputType outputType) {
+    private EnumSet<Direction> getOutputSidesInternal(DigitalStorageDepotOutputType outputType) {
         return switch (outputType) {
             case ITEMS -> this.itemOutputSides;
             case FLUIDS -> this.fluidOutputSides;
@@ -2025,11 +2024,11 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     private boolean replaceOutputSides(DigitalStorageDepotOutputType outputType, int sidesMask) {
-        Set<Direction> sides = getOutputSidesInternal(outputType);
+        EnumSet<Direction> sides = getOutputSidesInternal(outputType);
         return MemoryCardSettingsUtils.replaceSides(sides, sidesMask);
     }
 
-    private void copyOutputSidesToAllTypes(Set<Direction> sides) {
+    private void copyOutputSidesToAllTypes(EnumSet<Direction> sides) {
         this.itemOutputSides.clear();
         this.fluidOutputSides.clear();
         this.keyOutputSides.clear();
@@ -2038,7 +2037,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         this.keyOutputSides.addAll(sides);
     }
 
-    private static void readOutputSides(CompoundTag data, String tagName, Set<Direction> target) {
+    private static void readOutputSides(CompoundTag data, String tagName, EnumSet<Direction> target) {
         target.clear();
         for (Tag name : data.getList(tagName, Tag.TAG_STRING)) {
             Direction side = Direction.byName(name.getAsString());
@@ -2048,7 +2047,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         }
     }
 
-    private static ListTag createOutputSidesTag(Set<Direction> sides) {
+    private static ListTag createOutputSidesTag(EnumSet<Direction> sides) {
         ListTag tag = new ListTag();
         for (Direction side : sides) {
             tag.add(StringTag.valueOf(side.getName()));

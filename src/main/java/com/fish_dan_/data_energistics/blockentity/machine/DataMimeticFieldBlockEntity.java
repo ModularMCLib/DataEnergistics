@@ -196,7 +196,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     private boolean powerUsageDirty = true;
     private int cachedActiveCarrierCount;
     private int clientActiveSlotCount = BASE_ACTIVE_SLOTS;
-    private final Set<Direction> outputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> outputSides = EnumSet.allOf(Direction.class);
     private boolean syncingKeyMenu;
     private int runtimeBatchDepth;
     private boolean runtimePersistenceDirty;
@@ -242,7 +242,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP && dir != front;
     }
 
-    private static Set<Direction> getCableExposedSides(BlockState blockState) {
+    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
         Direction front = blockState.getValue(DataMimeticFieldBlock.FACING);
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(Direction.UP);
@@ -537,7 +537,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         return this.dropRoutingMode;
     }
 
-    public Set<Direction> getOutputSides() {
+    public EnumSet<Direction> getOutputSides() {
         if (this.outputSides.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }

@@ -98,7 +98,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * An integrated, buffered front-end for AE2 charger and inscriber recipes plus data charger recipes.
@@ -155,7 +154,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     private final ObjectList<GenericStackInv> fluidMenuInventories = createFluidMenuInventories();
     private final ConfigManager configManager = new ConfigManager(this::onConfigChanged);
     private boolean syncingFluidMenus;
-    private final Set<Direction> outputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> outputSides = EnumSet.allOf(Direction.class);
     private @Nullable AdjacentBlockCapabilityCache<GenericInternalInventory> adjacentGenericInventories;
     private @Nullable AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
     @Getter
@@ -187,7 +186,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(orientation.getSide(RelativeSide.FRONT));
         return sides;
@@ -296,11 +295,11 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         return this.configManager.getSetting(Settings.AUTO_EXPORT) == YesNo.YES;
     }
 
-    public Set<Direction> getOutputSides() {
+    public EnumSet<Direction> getOutputSides() {
         return this.outputSides.isEmpty() ? EnumSet.noneOf(Direction.class) : EnumSet.copyOf(this.outputSides);
     }
 
-    public Set<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
+    public EnumSet<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
         return outputType == DigitalStorageDepotOutputType.ITEMS ? getOutputSides() : EnumSet.noneOf(Direction.class);
     }
 
@@ -1179,7 +1178,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         return exportItemOutputs(this.outputSides);
     }
 
-    private boolean exportItemOutputs(Set<Direction> sides) {
+    private boolean exportItemOutputs(EnumSet<Direction> sides) {
         if (sides.isEmpty() || !initializeAdjacentCapabilityCaches()) {
             return false;
         }
@@ -1208,7 +1207,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
      * separate and therefore preserves the actual output resource.
      * </p>
      */
-    private ItemStack insertIntoAdjacentTargets(ItemStack stack, Set<Direction> sides) {
+    private ItemStack insertIntoAdjacentTargets(ItemStack stack, EnumSet<Direction> sides) {
         ItemStack remaining = stack.copy();
         for (Direction side : sides) {
             if (remaining.isEmpty()) {
@@ -1389,7 +1388,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         }
     }
 
-    private static void readOutputSides(CompoundTag data, Set<Direction> target) {
+    private static void readOutputSides(CompoundTag data, EnumSet<Direction> target) {
         target.clear();
         for (Tag name : data.getList(OUTPUT_SIDES_TAG, Tag.TAG_STRING)) {
             Direction side = Direction.byName(name.getAsString());
@@ -1399,7 +1398,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         }
     }
 
-    private static ListTag createOutputSidesTag(Set<Direction> sides) {
+    private static ListTag createOutputSidesTag(EnumSet<Direction> sides) {
         ListTag tag = new ListTag();
         for (Direction side : sides) {
             tag.add(net.minecraft.nbt.StringTag.valueOf(side.getName()));

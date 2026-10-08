@@ -126,7 +126,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -2035,7 +2034,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.host.saveChanges();
     }
 
-    private Set<Direction> getActiveSidesFiltered() {
+    private EnumSet<Direction> getActiveSidesFiltered() {
         var sides = EnumSet.copyOf(this.host.getTargets());
         var node = this.mainNode.getNode();
         if (node == null) {

@@ -199,7 +199,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private int debuffCooldown;
     private AABB cachedCoverageAabb;
     private List<LivingEntity> cachedTargets = List.of();
-    private final Set<Direction> outputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> outputSides = EnumSet.allOf(Direction.class);
     private int cachedCapacityCardCount = -1;
     private int cachedSpeedCardCount = -1;
     private int cachedEnergyCardCount = -1;
@@ -238,9 +238,9 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP && dir != front;
     }
 
-    private static Set<Direction> getCableExposedSides(BlockState blockState) {
+    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
         Direction front = blockState.getValue(DataExtractorBlock.FACING);
-        Set<Direction> exposedSides = EnumSet.allOf(Direction.class);
+        EnumSet<Direction> exposedSides = EnumSet.allOf(Direction.class);
         exposedSides.remove(Direction.UP);
         exposedSides.remove(front);
         return exposedSides;
@@ -606,7 +606,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.autoExportMode;
     }
 
-    public Set<Direction> getOutputSides() {
+    public EnumSet<Direction> getOutputSides() {
         if (this.outputSides.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }

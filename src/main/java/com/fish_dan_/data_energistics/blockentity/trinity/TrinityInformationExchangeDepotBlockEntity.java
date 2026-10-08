@@ -116,6 +116,7 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -186,14 +187,14 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                 .addService(ICraftingProvider.class, this.craftingProvider)
                 .addService(IStorageWatcherNode.class, this.transferWatcherNode)
                 .setFlags(GridFlags.REQUIRE_CHANNEL)
-                .setExposedOnSides(new ObjectOpenHashSet<>(Direction.values()))
+                .setExposedOnSides(EnumSet.allOf(Direction.class))
                 .setVisualRepresentation(DEBlocks.TRINITY_INFORMATION_EXCHANGE_DEPOT.get())
                 .setIdlePowerUsage(0.0D);
     }
 
     @Override
-    public ObjectSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return new ObjectOpenHashSet<>(Direction.values());
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
+        return EnumSet.allOf(Direction.class);
     }
 
     @Override

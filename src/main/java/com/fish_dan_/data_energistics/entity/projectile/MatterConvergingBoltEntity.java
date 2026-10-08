@@ -584,7 +584,8 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     private LivingEntity findNearestHomingTarget() {
         Entity owner = this.getOwner();
         if (this.preferredHomingTargetId != null) {
-            Entity preferred = this.level().getEntity(this.preferredHomingTargetId);
+            Entity preferred = this.level() instanceof ServerLevel serverLevel
+                    ? serverLevel.getEntity(this.preferredHomingTargetId) : null;
             if (preferred instanceof LivingEntity target && target.isAlive() && target != owner) return target;
         }
         return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(HOMING_RANGE),

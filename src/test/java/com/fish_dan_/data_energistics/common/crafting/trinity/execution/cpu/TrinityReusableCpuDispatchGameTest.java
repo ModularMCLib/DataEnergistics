@@ -32,10 +32,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.Fix
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Identity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Operation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.ToolOutcome;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.util.ExactAmountCodec;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -492,8 +492,8 @@ public final class TrinityReusableCpuDispatchGameTest {
                         helper.assertValueEqual(worker.getWaitingFor(product()), BigInteger.ZERO, "CPU settlement removes only cancelled unexecuted waiting output");
                         CompoundTag job = worker.logic().writeToTag(helper.getLevel().registryAccess()).getCompound("job");
                         CompoundTag time = job.getCompound("time_tracker");
-                        BigInteger started = TrinityBigIntegerEncoding.decode(time.getCompound("started_work").getByteArray(product().getType().getId().toString()), "test started work");
-                        BigInteger completed = TrinityBigIntegerEncoding.decode(time.getCompound("completed_work").getByteArray(product().getType().getId().toString()), "test completed work");
+                        BigInteger started = ExactAmountCodec.decode(time.getCompound("started_work").getByteArray(product().getType().getId().toString()), "test started work");
+                        BigInteger completed = ExactAmountCodec.decode(time.getCompound("completed_work").getByteArray(product().getType().getId().toString()), "test completed work");
                         helper.assertValueEqual(started, BigInteger.valueOf(requested - cancelled), "Cancelled accepted suffix reduces the original started baseline");
                         helper.assertValueEqual(completed, BigInteger.valueOf(executed), "Cancellation cannot become completed progress");
                         cancellationChecked = true;

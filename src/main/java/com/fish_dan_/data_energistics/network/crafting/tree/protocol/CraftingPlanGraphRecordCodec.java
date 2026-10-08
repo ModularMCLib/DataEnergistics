@@ -8,11 +8,11 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphCycle;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphEdge;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphHeader;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphNode;
+import com.fish_dan_.data_energistics.util.ExactAmountCodec;
 
 import appeng.api.stacks.AEKey;
 
@@ -127,11 +127,11 @@ final class CraftingPlanGraphRecordCodec {
     }
 
     private static void amount(RegistryFriendlyByteBuf buffer, BigInteger amount) {
-        buffer.writeByteArray(TrinityBigIntegerEncoding.encode(amount, "plan graph amount"));
+        buffer.writeByteArray(ExactAmountCodec.encode(amount, "plan graph amount"));
     }
 
     private static BigInteger amount(RegistryFriendlyByteBuf buffer) {
-        return TrinityBigIntegerEncoding.decode(buffer.readByteArray(TrinityBigIntegerEncoding.MAX_BYTES), "plan graph amount");
+        return ExactAmountCodec.decode(buffer.readByteArray(ExactAmountCodec.MAX_BYTES), "plan graph amount");
     }
 
     private static int count(RegistryFriendlyByteBuf buffer) {

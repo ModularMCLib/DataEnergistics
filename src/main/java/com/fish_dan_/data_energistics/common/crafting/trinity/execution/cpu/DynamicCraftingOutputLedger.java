@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputResolutionException;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
+import com.fish_dan_.data_energistics.util.ExactAmountCodec;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
@@ -347,7 +347,7 @@ final class DynamicCraftingOutputLedger {
         for (MutableEntry entry : this.entries) {
             CompoundTag tag = new CompoundTag();
             tag.put(KEY_TAG, entry.plannedKey.toTagGeneric(registries));
-            tag.putByteArray(AMOUNT_TAG, TrinityBigIntegerEncoding.encode(entry.remaining, "dynamic output allowance"));
+            tag.putByteArray(AMOUNT_TAG, ExactAmountCodec.encode(entry.remaining, "dynamic output allowance"));
             tag.putString(ROUTE_TAG, entry.route.name());
             tag.putString(SOURCE_TAG, entry.source.toString());
             tag.put("rule", entry.rule.save());
@@ -359,7 +359,7 @@ final class DynamicCraftingOutputLedger {
         this.inputAliases.forEach((key, amount) -> {
             CompoundTag tag = new CompoundTag();
             tag.put(ACTUAL_KEY_TAG, key.toTagGeneric(registries));
-            tag.putByteArray(AMOUNT_TAG, TrinityBigIntegerEncoding.encode(amount, "dynamic input alias"));
+            tag.putByteArray(AMOUNT_TAG, ExactAmountCodec.encode(amount, "dynamic input alias"));
             aliases.add(tag);
         });
         root.put(INPUT_ALIASES_TAG, aliases);
@@ -441,7 +441,7 @@ final class DynamicCraftingOutputLedger {
     }
 
     private static BigInteger readAmount(CompoundTag tag) {
-        return TrinityBigIntegerEncoding.readTag(tag, AMOUNT_TAG, "dynamic output ledger amount");
+        return ExactAmountCodec.readTag(tag, AMOUNT_TAG, "dynamic output ledger amount");
     }
 
     private static final class MutableEntry {

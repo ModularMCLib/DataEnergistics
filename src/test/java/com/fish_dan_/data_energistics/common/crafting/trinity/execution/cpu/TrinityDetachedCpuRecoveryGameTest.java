@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuPartitionProfile;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.ReusableCpuSessionLedger;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.ReusableCpuSessionLedgerNbtCodec;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.util.ExactAmountCodec;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData.RecoveryKey;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData.RecoveryStatus;
@@ -137,7 +137,7 @@ public final class TrinityDetachedCpuRecoveryGameTest {
         worker.putInt("index", 3);
         worker.putInt("partition_count", 4);
         worker.putBoolean("storage_unlimited", false);
-        worker.putByteArray("storage_capacity", TrinityBigIntegerEncoding.encode(BigInteger.valueOf(1024), "CPU storage capacity"));
+        worker.putByteArray("storage_capacity", ExactAmountCodec.encode(BigInteger.valueOf(1024), "CPU storage capacity"));
         worker.putInt("co_processors", 0);
         worker.putString("selection_mode", CpuSelectionMode.ANY.name());
         worker.put("logic", logic);

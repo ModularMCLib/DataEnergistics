@@ -159,6 +159,7 @@ public final class ReusableInputGraphCaptureService {
         private final Map<TrinityPatternIdentity, TrinityPlanningDiagnostic> fallbacks = new Object2ObjectLinkedOpenHashMap<>();
         private final ObjectLinkedOpenHashSet<List<TrinityBoundPatternInput>> merged = new ObjectLinkedOpenHashSet<>();
         private List<Endpoint> endpoints = List.of();
+        private boolean endpointsDiscovered;
         private int patternIndex;
         private int endpointIndex;
         private int expandedCount;
@@ -291,12 +292,13 @@ public final class ReusableInputGraphCaptureService {
                         inventory, rules, limits.maxBindingVariants(), control, pattern.reusableBindings());
                 return;
             }
-            if (endpoints.isEmpty() && endpointIndex == 0) {
+            if (!endpointsDiscovered) {
                 endpoints = discover(pattern);
+                endpointsDiscovered = true;
                 if (!endpoints.isEmpty()) {
                     return;
                 }
-            } else if (!sameEndpoints(endpoints, discover(pattern))) {
+            } else if (!endpoints.isEmpty() && !sameEndpoints(endpoints, discover(pattern))) {
                 restart(current.orElseThrow());
                 return;
             }
@@ -313,6 +315,7 @@ public final class ReusableInputGraphCaptureService {
             validationPatterns.add(pattern);
             patternIndex++;
             endpoints = List.of();
+            endpointsDiscovered = false;
             endpointIndex = 0;
             merged.clear();
             patternFallback = null;
@@ -336,6 +339,7 @@ public final class ReusableInputGraphCaptureService {
             fallbacks.clear();
             merged.clear();
             endpoints = List.of();
+            endpointsDiscovered = false;
             patternIndex = 0;
             endpointIndex = 0;
             expandedCount = 0;

@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.memorycard;
+package com.fish_dan_.data_energistics.util;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.implementations.items.IMemoryCard;
@@ -19,9 +19,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import org.jspecify.annotations.Nullable;
 
-public final class BlockMemoryCardInteractionHelper {
+public final class MemoryCardInteractionUtils {
 
-    private BlockMemoryCardInteractionHelper() {}
+    private MemoryCardInteractionUtils() {}
 
     public static ItemInteractionResult useOnBlockEntity(ItemStack stack, Level level, BlockPos pos, Player player) {
         if (!(stack.getItem() instanceof IMemoryCard memoryCard)) {

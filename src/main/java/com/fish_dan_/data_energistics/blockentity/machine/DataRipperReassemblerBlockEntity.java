@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOut
 import com.fish_dan_.data_energistics.common.acceleration.BatchTickProgression;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.recipe.ProcessingRecipeResolver;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataReassemblerRecipeResolver;
@@ -936,9 +936,9 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
         }
 
         CompoundTag settings = new CompoundTag();
-        settings.putInt(ITEM_OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.itemOutputSides));
-        settings.putInt(FLUID_OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.fluidOutputSides));
-        settings.putInt(KEY_OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.keyOutputSides));
+        settings.putInt(ITEM_OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.itemOutputSides));
+        settings.putInt(FLUID_OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.fluidOutputSides));
+        settings.putInt(KEY_OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.keyOutputSides));
         builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
     }
 
@@ -2026,7 +2026,7 @@ public class DataRipperReassemblerBlockEntity extends AENetworkedPoweredBlockEnt
 
     private boolean replaceOutputSides(DigitalStorageDepotOutputType outputType, int sidesMask) {
         Set<Direction> sides = getOutputSidesInternal(outputType);
-        return MemoryCardSettingsHelper.replaceSides(sides, sidesMask);
+        return MemoryCardSettingsUtils.replaceSides(sides, sidesMask);
     }
 
     private void copyOutputSidesToAllTypes(Set<Direction> sides) {

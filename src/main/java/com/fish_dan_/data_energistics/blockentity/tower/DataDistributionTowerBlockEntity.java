@@ -34,7 +34,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateG
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateGraph.TargetLinkStatus;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetDisplayResolverContext;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetSummaryResolver;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
@@ -797,7 +797,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         boolean invalidateTargets = false;
 
         if (settings.contains(SHOW_RANGE_TAG)) {
-            boolean showRange = MemoryCardSettingsHelper.readBoolean(settings, SHOW_RANGE_TAG, this.showRange);
+            boolean showRange = MemoryCardSettingsUtils.readBoolean(settings, SHOW_RANGE_TAG, this.showRange);
             if (this.showRange != showRange) {
                 this.showRange = showRange;
                 changed = true;

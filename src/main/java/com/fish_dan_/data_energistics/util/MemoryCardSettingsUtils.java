@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.memorycard;
+package com.fish_dan_.data_energistics.util;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -6,11 +6,11 @@ import net.minecraft.nbt.CompoundTag;
 import java.util.EnumSet;
 import java.util.Set;
 
-public final class MemoryCardSettingsHelper {
+public final class MemoryCardSettingsUtils {
 
     public static final int ALL_DIRECTIONS_MASK = 63;
 
-    private MemoryCardSettingsHelper() {}
+    private MemoryCardSettingsUtils() {}
 
     public static int encodeSides(Iterable<Direction> sides) {
         int mask = 0;

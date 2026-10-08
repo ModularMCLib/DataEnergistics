@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock.Type;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataExtractorSchema;
@@ -314,7 +314,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         settings.putBoolean(REDSTONE_CONTROLLED_TAG, this.redstoneControlled);
         settings.putBoolean(SHOW_RANGE_TAG, this.showRange);
         settings.putInt(AUTO_EXPORT_MODE_TAG, this.autoExportMode.ordinal());
-        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.outputSides));
+        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.outputSides));
         builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
     }
 
@@ -646,7 +646,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 changed = true;
             }
         }
-        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsHelper.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
+        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsUtils.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
             changed = true;
         }
         if (changed) {

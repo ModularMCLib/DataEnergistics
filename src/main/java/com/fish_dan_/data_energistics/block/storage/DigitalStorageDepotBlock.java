@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.block.storage;
 
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotBlockEntity;
-import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEMenus;
@@ -94,7 +94,7 @@ public class DigitalStorageDepotBlock extends AEBaseBlock implements EntityBlock
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hitResult) {
-        ItemInteractionResult memoryCardResult = BlockMemoryCardInteractionHelper.useOnBlockEntity(stack, level, pos, player);
+        ItemInteractionResult memoryCardResult = MemoryCardInteractionUtils.useOnBlockEntity(stack, level, pos, player);
         if (memoryCardResult.consumesAction()) {
             return memoryCardResult;
         }

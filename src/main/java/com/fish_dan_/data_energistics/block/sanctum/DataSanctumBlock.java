@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.block.sanctum;
 
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
-import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumStatusMenu;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 
@@ -166,7 +166,7 @@ public class DataSanctumBlock extends AEBaseBlock implements EntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hitResult) {
-        ItemInteractionResult memoryCardResult = BlockMemoryCardInteractionHelper.useOnBlockEntity(
+        ItemInteractionResult memoryCardResult = MemoryCardInteractionUtils.useOnBlockEntity(
                 stack,
                 level,
                 DataSanctumBlockEntity.getMainPos(pos, state),

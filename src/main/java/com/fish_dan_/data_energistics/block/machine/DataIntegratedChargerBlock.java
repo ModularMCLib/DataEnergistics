@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.block.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerBlockEntity;
-import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
@@ -87,7 +87,7 @@ public class DataIntegratedChargerBlock extends AEBaseBlock implements EntityBlo
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, net.minecraft.world.InteractionHand hand,
                                               BlockHitResult hitResult) {
-        ItemInteractionResult memoryCardResult = BlockMemoryCardInteractionHelper.useOnBlockEntity(stack, level, pos, player);
+        ItemInteractionResult memoryCardResult = MemoryCardInteractionUtils.useOnBlockEntity(stack, level, pos, player);
         if (memoryCardResult.consumesAction()) {
             return memoryCardResult;
         }

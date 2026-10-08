@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadW
 import com.fish_dan_.data_energistics.block.machine.DataIntegratedChargerBlock;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.catalog.EaeCircuitCutterRecipeCatalog;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipe;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
@@ -224,7 +224,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
 
         CompoundTag settings = new CompoundTag();
         settings.putString(MACHINE_MODE_TAG, this.machineMode.name());
-        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.outputSides));
+        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.outputSides));
         builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
     }
 
@@ -1379,7 +1379,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             }
         }
         if (settings.contains(OUTPUT_SIDES_TAG, Tag.TAG_INT)) {
-            changed |= MemoryCardSettingsHelper.replaceSides(
+            changed |= MemoryCardSettingsUtils.replaceSides(
                     this.outputSides,
                     settings.getInt(OUTPUT_SIDES_TAG));
         }

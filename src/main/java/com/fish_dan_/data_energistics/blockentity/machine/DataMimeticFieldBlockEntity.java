@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.blockentity.machine.mimetic.MimeticGenerat
 import com.fish_dan_.data_energistics.common.acceleration.BatchTickProgression;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
@@ -333,7 +333,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         settings.putBoolean(REDSTONE_CONTROLLED_TAG, this.redstoneControlled);
         settings.putBoolean(AUTO_PULL_KEY_INPUT_TAG, this.autoPullKeyInput);
         settings.putInt(DROP_ROUTING_MODE_TAG, this.dropRoutingMode.ordinal());
-        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.outputSides));
+        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.outputSides));
         builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
     }
 
@@ -633,7 +633,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
                 changed = true;
             }
         }
-        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsHelper.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
+        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsUtils.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
             changed = true;
         }
         if (powerUsageChanged) {

@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.block.tower;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
-import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
@@ -362,7 +362,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
     @Override
     protected ItemInteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        ItemInteractionResult memoryCardResult = BlockMemoryCardInteractionHelper.useOnBlockEntity(
+        ItemInteractionResult memoryCardResult = MemoryCardInteractionUtils.useOnBlockEntity(
                 heldItem,
                 level,
                 getBasePos(pos, state),

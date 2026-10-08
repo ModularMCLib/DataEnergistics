@@ -139,7 +139,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     @Override
     public void onWheel(ItemStack stack, boolean up) {
         RailLauncher.cancel(stack);
-        MountedAmmoCells.migrateLegacy(stack);
         MountedAmmoCells.cycle(stack, mode(stack), !up);
     }
 
@@ -150,7 +149,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             return;
         }
         if (player.level().isClientSide || !isCannon(stack) || !player.isAlive() || player.isSpectator() || player.isUsingItem() || player.containerMenu != player.inventoryMenu || stack.has(DEDataComponents.CANNON_CHARGE.get())) return;
-        MountedAmmoCells.migrateLegacy(stack);
         if (!this.isChargedAmmoSupported(stack)) return;
         if (!isCharged(stack)) {
             if (!this.hasAmmo(stack)) this.tryStoreAmmoFromPlayer(stack, player);
@@ -219,7 +217,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         super.inventoryTick(stack, level, entity, slot, selected);
         if (!level.isClientSide) {
-            MountedAmmoCells.migrateLegacy(stack);
             CannonCharge charge = stack.get(DEDataComponents.CANNON_CHARGE.get());
             if (charge != null && (!(entity instanceof Player player) || !charge.belongsTo(player, charge.hand(), mode(stack)) || player.getItemInHand(charge.hand()) != stack || player.containerMenu != player.inventoryMenu)) {
                 RailLauncher.cancel(stack);
@@ -268,7 +265,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
         if (isCannon(stack)) return InteractionResultHolder.pass(stack);
-        if (!level.isClientSide) MountedAmmoCells.migrateLegacy(stack);
         ChargedProjectiles charged = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
         if (!charged.isEmpty()) {
             if (!this.isChargedAmmoSupported(stack)) return InteractionResultHolder.fail(stack);
@@ -357,9 +353,6 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
                             railAmmo.damage(this.getUpgrades(stack).getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()))));
                 }
             }
-        }
-        if (!stack.getOrDefault(AEComponents.STORAGE_CELL_INV, List.of()).isEmpty()) {
-            lines.add(Component.translatable("tooltip.data_energistics.cannon.legacy_ammo"));
         }
         lines.add(Component.translatable("item.data_energistics.star_shard.projectile",
                 this.getDisplayedAmmoName(stack)));

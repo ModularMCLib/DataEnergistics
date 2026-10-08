@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.execution.Package
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
+import com.fish_dan_.data_energistics.util.ItemStackUtils;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -114,7 +115,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
                 ItemStack actual = table.inv.getStackInSlot(slot);
                 if (actual.isEmpty()) continue;
                 ItemStack recovered = table.inv.extractItem(slot, actual.getCount(), false);
-                if (!sameStack(actual, recovered)) throw new IllegalStateException("Tabula Vitae recovery extraction was incomplete");
+                if (!ItemStackUtils.sameItemAndCount(actual, recovered)) throw new IllegalStateException("Tabula Vitae recovery extraction was incomplete");
                 operation.returned(AEItemKey.of(recovered), recovered.getCount());
             }
             table.getPersistentData().remove(OWNER);
@@ -149,7 +150,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         for (int slot = 0; slot < inputs.size(); slot++) {
             ItemStack stack = inputs.get(slot);
             ItemStack remainder = table.inv.insertItem(slot, stack.copy(), false);
-            if (!remainder.isEmpty() || !sameStack(stack, table.inv.getStackInSlot(slot)))
+            if (!remainder.isEmpty() || !ItemStackUtils.sameItemAndCount(stack, table.inv.getStackInSlot(slot)))
                 throw new IllegalStateException("Tabula Vitae rejected a preflighted ingredient");
             operation.delivered(AEItemKey.of(stack), 1);
             operation.progress().putInt(INSERTED, operation.progress().getInt(INSERTED) | 1 << slot);
@@ -165,13 +166,13 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         if (!PackagedOutputMatching.matches(operation, expected, output))
             return false;
         ItemStack extractedOutput = table.inv.extractItem(TabulaVitaeBlockEntity.OUTPUT_SLOT, output.getCount(), false);
-        if (!sameStack(output, extractedOutput)) throw new IllegalStateException("Tabula Vitae output extraction was incomplete");
+        if (!ItemStackUtils.sameItemAndCount(output, extractedOutput)) throw new IllegalStateException("Tabula Vitae output extraction was incomplete");
         operation.returned(AEItemKey.of(extractedOutput), extractedOutput.getCount());
         for (int slot = 0; slot < TabulaVitaeBlockEntity.ORB_SLOT; slot++) {
             ItemStack remainder = table.inv.getStackInSlot(slot);
             if (remainder.isEmpty()) continue;
             ItemStack extracted = table.inv.extractItem(slot, remainder.getCount(), false);
-            if (!sameStack(remainder, extracted))
+            if (!ItemStackUtils.sameItemAndCount(remainder, extracted))
                 throw new IllegalStateException("Tabula Vitae remainder extraction was incomplete");
             operation.returned(AEItemKey.of(extracted), extracted.getCount());
         }
@@ -204,10 +205,6 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
             if (!table.inv.getStackInSlot(slot).isEmpty()) return false;
         }
         return table.inv.getStackInSlot(TabulaVitaeBlockEntity.OUTPUT_SLOT).isEmpty();
-    }
-
-    private static boolean sameStack(ItemStack expected, ItemStack actual) {
-        return expected.getCount() == actual.getCount() && ItemStack.isSameItemSameComponents(expected, actual);
     }
 
     private static ItemStack readStack(PackagedMachineOperation operation, String key) {

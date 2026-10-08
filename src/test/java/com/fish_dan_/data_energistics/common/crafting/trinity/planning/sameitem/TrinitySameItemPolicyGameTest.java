@@ -298,20 +298,20 @@ public final class TrinitySameItemPolicyGameTest {
         }
 
         @Override
-        public long storageStructureRevision() {
+        public long data_energistics$storageStructureRevision() {
             return 0L;
         }
 
         @Override
-        public TrinityAvailableAmount exactAvailability(AEKey what, IActionSource source) {
+        public TrinityAvailableAmount data_energistics$exactAvailability(AEKey what, IActionSource source) {
             return new TrinityAvailableAmount.Finite(BigInteger.valueOf(this.available.get(what)));
         }
 
         @Override
-        public FiniteTransferResult transferFinite(AEKey what,
-                                                   long amount,
-                                                   IActionSource source,
-                                                   FiniteTransferTarget target) {
+        public FiniteTransferResult data_energistics$transferFinite(AEKey what,
+                                                                    long amount,
+                                                                    IActionSource source,
+                                                                    FiniteTransferTarget target) {
             throw new UnsupportedOperationException("Finite transfer is not used by this inventory capture fixture");
         }
 

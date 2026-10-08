@@ -12,14 +12,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Resolves side-sensitive tower FE endpoints while caching topology until invalidation and directions per game tick.
@@ -29,9 +29,9 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
     private final TowerEnergyEndpointResolverContext context;
     private final TowerEnergyEndpointIntegrationRegistry integrations;
     private final ObjectArrayList<TowerEnergyEndpoint> reusableEndpointFilter = new ObjectArrayList<>();
-    private List<TowerEnergyEndpointCandidate> cachedTopologyEndpoints = List.of();
-    private List<TowerEnergyEndpoint> cachedReceiveEnergyEndpoints = List.of();
-    private List<TowerEnergyEndpoint> cachedExtractEnergyEndpoints = List.of();
+    private ObjectList<TowerEnergyEndpointCandidate> cachedTopologyEndpoints = ObjectList.of();
+    private ObjectList<TowerEnergyEndpoint> cachedReceiveEnergyEndpoints = ObjectList.of();
+    private ObjectList<TowerEnergyEndpoint> cachedExtractEnergyEndpoints = ObjectList.of();
     private boolean topologyResolutionValid;
     private long directionSnapshotTick = Long.MIN_VALUE;
 
@@ -59,25 +59,25 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
     @Override
     @Nullable
     public IEnergyStorage findAccessibleEnergyStorage(BlockPos pos, boolean forReceive) {
-        List<TowerEnergyEndpoint> endpoints = findAccessibleEnergyEndpoints(pos, forReceive);
+        ObjectList<TowerEnergyEndpoint> endpoints = findAccessibleEnergyEndpoints(pos, forReceive);
         return endpoints.isEmpty() ? null : endpoints.getFirst().storage();
     }
 
     @Override
-    public List<TowerEnergyEndpoint> findAccessibleEnergyEndpoints(BlockPos pos, boolean forReceive) {
+    public ObjectList<TowerEnergyEndpoint> findAccessibleEnergyEndpoints(BlockPos pos, boolean forReceive) {
         return filterByDirection(resolveDirectionalEndpoints(resolveEndpointCandidates(pos)), forReceive);
     }
 
     @Override
-    public List<TowerEnergyEndpoint> collectEnergyEndpoints(boolean forReceive, @Nullable BlockPos excludedPos) {
+    public ObjectList<TowerEnergyEndpoint> collectEnergyEndpoints(boolean forReceive, @Nullable BlockPos excludedPos) {
         return excludeEnergyEndpoint(getCachedResolvedEnergyEndpoints(forReceive), excludedPos);
     }
 
     @Override
-    public List<TowerEnergyEndpoint> getCachedResolvedEnergyEndpoints(boolean forReceive) {
+    public ObjectList<TowerEnergyEndpoint> getCachedResolvedEnergyEndpoints(boolean forReceive) {
         Level level = this.context.level();
         if (level == null) {
-            return List.of();
+            return ObjectList.of();
         }
 
         if (!this.topologyResolutionValid) {
@@ -87,7 +87,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
 
         long gameTime = level.getGameTime();
         if (this.directionSnapshotTick != gameTime) {
-            List<TowerEnergyEndpoint> directionalEndpoints = resolveDirectionalEndpoints(this.cachedTopologyEndpoints);
+            ObjectList<TowerEnergyEndpoint> directionalEndpoints = resolveDirectionalEndpoints(this.cachedTopologyEndpoints);
             this.cachedReceiveEnergyEndpoints = filterByDirection(directionalEndpoints, true);
             this.cachedExtractEnergyEndpoints = filterByDirection(directionalEndpoints, false);
             this.directionSnapshotTick = gameTime;
@@ -114,9 +114,9 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
 
     @Override
     public void invalidateResolvedCache() {
-        this.cachedTopologyEndpoints = List.of();
-        this.cachedReceiveEnergyEndpoints = List.of();
-        this.cachedExtractEnergyEndpoints = List.of();
+        this.cachedTopologyEndpoints = ObjectList.of();
+        this.cachedReceiveEnergyEndpoints = ObjectList.of();
+        this.cachedExtractEnergyEndpoints = ObjectList.of();
         this.topologyResolutionValid = false;
         this.directionSnapshotTick = Long.MIN_VALUE;
     }
@@ -126,7 +126,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         this.reusableEndpointFilter.clear();
     }
 
-    private List<TowerEnergyEndpointCandidate> resolveTopologyEndpoints() {
+    private ObjectList<TowerEnergyEndpointCandidate> resolveTopologyEndpoints() {
         Object2ObjectLinkedOpenHashMap<TowerEnergyEndpointKey, TowerEnergyEndpointCandidate> endpoints = new Object2ObjectLinkedOpenHashMap<>();
         for (long packedPos : this.context.cachedEndpointPositions()) {
             BlockPos pos = BlockPos.of(packedPos);
@@ -143,17 +143,17 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
                         TowerEnergyEndpointCandidate::mergeReceiveAccess);
             }
         }
-        return List.copyOf(endpoints.values());
+        return new ObjectImmutableList<>(endpoints.values());
     }
 
-    private List<TowerEnergyEndpointCandidate> resolveEndpointCandidates(BlockPos pos) {
+    private ObjectList<TowerEnergyEndpointCandidate> resolveEndpointCandidates(BlockPos pos) {
         Level level = this.context.level();
         if (level == null || !level.isLoaded(pos)) {
-            return List.of();
+            return ObjectList.of();
         }
 
         ObjectArrayList<TowerEnergyEndpointCandidate> endpoints = new ObjectArrayList<>();
-        Set<IEnergyStorage> seenStorages = new ReferenceOpenHashSet<>();
+        ReferenceOpenHashSet<IEnergyStorage> seenStorages = new ReferenceOpenHashSet<>();
         boolean collectAllSides = level.getBlockEntity(pos) instanceof CableBusBlockEntity;
         for (Direction direction : Direction.values()) {
             addEndpointCandidate(endpoints, seenStorages, pos, direction, collectAllSides);
@@ -161,10 +161,10 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         if (endpoints.isEmpty()) {
             addEndpointCandidate(endpoints, seenStorages, pos, null, collectAllSides);
         }
-        return List.copyOf(endpoints);
+        return new ObjectImmutableList<>(endpoints);
     }
 
-    private void addEndpointCandidate(List<TowerEnergyEndpointCandidate> endpoints, Set<IEnergyStorage> seenStorages,
+    private void addEndpointCandidate(ObjectList<TowerEnergyEndpointCandidate> endpoints, ReferenceOpenHashSet<IEnergyStorage> seenStorages,
                                       BlockPos pos, @Nullable Direction side, boolean collectAllSides) {
         IEnergyStorage storage = getEnergyStorageAt(pos, side);
         if (storage != null && seenStorages.add(storage)) {
@@ -172,10 +172,10 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         }
     }
 
-    private List<TowerEnergyEndpoint> resolveDirectionalEndpoints(List<TowerEnergyEndpointCandidate> candidates) {
+    private ObjectList<TowerEnergyEndpoint> resolveDirectionalEndpoints(ObjectList<TowerEnergyEndpointCandidate> candidates) {
         ObjectArrayList<TowerEnergyEndpoint> endpoints = new ObjectArrayList<>();
-        Set<BlockPos> selectedSources = new ObjectOpenHashSet<>();
-        Set<BlockPos> selectedSinks = new ObjectOpenHashSet<>();
+        LongSet selectedSources = new LongOpenHashSet();
+        LongSet selectedSinks = new LongOpenHashSet();
         for (TowerEnergyEndpointCandidate candidate : candidates) {
             TowerEnergyDirection direction;
             try {
@@ -203,14 +203,15 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
                 continue;
             }
 
-            boolean selectSource = canUseSource && selectedSources.add(candidate.pos());
-            boolean selectSink = canUseSink && selectedSinks.add(candidate.pos());
+            long candidatePosition = candidate.pos().asLong();
+            boolean selectSource = canUseSource && selectedSources.add(candidatePosition);
+            boolean selectSink = canUseSink && selectedSinks.add(candidatePosition);
             TowerEnergyDirection selectedDirection = TowerEnergyDirection.fromPermissions(selectSource, selectSink);
             if (selectedDirection != null) {
                 endpoints.add(candidate.withDirection(selectedDirection));
             }
         }
-        return List.copyOf(endpoints);
+        return new ObjectImmutableList<>(endpoints);
     }
 
     @Nullable
@@ -228,7 +229,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
         return storage.canReceive();
     }
 
-    private List<TowerEnergyEndpoint> filterByDirection(List<TowerEnergyEndpoint> endpoints, boolean forReceive) {
+    private ObjectList<TowerEnergyEndpoint> filterByDirection(ObjectList<TowerEnergyEndpoint> endpoints, boolean forReceive) {
         if (endpoints.isEmpty()) {
             return endpoints;
         }
@@ -238,11 +239,11 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
                 filtered.add(endpoint);
             }
         }
-        return List.copyOf(filtered);
+        return new ObjectImmutableList<>(filtered);
     }
 
-    private List<TowerEnergyEndpoint> excludeEnergyEndpoint(List<TowerEnergyEndpoint> endpoints,
-                                                            @Nullable BlockPos excludedPos) {
+    private ObjectList<TowerEnergyEndpoint> excludeEnergyEndpoint(ObjectList<TowerEnergyEndpoint> endpoints,
+                                                                  @Nullable BlockPos excludedPos) {
         if (excludedPos == null || endpoints.isEmpty()) {
             return endpoints;
         }
@@ -253,7 +254,7 @@ public final class CachedTowerEnergyEndpointResolver implements TowerEnergyEndpo
                 this.reusableEndpointFilter.add(endpoint);
             }
         }
-        return List.copyOf(this.reusableEndpointFilter);
+        return new ObjectImmutableList<>(this.reusableEndpointFilter);
     }
 
     @Nullable

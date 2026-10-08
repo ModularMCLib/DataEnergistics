@@ -25,7 +25,6 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.IManagedGridNode;
-import appeng.api.orientation.BlockOrientation;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.UpgradeInventories;
 import appeng.api.util.AECableType;
@@ -62,13 +61,14 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implements InterfaceLogicHost {
 
@@ -115,11 +115,13 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
             this,
             DEBlocks.DATA_SANCTUM.get().asItem(),
             DataSanctumInterfaceConstants.STOCK_SLOTS_PER_PAGE);
+    @Getter
     private final DataSanctumReturnInventory returnInventory = new DataSanctumReturnInventory(
             DataSanctumInterfaceConstants.RETURN_SLOTS_PER_PAGE,
             this::onReturnInventoryChanged,
             () -> 0);
     private final MachineSource actionSource = new MachineSource(this);
+    @Getter
     private final IUpgradeInventory energyUpgrades = UpgradeInventories.forMachine(
             DEBlocks.DATA_SANCTUM.get(), ENERGY_UPGRADE_SLOTS, this::onEnergyUpgradesChanged);
     private final IInWorldGridNodeHost networkPortHost = new NetworkPortNodeHost(this);
@@ -133,7 +135,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     private int blackHoleBlockCursor;
     private int blackHoleExpansionRadius;
     private int preparedBlackHoleRadius;
-    private final List<BlockPos> pendingBlackHoleBlocks = new ObjectArrayList<>();
+    private final LongList pendingBlackHoleBlocks = new LongArrayList();
 
     public DataSanctumBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_SANCTUM_BLOCK_ENTITY.get(), blockPos, blockState);
@@ -174,7 +176,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     public void setMode(int mode) {
-        int clampedMode = Math.max(0, Math.min(2, mode));
+        int clampedMode = Math.clamp(mode, 0, 2);
         if (this.level == null || this.level.isClientSide()) {
             this.lastMode = clampedMode;
             return;
@@ -224,7 +226,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
         clampStoredPowerToCapacity();
         this.blackHoleWorkTicks = Math.max(0, data.getInt(BLACK_HOLE_WORK_TICKS_TAG));
         this.blackHoleBlockCursor = 0;
-        this.blackHoleExpansionRadius = Math.max(0, Math.min(BLACK_HOLE_BLOCK_RADIUS, data.getInt(BLACK_HOLE_EXPANSION_RADIUS_TAG)));
+        this.blackHoleExpansionRadius = Math.clamp(data.getInt(BLACK_HOLE_EXPANSION_RADIUS_TAG), 0, BLACK_HOLE_BLOCK_RADIUS);
         this.preparedBlackHoleRadius = 0;
         this.pendingBlackHoleBlocks.clear();
     }
@@ -286,11 +288,6 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return EnumSet.allOf(Direction.class);
-    }
-
-    @Override
     public InterfaceLogic getInterfaceLogic() {
         return this.interfaceLogic;
     }
@@ -310,16 +307,8 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
         return this.energyUpgrades;
     }
 
-    public IUpgradeInventory getEnergyUpgrades() {
-        return this.energyUpgrades;
-    }
-
     public IInWorldGridNodeHost createNetworkPortHost() {
         return this.networkPortHost;
-    }
-
-    public DataSanctumReturnInventory getReturnInventory() {
-        return this.returnInventory;
     }
 
     @Override
@@ -363,7 +352,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     @Override
-    public InternalInventory getSubInventory(ResourceLocation id) {
+    public @Nullable InternalInventory getSubInventory(ResourceLocation id) {
         if (ISegmentedInventory.UPGRADES.equals(id)) {
             return this.energyUpgrades;
         }
@@ -448,7 +437,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
             }
         }
         if (settings.contains(MODE_TAG)) {
-            int mode = Math.max(0, Math.min(2, settings.getInt(MODE_TAG)));
+            int mode = Math.clamp(settings.getInt(MODE_TAG), 0, 2);
             if (getMode() != mode) {
                 setMode(mode);
                 changed = true;
@@ -475,12 +464,8 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
                 centerZ + BLACK_HOLE_BLOCK_RADIUS);
     }
 
-    public int getEnergyCardCount() {
-        return getEnergyCardCount(this.energyUpgrades);
-    }
-
     public static double computeMaxPower(IUpgradeInventory upgrades) {
-        int energyCards = Math.max(0, Math.min(ENERGY_UPGRADE_SLOTS, getEnergyCardCount(upgrades)));
+        int energyCards = Math.clamp(getEnergyCardCount(upgrades), 0, ENERGY_UPGRADE_SLOTS);
         return BASE_ENERGY_CAPACITY * (1 << energyCards);
     }
 
@@ -733,7 +718,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
         int destroyedCount = 0;
         for (int index = this.blackHoleBlockCursor; index < this.pendingBlackHoleBlocks.size(); index++) {
             this.blackHoleBlockCursor = index;
-            BlockPos targetPos = this.pendingBlackHoleBlocks.get(index);
+            BlockPos targetPos = BlockPos.of(this.pendingBlackHoleBlocks.getLong(index));
             if (targetPos.getY() < level.getMinBuildHeight() || targetPos.getY() >= level.getMaxBuildHeight()) {
                 continue;
             }
@@ -772,7 +757,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
             return 0;
         }
 
-        List<BlockPos> preparedBlocks = createBlackHoleSurfaceBlocks(level, radius);
+        LongList preparedBlocks = createBlackHoleSurfaceBlocks(level, radius);
         this.pendingBlackHoleBlocks.addAll(preparedBlocks);
         this.preparedBlackHoleRadius = radius;
         return preparedBlocks.size();
@@ -936,7 +921,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
         return this.worldPosition.getZ() + 0.5D;
     }
 
-    private List<BlockPos> createBlackHoleSurfaceBlocks(Level level, int radius) {
+    private LongList createBlackHoleSurfaceBlocks(Level level, int radius) {
         ObjectArrayList<BlockOffset> blocks = new ObjectArrayList<>();
         int innerRadius = Math.max(0, radius - BLACK_HOLE_SURFACE_INNER_MARGIN);
         int outerRadius = Math.min(BLACK_HOLE_BLOCK_RADIUS, radius + BLACK_HOLE_SURFACE_OUTER_MARGIN);
@@ -961,9 +946,9 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
                 .thenComparingDouble(block -> Math.abs(block.offsetY() + 0.5D - BLACK_HOLE_CENTER_Y_OFFSET))
                 .thenComparingDouble(block -> Math.atan2(block.offsetZ(), block.offsetX()))
                 .thenComparingInt(BlockOffset::offsetY));
-        ObjectArrayList<BlockPos> positions = new ObjectArrayList<>(blocks.size());
+        LongArrayList positions = new LongArrayList(blocks.size());
         for (BlockOffset block : blocks) {
-            positions.add(this.worldPosition.offset(block.offsetX(), block.offsetY(), block.offsetZ()));
+            positions.add(this.worldPosition.offset(block.offsetX(), block.offsetY(), block.offsetZ()).asLong());
         }
         return positions;
     }
@@ -971,7 +956,7 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
     private record NetworkPortNodeHost(DataSanctumBlockEntity host) implements IInWorldGridNodeHost {
 
         @Override
-        public IGridNode getGridNode(Direction dir) {
+        public @Nullable IGridNode getGridNode(Direction dir) {
             return this.host.networkPortNode.getNode();
         }
 
@@ -1001,11 +986,11 @@ public class DataSanctumBlockEntity extends AENetworkedPoweredBlockEntity implem
         return getPartPos(pos, facing, -offsetX, -offsetZ).below(offsetY);
     }
 
-    public static Iterable<BlockPos> iterFootprint(BlockPos mainPos, Direction facing) {
-        List<BlockPos> positions = new ObjectArrayList<>(25);
+    public static LongList iterFootprint(BlockPos mainPos, Direction facing) {
+        LongArrayList positions = new LongArrayList(25);
         for (int offsetX = -2; offsetX <= 2; offsetX++) {
             for (int offsetZ = -2; offsetZ <= 2; offsetZ++) {
-                positions.add(getPartPos(mainPos, facing, offsetX, offsetZ));
+                positions.add(getPartPos(mainPos, facing, offsetX, offsetZ).asLong());
             }
         }
         return positions;

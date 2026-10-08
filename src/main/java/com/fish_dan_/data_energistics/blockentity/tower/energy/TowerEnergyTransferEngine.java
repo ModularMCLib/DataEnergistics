@@ -18,11 +18,11 @@ import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Performs active FE balancing for one Data Distribution Tower's range targets.
@@ -85,7 +85,7 @@ public final class TowerEnergyTransferEngine {
             return transferred;
         }
 
-        List<TowerEnergyEndpoint> receiveEndpoints = this.endpointResolver.getCachedResolvedEnergyEndpoints(true);
+        ObjectList<TowerEnergyEndpoint> receiveEndpoints = this.endpointResolver.getCachedResolvedEnergyEndpoints(true);
         if (receiveEndpoints.isEmpty()) {
             return transferred;
         }
@@ -97,7 +97,7 @@ public final class TowerEnergyTransferEngine {
 
         int sourceCount = sources.size();
         int startIndex = Math.floorMod(this.activeSourceCursor, sourceCount);
-        Set<IEnergyStorage> stalledReceiveStorages = new ReferenceOpenHashSet<>();
+        ReferenceSet<IEnergyStorage> stalledReceiveStorages = new ReferenceOpenHashSet<>();
         boolean madeProgress;
         do {
             madeProgress = false;
@@ -205,8 +205,8 @@ public final class TowerEnergyTransferEngine {
         return host.getClass().getName() + " at " + host.getBlockPos();
     }
 
-    private long transferSourceOnce(TransferSource source, List<TowerEnergyEndpoint> receiveEndpoints,
-                                    Set<IEnergyStorage> stalledReceiveStorages) {
+    private long transferSourceOnce(TransferSource source, ObjectList<TowerEnergyEndpoint> receiveEndpoints,
+                                    ReferenceSet<IEnergyStorage> stalledReceiveStorages) {
         long simulatedExtract = source.extract(source.remainingQuota, true);
         if (!isValidTransferResult(source, "simulate extract", source.remainingQuota, simulatedExtract)) {
             return 0;
@@ -332,7 +332,7 @@ public final class TowerEnergyTransferEngine {
         return false;
     }
 
-    private static boolean hasActiveSource(List<TransferSource> sources) {
+    private static boolean hasActiveSource(ObjectList<TransferSource> sources) {
         for (TransferSource source : sources) {
             if (!source.stalled && source.remainingQuota > 0) {
                 return true;
@@ -350,7 +350,7 @@ public final class TowerEnergyTransferEngine {
      * @return inserted amount
      */
     public long distributeEnergyInRange(long amount, boolean simulate, @Nullable BlockPos excludedPos) {
-        Set<IEnergyStorage> stalledReceiveStorages = new ReferenceOpenHashSet<>();
+        ReferenceSet<IEnergyStorage> stalledReceiveStorages = new ReferenceOpenHashSet<>();
         return distributeEnergyInRange(amount, simulate, excludedPos,
                 this.endpointResolver.getCachedResolvedEnergyEndpoints(true), stalledReceiveStorages);
     }
@@ -458,14 +458,14 @@ public final class TowerEnergyTransferEngine {
     }
 
     private long distributeEnergyInRange(long amount, boolean simulate, @Nullable BlockPos excludedPos,
-                                         List<TowerEnergyEndpoint> receiveEndpoints,
-                                         Set<IEnergyStorage> stalledReceiveStorages) {
+                                         ObjectList<TowerEnergyEndpoint> receiveEndpoints,
+                                         ReferenceSet<IEnergyStorage> stalledReceiveStorages) {
         if (!this.context.isTowerActive() || amount <= 0) {
             return 0;
         }
 
         BlockPos normalizedExcludedPos = this.endpointResolver.normalizeReceiveExcludedPos(excludedPos);
-        List<TowerEnergyEndpoint> endpoints = excludeEnergyEndpoint(receiveEndpoints, normalizedExcludedPos);
+        ObjectList<TowerEnergyEndpoint> endpoints = excludeEnergyEndpoint(receiveEndpoints, normalizedExcludedPos);
         this.context.recordMaxReceiveEndpoints(endpoints.size());
         if (endpoints.isEmpty()) {
             return 0;
@@ -660,7 +660,7 @@ public final class TowerEnergyTransferEngine {
         }
 
         BlockPos normalizedExcludedPos = this.endpointResolver.normalizeExtractExcludedPos(excludedPos);
-        List<TowerEnergyEndpoint> endpoints = this.endpointResolver.collectEnergyEndpoints(false, normalizedExcludedPos);
+        ObjectList<TowerEnergyEndpoint> endpoints = this.endpointResolver.collectEnergyEndpoints(false, normalizedExcludedPos);
         this.context.recordMaxExtractEndpoints(endpoints.size());
         long totalExtracted = bufferedExtracted;
         long remaining = amount - bufferedExtracted;
@@ -725,7 +725,7 @@ public final class TowerEnergyTransferEngine {
 
         long totalStored = bufferedEnergy;
         long totalCapacity = bufferedEnergy;
-        List<TowerEnergyEndpoint> endpoints = this.endpointResolver.collectEnergyEndpoints(false, normalizedExcludedPos);
+        ObjectList<TowerEnergyEndpoint> endpoints = this.endpointResolver.collectEnergyEndpoints(false, normalizedExcludedPos);
         for (TowerEnergyEndpoint endpoint : endpoints) {
             EnergySnapshot snapshot = energySnapshot(endpoint);
             totalStored = saturatingAdd(totalStored, snapshot.stored());
@@ -757,9 +757,9 @@ public final class TowerEnergyTransferEngine {
             return cached;
         }
 
-        List<TowerEnergyEndpoint> endpoints = this.endpointResolver.collectEnergyEndpoints(
+        ObjectList<TowerEnergyEndpoint> endpoints = this.endpointResolver.collectEnergyEndpoints(
                 true, normalizedExcludedPos);
-        Set<IEnergyStorage> stalledStorages = new ReferenceOpenHashSet<>();
+        ReferenceSet<IEnergyStorage> stalledStorages = new ReferenceOpenHashSet<>();
         long totalReceivable = distributeEnergyInRange(
                 Long.MAX_VALUE, true, normalizedExcludedPos, endpoints, stalledStorages);
         ReceiverQuerySummary summary = new ReceiverQuerySummary(
@@ -768,7 +768,7 @@ public final class TowerEnergyTransferEngine {
         return summary;
     }
 
-    private List<TowerEnergyEndpoint> excludeEnergyEndpoint(List<TowerEnergyEndpoint> endpoints, @Nullable BlockPos excludedPos) {
+    private ObjectList<TowerEnergyEndpoint> excludeEnergyEndpoint(ObjectList<TowerEnergyEndpoint> endpoints, @Nullable BlockPos excludedPos) {
         if (excludedPos == null || endpoints.isEmpty()) {
             return endpoints;
         }
@@ -779,7 +779,7 @@ public final class TowerEnergyTransferEngine {
                 filtered.add(endpoint);
             }
         }
-        return filtered;
+        return new ObjectImmutableList<>(filtered);
     }
 
     private int getExtractStartIndex(@Nullable BlockPos excludedPos, int endpointCount) {

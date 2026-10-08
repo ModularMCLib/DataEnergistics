@@ -12,9 +12,7 @@ public interface BigIntegerCraftingAdmission extends CountedCraftingAdmission {
     /** Returns the fixed positive accepted count; it must not change between preparation and commit. */
     BigInteger exactCount();
 
-    /** Legacy callers may use only representable batches; oversized admissions fail instead of truncating. */
+    /** Returns the representable long count used by the common counted-dispatch contract. */
     @Override
-    default long count() {
-        return exactCount().longValueExact();
-    }
+    long count();
 }

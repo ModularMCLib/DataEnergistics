@@ -33,23 +33,9 @@ public record ReusableCraftingRequest(UUID sessionId, UUID jobId, String cpuOwne
                                       Optional<ResourceLocation> recipeId, IActionSource actionSource,
                                       ServerLevel level) {
 
-    /** @deprecated scheduled for removal in plan 340; use {@link #inputsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<Input> inputs() {
-        return inputs;
-    }
-
     /** Returns an immutable FastUtil view of per-slot inputs. */
     public ObjectList<Input> inputsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(inputs));
-    }
-
-    /** @deprecated scheduled for removal in plan 340; use {@link #offeredToolsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<SlotStack> offeredTools() {
-        return offeredTools;
     }
 
     /** Returns an immutable FastUtil view of offered tools. */
@@ -86,13 +72,6 @@ public record ReusableCraftingRequest(UUID sessionId, UUID jobId, String cpuOwne
 
     /** Ordinary inputs are per operation. Tools are held once per lane, not multiplied by batch count. */
     public record Input(int slot, List<GenericStack> consumedPerOperation, Optional<Tool> tool) {
-
-        /** @deprecated scheduled for removal in plan 340; use {@link #consumedPerOperationFast()} */
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<GenericStack> consumedPerOperation() {
-            return consumedPerOperation;
-        }
 
         /** Returns an immutable FastUtil view of consumed materials. */
         public ObjectList<GenericStack> consumedPerOperationFast() {

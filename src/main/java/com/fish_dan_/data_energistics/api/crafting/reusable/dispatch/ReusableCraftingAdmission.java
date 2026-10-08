@@ -4,14 +4,10 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 
 import appeng.api.stacks.KeyCounter;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
-
-import java.util.List;
 
 /**
- * One-shot server-thread admission for an exact open or append sequence. Unlike legacy counted admissions,
+ * One-shot server-thread admission for an exact open or append sequence. Unlike counted admissions,
  * physicalInputs is the complete transfer, not a per-craft prototype. Preparing or inspecting it cannot reserve assets.
  */
 public interface ReusableCraftingAdmission {
@@ -19,19 +15,8 @@ public interface ReusableCraftingAdmission {
     /** @return positive accepted logical count, never greater than the request */
     long count();
 
-    /**
-     * @return immutable total CPU-owned inputs to transfer for this sequence; replay admissions return an empty list
-     * @deprecated scheduled for removal in plan 340; use {@link #physicalInputsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default List<SlotStack> physicalInputs() {
-        return List.of();
-    }
-
-    /** Returns an immutable FastUtil snapshot of physical inputs. */
-    default ObjectList<SlotStack> physicalInputsFast() {
-        return ObjectLists.unmodifiable(new ObjectArrayList<>(physicalInputs()));
-    }
+    /** Returns immutable total CPU-owned inputs to transfer for this sequence; replay admissions are empty. */
+    ObjectList<SlotStack> physicalInputsFast();
 
     /** @return true only when this exact sequence has already been accepted, without requiring another transfer */
     boolean replay();

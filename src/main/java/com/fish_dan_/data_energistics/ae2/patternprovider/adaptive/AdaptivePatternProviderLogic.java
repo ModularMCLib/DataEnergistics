@@ -738,6 +738,15 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     @Override
+    public @Nullable CountedCraftingAdmission prepareBatchForTarget(
+                                                                    IPatternDetails patternDetails,
+                                                                    KeyCounter[] prototype,
+                                                                    long requestedCount,
+                                                                    CountedCraftingTarget target) {
+        return target.providerScoped() ? prepareBatch(patternDetails, prototype, requestedCount) : null;
+    }
+
+    @Override
     public CountedCraftingPreparation prepareBatch(
                                                    IPatternDetails patternDetails,
                                                    KeyCounter[] prototype,

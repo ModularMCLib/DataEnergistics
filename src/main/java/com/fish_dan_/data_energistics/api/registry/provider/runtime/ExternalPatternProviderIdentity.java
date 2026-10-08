@@ -25,15 +25,6 @@ public record ExternalPatternProviderIdentity(
                                               int schemaVersion,
                                               List<String> canonicalFields) {
 
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #canonicalFieldsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<String> canonicalFields() {
-        return canonicalFields;
-    }
-
     /** Returns an immutable FastUtil view of canonical identity fields. */
     public ObjectList<String> canonicalFieldsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(canonicalFields));

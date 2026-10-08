@@ -17,13 +17,6 @@ public record ReusableCraftingSessionView(UUID sessionId, UUID jobId, String cpu
                                           State state, long revision, long accepted, long completed, long cancelled,
                                           List<SlotStack> heldTools, Optional<String> failure) {
 
-    /** @deprecated scheduled for removal in plan 340; use {@link #heldToolsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<SlotStack> heldTools() {
-        return heldTools;
-    }
-
     /** Returns an immutable FastUtil view of held tools. */
     public ObjectList<SlotStack> heldToolsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(heldTools));
@@ -66,35 +59,14 @@ public record ReusableCraftingSessionView(UUID sessionId, UUID jobId, String cpu
                              long exhaustedTools, List<AppendReceipt> receipts,
                              Optional<String> failure) {
 
-        /** @deprecated scheduled for removal in plan 340; use {@link #returnedAssetsFast()} */
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<GenericStack> returnedAssets() {
-            return returnedAssets;
-        }
-
         /** Returns an immutable FastUtil view of returned assets. */
         public ObjectList<GenericStack> returnedAssetsFast() {
             return ObjectLists.unmodifiable(new ObjectArrayList<>(returnedAssets));
         }
 
-        /** @deprecated scheduled for removal in plan 340; use {@link #releasedMachineToolsFast()} */
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<SlotStack> releasedMachineTools() {
-            return releasedMachineTools;
-        }
-
         /** Returns an immutable FastUtil view of released machine tools. */
         public ObjectList<SlotStack> releasedMachineToolsFast() {
             return ObjectLists.unmodifiable(new ObjectArrayList<>(releasedMachineTools));
-        }
-
-        /** @deprecated scheduled for removal in plan 340; use {@link #receiptsFast()} */
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<AppendReceipt> receipts() {
-            return receipts;
         }
 
         /** Returns an immutable FastUtil view of append receipts. */

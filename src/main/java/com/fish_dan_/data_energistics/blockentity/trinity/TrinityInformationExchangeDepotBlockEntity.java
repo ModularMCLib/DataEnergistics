@@ -1819,6 +1819,20 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         }
 
         @Override
+        public @Nullable CountedCraftingAdmission prepareBatchForTarget(
+                                                                        IPatternDetails patternDetails,
+                                                                        KeyCounter[] prototype,
+                                                                        long requestedCount,
+                                                                        CountedCraftingTarget target) {
+            TrinityDataCoreBlockEntity host = patternProviderHost();
+            if (host == null || level == null || level.isClientSide()) return null;
+            CountedCraftingTarget expected = CountedCraftingTarget.machine(
+                    CRAFTING_CATALOG_TARGET.stableIdentity(),
+                    MachineTargetId.forBlockEntity(level.dimension(), host.getBlockPos()).stableIdentity());
+            return expected.equals(target) ? prepareBatch(patternDetails, prototype, requestedCount) : null;
+        }
+
+        @Override
         public CountedCraftingPreparation prepareBatch(
                                                        IPatternDetails patternDetails,
                                                        KeyCounter[] prototype,
@@ -1950,6 +1964,11 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         @Override
         public BigInteger exactCount() {
             return this.token.exactCount();
+        }
+
+        @Override
+        public long count() {
+            return this.token.exactCount().longValueExact();
         }
 
         @Override

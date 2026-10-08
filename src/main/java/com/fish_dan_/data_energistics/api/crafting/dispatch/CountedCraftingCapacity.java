@@ -29,19 +29,6 @@ public record CountedCraftingCapacity(CountedCraftingTarget target,
     }
 
     /**
-     * Returns the source-compatible aggregate capability of an adapter that only implements {@code prepareBatch}.
-     *
-     * @return aggregate provider target with unknown numeric bounds
-     */
-    public static CountedCraftingCapacity aggregateUnknown() {
-        return new CountedCraftingCapacity(
-                CountedCraftingTarget.provider(),
-                CountedCraftingRoutingMode.AGGREGATE,
-                OptionalLong.empty(),
-                OptionalLong.empty());
-    }
-
-    /**
      * Rejects negative known values without assigning a sentinel meaning to them.
      */
     private static void requireNonNegative(OptionalLong value, String role) {

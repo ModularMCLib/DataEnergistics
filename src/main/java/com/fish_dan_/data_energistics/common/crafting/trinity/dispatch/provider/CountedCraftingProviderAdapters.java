@@ -468,7 +468,24 @@ public final class CountedCraftingProviderAdapters {
                                                              ICraftingProvider provider,
                                                              PreparationContext context) {
         return prepareProviderTarget(
-                (details, ignoredPrototype, ignoredCount) -> new SingleCraftingAdmission(provider, details),
+                new CountedCraftingProviderAdapter() {
+                    @Override
+                    public CountedCraftingAdmission prepareBatch(
+                                                                  IPatternDetails details,
+                                                                  KeyCounter[] ignoredPrototype,
+                                                                  long ignoredCount) {
+                        return new SingleCraftingAdmission(provider, details);
+                    }
+
+                    @Override
+                    public CountedCraftingAdmission prepareBatchForTarget(
+                                                                          IPatternDetails details,
+                                                                          KeyCounter[] ignoredPrototype,
+                                                                          long ignoredCount,
+                                                                          CountedCraftingTarget target) {
+                        return target.providerScoped() ? prepareBatch(details, ignoredPrototype, ignoredCount) : null;
+                    }
+                },
                 context.patternDetails(),
                 context.prototype(),
                 1L,

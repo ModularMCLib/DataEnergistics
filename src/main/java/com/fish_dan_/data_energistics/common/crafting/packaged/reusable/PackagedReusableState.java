@@ -210,6 +210,12 @@ public final class PackagedReusableState {
         }
 
         @Override
+        public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] prototype,
+                                                                        long count, CountedCraftingTarget target) {
+            return null;
+        }
+
+        @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel queryLevel) {
             if (frozen || queryLevel != level || !available.test(pattern)) return ObjectList.of();
             var reference = EncodedPatternRecipeReference.get(pattern.getDefinition().getReadOnlyStack());

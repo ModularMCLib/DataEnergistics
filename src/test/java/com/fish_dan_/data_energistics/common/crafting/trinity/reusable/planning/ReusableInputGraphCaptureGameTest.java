@@ -266,6 +266,12 @@ public final class ReusableInputGraphCaptureGameTest {
         }
 
         @Override
+        public CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] prototype,
+                                                              long count, CountedCraftingTarget target) {
+            throw mutation();
+        }
+
+        @Override
         public ReusableCraftingAdmission prepareReusable(ReusableCraftingRequest request) {
             throw mutation();
         }

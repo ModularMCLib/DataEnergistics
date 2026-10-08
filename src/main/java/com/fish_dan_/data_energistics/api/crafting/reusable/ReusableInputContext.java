@@ -41,15 +41,6 @@ public record ReusableInputContext(IPatternDetails pattern, GenericStack actualI
                                    Optional<ResourceLocation> recipeId, Optional<ResourceLocation> machineMode,
                                    CountedCraftingTarget target) {
 
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #exactInputsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<GenericStack> exactInputs() {
-        return exactInputs;
-    }
-
     /** Returns an immutable FastUtil view of the complete input snapshot. */
     public ObjectList<GenericStack> exactInputsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(exactInputs));

@@ -15,15 +15,6 @@ import java.util.UUID;
  */
 public record ReusableCraftingCustodyCensus(UUID loadedEpoch, long revision, boolean complete, List<Entry> sessions) {
 
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #sessionsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<Entry> sessions() {
-        return sessions;
-    }
-
     /** Returns an immutable FastUtil view of custody sessions. */
     public ObjectList<Entry> sessionsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(sessions));

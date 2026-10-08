@@ -3,12 +3,8 @@ package com.fish_dan_.data_energistics.api.crafting.dispatch;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Optional server-thread adapter for one provider instance to admit counted Trinity dispatches.
@@ -18,7 +14,6 @@ import java.util.List;
  * mutate the supplied prototype. Target selection, retry windows and planning remain private to DataEnergistics.
  * </p>
  */
-@FunctionalInterface
 public interface CountedCraftingProviderAdapter {
 
     /**
@@ -43,43 +38,15 @@ public interface CountedCraftingProviderAdapter {
 
     /**
      * Captures every currently usable dispatch target without reserving capacity, consuming inputs or advancing a
-     * provider routing cursor.
-     *
-     * <p>
-     * The default preserves existing adapter behavior as one aggregate provider route with unknown numeric bounds.
-     * Implementations that expose exact routes must return a non-null immutable list of immutable observations. An
-     * empty list means that the provider currently has no usable route.
-     * </p>
-     *
-     * @param patternDetails exact pattern selected by the crafting plan
-     * @param prototype      read-only exact per-craft input prototype; it must not be retained or mutated
-     * @param requestedCount positive logical craft count still eligible for dispatch
-     * @return immutable capacity observations, or an empty immutable list when no target is currently usable
-     * @deprecated scheduled for removal in plan 340; use
-     *             {@link #captureCapacityFast(IPatternDetails, KeyCounter[], long)}
+     * provider routing cursor. An empty result means that this adapter does not expose a targeted capacity view.
      */
-    @Deprecated(forRemoval = true)
-    default List<CountedCraftingCapacity> captureCapacity(
-                                                          IPatternDetails patternDetails,
-                                                          KeyCounter[] prototype,
-                                                          long requestedCount) {
-        return List.of();
-    }
-
-    /** Captures capacity as an immutable FastUtil snapshot. */
     default ObjectList<CountedCraftingCapacity> captureCapacityFast(
                                                                     IPatternDetails patternDetails, KeyCounter[] prototype, long requestedCount) {
-        return ObjectLists.unmodifiable(new ObjectArrayList<>(
-                captureCapacity(patternDetails, prototype, requestedCount)));
+        return ObjectList.of();
     }
 
     /**
      * Prepares one counted submission for the exact target selected from {@link #captureCapacityFast}.
-     *
-     * <p>
-     * The default keeps source compatibility for aggregate adapters and rejects any target they did not publish.
-     * Preparation is read-only until the returned one-shot admission is committed.
-     * </p>
      *
      * @param patternDetails exact pattern selected by the crafting plan
      * @param prototype      read-only exact per-craft input prototype
@@ -88,14 +55,9 @@ public interface CountedCraftingProviderAdapter {
      * @return one one-shot admission, or {@code null} when the target is no longer available
      */
     @Nullable
-    default CountedCraftingAdmission prepareBatchForTarget(
-                                                           IPatternDetails patternDetails,
-                                                           KeyCounter[] prototype,
-                                                           long requestedCount,
-                                                           CountedCraftingTarget target) {
-        if (!target.providerScoped()) {
-            return null;
-        }
-        return prepareBatch(patternDetails, prototype, requestedCount);
-    }
+    CountedCraftingAdmission prepareBatchForTarget(
+                                                   IPatternDetails patternDetails,
+                                                   KeyCounter[] prototype,
+                                                   long requestedCount,
+                                                   CountedCraftingTarget target);
 }

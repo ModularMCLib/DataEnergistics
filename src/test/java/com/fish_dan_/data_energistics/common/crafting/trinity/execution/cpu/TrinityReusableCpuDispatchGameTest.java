@@ -403,6 +403,12 @@ public final class TrinityReusableCpuDispatchGameTest {
         }
 
         @Override
+        public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] inputs,
+                                                                        long count, CountedCraftingTarget target) {
+            return null;
+        }
+
+        @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
             return ObjectList.of(target);
         }

@@ -74,19 +74,10 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
     private static final float LIGHT_BLADE_DAMAGE_RATIO = 5.0F / 6.0F;
     private static final long SWORD_RADIX_LOSS_DATA_FLOW_COST = 20L;
     private static final int RADIX_LOSS_DURATION_TICKS = 20;
-    public static final float SANCTIFIER_THROWN_LIGHT_BLADE_SPEED = 2.4F;
     private final boolean throwable;
 
     public PoweredSwordItem(Tier tier, Properties properties) {
         this(tier, properties, createDefaultSwordTool(), true);
-    }
-
-    public PoweredSwordItem(Tier tier, Properties properties, boolean throwable) {
-        this(tier, properties, createDefaultSwordTool(), throwable);
-    }
-
-    public PoweredSwordItem(Tier tier, Properties properties, Tool toolComponent) {
-        this(tier, properties, toolComponent, true);
     }
 
     public PoweredSwordItem(Tier tier, Properties properties, Tool toolComponent, boolean throwable) {
@@ -123,26 +114,6 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
     }
 
     @Override
-    public boolean isBarVisible(ItemStack stack) {
-        return this.isEnergyBarVisible(stack);
-    }
-
-    @Override
-    public int getBarWidth(ItemStack stack) {
-        return this.getEnergyBarWidth(stack);
-    }
-
-    @Override
-    public int getBarColor(ItemStack stack) {
-        return this.getEnergyBarColor(stack);
-    }
-
-    @Override
-    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
-        return false;
-    }
-
-    @Override
     public boolean canPerformAction(ItemStack stack, ItemAbility itemAbility) {
         return ItemAbilities.DEFAULT_SWORD_ACTIONS.contains(itemAbility) || this.throwable && ItemAbilities.DEFAULT_TRIDENT_ACTIONS.contains(itemAbility);
     }
@@ -173,20 +144,16 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
         if (!this.hasSufficientEnergy(stack)) {
             return false;
         }
-        boolean result = true;
-        if (result && !attacker.level().isClientSide) {
+        if (!attacker.level().isClientSide) {
             this.tryApplyRadixLoss(stack, target, attacker);
             if (this.canFireLightBlade(stack)) {
-                this.fireLightBlade((Level) attacker.level(), attacker, stack);
+                this.fireLightBlade(attacker.level(), attacker, stack);
                 this.consumeActionEnergy(stack);
             }
             this.consumeActionEnergy(stack);
         }
-        return result;
+        return true;
     }
-
-    @Override
-    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {}
 
     @Override
     public boolean onEntitySwing(ItemStack stack, LivingEntity entity, InteractionHand hand) {
@@ -203,7 +170,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
             return false;
         }
 
-        this.fireLightBlade((Level) entity.level(), entity, stack);
+        this.fireLightBlade(entity.level(), entity, stack);
         this.consumeActionEnergy(stack);
         player.resetAttackStrengthTicker();
         return false;

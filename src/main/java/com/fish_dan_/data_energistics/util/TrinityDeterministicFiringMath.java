@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.support;
+package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;

@@ -27,6 +27,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -48,19 +49,6 @@ public final class TrinityGraphTopologyAnalyzer {
     }
 
     /**
-     * @param snapshot   graph key order and revision
-     * @param variants   complete bound transition set for the snapshot
-     * @param maxSccKeys configured per-component key limit
-     * @return topology or {@code SCC_KEY_LIMIT}
-     */
-    public TrinityAlgorithmResult<TrinityCraftingTopology> analyze(
-                                                                   TrinityCraftingGraphSnapshot snapshot,
-                                                                   List<TrinityPatternVariant> variants,
-                                                                   int maxSccKeys) {
-        return analyze(snapshot, variants, maxSccKeys, TrinityPlanningControl.unbounded());
-    }
-
-    /**
      * Analyzes topology while observing the request-wide cancellation and deadline boundary.
      */
     public TrinityAlgorithmResult<TrinityCraftingTopology> analyze(
@@ -68,7 +56,7 @@ public final class TrinityGraphTopologyAnalyzer {
                                                                    List<TrinityPatternVariant> variants,
                                                                    int maxSccKeys,
                                                                    TrinityPlanningControl control) {
-        if (snapshot == null || variants == null || maxSccKeys <= 0 || control == null) {
+        if (maxSccKeys <= 0) {
             throw new IllegalArgumentException(
                     "A Trinity topology analysis requires complete inputs and a positive SCC key limit");
         }
@@ -152,10 +140,17 @@ public final class TrinityGraphTopologyAnalyzer {
         for (TrinityPatternVariant variant : variants) {
             IntSet inputComponents = new IntLinkedOpenHashSet();
             IntSet outputComponents = new IntLinkedOpenHashSet();
-            variant.inputs().keySet().forEach(key -> inputComponents.add(
-                    componentByNode[graph.indexByKey().getInt(key)]));
-            variant.outputs().keySet().forEach(key -> outputComponents.add(
-                    componentByNode[graph.indexByKey().getInt(key)]));
+            // Retained inputs are physical reservations, not production dependencies. Removing only those
+            // reservations keeps ordinary input/output overlap visible while preventing an unchanged tool from
+            // connecting every recipe that uses it into one artificial SCC.
+            graphInputs(variant).keySet().forEach(key -> {
+                int component = componentByNode[graph.indexByKey().getInt(key)];
+                inputComponents.add(component);
+            });
+            graphOutputs(variant).keySet().forEach(key -> {
+                int component = componentByNode[graph.indexByKey().getInt(key)];
+                outputComponents.add(component);
+            });
             for (int outputComponent : outputComponents) {
                 outputVariants.get(outputComponent).add(variant);
                 if (inputComponents.contains(outputComponent)) {
@@ -190,7 +185,7 @@ public final class TrinityGraphTopologyAnalyzer {
         Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityPatternVariant>> variantsByOutputKey = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, ObjectArrayList<TrinityPatternVariant>> producerLists = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
-            variant.outputs().keySet().forEach(key -> producerLists
+            graphOutputs(variant).keySet().forEach(key -> producerLists
                     .computeIfAbsent(key, ignored -> new ObjectArrayList<>())
                     .add(variant));
         }
@@ -303,9 +298,9 @@ public final class TrinityGraphTopologyAnalyzer {
                 edges.add(new IntLinkedOpenHashSet());
             }
             for (TrinityPatternVariant variant : variants) {
-                for (AEKey input : variant.inputs().keySet()) {
+                for (AEKey input : graphInputs(variant).keySet()) {
                     int inputIndex = indexByKey.getInt(input);
-                    for (AEKey output : variant.outputs().keySet()) {
+                    for (AEKey output : graphOutputs(variant).keySet()) {
                         edges.get(inputIndex).add(indexByKey.getInt(output));
                     }
                 }
@@ -317,6 +312,47 @@ public final class TrinityGraphTopologyAnalyzer {
                     Object2IntMaps.unmodifiable(indexByKey),
                     List.copyOf(adjacency));
         }
+    }
+
+    private static Map<AEKey, BigInteger> graphInputs(TrinityPatternVariant variant) {
+        // Retained tools are still required inputs. Keeping them in the dependency graph preserves
+        // the producer order for recipes that need an existing tool, while graphOutputs filters the
+        // unchanged remainder so the tool does not become a producer of every material recipe.
+        return variant.inputs();
+    }
+
+    private static Map<AEKey, BigInteger> graphOutputs(TrinityPatternVariant variant) {
+        return subtractRetained(variant.outputs(), retainedAmounts(variant));
+    }
+
+    private static Map<AEKey, BigInteger> subtractRetained(
+                                                           Map<AEKey, BigInteger> amounts,
+                                                           Map<AEKey, BigInteger> retained) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(amounts);
+        retained.forEach((key, amount) -> {
+            BigInteger remaining = result.get(key);
+            if (remaining == null) {
+                return;
+            }
+            remaining = remaining.subtract(amount);
+            if (remaining.signum() > 0) {
+                result.put(key, remaining);
+            } else {
+                result.remove(key);
+            }
+        });
+        return result;
+    }
+
+    private static Map<AEKey, BigInteger> retainedAmounts(TrinityPatternVariant variant) {
+        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> retained = new Object2ObjectLinkedOpenHashMap<>();
+        for (var binding : variant.bindings()) {
+            if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
+                    binding.remainingKey().equals(binding.template().what())) {
+                retained.merge(binding.remainingKey(), binding.remainingAmount(), BigInteger::add);
+            }
+        }
+        return retained;
     }
 
     private static final class TarjanState {

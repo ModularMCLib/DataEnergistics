@@ -65,12 +65,12 @@ public final class RailImpactPresentation {
         pose.translate(-camera.x, -camera.y, -camera.z);
         VertexConsumer vertices = minecraft.renderBuffers().bufferSource().getBuffer(RenderType.lines());
         for (Chain chain : CHAINS) {
-            Vec3 center = chain.points.getFirst();
             for (int i = 1; i < chain.points.size(); i++) {
-                Vec3 delta = chain.points.get(i).subtract(center), previous = center;
+                Vec3 start = chain.points.get(i - 1);
+                Vec3 delta = chain.points.get(i).subtract(start), previous = start;
                 for (int piece = 1; piece <= 6; piece++) {
                     double wave = piece == 6 ? 0 : Math.sin(piece * 4.3 + level.getGameTime()) * 0.14;
-                    Vec3 next = center.add(delta.scale(piece / 6.0)).add(wave, -wave * 0.7, wave);
+                    Vec3 next = start.add(delta.scale(piece / 6.0)).add(wave, -wave * 0.7, wave);
                     segment(vertices, pose.last(), previous, next);
                     previous = next;
                 }

@@ -1,5 +1,12 @@
 # ChangeLog
 
+## Version [v3.3.5](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.4-1.21...v3.3.5-1.21)
+### Fixed
+
+- 修复异步工厂外部配方读取并统一 XEI 来源 by @QiuYe-123 in [#373](https://github.com/ModularMCLib/DataEnergistics/pull/373)
+- 修复 Trinity 大型 DAG 的可复用工具规划 by @QiuYe-123 in [#375](https://github.com/ModularMCLib/DataEnergistics/pull/375)
+
+ 
 ## Version [v3.3.4](https://github.com/ModularMCLib/DataEnergistics/compare/v3.3.3-1.21...v3.3.4-1.21)
 ### Fixed
 

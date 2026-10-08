@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
@@ -169,6 +170,15 @@ public final class TrinityAcyclicDemandPropagator {
                 if (state != StopState.RUNNING) {
                     return stopped(state);
                 }
+                // A first-feasible request must stay constructive. If the deterministic route cannot be replayed,
+                // report that exact route failure instead of escalating an acyclic graph into the global MIP search.
+                if (constructed.successful()) {
+                    return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
+                            TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
+                            Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_executable_order"),
+                            Map.of("phase", "dag_constructive_route")));
+                }
+                return TrinityAlgorithmResult.failure(constructed.diagnostic());
             }
             Optional<Attempt> competition = this.competitionPlanner.plan(
                     topology,
@@ -287,12 +297,14 @@ public final class TrinityAcyclicDemandPropagator {
                             shortages));
                 }
                 TrinityPatternVariant selected = candidates.getFirst();
-                BigInteger outputPerFiring = selected.outputs().get(key);
+                BigInteger outputPerFiring = selected.dependencyOutputs().get(key);
                 BigInteger count = missing.signum() > 0 ?
                         ceilDivide(missing, outputPerFiring) :
                         BigInteger.ONE;
                 firings.merge(selected, count, BigInteger::add);
                 selected.inputs().forEach((input, amount) -> merge(need, input, amount.multiply(count)));
+                // Keep complete physical outputs in balance propagation: an unchanged reusable tool is returned
+                // and therefore cancels its input reservation for the route's aggregate demand.
                 selected.outputs().forEach((output, amount) -> merge(need, output, amount.multiply(count).negate()));
             }
         }
@@ -310,6 +322,18 @@ public final class TrinityAcyclicDemandPropagator {
         StopState completedState = stopState(control);
         if (completedState != StopState.RUNNING) {
             return stopped(completedState, reservedInputs, firings, need, shortages);
+        }
+        reserveRetainedInputs(reservedInputs, firings);
+        for (Map.Entry<AEKey, BigInteger> retained : reservedInputs.entrySet()) {
+            if (!inventory.covers(retained.getKey(), retained.getValue())) {
+                BigInteger available = inventory.finiteAmount(retained.getKey());
+                mergeRequirement(
+                        shortages,
+                        retained.getKey(),
+                        retained.getValue(),
+                        available,
+                        retained.getValue().subtract(available).max(BigInteger.ZERO));
+            }
         }
         if (!shortages.isEmpty()) {
             return insufficient(reservedInputs, firings, shortages);
@@ -337,17 +361,49 @@ public final class TrinityAcyclicDemandPropagator {
         for (TrinityVariantFiring firing : plan.executionOrder()) {
             for (Map.Entry<AEKey, BigInteger> input : firing.variant().inputs().entrySet()) {
                 BigInteger required = input.getValue().multiply(firing.count());
+                BigInteger retained = unchangedReusableAmount(firing.variant(), input.getKey())
+                        .multiply(firing.count());
+                BigInteger consumed = required.subtract(retained).max(BigInteger.ZERO);
+                if (consumed.signum() <= 0) {
+                    continue;
+                }
+                if (inventory.unlimited(input.getKey())) {
+                    continue;
+                }
                 BigInteger available = balance.getOrDefault(input.getKey(), BigInteger.ZERO);
-                if (available.compareTo(required) < 0) return false;
-                balance.put(input.getKey(), available.subtract(required));
+                if (available.compareTo(consumed) < 0) return false;
+                balance.put(input.getKey(), available.subtract(consumed));
             }
-            firing.variant().outputs().forEach((key, amount) -> balance.merge(
-                    key, amount.multiply(firing.count()), BigInteger::add));
+            firing.variant().outputs().forEach((key, amount) -> {
+                BigInteger retained = unchangedReusableAmount(firing.variant(), key)
+                        .multiply(firing.count());
+                BigInteger produced = amount.multiply(firing.count()).subtract(retained);
+                if (produced.signum() > 0) {
+                    balance.merge(key, produced, BigInteger::add);
+                }
+            });
         }
         if (balance.getOrDefault(target, BigInteger.ZERO).compareTo(requestedAmount) < 0) return false;
         BigInteger requiredNet = quantityMode == CraftingQuantityMode.NET_NEW ? requestedAmount :
                 requestedAmount.subtract(inventory.availableUpTo(target, requestedAmount)).max(BigInteger.ONE);
         return plan.netChange().getOrDefault(target, BigInteger.ZERO).compareTo(requiredNet) >= 0;
+    }
+
+    /**
+     * Returns the per-firing amount occupied by unchanged reusable bindings for one logical key.
+     * Such a tool must be present once at the start of replay, but it is neither consumed nor newly produced by
+     * every firing in an aggregate batch.
+     */
+    private static BigInteger unchangedReusableAmount(TrinityPatternVariant variant, AEKey key) {
+        BigInteger retained = BigInteger.ZERO;
+        for (TrinityBoundPatternInput binding : variant.bindings()) {
+            if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
+                    binding.remainingKey().equals(binding.template().what()) &&
+                    binding.template().what().equals(key)) {
+                retained = retained.add(binding.consumedAmount());
+            }
+        }
+        return retained;
     }
 
     private TrinityAlgorithmResult<TrinityAcyclicPlan> optimizeWholeGraph(
@@ -445,7 +501,7 @@ public final class TrinityAcyclicDemandPropagator {
             }
         });
         for (TrinityPatternVariant variant : variants) {
-            variant.outputs().forEach((key, amount) -> {
+            variant.dependencyOutputs().forEach((key, amount) -> {
                 if (amount.signum() > 0 && !routeFamilies.containsKey(key)) {
                     producers.computeIfAbsent(key, ignored -> new ObjectArrayList<>()).add(variant);
                 }
@@ -491,7 +547,7 @@ public final class TrinityAcyclicDemandPropagator {
             for (AEKey key : topology.components().get(componentIndex).keys()) {
                 List<TrinityPatternVariant> candidates = producers.getOrDefault(key, List.of());
                 if (candidates.size() > 1 ||
-                        candidates.stream().anyMatch(variant -> variant.outputs().size() > 1)) {
+                        candidates.stream().anyMatch(variant -> variant.dependencyOutputs().size() > 1)) {
                     return true;
                 }
             }
@@ -503,7 +559,7 @@ public final class TrinityAcyclicDemandPropagator {
                                         Int2IntMap topologicalPositions,
                                         TrinityPatternVariant variant) {
         int earliestOutput = Integer.MAX_VALUE;
-        for (AEKey output : variant.outputs().keySet()) {
+        for (AEKey output : variant.dependencyOutputs().keySet()) {
             int component = topology.componentByKey().getOrDefault(output, -1);
             if (component >= 0) {
                 earliestOutput = Math.min(earliestOutput, topologicalPositions.get(component));
@@ -646,6 +702,20 @@ public final class TrinityAcyclicDemandPropagator {
                 existing.required().add(value.required()),
                 existing.available().add(value.available()),
                 existing.missing().add(value.missing())));
+    }
+
+    /** Retained reusable inputs need one initial lot even though their aggregate net change is zero. */
+    private static void reserveRetainedInputs(
+                                              Map<AEKey, BigInteger> reservedInputs,
+                                              Map<TrinityPatternVariant, BigInteger> firings) {
+        for (TrinityPatternVariant variant : firings.keySet()) {
+            variant.bindings().forEach(binding -> {
+                if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
+                        binding.remainingKey().equals(binding.template().what())) {
+                    reservedInputs.merge(binding.remainingKey(), binding.remainingAmount(), BigInteger::max);
+                }
+            });
+        }
     }
 
     private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {

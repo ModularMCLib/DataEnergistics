@@ -599,11 +599,22 @@ public final class TrinityAcyclicRouteOptimizer {
         ModelData data = modelTemplate.forPass(request.pass());
         configureDeadline(data.model(), control);
         long startedNanos = System.nanoTime();
-        Optimisation.Result result = TrinitySolverFailureCapture.solve(
-                data.model(),
-                request.pass() instanceof IdentityPass ? Optimisation.Sense.MAX : Optimisation.Sense.MIN,
-                "acyclic_" + request.pass().getClass().getSimpleName());
-        control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
+        Optimisation.Result result;
+        try {
+            result = TrinitySolverFailureCapture.solve(
+                    data.model(),
+                    request.pass() instanceof IdentityPass ? Optimisation.Sense.MAX : Optimisation.Sense.MIN,
+                    "acyclic_" + request.pass().getClass().getSimpleName());
+        } catch (StackOverflowError error) {
+            return failure(
+                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
+                    SEARCH_LIMIT_KEY,
+                    Map.of(
+                            "reason", "solver_stack_depth",
+                            "phase", "acyclic_" + request.pass().getClass().getSimpleName()));
+        } finally {
+            control.recordSolverPass(Math.max(0L, System.nanoTime() - startedNanos));
+        }
 
         if (control.cancellationRequested()) {
             return failure(
@@ -1068,7 +1079,7 @@ public final class TrinityAcyclicRouteOptimizer {
         keys.add(target);
         variants.forEach(variant -> {
             keys.addAll(variant.inputs().keySet());
-            keys.addAll(variant.outputs().keySet());
+            keys.addAll(variant.dependencyOutputs().keySet());
         });
         return ObjectSets.unmodifiable(keys);
     }
@@ -1080,7 +1091,7 @@ public final class TrinityAcyclicRouteOptimizer {
         ordered.sort(Comparator.naturalOrder());
         Object2ObjectOpenHashMap<AEKey, ObjectArrayList<TrinityPatternVariant>> producersByOutput = new Object2ObjectOpenHashMap<>();
         for (TrinityPatternVariant variant : ordered) {
-            variant.outputs().keySet().forEach(output -> producersByOutput
+            variant.dependencyOutputs().keySet().forEach(output -> producersByOutput
                     .computeIfAbsent(output, ignored -> new ObjectArrayList<>())
                     .add(variant));
         }
@@ -1113,7 +1124,7 @@ public final class TrinityAcyclicRouteOptimizer {
                                                  List<TrinityPatternVariant> variants,
                                                  TrinityPlanningInventory inventory) {
         ObjectLinkedOpenHashSet<AEKey> produced = new ObjectLinkedOpenHashSet<>();
-        variants.forEach(variant -> produced.addAll(variant.outputs().keySet()));
+        variants.forEach(variant -> produced.addAll(variant.dependencyOutputs().keySet()));
         ObjectLinkedOpenHashSet<AEKey> sourceKeys = new ObjectLinkedOpenHashSet<>();
         variants.forEach(variant -> variant.inputs().keySet().stream()
                 .filter(key -> !produced.contains(key) && !inventory.unlimited(key))
@@ -1125,7 +1136,7 @@ public final class TrinityAcyclicRouteOptimizer {
                                                          List<TrinityPatternVariant> variants,
                                                          TrinityPlanningInventory available) {
         ObjectLinkedOpenHashSet<AEKey> produced = new ObjectLinkedOpenHashSet<>();
-        variants.forEach(variant -> produced.addAll(variant.outputs().keySet()));
+        variants.forEach(variant -> produced.addAll(variant.dependencyOutputs().keySet()));
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> capacity = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> variant.inputs().keySet().stream()
                 .filter(key -> !produced.contains(key) && !available.unlimited(key))
@@ -1220,7 +1231,7 @@ public final class TrinityAcyclicRouteOptimizer {
                                         Int2IntMap positions,
                                         TrinityPatternVariant variant) {
         int earliestOutput = Integer.MAX_VALUE;
-        for (AEKey output : variant.outputs().keySet()) {
+        for (AEKey output : variant.dependencyOutputs().keySet()) {
             int component = topology.componentByKey().getOrDefault(output, -1);
             if (component >= 0) {
                 earliestOutput = Math.min(earliestOutput, positions.get(component));
@@ -1513,18 +1524,20 @@ public final class TrinityAcyclicRouteOptimizer {
                                                                 List<TrinityPatternVariant> variants,
                                                                 AEKey target) {
             TrinityPatternVariant first = variants.getFirst();
-            if (first.inputs().size() != 1 || first.outputs().size() != 1 ||
-                    !first.outputs().containsKey(target) || first.inputs().containsKey(target)) {
+            Map<AEKey, BigInteger> firstOutputs = first.dependencyOutputs();
+            if (first.inputs().size() != 1 || firstOutputs.size() != 1 ||
+                    !firstOutputs.containsKey(target) || first.inputs().containsKey(target)) {
                 return Optional.empty();
             }
             BigInteger inputPerFiring = first.inputs().values().iterator().next();
-            BigInteger outputPerFiring = first.outputs().get(target);
+            BigInteger outputPerFiring = firstOutputs.get(target);
             for (TrinityPatternVariant variant : variants) {
+                Map<AEKey, BigInteger> outputs = variant.dependencyOutputs();
                 if (!variant.patternIdentity().equals(first.patternIdentity()) ||
-                        variant.inputs().size() != 1 || variant.outputs().size() != 1 ||
+                        variant.inputs().size() != 1 || outputs.size() != 1 ||
                         variant.inputs().containsKey(target) ||
                         !variant.inputs().values().iterator().next().equals(inputPerFiring) ||
-                        !outputPerFiring.equals(variant.outputs().get(target))) {
+                        !outputPerFiring.equals(outputs.get(target))) {
                     return Optional.empty();
                 }
             }

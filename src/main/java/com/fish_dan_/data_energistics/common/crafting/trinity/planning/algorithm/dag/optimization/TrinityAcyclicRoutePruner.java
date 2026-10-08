@@ -85,7 +85,7 @@ public final class TrinityAcyclicRoutePruner {
                 continue;
             }
             executable[index] = true;
-            for (AEKey output : variants.get(index).outputs().keySet()) {
+            for (AEKey output : variants.get(index).dependencyOutputs().keySet()) {
                 if (!producibleKeys.add(output)) {
                     continue;
                 }
@@ -125,7 +125,7 @@ public final class TrinityAcyclicRoutePruner {
 
         Object2ObjectOpenHashMap<AEKey, ObjectArrayList<TrinityPatternVariant>> producersByOutput = new Object2ObjectOpenHashMap<>();
         for (TrinityPatternVariant variant : ordered) {
-            variant.outputs().keySet().forEach(output -> producersByOutput
+            variant.dependencyOutputs().keySet().forEach(output -> producersByOutput
                     .computeIfAbsent(output, ignored -> new ObjectArrayList<>())
                     .add(variant));
         }

@@ -16,6 +16,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 /** One collision, one damage/effect settlement. FE branches from that physical impact point. */
@@ -35,8 +36,9 @@ public final class RailImpact {
             points.add(center);
             int width = cards == 0 ? 12 : 17;
             int maximumTargets = cards == 2 ? 16 : 8;
-            for (LivingEntity chained : level.getEntitiesOfClass(LivingEntity.class, ElementalGrenade.area(center, width),
-                    entity -> entity != owner && entity.isAlive() && !entity.isSpectator()).stream().limit(maximumTargets).toList()) {
+            List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, ElementalGrenade.area(center, width),
+                    entity -> entity != owner && entity.isAlive() && !entity.isSpectator());
+            for (LivingEntity chained : orderTargets(center, candidates, maximumTargets)) {
                 WeaponDamage.hurt(chained, WeaponDamage.source(chained, owner), damage);
                 if (points.size() < 4096) points.add(chained.getBoundingBox().getCenter());
             }
@@ -60,5 +62,13 @@ public final class RailImpact {
             }
             case FE -> throw new IllegalStateException("FE was already settled");
         }
+    }
+
+    static List<LivingEntity> orderTargets(Vec3 center, List<LivingEntity> candidates, int maximumTargets) {
+        if (maximumTargets <= 0) return List.of();
+        return candidates.stream()
+                .sorted(Comparator.comparingDouble(target -> center.distanceToSqr(target.getBoundingBox().getCenter())))
+                .limit(maximumTargets)
+                .toList();
     }
 }

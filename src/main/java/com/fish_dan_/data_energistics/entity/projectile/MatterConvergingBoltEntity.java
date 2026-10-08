@@ -288,8 +288,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         if (this.modernEffects && this.getItem().is(DEItems.SINGULARITY_BLOCK.get())) {
             if (livingTarget != null) {
                 var cube = AmmunitionRules.cube(this.focusingCards());
-                float damage = this.fragmentDamage > 0 ? this.fragmentDamage : cube.damage() * this.cannonShot.baseDamageMultiplier()
-                        * CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
+                float damage = this.fragmentDamage > 0 ? this.fragmentDamage : cube.damage() * this.cannonShot.baseDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
                 WeaponDamage.hurt(livingTarget, WeaponDamage.source(livingTarget, owner), damage);
                 if (this.fragmentDamage == 0) this.splitCube(result.getLocation(), cube);
             }
@@ -454,8 +453,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getImpactDamage() {
-        float damage = this.getDamageForAmmo() * CannonShot.BASE_DAMAGE_SPEED
-                * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
+        float damage = this.getDamageForAmmo() * CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;
         }
@@ -603,8 +601,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getDataDustBaseDamage() {
-        float damage = DATA_DUST_BASE_DAMAGE * this.cannonShot.baseDamageMultiplier() * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
-                * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
+        float damage = DATA_DUST_BASE_DAMAGE * this.cannonShot.baseDamageMultiplier() * this.getEnergyDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length()) * this.cannonShot.damageScale();
         if (this.critical) {
             damage *= CRIT_DAMAGE_BONUS;
         }

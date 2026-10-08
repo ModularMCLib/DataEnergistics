@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -219,13 +220,13 @@ public final class TrinityAcyclicCompetitionPlanner {
                 control);
     }
 
-    private static Preparation prepare(
-                                       TrinityCraftingTopology topology,
-                                       Map<AEKey, List<TrinityPatternVariant>> producers,
-                                       AEKey target,
-                                       BigInteger requestedAmount,
-                                       CraftingQuantityMode quantityMode,
-                                       TrinityPlanningInventory available) {
+    private static @Nullable Preparation prepare(
+                                                 TrinityCraftingTopology topology,
+                                                 Map<AEKey, List<TrinityPatternVariant>> producers,
+                                                 AEKey target,
+                                                 BigInteger requestedAmount,
+                                                 CraftingQuantityMode quantityMode,
+                                                 TrinityPlanningInventory available) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finiteInventory = new Object2ObjectLinkedOpenHashMap<>(
                 available.finiteAmounts());
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> need = new Object2ObjectLinkedOpenHashMap<>();
@@ -268,18 +269,18 @@ public final class TrinityAcyclicCompetitionPlanner {
                 if (candidates.isEmpty()) {
                     return null;
                 }
-                if (candidates.size() > 1 || candidates.stream().anyMatch(variant -> variant.outputs().size() > 1)) {
+                if (candidates.size() > 1 || candidates.stream().anyMatch(variant -> variant.dependencyOutputs().size() > 1)) {
                     frontiers.put(key, new FrontierDemand(key, missing.signum() > 0 ? missing : BigInteger.ONE));
                     continue;
                 }
 
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger count = missing.signum() > 0 ?
-                        ceilDivide(missing, selected.outputs().get(key)) : BigInteger.ONE;
+                        ceilDivide(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
                 deterministicFirings.merge(selected, count, BigInteger::add);
                 deterministicPatterns.add(selected.patternIdentity());
                 deterministicTouchedKeys.addAll(selected.inputs().keySet());
-                deterministicTouchedKeys.addAll(selected.outputs().keySet());
+                deterministicTouchedKeys.addAll(selected.dependencyOutputs().keySet());
                 selected.inputs().forEach((input, amount) -> merge(need, input, amount.multiply(count)));
                 selected.outputs().forEach((output, amount) -> merge(need, output, amount.multiply(count).negate()));
             }
@@ -320,7 +321,7 @@ public final class TrinityAcyclicCompetitionPlanner {
             for (TrinityPatternVariant variant : ordered) {
                 patterns.add(variant.patternIdentity());
                 touchedKeys.addAll(variant.inputs().keySet());
-                touchedKeys.addAll(variant.outputs().keySet());
+                touchedKeys.addAll(variant.dependencyOutputs().keySet());
             }
             regions.add(new CompetitionRegion(
                     frontier.key(),
@@ -334,7 +335,7 @@ public final class TrinityAcyclicCompetitionPlanner {
 
     private static boolean provablyIndependent(List<CompetitionRegion> regions, Preparation preparation) {
         boolean reservedCraftableSuffix = preparation.deterministicFirings().keySet().stream()
-                .flatMap(variant -> variant.outputs().keySet().stream())
+                .flatMap(variant -> variant.dependencyOutputs().keySet().stream())
                 .anyMatch(preparation.reservedInputs()::containsKey);
         if (reservedCraftableSuffix) {
             return false;
@@ -360,17 +361,17 @@ public final class TrinityAcyclicCompetitionPlanner {
         return true;
     }
 
-    private static TrinityAcyclicPlan verifyCombined(
-                                                     TrinityCraftingTopology topology,
-                                                     List<TrinityPatternVariant> legalVariants,
-                                                     AEKey target,
-                                                     BigInteger requestedAmount,
-                                                     CraftingQuantityMode quantityMode,
-                                                     TrinityPlanningInventory available,
-                                                     Map<TrinityPatternVariant, BigInteger> firings,
-                                                     Map<AEKey, BigInteger> externalInputs,
-                                                     int states,
-                                                     TrinityPlanQuality quality) {
+    private static @Nullable TrinityAcyclicPlan verifyCombined(
+                                                               TrinityCraftingTopology topology,
+                                                               List<TrinityPatternVariant> legalVariants,
+                                                               AEKey target,
+                                                               BigInteger requestedAmount,
+                                                               CraftingQuantityMode quantityMode,
+                                                               TrinityPlanningInventory available,
+                                                               Map<TrinityPatternVariant, BigInteger> firings,
+                                                               Map<AEKey, BigInteger> externalInputs,
+                                                               int states,
+                                                               TrinityPlanQuality quality) {
         Set<TrinityPatternVariant> legal = new ObjectOpenHashSet<>(legalVariants);
         if (firings.isEmpty() || firings.entrySet().stream().anyMatch(
                 entry -> !legal.contains(entry.getKey()) || entry.getValue().signum() <= 0)) {
@@ -474,7 +475,7 @@ public final class TrinityAcyclicCompetitionPlanner {
                                         Int2IntMap positions,
                                         TrinityPatternVariant variant) {
         int earliestOutput = Integer.MAX_VALUE;
-        for (AEKey output : variant.outputs().keySet()) {
+        for (AEKey output : variant.dependencyOutputs().keySet()) {
             if (topology.componentByKey().containsKey(output)) {
                 int component = topology.componentByKey().getInt(output);
                 earliestOutput = Math.min(earliestOutput, positions.get(component));

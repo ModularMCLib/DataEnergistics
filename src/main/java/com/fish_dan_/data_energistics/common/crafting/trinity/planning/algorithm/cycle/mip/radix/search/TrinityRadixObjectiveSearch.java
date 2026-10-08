@@ -367,6 +367,13 @@ public final class TrinityRadixObjectiveSearch {
         try {
             return TrinityAlgorithmResult.success(TrinitySolverFailureCapture.solve(
                     model, Optimisation.Sense.MIN, "radix"));
+        } catch (StackOverflowError error) {
+            return TrinityRadixDiagnostics.failure(
+                    TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
+                    "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
+                    Map.of(
+                            "reason", "solver_stack_depth",
+                            "radixBase", Integer.toString(TrinityRadixDigits.BASE)));
         } catch (RuntimeException exception) {
             if (!causedByStackOverflow(exception)) {
                 throw exception;

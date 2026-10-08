@@ -11,8 +11,8 @@ public final class AmmunitionRules {
 
     public record Cube(float damage, int fragments) {
 
-        public float fragmentDamage() {
-            return damage / fragments;
+        public float fragmentDamage(float totalDamage) {
+            return totalDamage / fragments;
         }
     }
 

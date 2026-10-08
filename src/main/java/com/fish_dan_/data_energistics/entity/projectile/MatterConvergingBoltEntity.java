@@ -288,9 +288,9 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         if (this.modernEffects && this.getItem().is(DEItems.SINGULARITY_BLOCK.get())) {
             if (livingTarget != null) {
                 var cube = AmmunitionRules.cube(this.focusingCards());
-                float damage = this.fragmentDamage > 0 ? this.fragmentDamage : cube.damage() * this.cannonShot.baseDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
+                float damage = this.fragmentDamage > 0 ? this.fragmentDamage : this.getCubeDamage(cube);
                 WeaponDamage.hurt(livingTarget, WeaponDamage.source(livingTarget, owner), damage);
-                if (this.fragmentDamage == 0) this.splitCube(result.getLocation(), cube);
+                if (this.fragmentDamage == 0) this.splitCube(result.getLocation(), cube, damage);
             }
             this.discardWithEffects();
             return;
@@ -395,7 +395,12 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         return Math.clamp(this.getEnergyCardCount(), 0, 2);
     }
 
-    private void splitCube(Vec3 center, AmmunitionRules.Cube cube) {
+    private float getCubeDamage(AmmunitionRules.Cube cube) {
+        return cube.damage() * this.cannonShot.baseDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
+                * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
+    }
+
+    private void splitCube(Vec3 center, AmmunitionRules.Cube cube, float totalDamage) {
         if (!(this.level() instanceof ServerLevel level)) return;
         for (int i = 0; i < cube.fragments(); i++) {
             double angle = 2 * Math.PI * i / cube.fragments();
@@ -403,7 +408,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
             fragment.setOwner(this.getOwner());
             fragment.setItem(this.getItem().copyWithCount(1));
             fragment.setWeaponStack(this.weaponStack);
-            fragment.fragmentDamage = cube.fragmentDamage();
+            fragment.fragmentDamage = cube.fragmentDamage(totalDamage);
             fragment.setHoming(this.isHoming());
             fragment.setPos(center.add(Math.cos(angle) * 0.35, 0.15, Math.sin(angle) * 0.35));
             fragment.setDeltaMovement(new Vec3(Math.cos(angle), 0.15, Math.sin(angle)).normalize().scale(1.5));

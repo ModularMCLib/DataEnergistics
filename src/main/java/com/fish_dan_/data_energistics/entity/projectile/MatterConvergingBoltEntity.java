@@ -54,6 +54,8 @@ import lombok.Setter;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
+import java.util.UUID;
+
 public class MatterConvergingBoltEntity extends ThrowableItemProjectile implements IEntityWithComplexSpawn {
 
     private static final float MATTER_BALL_DAMAGE = 10.0F;
@@ -89,6 +91,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     @Setter
     private boolean modernEffects;
     private float fragmentDamage;
+    private @Nullable UUID preferredHomingTargetId;
     private int singularityTicks;
 
     public MatterConvergingBoltEntity(EntityType<? extends MatterConvergingBoltEntity> entityType, Level level) {
@@ -246,6 +249,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         tag.putInt(TAG_CONSUMED_PIERCE_COUNT, this.consumedPierceCount);
         tag.putBoolean("Homing", this.isHoming());
         tag.putBoolean("Critical", this.critical);
+        if (this.preferredHomingTargetId != null) tag.putUUID("PreferredHomingTarget", this.preferredHomingTargetId);
         tag.putInt(TAG_ENERGY_CARD_COUNT, this.getEnergyCardCount());
         if (!this.weaponStack.isEmpty()) {
             tag.put("WeaponStack", this.weaponStack.save(this.registryAccess()));
@@ -266,6 +270,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
         this.getEntityData().set(DATA_HOMING, tag.getBoolean("Homing"));
         this.getEntityData().set(DATA_ENERGY_CARD_COUNT, Math.max(0, tag.getInt(TAG_ENERGY_CARD_COUNT)));
         this.critical = tag.getBoolean("Critical");
+        this.preferredHomingTargetId = tag.hasUUID("PreferredHomingTarget") ? tag.getUUID("PreferredHomingTarget") : null;
         if (tag.contains("WeaponStack", 10)) {
             this.weaponStack = ItemStack.parse(this.registryAccess(), tag.getCompound("WeaponStack"))
                     .orElse(ItemStack.EMPTY);
@@ -290,7 +295,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
                 var cube = AmmunitionRules.cube(this.focusingCards());
                 float damage = this.fragmentDamage > 0 ? this.fragmentDamage : this.getCubeDamage(cube);
                 WeaponDamage.hurt(livingTarget, WeaponDamage.source(livingTarget, owner), damage);
-                if (this.fragmentDamage == 0) this.splitCube(result.getLocation(), cube, damage);
+                if (this.fragmentDamage == 0) this.splitCube(result.getLocation(), cube, damage, livingTarget);
             }
             this.discardWithEffects();
             return;
@@ -396,11 +401,10 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private float getCubeDamage(AmmunitionRules.Cube cube) {
-        return cube.damage() * this.cannonShot.baseDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED
-                * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
+        return cube.damage() * this.cannonShot.baseDamageMultiplier() * CannonShot.BASE_DAMAGE_SPEED * this.cannonShot.speedMultiplier((float) this.getDeltaMovement().length());
     }
 
-    private void splitCube(Vec3 center, AmmunitionRules.Cube cube, float totalDamage) {
+    private void splitCube(Vec3 center, AmmunitionRules.Cube cube, float totalDamage, LivingEntity preferredTarget) {
         if (!(this.level() instanceof ServerLevel level)) return;
         for (int i = 0; i < cube.fragments(); i++) {
             double angle = 2 * Math.PI * i / cube.fragments();
@@ -410,6 +414,7 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
             fragment.setWeaponStack(this.weaponStack);
             fragment.fragmentDamage = cube.fragmentDamage(totalDamage);
             fragment.setHoming(this.isHoming());
+            if (this.isHoming()) fragment.preferredHomingTargetId = preferredTarget.getUUID();
             fragment.setPos(center.add(Math.cos(angle) * 0.35, 0.15, Math.sin(angle) * 0.35));
             fragment.setDeltaMovement(new Vec3(Math.cos(angle), 0.15, Math.sin(angle)).normalize().scale(1.5));
             level.addFreshEntity(fragment);
@@ -578,6 +583,10 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     @Nullable
     private LivingEntity findNearestHomingTarget() {
         Entity owner = this.getOwner();
+        if (this.preferredHomingTargetId != null) {
+            Entity preferred = this.level().getEntity(this.preferredHomingTargetId);
+            if (preferred instanceof LivingEntity target && target.isAlive() && target != owner) return target;
+        }
         return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(HOMING_RANGE),
                 entity -> entity.isAlive() && !(entity instanceof Player) && entity != owner && !this.piercedEntityIds.contains(entity.getId()))
                 .stream()
@@ -628,6 +637,11 @@ public class MatterConvergingBoltEntity extends ThrowableItemProjectile implemen
     }
 
     private boolean tryForceHomingHit(LivingEntity target) {
+        if (this.preferredHomingTargetId != null && this.getBoundingBox().inflate(HOMING_HIT_MARGIN).intersects(target.getBoundingBox())) {
+            this.setPos(target.getBoundingBox().getCenter());
+            this.onHitEntity(new EntityHitResult(target));
+            return true;
+        }
         Vec3 start = this.position();
         Vec3 end = start.add(this.getDeltaMovement());
         AABB searchBox = this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(HOMING_HIT_MARGIN);

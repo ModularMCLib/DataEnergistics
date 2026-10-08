@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackListCodec;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -17,7 +18,6 @@ import appeng.crafting.pattern.EncodedProcessingPattern;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -183,8 +183,8 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         if (!PackagedOutputMatching.matchesWithAdditionalReturns(pattern, result, returned)) return null;
 
         CompoundTag progress = new CompoundTag();
-        progress.put("inputs", saveStacks(grid, level.registryAccess()));
-        progress.put("returns", saveStacks(returned, level.registryAccess()));
+        progress.put("inputs", ItemStackListCodec.encode(grid, level.registryAccess()));
+        progress.put("returns", ItemStackListCodec.encode(returned, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
@@ -226,8 +226,10 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
         if (table == null) return false;
         CompoundTag progress = operation.progress();
         int slots = tier.size * tier.size;
-        ObjectList<ItemStack> inputs = readStacks(operation, progress.getList("inputs", Tag.TAG_COMPOUND));
-        ObjectList<ItemStack> returns = readStacks(operation, progress.getList("returns", Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> inputs = ItemStackListCodec.decode(
+                progress.getList("inputs", Tag.TAG_COMPOUND), operation.level().registryAccess());
+        ObjectList<ItemStack> returns = ItemStackListCodec.decode(
+                progress.getList("returns", Tag.TAG_COMPOUND), operation.level().registryAccess());
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Avaritia table result"));
         if (inputs.size() != slots) {
@@ -300,20 +302,6 @@ public final class TierCraftingAdapter implements PackagedMachineAdapter {
             if (!inventory.getStackInSlot(index).isEmpty()) return false;
         }
         return true;
-    }
-
-    private static ListTag saveStacks(List<? extends ItemStack> stacks, HolderLookup.Provider registries) {
-        ListTag encoded = new ListTag();
-        for (ItemStack stack : stacks) encoded.add(stack.saveOptional(registries));
-        return encoded;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        ObjectList<ItemStack> stacks = new ObjectArrayList<>(encoded.size());
-        for (int index = 0; index < encoded.size(); index++) {
-            stacks.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
-        }
-        return stacks;
     }
 
     private static int[] consumedSlots(TierInput input, int tableSize) {

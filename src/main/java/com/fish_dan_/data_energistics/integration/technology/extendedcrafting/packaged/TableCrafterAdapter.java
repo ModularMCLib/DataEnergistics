@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackListCodec;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -13,7 +14,6 @@ import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -123,8 +123,8 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
         progress.putInt("width", table.width());
-        progress.put("inputs", saveStacks(grid, level.registryAccess()));
-        progress.put("remaining", saveStacks(remaining, level.registryAccess()));
+        progress.put("inputs", ItemStackListCodec.encode(grid, level.registryAccess()));
+        progress.put("remaining", ItemStackListCodec.encode(remaining, level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
         return progress;
     }
@@ -164,8 +164,8 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
         if (encodedInputs.size() != width * width || encodedRemaining.size() != width * width) {
             throw new IllegalArgumentException("Invalid persisted Extended Crafting table grid");
         }
-        var inputs = readStacks(operation, encodedInputs);
-        var remaining = readStacks(operation, encodedRemaining);
+        var inputs = ItemStackListCodec.decode(encodedInputs, operation.level().registryAccess());
+        var remaining = ItemStackListCodec.decode(encodedRemaining, operation.level().registryAccess());
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Extended Crafting table output"));
         boolean delivered = progress.getBoolean("delivered");
@@ -229,20 +229,6 @@ public final class TableCrafterAdapter implements PackagedMachineAdapter {
                 UUID.nameUUIDFromBytes(operation.id().toString().getBytes(StandardCharsets.UTF_8)),
                 "data_energistics_packaged"));
         return new MenuContext(table.tile().createMenu(0, fake.getInventory(), fake), fake);
-    }
-
-    private static ListTag saveStacks(List<? extends ItemStack> stacks, HolderLookup.Provider registries) {
-        var encoded = new ListTag();
-        for (ItemStack stack : stacks) encoded.add(stack.saveOptional(registries));
-        return encoded;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        var stacks = new ObjectArrayList<ItemStack>(encoded.size());
-        for (int index = 0; index < encoded.size(); index++) {
-            stacks.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
-        }
-        return stacks;
     }
 
     private static boolean empty(BaseItemStackHandler inventory) {

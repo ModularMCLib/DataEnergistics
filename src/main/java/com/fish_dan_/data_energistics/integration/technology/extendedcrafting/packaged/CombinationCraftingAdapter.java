@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackListCodec;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -113,8 +114,8 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         var progress = new CompoundTag();
         progress.put("layout", positions(layout.pedestals()));
         progress.put("selected", positions(selected));
-        progress.put("inputs", saveStacks(assigned, level));
-        progress.put("remaining", saveStacks(remaining, level));
+        progress.put("inputs", ItemStackListCodec.encode(assigned, level.registryAccess()));
+        progress.put("remaining", ItemStackListCodec.encode(remaining, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
@@ -139,8 +140,10 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         CompoundTag progress = operation.progress();
         ObjectList<BlockPos> selected = selected(progress.getList("selected", Tag.TAG_LONG), layout.pedestals());
         if (selected == null) return false;
-        ObjectList<ItemStack> assigned = readStacks(operation, progress.getList("inputs", Tag.TAG_COMPOUND));
-        ObjectList<ItemStack> remaining = readStacks(operation, progress.getList("remaining", Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> assigned = ItemStackListCodec.decode(
+                progress.getList("inputs", Tag.TAG_COMPOUND), operation.level().registryAccess());
+        ObjectList<ItemStack> remaining = ItemStackListCodec.decode(
+                progress.getList("remaining", Tag.TAG_COMPOUND), operation.level().registryAccess());
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Extended Crafting combination output"));
         if (assigned.size() != selected.size() + 1 || remaining.size() != selected.size()) {
@@ -324,19 +327,6 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
             selected.add(position);
         }
         return selected;
-    }
-
-    private static ListTag saveStacks(List<? extends ItemStack> stacks, ServerLevel level) {
-        var encoded = new ListTag();
-        for (ItemStack stack : stacks) encoded.add(stack.saveOptional(level.registryAccess()));
-        return encoded;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        var stacks = new ObjectArrayList<ItemStack>(encoded.size());
-        for (int index = 0; index < encoded.size(); index++) stacks.add(ItemStack.parseOptional(
-                operation.level().registryAccess(), encoded.getCompound(index)));
-        return stacks;
     }
 
     private static void requireAvailable(PackagedMachineOperation operation, ObjectList<ItemStack> stacks) {

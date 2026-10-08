@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackListCodec;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -14,7 +15,6 @@ import appeng.api.stacks.KeyCounter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -74,7 +74,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
                 !PackagedOutputMatching.matches(pattern, recipe.getOutput(), recipe.getOutput().getCount()))
             return null;
         var result = new CompoundTag();
-        result.put(INPUTS, saveStacks(assigned, level));
+        result.put(INPUTS, ItemStackListCodec.encode(assigned, level.registryAccess()));
         result.put(OUTPUT, recipe.getOutput().save(level.registryAccess()));
         return result;
     }
@@ -133,7 +133,8 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         if (!emptyInputsAndOutput(table) || !safePartner(operation.level(), table)) return false;
         TabulaVitaeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null) return false;
-        ObjectList<ItemStack> inputs = readStacks(operation, operation.progress().getList(INPUTS, Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> inputs = ItemStackListCodec.decode(
+                operation.progress().getList(INPUTS, Tag.TAG_COMPOUND), operation.level().registryAccess());
         if (inputs.size() > TabulaVitaeBlockEntity.ORB_SLOT) return false;
 
         for (int slot = 0; slot < inputs.size(); slot++) {
@@ -207,20 +208,6 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
 
     private static boolean sameStack(ItemStack expected, ItemStack actual) {
         return expected.getCount() == actual.getCount() && ItemStack.isSameItemSameComponents(expected, actual);
-    }
-
-    private static ListTag saveStacks(ObjectList<ItemStack> stacks, ServerLevel level) {
-        var result = new ListTag();
-        for (ItemStack stack : stacks) result.add(stack.saveOptional(level.registryAccess()));
-        return result;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        var result = new ObjectArrayList<ItemStack>();
-        for (int index = 0; index < encoded.size(); index++) {
-            result.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
-        }
-        return result;
     }
 
     private static ItemStack readStack(PackagedMachineOperation operation, String key) {

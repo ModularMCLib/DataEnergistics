@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedCraftingGrid;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackListCodec;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -91,14 +92,10 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
         expected.add(result);
         expected.addAll(remaining);
         if (!PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
-        var encodedInputs = new ListTag();
-        var encodedRemaining = new ListTag();
-        for (ItemStack stack : grid) encodedInputs.add(stack.saveOptional(level.registryAccess()));
-        for (ItemStack stack : remaining) encodedRemaining.add(stack.saveOptional(level.registryAccess()));
         var progress = new CompoundTag();
         progress.putInt("size", size);
-        progress.put("inputs", encodedInputs);
-        progress.put("remaining", encodedRemaining);
+        progress.put("inputs", ItemStackListCodec.encode(grid, level.registryAccess()));
+        progress.put("remaining", ItemStackListCodec.encode(remaining, level.registryAccess()));
         progress.put("result", result.save(level.registryAccess()));
         return progress;
     }
@@ -116,10 +113,12 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
         var remaining = progress.getList("remaining", Tag.TAG_COMPOUND);
         if (encoded.size() != outputSlot || remaining.size() != outputSlot)
             throw new IllegalArgumentException("Invalid powered table grid");
+        var inputs = ItemStackListCodec.decode(encoded, operation.level().registryAccess());
+        var expectedRemaining = ItemStackListCodec.decode(remaining, operation.level().registryAccess());
         if (!progress.getBoolean("delivered")) {
             if (!empty(tile)) return false;
             for (int slot = 0; slot < outputSlot; slot++) {
-                ItemStack stack = ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(slot));
+                ItemStack stack = inputs.get(slot);
                 if (stack.isEmpty()) continue;
                 inventory.setStackInSlot(slot, stack.copy());
                 operation.delivered(AEItemKey.of(stack), stack.getCount());
@@ -134,8 +133,7 @@ public final class PoweredTableAdapter implements PackagedMachineAdapter {
         if (!PackagedOutputMatching.matches(operation, expected, actual))
             throw new IllegalStateException("Unexpected powered table result");
         for (int slot = 0; slot < outputSlot; slot++) {
-            ItemStack expectedRemaining = ItemStack.parseOptional(operation.level().registryAccess(), remaining.getCompound(slot));
-            if (!ItemStack.matches(expectedRemaining, inventory.getStackInSlot(slot)))
+            if (!ItemStack.matches(expectedRemaining.get(slot), inventory.getStackInSlot(slot)))
                 throw new IllegalStateException("Powered table remainder changed");
         }
         inventory.setStackInSlot(outputSlot, ItemStack.EMPTY);

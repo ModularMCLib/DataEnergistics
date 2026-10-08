@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackListCodec;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -90,9 +91,7 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         }
         if (result.isEmpty() || !PackagedIngredientAssignment.outputsMatch(pattern, expected)) return null;
         var progress = new CompoundTag();
-        var encoded = new ListTag();
-        for (var stack : assigned) encoded.add(stack.saveOptional(level.registryAccess()));
-        progress.put("inputs", encoded);
+        progress.put("inputs", ItemStackListCodec.encode(assigned, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
@@ -103,10 +102,7 @@ public final class ExtremeSmithingAdapter implements PackagedMachineAdapter {
         var progress = operation.progress();
         var encoded = progress.getList("inputs", Tag.TAG_COMPOUND);
         if (encoded.size() != 5) throw new IllegalArgumentException("Invalid persisted Avaritia smithing inputs");
-        var inputs = new ObjectArrayList<ItemStack>(5);
-        for (int index = 0; index < encoded.size(); index++) {
-            inputs.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
-        }
+        var inputs = ItemStackListCodec.decode(encoded, operation.level().registryAccess());
         var result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Avaritia smithing result"));
         var holder = operation.level().getRecipeManager().byKey(operation.recipeId());

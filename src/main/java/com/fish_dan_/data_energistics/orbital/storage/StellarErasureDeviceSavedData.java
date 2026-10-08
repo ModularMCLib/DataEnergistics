@@ -26,19 +26,20 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -71,23 +72,23 @@ public final class StellarErasureDeviceSavedData extends SavedData {
             StellarErasureDeviceSavedData::new,
             StellarErasureDeviceSavedData::load);
 
-    private final Map<UUID, StellarErasureDeviceRecord> weapons = new Object2ObjectLinkedOpenHashMap<>();
-    private final Map<UUID, UUID> ownerIndex = new Object2ObjectOpenHashMap<>();
-    private final Map<UUID, ObjectSet<UUID>> accessIndex = new Object2ObjectOpenHashMap<>();
-    private final Map<OrbitalEndpointLocation, UUID> endpointIndex = new Object2ObjectOpenHashMap<>();
-    private final Set<UUID> reserveChargeFaults = new ObjectOpenHashSet<>();
-    private final Map<UUID, UUID> lastSelectedWeaponByPlayer = new Object2ObjectOpenHashMap<>();
-    private final Map<UUID, OrbitalOwnershipTransfer> ownershipTransfers = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<UUID, StellarErasureDeviceRecord> weapons = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<UUID, UUID> ownerIndex = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<UUID, ObjectSet<UUID>> accessIndex = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<OrbitalEndpointLocation, UUID> endpointIndex = new Object2ObjectOpenHashMap<>();
+    private final ObjectSet<UUID> reserveChargeFaults = new ObjectOpenHashSet<>();
+    private final Object2ObjectMap<UUID, UUID> lastSelectedWeaponByPlayer = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<UUID, OrbitalOwnershipTransfer> ownershipTransfers = new Object2ObjectLinkedOpenHashMap<>();
 
     private StellarErasureDeviceSavedData() {}
 
     /** Stable, immutable accessible-weapon list paired with the player's currently resolved selection. */
     public record AccessibleWeaponSelection(
-                                            List<StellarErasureDeviceRecord> weapons,
+                                            ObjectList<StellarErasureDeviceRecord> weapons,
                                             @Nullable UUID selectedWeaponId) {
 
         public AccessibleWeaponSelection {
-            weapons = List.copyOf(weapons);
+            weapons = new ObjectImmutableList<>(weapons);
             if (weapons.isEmpty() != (selectedWeaponId == null)) {
                 throw new IllegalArgumentException("Accessible orbital selection must match its weapon list");
             }
@@ -198,8 +199,8 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     /**
      * Returns an immutable location-to-weapon snapshot for startup endpoint reconciliation.
      */
-    public Map<OrbitalEndpointLocation, UUID> endpointBindings() {
-        return Map.copyOf(this.endpointIndex);
+    public Object2ObjectMap<OrbitalEndpointLocation, UUID> endpointBindings() {
+        return Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(this.endpointIndex));
     }
 
     /**
@@ -225,7 +226,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
      * server tick that reconciles endpoint failover runs before the visual ticker, so this view never resurrects a
      * failed anchor on the client. Temporary AE availability does not hide a still-valid persisted projection.
      */
-    public List<OrbitalProjectionVisualSnapshot> publicVisualProjections(ServerLevel level, long gameTime) {
+    public ObjectList<OrbitalProjectionVisualSnapshot> publicVisualProjections(ServerLevel level, long gameTime) {
         requireServerThread(level.getServer());
         ResourceLocation dimensionId = level.dimension().location();
         int projectionY = level.getMaxBuildHeight() + OrbitalProjectionVisualSnapshot.ALTITUDE_ABOVE_BUILD_LIMIT;
@@ -237,7 +238,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
                 .flatMap(Optional::stream)
                 .map(anchor -> projectionSnapshot(level, gameTime, projectionY, anchor.weapon(), anchor.location()))
                 .flatMap(Optional::stream)
-                .toList();
+                .collect(ObjectArrayList.toList());
     }
 
     /**
@@ -253,7 +254,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         purgeExpiredTransfers(server);
         DataEnergisticsConfiguration.StellarErasureDeviceSchema settings = DataEnergisticsConfiguration.INSTANCE.stellarErasureDevice;
         boolean changed = false;
-        for (Map.Entry<UUID, StellarErasureDeviceRecord> entry : this.weapons.entrySet()) {
+        for (Object2ObjectMap.Entry<UUID, StellarErasureDeviceRecord> entry : this.weapons.object2ObjectEntrySet()) {
             UUID weaponId = entry.getKey();
             StellarErasureDeviceRecord updated = entry.getValue();
             boolean chargeSucceeded = true;
@@ -394,7 +395,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
             return false;
         }
 
-        List<OrbitalEndpointRecord> ordered = new ObjectArrayList<>(current.endpoints().values());
+        ObjectArrayList<OrbitalEndpointRecord> ordered = new ObjectArrayList<>(current.endpoints().values());
         ordered.sort(ENDPOINT_PRIORITY_ORDER);
         int oldIndex = ordered.indexOf(selected);
         if (oldIndex < 0) {
@@ -403,7 +404,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         ordered.remove(oldIndex);
         ordered.add(priority, selected);
 
-        Map<OrbitalEndpointLocation, OrbitalEndpointRecord> reordered = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> reordered = new Object2ObjectLinkedOpenHashMap<>();
         boolean changed = false;
         for (int index = 0; index < ordered.size(); index++) {
             OrbitalEndpointRecord endpoint = ordered.get(index);
@@ -476,7 +477,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     /**
      * Returns every owned or delegated weapon visible to a player in stable weapon-ID order.
      */
-    public List<StellarErasureDeviceRecord> accessibleTo(UUID playerId) {
+    public ObjectList<StellarErasureDeviceRecord> accessibleTo(UUID playerId) {
         return accessibleSelection(playerId).weapons();
     }
 
@@ -502,10 +503,10 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         if (ownedWeaponId != null) {
             weaponIds.add(ownedWeaponId);
         }
-        List<StellarErasureDeviceRecord> accessible = weaponIds.stream()
+        ObjectArrayList<StellarErasureDeviceRecord> accessible = weaponIds.stream()
                 .map(this::requireWeapon)
                 .sorted(Comparator.comparing(StellarErasureDeviceRecord::weaponId))
-                .toList();
+                .collect(ObjectArrayList.toList());
         UUID remembered = this.lastSelectedWeaponByPlayer.get(playerId);
         UUID selected = remembered != null && weaponIds.contains(remembered) ? remembered :
                 accessible.isEmpty() ? null : accessible.getFirst().weaponId();
@@ -528,9 +529,9 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     public Optional<UUID> selectNext(MinecraftServer server, UUID playerId, boolean forward) {
         requireServerThread(server);
         AccessibleWeaponSelection selection = accessibleSelection(playerId);
-        List<UUID> accessible = selection.weapons().stream()
+        ObjectArrayList<UUID> accessible = selection.weapons().stream()
                 .map(StellarErasureDeviceRecord::weaponId)
-                .toList();
+                .collect(ObjectArrayList.toList());
         if (accessible.isEmpty()) {
             if (this.lastSelectedWeaponByPlayer.remove(playerId) != null) {
                 setDirty();
@@ -694,7 +695,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
             return false;
         }
 
-        Map<UUID, OrbitalAccessRole> roles = new Object2ObjectOpenHashMap<>(current.delegatedRoles());
+        Object2ObjectMap<UUID, OrbitalAccessRole> roles = new Object2ObjectOpenHashMap<>(current.delegatedRoles());
         roles.remove(recipientId);
         roles.put(current.ownerId(), OrbitalAccessRole.OPERATOR);
         StellarErasureDeviceRecord updated = new StellarErasureDeviceRecord(
@@ -740,13 +741,13 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     /** Rebuilds owner and delegated-access indexes from the authoritative weapon records after an admin repair. */
     public int repairIndexes(MinecraftServer server) {
         requireServerThread(server);
-        List<StellarErasureDeviceRecord> ordered = this.weapons.values().stream()
+        ObjectArrayList<StellarErasureDeviceRecord> ordered = this.weapons.values().stream()
                 .sorted(Comparator.comparing(StellarErasureDeviceRecord::weaponId))
-                .toList();
+                .collect(ObjectArrayList.toList());
         this.ownerIndex.clear();
         this.accessIndex.clear();
         this.endpointIndex.clear();
-        Map<UUID, StellarErasureDeviceRecord> repaired = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<UUID, StellarErasureDeviceRecord> repaired = new Object2ObjectLinkedOpenHashMap<>();
         int removed = 0;
         for (StellarErasureDeviceRecord weapon : ordered) {
             if (this.ownerIndex.containsKey(weapon.ownerId())) {
@@ -777,7 +778,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
         StellarErasureDeviceNbtCodec.save(tag, this.weapons.values());
         ListTag selections = new ListTag();
         this.lastSelectedWeaponByPlayer.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
+                .sorted(Comparator.comparing(entry -> entry.getKey()))
                 .forEach(entry -> {
                     CompoundTag selection = new CompoundTag();
                     selection.putUUID(PLAYER_ID_TAG, entry.getKey());
@@ -1003,7 +1004,7 @@ public final class StellarErasureDeviceSavedData extends SavedData {
     private record ProjectionAnchor(StellarErasureDeviceRecord weapon, OrbitalEndpointLocation location) {}
 
     private StellarErasureDeviceRecord filterConflictingEndpoints(StellarErasureDeviceRecord weapon) {
-        Map<OrbitalEndpointLocation, OrbitalEndpointRecord> acceptedEndpoints = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> acceptedEndpoints = new Object2ObjectLinkedOpenHashMap<>();
         for (OrbitalEndpointRecord endpoint : weapon.endpoints().values()) {
             UUID indexedWeaponId = this.endpointIndex.get(endpoint.location());
             if (indexedWeaponId != null) {

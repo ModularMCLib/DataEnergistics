@@ -18,14 +18,15 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -61,7 +62,7 @@ final class StellarErasureDeviceNbtCodec {
 
     private StellarErasureDeviceNbtCodec() {}
 
-    static CompoundTag save(CompoundTag tag, Collection<StellarErasureDeviceRecord> weapons) {
+    static CompoundTag save(CompoundTag tag, ObjectCollection<StellarErasureDeviceRecord> weapons) {
         ListTag weaponList = new ListTag();
         weapons.stream()
                 .sorted(Comparator.comparing(StellarErasureDeviceRecord::weaponId))
@@ -71,13 +72,13 @@ final class StellarErasureDeviceNbtCodec {
         return tag;
     }
 
-    static List<StellarErasureDeviceRecord> load(CompoundTag tag) {
+    static ObjectList<StellarErasureDeviceRecord> load(CompoundTag tag) {
         Tag weaponsTag = tag.get(WEAPONS_TAG);
         if (!(weaponsTag instanceof ListTag weaponList)) {
-            return List.of();
+            return ObjectList.of();
         }
 
-        List<StellarErasureDeviceRecord> weapons = new ObjectArrayList<>();
+        ObjectArrayList<StellarErasureDeviceRecord> weapons = new ObjectArrayList<>();
         for (Tag weaponTag : weaponList) {
             if (weaponTag instanceof CompoundTag weaponEntry) {
                 StellarErasureDeviceRecord weapon = readWeapon(weaponEntry);
@@ -86,7 +87,7 @@ final class StellarErasureDeviceNbtCodec {
                 }
             }
         }
-        return List.copyOf(weapons);
+        return new ObjectImmutableList<>(weapons);
     }
 
     private static CompoundTag writeWeapon(StellarErasureDeviceRecord weapon) {
@@ -96,8 +97,8 @@ final class StellarErasureDeviceNbtCodec {
         weaponTag.putString("custom_name", weapon.customName());
 
         ListTag roleList = new ListTag();
-        weapon.delegatedRoles().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
+        weapon.delegatedRoles().object2ObjectEntrySet().stream()
+                .sorted(Comparator.comparing(entry -> entry.getKey()))
                 .map(StellarErasureDeviceNbtCodec::writeRole)
                 .forEach(roleList::add);
         weaponTag.put(DELEGATED_ROLES_TAG, roleList);
@@ -125,7 +126,7 @@ final class StellarErasureDeviceNbtCodec {
         return weaponTag;
     }
 
-    private static CompoundTag writeRole(Map.Entry<UUID, OrbitalAccessRole> entry) {
+    private static CompoundTag writeRole(Object2ObjectMap.Entry<UUID, OrbitalAccessRole> entry) {
         CompoundTag roleTag = new CompoundTag();
         roleTag.putUUID(PLAYER_ID_TAG, entry.getKey());
         roleTag.putString(ROLE_TAG, entry.getValue().name());
@@ -148,7 +149,7 @@ final class StellarErasureDeviceNbtCodec {
             return null;
         }
 
-        Map<UUID, OrbitalAccessRole> roles = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<UUID, OrbitalAccessRole> roles = new Object2ObjectLinkedOpenHashMap<>();
         Tag rolesTag = weaponTag.get(DELEGATED_ROLES_TAG);
         if (!(rolesTag instanceof ListTag roleList)) {
             LOGGER.warn("Ignoring orbital weapon {} with missing delegated roles", weaponId);
@@ -156,7 +157,7 @@ final class StellarErasureDeviceNbtCodec {
         }
         readRoles(weaponId, ownerId, roleList, roles);
 
-        Map<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints = new Object2ObjectLinkedOpenHashMap<>();
         Tag endpointsTag = weaponTag.get(ENDPOINTS_TAG);
         if (!(endpointsTag instanceof ListTag endpointList)) {
             LOGGER.warn("Ignoring orbital weapon {} with missing endpoints", weaponId);
@@ -205,7 +206,7 @@ final class StellarErasureDeviceNbtCodec {
     private static @Nullable OrbitalEndpointLocation readPrimaryAnchor(
                                                                        UUID weaponId,
                                                                        CompoundTag weaponTag,
-                                                                       Map<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints) {
+                                                                       Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints) {
         Tag rawAnchor = weaponTag.get(PRIMARY_ANCHOR_TAG);
         if (!(rawAnchor instanceof CompoundTag anchorTag)) {
             return null;
@@ -241,7 +242,7 @@ final class StellarErasureDeviceNbtCodec {
                                   UUID weaponId,
                                   UUID ownerId,
                                   ListTag roleList,
-                                  Map<UUID, OrbitalAccessRole> roles) {
+                                  Object2ObjectMap<UUID, OrbitalAccessRole> roles) {
         for (Tag roleTag : roleList) {
             if (!(roleTag instanceof CompoundTag roleEntry)) {
                 continue;
@@ -275,7 +276,7 @@ final class StellarErasureDeviceNbtCodec {
     private static void readEndpoints(
                                       UUID weaponId,
                                       ListTag endpointList,
-                                      Map<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints) {
+                                      Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints) {
         for (Tag endpointTag : endpointList) {
             if (!(endpointTag instanceof CompoundTag endpointEntry)) {
                 continue;

@@ -17,11 +17,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 public class TeleportAnchorSavedData extends SavedData {
 
@@ -35,7 +34,7 @@ public class TeleportAnchorSavedData extends SavedData {
             TeleportAnchorSavedData::new,
             TeleportAnchorSavedData::load);
 
-    private final Map<AnchorKey, AnchorRecord> anchors = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<AnchorKey, AnchorRecord> anchors = new Object2ObjectLinkedOpenHashMap<>();
 
     public static TeleportAnchorSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
@@ -59,7 +58,7 @@ public class TeleportAnchorSavedData extends SavedData {
                 }
 
                 ResourceLocation dimension = ResourceLocation.parse(dimensionId);
-                data.anchors.put(new AnchorKey(dimension, pos.immutable()),
+                data.anchors.put(new AnchorKey(dimension, pos.asLong()),
                         new AnchorRecord(dimension, pos.immutable(), name, channel));
             }
         }
@@ -67,7 +66,7 @@ public class TeleportAnchorSavedData extends SavedData {
     }
 
     public void registerAnchor(ResourceLocation dimensionId, BlockPos pos, String name, String channel) {
-        AnchorKey key = new AnchorKey(dimensionId, pos.immutable());
+        AnchorKey key = new AnchorKey(dimensionId, pos.asLong());
         AnchorRecord existing = this.anchors.get(key);
         if (existing != null && existing.name().equals(name) && existing.channel().equals(channel)) {
             return;
@@ -78,17 +77,17 @@ public class TeleportAnchorSavedData extends SavedData {
     }
 
     public void removeAnchor(ResourceLocation dimensionId, BlockPos pos) {
-        AnchorKey key = new AnchorKey(dimensionId, pos.immutable());
+        AnchorKey key = new AnchorKey(dimensionId, pos.asLong());
         if (this.anchors.remove(key) != null) {
             this.setDirty();
         }
     }
 
-    public List<AnchorRecord> getAnchors() {
-        return List.copyOf(this.anchors.values());
+    public ObjectList<AnchorRecord> getAnchors() {
+        return new ObjectImmutableList<>(this.anchors.values());
     }
 
-    public Collection<AnchorRecord> getAnchors(ResourceLocation dimensionId) {
+    public ObjectList<AnchorRecord> getAnchors(ResourceLocation dimensionId) {
         ObjectArrayList<AnchorRecord> matches = new ObjectArrayList<>();
         for (AnchorRecord anchor : this.anchors.values()) {
             if (anchor.dimensionId().equals(dimensionId)) {
@@ -142,7 +141,7 @@ public class TeleportAnchorSavedData extends SavedData {
         return tag;
     }
 
-    private record AnchorKey(ResourceLocation dimensionId, BlockPos pos) {}
+    private record AnchorKey(ResourceLocation dimensionId, long pos) {}
 
     public record AnchorRecord(ResourceLocation dimensionId, BlockPos pos, String name, String channel) {}
 }

@@ -10,23 +10,23 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
-import java.util.List;
-
 /**
  * Ars binds RecipeInput to its tile class. This detached view is never registered or ticked in a world;
  * it supplies prospective inputs to matches/assemble without temporarily changing the actual chamber.
  */
 final class ImbuementInputSnapshot extends ImbuementTile {
 
-    private final List<ItemStack> pedestalInputs;
+    private final ObjectList<ItemStack> pedestalInputs;
     private final LongList pedestalPositions;
     private final int storedSource;
     private final int sourceCapacity;
 
-    ImbuementInputSnapshot(ImbuementTile original, ItemStack input, List<ItemStack> pedestalInputs) {
+    ImbuementInputSnapshot(ImbuementTile original, ItemStack input, ObjectList<ItemStack> pedestalInputs) {
         super(original.getBlockPos(), original.getBlockState());
         this.stack = input.copy();
-        this.pedestalInputs = pedestalInputs.stream().map(ItemStack::copy).toList();
+        ObjectArrayList<ItemStack> copiedInputs = new ObjectArrayList<>(pedestalInputs.size());
+        for (ItemStack pedestalInput : pedestalInputs) copiedInputs.add(pedestalInput.copy());
+        this.pedestalInputs = ObjectLists.unmodifiable(copiedInputs);
         LongArrayList pedestalPositions = new LongArrayList(original.getNearbyPedestals().size());
         for (BlockPos position : original.getNearbyPedestals()) pedestalPositions.add(position.asLong());
         this.pedestalPositions = pedestalPositions;
@@ -46,8 +46,10 @@ final class ImbuementInputSnapshot extends ImbuementTile {
     }
 
     @Override
-    public List<ItemStack> getPedestalItems() {
-        return this.pedestalInputs.stream().map(ItemStack::copy).toList();
+    public ObjectList<ItemStack> getPedestalItems() {
+        ObjectArrayList<ItemStack> copiedInputs = new ObjectArrayList<>(this.pedestalInputs.size());
+        for (ItemStack pedestalInput : this.pedestalInputs) copiedInputs.add(pedestalInput.copy());
+        return copiedInputs;
     }
 
     @Override

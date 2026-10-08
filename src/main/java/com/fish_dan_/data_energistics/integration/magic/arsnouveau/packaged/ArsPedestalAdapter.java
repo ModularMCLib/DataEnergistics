@@ -33,7 +33,6 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 
 /** Owns only the selected empty pedestals and the center; the actual Ars tile produces and consumes everything. */
 public final class ArsPedestalAdapter implements PackagedMachineAdapter {
@@ -309,7 +308,7 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ars persisted " + key));
     }
 
-    private record Layout(BlockEntity tile, Container inventory, List<ArcanePedestalTile> pedestals) {
+    private record Layout(BlockEntity tile, Container inventory, ObjectList<ArcanePedestalTile> pedestals) {
 
         boolean centerEmpty() {
             return this.inventory.isEmpty() && (!(this.tile instanceof EnchantingApparatusTile apparatus) || !apparatus.isCrafting);

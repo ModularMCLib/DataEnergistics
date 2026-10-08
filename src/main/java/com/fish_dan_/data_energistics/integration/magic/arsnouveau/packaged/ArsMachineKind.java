@@ -16,10 +16,9 @@ import com.hollingsworth.arsnouveau.common.crafting.recipes.IEnchantingRecipe;
 import com.hollingsworth.arsnouveau.common.datagen.ItemTagProvider;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 public enum ArsMachineKind {
 
@@ -60,7 +59,7 @@ public enum ArsMachineKind {
 
     @Nullable
     ItemStack validate(ServerLevel level, BlockEntity tile, ResourceLocation recipeId,
-                       Recipe<?> recipe, ItemStack center, List<ItemStack> pedestals) {
+                       Recipe<?> recipe, ItemStack center, ObjectList<ItemStack> pedestals) {
         if (this == APPARATUS && recipe instanceof IEnchantingRecipe enchanting) {
             var input = new ApparatusRecipeInput(center.copy(), pedestals, null);
             if (!enchanting.matches(input, level)) return null;

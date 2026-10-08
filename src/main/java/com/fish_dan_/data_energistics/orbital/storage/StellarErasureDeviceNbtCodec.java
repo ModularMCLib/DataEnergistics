@@ -34,8 +34,6 @@ import java.util.UUID;
 final class StellarErasureDeviceNbtCodec {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 5;
     private static final String WEAPONS_TAG = "weapons";
     private static final String WEAPON_ID_TAG = "weapon_id";
     private static final String OWNER_ID_TAG = "owner_id";
@@ -64,7 +62,6 @@ final class StellarErasureDeviceNbtCodec {
     private StellarErasureDeviceNbtCodec() {}
 
     static CompoundTag save(CompoundTag tag, Collection<StellarErasureDeviceRecord> weapons) {
-        tag.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         ListTag weaponList = new ListTag();
         weapons.stream()
                 .sorted(Comparator.comparing(StellarErasureDeviceRecord::weaponId))
@@ -75,19 +72,6 @@ final class StellarErasureDeviceNbtCodec {
     }
 
     static List<StellarErasureDeviceRecord> load(CompoundTag tag) {
-        if (!tag.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            LOGGER.warn("Ignoring orbital weapon SavedData without a schema version");
-            return List.of();
-        }
-        int schemaVersion = tag.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            LOGGER.warn(
-                    "Ignoring orbital weapon SavedData schema version {}; required version is {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return List.of();
-        }
-
         Tag weaponsTag = tag.get(WEAPONS_TAG);
         if (!(weaponsTag instanceof ListTag weaponList)) {
             return List.of();

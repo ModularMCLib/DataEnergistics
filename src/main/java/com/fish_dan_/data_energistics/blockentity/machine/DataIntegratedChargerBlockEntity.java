@@ -110,10 +110,9 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     public static final int ITEM_INPUT_SLOT_COUNT = 9;
     public static final int ITEM_OUTPUT_SLOT_COUNT = 6;
     public static final int FLUID_TANK_COUNT = 3;
-    // Keep the new inputs contiguous while retaining a dedicated legacy-module refund slot.
+    // Keep the input and output ranges contiguous for menu and automation access.
     public static final int ITEM_OUTPUT_START_SLOT = ITEM_INPUT_SLOT_COUNT;
-    public static final int LEGACY_MACHINE_MODULE_SLOT = ITEM_OUTPUT_START_SLOT + ITEM_OUTPUT_SLOT_COUNT;
-    public static final int STORAGE_SLOTS = LEGACY_MACHINE_MODULE_SLOT + 1;
+    public static final int STORAGE_SLOTS = ITEM_OUTPUT_START_SLOT + ITEM_OUTPUT_SLOT_COUNT;
     public static final int ITEM_SLOT_CAPACITY = 512;
     public static final int FLUID_CAPACITY = 512_000;
     public static final int MAX_ENERGY_CARDS = 2;
@@ -129,13 +128,10 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     private static final String STORAGE_COUNT_TAG = "DataEnergisticsCount";
     private static final String UPGRADES_TAG = "upgrades";
     private static final String FLUID_TANKS_TAG = "fluid_tanks";
-    private static final String STORAGE_LAYOUT_VERSION_TAG = "storage_layout_version";
-    private static final int STORAGE_LAYOUT_VERSION = 2;
     private static final String CONFIG_TAG = "config";
     private static final String OUTPUT_SIDES_TAG = "output_sides";
     private static final String PROGRESS_TAG = "progress";
     private static final String MACHINE_MODE_TAG = "machine_mode";
-    private static final String LEGACY_MODULE_REFUND_TAG = "legacy_module_refund";
     private static final ResourceLocation DATA_CHARGE_PRESS_RECIPE_TYPE_ID = Data_Energistics.id("data_charge_press");
     private static final PatternUploadWorkstationVariant CHARGER_UPLOAD_VARIANT = createUploadVariant(
             MachineMode.CHARGER, "charger");
@@ -167,7 +163,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     @Getter
     private MachineMode machineMode = MachineMode.POWDER;
     private MachineMode processingMode = MachineMode.POWDER;
-    private ItemStack pendingLegacyModuleRefund = ItemStack.EMPTY;
 
     public DataIntegratedChargerBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(), blockPos, blockState);
@@ -178,10 +173,9 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 .setIdlePowerUsage(0.0D);
         this.configManager.registerSetting(Settings.AUTO_EXPORT, YesNo.NO);
         this.storage.setFilter(new StorageFilter());
-        for (int slot = 0; slot < LEGACY_MACHINE_MODULE_SLOT; slot++) {
+        for (int slot = 0; slot < STORAGE_SLOTS; slot++) {
             this.storage.setMaxStackSize(slot, ITEM_SLOT_CAPACITY);
         }
-        this.storage.setMaxStackSize(LEGACY_MACHINE_MODULE_SLOT, 1);
         this.setPowerSides(connectableSides);
         updateEnergyCapacity();
         syncMenuFluidsFromTanks();
@@ -418,7 +412,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             return;
         }
 
-        boolean changed = refundLegacyModule();
+        boolean changed = false;
         refillEnergyCache();
         MachineMode mode = getMachineMode();
         if (mode != this.processingMode) {
@@ -466,8 +460,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             dropStack(level, pos, this.storage.getStackInSlot(slot));
             this.storage.setItemDirect(slot, ItemStack.EMPTY);
         }
-        dropStack(level, pos, this.pendingLegacyModuleRefund);
-        this.pendingLegacyModuleRefund = ItemStack.EMPTY;
         for (int slot = 0; slot < this.upgrades.size(); slot++) {
             dropStack(level, pos, this.upgrades.getStackInSlot(slot));
             this.upgrades.setItemDirect(slot, ItemStack.EMPTY);
@@ -478,9 +470,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
     @Override
     public void loadTag(CompoundTag data, HolderLookup.Provider registries) {
         super.loadTag(data, registries);
-        if (data.getInt(STORAGE_LAYOUT_VERSION_TAG) != STORAGE_LAYOUT_VERSION) {
-            throw new IllegalArgumentException("Unsupported integrated charger storage layout: " + data.getInt(STORAGE_LAYOUT_VERSION_TAG));
-        }
         this.storage.readFromNBT(data, STORAGE_TAG, registries);
         this.upgrades.readFromNBT(data, UPGRADES_TAG, registries);
         loadFluidTanks(data, registries);
@@ -496,8 +485,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         this.progress = Math.max(0, data.getInt(PROGRESS_TAG));
         this.machineMode = readMachineMode(data.getString(MACHINE_MODE_TAG));
         this.processingMode = this.machineMode;
-        this.pendingLegacyModuleRefund = data.contains(LEGACY_MODULE_REFUND_TAG, Tag.TAG_COMPOUND) ?
-                ItemStack.parseOptional(registries, data.getCompound(LEGACY_MODULE_REFUND_TAG)) : ItemStack.EMPTY;
         syncMenuFluidsFromTanks();
         updateEnergyCapacity();
     }
@@ -518,16 +505,12 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             fluidTanksTag.add(tank.writeToNBT(registries, new CompoundTag()));
         }
         data.put(FLUID_TANKS_TAG, fluidTanksTag);
-        data.putInt(STORAGE_LAYOUT_VERSION_TAG, STORAGE_LAYOUT_VERSION);
         CompoundTag config = new CompoundTag();
         this.configManager.writeToNBT(config, registries);
         data.put(CONFIG_TAG, config);
         data.put(OUTPUT_SIDES_TAG, createOutputSidesTag(this.outputSides));
         data.putInt(PROGRESS_TAG, this.progress);
         data.putString(MACHINE_MODE_TAG, this.machineMode.name());
-        if (!this.pendingLegacyModuleRefund.isEmpty()) {
-            data.put(LEGACY_MODULE_REFUND_TAG, this.pendingLegacyModuleRefund.saveOptional(registries));
-        }
     }
 
     @Override
@@ -548,7 +531,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         for (FluidTank tank : this.fluidTanks) {
             tank.setFluid(FluidStack.EMPTY);
         }
-        this.pendingLegacyModuleRefund = ItemStack.EMPTY;
     }
 
     private boolean processChargerOperation() {
@@ -1168,7 +1150,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         if (stack.isEmpty() || stack.getCount() > ITEM_SLOT_CAPACITY) {
             return -1;
         }
-        for (int slot = ITEM_OUTPUT_START_SLOT; slot < LEGACY_MACHINE_MODULE_SLOT; slot++) {
+        for (int slot = ITEM_OUTPUT_START_SLOT; slot < STORAGE_SLOTS; slot++) {
             ItemStack current = this.storage.getStackInSlot(slot);
             if (current.isEmpty() || ItemStack.isSameItemSameComponents(current, stack) &&
                     current.getCount() + stack.getCount() <= ITEM_SLOT_CAPACITY) {
@@ -1202,7 +1184,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             return false;
         }
         boolean changed = false;
-        for (int slot = ITEM_OUTPUT_START_SLOT; slot < LEGACY_MACHINE_MODULE_SLOT; slot++) {
+        for (int slot = ITEM_OUTPUT_START_SLOT; slot < STORAGE_SLOTS; slot++) {
             ItemStack current = this.storage.getStackInSlot(slot);
             if (current.isEmpty()) {
                 continue;
@@ -1439,16 +1421,6 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
             CompoundTag tankTag = tank < tanksTag.size() ? tanksTag.getCompound(tank) : new CompoundTag();
             getFluidTank(tank, this.fluidTanks).readFromNBT(registries, tankTag);
         }
-    }
-
-    private boolean refundLegacyModule() {
-        if (this.pendingLegacyModuleRefund.isEmpty() || this.level == null || this.level.isClientSide()) {
-            return false;
-        }
-        Block.popResource(this.level, this.worldPosition, this.pendingLegacyModuleRefund.copy());
-        this.pendingLegacyModuleRefund = ItemStack.EMPTY;
-        setChanged();
-        return true;
     }
 
     private void dropStack(Level level, BlockPos pos, ItemStack stack) {

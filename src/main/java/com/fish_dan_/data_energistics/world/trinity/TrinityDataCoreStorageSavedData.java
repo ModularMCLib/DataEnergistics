@@ -43,8 +43,6 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
     private static final String DATA_NAME = Data_Energistics.MODID + "_trinity_data_core_storage";
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 2;
     private static final String DETACHED_RUNTIMES_TAG = "detached_cpu_runtimes";
     private static final String HOSTS_TAG = "hosts";
     private static final String HOST_ID_TAG = "host_id";
@@ -66,18 +64,6 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     static TrinityDataCoreStorageSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         TrinityDataCoreStorageSavedData data = new TrinityDataCoreStorageSavedData();
-        if (!tag.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            LOGGER.warn("Ignoring Trinity Data Core storage SavedData without a schema version");
-            return data;
-        }
-        int schemaVersion = tag.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            LOGGER.warn(
-                    "Ignoring Trinity Data Core storage SavedData schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return data;
-        }
         data.readDetachedRuntimes(tag);
         Tag hostsTag = tag.get(HOSTS_TAG);
         if (!(hostsTag instanceof ListTag hostList)) {
@@ -233,7 +219,6 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        tag.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         ListTag hostList = new ListTag();
         for (Object2ObjectMap.Entry<UUID, HostState> hostEntry : this.hosts.object2ObjectEntrySet()) {
             CompoundTag hostTag = new CompoundTag();

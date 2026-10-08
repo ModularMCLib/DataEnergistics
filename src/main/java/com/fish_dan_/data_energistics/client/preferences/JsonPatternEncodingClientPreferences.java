@@ -43,7 +43,6 @@ import java.util.regex.Pattern;
  */
 public final class JsonPatternEncodingClientPreferences implements PatternEncodingClientPreferences {
 
-    public static final int SCHEMA_VERSION = 7;
     public static final int MAX_STATISTICS_PER_PROFILE = 2048;
     public static final int MAX_STATISTICS_TOTAL = 8192;
     public static final int MAX_SERVER_PROFILES = 32;
@@ -267,28 +266,13 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             if (!rootElement.isJsonObject()) {
                 throw new IllegalArgumentException("Client preference root must be a JSON object");
             }
-            if (loadRoot(rootElement.getAsJsonObject())) {
-                save();
-            }
-        } catch (FutureSchemaException exception) {
-            Data_Energistics.LOGGER.error("Cannot write future Data Energistics client preference schema in {}",
-                    this.file, exception);
-            resetToDefaults();
-            this.writesDisabled = true;
+            loadRoot(rootElement.getAsJsonObject());
         } catch (IOException | RuntimeException exception) {
             recoverCorruptFile(exception);
         }
     }
 
-    private boolean loadRoot(JsonObject root) {
-        int schemaVersion = readRequiredInt(root, "schemaVersion");
-        if (schemaVersion > SCHEMA_VERSION) {
-            throw new FutureSchemaException(schemaVersion);
-        }
-        if (schemaVersion < 3) {
-            throw new IllegalArgumentException("Unsupported client preference schema: " + schemaVersion);
-        }
-        boolean requiresSchemaUpgrade = schemaVersion < SCHEMA_VERSION;
+    private void loadRoot(JsonObject root) {
         JsonObject preferences = readOptionalObject(root, "preferences");
         if (preferences != null) {
             if (preferences.has("uploadEnabled")) {
@@ -333,7 +317,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         }
         JsonObject profiles = readOptionalObject(root, "serverProfiles");
         if (profiles == null) {
-            return requiresSchemaUpgrade;
+            return;
         }
         if (profiles.size() > MAX_SERVER_PROFILES) {
             throw new IllegalArgumentException("Client preference server profiles exceed " + MAX_SERVER_PROFILES);
@@ -351,7 +335,6 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             }
             this.serverProfiles.put(entry.getKey(), profile);
         }
-        return requiresSchemaUpgrade;
     }
 
     private ServerProfile readProfile(JsonObject profileObject) {
@@ -480,7 +463,6 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
 
     private JsonObject writeRoot(Object2ObjectMap<String, ServerProfile> profilesToWrite) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", SCHEMA_VERSION);
         JsonObject preferences = new JsonObject();
         preferences.addProperty("uploadEnabled", this.uploadEnabled);
         preferences.addProperty("previewPanelPinned", this.previewPanelPinned);
@@ -755,11 +737,4 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
 
     private record ProfileStatistic(String profileDigest, ServerProfile profile,
                                     PatternProviderClickStatistic statistic) {}
-
-    private static final class FutureSchemaException extends RuntimeException {
-
-        private FutureSchemaException(int version) {
-            super("Client preference schema " + version + " is newer than supported schema " + SCHEMA_VERSION);
-        }
-    }
 }

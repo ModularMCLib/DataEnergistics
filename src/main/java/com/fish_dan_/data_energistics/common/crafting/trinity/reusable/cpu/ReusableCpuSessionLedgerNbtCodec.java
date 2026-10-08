@@ -43,7 +43,6 @@ public final class ReusableCpuSessionLedgerNbtCodec {
     public static CompoundTag encode(ReusableCpuSessionLedger ledger, HolderLookup.Provider registries) {
         Snapshot snapshot = ledger.snapshot();
         CompoundTag tag = new CompoundTag();
-        tag.putInt("schema", 2);
         tag.putUUID("owner", snapshot.owner());
         ListTag replanning = new ListTag();
         for (UUID job : snapshot.replanningJobs()) {
@@ -140,74 +139,70 @@ public final class ReusableCpuSessionLedgerNbtCodec {
     }
 
     public static ReusableCpuSessionLedger decode(CompoundTag tag, HolderLookup.Provider registries) {
-        int schema = integer(tag, "schema");
-        if (schema != 1 && schema != 2) {
-            throw new IllegalArgumentException("Unsupported reusable CPU ledger schema");
-        }
-        UUID owner = uuid(tag, "owner");
+        UUID owner = tag.getUUID("owner");
         ObjectOpenHashSet<UUID> replanning = new ObjectOpenHashSet<>();
         ObjectOpenHashSet<UUID> uncertain = new ObjectOpenHashSet<>();
         ObjectList<RemoteCustodyEvidence> evidence = new ObjectArrayList<>();
-        for (Tag value : list(tag, "remote_evidence")) {
+        for (Tag value : tag.getList("remote_evidence", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) value;
-            evidence.add(new RemoteCustodyEvidence(uuid(entry, "session"), uuid(entry, "job"), string(entry, "target"),
-                    uuid(entry, "loaded_epoch"), number(entry, "revision"), number(entry, "accepted"), bool(entry, "acknowledged"),
-                    string(entry, "reason")));
+            evidence.add(new RemoteCustodyEvidence(entry.getUUID("session"), entry.getUUID("job"), entry.getString("target"),
+                    entry.getUUID("loaded_epoch"), entry.getLong("revision"), entry.getLong("accepted"), entry.getBoolean("acknowledged"),
+                    entry.getString("reason")));
         }
-        for (Tag value : list(tag, "replanning_jobs")) {
-            if (!replanning.add(uuid((CompoundTag) value, "job"))) {
+        for (Tag value : tag.getList("replanning_jobs", Tag.TAG_COMPOUND)) {
+            if (!replanning.add(((CompoundTag) value).getUUID("job"))) {
                 throw new IllegalArgumentException("Duplicate reusable CPU recovery job");
             }
         }
-        for (Tag value : list(tag, "uncertain_sessions")) {
-            if (!uncertain.add(uuid((CompoundTag) value, "session"))) {
+        for (Tag value : tag.getList("uncertain_sessions", Tag.TAG_COMPOUND)) {
+            if (!uncertain.add(((CompoundTag) value).getUUID("session"))) {
                 throw new IllegalArgumentException("Duplicate quarantined reusable session");
             }
         }
         ObjectList<SessionSnapshot> sessions = new ObjectArrayList<>();
-        for (Tag value : list(tag, "sessions")) {
+        for (Tag value : tag.getList("sessions", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) value;
-            Target target = new Target(string(entry, "target"),
-                    new CountedCraftingTarget(false, string(entry, "route"), optionalString(entry, "machine")),
-                    optionalString(entry, "mode").map(ResourceLocation::parse));
-            if (!(key(compound(entry, "pattern"), registries) instanceof AEItemKey pattern)) {
+            Target target = new Target(entry.getString("target"),
+                    new CountedCraftingTarget(false, entry.getString("route"), entry.contains("machine") ?
+                            Optional.of(entry.getString("machine")) : Optional.empty()),
+                    entry.contains("mode") ? Optional.of(ResourceLocation.parse(entry.getString("mode"))) : Optional.empty());
+            if (!(key(entry.getCompound("pattern"), registries) instanceof AEItemKey pattern)) {
                 throw new IllegalArgumentException("Reusable CPU pattern must be an item key");
             }
             ObjectList<SubmissionEntry> submissions = new ObjectArrayList<>();
-            for (Tag item : list(entry, "submissions")) {
+            for (Tag item : entry.getList("submissions", Tag.TAG_COMPOUND)) {
                 CompoundTag stored = (CompoundTag) item;
                 ObjectList<SlotStack> escrow = new ObjectArrayList<>();
-                for (Tag asset : list(stored, "physical_inputs")) {
+                for (Tag asset : stored.getList("physical_inputs", Tag.TAG_COMPOUND)) {
                     CompoundTag owned = (CompoundTag) asset;
-                    escrow.add(new SlotStack(integer(owned, "input_slot"), stack(owned, registries)));
+                    escrow.add(new SlotStack(owned.getInt("input_slot"), stack(owned, registries)));
                 }
-                require(stored, "energy", Tag.TAG_DOUBLE);
                 ObjectList<DynamicOutput> dynamic = new ObjectArrayList<>();
                 ObjectList<VirtualCraftingCompletion> virtual = new ObjectArrayList<>();
-                for (Tag valueOutput : list(stored, "dynamic")) {
+                for (Tag valueOutput : stored.getList("dynamic", Tag.TAG_COMPOUND)) {
                     CompoundTag output = (CompoundTag) valueOutput;
                     var stack = stack(output, registries);
-                    var template = schema == 1 ? stack.what() : key(compound(output, "template"), registries);
+                    var template = key(output.getCompound("template"), registries);
                     if (!(template instanceof AEItemKey templateKey)) throw new IllegalArgumentException("Invalid dynamic output custody template");
-                    dynamic.add(new DynamicOutput(stack, bool(output, "final"), ResourceLocation.parse(string(output, "source")),
-                            schema == 1 ? ItemMatchingRule.ID : ItemMatchingRule.load(compound(output, "rule")), templateKey));
+                    dynamic.add(new DynamicOutput(stack, output.getBoolean("final"), ResourceLocation.parse(output.getString("source")),
+                            ItemMatchingRule.load(output.getCompound("rule")), templateKey));
                 }
-                for (Tag valueOutput : list(stored, "virtual")) {
+                for (Tag valueOutput : stored.getList("virtual", Tag.TAG_COMPOUND)) {
                     CompoundTag output = (CompoundTag) valueOutput;
-                    virtual.add(new VirtualCraftingCompletion(stack(output, registries), VirtualCraftingCompletionMode.valueOf(string(output, "mode"))));
+                    virtual.add(new VirtualCraftingCompletion(stack(output, registries), VirtualCraftingCompletionMode.valueOf(output.getString("mode"))));
                 }
-                OutputContract outputs = new OutputContract(readAssets(list(stored, "products"), registries),
-                        readAssets(list(stored, "remainders"), registries), dynamic, virtual);
-                submissions.add(new SubmissionEntry(number(stored, "sequence"), new Submission(
-                        readWork(compound(stored, "work"), registries), number(stored, "count"), number(stored, "offer"),
+                OutputContract outputs = new OutputContract(readAssets(stored.getList("products", Tag.TAG_COMPOUND), registries),
+                        readAssets(stored.getList("remainders", Tag.TAG_COMPOUND), registries), dynamic, virtual);
+                submissions.add(new SubmissionEntry(stored.getLong("sequence"), new Submission(
+                        readWork(stored.getCompound("work"), registries), stored.getLong("count"), stored.getLong("offer"),
                         stored.getDouble("energy"), outputs, escrow,
-                        bool(stored, "transferred"), bool(stored, "waiting_registered"),
-                        bool(stored, "accounted"), number(stored, "completed"))));
+                        stored.getBoolean("transferred"), stored.getBoolean("waiting_registered"),
+                        stored.getBoolean("accounted"), stored.getLong("completed"))));
             }
-            sessions.add(new SessionSnapshot(uuid(entry, "id"), uuid(entry, "job"), target, pattern,
-                    new TrinityPatternIdentity(string(entry, "definition"), string(entry, "publication")),
-                    new ObjectImmutableList<>(TrinityBoundInputSnapshotCodec.read(list(entry, "bindings"), registries)), submissions,
-                    number(entry, "next_sequence"), bool(entry, "closing"), optionalString(entry, "settlement").orElse(null)));
+            sessions.add(new SessionSnapshot(entry.getUUID("id"), entry.getUUID("job"), target, pattern,
+                    new TrinityPatternIdentity(entry.getString("definition"), entry.getString("publication")),
+                    new ObjectImmutableList<>(TrinityBoundInputSnapshotCodec.read(entry.getList("bindings", Tag.TAG_COMPOUND), registries)), submissions,
+                    entry.getLong("next_sequence"), entry.getBoolean("closing"), entry.contains("settlement") ? entry.getString("settlement") : null));
         }
         return ReusableCpuSessionLedger.restore(new Snapshot(owner, sessions, replanning, uncertain, evidence));
     }
@@ -228,10 +223,10 @@ public final class ReusableCpuSessionLedgerNbtCodec {
     }
 
     private static Work readWork(CompoundTag tag, HolderLookup.Provider registries) {
-        return new Work(number(tag, "generation"), integer(tag, "stage"), integer(tag, "firing"),
-                new TrinityPatternIdentity(string(tag, "definition"), string(tag, "publication")),
-                key(compound(tag, "output"), registries), integer(tag, "variant"), number(tag, "maximum"), bool(tag, "cycle"),
-                new ObjectImmutableList<>(TrinityBoundInputSnapshotCodec.read(list(tag, "bindings"), registries)));
+        return new Work(tag.getLong("generation"), tag.getInt("stage"), tag.getInt("firing"),
+                new TrinityPatternIdentity(tag.getString("definition"), tag.getString("publication")),
+                key(tag.getCompound("output"), registries), tag.getInt("variant"), tag.getLong("maximum"), tag.getBoolean("cycle"),
+                new ObjectImmutableList<>(TrinityBoundInputSnapshotCodec.read(tag.getList("bindings", Tag.TAG_COMPOUND), registries)));
     }
 
     private static ListTag writeAssets(ObjectList<GenericStack> assets, HolderLookup.Provider registries) {
@@ -262,60 +257,5 @@ public final class ReusableCpuSessionLedgerNbtCodec {
             throw new IllegalArgumentException("Unknown reusable CPU key");
         }
         return key;
-    }
-
-    private static CompoundTag compound(CompoundTag tag, String field) {
-        if (!(tag.get(field) instanceof CompoundTag value)) {
-            throw new IllegalArgumentException("Missing reusable CPU compound: " + field);
-        }
-        return value;
-    }
-
-    private static ListTag list(CompoundTag tag, String field) {
-        if (!(tag.get(field) instanceof ListTag value) || !value.isEmpty() && value.getElementType() != Tag.TAG_COMPOUND) {
-            throw new IllegalArgumentException("Missing reusable CPU compound list: " + field);
-        }
-        return value;
-    }
-
-    private static UUID uuid(CompoundTag tag, String field) {
-        if (!tag.hasUUID(field)) {
-            throw new IllegalArgumentException("Invalid reusable CPU identity: " + field);
-        }
-        return tag.getUUID(field);
-    }
-
-    private static String string(CompoundTag tag, String field) {
-        require(tag, field, Tag.TAG_STRING);
-        return tag.getString(field);
-    }
-
-    private static Optional<String> optionalString(CompoundTag tag, String field) {
-        return tag.contains(field) ? Optional.of(string(tag, field)) : Optional.empty();
-    }
-
-    private static long number(CompoundTag tag, String field) {
-        require(tag, field, Tag.TAG_LONG);
-        return tag.getLong(field);
-    }
-
-    private static int integer(CompoundTag tag, String field) {
-        require(tag, field, Tag.TAG_INT);
-        return tag.getInt(field);
-    }
-
-    private static boolean bool(CompoundTag tag, String field) {
-        require(tag, field, Tag.TAG_BYTE);
-        byte value = tag.getByte(field);
-        if (value != 0 && value != 1) {
-            throw new IllegalArgumentException("Invalid reusable CPU boolean: " + field);
-        }
-        return value != 0;
-    }
-
-    private static void require(CompoundTag tag, String field, int type) {
-        if (!tag.contains(field, type)) {
-            throw new IllegalArgumentException("Missing or invalid reusable CPU field: " + field);
-        }
     }
 }

@@ -36,7 +36,6 @@ public final class AdaptiveReusableCraftingState {
 
     public static final String NBT_KEY = "adaptive_reusable_state";
     public static final ResourceLocation MODE = ResourceLocation.fromNamespaceAndPath("data_energistics", "meteorite");
-    private static final int SCHEMA = 1;
 
     public static final class Slot {
 
@@ -325,7 +324,6 @@ public final class AdaptiveReusableCraftingState {
 
     private CompoundTag encode(HolderLookup.Provider registries, boolean itemHandoff) {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("schema", SCHEMA);
         tag.putUUID("provider", providerId);
         tag.putBoolean("handoff_prepared", !itemHandoff && handoffPrepared);
         ListTag encoded = new ListTag();
@@ -343,7 +341,7 @@ public final class AdaptiveReusableCraftingState {
     }
 
     public static AdaptiveReusableCraftingState readFromTag(CompoundTag tag, HolderLookup.Provider registries) {
-        if (!tag.contains("schema", Tag.TAG_INT) || tag.getInt("schema") != SCHEMA || !tag.hasUUID("provider") ||
+        if (!tag.hasUUID("provider") ||
                 !tag.contains("handoff_prepared", Tag.TAG_BYTE) || !(tag.get("slots") instanceof ListTag entries) ||
                 !entries.isEmpty() && entries.getElementType() != Tag.TAG_COMPOUND) {
             throw new IllegalArgumentException("Malformed adaptive reusable state");

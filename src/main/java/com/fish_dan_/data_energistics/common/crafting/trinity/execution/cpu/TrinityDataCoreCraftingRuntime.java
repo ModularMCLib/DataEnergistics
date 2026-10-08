@@ -61,8 +61,6 @@ public final class TrinityDataCoreCraftingRuntime {
 
     private static final AtomicLong RUNTIME_GENERATION_SEQUENCE = new AtomicLong();
 
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 3;
     private static final String CONTRIBUTIONS_TAG = "contributions";
     private static final String CONTRIBUTION_NAME_TAG = "name";
     private static final String STORAGE_CAPACITY_TAG = "storage_capacity";
@@ -612,8 +610,6 @@ public final class TrinityDataCoreCraftingRuntime {
      * Serializes contributions and only workers that retain a job, inventory, or pending raw logic.
      */
     public void writeToTag(CompoundTag data, HolderLookup.Provider registries) {
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
-
         ListTag contributionsTag = new ListTag();
         for (Map.Entry<String, TrinityDataCoreCpuContribution> entry : this.externalContributions.entrySet()) {
             CompoundTag contributionTag = new CompoundTag();
@@ -650,18 +646,6 @@ public final class TrinityDataCoreCraftingRuntime {
      */
     public void readFromTag(CompoundTag data, HolderLookup.Provider registries) {
         clearPersistedState();
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            Data_Energistics.LOGGER.warn("Ignoring Trinity Data Core CPU runtime without a schema version");
-            return;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            Data_Energistics.LOGGER.warn(
-                    "Ignoring Trinity Data Core CPU runtime schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return;
-        }
         ListTag contributionsTag;
         ListTag partitionsTag;
         try {

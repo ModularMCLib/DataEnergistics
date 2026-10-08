@@ -24,12 +24,6 @@ import java.util.Set;
  */
 public final class VersionedTowerBindingCodec {
 
-    /** Current persistent binding schema. */
-    public static final int CURRENT_VERSION = 4;
-
-    /** Version tag identifying the supported binding representation. */
-    public static final String VERSION_TAG = "tower_bindings_version";
-
     /** Current binding-list tag. */
     public static final String BINDINGS_TAG = "tower_bindings";
 
@@ -40,10 +34,6 @@ public final class VersionedTowerBindingCodec {
      * @return immutable bindings ordered by FIFO sequence
      */
     public List<TowerBinding> read(CompoundTag root) {
-        int version = root.getInt(VERSION_TAG);
-        if (version != CURRENT_VERSION) {
-            throw new IllegalArgumentException("Unsupported tower binding version: " + version);
-        }
         return readCurrent(root);
     }
 
@@ -85,7 +75,6 @@ public final class VersionedTowerBindingCodec {
             bindingTag.put("disabled_devices", disabledTags);
             bindingTags.add(bindingTag);
         }
-        root.putInt(VERSION_TAG, CURRENT_VERSION);
         root.put(BINDINGS_TAG, bindingTags);
     }
 

@@ -47,19 +47,9 @@ public final class TrinityBoundInputSnapshotCodec {
     }
 
     public static List<TrinityBoundPatternInput> read(ListTag encoded, HolderLookup.Provider registries) {
-        if (!encoded.isEmpty() && encoded.getElementType() != Tag.TAG_COMPOUND) {
-            throw new IllegalArgumentException("Exact input bindings must be a compound list");
-        }
         ObjectArrayList<TrinityBoundPatternInput> result = new ObjectArrayList<>(encoded.size());
         for (Tag value : encoded) {
             CompoundTag entry = (CompoundTag) value;
-            require(entry, "slot", Tag.TAG_INT);
-            require(entry, "alternative", Tag.TAG_INT);
-            require(entry, "template", Tag.TAG_COMPOUND);
-            require(entry, "multiplier", Tag.TAG_LONG);
-            require(entry, "has_remainder", Tag.TAG_BYTE);
-            require(entry, "reusable", Tag.TAG_BYTE);
-            require(entry, "lifetime_budget", Tag.TAG_BYTE);
             if (entry.getInt("slot") != result.size()) {
                 throw new IllegalArgumentException("Exact input binding slots must be contiguous and ordered");
             }
@@ -69,7 +59,6 @@ public final class TrinityBoundInputSnapshotCodec {
             }
             AEKey remaining = null;
             if (entry.getBoolean("has_remainder")) {
-                require(entry, "remainder", Tag.TAG_COMPOUND);
                 remaining = AEKey.fromTagGeneric(registries, entry.getCompound("remainder"));
                 if (remaining == null) {
                     throw new IllegalArgumentException("Unknown exact input remainder");
@@ -79,15 +68,11 @@ public final class TrinityBoundInputSnapshotCodec {
             }
             ReusableInputRule rule = null;
             if (entry.getBoolean("reusable")) {
-                require(entry, "rule", Tag.TAG_COMPOUND);
                 rule = ReusableInputRuleNbtCodec.decode(entry.getCompound("rule"), registries);
             } else if (entry.contains("rule")) {
                 throw new IllegalArgumentException("Unexpected reusable input rule");
             }
-            if (!(entry.get("byproducts") instanceof ListTag products) ||
-                    !products.isEmpty() && products.getElementType() != Tag.TAG_COMPOUND) {
-                throw new IllegalArgumentException("Input byproducts must be a compound list");
-            }
+            ListTag products = entry.getList("byproducts", Tag.TAG_COMPOUND);
             ObjectArrayList<GenericStack> byproducts = new ObjectArrayList<>(products.size());
             for (Tag product : products) {
                 GenericStack stack = GenericStack.readTag(registries, (CompoundTag) product);
@@ -100,11 +85,5 @@ public final class TrinityBoundInputSnapshotCodec {
                     entry.getLong("multiplier"), remaining, rule, byproducts, entry.getBoolean("lifetime_budget")));
         }
         return List.copyOf(result);
-    }
-
-    private static void require(CompoundTag tag, String name, int type) {
-        if (!tag.contains(name, type)) {
-            throw new IllegalArgumentException("Missing or invalid exact input binding field: " + name);
-        }
     }
 }

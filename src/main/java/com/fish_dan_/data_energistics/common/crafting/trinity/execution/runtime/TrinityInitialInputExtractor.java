@@ -90,7 +90,7 @@ public final class TrinityInitialInputExtractor {
                         break;
                     }
                     if (network instanceof FiniteNetworkStorageAccess storageAccess &&
-                            storageAccess.exactAvailability(physicalKey, source).unlimited()) {
+                            storageAccess.data_energistics$exactAvailability(physicalKey, source).unlimited()) {
                         exactInventory.deposit(physicalKey, remaining, cpuInventory);
                         unlimitedOwnership.merge(physicalKey, remaining, BigInteger::add);
                         remaining = BigInteger.ZERO;

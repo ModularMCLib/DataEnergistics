@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityPlanExecution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory.TrinityExactKeyInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityExecutionNbtCodec;
@@ -50,8 +49,6 @@ import java.util.function.Function;
  */
 final class TrinityDataCoreExecutingCraftingJob {
 
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 5;
     private static final String TARGET_PRINCIPAL_KNOWN_TAG = "target_principal_known";
     private static final String TARGET_PRINCIPAL_TAG = "target_principal";
     private static final String LINK_TAG = "link";
@@ -140,9 +137,6 @@ final class TrinityDataCoreExecutingCraftingJob {
                                         HolderLookup.Provider registries,
                                         CraftingDifferenceListener differenceListener,
                                         TrinityDataCoreCpuLogic logic) {
-        if (!hasSupportedSchema(data)) {
-            throw new IllegalArgumentException("Unsupported persisted Trinity Data Core CPU job schema");
-        }
         this.targetPrincipal = readTargetPrincipal(data);
         this.link = new CraftingLink(data.getCompound(LINK_TAG), logic.cpu());
         GenericStack finalOutput = GenericStack.readTag(registries, data.getCompound(FINAL_OUTPUT_TAG));
@@ -203,7 +197,6 @@ final class TrinityDataCoreExecutingCraftingJob {
      */
     CompoundTag writeToTag(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         data.putBoolean(TARGET_PRINCIPAL_KNOWN_TAG, this.targetPrincipal != null);
         if (this.targetPrincipal != null) {
             data.putByteArray(TARGET_PRINCIPAL_TAG, ExactAmountCodec.encode(this.targetPrincipal, "target principal"));
@@ -354,22 +347,6 @@ final class TrinityDataCoreExecutingCraftingJob {
         PatternRoute route = PatternRoute.readFromTag(item.getCompound(ROUTE_TAG));
         IPatternDetails details = definitionReader.apply(item.getCompound(TASK_DEFINITION_TAG));
         return details == null ? null : new RoutedCraftingPatternDetails(route, details);
-    }
-
-    static boolean hasSupportedSchema(CompoundTag data) {
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            Data_Energistics.LOGGER.warn("Ignoring persisted Trinity Data Core CPU job without a schema version");
-            return false;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            Data_Energistics.LOGGER.warn(
-                    "Ignoring persisted Trinity Data Core CPU job schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return false;
-        }
-        return true;
     }
 
     /** A zero production request is represented only by the explicit no-production branch. */

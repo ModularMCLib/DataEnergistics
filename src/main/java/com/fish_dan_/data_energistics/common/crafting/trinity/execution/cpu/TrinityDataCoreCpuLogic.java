@@ -162,8 +162,6 @@ import java.util.function.Consumer;
  */
 final class TrinityDataCoreCpuLogic {
 
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 5;
     private static final String INVENTORY_TAG = "inventory";
     private static final String EXACT_INVENTORY_TAG = "exact_inventory";
     private static final String VIRTUAL_COMPLETIONS_TAG = "virtual_completions";
@@ -1154,7 +1152,7 @@ final class TrinityDataCoreCpuLogic {
             return cpuAmount.add(BigInteger.valueOf(simulateNetworkExtraction(network, key)))
                     .min(usefulUpper);
         }
-        TrinityAvailableAmount networkAmount = storageAccess.exactAvailability(key, this.cpu.actionSource());
+        TrinityAvailableAmount networkAmount = storageAccess.data_energistics$exactAvailability(key, this.cpu.actionSource());
         return cpuAmount.add(networkAmount.availableUpTo(usefulUpper.subtract(cpuAmount)));
     }
 
@@ -3695,7 +3693,6 @@ final class TrinityDataCoreCpuLogic {
      */
     CompoundTag writeToTag(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         data.put(REUSABLE_LEDGER_TAG, this.quarantinedReusableState == null ?
                 ReusableCpuSessionLedgerNbtCodec.encode(this.reusableLedger, registries) : this.quarantinedReusableState.copy());
         data.put(INVENTORY_TAG, this.inventory.writeToNBT(registries));
@@ -3720,18 +3717,6 @@ final class TrinityDataCoreCpuLogic {
         this.reusableDispatch.resetObservation();
         discardPersistedState();
         readReusableLedger(data, registries);
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            Data_Energistics.LOGGER.warn("Ignoring Trinity Data Core CPU logic without a schema version");
-            return;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            Data_Energistics.LOGGER.warn(
-                    "Ignoring Trinity Data Core CPU logic schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return;
-        }
         Tag rawInventory = data.get(INVENTORY_TAG);
         if (!(rawInventory instanceof ListTag inventoryTag) ||
                 (!inventoryTag.isEmpty() && inventoryTag.getElementType() != Tag.TAG_COMPOUND)) {
@@ -3800,9 +3785,6 @@ final class TrinityDataCoreCpuLogic {
         }
 
         CompoundTag jobData = data.getCompound(JOB_TAG);
-        if (!TrinityDataCoreExecutingCraftingJob.hasSupportedSchema(jobData)) {
-            return;
-        }
         try {
             this.job = new TrinityDataCoreExecutingCraftingJob(
                     jobData,
@@ -3841,10 +3823,9 @@ final class TrinityDataCoreCpuLogic {
 
     private void readReusableLedger(CompoundTag data, HolderLookup.Provider registries) {
         this.reusableLedger = new ReusableCpuSessionLedger(UUID.randomUUID());
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
         Tag raw = data.get(REUSABLE_LEDGER_TAG);
         this.quarantinedReusableState = raw == null ? null : raw.copy();
-        if (schemaVersion != SCHEMA_VERSION || !(raw instanceof CompoundTag encoded)) {
+        if (!(raw instanceof CompoundTag encoded)) {
             if (raw == null) {
                 this.quarantinedReusableState = new CompoundTag();
             }

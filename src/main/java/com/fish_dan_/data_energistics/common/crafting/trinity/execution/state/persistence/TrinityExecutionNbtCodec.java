@@ -10,7 +10,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 
-import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.core.HolderLookup;
@@ -25,8 +24,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -39,16 +36,10 @@ import java.util.Set;
  */
 public final class TrinityExecutionNbtCodec {
 
-    /**
-     * The released 3.2.2 schema; later current data uses {@link #SCHEMA}.
-     */
-    private static final int SCHEMA_3_2_2 = 9;
-    private static final int SCHEMA = 11;
     private static final String PRODUCTION_RETIRED_TAG = "production_retired";
     private static final String EXACT_BINDINGS_TAG = "exact_bindings";
     private static final int MAX_BIG_INTEGER_BYTES = 512;
     private static final String PLAN_KIND = "trinity_compact";
-    private static final String SCHEMA_TAG = "schema_version";
     private static final String PLAN_KIND_TAG = "plan_kind";
     private static final String CATALOG_REVISION_TAG = "catalog_revision";
     private static final String QUANTITY_MODE_TAG = "quantity_mode";
@@ -104,89 +95,6 @@ public final class TrinityExecutionNbtCodec {
     private static final String KEY_TAG = "key";
     private static final String AMOUNT_TAG = "amount";
 
-    private static final Set<String> ROOT_FIELDS_3_2_2 = Set.of(
-            SCHEMA_TAG,
-            PLAN_KIND_TAG,
-            CATALOG_REVISION_TAG,
-            QUANTITY_MODE_TAG,
-            SAME_ITEM_POLICY_TAG,
-            TARGET_KEY_TAG,
-            TARGET_AMOUNT_TAG,
-            STATUS_TAG,
-            FAILURE_REASON_TAG,
-            GENERATION_TAG,
-            STAGES_TAG,
-            STAGE_ORDER_TAG,
-            REPEAT_BLOCKS_TAG,
-            SEED_RESERVE_TAG,
-            COMPLETION_SEALED_TAG,
-            COMPLETION_BUFFER_TAG,
-            ACTUAL_FINAL_OUTPUTS_TAG,
-            DELIVERY_REMAINING_TAG,
-            LEDGER_TAG,
-            SAVED_AT_TICK_TAG,
-            BUDGET_RETRY_AT_TAG);
-    private static final Set<String> ROOT_FIELDS = Set.of(
-            SCHEMA_TAG,
-            PLAN_KIND_TAG,
-            CATALOG_REVISION_TAG,
-            QUANTITY_MODE_TAG,
-            SAME_ITEM_POLICY_TAG,
-            TARGET_KEY_TAG,
-            TARGET_AMOUNT_TAG,
-            STATUS_TAG,
-            FAILURE_REASON_TAG,
-            GENERATION_TAG,
-            STAGES_TAG,
-            STAGE_ORDER_TAG,
-            REPEAT_BLOCKS_TAG,
-            SEED_RESERVE_TAG,
-            COMPLETION_SEALED_TAG,
-            COMPLETION_BUFFER_TAG,
-            ACTUAL_FINAL_OUTPUTS_TAG,
-            DELIVERY_REMAINING_TAG,
-            LEDGER_TAG,
-            SAVED_AT_TICK_TAG,
-            BUDGET_RETRY_AT_TAG,
-            STREAMING_DAG_TAG);
-    private static final Set<String> RETIRED_ROOT_FIELDS_3_2_2;
-    private static final Set<String> STAGE_FIELDS = Set.of(
-            INDEX_TAG,
-            CYCLE_TAG,
-            DEPENDENCIES_TAG,
-            CURRENT_FIRING_TAG,
-            COMPLETED_TAG,
-            INPUT_KEYS_TAG,
-            WAITING_KEYS_TAG,
-            WAIT_KIND_TAG,
-            RETRY_AT_TAG,
-            NEXT_DYNAMIC_DELAY_TAG,
-            NEXT_PROVIDER_DELAY_TAG,
-            RETRY_VERSION_TAG,
-            FIRINGS_TAG,
-            REQUIRED_AT_START_TAG,
-            NET_CHANGE_TAG);
-    private static final Set<String> FIRING_FIELDS = Set.of(
-            DEFINITION_TAG, PUBLICATION_TAG, PRIMARY_OUTPUT_TAG, VARIANT_ORDINAL_TAG,
-            PLANNED_COUNT_TAG, OUTPUTS_TAG, REMAINING_COUNT_TAG, INITIALIZED_TAG, EXACT_BINDINGS_TAG);
-    private static final Set<String> REPEAT_FIELDS = Set.of(
-            INDEX_TAG,
-            STAGE_ORDER_ENTRY_TAG,
-            REMAINING_REPETITIONS_TAG,
-            CURSOR_TAG,
-            WAVE_COUNT_TAG);
-    private static final Set<String> AMOUNT_FIELDS = Set.of(KEY_TAG, AMOUNT_TAG);
-    private static final Set<String> RETIRED_ROOT_FIELDS;
-
-    static {
-        ObjectOpenHashSet<String> oldFields = new ObjectOpenHashSet<>(ROOT_FIELDS_3_2_2);
-        oldFields.add(PRODUCTION_RETIRED_TAG);
-        RETIRED_ROOT_FIELDS_3_2_2 = ObjectSets.unmodifiable(oldFields);
-        ObjectOpenHashSet<String> fields = new ObjectOpenHashSet<>(ROOT_FIELDS);
-        fields.add(PRODUCTION_RETIRED_TAG);
-        RETIRED_ROOT_FIELDS = ObjectSets.unmodifiable(fields);
-    }
-
     private TrinityExecutionNbtCodec() {}
 
     /**
@@ -198,7 +106,6 @@ public final class TrinityExecutionNbtCodec {
      */
     public static CompoundTag encode(TrinityExecutionSnapshot snapshot, HolderLookup.Provider registries) {
         CompoundTag root = new CompoundTag();
-        root.putInt(SCHEMA_TAG, SCHEMA);
         root.putBoolean(PRODUCTION_RETIRED_TAG, snapshot.productionRetired());
         root.putString(PLAN_KIND_TAG, PLAN_KIND);
         root.putLong(CATALOG_REVISION_TAG, snapshot.catalogRevision());
@@ -232,33 +139,6 @@ public final class TrinityExecutionNbtCodec {
      * @return decoded durable snapshot
      */
     public static TrinityExecutionSnapshot decode(CompoundTag tag, HolderLookup.Provider registries) {
-        requireType(tag, SCHEMA_TAG, Tag.TAG_INT, "execution schema");
-        int schema = tag.getInt(SCHEMA_TAG);
-        if (schema != SCHEMA_3_2_2 && schema != SCHEMA) {
-            throw new IllegalArgumentException("Unsupported Trinity execution schema");
-        }
-        requireFields(tag, schema == SCHEMA ? RETIRED_ROOT_FIELDS : RETIRED_ROOT_FIELDS_3_2_2, "execution root");
-        requireType(tag, PRODUCTION_RETIRED_TAG, Tag.TAG_BYTE, "production retirement marker");
-        requireType(tag, PLAN_KIND_TAG, Tag.TAG_STRING, "execution plan kind");
-        requireType(tag, CATALOG_REVISION_TAG, Tag.TAG_LONG, "execution catalog revision");
-        requireType(tag, QUANTITY_MODE_TAG, Tag.TAG_STRING, "execution quantity mode");
-        requireType(tag, SAME_ITEM_POLICY_TAG, Tag.TAG_LIST, "execution same-item policy");
-        requireType(tag, ACTUAL_FINAL_OUTPUTS_TAG, Tag.TAG_LIST, "execution actual final outputs");
-        requireType(tag, TARGET_KEY_TAG, Tag.TAG_COMPOUND, "execution target key");
-        requireType(tag, TARGET_AMOUNT_TAG, Tag.TAG_BYTE_ARRAY, "execution target amount");
-        requireType(tag, STATUS_TAG, Tag.TAG_STRING, "execution status");
-        requireType(tag, FAILURE_REASON_TAG, Tag.TAG_STRING, "execution failure reason");
-        requireType(tag, GENERATION_TAG, Tag.TAG_LONG, "execution generation");
-        requireType(tag, STAGE_ORDER_TAG, Tag.TAG_INT_ARRAY, "execution stage order");
-        requireType(tag, COMPLETION_SEALED_TAG, Tag.TAG_BYTE, "execution completion seal");
-        requireType(tag, COMPLETION_BUFFER_TAG, Tag.TAG_BYTE_ARRAY, "execution completion buffer");
-        requireType(tag, DELIVERY_REMAINING_TAG, Tag.TAG_BYTE_ARRAY, "execution delivery remainder");
-        requireType(tag, LEDGER_TAG, Tag.TAG_COMPOUND, "execution borrowing ledger");
-        requireType(tag, SAVED_AT_TICK_TAG, Tag.TAG_LONG, "execution save tick");
-        requireType(tag, BUDGET_RETRY_AT_TAG, Tag.TAG_LONG, "execution budget retry");
-        if (schema == SCHEMA) {
-            requireType(tag, STREAMING_DAG_TAG, Tag.TAG_BYTE, "execution streaming mode");
-        }
         if (!PLAN_KIND.equals(tag.getString(PLAN_KIND_TAG))) {
             throw new IllegalArgumentException("Unsupported Trinity execution plan kind");
         }
@@ -283,7 +163,7 @@ public final class TrinityExecutionNbtCodec {
                 TrinityBorrowingLedgerNbtCodec.decode(tag.getCompound(LEDGER_TAG), registries),
                 nonNegative(tag.getLong(SAVED_AT_TICK_TAG), "save tick"),
                 tag.getLong(BUDGET_RETRY_AT_TAG),
-                schema == SCHEMA && tag.getBoolean(STREAMING_DAG_TAG),
+                tag.getBoolean(STREAMING_DAG_TAG),
                 tag.getBoolean(PRODUCTION_RETIRED_TAG));
     }
 
@@ -302,14 +182,6 @@ public final class TrinityExecutionNbtCodec {
      */
     public static Map<AEKey, BigInteger> recoverCompletionContents(CompoundTag tag,
                                                                    HolderLookup.Provider registries) {
-        if (!tag.contains(SCHEMA_TAG, Tag.TAG_INT)) {
-            return Map.of();
-        }
-        int schema = tag.getInt(SCHEMA_TAG);
-        if (schema != SCHEMA_3_2_2 && schema != SCHEMA) {
-            return Map.of();
-        }
-
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> recovered = new Object2ObjectLinkedOpenHashMap<>();
         BigInteger actualAmount = BigInteger.ZERO;
         boolean actualLedgerComplete = true;
@@ -322,12 +194,7 @@ public final class TrinityExecutionNbtCodec {
         } else {
             for (Tag encoded : actualOutputs) {
                 try {
-                    if (!(encoded instanceof CompoundTag entry) ||
-                            !entry.getAllKeys().equals(AMOUNT_FIELDS) ||
-                            !entry.contains(KEY_TAG, Tag.TAG_COMPOUND) ||
-                            !entry.contains(AMOUNT_TAG, Tag.TAG_BYTE_ARRAY)) {
-                        throw new IllegalArgumentException("Damaged actual final-output recovery entry");
-                    }
+                    CompoundTag entry = (CompoundTag) encoded;
                     AEKey key = decodeKey(
                             entry.getCompound(KEY_TAG),
                             registries,
@@ -390,7 +257,7 @@ public final class TrinityExecutionNbtCodec {
 
     private static List<Stage> readStages(CompoundTag root,
                                           HolderLookup.Provider registries) {
-        ListTag encodedStages = requireCompoundList(root, STAGES_TAG, "execution stages");
+        ListTag encodedStages = root.getList(STAGES_TAG, Tag.TAG_COMPOUND);
         ObjectArrayList<Stage> stages = new ObjectArrayList<>();
         IntOpenHashSet indexes = new IntOpenHashSet();
         for (Tag encoded : encodedStages) {
@@ -405,17 +272,6 @@ public final class TrinityExecutionNbtCodec {
 
     private static Stage readStage(CompoundTag tag,
                                    HolderLookup.Provider registries) {
-        requireFields(tag, STAGE_FIELDS, "execution stage");
-        requireType(tag, INDEX_TAG, Tag.TAG_INT, "stage index");
-        requireType(tag, CYCLE_TAG, Tag.TAG_BYTE, "stage cycle flag");
-        requireType(tag, DEPENDENCIES_TAG, Tag.TAG_INT_ARRAY, "stage dependencies");
-        requireType(tag, CURRENT_FIRING_TAG, Tag.TAG_INT, "stage firing cursor");
-        requireType(tag, COMPLETED_TAG, Tag.TAG_BYTE, "stage completion flag");
-        requireType(tag, WAIT_KIND_TAG, Tag.TAG_STRING, "stage wait kind");
-        requireType(tag, RETRY_AT_TAG, Tag.TAG_LONG, "stage retry tick");
-        requireType(tag, NEXT_DYNAMIC_DELAY_TAG, Tag.TAG_INT, "stage dynamic retry delay");
-        requireType(tag, NEXT_PROVIDER_DELAY_TAG, Tag.TAG_INT, "stage provider retry delay");
-        requireType(tag, RETRY_VERSION_TAG, Tag.TAG_LONG, "stage retry version");
         return new Stage(
                 tag.getInt(INDEX_TAG),
                 tag.getBoolean(CYCLE_TAG),
@@ -436,27 +292,10 @@ public final class TrinityExecutionNbtCodec {
 
     private static List<Firing> readFirings(CompoundTag stageTag,
                                             HolderLookup.Provider registries) {
-        ListTag encodedFirings = requireCompoundList(stageTag, FIRINGS_TAG, "stage firings");
+        ListTag encodedFirings = stageTag.getList(FIRINGS_TAG, Tag.TAG_COMPOUND);
         ObjectArrayList<Firing> firings = new ObjectArrayList<>();
         for (Tag encoded : encodedFirings) {
             CompoundTag firingTag = (CompoundTag) encoded;
-            requireFields(firingTag, FIRING_FIELDS, "stage firing");
-            requireType(firingTag, DEFINITION_TAG, Tag.TAG_STRING, "firing definition identity");
-            requireType(firingTag, PUBLICATION_TAG, Tag.TAG_STRING, "firing publication identity");
-            requireType(firingTag, PRIMARY_OUTPUT_TAG, Tag.TAG_COMPOUND, "firing primary output");
-            requireType(firingTag, VARIANT_ORDINAL_TAG, Tag.TAG_INT, "firing variant ordinal");
-            requireType(
-                    firingTag,
-                    PLANNED_COUNT_TAG,
-                    Tag.TAG_BYTE_ARRAY,
-                    "firing planned count");
-            requireType(firingTag, OUTPUTS_TAG, Tag.TAG_LIST, "firing outputs");
-            requireType(
-                    firingTag,
-                    REMAINING_COUNT_TAG,
-                    Tag.TAG_BYTE_ARRAY,
-                    "firing remaining count");
-            requireType(firingTag, INITIALIZED_TAG, Tag.TAG_BYTE, "firing initialized flag");
             AEKey primaryOutput = decodeKey(
                     firingTag.getCompound(PRIMARY_OUTPUT_TAG),
                     registries,
@@ -472,7 +311,7 @@ public final class TrinityExecutionNbtCodec {
                     readAmount(firingTag, REMAINING_COUNT_TAG),
                     firingTag.getBoolean(INITIALIZED_TAG),
                     TrinityBoundInputSnapshotCodec.read(
-                            requireCompoundList(firingTag, EXACT_BINDINGS_TAG, "exact firing bindings"), registries)));
+                            firingTag.getList(EXACT_BINDINGS_TAG, Tag.TAG_COMPOUND), registries)));
         }
         if (firings.isEmpty()) {
             throw new IllegalArgumentException("A Trinity stage requires at least one firing signature");
@@ -481,25 +320,11 @@ public final class TrinityExecutionNbtCodec {
     }
 
     private static List<RepeatBlock> readRepeatBlocks(CompoundTag root) {
-        ListTag encodedRepeats = requireCompoundList(root, REPEAT_BLOCKS_TAG, "repeat blocks");
+        ListTag encodedRepeats = root.getList(REPEAT_BLOCKS_TAG, Tag.TAG_COMPOUND);
         ObjectArrayList<RepeatBlock> repeats = new ObjectArrayList<>();
         IntOpenHashSet indexes = new IntOpenHashSet();
         for (Tag encoded : encodedRepeats) {
             CompoundTag repeatTag = (CompoundTag) encoded;
-            requireFields(repeatTag, REPEAT_FIELDS, "repeat block");
-            requireType(repeatTag, INDEX_TAG, Tag.TAG_INT, "repeat index");
-            requireType(repeatTag, STAGE_ORDER_ENTRY_TAG, Tag.TAG_INT_ARRAY, "repeat stage order");
-            requireType(
-                    repeatTag,
-                    REMAINING_REPETITIONS_TAG,
-                    Tag.TAG_BYTE_ARRAY,
-                    "repeat remaining count");
-            requireType(repeatTag, CURSOR_TAG, Tag.TAG_INT, "repeat cursor");
-            requireType(
-                    repeatTag,
-                    WAVE_COUNT_TAG,
-                    Tag.TAG_BYTE_ARRAY,
-                    "repeat wave count");
             RepeatBlock repeat = new RepeatBlock(
                     repeatTag.getInt(INDEX_TAG),
                     readIndexes(repeatTag, STAGE_ORDER_ENTRY_TAG, "repeat stage"),
@@ -520,17 +345,10 @@ public final class TrinityExecutionNbtCodec {
                                                            HolderLookup.Provider registries,
                                                            String role,
                                                            boolean signed) {
-        ListTag entries = requireCompoundList(root, field, role);
+        ListTag entries = root.getList(field, Tag.TAG_COMPOUND);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> target = new Object2ObjectLinkedOpenHashMap<>();
         for (Tag encoded : entries) {
             CompoundTag entry = (CompoundTag) encoded;
-            requireFields(entry, AMOUNT_FIELDS, role + " entry");
-            requireType(entry, KEY_TAG, Tag.TAG_COMPOUND, role + " key");
-            requireType(
-                    entry,
-                    AMOUNT_TAG,
-                    Tag.TAG_BYTE_ARRAY,
-                    role + " amount");
             AEKey key = decodeKey(entry.getCompound(KEY_TAG), registries, role);
             BigInteger amount = readAmount(entry, AMOUNT_TAG);
             if ((signed ? amount.signum() == 0 : amount.signum() <= 0) ||
@@ -542,7 +360,6 @@ public final class TrinityExecutionNbtCodec {
     }
 
     private static IntList readIndexes(CompoundTag tag, String field, String role) {
-        requireType(tag, field, Tag.TAG_INT_ARRAY, role + " indexes");
         IntArrayList indexes = new IntArrayList();
         IntOpenHashSet seen = new IntOpenHashSet();
         for (int index : tag.getIntArray(field)) {
@@ -558,7 +375,7 @@ public final class TrinityExecutionNbtCodec {
                                        String field,
                                        HolderLookup.Provider registries,
                                        String role) {
-        ListTag encodedKeys = requireCompoundList(tag, field, role + " list");
+        ListTag encodedKeys = tag.getList(field, Tag.TAG_COMPOUND);
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         for (Tag encoded : encodedKeys) {
             AEKey key = decodeKey((CompoundTag) encoded, registries, role);
@@ -571,15 +388,7 @@ public final class TrinityExecutionNbtCodec {
 
     private static TrinitySameItemPolicy readSameItemPolicy(CompoundTag tag,
                                                             HolderLookup.Provider registries) {
-        if (tag.getInt(SCHEMA_TAG) == SCHEMA)
-            return TrinitySameItemPolicy.load(tag.getList(SAME_ITEM_POLICY_TAG, Tag.TAG_COMPOUND), registries);
-        var representatives = new ObjectArrayList<AEItemKey>();
-        for (var key : readKeys(tag, SAME_ITEM_POLICY_TAG, registries, "same-item representative")) {
-            if (!(key instanceof AEItemKey item))
-                throw new IllegalArgumentException("Invalid legacy same-item representative");
-            representatives.add(item);
-        }
-        return TrinitySameItemPolicy.ofRepresentatives(representatives);
+        return TrinitySameItemPolicy.load(tag.getList(SAME_ITEM_POLICY_TAG, Tag.TAG_COMPOUND), registries);
     }
 
     private static ListTag saveStages(List<Stage> stages, HolderLookup.Provider registries) {
@@ -679,15 +488,6 @@ public final class TrinityExecutionNbtCodec {
         return new IntArrayTag(copied);
     }
 
-    private static ListTag requireCompoundList(CompoundTag tag, String field, String role) {
-        requireType(tag, field, Tag.TAG_LIST, role);
-        Tag encoded = tag.get(field);
-        if (!(encoded instanceof ListTag list) || (!list.isEmpty() && list.getElementType() != Tag.TAG_COMPOUND)) {
-            throw new IllegalArgumentException("A Trinity " + role + " must contain compound entries");
-        }
-        return list;
-    }
-
     private static AEKey decodeKey(CompoundTag tag, HolderLookup.Provider registries, String role) {
         AEKey key = AEKey.fromTagGeneric(registries, tag);
         if (key == null) {
@@ -709,17 +509,5 @@ public final class TrinityExecutionNbtCodec {
             throw new IllegalArgumentException("A Trinity " + role + " cannot be negative");
         }
         return value;
-    }
-
-    private static void requireFields(CompoundTag tag, Set<String> fields, String role) {
-        if (!tag.getAllKeys().equals(fields)) {
-            throw new IllegalArgumentException("Unexpected or missing fields in Trinity " + role);
-        }
-    }
-
-    private static void requireType(CompoundTag tag, String field, int type, String role) {
-        if (!tag.contains(field, type)) {
-            throw new IllegalArgumentException("Missing or damaged Trinity " + role);
-        }
     }
 }

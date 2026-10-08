@@ -150,24 +150,21 @@ public final class DigitalAnnihilationWork {
                 0L);
     }
 
-    /** Restores a manual nuke, including the released pre-orbital top-level progress fields. */
+    /** Restores a manual nuke from its complete current-format work state. */
     public static DigitalAnnihilationWork restoreManual(
                                                         BlockPos origin,
                                                         UUID ticketOwner,
-                                                        Settings settings,
-                                                        int legacyWorkTicks,
-                                                        int legacyExpansionRadius,
                                                         CompoundTag state) {
-        Settings capturedSettings = state.contains(TAG_SETTINGS_INTERVAL) && state.contains(TAG_SETTINGS_RADIUS) && state.contains(TAG_SETTINGS_CENTER) ? Settings.fromPersisted(
+        Settings capturedSettings = Settings.fromPersisted(
                 state.getInt(TAG_SETTINGS_INTERVAL),
                 state.getInt(TAG_SETTINGS_RADIUS),
-                state.getDouble(TAG_SETTINGS_CENTER)) : settings;
+                state.getDouble(TAG_SETTINGS_CENTER));
         return new DigitalAnnihilationWork(
                 origin,
                 ticketOwner,
                 capturedSettings,
-                state.contains(TAG_WORK_TICKS) ? state.getInt(TAG_WORK_TICKS) : legacyWorkTicks,
-                state.contains(TAG_EXPANSION_RADIUS) ? state.getInt(TAG_EXPANSION_RADIUS) : legacyExpansionRadius,
+                state.getInt(TAG_WORK_TICKS),
+                state.getInt(TAG_EXPANSION_RADIUS),
                 state.getInt(TAG_SHELL_RADIUS),
                 state.getBoolean(TAG_SHELL_ACTIVE),
                 state.getInt(TAG_CHUNK_X),
@@ -545,7 +542,7 @@ public final class DigitalAnnihilationWork {
         }
     }
 
-    /** Persisted cursor values; booleans distinguish absent legacy fields from an explicit zero. */
+    /** Immutable settings captured with the active annihilation work. */
     public record Settings(int workIntervalTicks, int maxRadius, double centerEntityConsumeRadius) {
 
         private static final int MAX_WORK_INTERVAL_TICKS = 1_200;

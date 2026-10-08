@@ -166,8 +166,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private static final String CRAFTING_LAST_FAILURE_POSITION_TAG = "crafting_last_failure_position";
     private static final String CRAFTING_PATTERN_CORE_COUNT_TAG = "crafting_pattern_core_count";
     private static final String CRAFTING_PATTERN_CAPACITY_TAG = "crafting_pattern_capacity";
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 1;
     private static final String CRAFTING_RUNTIME_TAG = "trinity_data_core_crafting_runtime";
     private static final String STORAGE_ID_TAG = "trinity_data_core_storage_id";
     private static final String HOST_ID_TAG = "trinity_data_core_host_id";
@@ -2363,21 +2361,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.pendingInfiniteDriveRefunds.clear();
         super.loadTag(data, registries);
         this.structureValidation.reset();
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            discardPersistedTrinityState();
-            LOGGER.warn("Ignoring Trinity Data Core block entity data without a schema version at {}", this.worldPosition);
-            return;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            discardPersistedTrinityState();
-            LOGGER.warn(
-                    "Ignoring Trinity Data Core block entity schema version {} at {}; expected {}",
-                    schemaVersion,
-                    this.worldPosition,
-                    SCHEMA_VERSION);
-            return;
-        }
         if (!data.hasUUID(STORAGE_ID_TAG) || !data.hasUUID(HOST_ID_TAG)) {
             discardPersistedTrinityState();
             LOGGER.warn("Ignoring Trinity Data Core block entity data with missing identities at {}", this.worldPosition);
@@ -2438,7 +2421,6 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     @Override
     public void saveAdditional(CompoundTag data, HolderLookup.Provider registries) {
         super.saveAdditional(data, registries);
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         data.putUUID(STORAGE_ID_TAG, this.storageId);
         data.putUUID(HOST_ID_TAG, this.hostId);
         if (this.cpuRemovalToken != null) {

@@ -59,8 +59,6 @@ public final class OrbitalAttackSavedData extends SavedData {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
     private static final String DATA_NAME = Data_Energistics.MODID + "_orbital_attacks";
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 1;
     private static final String ATTACKS_TAG = "attacks";
     private static final String ATTACK_ID_TAG = "attack_id";
     private static final String WEAPON_ID_TAG = "weapon_id";
@@ -680,7 +678,6 @@ public final class OrbitalAttackSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        tag.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         ListTag attackList = new ListTag();
         this.attacks.values()
                 .stream()
@@ -692,10 +689,6 @@ public final class OrbitalAttackSavedData extends SavedData {
 
     static OrbitalAttackSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         OrbitalAttackSavedData data = new OrbitalAttackSavedData();
-        if (!tag.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT) || tag.getInt(SCHEMA_VERSION_TAG) != SCHEMA_VERSION) {
-            LOGGER.warn("Ignoring orbital attack SavedData with an unsupported schema");
-            return data;
-        }
         Tag rawAttacks = tag.get(ATTACKS_TAG);
         if (!(rawAttacks instanceof ListTag attackList)) {
             LOGGER.warn("Ignoring orbital attack SavedData without its attack list");

@@ -299,20 +299,20 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         }
         super.readFromNBT(tag, registries);
 
-        this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE, ConnectorMode.INPUT);
+        this.connectorMode = readConnectorMode(tag, NBT_CONNECTOR_MODE);
         this.connectorPolicy = readConnectorPolicy(tag);
-        this.connectorCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_CURSOR));
-        this.connectorPullCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_PULL_CURSOR));
-        this.connectorPullSlotCursor = Math.max(0, readLegacyInt(tag, NBT_CONNECTOR_PULL_SLOT_CURSOR));
+        this.connectorCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_CURSOR));
+        this.connectorPullCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_CURSOR));
+        this.connectorPullSlotCursor = Math.max(0, tag.getInt(NBT_CONNECTOR_PULL_SLOT_CURSOR));
         this.connectorTargets.clear();
-        ListTag connectorTargetTags = tag.contains(NBT_CONNECTOR_TARGETS, Tag.TAG_LIST) ? tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND) : tag.getList("adaptive_" + NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
+        ListTag connectorTargetTags = tag.getList(NBT_CONNECTOR_TARGETS, Tag.TAG_COMPOUND);
         for (int index = 0; this.host instanceof BlockEntity && index < connectorTargetTags.size(); index++) {
             CompoundTag targetTag = connectorTargetTags.getCompound(index);
             int side = targetTag.getByte("side");
             if (side >= 0 && side < 6) {
                 this.connectorTargets.add(new ConnectorTarget(
                         BlockPos.of(targetTag.getLong("pos")), Direction.from3DDataValue(side),
-                        readConnectorMode(targetTag, "mode", this.connectorMode)));
+                        readConnectorMode(targetTag, "mode")));
             }
         }
 
@@ -321,14 +321,13 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         this.reusableItemHandoff = null;
         this.dispatchTargets.clear();
         this.unloadedDispatchStates = tag.getCompound(NBT_DISPATCH_STATES).copy();
-        ObjectSet<String> legacyKeys = new ObjectOpenHashSet<>();
         AdaptivePatternProviderRegistration selected = resolvedRegistration();
         if (selected != null) {
-            restoreDispatchState(selected, tag, registries, legacyKeys);
+            restoreDispatchState(selected, registries);
         }
         for (var registration : AdaptivePatternProviderResolver.registrations()) {
             if (registration != selected) {
-                restoreDispatchState(registration, tag, registries, legacyKeys);
+                restoreDispatchState(registration, registries);
             }
         }
     }
@@ -460,34 +459,20 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return this.connectorTargets.stream().anyMatch(target -> target.position().equals(position) && target.side() == side);
     }
 
-    private static ConnectorMode readConnectorMode(
-                                                   CompoundTag tag, String key, ConnectorMode fallback) {
-        String readKey = tag.contains(key) ? key : "adaptive_" + key;
-        if (!tag.contains(readKey)) {
-            return fallback;
-        }
+    private static ConnectorMode readConnectorMode(CompoundTag tag, String key) {
         try {
-            return ConnectorMode.valueOf(tag.getString(readKey));
+            return ConnectorMode.valueOf(tag.getString(key));
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid adaptive connector mode", exception);
         }
     }
 
-    private static ConnectorPolicy readConnectorPolicy(
-                                                       CompoundTag tag) {
-        String readKey = tag.contains(AdaptivePatternProviderLogic.NBT_CONNECTOR_POLICY) ? AdaptivePatternProviderLogic.NBT_CONNECTOR_POLICY : "adaptive_" + AdaptivePatternProviderLogic.NBT_CONNECTOR_POLICY;
-        if (!tag.contains(readKey)) {
-            return ConnectorPolicy.ROUND_ROBIN;
-        }
+    private static ConnectorPolicy readConnectorPolicy(CompoundTag tag) {
         try {
-            return ConnectorPolicy.valueOf(tag.getString(readKey));
+            return ConnectorPolicy.valueOf(tag.getString(NBT_CONNECTOR_POLICY));
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid adaptive connector policy", exception);
         }
-    }
-
-    private static int readLegacyInt(CompoundTag tag, String key) {
-        return tag.contains(key, Tag.TAG_INT) ? tag.getInt(key) : tag.getInt("adaptive_" + key);
     }
 
     public record ConnectorTarget(BlockPos position, Direction side, ConnectorMode mode) {}
@@ -1107,7 +1092,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             public long maximumBatch(Binding binding) {
                 var grid = getGrid();
                 if (grid == null) return 0L;
-                long workLimit = Math.min(batchLimit, Math.max(0, activeReusableWorkLimit() - reusableWorkCount));
+                long workLimit = Math.clamp(activeReusableWorkLimit() - reusableWorkCount, 0, batchLimit);
                 double perWork = activeReusableEnergyPerWork();
                 if (perWork <= 0.0D) {
                     return 0L;
@@ -1274,8 +1259,8 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
         return target == null ? null : target.dispatch().matchingMetadata(target, recipeCategoryId);
     }
 
-    private void restoreDispatchState(AdaptivePatternProviderRegistration registration, CompoundTag tag,
-                                      HolderLookup.Provider registries, ObjectSet<String> legacyKeys) {
+    private void restoreDispatchState(AdaptivePatternProviderRegistration registration,
+                                      HolderLookup.Provider registries) {
         String id = registration.registrationId().toString();
         if (this.unloadedDispatchStates.contains(id) && !(this.unloadedDispatchStates.get(id) instanceof CompoundTag)) {
             throw new IllegalArgumentException("Adaptive dispatch state must be a compound: " + id);
@@ -1284,12 +1269,6 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             var target = runtimeTarget(registration);
             target.dispatch().readState(target, this.unloadedDispatchStates.getCompound(id), registries);
             this.unloadedDispatchStates.remove(id);
-        } else if (!tag.contains(NBT_DISPATCH_STATES)) {
-            String legacyKey = registration.dispatch().legacyStateKey();
-            if (legacyKey != null && tag.contains(legacyKey) && legacyKeys.add(legacyKey)) {
-                var target = runtimeTarget(registration);
-                target.dispatch().readState(target, tag, registries);
-            }
         }
     }
 

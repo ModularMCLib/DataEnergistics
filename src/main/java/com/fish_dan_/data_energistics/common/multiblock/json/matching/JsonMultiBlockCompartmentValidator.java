@@ -6,8 +6,10 @@ import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMult
 
 import net.minecraft.world.level.block.state.BlockState;
 
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
+
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Validates block states for JSON symbols declared as compartment positions.
@@ -29,11 +31,11 @@ public final class JsonMultiBlockCompartmentValidator {
     /**
      * Returns compartment roles that may replace a normal block symbol.
      */
-    public static Set<CompartmentType> replaceableTypes(JsonMultiBlockDefinition definition, String symbol) {
+    public static ObjectSet<CompartmentType> replaceableTypes(JsonMultiBlockDefinition definition, String symbol) {
         if (symbol.isBlank()) {
-            return Set.of();
+            return ObjectSets.emptySet();
         }
-        return definition.replaceableCompartmentTypes().getOrDefault(symbol, Set.of());
+        return definition.replaceableCompartmentTypes().getOrDefault(symbol, ObjectSets.emptySet());
     }
 
     /**
@@ -46,7 +48,7 @@ public final class JsonMultiBlockCompartmentValidator {
     public static boolean matchesDeclaredType(JsonMultiBlockDefinition definition, String symbol, BlockState state) {
         Optional<CompartmentType> declared = declaredType(definition, symbol);
         if (declared.isEmpty()) {
-            Set<CompartmentType> replaceable = replaceableTypes(definition, symbol);
+            ObjectSet<CompartmentType> replaceable = replaceableTypes(definition, symbol);
             if (replaceable.isEmpty() || !(state.getBlock() instanceof CompartmentBlock block)) {
                 return true;
             }

@@ -10,10 +10,13 @@ import com.google.gson.JsonObject;
 import com.modularmc.mdl.api.multiblock.StructureDir;
 import com.modularmc.mdl.api.multiblock.util.RelativeDirection;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Parsed metadata for a JSON multiblock definition.
@@ -31,18 +34,18 @@ public final class JsonMultiBlockMetadata {
     private static final StructureDir DEFAULT_STRUCTURE_DIR = StructureDir.defaultDirs();
 
     private final Optional<String> displayNameTranslationKey;
-    private final Map<String, CompartmentType> compartmentTypes;
-    private final Map<String, Set<CompartmentType>> replaceableCompartmentTypes;
+    private final Object2ObjectMap<String, CompartmentType> compartmentTypes;
+    private final Object2ObjectMap<String, ObjectSet<CompartmentType>> replaceableCompartmentTypes;
     private final JsonMultiBlockAutoBuildStagingMetadata autoBuildStagingMetadata;
     private final StructureDir structureDir;
 
     private JsonMultiBlockMetadata(Optional<String> displayNameTranslationKey,
-                                   Map<String, CompartmentType> compartmentTypes,
-                                   Map<String, Set<CompartmentType>> replaceableCompartmentTypes,
+                                   Object2ObjectMap<String, CompartmentType> compartmentTypes,
+                                   Object2ObjectMap<String, ObjectSet<CompartmentType>> replaceableCompartmentTypes,
                                    JsonMultiBlockAutoBuildStagingMetadata autoBuildStagingMetadata,
                                    StructureDir structureDir) {
         this.displayNameTranslationKey = displayNameTranslationKey;
-        this.compartmentTypes = Map.copyOf(compartmentTypes);
+        this.compartmentTypes = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(compartmentTypes));
         this.replaceableCompartmentTypes = copyReplaceableCompartmentTypes(replaceableCompartmentTypes);
         this.autoBuildStagingMetadata = autoBuildStagingMetadata;
         this.structureDir = structureDir;
@@ -52,8 +55,8 @@ public final class JsonMultiBlockMetadata {
         if (!root.has(METADATA_PROPERTY)) {
             return new JsonMultiBlockMetadata(
                     Optional.empty(),
-                    Map.of(),
-                    Map.of(),
+                    Object2ObjectMaps.emptyMap(),
+                    Object2ObjectMaps.emptyMap(),
                     JsonMultiBlockAutoBuildStagingMetadata.none(),
                     DEFAULT_STRUCTURE_DIR);
         }
@@ -74,11 +77,11 @@ public final class JsonMultiBlockMetadata {
         return this.displayNameTranslationKey;
     }
 
-    public Map<String, CompartmentType> compartmentTypes() {
+    public Object2ObjectMap<String, CompartmentType> compartmentTypes() {
         return this.compartmentTypes;
     }
 
-    public Map<String, Set<CompartmentType>> replaceableCompartmentTypes() {
+    public Object2ObjectMap<String, ObjectSet<CompartmentType>> replaceableCompartmentTypes() {
         return this.replaceableCompartmentTypes;
     }
 
@@ -106,9 +109,9 @@ public final class JsonMultiBlockMetadata {
         return Optional.of(displayNameTranslationKey);
     }
 
-    private static Map<String, CompartmentType> readCompartmentTypes(JsonObject metadata, ResourceLocation resourceId) {
+    private static Object2ObjectMap<String, CompartmentType> readCompartmentTypes(JsonObject metadata, ResourceLocation resourceId) {
         if (!metadata.has(COMPARTMENTS_PROPERTY)) {
-            return Map.of();
+            return Object2ObjectMaps.emptyMap();
         }
         JsonElement compartmentsElement = metadata.get(COMPARTMENTS_PROPERTY);
         if (!compartmentsElement.isJsonObject()) {
@@ -116,7 +119,7 @@ public final class JsonMultiBlockMetadata {
         }
         JsonObject compartments = compartmentsElement.getAsJsonObject();
         Object2ObjectLinkedOpenHashMap<String, CompartmentType> types = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : compartments.entrySet()) {
+        for (var entry : compartments.entrySet()) {
             String symbol = entry.getKey();
             if (symbol == null || symbol.isBlank() || symbol.length() != 1) {
                 throw new IllegalArgumentException("JSON multiblock compartment symbol must be exactly one non-blank character: " + resourceId);
@@ -130,13 +133,13 @@ public final class JsonMultiBlockMetadata {
                     .orElseThrow(() -> new IllegalArgumentException("Unknown JSON multiblock compartment type '" + typeId + "' for symbol '" + symbol + "': " + resourceId));
             types.put(symbol, type);
         }
-        return Map.copyOf(types);
+        return Object2ObjectMaps.unmodifiable(types);
     }
 
-    private static Map<String, Set<CompartmentType>> readReplaceableCompartmentTypes(JsonObject metadata,
-                                                                                     ResourceLocation resourceId) {
+    private static Object2ObjectMap<String, ObjectSet<CompartmentType>> readReplaceableCompartmentTypes(JsonObject metadata,
+                                                                                                        ResourceLocation resourceId) {
         if (!metadata.has(REPLACEABLE_COMPARTMENTS_PROPERTY)) {
-            return Map.of();
+            return Object2ObjectMaps.emptyMap();
         }
         JsonElement replaceableElement = metadata.get(REPLACEABLE_COMPARTMENTS_PROPERTY);
         if (!replaceableElement.isJsonObject()) {
@@ -144,8 +147,8 @@ public final class JsonMultiBlockMetadata {
                     resourceId);
         }
         JsonObject replaceable = replaceableElement.getAsJsonObject();
-        Object2ObjectLinkedOpenHashMap<String, Set<CompartmentType>> types = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : replaceable.entrySet()) {
+        Object2ObjectLinkedOpenHashMap<String, ObjectSet<CompartmentType>> types = new Object2ObjectLinkedOpenHashMap<>();
+        for (var entry : replaceable.entrySet()) {
             String symbol = entry.getKey();
             validateSymbol(symbol, "replaceable compartment", resourceId);
             if (!entry.getValue().isJsonArray()) {
@@ -168,7 +171,7 @@ public final class JsonMultiBlockMetadata {
                 throw new IllegalArgumentException("JSON multiblock replaceable compartment symbol '" + symbol +
                         "' must allow at least one type: " + resourceId);
             }
-            types.put(symbol, Set.copyOf(symbolTypes.values()));
+            types.put(symbol, ObjectSets.unmodifiable(new ObjectOpenHashSet<>(symbolTypes.values())));
         }
         return copyReplaceableCompartmentTypes(types);
     }
@@ -233,11 +236,12 @@ public final class JsonMultiBlockMetadata {
         }
     }
 
-    private static Map<String, Set<CompartmentType>> copyReplaceableCompartmentTypes(Map<String, Set<CompartmentType>> source) {
-        Object2ObjectLinkedOpenHashMap<String, Set<CompartmentType>> copy = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<String, Set<CompartmentType>> entry : source.entrySet()) {
-            copy.put(entry.getKey(), Set.copyOf(entry.getValue()));
+    private static Object2ObjectMap<String, ObjectSet<CompartmentType>> copyReplaceableCompartmentTypes(
+                                                                                                        Object2ObjectMap<String, ObjectSet<CompartmentType>> source) {
+        Object2ObjectLinkedOpenHashMap<String, ObjectSet<CompartmentType>> copy = new Object2ObjectLinkedOpenHashMap<>();
+        for (Object2ObjectMap.Entry<String, ObjectSet<CompartmentType>> entry : source.object2ObjectEntrySet()) {
+            copy.put(entry.getKey(), ObjectSets.unmodifiable(new ObjectOpenHashSet<>(entry.getValue())));
         }
-        return Map.copyOf(copy);
+        return Object2ObjectMaps.unmodifiable(copy);
     }
 }

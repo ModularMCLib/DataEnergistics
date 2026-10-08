@@ -125,6 +125,8 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -228,7 +230,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     private boolean loaded;
     private boolean formed;
     @Getter
-    private ObjectList<BlockPos> matchedPositions = ObjectList.of();
+    private LongList matchedPositions = new LongArrayList();
     private TrinityDataCoreStorageProfile storageProfile = TrinityDataCoreStorageProfile.EMPTY;
     /** Returns the fixed-layout persistent inventory shown by the Trinity Data Core's infinite-drive panel. */
     @Getter
@@ -2380,7 +2382,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.patternCatalog = new MountedCorePatternCatalog(this.hostId);
         this.patternCatalogValid = false;
         this.formed = data.getBoolean(FORMED_TAG);
-        this.matchedPositions = ObjectList.of();
+        this.matchedPositions = new LongArrayList();
         this.lastFailureReason = data.getString(LAST_FAILURE_REASON_TAG);
         if (data.contains(LAST_FAILURE_POSITION_TAG)) {
             this.lastFailurePosition = BlockPos.of(data.getLong(LAST_FAILURE_POSITION_TAG));
@@ -2523,7 +2525,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         this.patternCatalog = new MountedCorePatternCatalog(this.hostId);
         this.patternCatalogValid = false;
         this.formed = false;
-        this.matchedPositions = ObjectList.of();
+        this.matchedPositions = new LongArrayList();
         this.storageProfile = TrinityDataCoreStorageProfile.EMPTY;
         this.infiniteDriveInventory.clearContent();
         this.pendingInfiniteDriveRefunds.clear();
@@ -2762,7 +2764,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         }
 
         if (result.matched()) {
-            Map<BlockPos, CompartmentType> declaredCompartments = JsonMultiBlockCompartmentPredicate.declaredCompartments(
+            Long2ObjectMap<CompartmentType> declaredCompartments = JsonMultiBlockCompartmentPredicate.declaredCompartments(
                     result.context());
             PatternDiagnostic compartmentFailure = this.compartmentBinder.validate(world, result, declaredCompartments);
             if (compartmentFailure != null) {
@@ -2776,10 +2778,10 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                 return topologyChanged;
             }
             boolean topologyChanged = !this.formed ||
-                    !this.matchedPositions.equals(result.positions()) ||
+                    !this.matchedPositions.equals(packPositions(result.positions())) ||
                     this.mainStructureFrontFacing != result.frontFacing() ||
                     this.mainStructureFlipped != result.flipped();
-            applyMatch(world, result.positions(), declaredCompartments, mainDefinitionKey().structureName());
+            applyMatch(world, packPositions(result.positions()), declaredCompartments, mainDefinitionKey().structureName());
             this.mainStructureFrontFacing = result.frontFacing();
             this.mainStructureFlipped = result.flipped();
             return topologyChanged;
@@ -2808,7 +2810,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                 CPU_STRUCTURE_NAME);
 
         if (result.matched()) {
-            applyCpuMatch(world, result.positions());
+            applyCpuMatch(world, packPositions(result.positions()));
         } else {
             if (deferStructureValidation(Structure.CPU, result.diagnostic(), world.firstUnloadedPosition())) {
                 return;
@@ -2830,7 +2832,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                 CRAFTING_STRUCTURE_NAME);
 
         if (result.matched()) {
-            PatternCatalogScanResult scan = scanPatternCores(world, result.positions());
+            PatternCatalogScanResult scan = scanPatternCores(world, packPositions(result.positions()));
             if (!scan.valid()) {
                 this.patternCatalogValid = false;
                 applyCraftingFailure(scan.failureReason(), scan.failurePosition());
@@ -2863,7 +2865,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                 return;
             }
             releaseStalePatternCoreBindings(previousLayout, currentLayout);
-            applyCraftingMatch(world, result.positions(), rebuild.changed());
+            applyCraftingMatch(world, packPositions(result.positions()), rebuild.changed());
         } else {
             if (deferStructureValidation(Structure.CRAFTING, result.diagnostic(), world.firstUnloadedPosition())) {
                 return;
@@ -2928,10 +2930,10 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
     }
 
     private void applyMatch(StructureWorldView world,
-                            List<BlockPos> positions,
-                            Map<BlockPos, CompartmentType> declaredCompartments,
+                            LongList positions,
+                            Long2ObjectMap<CompartmentType> declaredCompartments,
                             String structureName) {
-        ObjectList<BlockPos> nextPositions = new ObjectImmutableList<>(positions);
+        LongList nextPositions = new LongArrayList(positions);
         TrinityDataCoreStorageProfile nextStorageProfile = buildStorageProfile(world, nextPositions);
         boolean validationChanged = !this.structureValidation.isValid(Structure.MAIN);
         if (this.formed &&
@@ -2967,7 +2969,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         setChanged();
     }
 
-    private void applyCpuMatch(StructureWorldView world, List<BlockPos> positions) {
+    private void applyCpuMatch(StructureWorldView world, LongList positions) {
         TrinityDataCoreCpuContribution contribution = buildCpuContribution(world, positions);
         boolean contributionChanged = !Objects.equals(this.cpuStructureContribution, contribution);
         boolean statusChanged = !this.structureValidation.isValid(Structure.CPU) || !this.cpuStructureFormed ||
@@ -3022,7 +3024,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         setChanged();
     }
 
-    private void applyCraftingMatch(StructureWorldView world, List<BlockPos> positions, boolean catalogChanged) {
+    private void applyCraftingMatch(StructureWorldView world, LongList positions, boolean catalogChanged) {
         TrinityDataCoreCraftingCoreProfile nextProfile = buildCraftingProfile(world, positions);
         boolean statusChanged = !this.structureValidation.isValid(Structure.CRAFTING) ||
                 !this.craftingStructureFormed ||
@@ -3123,7 +3125,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             this.storageProfile = TrinityDataCoreStorageProfile.EMPTY;
         }
         this.formed = false;
-        this.matchedPositions = ObjectList.of();
+        this.matchedPositions = new LongArrayList();
         this.lastFailureReason = nextFailureReason;
         this.lastFailurePosition = nextFailurePosition;
         this.craftingRuntime.setMainStructureFormed(false);
@@ -3494,9 +3496,10 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
                 Actionable.MODULATE));
     }
 
-    private static TrinityDataCoreStorageProfile buildStorageProfile(StructureWorldView world, List<BlockPos> positions) {
+    private static TrinityDataCoreStorageProfile buildStorageProfile(StructureWorldView world, LongList positions) {
         TrinityDataCoreStorageProfile.Builder builder = TrinityDataCoreStorageProfile.builder(MAIN_STORAGE_CORE_SLOT_COUNT);
-        for (BlockPos pos : positions) {
+        for (long packedPosition : positions) {
+            BlockPos pos = BlockPos.of(packedPosition);
             BlockState state = world.getBlockState(pos);
             if (state.getBlock() instanceof TrinityCoreComponent component &&
                     component.contributesToKind(TrinityCoreKind.STORAGE_TYPES)) {
@@ -3506,9 +3509,10 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         return builder.build();
     }
 
-    private static TrinityDataCoreCraftingCoreProfile buildCraftingProfile(StructureWorldView world, List<BlockPos> positions) {
+    private static TrinityDataCoreCraftingCoreProfile buildCraftingProfile(StructureWorldView world, LongList positions) {
         TrinityDataCoreCraftingCoreProfile.Builder builder = TrinityDataCoreCraftingCoreProfile.builder();
-        for (BlockPos pos : positions) {
+        for (long packedPosition : positions) {
+            BlockPos pos = BlockPos.of(packedPosition);
             BlockState state = world.getBlockState(pos);
             if (state.getBlock() instanceof TrinityCoreComponent component &&
                     component.contributesToKind(TrinityCoreKind.PATTERN_PROCESSING)) {
@@ -3518,9 +3522,10 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         return builder.build();
     }
 
-    private PatternCatalogScanResult scanPatternCores(StructureWorldView world, List<BlockPos> positions) {
+    private PatternCatalogScanResult scanPatternCores(StructureWorldView world, LongList positions) {
         ObjectArrayList<TrinityPatternCatalog.CoreMount> mounts = new ObjectArrayList<>();
-        for (BlockPos pos : positions) {
+        for (long packedPosition : positions) {
+            BlockPos pos = BlockPos.of(packedPosition);
             BlockState state = world.getBlockState(pos);
             if (!(state.getBlock() instanceof TrinityCoreComponent component) ||
                     !component.contributesToKind(TrinityCoreKind.PATTERN_PROCESSING)) {
@@ -3548,10 +3553,11 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         return PatternCatalogScanResult.success(mounts);
     }
 
-    private TrinityDataCoreCpuContribution buildCpuContribution(StructureWorldView world, List<BlockPos> positions) {
+    private TrinityDataCoreCpuContribution buildCpuContribution(StructureWorldView world, LongList positions) {
         TrinityDataCoreCpuCoreProfile.Builder builder = TrinityDataCoreCpuCoreProfile.builder();
         IntSet repeatedLayers = new IntOpenHashSet();
-        for (BlockPos pos : positions) {
+        for (long packedPosition : positions) {
+            BlockPos pos = BlockPos.of(packedPosition);
             int localY = cpuLocalY(pos);
             if (localY >= TrinityDataCoreCpuCoreProfile.REPEAT_START_Y &&
                     localY <= TrinityDataCoreCpuCoreProfile.REPEAT_END_Y) {
@@ -3574,6 +3580,14 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
 
     private int cpuLocalY(BlockPos pos) {
         return pos.getY() - this.worldPosition.getY() + TrinityDataCoreCpuCoreProfile.CONTROLLER_LOCAL_Y;
+    }
+
+    private static LongList packPositions(Collection<BlockPos> positions) {
+        LongArrayList packedPositions = new LongArrayList(positions.size());
+        for (BlockPos position : positions) {
+            packedPositions.add(position.asLong());
+        }
+        return packedPositions;
     }
 
     private void clearCpuStructureStatus() {

@@ -40,14 +40,14 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Two-phase builder for MDLib-backed structures. Pre-publication failures restore staged state and supplies;
@@ -77,7 +77,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             return Result.failure(planOutcome.reused(), allocation.failure());
         }
 
-        List<WorldSnapshot> worldSnapshots;
+        ObjectList<WorldSnapshot> worldSnapshots;
         try {
             worldSnapshots = captureWorld(context, allocation.placements());
         } catch (RuntimeException exception) {
@@ -185,7 +185,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     private static PlanOutcome createPlan(Context context) {
         RepetitionOutcome repetitionOutcome = resolveRepetitions(context.pattern(), context.repeatCount());
         if (repetitionOutcome.failure() != null) {
-            return new PlanOutcome(List.of(), 0, repetitionOutcome.failure());
+            return new PlanOutcome(ObjectList.of(), 0, repetitionOutcome.failure());
         }
 
         BlockPattern pattern = context.pattern();
@@ -193,7 +193,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         MultiblockState state = new MultiblockState(context.world(), context.origin(), context.structureName());
         state.clean();
         ObjectArrayList<PositionPlan> positions = new ObjectArrayList<>();
-        Set<PreviewPredicateKey> appliedCandidateSelections = new ObjectLinkedOpenHashSet<>();
+        ObjectSet<PreviewPredicateKey> appliedCandidateSelections = new ObjectLinkedOpenHashSet<>();
         int reused = 0;
         int expandedZ = coordinates.minZ();
 
@@ -213,21 +213,21 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                             appliedCandidateSelections);
                     reused += layer.reused();
                     if (layer.failure() != null) {
-                        return new PlanOutcome(List.of(), reused, layer.failure());
+                        return new PlanOutcome(ObjectList.of(), reused, layer.failure());
                     }
                     expandedZ++;
                 }
             }
         }
         if (!appliedCandidateSelections.containsAll(context.candidateSelections().keySet())) {
-            Set<PreviewPredicateKey> unknown = new ObjectLinkedOpenHashSet<>(context.candidateSelections().keySet());
+            ObjectSet<PreviewPredicateKey> unknown = new ObjectLinkedOpenHashSet<>(context.candidateSelections().keySet());
             unknown.removeAll(appliedCandidateSelections);
-            return new PlanOutcome(List.of(), reused, new Failure(
+            return new PlanOutcome(ObjectList.of(), reused, new Failure(
                     FailureType.UNSUPPORTED_CANDIDATE,
                     null,
                     "Candidate selections do not address buildable source predicates: " + unknown));
         }
-        return new PlanOutcome(List.copyOf(positions), reused, null);
+        return new PlanOutcome(ObjectLists.unmodifiable(positions), reused, null);
     }
 
     private static LayerOutcome planLayer(Context context,
@@ -235,8 +235,8 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                                           MultiblockState state,
                                           int patternZ,
                                           int expandedZ,
-                                          List<PositionPlan> positions,
-                                          Set<PreviewPredicateKey> appliedCandidateSelections) {
+                                          ObjectList<PositionPlan> positions,
+                                          ObjectSet<PreviewPredicateKey> appliedCandidateSelections) {
         int reused = 0;
         for (int yOffset = coordinates.minY(); yOffset < coordinates.minY() + coordinates.thumbLength(); yOffset++) {
             for (int xOffset = coordinates.minX(); xOffset < coordinates.minX() + coordinates.palmLength(); xOffset++) {
@@ -284,7 +284,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                                                      TraceabilityPredicate predicate,
                                                      BlockPos target,
                                                      int candidateIndex,
-                                                     List<PositionPlan> positions) {
+                                                     ObjectList<PositionPlan> positions) {
         if (!context.level().isLoaded(target) || !state.update(target, predicate)) {
             return PositionOutcome.failure(failure(
                     FailureType.UNLOADED,
@@ -346,9 +346,9 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                     "Required position is occupied by a non-replaceable block"));
         }
 
-        List<Candidate> candidates = explicitCandidate == null ?
+        ObjectList<Candidate> candidates = explicitCandidate == null ?
                 supportedCandidates(predicate, tierSelection, missingRequiredPart) :
-                List.of(explicitCandidate);
+                ObjectList.of(explicitCandidate);
         if (candidates.isEmpty()) {
             return PositionOutcome.failure(failure(
                     FailureType.UNSUPPORTED_CANDIDATE,
@@ -386,9 +386,9 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     }
 
     private static TierSelectionOutcome resolveTierSelection(TraceabilityPredicate predicate,
-                                                             Map<Block, Block> selectedTierBlocks,
+                                                             Object2ObjectMap<Block, Block> selectedTierBlocks,
                                                              BlockPos target) {
-        List<Block> candidates = tierCandidateBlocks(predicate);
+        ObjectList<Block> candidates = tierCandidateBlocks(predicate);
         Block selectedBlock = null;
         for (Block candidate : candidates) {
             Block mappedBlock = selectedTierBlocks.get(candidate);
@@ -425,7 +425,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         return TierSelectionOutcome.success(new TierSelection(candidates, selectedBlock));
     }
 
-    private static List<Block> tierCandidateBlocks(TraceabilityPredicate predicate) {
+    private static ObjectList<Block> tierCandidateBlocks(TraceabilityPredicate predicate) {
         ObjectLinkedOpenHashSet<Block> candidates = new ObjectLinkedOpenHashSet<>();
         for (ItemStack candidate : predicate.placementCandidates()) {
             if (!candidate.isEmpty() && candidate.getItem() instanceof BlockItem blockItem) {
@@ -435,12 +435,12 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         for (BlockState candidate : predicate.blockStateCandidates()) {
             candidates.add(candidate.getBlock());
         }
-        return List.copyOf(candidates);
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(candidates));
     }
 
-    private static List<Candidate> supportedCandidates(TraceabilityPredicate predicate,
-                                                       TierSelection tierSelection,
-                                                       boolean partsOnly) {
+    private static ObjectList<Candidate> supportedCandidates(TraceabilityPredicate predicate,
+                                                             TierSelection tierSelection,
+                                                             boolean partsOnly) {
         ObjectArrayList<Candidate> candidates = new ObjectArrayList<>();
         for (ItemStack candidateStack : predicate.placementCandidates()) {
             if (partsOnly && !(candidateStack.getItem() instanceof IPartItem<?>)) {
@@ -452,7 +452,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             }
         }
         if (partsOnly) {
-            return List.copyOf(candidates);
+            return ObjectLists.unmodifiable(candidates);
         }
         for (BlockState state : predicate.blockStateCandidates()) {
             if (!tierSelection.allows(state.getBlock())) {
@@ -468,7 +468,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                 addCandidate(candidates, new Candidate(stack.copyWithCount(1), state));
             }
         }
-        return List.copyOf(candidates);
+        return ObjectLists.unmodifiable(candidates);
     }
 
     private static ExplicitCandidateOutcome resolveExplicitCandidate(TraceabilityPredicate predicate,
@@ -477,9 +477,9 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                                                                      BlockPos target) {
         boolean allowsEmpty = predicate.hasAir() || predicate.blockStateCandidates().stream().anyMatch(BlockState::isAir);
         ObjectArrayList<Candidate> candidates = new ObjectArrayList<>();
-        List<PatternCandidate> patternCandidates;
+        ObjectList<PatternCandidate> patternCandidates;
         try {
-            patternCandidates = predicate.patternCandidates();
+            patternCandidates = new ObjectArrayList<>(predicate.patternCandidates());
         } catch (IllegalArgumentException | IllegalStateException exception) {
             return ExplicitCandidateOutcome.failure(failure(
                     FailureType.UNSUPPORTED_CANDIDATE,
@@ -615,7 +615,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         return selectedBlock.defaultBlockState();
     }
 
-    private static void addCandidate(List<Candidate> candidates, Candidate candidate) {
+    private static void addCandidate(ObjectList<Candidate> candidates, Candidate candidate) {
         for (Candidate existing : candidates) {
             boolean sameState = existing.desiredState() == null ? candidate.desiredState() == null :
                     existing.desiredState().equals(candidate.desiredState());
@@ -626,7 +626,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         candidates.add(candidate);
     }
 
-    private static AllocationOutcome allocateMaterials(Context context, List<PositionPlan> positions,
+    private static AllocationOutcome allocateMaterials(Context context, ObjectList<PositionPlan> positions,
                                                        AutoBuildMaterialTransaction inventory) {
         ObjectArrayList<Placement> placements = new ObjectArrayList<>(positions.size());
         int missing = 0;
@@ -639,7 +639,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                     missing++;
                     continue;
                 }
-                return new AllocationOutcome(List.of(), selection.failure());
+                return new AllocationOutcome(ObjectList.of(), selection.failure());
             }
             Candidate candidate = selection.candidate();
             PlacementValidation validation = selection.validation();
@@ -653,15 +653,15 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
                     position.requiresPart(),
                     position.replacesExistingTier()));
         }
-        return new AllocationOutcome(List.copyOf(placements), missing, null);
+        return new AllocationOutcome(ObjectLists.unmodifiable(placements), missing, null);
     }
 
     private static CandidateSelection selectCandidate(Context context,
                                                       AutoBuildMaterialTransaction inventory,
                                                       PositionPlan position) {
         Failure validationFailure = null;
-        List<Candidate> approved = new ObjectArrayList<>();
-        List<PlacementValidation> validations = new ObjectArrayList<>();
+        ObjectList<Candidate> approved = new ObjectArrayList<>();
+        ObjectList<PlacementValidation> validations = new ObjectArrayList<>();
         for (Candidate candidate : position.candidates()) {
             if (!inventory.hasAvailable(candidate.material())) {
                 continue;
@@ -676,7 +676,9 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             approved.add(candidate);
             validations.add(validation);
         }
-        GenericStack selected = inventory.reserve(position.position(), approved.stream().map(Candidate::material).toList());
+        ObjectList<GenericStack> approvedMaterials = new ObjectArrayList<>(approved.size());
+        for (Candidate candidate : approved) approvedMaterials.add(candidate.material());
+        GenericStack selected = inventory.reserve(position.position(), approvedMaterials);
         if (selected != null) {
             for (int index = 0; index < approved.size(); index++) {
                 if (approved.get(index).material().equals(selected)) {
@@ -773,23 +775,23 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         return PlacementValidation.success(null, desiredState);
     }
 
-    private static List<WorldSnapshot> captureWorld(Context context, List<Placement> placements) {
+    private static ObjectList<WorldSnapshot> captureWorld(Context context, ObjectList<Placement> placements) {
         Long2ObjectMap<WorldSnapshot> snapshots = new Long2ObjectLinkedOpenHashMap<>();
         for (Placement placement : placements) {
             snapshots.putIfAbsent(placement.position().asLong(), WorldSnapshot.capture(context.level(), placement.position()));
         }
-        return List.copyOf(snapshots.values());
+        return ObjectLists.unmodifiable(new ObjectArrayList<>(snapshots.values()));
     }
 
     private static StageOutcome stageAll(Context context,
-                                         List<Placement> placements,
-                                         List<WorldSnapshot> snapshots,
+                                         ObjectList<Placement> placements,
+                                         ObjectList<WorldSnapshot> snapshots,
                                          StagingProgress stagingProgress) {
         Long2ObjectMap<WorldSnapshot> snapshotsByPosition = new Long2ObjectLinkedOpenHashMap<>();
         for (WorldSnapshot snapshot : snapshots) {
             snapshotsByPosition.put(snapshot.position().asLong(), snapshot);
         }
-        List<Placement> pending = placements;
+        ObjectList<Placement> pending = placements;
         ObjectArrayList<ReplacementDrop> replacementDrops = new ObjectArrayList<>();
         ObjectArrayList<StagedBlock> stagedBlocks = new ObjectArrayList<>();
         ObjectArrayList<DeferredPartPlacement> deferredParts = new ObjectArrayList<>();
@@ -901,7 +903,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         if (stagingState == null) {
             return StagingCommit.failed();
         }
-        List<ReplacementDrop> replacementDrops = replacementDrops(context, placement);
+        ObjectList<ReplacementDrop> replacementDrops = replacementDrops(context, placement);
         BlockState currentState = context.level().getBlockState(placement.position());
         StagedBlock stagedBlock = null;
         if (!currentState.equals(stagingState)) {
@@ -929,28 +931,28 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         return StagingCommit.success(stagedBlock, replacementDrops);
     }
 
-    private static List<ReplacementDrop> replacementDrops(Context context, Placement placement) {
+    private static ObjectList<ReplacementDrop> replacementDrops(Context context, Placement placement) {
         if (!placement.replacesExistingTier()) {
-            return List.of();
+            return ObjectList.of();
         }
         BlockState replacedState = context.level().getBlockState(placement.position());
         BlockEntity replacedBlockEntity = context.level().getBlockEntity(placement.position());
-        List<ItemStack> drops = Block.getDrops(
+        ObjectList<ItemStack> drops = new ObjectArrayList<>(Block.getDrops(
                 replacedState,
                 context.level(),
                 placement.position(),
                 replacedBlockEntity).stream()
                 .filter(drop -> !drop.isEmpty())
                 .map(ItemStack::copy)
-                .toList();
+                .toList());
         if (drops.isEmpty()) {
-            return List.of();
+            return ObjectList.of();
         }
-        return List.of(new ReplacementDrop(placement.position(), drops));
+        return ObjectList.of(new ReplacementDrop(placement.position(), drops));
     }
 
     private static Failure verifyStagedPlacements(Context context,
-                                                  List<Placement> placements,
+                                                  ObjectList<Placement> placements,
                                                   Long2ObjectMap<BlockState> stagedStates) {
         for (Placement placement : placements) {
             if (!verifyStagedPlacement(context, placement, stagedStates)) {
@@ -983,7 +985,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     }
 
     private static PublicationOutcome publishAll(Context context,
-                                                 List<Placement> placements,
+                                                 ObjectList<Placement> placements,
                                                  StageOutcome stageOutcome) {
         int placed = 0;
         ObjectArrayList<ReplacementDrop> releasedReplacementDrops = new ObjectArrayList<>();
@@ -1130,7 +1132,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         return PublicationOutcome.success(placed, releasedReplacementDrops, consumedPlacements);
     }
 
-    private static void markMaterialConsumed(List<Placement> consumedPlacements, Placement placement) {
+    private static void markMaterialConsumed(ObjectList<Placement> consumedPlacements, Placement placement) {
         for (Placement consumedPlacement : consumedPlacements) {
             if (consumedPlacement.position().equals(placement.position())) {
                 return;
@@ -1142,7 +1144,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     private static void appendPublishedReplacementDrops(Context context,
                                                         StageOutcome stageOutcome,
                                                         StagedBlock stagedBlock,
-                                                        List<ReplacementDrop> releasedReplacementDrops) {
+                                                        ObjectList<ReplacementDrop> releasedReplacementDrops) {
         if (!stagedBlock.placement().replacesExistingTier() ||
                 context.level().getBlockState(stagedBlock.snapshot().position()).equals(stagedBlock.snapshot().state())) {
             return;
@@ -1174,7 +1176,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         return "A staging operation failed and " + refundOutcome.detail();
     }
 
-    private static void releaseReplacementDrops(Context context, List<ReplacementDrop> replacementDrops) {
+    private static void releaseReplacementDrops(Context context, ObjectList<ReplacementDrop> replacementDrops) {
         ObjectArrayList<ReplacementOverflow> overflows = new ObjectArrayList<>();
         for (ReplacementDrop replacementDrop : replacementDrops) {
             for (ItemStack stack : replacementDrop.stacks()) {
@@ -1201,7 +1203,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         }
     }
 
-    private static void appendReplacementOverflow(List<ReplacementOverflow> overflows,
+    private static void appendReplacementOverflow(ObjectList<ReplacementOverflow> overflows,
                                                   BlockPos position,
                                                   ItemStack remaining) {
         ItemStack unmerged = remaining.copy();
@@ -1228,7 +1230,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         }
     }
 
-    private static boolean restoreWorld(Context context, List<WorldSnapshot> snapshots) {
+    private static boolean restoreWorld(Context context, ObjectList<WorldSnapshot> snapshots) {
         boolean restored = true;
         for (int index = snapshots.size() - 1; index >= 0; index--) {
             WorldSnapshot snapshot = snapshots.get(index);
@@ -1324,7 +1326,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         }
     }
 
-    private record PlanOutcome(List<PositionPlan> positions, int reused, @Nullable Failure failure) {}
+    private record PlanOutcome(ObjectList<PositionPlan> positions, int reused, @Nullable Failure failure) {}
 
     private record LayerOutcome(int reused, @Nullable Failure failure) {}
 
@@ -1345,7 +1347,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
 
     private record RepetitionOutcome(int[] repetitions, @Nullable Failure failure) {}
 
-    private record TierSelection(List<Block> candidateBlocks, @Nullable Block selectedBlock) {
+    private record TierSelection(ObjectList<Block> candidateBlocks, @Nullable Block selectedBlock) {
 
         private boolean isSelected() {
             return this.selectedBlock != null;
@@ -1382,7 +1384,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
 
     private record PositionPlan(BlockPos position,
                                 TraceabilityPredicate predicate,
-                                List<Candidate> candidates,
+                                ObjectList<Candidate> candidates,
                                 boolean requiresPart,
                                 boolean replacesExistingTier) {}
 
@@ -1416,7 +1418,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
         }
     }
 
-    private record AllocationOutcome(List<Placement> placements, int missing, @Nullable Failure failure) {
+    private record AllocationOutcome(ObjectList<Placement> placements, int missing, @Nullable Failure failure) {
 
         private AllocationOutcome {
             if (missing < 0) {
@@ -1424,7 +1426,7 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             }
         }
 
-        private AllocationOutcome(List<Placement> placements, @Nullable Failure failure) {
+        private AllocationOutcome(ObjectList<Placement> placements, @Nullable Failure failure) {
             this(placements, 0, failure);
         }
     }
@@ -1468,57 +1470,60 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
     }
 
     private record StageOutcome(@Nullable Failure failure,
-                                List<StagedBlock> stagedBlocks,
-                                List<DeferredPartPlacement> deferredParts,
-                                List<ReplacementDrop> replacementDrops) {
+                                ObjectList<StagedBlock> stagedBlocks,
+                                ObjectList<DeferredPartPlacement> deferredParts,
+                                ObjectList<ReplacementDrop> replacementDrops) {
 
-        private static StageOutcome success(List<StagedBlock> stagedBlocks,
-                                            List<DeferredPartPlacement> deferredParts,
-                                            List<ReplacementDrop> replacementDrops) {
-            return new StageOutcome(null, List.copyOf(stagedBlocks), List.copyOf(deferredParts),
-                    List.copyOf(replacementDrops));
+        private static StageOutcome success(ObjectList<StagedBlock> stagedBlocks,
+                                            ObjectList<DeferredPartPlacement> deferredParts,
+                                            ObjectList<ReplacementDrop> replacementDrops) {
+            return new StageOutcome(null, ObjectLists.unmodifiable(new ObjectArrayList<>(stagedBlocks)),
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(deferredParts)),
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(replacementDrops)));
         }
 
         private static StageOutcome failure(Failure failure) {
-            return new StageOutcome(failure, List.of(), List.of(), List.of());
+            return new StageOutcome(failure, ObjectList.of(), ObjectList.of(), ObjectList.of());
         }
     }
 
     private record StagingCommit(boolean success,
                                  @Nullable StagedBlock stagedBlock,
-                                 List<ReplacementDrop> replacementDrops) {
+                                 ObjectList<ReplacementDrop> replacementDrops) {
 
-        private static StagingCommit success(@Nullable StagedBlock stagedBlock, List<ReplacementDrop> replacementDrops) {
-            return new StagingCommit(true, stagedBlock, List.copyOf(replacementDrops));
+        private static StagingCommit success(@Nullable StagedBlock stagedBlock, ObjectList<ReplacementDrop> replacementDrops) {
+            return new StagingCommit(true, stagedBlock, ObjectLists.unmodifiable(new ObjectArrayList<>(replacementDrops)));
         }
 
         private static StagingCommit failed() {
-            return new StagingCommit(false, null, List.of());
+            return new StagingCommit(false, null, ObjectList.of());
         }
     }
 
     private record PublicationOutcome(int placed,
                                       @Nullable Failure failure,
-                                      List<ReplacementDrop> releasedReplacementDrops,
-                                      List<Placement> consumedPlacements) {
+                                      ObjectList<ReplacementDrop> releasedReplacementDrops,
+                                      ObjectList<Placement> consumedPlacements) {
 
         private static PublicationOutcome success(int placed,
-                                                  List<ReplacementDrop> releasedReplacementDrops,
-                                                  List<Placement> consumedPlacements) {
-            return new PublicationOutcome(placed, null, List.copyOf(releasedReplacementDrops),
-                    List.copyOf(consumedPlacements));
+                                                  ObjectList<ReplacementDrop> releasedReplacementDrops,
+                                                  ObjectList<Placement> consumedPlacements) {
+            return new PublicationOutcome(placed, null,
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(releasedReplacementDrops)),
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(consumedPlacements)));
         }
 
         private static PublicationOutcome failure(int placed,
                                                   Failure failure,
-                                                  List<ReplacementDrop> releasedReplacementDrops,
-                                                  List<Placement> consumedPlacements) {
-            return new PublicationOutcome(placed, failure, List.copyOf(releasedReplacementDrops),
-                    List.copyOf(consumedPlacements));
+                                                  ObjectList<ReplacementDrop> releasedReplacementDrops,
+                                                  ObjectList<Placement> consumedPlacements) {
+            return new PublicationOutcome(placed, failure,
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(releasedReplacementDrops)),
+                    ObjectLists.unmodifiable(new ObjectArrayList<>(consumedPlacements)));
         }
     }
 
-    private record ReplacementDrop(BlockPos position, List<ItemStack> stacks) {}
+    private record ReplacementDrop(BlockPos position, ObjectList<ItemStack> stacks) {}
 
     private record ReplacementOverflow(BlockPos position, ItemStack stack) {}
 
@@ -1539,8 +1544,8 @@ public final class TransactionalMultiBlockAutoBuild implements MultiBlockAutoBui
             this.physicalSnapshots.putIfAbsent(snapshot.position().asLong(), snapshot);
         }
 
-        private List<WorldSnapshot> physicalSnapshots() {
-            return List.copyOf(this.physicalSnapshots.values());
+        private ObjectList<WorldSnapshot> physicalSnapshots() {
+            return ObjectLists.unmodifiable(new ObjectArrayList<>(this.physicalSnapshots.values()));
         }
     }
 

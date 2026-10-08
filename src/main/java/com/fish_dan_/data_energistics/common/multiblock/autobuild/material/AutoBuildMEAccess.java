@@ -15,9 +15,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 /** Binds the connected structure network and the first usable carried wireless terminal directly through AE2. */
@@ -33,8 +33,8 @@ final class AutoBuildMEAccess implements AutoBuildMaterialSource {
         this.actionSource = actionSource;
     }
 
-    static void addSources(List<AutoBuildMaterialSource> sources, Player player,
-                           Supplier<@Nullable IGrid> connectedGrid, List<AutoBuildInventoryTraversal.Slot> slots) {
+    static void addSources(ObjectList<AutoBuildMaterialSource> sources, Player player,
+                           Supplier<@Nullable IGrid> connectedGrid, ObjectList<AutoBuildInventoryTraversal.Slot> slots) {
         IGrid connected = connectedGrid.get();
         MEStorage connectedStorage = connected == null ? null : connected.getStorageService().getInventory();
         if (connectedStorage != null) {

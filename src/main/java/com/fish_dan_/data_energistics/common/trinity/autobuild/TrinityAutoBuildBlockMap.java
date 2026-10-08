@@ -12,11 +12,11 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /**
  * Maps generic auto-build predicate categories to explicit, one-based tiered Trinity core registrations and the
@@ -40,62 +40,64 @@ public final class TrinityAutoBuildBlockMap {
     private static final int EMPTY_TRINITY_UNIT_RANK = 1;
 
     /** Stable category presentation order shared by the auto-build request UI and payload diagnostics. */
-    private static final List<String> CATEGORY_ORDER = List.of(
+    private static final ObjectList<String> CATEGORY_ORDER = ObjectList.of(
             STORAGE_CORE,
             PARALLEL_CPU_CORE,
             PATTERN_PROCESSING_CORE);
 
     /** Immutable category-to-tier definitions used by validation and runtime block resolution. */
-    private static final Map<String, List<TierDefinition>> CATEGORIES = Map.of(
-            STORAGE_CORE,
-            List.of(
-                    tier("me_digital_storage_core_1k", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_4k", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_16k", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_64k", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_256k", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_1m", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_4m", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_16m", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_64m", TrinityCoreKind.STORAGE_TYPES),
-                    tier("me_digital_storage_core_256m", TrinityCoreKind.STORAGE_TYPES),
-                    emptyTier(TrinityCoreKind.STORAGE_TYPES)),
-            PARALLEL_CPU_CORE,
-            List.of(
-                    tier("me_digital_merged_storage_core_1k", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_4k", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_16k", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_64k", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_256k", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_1m", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_4m", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_16m", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_64m", TrinityCoreKind.PARALLEL_CPU),
-                    tier("me_digital_merged_storage_core_256m", TrinityCoreKind.PARALLEL_CPU),
-                    emptyTier(TrinityCoreKind.PARALLEL_CPU)),
-            PATTERN_PROCESSING_CORE,
-            List.of(
-                    tier("me_digital_pattern_processing_core", TrinityCoreKind.PATTERN_PROCESSING),
-                    tier("extended_me_digital_pattern_processing_core", TrinityCoreKind.PATTERN_PROCESSING),
-                    tier("overlimit_me_digital_pattern_processing_core", TrinityCoreKind.PATTERN_PROCESSING),
-                    emptyTier(TrinityCoreKind.PATTERN_PROCESSING)));
+    private static final Object2ObjectMap<String, ObjectList<TierDefinition>> CATEGORIES = createCategories();
+
+    private static Object2ObjectMap<String, ObjectList<TierDefinition>> createCategories() {
+        Object2ObjectLinkedOpenHashMap<String, ObjectList<TierDefinition>> categories = new Object2ObjectLinkedOpenHashMap<>();
+        categories.put(STORAGE_CORE, ObjectList.of(
+                tier("me_digital_storage_core_1k", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_4k", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_16k", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_64k", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_256k", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_1m", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_4m", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_16m", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_64m", TrinityCoreKind.STORAGE_TYPES),
+                tier("me_digital_storage_core_256m", TrinityCoreKind.STORAGE_TYPES),
+                emptyTier(TrinityCoreKind.STORAGE_TYPES)));
+        categories.put(PARALLEL_CPU_CORE, ObjectList.of(
+                tier("me_digital_merged_storage_core_1k", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_4k", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_16k", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_64k", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_256k", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_1m", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_4m", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_16m", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_64m", TrinityCoreKind.PARALLEL_CPU),
+                tier("me_digital_merged_storage_core_256m", TrinityCoreKind.PARALLEL_CPU),
+                emptyTier(TrinityCoreKind.PARALLEL_CPU)));
+        categories.put(PATTERN_PROCESSING_CORE, ObjectList.of(
+                tier("me_digital_pattern_processing_core", TrinityCoreKind.PATTERN_PROCESSING),
+                tier("extended_me_digital_pattern_processing_core", TrinityCoreKind.PATTERN_PROCESSING),
+                tier("overlimit_me_digital_pattern_processing_core", TrinityCoreKind.PATTERN_PROCESSING),
+                emptyTier(TrinityCoreKind.PATTERN_PROCESSING)));
+        return Object2ObjectMaps.unmodifiable(categories);
+    }
 
     private TrinityAutoBuildBlockMap() {}
 
     /**
      * Returns immutable category metadata without resolving Minecraft block registrations.
      */
-    public static Map<String, List<ResourceLocation>> categories() {
-        Map<String, List<ResourceLocation>> categories = new Object2ObjectLinkedOpenHashMap<>();
+    public static Object2ObjectMap<String, ObjectList<ResourceLocation>> categories() {
+        Object2ObjectLinkedOpenHashMap<String, ObjectList<ResourceLocation>> categories = new Object2ObjectLinkedOpenHashMap<>();
         for (String category : CATEGORY_ORDER) {
-            List<TierDefinition> tiers = CATEGORIES.get(category);
-            List<ResourceLocation> blockIds = new ObjectArrayList<>(tiers.size());
+            ObjectList<TierDefinition> tiers = CATEGORIES.get(category);
+            ObjectArrayList<ResourceLocation> blockIds = new ObjectArrayList<>(tiers.size());
             for (TierDefinition tier : tiers) {
                 blockIds.add(tier.blockId());
             }
-            categories.put(category, List.copyOf(blockIds));
+            categories.put(category, ObjectLists.unmodifiable(blockIds));
         }
-        return Collections.unmodifiableMap(categories);
+        return Object2ObjectMaps.unmodifiable(categories);
     }
 
     /**
@@ -116,7 +118,7 @@ public final class TrinityAutoBuildBlockMap {
      * @return capability kind expected from resolved blocks in that category
      */
     public static TrinityCoreKind coreKind(String category) {
-        List<TierDefinition> tiers = CATEGORIES.get(category);
+        ObjectList<TierDefinition> tiers = CATEGORIES.get(category);
         if (tiers == null) {
             throw new IllegalArgumentException("Unknown Trinity auto-build tier category: " + category);
         }
@@ -175,9 +177,9 @@ public final class TrinityAutoBuildBlockMap {
      * @param tierSelections one category and one one-based tier selected by the request
      * @return immutable block-candidate to selected-block mapping
      */
-    public static Map<Block, Block> selectedTierBlocks(int structureIndex,
-                                                       int repeatCount,
-                                                       Object2IntMap<String> tierSelections) {
+    public static Object2ObjectMap<Block, Block> selectedTierBlocks(int structureIndex,
+                                                                    int repeatCount,
+                                                                    Object2IntMap<String> tierSelections) {
         validateRepeatCount(structureIndex, repeatCount);
         String requiredCategory = categoryForStructure(structureIndex);
         if (tierSelections.size() != 1 || !tierSelections.containsKey(requiredCategory)) {
@@ -190,7 +192,7 @@ public final class TrinityAutoBuildBlockMap {
         for (TierDefinition tier : CATEGORIES.get(requiredCategory)) {
             selections.put(resolveTierBlock(tier), selectedBlock);
         }
-        return Map.copyOf(selections);
+        return Object2ObjectMaps.unmodifiable(selections);
     }
 
     /**
@@ -207,7 +209,7 @@ public final class TrinityAutoBuildBlockMap {
     public static Object2IntMap<Block> tierRanksForStructure(int structureIndex) {
         String category = categoryForStructure(structureIndex);
         Object2IntLinkedOpenHashMap<Block> ranks = new Object2IntLinkedOpenHashMap<>();
-        List<TierDefinition> tiers = CATEGORIES.get(category);
+        ObjectList<TierDefinition> tiers = CATEGORIES.get(category);
         for (int index = 0; index < tiers.size(); index++) {
             TierDefinition tier = tiers.get(index);
             int rank = EMPTY_TRINITY_UNIT_ID.equals(tier.blockId()) ? EMPTY_TRINITY_UNIT_RANK : index + 2;
@@ -225,7 +227,7 @@ public final class TrinityAutoBuildBlockMap {
     }
 
     private static TierDefinition tierDefinition(String category, int tierIndex) {
-        List<TierDefinition> tiers = CATEGORIES.get(category);
+        ObjectList<TierDefinition> tiers = CATEGORIES.get(category);
         if (tiers == null) {
             throw new IllegalArgumentException("Unknown Trinity auto-build tier category: " + category);
         }

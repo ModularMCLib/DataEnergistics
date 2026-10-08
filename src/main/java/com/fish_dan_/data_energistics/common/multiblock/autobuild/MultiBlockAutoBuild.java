@@ -18,9 +18,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -179,7 +180,7 @@ public interface MultiBlockAutoBuild {
         /**
          * Maps every candidate in a selected predicate category to that category's chosen block.
          */
-        private final Map<Block, Block> selectedTierBlocks;
+        private final Object2ObjectMap<Block, Block> selectedTierBlocks;
         /**
          * Maps unexpanded source predicates to the exact candidate index selected in the preview.
          */
@@ -208,7 +209,7 @@ public interface MultiBlockAutoBuild {
             this.front = builder.front;
             this.flipped = builder.flipped;
             this.repeatCount = builder.repeatCount;
-            this.selectedTierBlocks = Map.copyOf(builder.selectedTierBlocks);
+            this.selectedTierBlocks = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(builder.selectedTierBlocks));
             this.candidateSelections = Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(builder.candidateSelections));
             this.tierRanks = Object2IntMaps.unmodifiable(new Object2IntLinkedOpenHashMap<>(builder.tierRanks));
             this.partSideResolver = builder.partSideResolver;
@@ -306,7 +307,7 @@ public interface MultiBlockAutoBuild {
         /**
          * Returns the immutable candidate-to-selected-tier mapping.
          */
-        public Map<Block, Block> selectedTierBlocks() {
+        public Object2ObjectMap<Block, Block> selectedTierBlocks() {
             return this.selectedTierBlocks;
         }
 
@@ -389,7 +390,7 @@ public interface MultiBlockAutoBuild {
             /**
              * Mutable accumulation of candidate-to-tier selections.
              */
-            private final Map<Block, Block> selectedTierBlocks = new Object2ObjectLinkedOpenHashMap<>();
+            private final Object2ObjectMap<Block, Block> selectedTierBlocks = new Object2ObjectLinkedOpenHashMap<>();
             /**
              * Mutable accumulation of exact source-predicate candidate choices.
              */
@@ -490,7 +491,7 @@ public interface MultiBlockAutoBuild {
              * must map to the same candidate block, otherwise the operation fails before materials are reserved.
              * </p>
              */
-            public Builder selectedTierBlocks(Map<Block, Block> selectedTierBlocks) {
+            public Builder selectedTierBlocks(Object2ObjectMap<Block, Block> selectedTierBlocks) {
                 this.selectedTierBlocks.clear();
                 this.selectedTierBlocks.putAll(selectedTierBlocks);
                 return this;

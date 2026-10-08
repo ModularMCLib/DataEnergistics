@@ -19,9 +19,10 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -32,7 +33,7 @@ import java.util.function.Supplier;
 public final class AutoBuildMaterialTransaction {
 
     private final Player player;
-    private final List<SourceBudget> sources;
+    private final ObjectList<SourceBudget> sources;
     private final boolean creative;
     private final Long2ObjectMap<Reservation> reservations = new Long2ObjectLinkedOpenHashMap<>();
     private boolean commitStarted;
@@ -42,10 +43,10 @@ public final class AutoBuildMaterialTransaction {
 
     /** Opens ME and recursive player sources; creative players never query either source. */
     public static AutoBuildMaterialTransaction open(Player player, Supplier<@Nullable IGrid> connectedGrid) {
-        if (player.isCreative()) return new AutoBuildMaterialTransaction(player, List.of());
-        List<AutoBuildInventoryTraversal.Slot> slots = new AutoBuildInventoryTraversal().collect(
+        if (player.isCreative()) return new AutoBuildMaterialTransaction(player, ObjectList.of());
+        ObjectList<AutoBuildInventoryTraversal.Slot> slots = new AutoBuildInventoryTraversal().collect(
                 new InvWrapper(player.getInventory()));
-        List<AutoBuildMaterialSource> sources = new ObjectArrayList<>();
+        ObjectList<AutoBuildMaterialSource> sources = new ObjectArrayList<>();
         AutoBuildMEAccess.addSources(sources, player, connectedGrid, slots);
         for (AutoBuildInventoryTraversal.Slot slot : slots) {
             sources.add(slot);
@@ -54,10 +55,12 @@ public final class AutoBuildMaterialTransaction {
         return new AutoBuildMaterialTransaction(player, sources);
     }
 
-    private AutoBuildMaterialTransaction(Player player, List<AutoBuildMaterialSource> sources) {
+    private AutoBuildMaterialTransaction(Player player, ObjectList<AutoBuildMaterialSource> sources) {
         this.player = player;
         this.creative = player.isCreative();
-        this.sources = sources.stream().map(SourceBudget::new).toList();
+        ObjectArrayList<SourceBudget> budgets = new ObjectArrayList<>(sources.size());
+        for (AutoBuildMaterialSource source : sources) budgets.add(new SourceBudget(source));
+        this.sources = ObjectLists.unmodifiable(budgets);
     }
 
     /** Tests the remaining simulated budget for an exact nonempty candidate without reserving it. */
@@ -75,34 +78,34 @@ public final class AutoBuildMaterialTransaction {
      * Reserves one approved candidate for a unique world position, preferring source order before candidate order.
      * Returns the exact selected key and quantity, or null when none is available; missing positions are not reserved.
      */
-    public @Nullable GenericStack reserve(BlockPos position, List<GenericStack> candidates) {
+    public @Nullable GenericStack reserve(BlockPos position, ObjectList<GenericStack> candidates) {
         requirePlanning();
         long packedPosition = position.asLong();
         if (reservations.containsKey(packedPosition)) throw new IllegalArgumentException("Position already reserved: " + position);
         if (candidates.isEmpty()) return null;
         if (creative) {
-            reservations.put(packedPosition, new Reservation(candidates.getFirst().what(), List.of()));
+            reservations.put(packedPosition, new Reservation(candidates.getFirst().what(), ObjectList.of()));
             return candidates.getFirst();
         }
         for (int first = 0; first < sources.size(); first++) {
             for (GenericStack candidate : candidates) {
-                List<Debit> debits = plan(candidate, first);
+                ObjectList<Debit> debits = plan(candidate, first);
                 if (debits == null) continue;
                 for (Debit debit : debits) {
                     debit.source().reserved.mergeLong(candidate.what(), debit.amount(), Math::addExact);
                 }
-                reservations.put(packedPosition, new Reservation(candidate.what(), List.copyOf(debits)));
+                reservations.put(packedPosition, new Reservation(candidate.what(), ObjectLists.unmodifiable(debits)));
                 return candidate;
             }
         }
         return null;
     }
 
-    private @Nullable List<Debit> plan(GenericStack material, int first) {
+    private @Nullable ObjectList<Debit> plan(GenericStack material, int first) {
         long needed = material.amount();
         if (needed <= 0) throw new IllegalArgumentException("Material amount must be positive");
         if (sources.get(first).extractable(material.what(), needed) == 0) return null;
-        List<Debit> debits = new ObjectArrayList<>();
+        ObjectList<Debit> debits = new ObjectArrayList<>();
         // Retry from later sources when an earlier partial allocation would require splitting a whole bucket.
         for (int index = first; index < sources.size(); index++) {
             SourceBudget source = sources.get(index);
@@ -251,7 +254,7 @@ public final class AutoBuildMaterialTransaction {
     /** Result of actual refund delivery, with diagnostic detail only on failure. */
     public record RefundOutcome(boolean completed, @Nullable String detail) {}
 
-    private record Reservation(AEKey key, List<Debit> debits) {}
+    private record Reservation(AEKey key, ObjectList<Debit> debits) {}
 
     private record Debit(SourceBudget source, long amount) {}
 

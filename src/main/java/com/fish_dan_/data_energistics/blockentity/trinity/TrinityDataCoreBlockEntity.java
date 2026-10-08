@@ -127,6 +127,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -140,7 +141,6 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -954,7 +954,7 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
         JsonMultiBlockDefinition definition = autoBuildDefinition(structureIndex);
         String structureName = autoBuildStructureName(structureIndex);
         StructureWorldView world = new LevelStructureWorldView(serverLevel);
-        Map<Block, Block> selectedTierBlocks = TrinityAutoBuildBlockMap.selectedTierBlocks(
+        Object2ObjectMap<Block, Block> selectedTierBlocks = TrinityAutoBuildBlockMap.selectedTierBlocks(
                 structureIndex,
                 request.options().repeatCount(),
                 request.options().tierSelections());

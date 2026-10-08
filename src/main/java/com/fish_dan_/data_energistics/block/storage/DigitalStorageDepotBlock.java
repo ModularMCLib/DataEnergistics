@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.block.storage;
 
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotBlockEntity;
-import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseBlock;
 import appeng.menu.MenuOpener;

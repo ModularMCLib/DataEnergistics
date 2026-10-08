@@ -223,5 +223,4 @@ public final class TrinityFiringComplementOptimizer {
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         return net;
     }
-
 }

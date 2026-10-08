@@ -469,11 +469,12 @@ public final class CountedCraftingProviderAdapters {
                                                              PreparationContext context) {
         return prepareProviderTarget(
                 new CountedCraftingProviderAdapter() {
+
                     @Override
                     public CountedCraftingAdmission prepareBatch(
-                                                                  IPatternDetails details,
-                                                                  KeyCounter[] ignoredPrototype,
-                                                                  long ignoredCount) {
+                                                                 IPatternDetails details,
+                                                                 KeyCounter[] ignoredPrototype,
+                                                                 long ignoredCount) {
                         return new SingleCraftingAdmission(provider, details);
                     }
 

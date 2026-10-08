@@ -250,5 +250,4 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
             return new MimeticGeneratedOutput(this.items, this.experience);
         }
     }
-
 }

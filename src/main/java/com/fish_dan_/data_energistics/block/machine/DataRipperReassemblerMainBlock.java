@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.block.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
-import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 
 import appeng.hooks.WrenchHook;
 import appeng.menu.MenuOpener;

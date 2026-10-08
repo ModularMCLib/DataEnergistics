@@ -43,7 +43,6 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.UUID;
 
 /** Runs Extended Crafting's four table tiers through their actual menu result slot. */

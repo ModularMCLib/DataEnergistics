@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
-import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
-import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataRipperSchema;
 import com.fish_dan_.data_energistics.menu.patternencoding.MenuClientRefresh;
 import com.fish_dan_.data_energistics.part.DataRipperPart;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
+import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 
 import appeng.api.config.YesNo;
 import appeng.api.util.IConfigManager;

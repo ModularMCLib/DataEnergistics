@@ -75,5 +75,4 @@ public final class TrinityDeterministicFiringMath {
     public static BigInteger sum(Map<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(ZERO, BigInteger::add);
     }
-
 }

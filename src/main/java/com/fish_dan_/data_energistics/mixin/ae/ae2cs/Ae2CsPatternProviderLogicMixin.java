@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2cs;
 
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderHostAccessor;
-import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.PatternProviderLogicFieldAccessor;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;

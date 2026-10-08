@@ -34,7 +34,6 @@ import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateG
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateGraph.TargetLinkStatus;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetDisplayResolverContext;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetSummaryResolver;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
@@ -47,6 +46,7 @@ import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.util.ThrowableIsolation;
 
 import appeng.api.AECapabilities;

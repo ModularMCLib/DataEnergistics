@@ -2,12 +2,12 @@ package com.fish_dan_.data_energistics.util;
 
 import com.fish_dan_.data_energistics.registry.DEItems;
 
-import appeng.api.upgrades.IUpgradeInventory;
-import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.upgrades.IUpgradeInventory;
+import appeng.api.upgrades.IUpgradeableObject;
 
 import net.minecraft.server.level.ServerLevel;
 
@@ -93,7 +93,7 @@ public final class RedstoneTuningUtils {
     }
 
     private static @Nullable IUpgradeInventory invokeUpgradeInventoryMethod(
-            Object target, String methodName) {
+                                                                            Object target, String methodName) {
         Object result = ReflectionAccess.invokeNoArg(target, methodName);
         return result instanceof IUpgradeInventory upgradeInventory ? upgradeInventory : null;
     }

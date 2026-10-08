@@ -10,8 +10,6 @@ import com.fish_dan_.data_energistics.blockentity.machine.mimetic.MimeticGenerat
 import com.fish_dan_.data_energistics.common.acceleration.BatchTickProgression;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
-import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.item.carrier.BiologyDataCarrierData;
@@ -21,6 +19,8 @@ import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;

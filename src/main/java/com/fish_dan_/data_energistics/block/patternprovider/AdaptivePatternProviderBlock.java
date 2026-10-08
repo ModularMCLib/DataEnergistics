@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.block.patternprovider;
 
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
-import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseEntityBlock;
 import appeng.block.crafting.PatternProviderBlock;

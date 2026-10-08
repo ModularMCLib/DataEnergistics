@@ -3,8 +3,8 @@ package com.fish_dan_.data_energistics.common.trinity.pattern;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.pattern.ProviderIdentity;
-import com.fish_dan_.data_energistics.util.StableDigest;
 import com.fish_dan_.data_energistics.util.ItemStackUtils;
+import com.fish_dan_.data_energistics.util.StableDigest;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;

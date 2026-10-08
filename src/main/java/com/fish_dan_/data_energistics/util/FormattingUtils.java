@@ -31,7 +31,8 @@ public final class FormattingUtils {
     private FormattingUtils() {}
 
     /**
-     * Formats a non-negative planning duration with a compact unit selected from microseconds, milliseconds, and seconds.
+     * Formats a non-negative planning duration with a compact unit selected from microseconds, milliseconds, and
+     * seconds.
      *
      * @param nanos duration measured with {@link System#nanoTime()}
      * @return duration rounded to one decimal place with a dynamically selected unit

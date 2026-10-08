@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider.packaged;
 
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
-import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
@@ -51,8 +51,8 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
 
             @Override
             public @Nullable CountedCraftingAdmission prepareBatch(
-                                                                    IPatternDetails pattern, KeyCounter[] prototype,
-                                                                    long requested) {
+                                                                   IPatternDetails pattern, KeyCounter[] prototype,
+                                                                   long requested) {
                 var adjacent = new ObjectArrayList<ConnectorLink>();
                 for (var side : target.targetSidesFast()) {
                     adjacent.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));

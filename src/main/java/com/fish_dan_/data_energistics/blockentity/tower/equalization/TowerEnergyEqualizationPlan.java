@@ -1,10 +1,11 @@
 package com.fish_dan_.data_energistics.blockentity.tower.equalization;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Immutable two-phase FE transfer plan produced from one frozen tower snapshot.
@@ -18,11 +19,11 @@ import java.util.Set;
  * @param sources ordered positive withdrawals
  * @param sinks   ordered positive deposits
  */
-public record TowerEnergyEqualizationPlan(List<TowerEnergySourceAllocation> sources,
-                                          List<TowerEnergySinkAllocation> sinks) {
+public record TowerEnergyEqualizationPlan(ObjectList<TowerEnergySourceAllocation> sources,
+                                          ObjectList<TowerEnergySinkAllocation> sinks) {
 
     /** Shared immutable result for snapshots that require no transfer. */
-    private static final TowerEnergyEqualizationPlan EMPTY = new TowerEnergyEqualizationPlan(List.of(), List.of());
+    private static final TowerEnergyEqualizationPlan EMPTY = new TowerEnergyEqualizationPlan(ObjectList.of(), ObjectList.of());
 
     /**
      * Defensively copies operations and verifies uniqueness and energy conservation.
@@ -31,10 +32,10 @@ public record TowerEnergyEqualizationPlan(List<TowerEnergySourceAllocation> sour
      * @param sinks   ordered positive deposits
      */
     public TowerEnergyEqualizationPlan {
-        sources = List.copyOf(sources);
-        sinks = List.copyOf(sinks);
+        sources = new ObjectImmutableList<>(sources);
+        sinks = new ObjectImmutableList<>(sinks);
 
-        Set<TowerEnergyEndpointId> sourceEndpoints = new ObjectOpenHashSet<>();
+        ObjectSet<TowerEnergyEndpointId> sourceEndpoints = new ObjectOpenHashSet<>();
         BigInteger sourceTotal = BigInteger.ZERO;
         for (TowerEnergySourceAllocation source : sources) {
             if (!sourceEndpoints.add(source.endpoint())) {
@@ -43,7 +44,7 @@ public record TowerEnergyEqualizationPlan(List<TowerEnergySourceAllocation> sour
             sourceTotal = sourceTotal.add(BigInteger.valueOf(source.amount()));
         }
 
-        Set<TowerEnergyEndpointId> sinkEndpoints = new ObjectOpenHashSet<>();
+        ObjectSet<TowerEnergyEndpointId> sinkEndpoints = new ObjectOpenHashSet<>();
         BigInteger sinkTotal = BigInteger.ZERO;
         for (TowerEnergySinkAllocation sink : sinks) {
             if (!sinkEndpoints.add(sink.endpoint())) {

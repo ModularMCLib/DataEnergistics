@@ -69,6 +69,8 @@ import net.minecraft.world.level.Level;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
@@ -91,7 +93,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     private static final int BRIDGE_FAILURE_LOG_INTERVAL_TICKS = 100;
     private static final int ENERGY_FAILURE_LOG_INTERVAL_TICKS = 100;
     private static final TowerEnergyTransactionResult EMPTY_ENERGY_RESULT = new TowerEnergyTransactionResult(
-            List.of(), 0, 0, 0, false, "");
+            ObjectList.of(), 0, 0, 0, false, "");
     private static final Comparator<TowerEnergyEndpointId> ENERGY_ENDPOINT_ORDER = Comparator
             .comparing((TowerEnergyEndpointId endpoint) -> endpoint.dimensionId().toString())
             .thenComparingInt(endpoint -> endpoint.pos().getX())
@@ -114,7 +116,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     private final SharedTowerEnergyPort energyPort;
     private final TowerChannelCapacity capacityCalculator = new ControllerChannelCapacity();
     private List<IGridNode> cachedLocalNodes = List.of();
-    private List<TowerEnergyTransferEndpoint> energyEndpoints = List.of();
+    private ObjectList<TowerEnergyTransferEndpoint> energyEndpoints = ObjectList.of();
     private TowerEnergyTransactionResult lastEnergyResult = EMPTY_ENERGY_RESULT;
     private long nextRegistrationOrder;
     private long revision;
@@ -153,8 +155,8 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     @Override
     public void invalidate(TowerNetworkDomainChange reason) {
         this.revision = Math.incrementExact(this.revision);
-        this.energyEndpoints = List.of();
-        this.energyPort.replaceEndpoints(List.of());
+        this.energyEndpoints = ObjectList.of();
+        this.energyPort.replaceEndpoints(ObjectList.of());
     }
 
     @Override
@@ -363,7 +365,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
                     source,
                     queueOrder,
                     enabled,
-                    List.of(new VirtualChannelNodeRequest<>(
+                    ObjectList.<VirtualChannelNodeRequest<IGridNode>>of(new VirtualChannelNodeRequest<>(
                             deviceWork.device().node(), 0, deviceWork.device().requiresChannel()))));
             devicesByLease.put(leaseKey, deviceWork);
         }
@@ -440,11 +442,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
     /**
      * Builds one stable cross-dimensional endpoint topology shared by every active tower on this primary grid.
      */
-    private List<TowerEnergyTransferEndpoint> dataEnergistics$buildEnergyTopology(
-                                                                                  List<TowerWork> towerWorks,
-                                                                                  Map<DeviceLeaseKey, DeviceWork> devicesByLease,
-                                                                                  Map<DeviceLeaseKey, VirtualChannelNodeAllocation<IGridNode>> allocations,
-                                                                                  Set<IGrid> bridgeFailures) {
+    private ObjectList<TowerEnergyTransferEndpoint> dataEnergistics$buildEnergyTopology(
+                                                                                        List<TowerWork> towerWorks,
+                                                                                        Map<DeviceLeaseKey, DeviceWork> devicesByLease,
+                                                                                        Map<DeviceLeaseKey, VirtualChannelNodeAllocation<IGridNode>> allocations,
+                                                                                        Set<IGrid> bridgeFailures) {
         Map<EnergyLocationKey, TowerEnergyLocation> locations = new Object2ObjectLinkedOpenHashMap<>();
         for (TowerWork towerWork : towerWorks) {
             TowerNetworkParticipant participant = towerWork.participant();
@@ -516,11 +518,11 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             }
         }
         ObjectArrayList<TowerEnergyTransferEndpoint> endpoints = new ObjectArrayList<>(orderedRouteGroups.size());
-        for (List<TowerEnergyTransferEndpoint> routes : orderedRouteGroups) {
+        for (ObjectArrayList<TowerEnergyTransferEndpoint> routes : orderedRouteGroups) {
             endpoints.add(routes.size() == 1 ? routes.getFirst() : new MultiRouteEnergyTransferEndpoint(routes));
         }
         endpoints.sort(Comparator.comparing(TowerEnergyTransferEndpoint::endpoint, ENERGY_ENDPOINT_ORDER));
-        return List.copyOf(endpoints);
+        return new ObjectImmutableList<>(endpoints);
     }
 
     private static TowerDomainEnergyEndpoint applyConnectorDirection(
@@ -749,7 +751,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             for (BindingWork bindingWork : towerWork.bindings()) {
                 BindingIdentity identity = new BindingIdentity(
                         towerWork.participant().towerKey(), bindingWork.binding().fifoSequence());
-                List<TowerVirtualDeviceSnapshot> devices = List.copyOf(
+                ObjectList<TowerVirtualDeviceSnapshot> devices = new ObjectImmutableList<>(
                         deviceSnapshots.getOrDefault(identity, new ObjectArrayList<>()));
                 BindingState bindingState = dataEnergistics$bindingState(
                         towerWork, bindingWork, ownership, devices, bridgeFailures);

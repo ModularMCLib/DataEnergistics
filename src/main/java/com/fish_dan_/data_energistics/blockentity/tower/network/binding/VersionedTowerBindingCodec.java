@@ -14,10 +14,10 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Reads and writes the current tower binding schema.
@@ -101,7 +101,7 @@ public final class VersionedTowerBindingCodec {
                 throw new IllegalArgumentException("Tower bindings contain duplicate FIFO sequence " + fifoSequence);
             }
             boolean enabled = !bindingTag.contains("enabled") || bindingTag.getBoolean("enabled");
-            Set<TowerDeviceKey> disabledDeviceKeys = readDeviceKeys(bindingTag);
+            ObjectSet<TowerDeviceKey> disabledDeviceKeys = readDeviceKeys(bindingTag);
             EnergyTransferDirection direction = readEnergyDirection(bindingTag);
             int targetSide = bindingTag.contains("target_side") ? bindingTag.getInt("target_side") : -1;
             bindings.add(new TowerBinding(
@@ -123,9 +123,9 @@ public final class VersionedTowerBindingCodec {
         }
     }
 
-    private static Set<TowerDeviceKey> readDeviceKeys(CompoundTag bindingTag) {
+    private static ObjectSet<TowerDeviceKey> readDeviceKeys(CompoundTag bindingTag) {
         if (!bindingTag.contains("disabled_devices")) {
-            return Set.of();
+            return new ObjectOpenHashSet<>();
         }
         if (!bindingTag.contains("disabled_devices", Tag.TAG_LIST)) {
             throw new IllegalArgumentException("Tower binding disabled-device data is not a list");
@@ -145,7 +145,7 @@ public final class VersionedTowerBindingCodec {
                 throw new IllegalArgumentException("Tower binding contains a duplicate disabled-device key");
             }
         }
-        return Set.copyOf(result);
+        return result;
     }
 
     private static ResourceLocation parseId(String serializedId, String fieldName) {

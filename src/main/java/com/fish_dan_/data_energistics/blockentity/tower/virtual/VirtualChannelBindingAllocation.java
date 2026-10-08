@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable allocation result for one bound device.
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public record VirtualChannelBindingAllocation<B, N>(B bindingKey, VirtualChannelBindingSource source,
                                                     long fifoOrder, boolean enabled,
-                                                    List<VirtualChannelNodeAllocation<N>> nodes) {
+                                                    ObjectList<VirtualChannelNodeAllocation<N>> nodes) {
 
     /**
      * Defensively copies the node allocation list.
@@ -24,7 +25,7 @@ public record VirtualChannelBindingAllocation<B, N>(B bindingKey, VirtualChannel
         if (fifoOrder < 0) {
             throw new IllegalArgumentException("Virtual channel binding FIFO order must not be negative");
         }
-        nodes = List.copyOf(nodes);
+        nodes = new ObjectImmutableList<>(nodes);
     }
 
     /**

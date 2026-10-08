@@ -111,6 +111,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import lombok.Getter;
@@ -119,6 +120,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -632,11 +634,8 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                                                         TowerDeviceKey deviceKey,
                                                         boolean disabled) {
         Level towerLevel = this.level;
-        if (towerLevel != null && ownerTower.dimensionId().equals(towerLevel.dimension().location()) && ownerTower.position().equals(this.worldPosition) && dimensionId.equals(towerLevel.dimension().location()) && setVirtualDeviceDisabled(
-                targetPos, deviceKey, disabled)) {
-            return true;
-        }
-        return false;
+        return towerLevel != null && ownerTower.dimensionId().equals(towerLevel.dimension().location()) && ownerTower.position().equals(this.worldPosition) && dimensionId.equals(towerLevel.dimension().location()) && setVirtualDeviceDisabled(
+                targetPos, deviceKey, disabled);
     }
 
     public void setConnectionMode(@Nullable ConnectionMode connectionMode) {
@@ -2579,7 +2578,6 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
     }
 
     private void removeTargetNormalized(BlockPos normalizedPos) {
-        TowerBinding binding = this.towerBindings.get(normalizedPos);
         transitionTargetState(normalizedPos, TargetLinkState.INVALID, TargetLinkFailure.NONE, 0);
         this.linkGraph.removeLinked(normalizedPos);
         this.towerBindings.remove(normalizedPos);
@@ -2638,7 +2636,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
         }
 
         boolean enabled = getTargetTransferMode(normalizedPos) != TargetTransferMode.DISABLED;
-        Set<TowerDeviceKey> disabledDevices = existing == null ? Set.of() : existing.disabledDeviceKeys();
+        ObjectSet<TowerDeviceKey> disabledDevices = existing == null ? new ObjectOpenHashSet<>() : existing.disabledDeviceKeys();
         TowerBinding binding = new TowerBinding(
                 targetLevel.dimension().location(),
                 normalizedPos,
@@ -2912,10 +2910,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             }
         }
         BlockPos networkPortPos = DataSanctumBlockEntity.findNetworkPortPos(level, targetPos);
-        if (networkPortPos != null) {
-            return networkPortPos.immutable();
-        }
-        return targetPos.immutable();
+        return Objects.requireNonNullElse(networkPortPos, targetPos).immutable();
     }
 
     private void emitDiagnosticLogIfNeeded() {
@@ -3222,33 +3217,6 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
                 Level.OVERWORLD.location(),
                 BlockPos.ZERO,
                 null);
-
-        /**
-         * Creates a legacy aggregate row without a virtual-device identity.
-         */
-        public TargetTransferInfo(int channelConnections,
-                                  boolean hasAeTarget,
-                                  boolean hasEnergyTarget,
-                                  long storedFe,
-                                  long capacityFe,
-                                  boolean canExtractFe,
-                                  boolean canReceiveFe) {
-            this(
-                    channelConnections,
-                    hasAeTarget,
-                    hasEnergyTarget,
-                    storedFe,
-                    capacityFe,
-                    canExtractFe,
-                    canReceiveFe,
-                    channelConnections,
-                    TowerVirtualDeviceState.ALLOCATED,
-                    "",
-                    new TowerRuntimeKey(Level.OVERWORLD.location(), BlockPos.ZERO),
-                    Level.OVERWORLD.location(),
-                    BlockPos.ZERO,
-                    null);
-        }
 
         /**
          * Validates and freezes one per-binding or per-device payload snapshot.

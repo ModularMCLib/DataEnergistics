@@ -2,7 +2,8 @@ package com.fish_dan_.data_energistics.blockentity.tower.network.energy;
 
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable result of one domain FE equalization attempt.
@@ -14,7 +15,7 @@ import java.util.List;
  * @param mutated       whether at least one endpoint changed
  * @param failure       concise failure reason, empty after a complete or balanced transaction
  */
-public record TowerEnergyTransactionResult(List<TowerEnergyEndpointSnapshot> snapshots,
+public record TowerEnergyTransactionResult(ObjectList<TowerEnergyEndpointSnapshot> snapshots,
                                            long plannedFe,
                                            long insertedFe,
                                            long quarantinedFe,
@@ -28,6 +29,6 @@ public record TowerEnergyTransactionResult(List<TowerEnergyEndpointSnapshot> sna
         if (plannedFe < 0 || insertedFe < 0 || insertedFe > plannedFe || quarantinedFe < 0) {
             throw new IllegalArgumentException("Tower energy transaction counters are invalid");
         }
-        snapshots = List.copyOf(snapshots);
+        snapshots = new ObjectImmutableList<>(snapshots);
     }
 }

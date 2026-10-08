@@ -8,17 +8,18 @@ import net.minecraft.network.codec.StreamCodec;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Atomic client-facing snapshot of one Trinity Data Core's capacity and exact stored keys.
  */
 public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
                                          int firstEntry,
-                                         List<Entry> entries) {
+                                         ObjectList<Entry> entries) {
 
     public static final int VISIBLE_ROW_COUNT = 8;
     public static final int PAGE_SIZE = VISIBLE_ROW_COUNT;
@@ -26,7 +27,9 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
     public static final TrinityDataCoreStorageView EMPTY = new TrinityDataCoreStorageView(
             TrinityDataCoreStorageStatus.EMPTY,
             0,
-            List.of());
+            ObjectList.of());
+    private static final Codec<ObjectList<Entry>> ENTRIES_CODEC = Entry.CODEC.listOf()
+            .xmap(ObjectArrayList::new, entries -> new ObjectArrayList<>(entries));
     public static final Codec<TrinityDataCoreStorageView> CODEC = RecordCodecBuilder.create(instance -> instance
             .group(
                     TrinityDataCoreStorageStatus.CODEC
@@ -35,7 +38,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
                     Codec.INT
                             .fieldOf("first_entry")
                             .forGetter(TrinityDataCoreStorageView::firstEntry),
-                    Entry.CODEC.listOf()
+                    ENTRIES_CODEC
                             .fieldOf("entries")
                             .forGetter(TrinityDataCoreStorageView::entries))
             .apply(instance, TrinityDataCoreStorageView::new));
@@ -50,7 +53,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
         if (entries.size() > PAGE_SIZE) {
             throw new IllegalArgumentException("Trinity storage view exceeds the synchronized entry limit");
         }
-        List<Entry> sorted = new ObjectArrayList<>(entries);
+        ObjectArrayList<Entry> sorted = new ObjectArrayList<>(entries);
         if (sorted.contains(null)) {
             throw new IllegalArgumentException("Trinity storage view must not contain null entries");
         }
@@ -66,7 +69,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
         if ((long) firstEntry + sorted.size() > status.typeCount()) {
             throw new IllegalArgumentException("Trinity storage page extends beyond its exact type range");
         }
-        entries = List.copyOf(sorted);
+        entries = new ObjectImmutableList<>(sorted);
     }
 
     private static void encode(RegistryFriendlyByteBuf buffer, TrinityDataCoreStorageView value) {
@@ -85,7 +88,7 @@ public record TrinityDataCoreStorageView(TrinityDataCoreStorageStatus status,
         if (count < 0 || count > PAGE_SIZE) {
             throw new IllegalArgumentException("Invalid synchronized Trinity storage entry count: " + count);
         }
-        List<Entry> entries = new ObjectArrayList<>(count);
+        ObjectArrayList<Entry> entries = new ObjectArrayList<>(count);
         for (int index = 0; index < count; index++) {
             entries.add(Entry.STREAM_CODEC.decode(buffer));
         }

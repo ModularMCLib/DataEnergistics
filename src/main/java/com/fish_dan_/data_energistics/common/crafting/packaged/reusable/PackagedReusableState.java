@@ -60,7 +60,6 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -479,7 +478,7 @@ public final class PackagedReusableState {
                 }
 
                 @Override
-                public void acceptOutputs(Identity identity, List<GenericStack> produced) {
+                public void acceptOutputs(Identity identity, ObjectList<GenericStack> produced) {
                     for (GenericStack stack : produced) outputs.merge(stack.what(), BigInteger.valueOf(stack.amount()), BigInteger::add);
                 }
 
@@ -551,7 +550,7 @@ public final class PackagedReusableState {
                     successors.add(new GenericStack(successor, recovered));
                 }
             }
-            tools.add(new ToolOutcome(tool.slot(), successors, List.of()));
+            tools.add(new ToolOutcome(tool.slot(), successors, ObjectList.of()));
         }
         var returned = new ObjectArrayList<GenericStack>();
         for (var stack : actual) if (stack.getLongValue() > 0) returned.add(new GenericStack(stack.getKey(), stack.getLongValue()));

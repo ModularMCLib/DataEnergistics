@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
@@ -76,7 +77,7 @@ public final class ReusableInputPlanningCursor {
     private List<GenericStack> encodedOptions = List.of();
     private int[] selected = new int[0];
     private List<GenericStack> assignment = List.of();
-    private List<GenericStack> actual = List.of();
+    private ObjectList<GenericStack> actual = ObjectList.of();
     private List<TrinityBoundPatternInput> captured = new ObjectArrayList<>();
     private boolean reusable;
     private boolean anyReusable;

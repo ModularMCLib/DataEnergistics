@@ -47,9 +47,9 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -65,7 +65,7 @@ public final class VanillaRetainedInputRulesGameTest {
     public static void registeredBookRulePreservesActualOriginal(GameTestHelper helper) {
         ItemStack original = new ItemStack(Items.WRITTEN_BOOK);
         original.set(DataComponents.WRITTEN_BOOK_CONTENT, new WrittenBookContent(Filterable.passThrough("Original"), "Trinity", 0,
-                List.of(Filterable.passThrough(Component.literal("Retained page"))), true));
+                ObjectList.of(Filterable.passThrough(Component.literal("Retained page"))), true));
         original.set(DataComponents.CUSTOM_NAME, Component.literal("retained book"));
         verify(helper, ResourceLocation.withDefaultNamespace("book_cloning"), original, new ItemStack(Items.WRITABLE_BOOK));
         helper.succeed();
@@ -96,14 +96,14 @@ public final class VanillaRetainedInputRulesGameTest {
         AECraftingPattern pattern = new AECraftingPattern(AEItemKey.of(encoded), level);
         var rules = DataEnergisticsEntrypointLoader.snapshot().reusableInputs();
         helper.assertTrue(rules.mayMatch(pattern, Optional.of(recipeId)), "Production plugin discovers the native recipe");
-        List<GenericStack> exact = new ObjectArrayList<>();
+        ObjectList<GenericStack> exact = new ObjectArrayList<>();
         for (var slot : pattern.getInputs()) {
             GenericStack template = slot.getPossibleInputs()[0];
             exact.add(new GenericStack(template.what(), Math.multiplyExact(template.amount(), slot.getMultiplier())));
         }
         int retained = 0;
-        List<Input> requirements = new ObjectArrayList<>();
-        List<SlotStack> tools = new ObjectArrayList<>();
+        ObjectList<Input> requirements = new ObjectArrayList<>();
+        ObjectList<SlotStack> tools = new ObjectArrayList<>();
         for (int slot = 0; slot < exact.size(); slot++) {
             var context = ReusableInputContext.builder().pattern(pattern).actualInput(exact.get(slot)).exactInputs(exact).inputSlot(slot)
                     .ownership(Ownership.CPU_SUPPLIED).actionSource(IActionSource.empty()).level(level).recipeId(Optional.of(recipeId))
@@ -114,12 +114,12 @@ public final class VanillaRetainedInputRulesGameTest {
                 helper.assertValueEqual(rule.orElseThrow().advance(AEItemKey.of(original), 1_000).successor(), AEItemKey.of(original),
                         "Frozen rule preserves every original component across repeated uses");
                 retained++;
-                requirements.add(new Input(slot, List.of(), Optional.of(new Tool(exact.get(slot).amount(), Ownership.CPU_SUPPLIED,
+                requirements.add(new Input(slot, ObjectList.of(), Optional.of(new Tool(exact.get(slot).amount(), Ownership.CPU_SUPPLIED,
                         rule.orElseThrow(), Optional.of(AEItemKey.of(original))))));
                 tools.add(new SlotStack(slot, exact.get(slot)));
             } else {
                 helper.assertTrue(rule.isEmpty(), "Ordinary material cannot become a reusable input");
-                requirements.add(new Input(slot, List.of(exact.get(slot)), Optional.empty()));
+                requirements.add(new Input(slot, ObjectList.of(exact.get(slot)), Optional.empty()));
             }
         }
         helper.assertValueEqual(retained, 1, "Exactly one original slot is retained");
@@ -152,7 +152,7 @@ public final class VanillaRetainedInputRulesGameTest {
                 "All 1000 actual copies enter the existing output queue");
         endpoint.close(session, host);
         helper.assertTrue(endpoint.settle(session, settlement -> {
-            helper.assertValueEqual(settlement.returnedAssetsFast(), List.of(new GenericStack(AEItemKey.of(original), 1)),
+            helper.assertValueEqual(settlement.returnedAssetsFast(), ObjectList.of(new GenericStack(AEItemKey.of(original), 1)),
                     "The original is returned once, not multiplied by the batch size");
             return true;
         }, host), "The completed native batch settles normally");

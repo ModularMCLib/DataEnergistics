@@ -10,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -22,14 +21,6 @@ import java.util.Objects;
 public record DynamicCraftingOutput(GenericStack plannedOutput,
                                     ProcessingMatchMode matchMode,
                                     ObjectList<ResourceLocation> tags) {
-
-    public DynamicCraftingOutput(GenericStack plannedOutput, ProcessingMatchMode matchMode, List<ResourceLocation> tags) {
-        this(plannedOutput, matchMode, new ObjectImmutableList<>(tags));
-    }
-
-    public DynamicCraftingOutput(GenericStack plannedOutput, ProcessingMatchMode matchMode) {
-        this(plannedOutput, matchMode, ObjectList.of());
-    }
 
     /**
      * Rejects declarations that cannot be represented safely by the supported matching policies.

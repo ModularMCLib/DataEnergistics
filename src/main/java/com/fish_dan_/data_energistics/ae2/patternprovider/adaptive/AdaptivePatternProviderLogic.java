@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
-import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.reusable.AdaptiveReusableCraftingState;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
@@ -49,6 +48,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypoin
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;
@@ -1127,7 +1127,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
             }
 
             @Override
-            public void acceptOutputs(Identity identity, List<GenericStack> outputs) {
+            public void acceptOutputs(Identity identity, ObjectList<GenericStack> outputs) {
                 var target = activeDispatchTarget();
                 if (target != null) {
                     target.dispatch().acceptReusableOutputsFast(target, new ObjectArrayList<>(outputs));

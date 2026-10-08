@@ -19,9 +19,10 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Native endpoint metadata plus complete session escrows; embedded directly in the owning core/provider state. */
@@ -61,7 +62,7 @@ public final class ReusableCraftingEndpointNbtCodec {
 
     /** Decodes into detached state before the owner swaps it into its live core. */
     public static PersistentReusableCraftingEndpoint decode(CompoundTag tag, HolderLookup.Provider registries) {
-        List<EntrySnapshot> snapshots = new ObjectArrayList<>();
+        ObjectArrayList<EntrySnapshot> snapshots = new ObjectArrayList<>();
         for (Tag encoded : tag.getList("sessions", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             CompoundTag nativeResult = entry.getCompound("native_result");
@@ -69,7 +70,7 @@ public final class ReusableCraftingEndpointNbtCodec {
             ReusableInputSession session = recorded != null && recorded.asynchronous() ?
                     ReusableInputSessionNbtCodec.decodeWithNativeCheckpoint(entry.getCompound("session"), registries, recorded.operationId()) :
                     ReusableInputSessionNbtCodec.decode(entry.getCompound("session"), registries);
-            List<SlotInput> consumed = new ObjectArrayList<>();
+            ObjectArrayList<SlotInput> consumed = new ObjectArrayList<>();
             for (Tag inputTag : entry.getList("consumed", Tag.TAG_COMPOUND)) {
                 CompoundTag input = (CompoundTag) inputTag;
                 GenericStack stack = GenericStack.readTag(registries, input.getCompound("stack"));
@@ -84,7 +85,8 @@ public final class ReusableCraftingEndpointNbtCodec {
             }
             TrinityPatternIdentity publication = new TrinityPatternIdentity(entry.getString("publication_definition"),
                     entry.getString("publication_semantics"));
-            Binding binding = new Binding(session.identity(), publication, entry.getInt("input_slots"), consumed, session.slotContracts(), recipe);
+            Binding binding = new Binding(session.identity(), publication, entry.getInt("input_slots"), consumed,
+                    new ObjectImmutableList<>(session.slotContracts()), recipe);
             snapshots.add(new EntrySnapshot(binding, session, entry.getLong("revision"), entry.getLong("not_before"),
                     entry.getBoolean("acknowledged"), entry.getString("failure"), recorded));
         }
@@ -106,8 +108,8 @@ public final class ReusableCraftingEndpointNbtCodec {
         for (ToolOutcome outcome : result.tools()) {
             CompoundTag tool = new CompoundTag();
             tool.putInt("slot", outcome.slot());
-            tool.put("successors", stacks(outcome.successors(), registries));
-            tool.put("byproducts", stacks(outcome.byproducts(), registries));
+            tool.put("successors", stacks(new ObjectImmutableList<>(outcome.successors()), registries));
+            tool.put("byproducts", stacks(new ObjectImmutableList<>(outcome.byproducts()), registries));
             tools.add(tool);
         }
         tag.put("tools", tools);
@@ -117,7 +119,7 @@ public final class ReusableCraftingEndpointNbtCodec {
     private static @Nullable RecordedNativeResult decodeResult(CompoundTag tag, HolderLookup.Provider registries) {
         if (tag.isEmpty()) return null;
         if (!tag.hasUUID("epoch")) throw new IllegalArgumentException("Native result checkpoint has no loaded epoch");
-        List<ToolOutcome> tools = new ObjectArrayList<>();
+        ObjectArrayList<ToolOutcome> tools = new ObjectArrayList<>();
         for (Tag encoded : tag.getList("tools", Tag.TAG_COMPOUND)) {
             CompoundTag tool = (CompoundTag) encoded;
             tools.add(new ToolOutcome(tool.getInt("slot"), readStacks(tool, "successors", registries), readStacks(tool, "byproducts", registries)));
@@ -128,19 +130,19 @@ public final class ReusableCraftingEndpointNbtCodec {
                 tag.getBoolean("asynchronous"));
     }
 
-    private static ListTag stacks(List<GenericStack> stacks, HolderLookup.Provider registries) {
+    private static ListTag stacks(ObjectList<GenericStack> stacks, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         for (GenericStack stack : stacks) result.add(GenericStack.writeTag(registries, stack));
         return result;
     }
 
-    private static List<GenericStack> readStacks(CompoundTag tag, String field, HolderLookup.Provider registries) {
-        List<GenericStack> result = new ObjectArrayList<>();
+    private static ObjectList<GenericStack> readStacks(CompoundTag tag, String field, HolderLookup.Provider registries) {
+        ObjectArrayList<GenericStack> result = new ObjectArrayList<>();
         for (Tag encoded : tag.getList(field, Tag.TAG_COMPOUND)) {
             GenericStack stack = GenericStack.readTag(registries, (CompoundTag) encoded);
             if (stack == null || stack.amount() <= 0) throw new IllegalArgumentException("Invalid recorded native asset in " + field);
             result.add(stack);
         }
-        return result;
+        return new ObjectImmutableList<>(result);
     }
 }

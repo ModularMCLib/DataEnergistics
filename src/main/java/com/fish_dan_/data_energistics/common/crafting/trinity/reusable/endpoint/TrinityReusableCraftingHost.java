@@ -19,9 +19,9 @@ import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.BooleanSupplier;
 
 /** Ephemeral server callback adapter; actual assets, receipts and output queues belong to the movable core. */
@@ -99,7 +99,7 @@ public final class TrinityReusableCraftingHost implements Host {
     }
 
     @Override
-    public void acceptOutputs(Identity identity, List<GenericStack> outputs) {
+    public void acceptOutputs(Identity identity, ObjectList<GenericStack> outputs) {
         core.appendPendingOutputs(route, outputs.stream().map(stack -> new TrinityItemAmount((AEItemKey) stack.what(), stack.amount()))
                 .collect(ObjectImmutableList.toList()));
     }

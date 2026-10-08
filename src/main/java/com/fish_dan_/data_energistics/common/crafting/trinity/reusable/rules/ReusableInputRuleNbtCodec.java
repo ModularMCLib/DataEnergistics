@@ -14,8 +14,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Versioned, complete value encoding for frozen rules. Decoding never re-runs an adapter, so an
@@ -55,7 +55,7 @@ public final class ReusableInputRuleNbtCodec {
      * @throws IllegalArgumentException when a decoded key or rule value cannot be used
      */
     public static ReusableInputRule decode(CompoundTag tag, HolderLookup.Provider registries) {
-        List<Transition> transitions = new ObjectArrayList<>();
+        ObjectArrayList<Transition> transitions = new ObjectArrayList<>();
         for (Tag encoded : tag.getList("transitions", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             boolean exhausted = entry.getBoolean("exhausted");
@@ -69,14 +69,14 @@ public final class ReusableInputRuleNbtCodec {
                 decodeOutputs(tag, "exhaustion_outputs", registries), transitions);
     }
 
-    private static ListTag encodeOutputs(List<GenericStack> outputs, HolderLookup.Provider registries) {
+    private static ListTag encodeOutputs(ObjectList<GenericStack> outputs, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         outputs.forEach(output -> result.add(GenericStack.writeTag(registries, output)));
         return result;
     }
 
-    private static List<GenericStack> decodeOutputs(CompoundTag tag, String field, HolderLookup.Provider registries) {
-        List<GenericStack> result = new ObjectArrayList<>();
+    private static ObjectList<GenericStack> decodeOutputs(CompoundTag tag, String field, HolderLookup.Provider registries) {
+        ObjectArrayList<GenericStack> result = new ObjectArrayList<>();
         for (Tag encoded : tag.getList(field, Tag.TAG_COMPOUND)) {
             GenericStack output = GenericStack.readTag(registries, (CompoundTag) encoded);
             if (output == null || output.amount() <= 0L) {
@@ -84,7 +84,7 @@ public final class ReusableInputRuleNbtCodec {
             }
             result.add(output);
         }
-        return result;
+        return new ObjectImmutableList<>(result);
     }
 
     private static AEItemKey decodeItem(CompoundTag tag, String field, HolderLookup.Provider registries) {

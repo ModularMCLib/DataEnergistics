@@ -30,7 +30,6 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Optional;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -67,7 +66,7 @@ public final class ReusableInputRuleGameTest {
         helper.assertValueEqual(rule.advance(initial, 2L).successor(), tool(5), "Damage advances but name is retained");
         helper.assertValueEqual(rule.guaranteedUses(tool(5)), 1L, "Resumed state has only one remaining use");
         helper.assertTrue(rule.advance(initial, 3L).successor() == null, "Last legal use consumes the tool");
-        helper.assertValueEqual(rule.advance(initial, 3L).byproductsFast(), List.of(scrap), "Exhaustion yields scrap once");
+        helper.assertValueEqual(rule.advance(initial, 3L).byproductsFast(), ObjectList.of(scrap), "Exhaustion yields scrap once");
         expectIllegal(helper, () -> rule.advance(initial, 4L), "Overdrawing durability must fail");
         expectIllegal(helper, () -> rule.guaranteedUses(tool(6)), "An already exhausted state must fail");
         ItemStack renamed = initial.toStack();
@@ -86,23 +85,23 @@ public final class ReusableInputRuleGameTest {
         AEItemKey second = tool(2);
         GenericStack scrap = new GenericStack(AEItemKey.of(Items.STICK), 1L);
         ReusableInputRule finite = ReusableInputRule.transitionsFast(RULE_ID, 1L, first, ObjectList.of(
-                new Transition(first, second, List.of(scrap)), new Transition(second, null, List.of(scrap))));
+                new Transition(first, second, ObjectList.of(scrap)), new Transition(second, null, ObjectList.of(scrap))));
         helper.assertValueEqual(finite.guaranteedUses(first), 2L, "Both explicit transitions are usable");
         helper.assertValueEqual(finite.advance(first, 1L).successor(), second, "First transition retains exact successor");
         helper.assertTrue(finite.advance(first, 2L).successor() == null, "Final transition legally exhausts");
         helper.assertValueEqual(finite.advance(first, 2L).byproductsFast().getFirst().amount(), 2L, "Outputs aggregate");
         expectIllegal(helper, () -> finite.advance(first, 3L), "Finite table cannot continue after exhaustion");
         ReusableInputRule cycle = ReusableInputRule.transitionsFast(RULE_ID, 2L, first, ObjectList.of(
-                new Transition(first, second, List.of(scrap)), new Transition(second, first, List.of())));
+                new Transition(first, second, ObjectList.of(scrap)), new Transition(second, first, ObjectList.of())));
         helper.assertValueEqual(cycle.guaranteedUses(first), Long.MAX_VALUE, "Complete deterministic cycle is unbounded");
         ReusableInputRule.Result result = cycle.advance(first, Long.MAX_VALUE);
         helper.assertValueEqual(result.successor(), second, "Odd cycle count retains the second state");
         helper.assertValueEqual(result.byproductsFast().getFirst().amount(), Long.MAX_VALUE / 2L + 1L,
                 "Cycle acceleration preserves exact per-step byproducts at long boundary");
         expectIllegal(helper, () -> ReusableInputRule.transitionsFast(RULE_ID, 1L, first,
-                ObjectList.of(new Transition(first, second, List.of()))), "Unknown successor must reject the rule");
+                ObjectList.of(new Transition(first, second, ObjectList.of()))), "Unknown successor must reject the rule");
         ReusableInputRule overflowing = ReusableInputRule.transitionsFast(RULE_ID, 3L, first, ObjectList.of(
-                new Transition(first, first, List.of(new GenericStack(scrap.what(), 2L)))));
+                new Transition(first, first, ObjectList.of(new GenericStack(scrap.what(), 2L)))));
         try {
             overflowing.advance(first, Long.MAX_VALUE);
         } catch (ArithmeticException expected) {
@@ -117,11 +116,11 @@ public final class ReusableInputRuleGameTest {
     @GameTest(template = "empty_5x5")
     public static void ruleNbtRoundtripPreservesAllSemantics(GameTestHelper helper) {
         AEItemKey key = tool(1);
-        List<ReusableInputRule> rules = List.of(
+        ObjectList<ReusableInputRule> rules = ObjectList.of(
                 ReusableInputRule.unchanged(RULE_ID, 3L, key),
                 ReusableInputRule.fixedDamageFast(RULE_ID, 4L, key, 2, 6,
                         ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 2L))),
-                ReusableInputRule.transitionsFast(RULE_ID, 5L, key, ObjectList.of(new Transition(key, null, List.of()))));
+                ReusableInputRule.transitionsFast(RULE_ID, 5L, key, ObjectList.of(new Transition(key, null, ObjectList.of()))));
         for (ReusableInputRule rule : rules) {
             CompoundTag tag = ReusableInputRuleNbtCodec.encode(rule, helper.getLevel().registryAccess());
             ReusableInputRule restored = ReusableInputRuleNbtCodec.decode(tag, helper.getLevel().registryAccess());
@@ -141,11 +140,11 @@ public final class ReusableInputRuleGameTest {
         AEItemKey key = tool(2);
         GenericStack slot = new GenericStack(key, 2L);
         ReusableInputContext context = ReusableInputContext.builder()
-                .pattern(new SingleInputPattern(slot)).actualInput(slot).exactInputs(List.of(slot)).inputSlot(0)
+                .pattern(new SingleInputPattern(slot)).actualInput(slot).exactInputs(ObjectList.of(slot)).inputSlot(0)
                 .ownership(ReusableInputContext.Ownership.CPU_SUPPLIED).actionSource(new BaseActionSource())
                 .level(helper.getLevel()).recipeId(Optional.empty()).machineMode(Optional.empty())
                 .target(CountedCraftingTarget.route("test")).build();
-        helper.assertTrue(new FrozenReusableInputRules(List.of()).resolve(context).isEmpty(),
+        helper.assertTrue(new FrozenReusableInputRules(ObjectList.of()).resolve(context).isEmpty(),
                 "No rule means legacy behavior, even though the test pattern returns its tool unchanged");
         ReusableInputRule unchanged = ReusableInputRule.unchanged(RULE_ID, 1L, key);
         ObjectArrayList<ReusableInputRuleAdapter> mutable = new ObjectArrayList<>();
@@ -154,10 +153,10 @@ public final class ReusableInputRuleGameTest {
         mutable.clear();
         helper.assertValueEqual(lookup.resolve(context).orElseThrow(), unchanged, "Lookup copies frozen registration list");
         ResourceLocation other = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "other_tool");
-        FrozenReusableInputRules conflict = new FrozenReusableInputRules(List.of(new FixedAdapter(RULE_ID, unchanged),
+        FrozenReusableInputRules conflict = new FrozenReusableInputRules(ObjectList.of(new FixedAdapter(RULE_ID, unchanged),
                 new FixedAdapter(other, ReusableInputRule.unchanged(other, 1L, key))));
         expectState(helper, () -> conflict.resolve(context), "Two explicit claimants must not silently choose a rule");
-        expectState(helper, () -> new FrozenReusableInputRules(List.of(new FixedAdapter(RULE_ID, unchanged),
+        expectState(helper, () -> new FrozenReusableInputRules(ObjectList.of(new FixedAdapter(RULE_ID, unchanged),
                 new FixedAdapter(RULE_ID, unchanged))), "Duplicate adapter IDs must fail at snapshot creation");
         helper.succeed();
     }
@@ -208,8 +207,8 @@ public final class ReusableInputRuleGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(AEItemKey.of(Items.STICK), 1L));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 1L));
         }
     }
 

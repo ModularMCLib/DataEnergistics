@@ -271,7 +271,7 @@ public final class ReusableInputGraphCaptureService {
             }
             if (endpointIndex < endpoints.size()) {
                 Endpoint endpoint = endpoints.get(endpointIndex);
-                List<GenericStack> actual = new ObjectArrayList<>(pattern.inputs().size());
+                ObjectList<GenericStack> actual = new ObjectArrayList<>(pattern.inputs().size());
                 int firstItem = -1;
                 for (int slot = 0; slot < pattern.inputs().size(); slot++) {
                     var input = pattern.inputs().get(slot);

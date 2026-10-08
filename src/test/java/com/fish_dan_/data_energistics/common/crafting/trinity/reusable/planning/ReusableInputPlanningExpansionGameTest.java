@@ -57,7 +57,7 @@ public final class ReusableInputPlanningExpansionGameTest {
                     ReusableInputRule.fixedDamageFast(RULE_ID, 1L, key, 1, 4, ObjectList.of()) :
                     ReusableInputRule.unchanged(RULE_ID, 2L, key));
         };
-        var result = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(), rules, 8,
+        var result = ReusableInputPlanningExpansion.capture(context(helper, pattern), ObjectList.of(), rules, 8,
                 TrinityPlanningControl.unbounded());
         helper.assertTrue(result instanceof ReusableInputPlanningExpansion.Captured, "Complete contextual capture should fit");
         helper.assertValueEqual(((ReusableInputPlanningExpansion.Captured) result).bindings().size(), 2,
@@ -83,13 +83,13 @@ public final class ReusableInputPlanningExpansionGameTest {
     @GameTest(template = "empty_5x5")
     public static void unknownRulesAndInvalidSuccessorsPreserveAeContract(GameTestHelper helper) {
         TestPattern pattern = new TestPattern(1, false);
-        var unknown = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(tool(1)),
+        var unknown = ReusableInputPlanningExpansion.capture(context(helper, pattern), ObjectList.of(tool(1)),
                 ignored -> Optional.empty(), 4, TrinityPlanningControl.unbounded());
         helper.assertTrue(unknown instanceof ReusableInputPlanningExpansion.Captured, "Unknown rules retain normal capture");
         var legacy = (ReusableInputPlanningExpansion.Captured) unknown;
         helper.assertFalse(legacy.hasReusableInputs(), "Observed unchanged remainder must not imply a reusable rule");
         helper.assertValueEqual(legacy.bindings().size(), 1, "Unknown inventory-only variants are not guessed");
-        var known = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(),
+        var known = ReusableInputPlanningExpansion.capture(context(helper, pattern), ObjectList.of(),
                 input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamageFast(
                         RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4,
                         ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 1L)))) : Optional.empty(),
@@ -111,13 +111,13 @@ public final class ReusableInputPlanningExpansionGameTest {
         TestPattern pattern = new TestPattern(3, false);
         ReusableInputRules rules = input -> input.inputSlot() == 0 ? Optional.of(ReusableInputRule.fixedDamageFast(
                 RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4, ObjectList.of())) : Optional.empty();
-        var limit = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(tool(1), tool(2), tool(3)), rules, 3,
+        var limit = ReusableInputPlanningExpansion.capture(context(helper, pattern), ObjectList.of(tool(1), tool(2), tool(3)), rules, 3,
                 TrinityPlanningControl.unbounded());
         helper.assertTrue(limit instanceof ReusableInputPlanningExpansion.Stopped, "One state beyond the limit rejects capture");
         helper.assertValueEqual(((ReusableInputPlanningExpansion.Stopped) limit).reason(),
                 ReusableInputPlanningExpansion.Reason.BINDING_LIMIT, "Configured binding bound is explicit");
         AtomicLong clock = new AtomicLong();
-        var timed = ReusableInputPlanningExpansion.capture(context(helper, pattern), List.of(), rules, 10,
+        var timed = ReusableInputPlanningExpansion.capture(context(helper, pattern), ObjectList.of(), rules, 10,
                 TrinityPlanningControl.create(() -> false, clock::getAndIncrement, 3L));
         helper.assertTrue(timed instanceof ReusableInputPlanningExpansion.Stopped, "Expired server capture must stop");
         helper.assertValueEqual(((ReusableInputPlanningExpansion.Stopped) timed).reason(),
@@ -142,7 +142,7 @@ public final class ReusableInputPlanningExpansionGameTest {
                     RULE_ID, 1L, (AEItemKey) input.actualInput().what(), 1, 4,
                     ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 3L)))) : Optional.empty();
         };
-        ReusableInputPlanningCursor cursor = new ReusableInputPlanningCursor(context(helper, pattern), List.of(tool(2)),
+        ReusableInputPlanningCursor cursor = new ReusableInputPlanningCursor(context(helper, pattern), ObjectList.of(tool(2)),
                 rules, 4, TrinityPlanningControl.unbounded());
         AtomicLong clock = new AtomicLong();
         ReusableInputPlanningExpansion.Result result = null;
@@ -175,7 +175,7 @@ public final class ReusableInputPlanningExpansionGameTest {
     @GameTest(template = "empty_5x5")
     public static void cursorCancelStopsPendingCaptureWithoutPartialGraph(GameTestHelper helper) {
         ReusableInputPlanningCursor cursor = new ReusableInputPlanningCursor(context(helper, new TestPattern(3, false)),
-                List.of(tool(2)), ignored -> Optional.empty(), 4, TrinityPlanningControl.unbounded());
+                ObjectList.of(tool(2)), ignored -> Optional.empty(), 4, TrinityPlanningControl.unbounded());
         AtomicLong clock = new AtomicLong();
         helper.assertTrue(cursor.advance(1L, clock::getAndIncrement) == null, "First small slice should retain pending work");
         cursor.cancel();
@@ -189,7 +189,7 @@ public final class ReusableInputPlanningExpansionGameTest {
     private static ReusableInputContext context(GameTestHelper helper, TestPattern pattern) {
         GenericStack tool = new GenericStack(tool(0), 2L);
         return ReusableInputContext.builder().pattern(pattern).actualInput(tool)
-                .exactInputs(List.of(tool, new GenericStack(AEItemKey.of(Items.REDSTONE), 1L))).inputSlot(0)
+                .exactInputs(ObjectList.of(tool, new GenericStack(AEItemKey.of(Items.REDSTONE), 1L))).inputSlot(0)
                 .ownership(ReusableInputContext.Ownership.CPU_SUPPLIED).actionSource(new BaseActionSource())
                 .level(helper.getLevel()).recipeId(Optional.empty()).machineMode(Optional.empty())
                 .target(CountedCraftingTarget.provider()).build();
@@ -214,8 +214,8 @@ public final class ReusableInputPlanningExpansionGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
         }
     }
 

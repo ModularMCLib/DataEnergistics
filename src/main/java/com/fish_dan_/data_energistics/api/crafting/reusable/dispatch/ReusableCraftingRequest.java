@@ -13,11 +13,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import lombok.Builder;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,8 +28,8 @@ import java.util.UUID;
  */
 @Builder
 public record ReusableCraftingRequest(UUID sessionId, UUID jobId, String cpuOwner, long sequence,
-                                      Target target, IPatternDetails pattern, List<Input> inputs,
-                                      List<SlotStack> offeredTools, long requestedCount,
+                                      Target target, IPatternDetails pattern, ObjectList<Input> inputs,
+                                      ObjectList<SlotStack> offeredTools, long requestedCount,
                                       Optional<ResourceLocation> recipeId, IActionSource actionSource,
                                       ServerLevel level) {
 
@@ -44,8 +44,8 @@ public record ReusableCraftingRequest(UUID sessionId, UUID jobId, String cpuOwne
     }
 
     public ReusableCraftingRequest {
-        inputs = List.copyOf(inputs);
-        offeredTools = List.copyOf(offeredTools);
+        inputs = new ObjectImmutableList<>(inputs);
+        offeredTools = new ObjectImmutableList<>(offeredTools);
         if (sequence < 0L || requestedCount <= 0L || cpuOwner.isBlank()) {
             throw new IllegalArgumentException("A reusable submission needs an owner, sequence and positive count");
         }
@@ -71,7 +71,7 @@ public record ReusableCraftingRequest(UUID sessionId, UUID jobId, String cpuOwne
     }
 
     /** Ordinary inputs are per operation. Tools are held once per lane, not multiplied by batch count. */
-    public record Input(int slot, List<GenericStack> consumedPerOperation, Optional<Tool> tool) {
+    public record Input(int slot, ObjectList<GenericStack> consumedPerOperation, Optional<Tool> tool) {
 
         /** Returns an immutable FastUtil view of consumed materials. */
         public ObjectList<GenericStack> consumedPerOperationFast() {
@@ -79,7 +79,7 @@ public record ReusableCraftingRequest(UUID sessionId, UUID jobId, String cpuOwne
         }
 
         public Input {
-            consumedPerOperation = List.copyOf(consumedPerOperation);
+            consumedPerOperation = new ObjectImmutableList<>(consumedPerOperation);
             if (slot < 0 || consumedPerOperation.isEmpty() && tool.isEmpty()) {
                 throw new IllegalArgumentException("A reusable input slot must have a material or tool requirement");
             }

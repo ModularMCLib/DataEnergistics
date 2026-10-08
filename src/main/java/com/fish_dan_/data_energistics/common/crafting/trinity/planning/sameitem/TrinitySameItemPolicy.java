@@ -134,7 +134,7 @@ public final class TrinitySameItemPolicy {
     }
 
     private static void addDomain(ObjectList<Domain> domains, ObjectSet<Item> exact, AEItemKey key,
-                                  ProcessingMatchMode mode, List<ResourceLocation> tags, boolean output,
+                                  ProcessingMatchMode mode, ObjectList<ResourceLocation> tags, boolean output,
                                   Object2ObjectLinkedOpenHashMap<Item, AEItemKey> outputRepresentatives) {
         if (mode == ProcessingMatchMode.EXACT) {
             exact.add(key.getItem());

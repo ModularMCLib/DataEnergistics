@@ -5,19 +5,21 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.UUID;
 
 /** Combines visible executor summaries without rescanning historic entries on unchanged server ticks. */
 public final class ReusableCustodyAggregation {
 
     private final UUID loadedEpoch = UUID.randomUUID();
-    private final ReusableCraftingCustodyCensus empty = new ReusableCraftingCustodyCensus(loadedEpoch, 0, true, List.of());
-    private final ReusableCraftingCustodyCensus unavailable = new ReusableCraftingCustodyCensus(loadedEpoch, 0, false, List.of());
+    private final ReusableCraftingCustodyCensus empty = new ReusableCraftingCustodyCensus(loadedEpoch, 0, true, ObjectList.of());
+    private final ReusableCraftingCustodyCensus unavailable = new ReusableCraftingCustodyCensus(loadedEpoch, 0, false, ObjectList.of());
     private final Object2ObjectOpenHashMap<String, Cached> owners = new Object2ObjectOpenHashMap<>();
 
-    public ReusableCraftingCustodyCensus census(String cpuOwner, boolean complete, List<ReusableCraftingCustodyCensus> sources) {
+    public ReusableCraftingCustodyCensus census(String cpuOwner, boolean complete, ObjectList<ReusableCraftingCustodyCensus> sources) {
         boolean covered = complete;
         boolean noEntries = true;
         for (ReusableCraftingCustodyCensus source : sources) {
@@ -42,12 +44,13 @@ public final class ReusableCustodyAggregation {
             }
         }
         long revision = previous == null ? 0 : Math.incrementExact(previous.snapshot.revision());
-        ReusableCraftingCustodyCensus snapshot = new ReusableCraftingCustodyCensus(loadedEpoch, revision, covered, List.copyOf(entries.values()));
-        owners.put(cpuOwner, new Cached(List.copyOf(sources), snapshot));
+        ReusableCraftingCustodyCensus snapshot = new ReusableCraftingCustodyCensus(loadedEpoch, revision, covered,
+                new ObjectImmutableList<>(new ObjectArrayList<>(entries.values())));
+        owners.put(cpuOwner, new Cached(new ObjectImmutableList<>(sources), snapshot));
         return snapshot;
     }
 
-    private static boolean sameSources(List<ReusableCraftingCustodyCensus> previous, List<ReusableCraftingCustodyCensus> current) {
+    private static boolean sameSources(ObjectList<ReusableCraftingCustodyCensus> previous, ObjectList<ReusableCraftingCustodyCensus> current) {
         if (previous.size() != current.size()) return false;
         for (int index = 0; index < previous.size(); index++) {
             if (previous.get(index) != current.get(index)) return false;
@@ -55,5 +58,5 @@ public final class ReusableCustodyAggregation {
         return true;
     }
 
-    private record Cached(List<ReusableCraftingCustodyCensus> sources, ReusableCraftingCustodyCensus snapshot) {}
+    private record Cached(ObjectList<ReusableCraftingCustodyCensus> sources, ReusableCraftingCustodyCensus snapshot) {}
 }

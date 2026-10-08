@@ -25,8 +25,9 @@ import net.minecraft.nbt.Tag;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Complete current-format session escrow encoding. Malformed asset/progress relationships fail at load. */
@@ -104,14 +105,14 @@ public final class ReusableInputSessionNbtCodec {
         Identity identity = new Identity(tag.getUUID("session_id"), tag.getUUID("job_id"), tag.getString("cpu_owner"),
                 tag.getString("target"), item(tag, "pattern", registries),
                 tag.contains("mode") ? Optional.of(tag.getString("mode")) : Optional.empty());
-        List<SlotContract> contracts = new ObjectArrayList<>();
+        ObjectArrayList<SlotContract> contracts = new ObjectArrayList<>();
         for (Tag encoded : tag.getList("contracts", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             contracts.add(new SlotContract(entry.getInt("slot"), entry.getLong("held"),
                     Ownership.valueOf(entry.getString("ownership")),
                     ReusableInputRuleNbtCodec.decode(entry.getCompound("rule"), registries)));
         }
-        List<AppendSnapshot> appends = new ObjectArrayList<>();
+        ObjectArrayList<AppendSnapshot> appends = new ObjectArrayList<>();
         for (Tag encoded : tag.getList("appends", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             appends.add(new AppendSnapshot(decodeAppend(entry, registries), entry.getLong("completed"),
@@ -162,7 +163,7 @@ public final class ReusableInputSessionNbtCodec {
                 decodeAssets(tag, "delivered_materials", registries), decodeTools(tag, "delivered_tools", registries), states);
     }
 
-    private static ListTag encodeInputs(List<SlotInput> inputs, HolderLookup.Provider registries) {
+    private static ListTag encodeInputs(ObjectList<SlotInput> inputs, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         for (SlotInput input : inputs) {
             CompoundTag entry = new CompoundTag();
@@ -173,16 +174,16 @@ public final class ReusableInputSessionNbtCodec {
         return result;
     }
 
-    private static List<SlotInput> decodeInputs(CompoundTag tag, String field, HolderLookup.Provider registries) {
-        List<SlotInput> result = new ObjectArrayList<>();
+    private static ObjectList<SlotInput> decodeInputs(CompoundTag tag, String field, HolderLookup.Provider registries) {
+        ObjectArrayList<SlotInput> result = new ObjectArrayList<>();
         for (Tag encoded : tag.getList(field, Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             result.add(new SlotInput(entry.getInt("slot"), stack(entry, "stack", registries)));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
-    private static ListTag encodeTools(List<ToolDelivery> tools, HolderLookup.Provider registries) {
+    private static ListTag encodeTools(ObjectList<ToolDelivery> tools, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         for (ToolDelivery tool : tools) {
             CompoundTag entry = new CompoundTag();
@@ -193,16 +194,16 @@ public final class ReusableInputSessionNbtCodec {
         return result;
     }
 
-    private static List<ToolDelivery> decodeTools(CompoundTag tag, String field, HolderLookup.Provider registries) {
-        List<ToolDelivery> result = new ObjectArrayList<>();
+    private static ObjectList<ToolDelivery> decodeTools(CompoundTag tag, String field, HolderLookup.Provider registries) {
+        ObjectArrayList<ToolDelivery> result = new ObjectArrayList<>();
         for (Tag encoded : tag.getList(field, Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             result.add(new ToolDelivery(entry.getInt("slot"), stack(entry, "stack", registries)));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
-    private static ListTag encodeReturns(List<ReturnBatch> batches, HolderLookup.Provider registries) {
+    private static ListTag encodeReturns(ObjectList<ReturnBatch> batches, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         for (ReturnBatch batch : batches) {
             CompoundTag entry = new CompoundTag();
@@ -213,23 +214,23 @@ public final class ReusableInputSessionNbtCodec {
         return result;
     }
 
-    private static List<ReturnBatch> decodeReturns(CompoundTag tag, String field, HolderLookup.Provider registries) {
-        List<ReturnBatch> result = new ObjectArrayList<>();
+    private static ObjectList<ReturnBatch> decodeReturns(CompoundTag tag, String field, HolderLookup.Provider registries) {
+        ObjectArrayList<ReturnBatch> result = new ObjectArrayList<>();
         for (Tag encoded : tag.getList(field, Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             result.add(new ReturnBatch(entry.getLong("sequence"), decodeAssets(entry, "assets", registries)));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
-    private static ListTag encodeAssets(List<GenericStack> assets, HolderLookup.Provider registries) {
+    private static ListTag encodeAssets(ObjectList<GenericStack> assets, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         assets.forEach(asset -> result.add(GenericStack.writeTag(registries, asset)));
         return result;
     }
 
-    private static List<GenericStack> decodeAssets(CompoundTag tag, String field, HolderLookup.Provider registries) {
-        List<GenericStack> result = new ObjectArrayList<>();
+    private static ObjectList<GenericStack> decodeAssets(CompoundTag tag, String field, HolderLookup.Provider registries) {
+        ObjectArrayList<GenericStack> result = new ObjectArrayList<>();
         for (Tag encoded : tag.getList(field, Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) encoded;
             GenericStack stack = GenericStack.readTag(registries, entry);
@@ -238,7 +239,7 @@ public final class ReusableInputSessionNbtCodec {
             }
             result.add(stack);
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     private static GenericStack stack(CompoundTag tag, String field, HolderLookup.Provider registries) {

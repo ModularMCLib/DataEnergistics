@@ -5,17 +5,17 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import appeng.api.stacks.GenericStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /** Immutable server observation. Held resources belong only to this owner/target, never to global AE availability. */
 public record ReusableCraftingSessionView(UUID sessionId, UUID jobId, String cpuOwner, String targetIdentity,
                                           State state, long revision, long accepted, long completed, long cancelled,
-                                          List<SlotStack> heldTools, Optional<String> failure) {
+                                          ObjectList<SlotStack> heldTools, Optional<String> failure) {
 
     /** Returns an immutable FastUtil view of held tools. */
     public ObjectList<SlotStack> heldToolsFast() {
@@ -23,8 +23,8 @@ public record ReusableCraftingSessionView(UUID sessionId, UUID jobId, String cpu
     }
 
     public ReusableCraftingSessionView {
-        heldTools = List.copyOf(heldTools);
-        if (revision < 0L || accepted < 0L || completed < 0L || cancelled < 0L ||
+        heldTools = new ObjectImmutableList<>(heldTools);
+        if (revision < 0L || completed < 0L || cancelled < 0L ||
                 completed > accepted || cancelled > accepted - completed) {
             throw new IllegalArgumentException("Reusable session counters are inconsistent");
         }
@@ -55,8 +55,8 @@ public record ReusableCraftingSessionView(UUID sessionId, UUID jobId, String cpu
      * synthesize items. Machine-owned units are released separately; exhausted units are explicitly accounted for.
      */
     public record Settlement(UUID sessionId, UUID jobId, String cpuOwner, String targetIdentity, long sequence,
-                             List<GenericStack> returnedAssets, List<SlotStack> releasedMachineTools,
-                             long exhaustedTools, List<AppendReceipt> receipts,
+                             ObjectList<GenericStack> returnedAssets, ObjectList<SlotStack> releasedMachineTools,
+                             long exhaustedTools, ObjectList<AppendReceipt> receipts,
                              Optional<String> failure) {
 
         /** Returns an immutable FastUtil view of returned assets. */
@@ -78,9 +78,9 @@ public record ReusableCraftingSessionView(UUID sessionId, UUID jobId, String cpu
             if (sequence < 0L || exhaustedTools < 0L) {
                 throw new IllegalArgumentException("Reusable settlement counters must not be negative");
             }
-            returnedAssets = List.copyOf(returnedAssets);
-            releasedMachineTools = List.copyOf(releasedMachineTools);
-            receipts = List.copyOf(receipts);
+            returnedAssets = new ObjectImmutableList<>(returnedAssets);
+            releasedMachineTools = new ObjectImmutableList<>(releasedMachineTools);
+            receipts = new ObjectImmutableList<>(receipts);
             for (GenericStack stack : returnedAssets) {
                 if (stack.amount() <= 0L) {
                     throw new IllegalArgumentException("Returned physical assets must have positive quantities");

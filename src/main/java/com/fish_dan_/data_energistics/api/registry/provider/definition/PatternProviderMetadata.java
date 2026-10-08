@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.api.registry.provider.definition;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
 
 /**
  * Immutable semantic metadata used to match a declared provider integration.
@@ -26,8 +26,8 @@ import java.util.List;
  */
 public record PatternProviderMetadata(ResourceLocation registrationId,
                                       ProviderIdentityDescriptor providerIdentity,
-                                      List<ResourceLocation> recipeCategoryIds,
-                                      List<ResourceLocation> workstationItemIds) {
+                                      ObjectList<ResourceLocation> recipeCategoryIds,
+                                      ObjectList<ResourceLocation> workstationItemIds) {
 
     /** Returns an immutable FastUtil view of recipe category IDs. */
     public ObjectList<ResourceLocation> recipeCategoryIdsFast() {
@@ -47,11 +47,10 @@ public record PatternProviderMetadata(ResourceLocation registrationId,
         workstationItemIds = canonicalIds(workstationItemIds);
     }
 
-    private static List<ResourceLocation> canonicalIds(
-                                                       List<ResourceLocation> ids) {
-        LinkedHashSet<ResourceLocation> unique = new LinkedHashSet<>(ids);
-        ArrayList<ResourceLocation> canonical = new ArrayList<>(unique);
+    private static ObjectList<ResourceLocation> canonicalIds(ObjectList<ResourceLocation> ids) {
+        ObjectSet<ResourceLocation> unique = new ObjectLinkedOpenHashSet<>(ids);
+        ObjectArrayList<ResourceLocation> canonical = new ObjectArrayList<>(unique);
         canonical.sort(Comparator.comparing(ResourceLocation::toString));
-        return List.copyOf(canonical);
+        return new ObjectImmutableList<>(canonical);
     }
 }

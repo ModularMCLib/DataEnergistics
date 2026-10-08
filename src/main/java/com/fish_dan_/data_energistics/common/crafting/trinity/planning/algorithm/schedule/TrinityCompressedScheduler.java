@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -206,7 +207,7 @@ public final class TrinityCompressedScheduler {
                     reachable = false;
                     break;
                 }
-                breakpoint = breakpoint.max(ceilDivide(shortage, growth));
+                breakpoint = breakpoint.max(BigIntegerMath.ceilDivideNonNegative(shortage, growth));
             }
             if (reachable && breakpoint.signum() > 0 && breakpoint.compareTo(maximum) <= 0) {
                 candidates.add(breakpoint);
@@ -239,11 +240,6 @@ public final class TrinityCompressedScheduler {
 
     static boolean allComplete(List<BigInteger> remaining) {
         return remaining.stream().allMatch(amount -> amount.signum() == 0);
-    }
-
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
     }
 
     private static BigInteger requirePositive(BigInteger value) {

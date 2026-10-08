@@ -76,11 +76,4 @@ public final class TrinityDeterministicFiringMath {
         return amounts.values().stream().reduce(ZERO, BigInteger::add);
     }
 
-    public static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        if (numerator.signum() <= 0 || denominator.signum() <= 0) {
-            throw new IllegalArgumentException("A deterministic Trinity ratio requires positive values");
-        }
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
-    }
 }

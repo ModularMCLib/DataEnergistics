@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -492,7 +493,7 @@ public final class TrinityAcyclicRouteOptimizer {
                                                                                TrinityPlanningInventory available,
                                                                                SearchBudget budget,
                                                                                TrinityPlanningControl control) {
-        BigInteger requiredFirings = ceilDivide(requiredTargetNet, family.outputPerFiring());
+        BigInteger requiredFirings = BigIntegerMath.ceilDivideNonNegative(requiredTargetNet, family.outputPerFiring());
         BigInteger remainingFirings = requiredFirings;
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> remainingInventory = new Object2ObjectLinkedOpenHashMap<>(available.finiteAmounts());
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
@@ -1254,11 +1255,6 @@ public final class TrinityAcyclicRouteOptimizer {
 
     private static BigInteger sum(Map<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
-    }
-
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
     }
 
     private static <T> TrinityAlgorithmResult<T> insufficient(

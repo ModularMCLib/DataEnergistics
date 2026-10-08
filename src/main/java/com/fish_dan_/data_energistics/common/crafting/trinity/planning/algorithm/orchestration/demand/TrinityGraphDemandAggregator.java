@@ -23,6 +23,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnosti
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -852,7 +853,7 @@ public final class TrinityGraphDemandAggregator {
                 }
                 return TrinityAlgorithmResult.success(StepSuccess.INSTANCE);
             }
-            BigInteger count = ceilDivide(outputDemand, selected.outputs().get(key));
+            BigInteger count = BigIntegerMath.ceilDivideNonNegative(outputDemand, selected.outputs().get(key));
             int rank = Math.multiplyExact(this.topologicalPositions.get(outputComponent.index()), 2);
             if (crossBoundaryInput || outputComponent.cyclic()) {
                 rank = Math.subtractExact(rank, 1);
@@ -1407,14 +1408,6 @@ public final class TrinityGraphDemandAggregator {
 
     private static void merge(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
         amounts.merge(key, amount, BigInteger::add);
-    }
-
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        if (numerator.signum() <= 0 || denominator.signum() <= 0) {
-            throw new IllegalArgumentException("Trinity aggregate demand requires a positive producer output");
-        }
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
     }
 
     private static StopState stopState(TrinityPlanningControl control) {

@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.TrinityCycleDemand;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -108,7 +109,7 @@ public final class TrinityFiringComplementOptimizer {
                 BigInteger deficit = lowerBounds.getOrDefault(output.getKey(), ZERO)
                         .subtract(net.getOrDefault(output.getKey(), ZERO));
                 if (deficit.signum() > 0) {
-                    count = count.max(ceilDivide(deficit, output.getValue()));
+                    count = count.max(BigIntegerMath.ceilDivideNonNegative(deficit, output.getValue()));
                 }
             }
             if (count.compareTo(firingUpperBound.get(variant)) > 0) {
@@ -223,11 +224,4 @@ public final class TrinityFiringComplementOptimizer {
         return net;
     }
 
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        if (numerator.signum() <= 0 || denominator.signum() <= 0) {
-            throw new IllegalArgumentException("A Trinity firing complement requires positive division operands");
-        }
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
-    }
 }

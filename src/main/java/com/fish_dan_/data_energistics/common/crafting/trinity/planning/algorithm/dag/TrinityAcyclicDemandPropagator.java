@@ -22,6 +22,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -299,7 +300,7 @@ public final class TrinityAcyclicDemandPropagator {
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger outputPerFiring = selected.dependencyOutputs().get(key);
                 BigInteger count = missing.signum() > 0 ?
-                        ceilDivide(missing, outputPerFiring) :
+                        BigIntegerMath.ceilDivideNonNegative(missing, outputPerFiring) :
                         BigInteger.ONE;
                 firings.merge(selected, count, BigInteger::add);
                 selected.inputs().forEach((input, amount) -> merge(need, input, amount.multiply(count)));
@@ -716,14 +717,6 @@ public final class TrinityAcyclicDemandPropagator {
                 }
             });
         }
-    }
-
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        if (numerator.signum() <= 0 || denominator.signum() <= 0) {
-            throw new IllegalArgumentException("Trinity ceil division requires positive values");
-        }
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
     }
 
     private static void merge(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {

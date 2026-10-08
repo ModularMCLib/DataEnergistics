@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -276,7 +277,7 @@ public final class TrinityAcyclicCompetitionPlanner {
 
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger count = missing.signum() > 0 ?
-                        ceilDivide(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
+                        BigIntegerMath.ceilDivideNonNegative(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
                 deterministicFirings.merge(selected, count, BigInteger::add);
                 deterministicPatterns.add(selected.patternIdentity());
                 deterministicTouchedKeys.addAll(selected.inputs().keySet());
@@ -482,11 +483,6 @@ public final class TrinityAcyclicCompetitionPlanner {
             }
         }
         return earliestOutput;
-    }
-
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
     }
 
     private static void merge(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {

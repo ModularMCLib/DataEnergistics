@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -151,7 +152,7 @@ public final class TrinityDeterministicResidualTopology {
                         effect.getKey(),
                         TrinityDeterministicFiringMath.ZERO);
                 if (required.signum() > 0) {
-                    count = count.max(TrinityDeterministicFiringMath.ceilDivide(required, effect.getValue()));
+                    count = count.max(BigIntegerMath.ceilDivideNonNegative(required, effect.getValue()));
                 }
             }
             if (count.signum() == 0) {

@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticEvidence;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.BigIntegerMath;
 
 import appeng.api.stacks.AEKey;
 
@@ -83,7 +84,7 @@ public final class TrinityDeterministicCyclePlanner {
         BigInteger requiredNet = quantityMode == CraftingQuantityMode.NET_NEW ?
                 requestedAmount :
                 requestedAmount.subtract(inventory.getOrDefault(target, BigInteger.ZERO)).max(BigInteger.ZERO);
-        BigInteger repetitions = ceilDivide(requiredNet, targetEffect);
+        BigInteger repetitions = BigIntegerMath.ceilDivideNonNegative(requiredNet, targetEffect);
         if (quantityMode == CraftingQuantityMode.FINAL_TOTAL) {
             repetitions = repetitions.max(BigInteger.ONE);
         }
@@ -215,14 +216,6 @@ public final class TrinityDeterministicCyclePlanner {
             }
         });
         return Collections.unmodifiableMap(copied);
-    }
-
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        if (numerator.signum() == 0) {
-            return BigInteger.ZERO;
-        }
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
     }
 
     private static <T> TrinityAlgorithmResult<T> insufficientInputs(

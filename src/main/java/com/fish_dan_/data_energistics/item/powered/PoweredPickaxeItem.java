@@ -29,17 +29,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements ConditionalDataFlowCellItem {
 
     private static final float SABER_ENERGY_DESTROY_SPEED_BONUS = 8.0F;
-    private static final ThreadLocal<Set<BlockPos>> FTB_ULTIMINE_DUPLICATED_POSITIONS = ThreadLocal.withInitial(ObjectOpenHashSet::new);
+    private static final ThreadLocal<LongSet> FTB_ULTIMINE_DUPLICATED_POSITIONS = ThreadLocal.withInitial(LongOpenHashSet::new);
 
     public PoweredPickaxeItem(Tier tier, Properties properties) {
         super(tier, properties, tier.createToolProperties(BlockTags.MINEABLE_WITH_PICKAXE));
@@ -266,7 +266,7 @@ public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements Con
             return false;
         }
 
-        FTB_ULTIMINE_DUPLICATED_POSITIONS.get().add(pos.immutable());
+        FTB_ULTIMINE_DUPLICATED_POSITIONS.get().add(pos.asLong());
         return true;
     }
 
@@ -275,7 +275,7 @@ public class PoweredPickaxeItem extends AbstractPoweredTieredItem implements Con
     }
 
     private static boolean consumeFtbUltimineDuplicateMarker(BlockPos pos) {
-        return FTB_ULTIMINE_DUPLICATED_POSITIONS.get().remove(pos);
+        return FTB_ULTIMINE_DUPLICATED_POSITIONS.get().remove(pos.asLong());
     }
 
     private float getSaberEnergyDestroySpeedBonus(ItemStack stack) {

@@ -23,13 +23,16 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 
 /**
@@ -223,12 +226,14 @@ public final class LdlibStructurePreviewSceneBinder implements StructurePreviewS
         private void replaceSnapshot(StructurePreviewRenderState renderState) {
             this.scene.setRenderedCore(List.of(), null, false);
             this.world.clear();
-            Map<BlockPos, BlockInfo> blocks = new Object2ObjectLinkedOpenHashMap<>();
-            renderState.blockStates().forEach((position, state) -> blocks.put(position, new BlockInfo(state)));
+            Object2ObjectMap<BlockPos, BlockInfo> blocks = new Object2ObjectLinkedOpenHashMap<>();
+            renderState.blockStates().long2ObjectEntrySet().forEach(entry -> blocks.put(
+                    BlockPos.of(entry.getLongKey()), new BlockInfo(entry.getValue())));
             this.world.addBlocks(blocks);
-            List<BlockPos> renderedCore = renderState.renderedCore();
+            LongList renderedCore = renderState.renderedCore();
+            ObjectList<BlockPos> renderedCorePositions = toBlockPositions(renderedCore);
             boolean constrained = this.viewportWidth > 0 && this.viewportHeight > 0;
-            this.scene.setRenderedCore(renderedCore, null, !constrained && !renderedCore.isEmpty());
+            this.scene.setRenderedCore(renderedCorePositions, null, !constrained && !renderedCore.isEmpty());
             if (constrained && !renderedCore.isEmpty()) {
                 fitConstrainedCamera(renderedCore);
             }
@@ -238,14 +243,15 @@ public final class LdlibStructurePreviewSceneBinder implements StructurePreviewS
          * Starts from a complete-volume fit instead of LDLib2's largest-axis heuristic, then applies the
          * authored close-up and upward framing needed by this compact preview cavity.
          */
-        private void fitConstrainedCamera(List<BlockPos> renderedCore) {
+        private void fitConstrainedCamera(LongList renderedCore) {
             int minX = Integer.MAX_VALUE;
             int minY = Integer.MAX_VALUE;
             int minZ = Integer.MAX_VALUE;
             int maxX = Integer.MIN_VALUE;
             int maxY = Integer.MIN_VALUE;
             int maxZ = Integer.MIN_VALUE;
-            for (BlockPos position : renderedCore) {
+            for (long packedPosition : renderedCore) {
+                BlockPos position = BlockPos.of(packedPosition);
                 minX = Math.min(minX, position.getX());
                 minY = Math.min(minY, position.getY());
                 minZ = Math.min(minZ, position.getZ());
@@ -276,10 +282,16 @@ public final class LdlibStructurePreviewSceneBinder implements StructurePreviewS
         /**
          * Preserves the camera because Scene changes its center even when automatic fitting is disabled.
          */
-        private void replaceRenderedCorePreservingCamera(List<BlockPos> renderedCore) {
+        private void replaceRenderedCorePreservingCamera(LongList renderedCore) {
             Vector3f center = new Vector3f(this.scene.getCenter());
-            this.scene.setRenderedCore(renderedCore, null, false);
+            this.scene.setRenderedCore(toBlockPositions(renderedCore), null, false);
             this.scene.setCenter(center);
+        }
+
+        private static ObjectList<BlockPos> toBlockPositions(LongList positions) {
+            ObjectArrayList<BlockPos> result = new ObjectArrayList<>(positions.size());
+            for (long position : positions) result.add(BlockPos.of(position));
+            return result;
         }
     }
 

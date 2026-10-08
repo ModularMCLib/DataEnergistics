@@ -24,12 +24,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 
-import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Claims valid mirrors and performs the high-tier array's server-authoritative production transaction.
@@ -40,7 +40,7 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
     private static final int STRUCTURE_SCAN_INTERVAL_TICKS = 20;
     private static final int PERSISTED_MIRROR_LIMIT = 16;
 
-    private Set<BlockPos> claimedMirrors = Set.of();
+    private LongSet claimedMirrors = LongSets.emptySet();
     private long nextStructureScan;
     private boolean runtimeFaultLogged;
     private boolean insertionMismatchLogged;
@@ -54,7 +54,7 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.of(Direction.DOWN);
     }
 
@@ -94,11 +94,11 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
         if (!(this.level instanceof ServerLevel serverLevel)) {
             return;
         }
-        for (BlockPos mirrorPos : this.claimedMirrors) {
-            releaseMirror(serverLevel, mirrorPos);
+        for (long mirrorPosition : this.claimedMirrors) {
+            releaseMirror(serverLevel, BlockPos.of(mirrorPosition));
         }
         if (!this.claimedMirrors.isEmpty()) {
-            this.claimedMirrors = Set.of();
+            this.claimedMirrors = LongSets.emptySet();
             setChanged();
         }
     }
@@ -107,12 +107,11 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
     public void loadTag(CompoundTag data, HolderLookup.Provider registries) {
         super.loadTag(data, registries);
         long[] persistedMirrors = data.getLongArray(CLAIMED_MIRRORS_TAG);
-        Set<BlockPos> loadedMirrors = new ObjectLinkedOpenHashSet<>();
-        Arrays.stream(persistedMirrors)
-                .limit(PERSISTED_MIRROR_LIMIT)
-                .mapToObj(BlockPos::of)
-                .forEach(loadedMirrors::add);
-        this.claimedMirrors = Set.copyOf(loadedMirrors);
+        LongSet loadedMirrors = new LongOpenHashSet();
+        for (int index = 0; index < Math.min(persistedMirrors.length, PERSISTED_MIRROR_LIMIT); index++) {
+            loadedMirrors.add(persistedMirrors[index]);
+        }
+        this.claimedMirrors = loadedMirrors;
         this.nextStructureScan = 0L;
     }
 
@@ -121,7 +120,7 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
         super.saveAdditional(data, registries);
         data.putLongArray(
                 CLAIMED_MIRRORS_TAG,
-                this.claimedMirrors.stream().mapToLong(BlockPos::asLong).toArray());
+                this.claimedMirrors.toLongArray());
     }
 
     private boolean tryProduce() {
@@ -180,25 +179,25 @@ public final class InterferenceArrayCoreBlockEntity extends AENetworkedBlockEnti
     private void refreshMirrorClaims(
                                      ServerLevel level,
                                      DataEnergisticsConfiguration.AstronomySchema settings) {
-        List<BlockPos> candidates = InterferenceArrayPattern.findConnectedMirrors(level, this.worldPosition, settings);
-        Set<BlockPos> nextClaims = new ObjectLinkedOpenHashSet<>();
-        for (BlockPos mirrorPos : candidates) {
+        LongArrayList candidates = new LongArrayList(InterferenceArrayPattern.findConnectedMirrors(level, this.worldPosition, settings));
+        LongSet nextClaims = new LongOpenHashSet();
+        for (long mirrorPosition : candidates) {
             if (nextClaims.size() >= settings.highTierMaximumMirrors) {
                 break;
             }
+            BlockPos mirrorPos = BlockPos.of(mirrorPosition);
             if (level.getBlockEntity(mirrorPos) instanceof AstronomicalMirrorBlockEntity mirror &&
                     mirror.tryClaim(level, this.worldPosition)) {
-                nextClaims.add(mirrorPos.immutable());
+                nextClaims.add(mirrorPosition);
             }
         }
-        for (BlockPos oldMirror : this.claimedMirrors) {
+        for (long oldMirror : this.claimedMirrors) {
             if (!nextClaims.contains(oldMirror)) {
-                releaseMirror(level, oldMirror);
+                releaseMirror(level, BlockPos.of(oldMirror));
             }
         }
-        Set<BlockPos> immutableClaims = Set.copyOf(nextClaims);
-        if (!immutableClaims.equals(this.claimedMirrors)) {
-            this.claimedMirrors = immutableClaims;
+        if (!nextClaims.equals(this.claimedMirrors)) {
+            this.claimedMirrors = nextClaims;
             setChanged();
         }
     }

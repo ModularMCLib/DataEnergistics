@@ -35,10 +35,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Set;
 
 public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity {
@@ -84,11 +83,8 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP;
     }
 
-    private static ObjectSet<Direction> getCableExposedSides(BlockState blockState) {
-        ObjectSet<Direction> sides = new ObjectOpenHashSet<>();
-        for (Direction direction : Direction.values()) {
-            sides.add(direction);
-        }
+    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
+        EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(Direction.UP);
         return sides;
     }

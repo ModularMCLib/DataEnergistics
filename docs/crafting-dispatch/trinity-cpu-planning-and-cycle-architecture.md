@@ -3,7 +3,7 @@
 ## 1. 文档状态
 
 - 方案状态：已确定，按功能提交实施
-- 实现进度：网格图、Trinity/AE2 资格分流入口、DAG/SCC/循环求解、无 `long` 人工上限的精确 radix MIP、BigInteger 执行游标、动态借料、执行 schema 6 和精确数量/诊断界面均已完成
+- 实现进度：网格图、Trinity/AE2 资格分流入口、DAG/SCC/循环求解、无 `long` 人工上限的精确 radix MIP、BigInteger 执行游标、动态借料和精确数量/诊断界面均已完成
 - 适用范围：Trinity CPU 专属计算计划、无环大数量计算、自增殖、多步增殖和多路线生产循环
 - 前置基础：派发架构 Phase 0 至 Phase 2
 - 非依赖项：派发架构 Phase 3 容量切片、Phase 4 Actor/Shard、Phase 5 Governor
@@ -361,7 +361,7 @@ pattern 失效仍可在相同 revision 上重新发起计算。所有等待均�
 
 ## 8. 持久化
 
-作业 schema 2 持久化：
+作业持久化：
 
 - plan kind、graph revision、数量模式；
 - stage/repeat block、阶段游标和剩余次数；
@@ -369,13 +369,10 @@ pattern 失效仍可在相同 revision 上重新发起计算。所有等待均�
 - 动态借料账本；
 - 稳定 pattern signature 与重规划所需摘要。
 
-ready queue 和反向索引是派生状态，载入后确定性重建。schema 1 继续按普通线性作业恢复；未知 schema 和损坏数据
+ready queue 和反向索引是派生状态，载入后确定性重建。损坏数据
 fail fast、记录日志，且在能解析已有库存时只走统一回收路径。
 
-作业外层仍为 schema 2；其执行快照使用 schema 4。schema 3 引入重试时钟基准，恢复时把 provider、动态材料和预算 retry
-的剩余延迟重基到新会话 tick；schema 4 为每个 firing 保存不含输入余留物的真实声明输出，使 CPU 状态页可从紧凑游标精确
-推导剩余待合成量。旧执行 schema 2 的绝对 deadline 无法可靠换算，迁移时只令其立即到期一次；schema 2/3 没有声明输出
-元数据，恢复时记录警告并省略未知待合成行，不猜测数量。已接受 firing 仍以持久游标和 `waitingFor` 为准，不会重复派发。
+执行快照保存重试时钟基准和每个 firing 的声明输出，使 CPU 状态页可从紧凑游标精确推导剩余待合成量；缺少声明输出时只保守显示未知待合成行。已接受 firing 仍以持久游标和 `waitingFor` 为准，不会重复派发。
 所有 durable 状态迁移通过 revision 统一触发宿主 dirty 标记。
 
 ## 9. 配置与线程
@@ -440,7 +437,7 @@ MIP coefficient template 和 in-flight sharing；不再存在 completed exact pl
 
 1. 网格图、计划接口、规划入口和配置。**已实现**
 2. DAG、Tarjan、闭式循环、MIP 和精确排程验证。**已实现**
-3. ready queue、seed 门、动态借料和 schema 2。**已实现**
+3. ready queue、seed 门和动态借料。**已实现**
 4. Craft Amount 数量模式、确认页诊断和 Trinity-only 过滤。**已实现**
 5. 现有构建检查与用户真实环境验收。**进行中**
 
@@ -501,9 +498,9 @@ producer安全稀疏化旧依赖；缺少输出元数据的旧快照继续保留
 - 循环工作库存、隔离 completion buffer、requester 异常重试和部分接收精确扣减；
 - 动态 variant 选择、服务器线程借料事务和 `RESERVED`/`COMMITTED`/`RELEASED` 守恒账本；
 - pattern signature 失效后的有界异步剩余量重规划，以及无可行方案时按 revision 等待；
-- 作业中的 firing、stage、repeat、seed 与 pending output 使用 BigInteger 总账；CPU logic schema 3 另持久化超出 KeyCounter
+- 作业中的 firing、stage、repeat、seed 与 pending output 使用 BigInteger 总账；CPU logic 另持久化超出 KeyCounter
   物理窗口的 exact working inventory，单次 provider/waiting 操作保持 long 窗口；
-- 执行快照 schema 6 和借料账本 schema 2 使用有界 BigInteger 字节编码，并从旧 long schema 无损迁移；
+- 执行快照和借料账本使用有界 BigInteger 字节编码；
 - `TrinityPlanAdmission` 统一显式目标、自动选择、fallback 和直接 CPU 的计划接纳语义。
 
 ### 11.4 已落地的数量与诊断轨道

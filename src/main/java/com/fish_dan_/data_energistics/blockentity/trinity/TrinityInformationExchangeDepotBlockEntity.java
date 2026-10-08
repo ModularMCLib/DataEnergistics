@@ -1268,7 +1268,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
 
         MEStorage aggregateStorage = grid.getStorageService().getInventory();
         FiniteNetworkStorageAccess finiteStorage = (FiniteNetworkStorageAccess) aggregateStorage;
-        updateTransferContext(host, grid, finiteStorage.storageStructureRevision());
+        updateTransferContext(host, grid, finiteStorage.data_energistics$storageStructureRevision());
 
         TrinityDataCoreStorageSavedData storageData = TrinityDataCoreStorageSavedData.get(serverLevel.getServer());
         if (this.storageMode.pullsFromNetwork()) {
@@ -1361,7 +1361,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
             AEKey key = this.transferQueue.dequeue();
             boolean retry = false;
             try {
-                FiniteTransferResult result = finiteStorage.transferFinite(
+                FiniteTransferResult result = finiteStorage.data_energistics$transferFinite(
                         key,
                         Long.MAX_VALUE,
                         this.transferActionSource,

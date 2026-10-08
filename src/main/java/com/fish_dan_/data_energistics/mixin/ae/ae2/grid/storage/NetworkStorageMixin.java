@@ -65,12 +65,12 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
     }
 
     @Override
-    public long storageStructureRevision() {
+    public long data_energistics$storageStructureRevision() {
         return this.dataEnergistics$storageStructureRevision;
     }
 
     @Override
-    public TrinityAvailableAmount exactAvailability(AEKey what, IActionSource source) {
+    public TrinityAvailableAmount data_energistics$exactAvailability(AEKey what, IActionSource source) {
         if (this.mountsInUse) {
             throw new IllegalStateException("AE network mounts are already in use during exact inventory capture");
         }
@@ -115,10 +115,10 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
     }
 
     @Override
-    public FiniteTransferResult transferFinite(AEKey what,
-                                               long amount,
-                                               IActionSource source,
-                                               FiniteTransferTarget target) {
+    public FiniteTransferResult data_energistics$transferFinite(AEKey what,
+                                                                long amount,
+                                                                IActionSource source,
+                                                                FiniteTransferTarget target) {
         MEStorage.checkPreconditions(what, amount, Actionable.MODULATE, source);
         if (this.mountsInUse) {
             return new FiniteTransferResult(0L, 0L, 0L, 0L, 0L, 0L, 0, true);

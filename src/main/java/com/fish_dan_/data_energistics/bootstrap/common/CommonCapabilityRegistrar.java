@@ -73,6 +73,10 @@ final class CommonCapabilityRegistrar {
                 DEBlockEntities.DATA_ENERGY_CELL_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity);
         event.registerBlockEntity(
+                AECapabilities.IN_WORLD_GRID_NODE_HOST,
+                DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
+                (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
                 DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity.getExternalInventory().toItemHandler());

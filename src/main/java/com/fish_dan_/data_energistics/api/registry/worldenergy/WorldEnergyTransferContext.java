@@ -37,16 +37,16 @@ public interface WorldEnergyTransferContext {
             return TransferResult.empty();
         }
         long networkAvailable = simulateNetworkExtract(key, requested);
-        long worldAcceptable = world.transfer(networkAvailable, true);
+        long worldAcceptable = requireNativeResult(networkAvailable, world.transfer(networkAvailable, true));
         long planned = Math.min(networkAvailable, worldAcceptable);
         if (planned <= 0) {
-            return TransferResult.empty();
+            return new TransferResult(requested, 0, 0);
         }
         long extracted = commitNetworkExtract(key, planned);
         if (extracted <= 0) {
-            return TransferResult.empty();
+            return new TransferResult(requested, 0, 0);
         }
-        long accepted = world.transfer(extracted, false);
+        long accepted = requireNativeResult(extracted, world.transfer(extracted, false));
         if (accepted >= extracted) {
             return new TransferResult(requested, accepted, 0);
         }
@@ -62,15 +62,15 @@ public interface WorldEnergyTransferContext {
         if (requested == 0) {
             return TransferResult.empty();
         }
-        long worldAvailable = world.transfer(requested, true);
+        long worldAvailable = requireNativeResult(requested, world.transfer(requested, true));
         long networkAcceptable = simulateNetworkInsert(key, worldAvailable);
         long planned = Math.min(worldAvailable, networkAcceptable);
         if (planned <= 0) {
-            return TransferResult.empty();
+            return new TransferResult(requested, 0, 0);
         }
-        long extracted = world.transfer(planned, false);
+        long extracted = requireNativeResult(planned, world.transfer(planned, false));
         if (extracted <= 0) {
-            return TransferResult.empty();
+            return new TransferResult(requested, 0, 0);
         }
         long inserted = commitNetworkInsert(key, extracted);
         if (inserted >= extracted) {
@@ -86,6 +86,14 @@ public interface WorldEnergyTransferContext {
         if (amount < 0) {
             throw new IllegalArgumentException("Transfer amount must be non-negative");
         }
+    }
+
+    private static long requireNativeResult(long offered, long result) {
+        if (result < 0 || result > offered) {
+            throw new IllegalStateException(
+                    "World-energy target returned " + result + " for offered amount " + offered);
+        }
+        return result;
     }
 
     /** Callback receiving an amount and a simulation flag; return the amount accepted or extracted. */

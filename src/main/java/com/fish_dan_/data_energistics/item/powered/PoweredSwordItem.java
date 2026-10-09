@@ -60,6 +60,8 @@ import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ItemAbility;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
@@ -106,11 +108,11 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
             return cellTooltip;
         }
         var upgrades = this.getUpgrades(stack);
-        List<ItemStack> upgradeItems = collectUpgradeItems(upgrades);
+        ObjectList<ItemStack> upgradeItems = collectUpgradeItems(upgrades);
         if (upgradeItems.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(new StorageCellTooltipComponent(upgradeItems, List.of(), false, false));
+        return Optional.of(new StorageCellTooltipComponent(upgradeItems, ObjectLists.emptyList(), false, false));
     }
 
     @Override
@@ -408,8 +410,8 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
                 (float) getPanelAttackDamage(stack));
     }
 
-    private static List<ItemStack> collectUpgradeItems(IUpgradeInventory upgrades) {
-        List<ItemStack> upgradeItems = new ObjectArrayList<>(upgrades.size());
+    private static ObjectList<ItemStack> collectUpgradeItems(IUpgradeInventory upgrades) {
+        ObjectList<ItemStack> upgradeItems = new ObjectArrayList<>(upgrades.size());
         for (int i = 0; i < upgrades.size(); i++) {
             ItemStack upgrade = upgrades.getStackInSlot(i);
             if (!upgrade.isEmpty()) {

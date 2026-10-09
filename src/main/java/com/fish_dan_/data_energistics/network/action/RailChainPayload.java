@@ -10,11 +10,11 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Short FE arcs emitted once at projectile impact, never a held beam. */
-public record RailChainPayload(List<Vec3> points) implements CustomPacketPayload {
+public record RailChainPayload(ObjectList<Vec3> points) implements CustomPacketPayload {
 
     public static final Type<RailChainPayload> TYPE = new Type<>(Data_Energistics.id("star_shard_impact_chain"));
     public static final StreamCodec<RegistryFriendlyByteBuf, RailChainPayload> STREAM_CODEC = new StreamCodec<>() {
@@ -23,9 +23,9 @@ public record RailChainPayload(List<Vec3> points) implements CustomPacketPayload
         public RailChainPayload decode(RegistryFriendlyByteBuf buffer) {
             int count = buffer.readVarInt();
             if (count < 2 || count > 4096) throw new IllegalArgumentException("Invalid impact chain count");
-            List<Vec3> points = new ObjectArrayList<>(count);
+            ObjectArrayList<Vec3> points = new ObjectArrayList<>(count);
             for (int i = 0; i < count; i++) points.add(new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
-            return new RailChainPayload(List.copyOf(points));
+            return new RailChainPayload(new ObjectImmutableList<>(points));
         }
 
         @Override

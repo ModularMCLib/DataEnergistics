@@ -15,8 +15,10 @@ import java.util.EnumSet;
 /**
  * Stable identity and transfer rules for one resource exposed by a Digital Supply Interface adapter.
  *
- * <p>The {@code key} is the real AE identity used for quantity transactions. The presence marker maintained by a
- * device is deliberately separate and always has amount one.</p>
+ * <p>
+ * The {@code key} is the real AE identity used for quantity transactions. The presence marker maintained by a
+ * device is deliberately separate and always has amount one.
+ * </p>
  */
 public record WorldEnergyResourceDefinition(ResourceLocation id,
                                             AEKey key,

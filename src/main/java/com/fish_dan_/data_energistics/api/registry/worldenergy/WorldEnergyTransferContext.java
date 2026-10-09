@@ -5,8 +5,10 @@ import appeng.api.stacks.AEKey;
 /**
  * Two-phase quantity transfer surface for one Digital Supply Interface tick.
  *
- * <p>Network and world-side simulation happen before either side is committed. If the second commit accepts less
- * than the planned amount, the context compensates the first side and reports the actual transferred quantity.</p>
+ * <p>
+ * Network and world-side simulation happen before either side is committed. If the second commit accepts less
+ * than the planned amount, the context compensates the first side and reports the actual transferred quantity.
+ * </p>
  */
 public interface WorldEnergyTransferContext {
 
@@ -25,9 +27,9 @@ public interface WorldEnergyTransferContext {
     /**
      * Runs a network-to-world transaction using amounts expressed in AE units.
      *
-     * @param key real network key, never a presence-marker inventory entry
+     * @param key       real network key, never a presence-marker inventory entry
      * @param requested requested AE amount
-     * @param world target-side simulation and commit callback
+     * @param world     target-side simulation and commit callback
      */
     default TransferResult networkToWorld(AEKey key, long requested, NativeTransfer world) {
         requireAmount(requested);
@@ -89,6 +91,7 @@ public interface WorldEnergyTransferContext {
     /** Callback receiving an amount and a simulation flag; return the amount accepted or extracted. */
     @FunctionalInterface
     interface NativeTransfer {
+
         long transfer(long amount, boolean simulate);
     }
 

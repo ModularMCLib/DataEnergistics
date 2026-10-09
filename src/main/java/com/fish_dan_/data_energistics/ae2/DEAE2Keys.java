@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.ae2.key.DigitalizationKeyType;
 import com.fish_dan_.data_energistics.ae2.key.EchoKey;
 import com.fish_dan_.data_energistics.ae2.key.ManifestBinaryKeyType;
 import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
-import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;

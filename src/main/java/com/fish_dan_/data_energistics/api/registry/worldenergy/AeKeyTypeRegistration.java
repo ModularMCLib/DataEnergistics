@@ -7,8 +7,10 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * One AE2 key type declared through the unified Data Energistics plugin transaction.
  *
- * <p>The key type must already contain its stable codec and packet decoder. The registration only publishes the
- * value before AE2's key-type registry event; it never mutates a running network.</p>
+ * <p>
+ * The key type must already contain its stable codec and packet decoder. The registration only publishes the
+ * value before AE2's key-type registry event; it never mutates a running network.
+ * </p>
  */
 public record AeKeyTypeRegistration(ResourceLocation id,
                                     AEKeyType keyType,

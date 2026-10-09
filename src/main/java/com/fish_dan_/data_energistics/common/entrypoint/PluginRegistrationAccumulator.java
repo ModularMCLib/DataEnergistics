@@ -6,8 +6,6 @@ import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAd
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutputRegistry;
@@ -29,6 +27,8 @@ import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalReg
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistry;
 import com.fish_dan_.data_energistics.api.registry.tower.energy.TowerEnergyIntegrationRegistry;
 import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegistry;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistry;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistry;

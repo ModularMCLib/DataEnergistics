@@ -9,8 +9,10 @@ import org.jspecify.annotations.Nullable;
 /**
  * Public, optional-Mod-neutral behavior contract for one world-energy integration.
  *
- * <p>Implementations must only depend on this API and the target mod's public API. The block entity owns lifecycle,
- * persistence and AE storage; an adapter owns recognition, native links and world-side rules.</p>
+ * <p>
+ * Implementations must only depend on this API and the target mod's public API. The block entity owns lifecycle,
+ * persistence and AE storage; an adapter owns recognition, native links and world-side rules.
+ * </p>
  */
 public interface DigitalSupplyInterfaceAdapter {
 

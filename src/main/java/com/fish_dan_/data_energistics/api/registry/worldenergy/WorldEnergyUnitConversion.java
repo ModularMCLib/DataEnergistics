@@ -5,6 +5,7 @@ public interface WorldEnergyUnitConversion {
 
     /** Identity conversion for resources whose native unit is already an AE unit. */
     WorldEnergyUnitConversion IDENTITY = new WorldEnergyUnitConversion() {
+
         @Override
         public long toNative(long aeUnits) {
             return nonNegative(aeUnits);

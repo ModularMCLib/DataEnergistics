@@ -7,7 +7,11 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
@@ -22,6 +26,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRe
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FrozenReusableInputRules;
 import com.fish_dan_.data_energistics.common.trinity.TrinityPatternRecipeIdResolvers;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -88,7 +93,7 @@ public final class DataEnergisticsRegistrySnapshot {
         this.patternUploadWorkstationRegistrations = immutableList(patternUploadWorkstationRegistrations);
         this.adaptivePatternProviderRegistrations = immutableList(adaptivePatternProviderRegistrations);
         this.aeKeyTypeRegistrations = immutableList(aeKeyTypeRegistrations);
-        this.digitalSupplyInterfaceRegistrations = immutableList(digitalSupplyInterfaceRegistrations);
+        this.digitalSupplyInterfaceRegistrations = freezeDigitalSupplyInterfaces(digitalSupplyInterfaceRegistrations);
         this.trinityPatternRecipes = new TrinityPatternRecipeIdResolvers(trinityPatternRecipeIdResolvers);
         this.trinityPatternSearchTermRegistrations = immutableList(trinityPatternSearchTerms.values());
         this.virtualCraftingOutputAdapters = immutableList(virtualCraftingOutputAdapters);
@@ -105,6 +110,80 @@ public final class DataEnergisticsRegistrySnapshot {
 
     private static <T> ObjectList<T> immutableList(ObjectCollection<T> values) {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(values));
+    }
+
+    private static ObjectList<DigitalSupplyInterfaceRegistration> freezeDigitalSupplyInterfaces(
+                                                                                                ObjectCollection<DigitalSupplyInterfaceRegistration> registrations) {
+        ObjectArrayList<DigitalSupplyInterfaceRegistration> frozen = new ObjectArrayList<>(registrations.size());
+        for (DigitalSupplyInterfaceRegistration registration : registrations) {
+            ObjectList<DigitalSupplyResourceDefinition> resources = registration.resources();
+            frozen.add(new DigitalSupplyInterfaceRegistration(
+                    registration.id(), resources, new FrozenDigitalSupplyAdapter(registration.adapter(), resources)));
+        }
+        return ObjectLists.unmodifiable(frozen);
+    }
+
+    /** Adapter facade that prevents runtime resource discovery from replacing the frozen registration catalog. */
+    private static final class FrozenDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
+
+        private final DigitalSupplyInterfaceAdapter delegate;
+        private final ObjectList<DigitalSupplyResourceDefinition> resources;
+
+        private FrozenDigitalSupplyAdapter(DigitalSupplyInterfaceAdapter delegate,
+                                           ObjectList<DigitalSupplyResourceDefinition> resources) {
+            this.delegate = delegate;
+            this.resources = resources;
+        }
+
+        @Override
+        public ResourceLocation id() {
+            return this.delegate.id();
+        }
+
+        @Override
+        public ObjectList<DigitalSupplyResourceDefinition> resources() {
+            return this.resources;
+        }
+
+        @Override
+        public int priority() {
+            return this.delegate.priority();
+        }
+
+        @Override
+        public boolean supports(DigitalSupplyInterfaceTarget target) {
+            return this.delegate.supports(target);
+        }
+
+        @Override
+        public void discover(DigitalSupplyInterfaceTarget target) {
+            this.delegate.discover(target);
+        }
+
+        @Override
+        public void updateLinks(DigitalSupplyInterfaceTarget target) {
+            this.delegate.updateLinks(target);
+        }
+
+        @Override
+        public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
+            this.delegate.tick(target, transfer);
+        }
+
+        @Override
+        public void saveState(CompoundTag tag) {
+            this.delegate.saveState(tag);
+        }
+
+        @Override
+        public void loadState(CompoundTag tag) {
+            this.delegate.loadState(tag);
+        }
+
+        @Override
+        public void detach(DigitalSupplyInterfaceTarget target) {
+            this.delegate.detach(target);
+        }
     }
 
     /**

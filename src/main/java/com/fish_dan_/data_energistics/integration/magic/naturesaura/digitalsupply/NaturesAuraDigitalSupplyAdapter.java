@@ -23,7 +23,8 @@ import java.util.EnumSet;
 /** Transfers Nature's Aura using the public IAuraChunk API with threshold hysteresis. */
 public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
-    private static final long RATE_LIMIT = 256L;
+    /** Nature's Aura's native spread moves ceil(aura * 0.72) / 6 units; use five times that fixed rate. */
+    private static final long RATE_LIMIT = (long) Math.ceil(IAuraChunk.DEFAULT_AURA * 0.72D) / 6L * 5L;
     private static final int RELEASE_THRESHOLD = IAuraChunk.DEFAULT_AURA * 3 / 10;
     private final ObjectList<DigitalSupplyResourceDefinition> resources = createResources();
 

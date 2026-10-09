@@ -53,6 +53,9 @@ public final class AstralSorceryKey extends AEKey {
         }
         if (id.getNamespace().equals(Data_Energistics.MODID) && path.startsWith(CONSTELLATION_PREFIX)) {
             ResourceLocation registryId = parseRegistryId(path.substring(CONSTELLATION_PREFIX.length()));
+            if (registryId.getPath().equals("none")) {
+                return Optional.empty();
+            }
             BaseConstellation constellation = RegistriesAS.REGISTRY_CONSTELLATIONS.get(registryId);
             return constellation == null ? Optional.empty() : Optional.of(constellation(registryId, constellation));
         }

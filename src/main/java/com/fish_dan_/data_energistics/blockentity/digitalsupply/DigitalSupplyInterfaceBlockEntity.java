@@ -2,11 +2,13 @@ package com.fish_dan_.data_energistics.blockentity.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyInterfaceTransferContext;
+import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyNetworkStorage;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.PresenceMarkerStorage;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyLinkContext;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
@@ -70,13 +72,16 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     private final IStorageProvider storageProvider = new MarkerStorageProvider();
     private final ObjectList<DigitalSupplyInterfaceAdapter> adapters;
     private final ObjectSet<ResourceLocation> failedAdapters = new ObjectLinkedOpenHashSet<>();
+    private final ObjectSet<ConnectorLink> automaticLinks = new ObjectLinkedOpenHashSet<>();
     private ObjectList<ConnectorLink> links = new ObjectArrayList<>();
     private ConnectorMode mode = ConnectorMode.INPUT;
 
     public DigitalSupplyInterfaceBlockEntity(BlockPos pos, BlockState state) {
         super(DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(), pos, state);
         ObjectArrayList<DigitalSupplyInterfaceAdapter> discovered = new ObjectArrayList<>();
-        DataEnergisticsEntrypointLoader.snapshot().digitalSupplyInterfaces().forEach(registration -> discovered.add(registration.adapter()));
+        for (DigitalSupplyInterfaceRegistration registration : DataEnergisticsEntrypointLoader.snapshot().digitalSupplyInterfaces()) {
+            discovered.add(registration.adapter());
+        }
         discovered.sort(Comparator.comparingInt(DigitalSupplyInterfaceAdapter::priority)
                 .thenComparing(adapter -> adapter.id().toString()));
         this.adapters = ObjectLists.unmodifiable(discovered);
@@ -121,7 +126,8 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         if (!this.getMainNode().isOnline() || this.getMainNode().getGrid() == null) {
             return null;
         }
-        return this.getMainNode().getGrid().getStorageService().getInventory();
+        return new DigitalSupplyNetworkStorage(
+                this.getMainNode().getGrid().getStorageService().getInventory(), this.presenceStorage);
     }
 
     /** Returns the marker mount for diagnostics and focused tests. */
@@ -163,6 +169,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         if (this.level == null || this.level.isClientSide()) {
             return;
         }
+        refreshAdjacentLinks();
         removeOfflineLinks();
         DigitalSupplyInterfaceTransferContext transfer = new DigitalSupplyInterfaceTransferContext(
                 networkStorage(), new MachineSource(this));
@@ -231,12 +238,22 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         if (slot != -1) {
             throw new IllegalArgumentException("Digital Supply Interface links do not expose stock slots");
         }
-        ConnectorLink link = new ConnectorLink(position, side, this.mode, -1);
-        if (!this.links.remove(link)) {
+        ConnectorLink existing = null;
+        for (ConnectorLink candidate : this.links) {
+            if (candidate.position().equals(position) && candidate.side() == side && candidate.slot() == slot) {
+                existing = candidate;
+                break;
+            }
+        }
+        if (existing == null) {
+            ConnectorLink link = new ConnectorLink(position, side, this.mode, -1);
             this.links.add(link);
+            this.automaticLinks.remove(link);
             refreshState();
             return true;
         }
+        this.links.remove(existing);
+        this.automaticLinks.remove(existing);
         refreshState();
         return false;
     }
@@ -253,6 +270,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
             }
         }
         this.links = replacement;
+        this.automaticLinks.clear();
         refreshState();
         return replacement.size();
     }
@@ -272,6 +290,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         int before = this.links.size();
         this.links.removeIf(link -> !isOnline(link));
         int removed = before - this.links.size();
+        this.automaticLinks.removeIf(link -> !this.links.contains(link));
         if (removed > 0) {
             refreshState();
         }
@@ -353,6 +372,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
 
     private void readLinks(CompoundTag data) {
         this.links = new ObjectArrayList<>();
+        this.automaticLinks.clear();
         ListTag saved = data.getList(LINKS_TAG, Tag.TAG_COMPOUND);
         for (int index = 0; index < saved.size(); index++) {
             CompoundTag link = saved.getCompound(index);
@@ -373,6 +393,9 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     private void writeLinks(CompoundTag data) {
         ListTag saved = new ListTag();
         for (ConnectorLink link : this.links) {
+            if (this.automaticLinks.contains(link)) {
+                continue;
+            }
             CompoundTag value = new CompoundTag();
             value.putInt(LINK_X_TAG, link.position().getX());
             value.putInt(LINK_Y_TAG, link.position().getY());
@@ -383,6 +406,41 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
             saved.add(value);
         }
         data.put(LINKS_TAG, saved);
+    }
+
+    private void refreshAdjacentLinks() {
+        if (this.level == null) {
+            return;
+        }
+        ObjectArrayList<ConnectorLink> stale = new ObjectArrayList<>();
+        for (ConnectorLink link : this.automaticLinks) {
+            if (link.mode() != ConnectorMode.BOTH || !isAdjacentLoadedTarget(link)) {
+                stale.add(link);
+            }
+        }
+        for (ConnectorLink link : stale) {
+            this.automaticLinks.remove(link);
+            this.links.remove(link);
+        }
+        for (Direction direction : Direction.values()) {
+            BlockPos target = this.worldPosition.relative(direction);
+            if (!this.level.isLoaded(target) || this.level.getBlockState(target).isAir()) {
+                continue;
+            }
+            ConnectorLink link = new ConnectorLink(target, direction.getOpposite(), ConnectorMode.BOTH, -1);
+            if (this.links.contains(link)) {
+                continue;
+            }
+            this.links.add(link);
+            this.automaticLinks.add(link);
+        }
+    }
+
+    private boolean isAdjacentLoadedTarget(ConnectorLink link) {
+        if (this.level == null || !this.level.isLoaded(link.position())) {
+            return false;
+        }
+        return this.worldPosition.distManhattan(link.position()) == 1 && !this.level.getBlockState(link.position()).isAir();
     }
 
     private final class MarkerStorageProvider implements IStorageProvider {

@@ -38,6 +38,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     private static final long TICK_LIMIT = 1_000L;
     private static final int NATIVE_LIMIT = 1_000;
     private static boolean constellationWarningLogged;
+    private final ObjectList<DigitalSupplyResourceDefinition> resourceCatalog;
+
+    public AstralSorceryDigitalSupplyAdapter() {
+        this.resourceCatalog = createResources();
+    }
 
     @Override
     public ResourceLocation id() {
@@ -57,6 +62,10 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
 
     @Override
     public ObjectList<DigitalSupplyResourceDefinition> resources() {
+        return this.resourceCatalog;
+    }
+
+    private static ObjectList<DigitalSupplyResourceDefinition> createResources() {
         ObjectArrayList<DigitalSupplyResourceDefinition> result = new ObjectArrayList<>();
         for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
             ResourceLocation registryId = RegistriesAS.REGISTRY_LUMEN.getKey(entry.getValue());
@@ -70,7 +79,9 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         }
         for (var entry : RegistriesAS.REGISTRY_CONSTELLATIONS.entrySet()) {
             ResourceLocation registryId = RegistriesAS.REGISTRY_CONSTELLATIONS.getKey(entry.getValue());
-            if (registryId == null || entry.getValue() == null) continue;
+            // Astral exposes a NONE sentinel in some registry versions. It is a
+            // lookup placeholder, not a transferable constellation resource.
+            if (registryId == null || entry.getValue() == null || isNoneConstellation(registryId)) continue;
             AstralSorceryKey key = AstralSorceryKey.constellation(registryId, entry.getValue());
             result.add(new DigitalSupplyResourceDefinition(key.getId(), key, entry.getValue().getName(),
                     DigitalSupplyUnitConversion.IDENTITY, true,
@@ -82,7 +93,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
                     DigitalSupplyUnitConversion.IDENTITY, false,
                     EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         }
-        return result;
+        return ObjectList.of(result.toArray(DigitalSupplyResourceDefinition[]::new));
+    }
+
+    private static boolean isNoneConstellation(ResourceLocation registryId) {
+        return registryId.getPath().equals("none");
     }
 
     @Override

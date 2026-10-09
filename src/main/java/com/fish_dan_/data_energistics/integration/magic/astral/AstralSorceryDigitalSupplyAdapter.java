@@ -95,9 +95,8 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     public void discover(DigitalSupplyInterfaceTarget target) {
         for (WorldEnergyResourceDefinition definition : resources()) {
             if (definition.presenceMarker()) {
-                // Constellations are registry identities; Astral exposes no public quantity endpoint for them.
-                // Their marker therefore records discovery from the loaded registry rather than inventing stock.
-                target.setPresence(definition.key(), true);
+                // A registry entry proves that a constellation type exists, not that this interface received it.
+                // Native transmission callbacks are responsible for setting this marker.
                 continue;
             }
             boolean present = false;

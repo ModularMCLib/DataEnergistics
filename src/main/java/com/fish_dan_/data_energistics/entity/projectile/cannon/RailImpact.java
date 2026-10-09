@@ -16,24 +16,29 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 /** One collision, one damage/effect settlement. FE branches from that physical impact point. */
 public final class RailImpact {
 
+    private static final float BLAZE_BURN_DAMAGE_RATIO = 0.20F;
+
     private RailImpact() {}
 
-    public static void apply(ServerLevel level, RailShot shot, Vec3 center, @Nullable LivingEntity target, @Nullable Entity owner) {
+    public static void apply(ServerLevel level, RailShot shot, float speedMultiplier, Vec3 center,
+                             @Nullable LivingEntity target, @Nullable Entity owner) {
         var ammo = shot.ammunition();
         int cards = shot.cards();
-        float damage = ammo.damage(cards) * shot.charge();
+        float damage = ammo.damage(cards) * shot.charge() * speedMultiplier;
         if (ammo == RailAmmunition.FE) {
             List<Vec3> points = new ObjectArrayList<>();
             points.add(center);
             int width = cards == 0 ? 12 : 17;
             int maximumTargets = cards == 2 ? 16 : 8;
-            for (LivingEntity chained : level.getEntitiesOfClass(LivingEntity.class, ElementalGrenade.area(center, width),
-                    entity -> entity != owner && entity.isAlive() && !entity.isSpectator()).stream().limit(maximumTargets).toList()) {
+            List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, ElementalGrenade.area(center, width),
+                    entity -> entity != owner && entity.isAlive() && !entity.isSpectator());
+            for (LivingEntity chained : orderTargets(center, candidates, maximumTargets)) {
                 WeaponDamage.hurt(chained, WeaponDamage.source(chained, owner), damage);
                 if (points.size() < 4096) points.add(chained.getBoundingBox().getCenter());
             }
@@ -43,11 +48,11 @@ public final class RailImpact {
         }
         if (target == null || !target.isAlive()) return;
         float missing = Math.max(0, target.getMaxHealth() - target.getHealth());
-        if (!WeaponDamage.hurt(target, WeaponDamage.source(target, owner),
-                damage + (ammo == RailAmmunition.HEAVY && cards == 2 ? missing * 0.25F * shot.charge() : 0)))
+        float heavyBonus = ammo == RailAmmunition.HEAVY && cards == 2 ? missing * 0.25F * shot.charge() * speedMultiplier : 0.0F;
+        if (!WeaponDamage.hurt(target, WeaponDamage.source(target, owner), damage + heavyBonus))
             return;
         switch (ammo) {
-            case BLAZE -> WeaponBurn.apply(target, owner, cards == 0 ? 100 : 200, cards == 2 ? 3 : 1.5F);
+            case BLAZE -> WeaponBurn.applyWithDecay(target, owner, cards == 0 ? 100 : 200, damage * BLAZE_BURN_DAMAGE_RATIO);
             case HEAVY -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, cards == 2 ? 9 : 3));
             case DATA -> {
                 for (int layer = 0; layer < (cards == 0 ? 1 : 2) && target.isAlive(); layer++) {
@@ -57,5 +62,13 @@ public final class RailImpact {
             }
             case FE -> throw new IllegalStateException("FE was already settled");
         }
+    }
+
+    static List<LivingEntity> orderTargets(Vec3 center, List<LivingEntity> candidates, int maximumTargets) {
+        if (maximumTargets <= 0) return List.of();
+        return candidates.stream()
+                .sorted(Comparator.comparingDouble(target -> center.distanceToSqr(target.getBoundingBox().getCenter())))
+                .limit(maximumTargets)
+                .toList();
     }
 }

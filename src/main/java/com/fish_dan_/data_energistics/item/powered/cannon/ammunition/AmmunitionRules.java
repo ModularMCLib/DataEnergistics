@@ -11,8 +11,8 @@ public final class AmmunitionRules {
 
     public record Cube(float damage, int fragments) {
 
-        public float fragmentDamage() {
-            return damage / 4.0F;
+        public float fragmentDamage(float totalDamage) {
+            return totalDamage / fragments;
         }
     }
 
@@ -27,12 +27,18 @@ public final class AmmunitionRules {
 
     public static Flame flame(int cards) {
         checkCards(cards);
-        return new Flame(cards == 0 ? 5 : 7, cards == 0 ? 4 : 6, cards == 2 ? 280 : 100, cards == 2 ? 3 : 1.5F);
+        return new Flame(cards == 0 ? 5 : 7, cards == 0 ? 4 : 6, cards == 2 ? 280 : 100,
+                switch (cards) {
+                    case 0 -> 4.0F;
+                    case 1 -> 17.0F;
+                    case 2 -> 34.0F;
+                    default -> throw new IllegalArgumentException("Invalid focusing upgrade count");
+                });
     }
 
     public static Cube cube(int cards) {
         checkCards(cards);
-        return new Cube(cards == 0 ? 36 : 40, 4 + 2 * cards);
+        return new Cube(cards == 0 ? 85.0F : 89.0F, 4 + 2 * cards);
     }
 
     public static void checkCards(int cards) {

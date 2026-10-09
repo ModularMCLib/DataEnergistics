@@ -8,6 +8,8 @@ import net.minecraft.world.phys.Vec3;
 public final class CannonBallistics {
 
     public static final double GRENADE_GRAVITY = 0.045D;
+    /** Rail rounds cross the maximum simulated travel distance in one tick. */
+    public static final double RAIL_PROJECTILE_SPEED = 256.0D;
     public static final int PREVIEW_TICKS = 120;
 
     private CannonBallistics() {}
@@ -17,13 +19,17 @@ public final class CannonBallistics {
     }
 
     public static Vec3 launchVelocity(MatterConvergingCrossbowMode mode, float charge, Vec3 direction, float ammoSpeed) {
-        double speed = mode == MatterConvergingCrossbowMode.GRENADE ? 0.65D + (ammoSpeed - 0.65D) * charge : Math.max(8.0D, ammoSpeed * 2.0D);
+        double speed = switch (mode) {
+            case GRENADE -> 0.65D + (ammoSpeed - 0.65D) * charge;
+            case RAIL -> RAIL_PROJECTILE_SPEED;
+            case CROSSBOW -> ammoSpeed;
+        };
         return direction.normalize().scale(speed);
     }
 
     /** Vanilla projectiles first move by velocity, then apply medium drag and gravity. */
-    public static Vec3 nextVelocity(Vec3 velocity, MatterConvergingCrossbowMode mode, boolean inWater, boolean saberAmmo) {
-        double drag = inWater && !saberAmmo ? (double) 0.8F : (double) 0.99F;
+    public static Vec3 nextVelocity(Vec3 velocity, MatterConvergingCrossbowMode mode, boolean inWater, boolean ignoresWaterDrag) {
+        double drag = inWater && !ignoresWaterDrag ? (double) 0.8F : (double) 0.99F;
         return velocity.scale(drag).add(0.0D, mode == MatterConvergingCrossbowMode.GRENADE ? -GRENADE_GRAVITY : 0.0D, 0.0D);
     }
 

@@ -28,12 +28,17 @@ public enum RailAmmunition {
 
     public float damage(int cards) {
         AmmunitionRules.checkCards(cards);
-        return switch (this) {
+        float baseDamage = switch (this) {
             case BLAZE -> cards == 0 ? 8 : cards == 1 ? 10 : 14;
             case HEAVY -> cards == 0 ? 34 : 40;
             case DATA -> cards == 2 ? 20 : 13;
             case FE -> cards == 2 ? 19 : 11;
         };
+        return baseDamage * this.baseDamageMultiplier();
+    }
+
+    public float baseDamageMultiplier() {
+        return this == FE ? 3.0F : 5.0F;
     }
 
     public int color() {

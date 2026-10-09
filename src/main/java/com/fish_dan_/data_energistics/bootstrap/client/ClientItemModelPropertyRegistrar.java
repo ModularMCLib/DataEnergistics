@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ChargedProjectiles;
 
 final class ClientItemModelPropertyRegistrar {
 
@@ -29,11 +28,6 @@ final class ClientItemModelPropertyRegistrar {
 
     private static void registerMatterConvergingCrossbowProperties() {
         var item = DEItems.MATTER_CONVERGING_CROSSBOW.get();
-        ItemProperties.register(item, Data_Energistics.id("loaded_special_light_saber"),
-                (stack, level, entity, seed) -> {
-                    ChargedProjectiles charged = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
-                    return !charged.isEmpty() && MatterConvergingCrossbowItem.isSpecialLightSaberAmmo(charged.getItems().getFirst()) ? 1.0F : 0.0F;
-                });
         ItemProperties.register(item, Data_Energistics.id("load_stage"),
                 (stack, level, entity, seed) -> {
                     if (MatterConvergingCrossbowItem.isCharged(stack)) {

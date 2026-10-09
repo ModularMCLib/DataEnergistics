@@ -22,18 +22,19 @@ import net.neoforged.neoforge.client.model.geometry.IUnbakedGeometry;
 
 import com.mojang.math.Transformation;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.List;
 import java.util.function.Function;
 
 public final class CrossbowGeometry implements IUnbakedGeometry<CrossbowGeometry> {
 
-    private final List<List<Element>> poses;
-    private final List<Element> specialAmmo;
+    private final ObjectList<ObjectList<Element>> poses;
+    private final ObjectList<Element> specialAmmo;
 
-    CrossbowGeometry(List<List<Element>> poses, List<Element> specialAmmo) {
+    CrossbowGeometry(ObjectList<ObjectList<Element>> poses, ObjectList<Element> specialAmmo) {
         this.poses = poses;
         this.specialAmmo = specialAmmo;
     }
@@ -43,9 +44,10 @@ public final class CrossbowGeometry implements IUnbakedGeometry<CrossbowGeometry
                            Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState,
                            ItemOverrides overrides) {
         FaceBakery bakery = new FaceBakery();
-        List<List<Part>> frames = this.poses.stream()
-                .map(pose -> bakeParts(pose, context, spriteGetter, bakery)).toList();
-        List<Part> ammo = bakeParts(this.specialAmmo, context, spriteGetter, bakery);
+        ObjectList<ObjectList<Part>> frames = this.poses.stream()
+                .map(pose -> bakeParts(pose, context, spriteGetter, bakery))
+                .collect(ObjectArrayList.toList());
+        ObjectList<Part> ammo = bakeParts(this.specialAmmo, context, spriteGetter, bakery);
         Matrix4f root = modelState.getRotation().applyOrigin(new Vector3f(0.5F))
                 .compose(context.getRootTransform()).getMatrix();
         ResourceLocation renderType = context.getRenderTypeHint();
@@ -56,23 +58,25 @@ public final class CrossbowGeometry implements IUnbakedGeometry<CrossbowGeometry
         return new CrossbowBakedModel(builder.build(), frames, ammo, root, overrides);
     }
 
-    private static List<Part> bakeParts(List<Element> elements, IGeometryBakingContext context,
-                                        Function<Material, TextureAtlasSprite> sprites, FaceBakery bakery) {
-        return elements.stream().map(element -> {
-            List<BakedQuad> faces = new ObjectArrayList<>();
+    private static ObjectList<Part> bakeParts(ObjectList<Element> elements, IGeometryBakingContext context,
+                                              Function<Material, TextureAtlasSprite> sprites, FaceBakery bakery) {
+        ObjectArrayList<Part> result = new ObjectArrayList<>(elements.size());
+        for (Element element : elements) {
+            ObjectArrayList<BakedQuad> faces = new ObjectArrayList<>();
             element.cube.faces.forEach((direction, face) -> faces.add(bakery.bakeQuad(
                     new Vector3f(-8.0F), new Vector3f(8.0F), face,
                     sprites.apply(context.getMaterial(face.texture())), direction,
                     BlockModelRotation.X0_Y0, null, element.cube.shade)));
-            return new Part(List.copyOf(faces), element.pose, element.motion, element.deployment);
-        }).toList();
+            result.add(new Part(new ObjectImmutableList<>(faces), element.pose, element.motion, element.deployment));
+        }
+        return new ObjectImmutableList<>(result);
     }
 
-    static List<BakedQuad> render(List<List<Part>> frames, List<Part> specialAmmo,
-                                  CrossbowAnimation.Pose pose, boolean special, Matrix4f root) {
-        List<Part> folded = frames.getFirst();
-        List<Part> active = frames.get(pose.stage() + 1);
-        List<BakedQuad> quads = new ObjectArrayList<>(320);
+    static ObjectList<BakedQuad> render(ObjectList<ObjectList<Part>> frames, ObjectList<Part> specialAmmo,
+                                        CrossbowAnimation.Pose pose, boolean special, Matrix4f root) {
+        ObjectList<Part> folded = frames.getFirst();
+        ObjectList<Part> active = frames.get(pose.stage() + 1);
+        ObjectArrayList<BakedQuad> quads = new ObjectArrayList<>(320);
         CrossbowRig rig = new CrossbowRig(pose);
         for (int i = 0; i < active.size(); i++) {
             Part from = folded.get(i);
@@ -101,13 +105,13 @@ public final class CrossbowGeometry implements IUnbakedGeometry<CrossbowGeometry
                 }
             }
         }
-        return List.copyOf(quads);
+        return new ObjectImmutableList<>(quads);
     }
 
     public record Anchors(Vector3f muzzle, Vector3f left, Vector3f right, Vector3f back) {}
 
     /** The authored upper/lower rail housings and front tips, transformed by the same rig as their vertices. */
-    static Anchors anchors(List<List<Part>> frames, CrossbowAnimation.Pose pose) {
+    static Anchors anchors(ObjectList<ObjectList<Part>> frames, CrossbowAnimation.Pose pose) {
         CrossbowRig rig = new CrossbowRig(pose);
         Matrix4f upper = anchorTransform(frames, rig, 11);
         Matrix4f lower = anchorTransform(frames, rig, 17);
@@ -122,12 +126,12 @@ public final class CrossbowGeometry implements IUnbakedGeometry<CrossbowGeometry
         return new Anchors(muzzle, left, right, back);
     }
 
-    private static Matrix4f anchorTransform(List<List<Part>> frames, CrossbowRig rig, int index) {
+    private static Matrix4f anchorTransform(ObjectList<ObjectList<Part>> frames, CrossbowRig rig, int index) {
         Part from = frames.getFirst().get(index), to = frames.get(1).get(index);
         return rig.transform(from.pose, to.pose, to.deployment, to.motion);
     }
 
-    private static void append(List<BakedQuad> output, List<BakedQuad> source, Matrix4f matrix) {
+    private static void append(ObjectList<BakedQuad> output, ObjectList<BakedQuad> source, Matrix4f matrix) {
         Transformation transformation = new Transformation(matrix);
         var transformer = QuadTransformers.applying(transformation);
         for (BakedQuad quad : source) {
@@ -148,5 +152,5 @@ public final class CrossbowGeometry implements IUnbakedGeometry<CrossbowGeometry
 
     record Element(BlockElement cube, CrossbowPartPose pose, CrossbowMotion motion, CrossbowDeployment deployment) {}
 
-    record Part(List<BakedQuad> quads, CrossbowPartPose pose, CrossbowMotion motion, CrossbowDeployment deployment) {}
+    record Part(ObjectList<BakedQuad> quads, CrossbowPartPose pose, CrossbowMotion motion, CrossbowDeployment deployment) {}
 }

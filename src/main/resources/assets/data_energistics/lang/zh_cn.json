@@ -953,7 +953,7 @@
 	"key.data_energistics.toggle_orbital_control_hud": "切换轨道控制 HUD",
 	"key_type.data_energistics.digitalization": "数位化",
 	"key_type.data_energistics.manifest_binary": "显型二进制",
-	"key_type.data_energistics.digital_biological_resources": "世界能源",
+	"key_type.data_energistics.digital_biological_resources": "数位化生物资源",
 	"message.data_energistics.beam.cleared": "已清除光束源选择",
 	"message.data_energistics.beam.invalid_target": "不能连接自身，或无权操作该光束源",
 	"message.data_energistics.beam.linked": "已保存双向光束绑定",

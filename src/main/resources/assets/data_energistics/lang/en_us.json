@@ -953,7 +953,7 @@
 	"key.data_energistics.toggle_orbital_control_hud": "Toggle Orbital Control HUD",
 	"key_type.data_energistics.digitalization": "Digitalization",
 	"key_type.data_energistics.manifest_binary": "Manifest Binary",
-	"key_type.data_energistics.digital_biological_resources": "World Energy",
+	"key_type.data_energistics.digital_biological_resources": "Digital Biological Resources",
 	"message.data_energistics.beam.cleared": "Beam source selection cleared",
 	"message.data_energistics.beam.invalid_target": "Cannot link to itself, or access to the source is denied",
 	"message.data_energistics.beam.linked": "Symmetric beam binding saved",

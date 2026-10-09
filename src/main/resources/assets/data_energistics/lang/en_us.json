@@ -1,5 +1,6 @@
 {
 	"block.data_energistics.adaptive_pattern_provider": "Adaptive Pattern Provider",
+	"block.data_energistics.digital_supply_interface": "Digital Supply Interface",
 	"block.data_energistics.amethyst_tuning_fork": "Amethyst Tuning Fork",
 	"block.data_energistics.astronomical_mirror": "Astronomical Mirror",
 	"block.data_energistics.astronomical_mirror_panel": "Astronomical Mirror Panel",
@@ -703,6 +704,7 @@
 	"gui.data_energistics.universal_terminal.previous": "Right-click: Previous %s",
 	"gui.data_energistics.universal_terminal.switch_terminal": "Switch Terminal",
 	"item.data_energistics.adaptive_pattern_provider_part": "Adaptive Pattern Provider",
+	"item.data_energistics.digital_supply_interface": "Digital Supply Interface",
 	"item.data_energistics.adaptive_pattern_provider_upgrade": "Adaptive Pattern Provider Upgrade",
 	"item.data_energistics.amethyst_dust": "Amethyst Dust",
 	"item.data_energistics.beam_binding_tool": "Laser Binding Tool",

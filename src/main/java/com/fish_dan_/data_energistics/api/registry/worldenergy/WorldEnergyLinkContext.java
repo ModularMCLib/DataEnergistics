@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 public interface WorldEnergyLinkContext {
 
     /** Returns an immutable snapshot of connector and native links in registration order. */
-    ObjectList<ConnectorLink> links();
+    ObjectList<ConnectorLink> bindings();
 
     /** Returns whether the linked dimension and position are currently available to an adapter. */
     boolean isOnline(ConnectorLink link);

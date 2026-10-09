@@ -1,5 +1,6 @@
 {
 	"block.data_energistics.adaptive_pattern_provider": "自适应样板供应器",
+	"block.data_energistics.digital_supply_interface": "数位化供应接口",
 	"block.data_energistics.amethyst_tuning_fork": "紫水晶音叉",
 	"block.data_energistics.astronomical_mirror": "天文观测镜",
 	"block.data_energistics.astronomical_mirror_panel": "天文观测镜面板",
@@ -703,6 +704,7 @@
 	"gui.data_energistics.universal_terminal.previous": "右键：切到上一个 %s",
 	"gui.data_energistics.universal_terminal.switch_terminal": "切换终端",
 	"item.data_energistics.adaptive_pattern_provider_part": "自适应样板供应器",
+	"item.data_energistics.digital_supply_interface": "数位化供应接口",
 	"item.data_energistics.adaptive_pattern_provider_upgrade": "自适应样板供应器升级件",
 	"item.data_energistics.amethyst_dust": "紫水晶粉",
 	"item.data_energistics.beam_binding_tool": "光束绑定器",

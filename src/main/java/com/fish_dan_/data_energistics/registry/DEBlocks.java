@@ -37,6 +37,7 @@ import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.block.trinity.TrinityCoreBlock;
 import com.fish_dan_.data_energistics.block.trinity.TrinityDataCoreBlock;
 import com.fish_dan_.data_energistics.block.trinity.TrinityPatternCoreBlock;
+import com.fish_dan_.data_energistics.block.worldenergy.DigitalSupplyInterfaceBlock;
 import com.fish_dan_.data_energistics.block.worldgen.DataCrystalBuddingBlock;
 import com.fish_dan_.data_energistics.block.worldgen.DataMysteriousCubeBlock;
 import com.fish_dan_.data_energistics.block.worldgen.EnderCohesionMeteoriteBlock;
@@ -240,6 +241,12 @@ public final class DEBlocks {
             "adaptive_pattern_provider",
             properties -> new AdaptivePatternProviderBlock(properties),
             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK));
+
+    public static final DeferredBlock<DigitalSupplyInterfaceBlock> DIGITAL_SUPPLY_INTERFACE = BLOCKS.registerBlock(
+            "digital_supply_interface",
+            DigitalSupplyInterfaceBlock::new,
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .requiresCorrectToolForDrops());
 
     public static final DeferredBlock<DigitalPackagedPatternProviderBlock> DIGITAL_PACKAGED_PATTERN_PROVIDER = BLOCKS.register(
             "digital_packaged_pattern_provider", DigitalPackagedPatternProviderBlock::new);

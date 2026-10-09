@@ -58,7 +58,7 @@ public final class DEAE2Keys {
         for (AEKeyType type : registeredTypes) {
             event.register(AEKeyType.REGISTRY_KEY, type.getId(), () -> type);
         }
-        IRegistryExtension<?> registry = (IRegistryExtension<?>) event.getRegistry();
+        IRegistryExtension<?> registry = event.getRegistry();
         registry.addAlias(DataFlowKey.ID, DigitalizationKeyType.TYPE.getId());
         registry.addAlias(EchoKey.ID, DigitalizationKeyType.TYPE.getId());
         registry.addAlias(StellarFluxKey.ID, DigitalizationKeyType.TYPE.getId());

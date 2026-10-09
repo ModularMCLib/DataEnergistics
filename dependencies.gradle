@@ -25,6 +25,7 @@ dependencies {
 
     // Magic integrations and their API libraries
     compileOnly(forge.botania)
+    compileOnly(forge.astral.sorcery)
     compileOnly(forge.ars.nouveau)
     compileOnly(forge.malum)
     compileOnly(forge.forbidden.arcanus)
@@ -123,6 +124,7 @@ dependencies {
     localRuntime(forge.ldlib)
     localRuntime(forge.glodium)
     localRuntime(forge.geckolib)
+    localRuntime(forge.astral.sorcery)
     localRuntime(forge.cloth.config)
     localRuntime(forge.pneumaticcraft)
     localRuntime(forge.kotlinforforge)

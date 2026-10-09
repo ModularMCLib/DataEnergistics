@@ -40,7 +40,8 @@ import java.util.EnumSet;
 public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
     private static final ResourceLocation ADAPTER_ID = Data_Energistics.id("goety_digital_supply");
-    private static final long TICK_LIMIT = Integer.MAX_VALUE;
+    /** Keeps one tick bounded while allowing a full ordinary ritual-level refill. */
+    private static final long TICK_LIMIT = 256L;
     private static final ObjectList<DigitalSupplyResourceDefinition> RESOURCES = createResources();
 
     @Override

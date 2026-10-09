@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletion;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletionMode;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -11,11 +12,12 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -23,7 +25,7 @@ import java.util.Optional;
  */
 public final class VirtualCraftingOutputAdapters {
 
-    private static volatile List<VirtualCraftingOutputAdapter> ADAPTERS = List.of();
+    private static volatile ObjectList<VirtualCraftingOutputAdapter> ADAPTERS = ObjectList.of();
     private static boolean installed;
 
     private VirtualCraftingOutputAdapters() {}
@@ -34,7 +36,7 @@ public final class VirtualCraftingOutputAdapters {
      * @param adapters adapters in deterministic plugin and registration order
      */
     public static synchronized void install(
-                                            List<VirtualCraftingOutputAdapter> adapters) {
+                                            ObjectList<VirtualCraftingOutputAdapter> adapters) {
         if (installed) {
             throw new IllegalStateException("Virtual crafting output adapters have already been installed");
         }
@@ -45,7 +47,7 @@ public final class VirtualCraftingOutputAdapters {
             }
             validated.add(adapter);
         }
-        ADAPTERS = List.copyOf(validated);
+        ADAPTERS = FastUtilCollections.immutableList(validated);
         installed = true;
     }
 
@@ -63,9 +65,9 @@ public final class VirtualCraftingOutputAdapters {
         }
         var encoded = details.getDefinition().get(AEComponents.ENCODED_PROCESSING_PATTERN);
         if (encoded != null && !encoded.containsMissingContent()) {
-            return project(encoded.sparseOutputs());
+            return project(new ObjectArrayList<>(encoded.sparseOutputs()));
         }
-        return project(details.getOutputs(), List.of());
+        return project(new ObjectArrayList<>(details.getOutputs()), ObjectList.of());
     }
 
     /**
@@ -75,15 +77,15 @@ public final class VirtualCraftingOutputAdapters {
      * @return immutable projection preserving first-key order after aggregation
      */
     public static VirtualCraftingOutputProjection project(
-                                                          List<@Nullable GenericStack> declaredOutputs) {
+                                                          ObjectList<@Nullable GenericStack> declaredOutputs) {
         requireInstalled();
         return project(declaredOutputs, ADAPTERS);
     }
 
     private static VirtualCraftingOutputProjection project(
-                                                           List<@Nullable GenericStack> declaredOutputs,
-                                                           List<VirtualCraftingOutputAdapter> adapters) {
-        Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> logical = new Object2ObjectLinkedOpenHashMap<>();
+                                                           ObjectList<@Nullable GenericStack> declaredOutputs,
+                                                           ObjectList<VirtualCraftingOutputAdapter> adapters) {
+        Object2ObjectMap<AEKey, BigInteger> logical = new Object2ObjectLinkedOpenHashMap<>();
         ObjectArrayList<VirtualCraftingCompletion> virtual = new ObjectArrayList<>();
         for (GenericStack output : declaredOutputs) {
             // AE2's encoded processing pattern deliberately preserves sparse slot positions with null entries.
@@ -132,7 +134,7 @@ public final class VirtualCraftingOutputAdapters {
     }
 
     private static Optional<ResolvedOutput> resolveOutput(
-                                                          List<VirtualCraftingOutputAdapter> adapters,
+                                                          ObjectList<VirtualCraftingOutputAdapter> adapters,
                                                           GenericStack output) {
         ResolvedOutput resolved = null;
         for (VirtualCraftingOutputAdapter adapter : adapters) {

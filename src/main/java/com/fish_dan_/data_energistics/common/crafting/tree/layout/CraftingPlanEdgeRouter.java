@@ -25,11 +25,11 @@ import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.CancellationException;
 
@@ -40,19 +40,19 @@ final class CraftingPlanEdgeRouter {
 
     private CraftingPlanEdgeRouter() {}
 
-    static Layout route(ViewGraph graph, List<PlacedNode> nodes, Spacing spacing, Int2IntMap nodeRanks) {
+    static Layout route(ViewGraph graph, ObjectList<PlacedNode> nodes, Spacing spacing, Int2IntMap nodeRanks) {
         Int2ObjectMap<PlacedNode> nodeById = new Int2ObjectOpenHashMap<>();
         for (PlacedNode node : nodes) nodeById.put(node.id(), node);
         Object2ObjectMap<PortKey, PortIntent> intents = new Object2ObjectLinkedOpenHashMap<>();
-        List<Request> requests = requests(graph, nodeById, intents);
-        List<Port> ports = ports(intents);
-        if (requests.isEmpty()) return assemble(nodes, List.of(), spacing.boundaryPadding());
+        ObjectList<Request> requests = requests(graph, nodeById, intents);
+        ObjectList<Port> ports = ports(intents);
+        if (requests.isEmpty()) return assemble(nodes, ObjectList.of(), spacing.boundaryPadding());
         var scene = new OrthogonalRoutingGraph(nodes, ports);
         var reservations = new OrthogonalSegmentReservations(scene.x, scene.y);
         var search = new OrthogonalRouteSearch(scene, reservations);
         Int2IntMap depths = routingDepths(graph);
         double[] channelLanes = channelLanes(requests, nodeRanks, scene.x);
-        List<Request> ordered = new ObjectArrayList<>(requests);
+        ObjectList<Request> ordered = new ObjectArrayList<>(requests);
         ordered.sort(Comparator.comparingInt((Request request) -> depths.get(request.edge().source()))
                 .thenComparingInt(request -> depths.get(request.edge().target()))
                 .thenComparingDouble(Request::distance).thenComparingInt(Request::id));
@@ -67,7 +67,7 @@ final class CraftingPlanEdgeRouter {
         int remainingRefinements = MAXIMUM_REFINEMENTS;
         for (int pass = 0; pass < 2 && remainingRefinements > 0; pass++) {
             boolean changed = false;
-            List<Request> refinements = new ObjectArrayList<>();
+            ObjectList<Request> refinements = new ObjectArrayList<>();
             for (Request request : ordered) {
                 if (choices[request.id()].reserved() && choices[request.id()].metrics().crossings() > 0) refinements.add(request);
             }
@@ -97,7 +97,7 @@ final class CraftingPlanEdgeRouter {
             remainingRefinements -= count;
             if (!changed) break;
         }
-        List<Path> paths = new ObjectArrayList<>(requests.size());
+        ObjectList<Path> paths = new ObjectArrayList<>(requests.size());
         for (Request request : requests) {
             paths.add(new Path(request.edge().source(), request.edge().target(), choices[request.id()].points(),
                     request.edge().cyclic(), request.originals(), request.group()));
@@ -139,10 +139,10 @@ final class CraftingPlanEdgeRouter {
         return search.fixedChannel(source, target, lane, request.group());
     }
 
-    private static double[] channelLanes(List<Request> requests, Int2IntMap ranks, OrthogonalRoutingAxis xAxis) {
+    private static double[] channelLanes(ObjectList<Request> requests, Int2IntMap ranks, OrthogonalRoutingAxis xAxis) {
         double[] lanes = new double[requests.size()];
         Arrays.fill(lanes, Double.NaN);
-        Int2ObjectMap<List<Request>> byBoundary = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<ObjectList<Request>> byBoundary = new Int2ObjectOpenHashMap<>();
         for (Request request : requests) {
             int sourceRank = ranks.get(request.edge().source());
             int targetRank = ranks.get(request.edge().target());
@@ -151,7 +151,7 @@ final class CraftingPlanEdgeRouter {
             byBoundary.computeIfAbsent(Math.min(sourceRank, targetRank), unused -> new ObjectArrayList<>()).add(request);
         }
         int[] trackByRequest = new int[requests.size()];
-        for (List<Request> boundary : byBoundary.values()) {
+        for (ObjectList<Request> boundary : byBoundary.values()) {
             boundary.sort(Comparator.comparingDouble(CraftingPlanEdgeRouter::intervalStart)
                     .thenComparingDouble(CraftingPlanEdgeRouter::intervalEnd).thenComparingInt(Request::id));
             var active = new PriorityQueue<ActiveTrack>(Comparator.comparingDouble(ActiveTrack::end)
@@ -192,10 +192,10 @@ final class CraftingPlanEdgeRouter {
                 request.target().node.y() + request.target().node.height() / 2);
     }
 
-    private static List<Request> requests(ViewGraph graph, Int2ObjectMap<PlacedNode> nodes,
-                                          Object2ObjectMap<PortKey, PortIntent> intents) {
+    private static ObjectList<Request> requests(ViewGraph graph, Int2ObjectMap<PlacedNode> nodes,
+                                                Object2ObjectMap<PortKey, PortIntent> intents) {
         var styles = CraftingPlanRouteGroup.indexStyles(graph.source());
-        List<Request> result = new ObjectArrayList<>();
+        ObjectList<Request> result = new ObjectArrayList<>();
         for (ViewEdge edge : graph.edges()) {
             Object2ObjectMap<Style, IntList> split = new Object2ObjectLinkedOpenHashMap<>();
             for (int original : edge.originalEdgeIds()) {
@@ -227,14 +227,14 @@ final class CraftingPlanEdgeRouter {
         return intent;
     }
 
-    private static List<Port> ports(Object2ObjectMap<PortKey, PortIntent> intents) {
-        Int2ObjectMap<List<PortIntent>> byNode = new Int2ObjectOpenHashMap<>();
+    private static ObjectList<Port> ports(Object2ObjectMap<PortKey, PortIntent> intents) {
+        Int2ObjectMap<ObjectList<PortIntent>> byNode = new Int2ObjectOpenHashMap<>();
         for (PortIntent intent : intents.values()) {
             byNode.computeIfAbsent(intent.node.id(), unused -> new ObjectArrayList<>()).add(intent);
         }
-        List<Port> result = new ObjectArrayList<>(intents.size() * 4);
+        ObjectList<Port> result = new ObjectArrayList<>(intents.size() * 4);
         for (var entry : byNode.int2ObjectEntrySet()) {
-            List<PortIntent> nodePorts = entry.getValue();
+            ObjectList<PortIntent> nodePorts = entry.getValue();
             for (Side side : OrthogonalRoutingGraph.sides()) {
                 boolean horizontal = side == Side.TOP || side == Side.BOTTOM;
                 nodePorts.sort(Comparator.comparingDouble((PortIntent intent) -> (horizontal ? intent.x : intent.y) / intent.count)
@@ -250,7 +250,7 @@ final class CraftingPlanEdgeRouter {
         return result;
     }
 
-    private static Layout assemble(List<PlacedNode> nodes, List<Path> paths, double padding) {
+    private static Layout assemble(ObjectList<PlacedNode> nodes, ObjectList<Path> paths, double padding) {
         double minX = Double.POSITIVE_INFINITY;
         double minY = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY;
@@ -271,13 +271,13 @@ final class CraftingPlanEdgeRouter {
         }
         double dx = padding - minX;
         double dy = padding - minY;
-        List<PlacedNode> shiftedNodes = new ObjectArrayList<>(nodes.size());
+        ObjectList<PlacedNode> shiftedNodes = new ObjectArrayList<>(nodes.size());
         for (PlacedNode node : nodes) {
             shiftedNodes.add(new PlacedNode(node.viewNode(), node.x() + dx, node.y() + dy, node.width(), node.height()));
         }
-        List<Path> shiftedPaths = new ObjectArrayList<>(paths.size());
+        ObjectList<Path> shiftedPaths = new ObjectArrayList<>(paths.size());
         for (Path path : paths) {
-            List<Point> points = new ObjectArrayList<>(path.points().size());
+            ObjectList<Point> points = new ObjectArrayList<>(path.points().size());
             for (Point point : path.points()) points.add(new Point(point.x() + dx, point.y() + dy));
             shiftedPaths.add(new Path(path.source(), path.target(), points, path.cyclic(), path.originalEdgeIds(), path.group()));
         }
@@ -296,7 +296,7 @@ final class CraftingPlanEdgeRouter {
 
         private final PlacedNode node;
         private final int ordinal;
-        private final List<Port> ports = new ObjectArrayList<>(4);
+        private final ObjectList<Port> ports = new ObjectArrayList<>(4);
         private double x;
         private double y;
         private int count;

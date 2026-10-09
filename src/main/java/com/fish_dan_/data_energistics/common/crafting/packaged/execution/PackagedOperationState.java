@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
@@ -29,7 +30,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -204,7 +204,7 @@ public final class PackagedOperationState implements PackagedMachineOperation {
     public ObjectList<GenericStack> collectedOutputs() {
         var result = new ObjectArrayList<GenericStack>();
         this.outputs.forEach((key, amount) -> result.add(new GenericStack(key, amount.longValueExact())));
-        return ObjectLists.unmodifiable(result);
+        return FastUtilCollections.immutableList(result);
     }
 
     /** Retires a dismantled structure, returning only undelivered inputs and already collected outputs. */

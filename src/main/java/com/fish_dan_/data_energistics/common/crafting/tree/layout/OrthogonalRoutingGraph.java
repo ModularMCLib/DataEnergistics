@@ -14,13 +14,13 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 /** Sparse obstacle visibility guides. Search adds only local/goal projections, never an X/Y grid. */
@@ -36,9 +36,9 @@ final class OrthogonalRoutingGraph {
     private final Int2ObjectMap<int[]> rows = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<int[]> columns = new Int2ObjectOpenHashMap<>();
 
-    OrthogonalRoutingGraph(List<PlacedNode> nodes, List<Port> ports) {
+    OrthogonalRoutingGraph(ObjectList<PlacedNode> nodes, ObjectList<Port> ports) {
         obstacles = new OrthogonalNodeIndex(nodes, CLEARANCE);
-        Set<Point> seeds = new ObjectOpenHashSet<>();
+        ObjectSet<Point> seeds = new ObjectOpenHashSet<>();
         DoubleSortedSet xs = new DoubleAVLTreeSet();
         DoubleSortedSet ys = new DoubleAVLTreeSet();
         for (PlacedNode node : nodes) {
@@ -81,11 +81,11 @@ final class OrthogonalRoutingGraph {
         minY = clean(minY - LANE);
         maxX = clean(maxX + LANE);
         maxY = clean(maxY + LANE);
-        Set<Point> guides = new ObjectOpenHashSet<>();
+        ObjectSet<Point> guides = new ObjectOpenHashSet<>();
         for (Point point : seeds) {
             if (obstacles.contains(point)) continue;
             guides.add(point);
-            for (Point end : List.of(new Point(minX, point.y()), new Point(maxX, point.y()),
+            for (Point end : ObjectList.of(new Point(minX, point.y()), new Point(maxX, point.y()),
                     new Point(point.x(), minY), new Point(point.x(), maxY))) {
                 var hit = obstacles.firstHit(point, end, -1);
                 guides.add(hit == null ? end : hit.point());
@@ -135,7 +135,7 @@ final class OrthogonalRoutingGraph {
     }
 
     /** Bounded-degree visibility expansion; projections stop at the first obstacle face. */
-    LongSet neighbors(long key, List<Port> goals, OrthogonalSegmentReservations reservations,
+    LongSet neighbors(long key, ObjectList<Port> goals, OrthogonalSegmentReservations reservations,
                       CraftingPlanRouteGroup group, boolean respectReservations) {
         int px = OrthogonalRoutingAxis.x(key);
         int py = OrthogonalRoutingAxis.y(key);
@@ -180,37 +180,37 @@ final class OrthogonalRoutingGraph {
         return result;
     }
 
-    List<List<Point>> quickPaths(Port from, Port to) {
+    ObjectList<ObjectList<Point>> quickPaths(Port from, Port to) {
         Point start = from.stub();
         Point end = to.stub();
-        List<List<Point>> paths = new ObjectArrayList<>(8);
-        paths.add(List.of(start, new Point(end.x(), start.y()), end));
-        paths.add(List.of(start, new Point(start.x(), end.y()), end));
+        ObjectList<ObjectList<Point>> paths = new ObjectArrayList<>(8);
+        paths.add(ObjectList.of(start, new Point(end.x(), start.y()), end));
+        paths.add(ObjectList.of(start, new Point(start.x(), end.y()), end));
         double centerX = (start.x() + end.x()) / 2;
         double centerY = (start.y() + end.y()) / 2;
         for (int index : new int[] { x.floor(centerX), x.ceiling(centerX) }) {
             double lane = x.value(index);
-            paths.add(List.of(start, new Point(lane, start.y()), new Point(lane, end.y()), end));
+            paths.add(ObjectList.of(start, new Point(lane, start.y()), new Point(lane, end.y()), end));
         }
         for (int index : new int[] { y.floor(centerY), y.ceiling(centerY) }) {
             double lane = y.value(index);
-            paths.add(List.of(start, new Point(start.x(), lane), new Point(end.x(), lane), end));
+            paths.add(ObjectList.of(start, new Point(start.x(), lane), new Point(end.x(), lane), end));
         }
         return paths;
     }
 
     /** Existing compressed tracks between facing ports; no dense X/Y product is generated. */
-    List<List<Point>> localChannelPaths(Port from, Port to) {
+    ObjectList<ObjectList<Point>> localChannelPaths(Port from, Port to) {
         Point start = from.stub();
         Point end = to.stub();
-        List<List<Point>> paths = new ObjectArrayList<>();
+        ObjectList<ObjectList<Point>> paths = new ObjectArrayList<>();
         boolean horizontal = from.side() == Side.RIGHT && to.side() == Side.LEFT && start.x() < end.x() || from.side() == Side.LEFT && to.side() == Side.RIGHT && start.x() > end.x();
         if (horizontal) {
             int first = x.ceiling(Math.min(start.x(), end.x()) + OrthogonalSegmentReservations.EPSILON);
             int last = x.floor(Math.max(start.x(), end.x()) - OrthogonalSegmentReservations.EPSILON);
             for (int index = first; index <= last; index++) {
                 double lane = x.value(index);
-                paths.add(List.of(start, new Point(lane, start.y()), new Point(lane, end.y()), end));
+                paths.add(ObjectList.of(start, new Point(lane, start.y()), new Point(lane, end.y()), end));
             }
             return paths;
         }
@@ -220,7 +220,7 @@ final class OrthogonalRoutingGraph {
             int last = y.floor(Math.max(start.y(), end.y()) - OrthogonalSegmentReservations.EPSILON);
             for (int index = first; index <= last; index++) {
                 double lane = y.value(index);
-                paths.add(List.of(start, new Point(start.x(), lane), new Point(end.x(), lane), end));
+                paths.add(ObjectList.of(start, new Point(start.x(), lane), new Point(end.x(), lane), end));
             }
         }
         return paths;
@@ -248,8 +248,8 @@ final class OrthogonalRoutingGraph {
         return SIDES;
     }
 
-    private static void addInterColumnTracks(List<PlacedNode> nodes, DoubleSortedSet coordinates) {
-        List<Column> columns = new ObjectArrayList<>(nodes.size());
+    private static void addInterColumnTracks(ObjectList<PlacedNode> nodes, DoubleSortedSet coordinates) {
+        ObjectList<Column> columns = new ObjectArrayList<>(nodes.size());
         for (PlacedNode node : nodes) {
             columns.add(new Column(clean(node.x() - CLEARANCE), clean(node.x() + node.width() + CLEARANCE)));
         }
@@ -285,7 +285,7 @@ final class OrthogonalRoutingGraph {
         }
     }
 
-    private static void add(Set<Point> points, double x, double y) {
+    private static void add(ObjectSet<Point> points, double x, double y) {
         points.add(new Point(clean(x), clean(y)));
     }
 

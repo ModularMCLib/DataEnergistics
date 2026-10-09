@@ -29,6 +29,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.ToolOutcome;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
@@ -54,7 +55,6 @@ import net.minecraft.server.level.ServerLevel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
@@ -229,7 +229,7 @@ public final class PackagedReusableState {
                     if (!result.contains(candidate)) result.add(candidate);
                 }
             }
-            return ObjectLists.unmodifiable(result);
+            return FastUtilCollections.immutableList(result);
         }
 
         @Override

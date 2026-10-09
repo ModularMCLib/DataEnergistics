@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutput
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputSemantics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;
@@ -15,13 +16,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -29,7 +30,7 @@ import java.util.Optional;
  */
 public final class DynamicCraftingOutputAdapters {
 
-    private static volatile List<DynamicCraftingOutputAdapter> adapters = List.of();
+    private static volatile ObjectList<DynamicCraftingOutputAdapter> adapters = ObjectList.of();
     private static boolean installed;
 
     private DynamicCraftingOutputAdapters() {}
@@ -39,7 +40,7 @@ public final class DynamicCraftingOutputAdapters {
      *
      * @param values adapters in deterministic plugin and declaration order
      */
-    public static synchronized void install(List<DynamicCraftingOutputAdapter> values) {
+    public static synchronized void install(ObjectList<DynamicCraftingOutputAdapter> values) {
         if (installed) {
             throw new IllegalStateException("Dynamic crafting output adapters have already been installed");
         }
@@ -50,7 +51,7 @@ public final class DynamicCraftingOutputAdapters {
             }
             validated.add(adapter);
         }
-        adapters = List.copyOf(validated);
+        adapters = FastUtilCollections.immutableList(validated);
         installed = true;
     }
 
@@ -118,7 +119,7 @@ public final class DynamicCraftingOutputAdapters {
         }
 
         Object2LongLinkedOpenHashMap<AEKey> claimed = new Object2LongLinkedOpenHashMap<>();
-        Map<Item, AEItemKey> domains = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<Item, AEItemKey> domains = new Object2ObjectOpenHashMap<>();
         for (DynamicCraftingOutput output : semantics.outputsFast()) {
             if (output.matchMode() == ProcessingMatchMode.EXACT ||
                     !(output.plannedOutput().what() instanceof AEItemKey plannedKey)) {
@@ -139,14 +140,16 @@ public final class DynamicCraftingOutputAdapters {
                         exception);
             }
         }
-        claimed.forEach((key, amount) -> {
+        for (Object2LongMap.Entry<AEKey> entry : claimed.object2LongEntrySet()) {
+            AEKey key = entry.getKey();
+            long amount = entry.getLongValue();
             long available = declared.getOrDefault(key, 0L);
             if (amount > available) {
                 throw new DynamicCraftingOutputResolutionException(
                         "Dynamic output adapter " + adapterId + " declared absent output " + key +
                                 " x" + amount + " for pattern " + details.getDefinition());
             }
-        });
+        }
         return new ResolvedSemantics(adapterId, semantics.outputsFast());
     }
 
@@ -164,10 +167,6 @@ public final class DynamicCraftingOutputAdapters {
      */
     public record ResolvedSemantics(ResourceLocation adapterId,
                                     ObjectList<DynamicCraftingOutput> outputs) {
-
-        public ResolvedSemantics(ResourceLocation adapterId, List<DynamicCraftingOutput> outputs) {
-            this(adapterId, new ObjectImmutableList<>(outputs));
-        }
 
         /**
          * Isolates the adapter-owned list from runtime callers.

@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Node;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -22,11 +23,10 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 /** Immutable, server-safe projection. Folding never mutates the authoritative plan or duplicates a material. */
 public final class CraftingPlanGraphView {
@@ -37,7 +37,7 @@ public final class CraftingPlanGraphView {
     private final Int2IntMap embedded = new Int2IntOpenHashMap();
     private final Int2ObjectMap<IntList> outgoing = new Int2ObjectAVLTreeMap<>();
     private final Int2ObjectMap<IntList> reverse = new Int2ObjectAVLTreeMap<>();
-    private final List<ViewEdge> edges;
+    private final ObjectList<ViewEdge> edges;
     private final GraphComponents components;
     private final IntList[] componentChildren;
     private final int root;
@@ -45,8 +45,8 @@ public final class CraftingPlanGraphView {
     public CraftingPlanGraphView(CraftingPlanGraph graph) {
         this.graph = graph;
         graph.nodes().forEach(node -> sourceNodes.put(node.id(), node));
-        Int2ObjectMap<List<Edge>> incomingEdges = new Int2ObjectOpenHashMap<>();
-        Int2ObjectMap<List<Edge>> outgoingEdges = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<ObjectList<Edge>> incomingEdges = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<ObjectList<Edge>> outgoingEdges = new Int2ObjectOpenHashMap<>();
         Int2ObjectMap<IntList> sourceOutgoing = new Int2ObjectAVLTreeMap<>();
         Int2ObjectMap<IntList> displayChildren = new Int2ObjectAVLTreeMap<>();
         for (int id : sourceNodes.keySet()) {
@@ -62,14 +62,14 @@ public final class CraftingPlanGraphView {
             if (!(node instanceof Process process) || !process.cycleIds().isEmpty() || sourceComponents.cyclicComponents().contains(sourceComponents.componentByNode().get(node.id()))) {
                 continue;
             }
-            List<Edge> parents = incomingEdges.getOrDefault(node.id(), List.of());
-            List<Edge> children = outgoingEdges.getOrDefault(node.id(), List.of());
+            ObjectList<Edge> parents = incomingEdges.getOrDefault(node.id(), ObjectList.of());
+            ObjectList<Edge> children = outgoingEdges.getOrDefault(node.id(), ObjectList.of());
             if (parents.size() != 1 || parents.getFirst().role() != Role.OUTPUT) {
                 continue;
             }
             int materialId = parents.getFirst().source();
             Material material = (Material) sourceNodes.get(materialId);
-            if (!material.key().equals(process.primaryOutput()) || outgoingEdges.getOrDefault(materialId, List.of()).size() != 1 || incomingEdges.getOrDefault(materialId, List.of()).size() > 1 || children.stream().anyMatch(edge -> incomingEdges.getOrDefault(edge.target(), List.of()).size() > 1)) {
+            if (!material.key().equals(process.primaryOutput()) || outgoingEdges.getOrDefault(materialId, ObjectList.of()).size() != 1 || incomingEdges.getOrDefault(materialId, ObjectList.of()).size() > 1 || children.stream().anyMatch(edge -> incomingEdges.getOrDefault(edge.target(), ObjectList.of()).size() > 1)) {
                 continue;
             }
             aliases.put(node.id(), materialId);
@@ -82,7 +82,7 @@ public final class CraftingPlanGraphView {
                 displayChildren.put(id, new IntArrayList());
             }
         }
-        Map<Connection, IntList> edgeGroups = new Object2ObjectAVLTreeMap<>();
+        Object2ObjectMap<Connection, IntList> edgeGroups = new Object2ObjectAVLTreeMap<>();
         for (Edge edge : graph.edges()) {
             int source = projectedId(edge.source());
             int target = projectedId(edge.target());
@@ -115,14 +115,14 @@ public final class CraftingPlanGraphView {
             }
             componentChildren[component] = IntLists.unmodifiable(new IntArrayList(children));
         }
-        List<ViewEdge> projectedEdges = new ObjectArrayList<>();
+        ObjectList<ViewEdge> projectedEdges = new ObjectArrayList<>();
         edgeGroups.forEach((connection, ids) -> {
             ids.sort(IntComparators.NATURAL_COMPARATOR);
             int component = components.componentByNode().get(connection.source());
             boolean cyclic = component == components.componentByNode().get(connection.target()) && components.cyclicComponents().contains(component);
             projectedEdges.add(new ViewEdge(connection.source(), connection.target(), ids, cyclic));
         });
-        edges = List.copyOf(projectedEdges);
+        edges = FastUtilCollections.immutableList(projectedEdges);
         root = projectedId(graph.rootId());
     }
 
@@ -160,7 +160,7 @@ public final class CraftingPlanGraphView {
         IntSet collapsed = new IntAVLTreeSet();
         IntSet initiallyHidden = new IntAVLTreeSet();
         for (int component = 0; component < components.members().size(); component++) {
-            List<Integer> members = components.members().get(component);
+            IntList members = components.members().get(component);
             if (!admitted.contains(component)) {
                 initiallyHidden.addAll(members);
             }
@@ -225,7 +225,7 @@ public final class CraftingPlanGraphView {
             // Follow dependency arrows, not the reverse display attachment to co-products.
             for (int member : components.members().get(component)) {
                 for (int target : outgoing.get(member)) {
-                    queue.enqueue(components.componentByNode().get(target).intValue());
+                    queue.enqueue(components.componentByNode().get(target));
                 }
             }
         }
@@ -236,21 +236,21 @@ public final class CraftingPlanGraphView {
     public ViewGraph visible(Expansion expansion, boolean missingOnly) {
         IntSet collapsedComponents = new IntOpenHashSet();
         for (int id : expansion.collapsed()) {
-            collapsedComponents.add(components.componentByNode().get(id).intValue());
+            collapsedComponents.add(components.componentByNode().get(id));
         }
         IntSet allowed = missingOnly ? missingExplanation() : outgoing.keySet();
         IntSet visible = new IntAVLTreeSet();
         IntSet reached = new IntOpenHashSet();
         IntSet partialFrontiers = new IntOpenHashSet();
         IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
-        queue.enqueue(components.componentByNode().get(root).intValue());
+        queue.enqueue(components.componentByNode().get(root));
         while (!queue.isEmpty()) {
             int component = queue.dequeueInt();
             if (!reached.add(component)) {
                 continue;
             }
-            List<Integer> members = components.members().get(component);
-            if (expansion.initiallyHidden().contains(members.getFirst().intValue())) {
+            IntList members = components.members().get(component);
+            if (expansion.initiallyHidden().contains(members.getInt(0))) {
                 continue;
             }
             boolean allowedMember = false;
@@ -268,24 +268,29 @@ public final class CraftingPlanGraphView {
                 continue;
             }
             for (int child : childrenOfComponent(component)) {
-                if (expansion.initiallyHidden().contains(components.members().get(child).getFirst().intValue())) {
+                if (expansion.initiallyHidden().contains(components.members().get(child).getInt(0))) {
                     partialFrontiers.add(component);
                 } else {
                     queue.enqueue(child);
                 }
             }
         }
-        List<ViewNode> nodes = new ObjectArrayList<>();
+        ObjectList<ViewNode> nodes = new ObjectArrayList<>();
         for (int id : visible) {
             int component = components.componentByNode().get(id);
             boolean folded = collapsedComponents.contains(component) || partialFrontiers.contains(component);
             nodes.add(new ViewNode(id, sourceNodes.get(id), embedded.containsKey(id) ? embedded.get(id) : null, component,
                     components.cyclicComponents().contains(component), folded, !childrenOfComponent(component).isEmpty()));
         }
-        List<ViewEdge> visibleEdges = edges.stream().filter(edge -> visible.contains(edge.source()) && visible.contains(edge.target()) && (edge.cyclic() || !collapsedComponents.contains(components.componentByNode().get(edge.source()).intValue())))
-                .toList();
-        List<List<Integer>> visibleComponents = components.members().stream()
-                .filter(group -> visible.contains(group.getFirst().intValue())).toList();
+        ObjectList<ViewEdge> visibleEdges = edges.stream().filter(edge -> visible.contains(edge.source()) && visible.contains(edge.target()) && (edge.cyclic() || !collapsedComponents.contains(components.componentByNode().get(edge.source()))))
+                .collect(ObjectArrayList.toList());
+        ObjectList<ObjectList<Integer>> visibleComponents = new ObjectArrayList<>();
+        for (IntList group : components.members()) {
+            if (!visible.contains(group.getInt(0))) continue;
+            ObjectArrayList<Integer> boxed = new ObjectArrayList<>(group.size());
+            for (int member : group) boxed.add(member);
+            visibleComponents.add(boxed);
+        }
         return new ViewGraph(graph, root, nodes, visibleEdges, visibleComponents);
     }
 
@@ -366,23 +371,23 @@ public final class CraftingPlanGraphView {
         }
     }
 
-    public record ViewGraph(CraftingPlanGraph source, int rootId, List<ViewNode> nodes,
-                            List<ViewEdge> edges, List<List<Integer>> components) {
+    public record ViewGraph(CraftingPlanGraph source, int rootId, ObjectList<ViewNode> nodes,
+                            ObjectList<ViewEdge> edges, ObjectList<ObjectList<Integer>> components) {
 
         public ViewGraph {
-            nodes = List.copyOf(nodes);
-            edges = List.copyOf(edges);
-            components = components.stream().map(List::copyOf).toList();
+            nodes = FastUtilCollections.immutableList(nodes);
+            edges = FastUtilCollections.immutableList(edges);
+            components = components.stream().map(FastUtilCollections::immutableList).collect(ObjectArrayList.toList());
         }
     }
 
     public record ViewNode(int id, Node sourceNode, @Nullable Integer embeddedProcessId,
                            int componentId, boolean cyclic, boolean collapsed, boolean expandable) {}
 
-    public record ViewEdge(int source, int target, List<Integer> originalEdgeIds, boolean cyclic) {
+    public record ViewEdge(int source, int target, IntList originalEdgeIds, boolean cyclic) {
 
         public ViewEdge {
-            originalEdgeIds = List.copyOf(originalEdgeIds);
+            originalEdgeIds = IntLists.unmodifiable(new IntArrayList(originalEdgeIds));
         }
     }
 

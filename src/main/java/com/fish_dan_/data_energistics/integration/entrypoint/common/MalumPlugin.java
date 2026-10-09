@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.integration.magic.malum.packaged.MalumMach
 import com.fish_dan_.data_energistics.integration.magic.malum.packaged.RunicWorkbenchAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "malum")
-public final class MalumPackagedCrafting implements DataEnergisticsPlugin {
+public final class MalumPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

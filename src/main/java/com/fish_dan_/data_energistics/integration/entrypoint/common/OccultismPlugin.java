@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.integration.magic.occultism.packaged.Occul
 import com.fish_dan_.data_energistics.integration.magic.occultism.packaged.SpiritFireAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "occultism")
-public final class OccultismPackagedCrafting implements DataEnergisticsPlugin {
+public final class OccultismPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

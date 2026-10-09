@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.integration.technology.extendedcrafting.pa
 
 /** Real powered and alternator-driven crafting; optional classes load only with their owning mods. */
 @DataEnergisticsEntrypoint(requiredMods = { "extendedcrafting", "cucumber" })
-public final class ExtendedCraftingPackagedCrafting implements DataEnergisticsPlugin {
+public final class ExtendedCraftingPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

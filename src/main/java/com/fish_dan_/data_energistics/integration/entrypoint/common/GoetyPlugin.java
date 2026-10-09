@@ -8,13 +8,15 @@ import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInte
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyExperienceKeyType;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetySoulKeyType;
+import com.fish_dan_.data_energistics.integration.magic.goety.packaged.DarkAltarAdapter;
 
 /** Registers Goety's soul and ritual-level resources when Goety is present. */
 @DataEnergisticsEntrypoint(requiredMods = "goety")
-public final class GoetyDigitalSupply implements DataEnergisticsPlugin {
+public final class GoetyPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
+        registry.packagedCrafting().register(new DarkAltarAdapter());
         registry.aeKeyTypes().register(new AeKeyTypeRegistration(
                 GoetySoulKeyType.ID,
                 GoetySoulKeyType.INSTANCE,

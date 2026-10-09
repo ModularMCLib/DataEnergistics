@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.integration.entrypoint.common;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.integration.technology.embers.packaged.AlchemyTableAdapter;
+import com.fish_dan_.data_energistics.integration.magic.projecte.reusable.ProjectEReusableInputs;
 
-@DataEnergisticsEntrypoint(requiredMods = "embers")
-public final class EmbersPackagedCrafting implements DataEnergisticsPlugin {
+@DataEnergisticsEntrypoint(requiredMods = "projecte")
+public final class ProjectEPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
-        registry.packagedCrafting().register(new AlchemyTableAdapter());
+        registry.reusableInputs().register(new ProjectEReusableInputs());
     }
 }

@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.energy.access.VerifiedUn
 import com.fish_dan_.data_energistics.integration.technology.industrialforegoing.energy.IndustrialForegoingEnergyEndpointIntegration;
 
 @DataEnergisticsEntrypoint(requiredMods = "industrialforegoing")
-public final class IndustrialForegoingEnergyRegistration implements DataEnergisticsPlugin {
+public final class IndustrialForegoingPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

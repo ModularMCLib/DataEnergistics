@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigi
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryKeyType;
 
 @DataEnergisticsEntrypoint(requiredMods = "astralsorcery")
-public final class AstralSorceryDigitalSupply implements DataEnergisticsPlugin {
+public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

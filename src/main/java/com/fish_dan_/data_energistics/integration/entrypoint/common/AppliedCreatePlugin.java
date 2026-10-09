@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrati
 
 /** Registers Applied Create mechanical pattern provider variants. */
 @DataEnergisticsEntrypoint(requiredMods = "appliedcreate")
-public final class AdaptivePatternProviderAppliedCreateRegistration implements DataEnergisticsPlugin {
+public final class AppliedCreatePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

@@ -7,14 +7,16 @@ import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistra
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.digitalsupply.ForbiddenArcanusDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.digitalsupply.ForbiddenArcanusEssenceKeyType;
+import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.packaged.HephaestusForgeAdapter;
 
 import net.minecraft.resources.ResourceLocation;
 
 @DataEnergisticsEntrypoint(requiredMods = "forbidden_arcanus")
-public final class ForbiddenArcanusDigitalSupply implements DataEnergisticsPlugin {
+public final class ForbiddenArcanusPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
+        registry.packagedCrafting().register(new HephaestusForgeAdapter());
         registry.aeKeyTypes().register(new AeKeyTypeRegistration(
                 ForbiddenArcanusEssenceKeyType.TYPE.getId(), ForbiddenArcanusEssenceKeyType.TYPE,
                 ResourceLocation.fromNamespaceAndPath("data_energistics", "forbidden_arcanus/essence")));

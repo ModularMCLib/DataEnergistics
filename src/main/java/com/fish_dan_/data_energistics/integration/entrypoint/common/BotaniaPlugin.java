@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.integration.magic.botania.packaged.Botania
 import com.fish_dan_.data_energistics.integration.magic.botania.packaged.BotanicalBreweryAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "botania")
-public final class BotaniaPackagedCrafting implements DataEnergisticsPlugin {
+public final class BotaniaPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

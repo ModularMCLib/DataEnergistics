@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.integration.technology.draconicevolution.p
 
 /** Keeps Draconic Evolution classes behind the mod-gated plugin boundary. */
 @DataEnergisticsEntrypoint(requiredMods = "draconicevolution")
-public final class DraconicEvolutionPackagedCrafting implements DataEnergisticsPlugin {
+public final class DraconicEvolutionPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

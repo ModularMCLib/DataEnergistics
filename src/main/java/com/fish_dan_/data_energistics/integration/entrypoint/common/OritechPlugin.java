@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.integration.technology.oritech.energy.Orit
 import com.fish_dan_.data_energistics.integration.technology.oritech.energy.OritechEnergyEndpointIntegration;
 
 @DataEnergisticsEntrypoint(requiredMods = "oritech")
-public final class OritechEnergyRegistration implements DataEnergisticsPlugin {
+public final class OritechPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

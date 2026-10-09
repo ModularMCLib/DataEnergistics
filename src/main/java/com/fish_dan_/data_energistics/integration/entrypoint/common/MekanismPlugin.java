@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.integration.entrypoint.common;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.packaged.HephaestusForgeAdapter;
+import com.fish_dan_.data_energistics.integration.technology.mekanism.energy.MekanismEnergyEndpointIntegration;
 
-@DataEnergisticsEntrypoint(requiredMods = "forbidden_arcanus")
-public final class ForbiddenArcanusPackagedCrafting implements DataEnergisticsPlugin {
+@DataEnergisticsEntrypoint(requiredMods = "mekanism")
+public final class MekanismPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {
-        registry.packagedCrafting().register(new HephaestusForgeAdapter());
+        registry.towerEnergyIntegrations().register(new MekanismEnergyEndpointIntegration());
     }
 }

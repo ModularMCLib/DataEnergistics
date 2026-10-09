@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.integration.magic.arsnouveau.packaged.ArsP
 import com.fish_dan_.data_energistics.integration.magic.arsnouveau.reusable.ArsImbuementReusableInputs;
 
 @DataEnergisticsEntrypoint(requiredMods = "ars_nouveau")
-public final class ArsNouveauPackagedCrafting implements DataEnergisticsPlugin {
+public final class ArsNouveauPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrati
 
 /** Registers ExtendedAE pattern provider variants. */
 @DataEnergisticsEntrypoint(requiredMods = "extendedae")
-public final class AdaptivePatternProviderExtendedAeRegistration implements DataEnergisticsPlugin {
+public final class ExtendedAePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

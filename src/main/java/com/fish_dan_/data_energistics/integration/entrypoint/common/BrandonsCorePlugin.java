@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.integration.technology.brandonscore.energy
 import com.fish_dan_.data_energistics.integration.technology.brandonscore.energy.BrandonsCoreEnergyEndpointIntegration;
 
 @DataEnergisticsEntrypoint(requiredMods = "brandonscore")
-public final class BrandonsCoreEnergyRegistration implements DataEnergisticsPlugin {
+public final class BrandonsCorePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

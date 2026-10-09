@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.integration.technology.mekanismmore.packag
 
 /** Registers Mekanism More Machines only when Applied Mekanistics can represent chemical AE keys. */
 @DataEnergisticsEntrypoint(requiredMods = { "mekmm", "appmek" })
-public final class MekanismMoreMachinesPackagedCrafting implements DataEnergisticsPlugin {
+public final class MekanismMoreMachinesPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

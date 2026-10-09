@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.integration.technology.actuallyadditions.p
 import com.fish_dan_.data_energistics.integration.technology.actuallyadditions.packaged.EmpowererAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "actuallyadditions")
-public final class ActuallyAdditionsPackagedCrafting implements DataEnergisticsPlugin {
+public final class ActuallyAdditionsPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.integration.magic.mysticalagriculture.pack
 
 /** Keeps optional MA classes behind the mod-gated plugin boundary. */
 @DataEnergisticsEntrypoint(requiredMods = { "mysticalagriculture", "cucumber" })
-public final class MysticalAgriculturePackagedCrafting implements DataEnergisticsPlugin {
+public final class MysticalAgriculturePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

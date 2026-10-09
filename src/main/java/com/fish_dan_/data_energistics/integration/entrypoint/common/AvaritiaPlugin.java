@@ -11,7 +11,7 @@ import committee.nova.mods.avaritia.init.registry.enums.ModCraftTier;
 
 /** Registers the four native Avaritia tier tables. */
 @DataEnergisticsEntrypoint(requiredMods = "avaritia")
-public final class AvaritiaPackagedCrafting implements DataEnergisticsPlugin {
+public final class AvaritiaPlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

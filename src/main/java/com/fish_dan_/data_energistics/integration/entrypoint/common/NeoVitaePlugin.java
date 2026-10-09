@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.integration.magic.neovitae.packaged.Hellfi
 import com.fish_dan_.data_energistics.integration.magic.neovitae.packaged.TabulaVitaeAdapter;
 
 @DataEnergisticsEntrypoint(requiredMods = "neovitae")
-public final class NeoVitaePackagedCrafting implements DataEnergisticsPlugin {
+public final class NeoVitaePlugin implements DataEnergisticsPlugin {
 
     @Override
     public void register(DataEnergisticsRegistry registry) {

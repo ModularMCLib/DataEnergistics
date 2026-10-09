@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.integration.entrypoint.common;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.integration.magic.neovitae.digitalsupply.NeoVitaeDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.neovitae.packaged.AraVitaeAdapter;
 import com.fish_dan_.data_energistics.integration.magic.neovitae.packaged.HellfireForgeAdapter;

@@ -2,12 +2,11 @@ package com.fish_dan_.data_energistics.integration.magic.neovitae.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.BloodKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResources;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
 
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -23,7 +22,7 @@ public final class NeoVitaeDigitalSupplyAdapter implements DigitalSupplyInterfac
 
     private static final ResourceLocation ADAPTER_ID = Data_Energistics.id("neovitae_digital_supply");
     private static final long RATE_LIMIT = 256L;
-    private static final ObjectList<WorldEnergyResourceDefinition> RESOURCES = ObjectList.of(DigitalBiologicalResources.BLOOD);
+    private static final ObjectList<DigitalSupplyResourceDefinition> RESOURCES = ObjectList.of();
 
     @Override
     public ResourceLocation id() {
@@ -31,7 +30,7 @@ public final class NeoVitaeDigitalSupplyAdapter implements DigitalSupplyInterfac
     }
 
     @Override
-    public ObjectList<WorldEnergyResourceDefinition> resources() {
+    public ObjectList<DigitalSupplyResourceDefinition> resources() {
         return RESOURCES;
     }
 
@@ -64,7 +63,7 @@ public final class NeoVitaeDigitalSupplyAdapter implements DigitalSupplyInterfac
     }
 
     @Override
-    public void tick(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer) {
+    public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) {
                 continue;
@@ -78,12 +77,13 @@ public final class NeoVitaeDigitalSupplyAdapter implements DigitalSupplyInterfac
                 continue;
             }
             if (link.mode().supportsInput()) {
-                transfer.networkToWorld(BloodKey.INSTANCE, RATE_LIMIT,
+                transfer.networkToTarget(BloodKey.INSTANCE, RATE_LIMIT,
                         (amount, simulate) -> fill(fluidHandler, amount, simulate));
             }
             if (link.mode().supportsPull()) {
-                transfer.worldToNetwork(BloodKey.INSTANCE, RATE_LIMIT,
-                        (amount, simulate) -> drain(fluidHandler, amount, simulate));
+                transfer.targetToNetwork(BloodKey.INSTANCE, RATE_LIMIT, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                        (amount, simulate) -> drain(fluidHandler, amount, simulate),
+                        amount -> fill(fluidHandler, amount, false)));
             }
         }
     }

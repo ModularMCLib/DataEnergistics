@@ -2,12 +2,12 @@ package com.fish_dan_.data_energistics.integration.magic.naturesaura.digitalsupp
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferDirection;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUnitConversion;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +25,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
 
     private static final long RATE_LIMIT = 256L;
     private static final int RELEASE_THRESHOLD = IAuraChunk.DEFAULT_AURA * 3 / 10;
-    private final ObjectList<WorldEnergyResourceDefinition> resources = createResources();
+    private final ObjectList<DigitalSupplyResourceDefinition> resources = createResources();
 
     @Override
     public ResourceLocation id() {
@@ -33,7 +33,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
     }
 
     @Override
-    public ObjectList<WorldEnergyResourceDefinition> resources() {
+    public ObjectList<DigitalSupplyResourceDefinition> resources() {
         return resources;
     }
 
@@ -47,7 +47,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
 
     @Override
     public void discover(DigitalSupplyInterfaceTarget target) {
-        for (WorldEnergyResourceDefinition resource : resources) target.setPresence(resource.key(), false);
+        for (DigitalSupplyResourceDefinition resource : resources) target.setPresence(resource.key(), false);
         boolean present = false;
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) continue;
@@ -61,7 +61,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
     }
 
     @Override
-    public void tick(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer) {
+    public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) continue;
             IAuraChunk chunk = auraAt(target, link.position());
@@ -70,9 +70,11 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
             int aura = IAuraChunk.getAuraInArea(target.level(), link.position(), 0);
             if (aura > IAuraChunk.DEFAULT_AURA && link.mode().supportsPull()) {
                 long available = Math.min(RATE_LIMIT, (long) aura - IAuraChunk.DEFAULT_AURA);
-                transfer.worldToNetwork(key, available, (amount, simulate) -> chunk.drainAura(link.position(), Math.toIntExact(amount), simulate, false));
+                transfer.targetToNetwork(key, available, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                        (amount, simulate) -> chunk.drainAura(link.position(), Math.toIntExact(amount), simulate, false),
+                        amount -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, false)));
             } else if (aura <= RELEASE_THRESHOLD && link.mode().supportsInput()) {
-                transfer.networkToWorld(key, RATE_LIMIT, (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), simulate, false));
+                transfer.networkToTarget(key, RATE_LIMIT, (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), simulate, false));
             }
         }
     }
@@ -86,11 +88,11 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
         return chunk == null ? null : chunk.getType();
     }
 
-    private static ObjectList<WorldEnergyResourceDefinition> createResources() {
-        var result = new ObjectArrayList<WorldEnergyResourceDefinition>();
+    private static ObjectList<DigitalSupplyResourceDefinition> createResources() {
+        var result = new ObjectArrayList<DigitalSupplyResourceDefinition>();
         for (NaturesAuraKey key : NaturesAuraKey.all()) {
-            result.add(new WorldEnergyResourceDefinition(key.getId(), key, key.getDisplayName(), WorldEnergyUnitConversion.IDENTITY,
-                    false, EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
+            result.add(new DigitalSupplyResourceDefinition(key.getId(), key, key.getDisplayName(), DigitalSupplyUnitConversion.IDENTITY,
+                    false, EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         }
         return result;
     }

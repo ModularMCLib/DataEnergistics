@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.api.entrypoint;
 
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistry;
 import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutputRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.matching.RecipeMatchingRegistry;
@@ -12,8 +14,6 @@ import com.fish_dan_.data_energistics.api.registry.search.TrinityPatternSearchRe
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistry;
 import com.fish_dan_.data_energistics.api.registry.tower.energy.TowerEnergyIntegrationRegistry;
 import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistry;
 
 /**
  * Root registration-stage surface passed to a Data Energistics plugin.

@@ -1,16 +1,18 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import appeng.api.stacks.AEKey;
+
+import java.util.function.LongUnaryOperator;
 
 /**
  * Two-phase quantity transfer surface for one Digital Supply Interface tick.
  *
  * <p>
- * Network and world-side simulation happen before either side is committed. If the second commit accepts less
+ * Network and native-side simulation happen before either side is committed. If the second commit accepts less
  * than the planned amount, the context compensates the first side and reports the actual transferred quantity.
  * </p>
  */
-public interface WorldEnergyTransferContext {
+public interface DigitalSupplyTransferContext {
 
     /** Simulates extraction from ordinary AE network storage. */
     long simulateNetworkExtract(AEKey key, long amount);
@@ -25,28 +27,28 @@ public interface WorldEnergyTransferContext {
     long commitNetworkInsert(AEKey key, long amount);
 
     /**
-     * Runs a network-to-world transaction using amounts expressed in AE units.
+     * Runs a network-to-target transaction using amounts expressed in AE units.
      *
      * @param key       real network key, never a presence-marker inventory entry
      * @param requested requested AE amount
-     * @param world     target-side simulation and commit callback
+     * @param target    native-target simulation and commit callback
      */
-    default TransferResult networkToWorld(AEKey key, long requested, NativeTransfer world) {
+    default TransferResult networkToTarget(AEKey key, long requested, NativeTransfer target) {
         requireAmount(requested);
         if (requested == 0) {
             return TransferResult.empty();
         }
         long networkAvailable = simulateNetworkExtract(key, requested);
-        long worldAcceptable = requireNativeResult(networkAvailable, world.transfer(networkAvailable, true));
-        long planned = Math.min(networkAvailable, worldAcceptable);
+        long targetAcceptable = requireNativeResult(networkAvailable, target.transfer(networkAvailable, true));
+        long planned = Math.min(networkAvailable, targetAcceptable);
         if (planned <= 0) {
             return new TransferResult(requested, 0, 0);
         }
-        long extracted = commitNetworkExtract(key, planned);
+        long extracted = requireNativeResult(planned, commitNetworkExtract(key, planned));
         if (extracted <= 0) {
             return new TransferResult(requested, 0, 0);
         }
-        long accepted = requireNativeResult(extracted, world.transfer(extracted, false));
+        long accepted = requireNativeResult(extracted, target.transfer(extracted, false));
         if (accepted >= extracted) {
             return new TransferResult(requested, accepted, 0);
         }
@@ -56,29 +58,29 @@ public interface WorldEnergyTransferContext {
         return new TransferResult(requested, Math.max(0, accepted), Math.max(0, unaccepted - restored));
     }
 
-    /** Runs a world-to-network transaction with the same rollback guarantees. */
-    default TransferResult worldToNetwork(AEKey key, long requested, NativeTransfer world) {
+    /** Runs a target-to-network transaction with the same rollback guarantees. */
+    default TransferResult targetToNetwork(AEKey key, long requested, NativeTransfer target) {
         requireAmount(requested);
         if (requested == 0) {
             return TransferResult.empty();
         }
-        long worldAvailable = requireNativeResult(requested, world.transfer(requested, true));
-        long networkAcceptable = simulateNetworkInsert(key, worldAvailable);
-        long planned = Math.min(worldAvailable, networkAcceptable);
+        long targetAvailable = requireNativeResult(requested, target.transfer(requested, true));
+        long networkAcceptable = simulateNetworkInsert(key, targetAvailable);
+        long planned = Math.min(targetAvailable, networkAcceptable);
         if (planned <= 0) {
             return new TransferResult(requested, 0, 0);
         }
-        long extracted = requireNativeResult(planned, world.transfer(planned, false));
+        long extracted = requireNativeResult(planned, target.transfer(planned, false));
         if (extracted <= 0) {
             return new TransferResult(requested, 0, 0);
         }
-        long inserted = commitNetworkInsert(key, extracted);
+        long inserted = requireNativeResult(extracted, commitNetworkInsert(key, extracted));
         if (inserted >= extracted) {
             return new TransferResult(requested, inserted, 0);
         }
 
         long uninserted = extracted - Math.max(0, inserted);
-        long restored = world.transfer(uninserted, false);
+        long restored = requireNativeResult(uninserted, target.rollback(uninserted));
         return new TransferResult(requested, Math.max(0, inserted), Math.max(0, uninserted - restored));
     }
 
@@ -91,7 +93,7 @@ public interface WorldEnergyTransferContext {
     private static long requireNativeResult(long offered, long result) {
         if (result < 0 || result > offered) {
             throw new IllegalStateException(
-                    "World-energy target returned " + result + " for offered amount " + offered);
+                    "Digital Supply target returned " + result + " for offered amount " + offered);
         }
         return result;
     }
@@ -101,6 +103,30 @@ public interface WorldEnergyTransferContext {
     interface NativeTransfer {
 
         long transfer(long amount, boolean simulate);
+
+        /**
+         * Restores an amount that was removed during a committed target-to-network transfer.
+         * Implementations that cannot restore the native side return zero so the result exposes the unrecovered amount.
+         */
+        default long rollback(long amount) {
+            return 0;
+        }
+
+        /** Creates a native transfer callback with an explicit rollback operation. */
+        static NativeTransfer reversible(NativeTransfer transfer, LongUnaryOperator rollback) {
+            return new NativeTransfer() {
+
+                @Override
+                public long transfer(long amount, boolean simulate) {
+                    return transfer.transfer(amount, simulate);
+                }
+
+                @Override
+                public long rollback(long amount) {
+                    return rollback.applyAsLong(amount);
+                }
+            };
+        }
     }
 
     /** Actual transfer and any unrecovered quantity after a late commit mismatch. */
@@ -108,7 +134,7 @@ public interface WorldEnergyTransferContext {
 
         public TransferResult {
             if (requested < 0 || transferred < 0 || unrecovered < 0 || transferred > requested) {
-                throw new IllegalArgumentException("Invalid world-energy transfer result");
+                throw new IllegalArgumentException("Invalid digital-supply transfer result");
             }
         }
 

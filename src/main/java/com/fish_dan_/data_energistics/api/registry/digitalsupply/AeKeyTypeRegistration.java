@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import appeng.api.stacks.AEKeyType;
 

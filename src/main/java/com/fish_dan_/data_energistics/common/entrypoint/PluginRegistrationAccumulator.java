@@ -8,6 +8,12 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAda
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
 import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutputRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
@@ -27,12 +33,6 @@ import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalReg
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistry;
 import com.fish_dan_.data_energistics.api.registry.tower.energy.TowerEnergyIntegrationRegistry;
 import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
 
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +56,7 @@ final class PluginRegistrationAccumulator {
 
     private final Object2ObjectMap<ResourceLocation, AeKeyTypeRegistration> aeKeyTypes = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, DigitalSupplyInterfaceRegistration> digitalSupplyInterfaces = new Object2ObjectLinkedOpenHashMap<>();
-    private final Object2ObjectMap<ResourceLocation, WorldEnergyResourceDefinition> worldEnergyResources = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<ResourceLocation, DigitalSupplyResourceDefinition> digitalSupplyResources = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<String, UniversalTerminalRegistration> universalTerminals = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, PatternProviderRegistration> patternProviders = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ProviderIdentityDescriptor, ResourceLocation> patternProviderIdentities = new Object2ObjectLinkedOpenHashMap<>();
@@ -167,10 +167,10 @@ final class PluginRegistrationAccumulator {
                 throw new IllegalStateException("Duplicate Digital Supply Interface adapter ID '" + registrationId + "' from " + staging.description());
             }
         }
-        for (WorldEnergyResourceDefinition resource : staging.worldEnergyResources.values()) {
-            WorldEnergyResourceDefinition existing = this.worldEnergyResources.get(resource.id());
-            if (existing != null && !existing.equals(resource)) {
-                throw new IllegalStateException("Duplicate world-energy resource ID '" + resource.id() + "' from " + staging.description());
+        for (DigitalSupplyResourceDefinition resource : staging.digitalSupplyResources.values()) {
+            DigitalSupplyResourceDefinition existing = this.digitalSupplyResources.get(resource.id());
+            if (existing != null) {
+                throw new IllegalStateException("Duplicate digital-supply resource ID '" + resource.id() + "' from " + staging.description());
             }
         }
         for (ResourceLocation resolverId : staging.trinityPatternRecipeIdResolvers.keySet()) {
@@ -234,7 +234,7 @@ final class PluginRegistrationAccumulator {
         this.adaptivePatternProviders.putAll(staging.adaptivePatternProviders);
         this.aeKeyTypes.putAll(staging.aeKeyTypes);
         this.digitalSupplyInterfaces.putAll(staging.digitalSupplyInterfaces);
-        this.worldEnergyResources.putAll(staging.worldEnergyResources);
+        this.digitalSupplyResources.putAll(staging.digitalSupplyResources);
         this.trinityPatternRecipeIdResolvers.putAll(staging.trinityPatternRecipeIdResolvers);
         this.trinityPatternSearchTerms.putAll(staging.trinityPatternSearchTerms);
         this.virtualCraftingOutputAdapters.addAll(staging.virtualCraftingOutputAdapters);
@@ -288,7 +288,7 @@ final class PluginRegistrationAccumulator {
         private final String pluginClassName;
         private final Object2ObjectMap<ResourceLocation, AeKeyTypeRegistration> aeKeyTypes = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, DigitalSupplyInterfaceRegistration> digitalSupplyInterfaces = new Object2ObjectLinkedOpenHashMap<>();
-        private final Object2ObjectMap<ResourceLocation, WorldEnergyResourceDefinition> worldEnergyResources = new Object2ObjectLinkedOpenHashMap<>();
+        private final Object2ObjectMap<ResourceLocation, DigitalSupplyResourceDefinition> digitalSupplyResources = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<String, UniversalTerminalRegistration> universalTerminals = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PatternProviderRegistration> patternProviders = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSources = new Object2ObjectLinkedOpenHashMap<>();
@@ -328,19 +328,16 @@ final class PluginRegistrationAccumulator {
             ResourceLocation id = requireStagedValue(staged.id(), "Digital Supply Interface registration ID");
             DigitalSupplyInterfaceAdapter adapter = requireStagedValue(staged.adapter(), "Digital Supply Interface adapter");
             requireStagedValue(adapter.id(), "Digital Supply Interface adapter ID");
-            if (staged.resources().isEmpty()) {
-                throw new IllegalArgumentException("Digital Supply Interface adapter must declare resources: " + id);
-            }
-            for (WorldEnergyResourceDefinition resource : staged.resources()) {
-                WorldEnergyResourceDefinition value = requireStagedValue(resource, "World-energy resource definition");
-                ResourceLocation resourceId = requireStagedValue(value.id(), "World-energy resource ID");
-                if (this.worldEnergyResources.putIfAbsent(resourceId, value) != null) {
-                    throw new IllegalStateException("Duplicate world-energy resource ID '" + resourceId + "' in " + description());
+            for (DigitalSupplyResourceDefinition resource : staged.resources()) {
+                DigitalSupplyResourceDefinition value = requireStagedValue(resource, "Digital Supply resource definition");
+                ResourceLocation resourceId = requireStagedValue(value.id(), "Digital Supply resource ID");
+                if (this.digitalSupplyResources.putIfAbsent(resourceId, value) != null) {
+                    throw new IllegalStateException("Duplicate digital-supply resource ID '" + resourceId + "' in " + description());
                 }
             }
             if (this.digitalSupplyInterfaces.putIfAbsent(id, staged) != null) {
-                for (WorldEnergyResourceDefinition resource : staged.resources()) {
-                    this.worldEnergyResources.remove(resource.id(), staged.resources().contains(resource) ? resource : null);
+                for (DigitalSupplyResourceDefinition resource : staged.resources()) {
+                    this.digitalSupplyResources.remove(resource.id(), staged.resources().contains(resource) ? resource : null);
                 }
                 throw new IllegalStateException("Duplicate Digital Supply Interface adapter ID '" + id + "' in " + description());
             }
@@ -468,7 +465,7 @@ final class PluginRegistrationAccumulator {
             this.recipeMatchingAdapters.clear();
             this.aeKeyTypes.clear();
             this.digitalSupplyInterfaces.clear();
-            this.worldEnergyResources.clear();
+            this.digitalSupplyResources.clear();
             this.universalTerminals.clear();
             this.patternProviders.clear();
             this.patternProviderWorkstationSources.clear();

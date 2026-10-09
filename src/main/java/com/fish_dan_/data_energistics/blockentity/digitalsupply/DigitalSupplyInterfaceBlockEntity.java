@@ -1,14 +1,14 @@
-package com.fish_dan_.data_energistics.blockentity.worldenergy;
+package com.fish_dan_.data_energistics.blockentity.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.worldenergy.DigitalSupplyInterfaceTransferContext;
-import com.fish_dan_.data_energistics.ae2.worldenergy.PresenceMarkerStorage;
+import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyInterfaceTransferContext;
+import com.fish_dan_.data_energistics.ae2.digitalsupply.PresenceMarkerStorage;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyLinkContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyLinkContext;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
@@ -46,7 +46,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 
 /**
- * Independent AE network endpoint for world-energy adapters.
+ * Independent AE network endpoint for digital-supply adapters.
  *
  * <p>
  * Only resource-type markers and adapter/link cursors are persisted. Consumable quantities always remain in the
@@ -54,7 +54,7 @@ import java.util.EnumSet;
  * </p>
  */
 public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEntity
-                                                     implements DigitalSupplyInterfaceTarget, WorldEnergyLinkContext, ConnectorEndpoint {
+                                                     implements DigitalSupplyInterfaceTarget, DigitalSupplyLinkContext, ConnectorEndpoint {
 
     private static final String PRESENCE_MARKERS_TAG = "presence_markers";
     private static final String LINKS_TAG = "native_links";
@@ -135,7 +135,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     }
 
     @Override
-    public WorldEnergyLinkContext links() {
+    public DigitalSupplyLinkContext links() {
         return this;
     }
 
@@ -158,7 +158,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         }
     }
 
-    /** Runs adapter discovery and world/network transactions on the logical server thread. */
+    /** Runs adapter discovery and native/network transactions on the logical server thread. */
     public void serverTick() {
         if (this.level == null || this.level.isClientSide()) {
             return;

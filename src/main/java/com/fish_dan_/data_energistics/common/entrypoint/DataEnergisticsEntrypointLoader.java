@@ -19,8 +19,6 @@ import java.lang.annotation.ElementType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
-import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Discovers and invokes the single public Data Energistics plugin entrypoint during early common initialization.
@@ -72,7 +70,7 @@ public final class DataEnergisticsEntrypointLoader {
 
         publishedSnapshot = registry.freeze();
         Data_Energistics.LOGGER.info(
-                "Loaded {} of {} Data Energistics plugins: {} AEKeyTypes, {} world-energy adapters, {} terminals, {} provider declarations, {} provider workstation sources, {} machine capacity declarations, {} pattern upload workstation declarations, {} adaptive provider definitions, {} Trinity recipe resolvers, {} Trinity search contributors, {} virtual output adapters",
+                "Loaded {} of {} Data Energistics plugins: {} AEKeyTypes, {} digital-supply adapters, {} terminals, {} provider declarations, {} provider workstation sources, {} machine capacity declarations, {} pattern upload workstation declarations, {} adaptive provider definitions, {} Trinity recipe resolvers, {} Trinity search contributors, {} virtual output adapters",
                 loaded,
                 candidates.size(),
                 publishedSnapshot.aeKeyTypes().size(),
@@ -108,9 +106,9 @@ public final class DataEnergisticsEntrypointLoader {
     public static ObjectList<EntrypointCandidate> discoverCandidates(boolean clientOnly) {
         ObjectArrayList<EntrypointCandidate> candidates = new ObjectArrayList<>();
         for (ModFileScanData scanData : ModList.get().getAllScanData()) {
-            List<ModFileScanData.AnnotationData> annotations = scanData
+            ObjectList<ModFileScanData.AnnotationData> annotations = new ObjectArrayList<>(scanData
                     .getAnnotatedBy(DataEnergisticsEntrypoint.class, ElementType.TYPE)
-                    .toList();
+                    .toList());
             if (annotations.isEmpty()) {
                 continue;
             }
@@ -123,9 +121,12 @@ public final class DataEnergisticsEntrypointLoader {
                         if (isClientOnly != clientOnly) {
                             continue;
                         }
-                        List<String> missingMods = requiredMods(annotation).stream()
-                                .filter(Predicate.not(ModList.get()::isLoaded))
-                                .toList();
+                        ObjectArrayList<String> missingMods = new ObjectArrayList<>();
+                        for (String requiredMod : requiredMods(annotation)) {
+                            if (!ModList.get().isLoaded(requiredMod)) {
+                                missingMods.add(requiredMod);
+                            }
+                        }
                         if (!missingMods.isEmpty()) {
                             Data_Energistics.LOGGER.debug(
                                     "Skipping Data Energistics plugin {} owned by mod {}; missing required mods {}",
@@ -159,12 +160,11 @@ public final class DataEnergisticsEntrypointLoader {
      * Decodes the marker's string-array member without resolving the annotated plugin class.
      */
     static ObjectList<String> requiredMods(ModFileScanData.AnnotationData annotation) {
-        @Nullable
         Object encoded = annotation.annotationData().get(REQUIRED_MODS_MEMBER);
         if (encoded == null) {
             return ObjectList.of();
         }
-        if (!(encoded instanceof List<?> values)) {
+        if (!(encoded instanceof Iterable<?> values)) {
             throw new IllegalArgumentException("Data Energistics requiredMods scan value is not an array");
         }
 
@@ -184,16 +184,18 @@ public final class DataEnergisticsEntrypointLoader {
      * Resolves the only mod descriptor that can unambiguously own entrypoints in one scanned mod file.
      */
     private static String resolveOwningModId(ModFileScanData scanData) {
-        List<IModFileInfo> fileInfos = scanData.getIModInfoData();
+        ObjectList<IModFileInfo> fileInfos = new ObjectArrayList<>(scanData.getIModInfoData());
         if (fileInfos.isEmpty()) {
             throw new IllegalStateException("A mod file containing a Data Energistics entrypoint has no mod metadata");
         }
-        List<String> owningModIds = fileInfos.stream()
-                .flatMap(fileInfo -> fileInfo.getMods().stream())
-                .map(IModInfo::getModId)
-                .distinct()
-                .sorted()
-                .toList();
+        ObjectLinkedOpenHashSet<String> distinctOwningModIds = new ObjectLinkedOpenHashSet<>();
+        for (IModFileInfo fileInfo : fileInfos) {
+            for (IModInfo modInfo : fileInfo.getMods()) {
+                distinctOwningModIds.add(modInfo.getModId());
+            }
+        }
+        ObjectArrayList<String> owningModIds = new ObjectArrayList<>(distinctOwningModIds);
+        owningModIds.sort(Comparator.naturalOrder());
         if (owningModIds.isEmpty()) {
             throw new IllegalStateException("A mod file containing a Data Energistics entrypoint declares no owning mod");
         }

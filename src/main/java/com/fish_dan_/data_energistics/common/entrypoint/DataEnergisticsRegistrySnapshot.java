@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAd
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
@@ -15,8 +17,6 @@ import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeId
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.api.registry.search.TrinityPatternSearchTermRegistration;
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistration;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FrozenReusableInputRules;
@@ -24,13 +24,11 @@ import com.fish_dan_.data_energistics.common.trinity.TrinityPatternRecipeIdResol
 
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Immutable runtime values published after every discovered plugin has finished registration.
@@ -64,22 +62,22 @@ public final class DataEnergisticsRegistrySnapshot {
     /**
      * Freezes all registration values without retaining a mutable staging collection.
      */
-    DataEnergisticsRegistrySnapshot(Collection<UniversalTerminalRegistration> universalTerminalRegistrations,
-                                    Collection<PatternProviderRegistration> patternProviderRegistrations,
-                                    Collection<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations,
-                                    Collection<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations,
-                                    Collection<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations,
-                                    Collection<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations,
-                                    Collection<AeKeyTypeRegistration> aeKeyTypeRegistrations,
-                                    Collection<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaceRegistrations,
-                                    Map<ResourceLocation, TrinityPatternRecipeIdResolver> trinityPatternRecipeIdResolvers,
-                                    Map<ResourceLocation, TrinityPatternSearchTermRegistration> trinityPatternSearchTerms,
-                                    Collection<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters,
-                                    Map<ResourceLocation, DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters,
-                                    Map<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters,
-                                    Collection<TowerEnergyEndpointIntegration> towerEnergyIntegrations,
+    DataEnergisticsRegistrySnapshot(ObjectCollection<UniversalTerminalRegistration> universalTerminalRegistrations,
+                                    ObjectCollection<PatternProviderRegistration> patternProviderRegistrations,
+                                    ObjectCollection<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations,
+                                    ObjectCollection<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations,
+                                    ObjectCollection<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations,
+                                    ObjectCollection<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations,
+                                    ObjectCollection<AeKeyTypeRegistration> aeKeyTypeRegistrations,
+                                    ObjectCollection<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaceRegistrations,
+                                    Object2ObjectMap<ResourceLocation, TrinityPatternRecipeIdResolver> trinityPatternRecipeIdResolvers,
+                                    Object2ObjectMap<ResourceLocation, TrinityPatternSearchTermRegistration> trinityPatternSearchTerms,
+                                    ObjectCollection<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters,
+                                    Object2ObjectMap<ResourceLocation, DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters,
+                                    Object2ObjectMap<ResourceLocation, ReusableInputRuleAdapter> reusableInputAdapters,
+                                    ObjectCollection<TowerEnergyEndpointIntegration> towerEnergyIntegrations,
                                     ObjectList<PackagedMachineAdapter> packagedAdapters,
-                                    Collection<RecipeMatchingRuleAdapter> recipeMatchingAdapters) {
+                                    ObjectCollection<RecipeMatchingRuleAdapter> recipeMatchingAdapters) {
         this.recipeMatching = immutableList(recipeMatchingAdapters);
         this.packagedCrafting = new PackagedRecipeCatalog(packagedAdapters);
         this.universalTerminalRegistrations = immutableList(universalTerminalRegistrations);
@@ -105,42 +103,42 @@ public final class DataEnergisticsRegistrySnapshot {
         return this.towerEnergyIntegrations;
     }
 
-    private static <T> ObjectList<T> immutableList(Collection<T> values) {
+    private static <T> ObjectList<T> immutableList(ObjectCollection<T> values) {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(values));
     }
 
     /**
      * @return terminals in deterministic plugin and declaration order
      */
-    public List<UniversalTerminalRegistration> universalTerminalRegistrations() {
+    public ObjectList<UniversalTerminalRegistration> universalTerminalRegistrations() {
         return this.universalTerminalRegistrations;
     }
 
     /**
      * @return provider lifecycle declarations in deterministic plugin and declaration order
      */
-    public List<PatternProviderRegistration> patternProviderRegistrations() {
+    public ObjectList<PatternProviderRegistration> patternProviderRegistrations() {
         return this.patternProviderRegistrations;
     }
 
     /**
      * @return custom provider workstation sources in deterministic plugin and declaration order
      */
-    public List<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations() {
+    public ObjectList<PatternProviderWorkstationSourceRegistration> patternProviderWorkstationSourceRegistrations() {
         return this.patternProviderWorkstationSourceRegistrations;
     }
 
     /**
      * @return machine-capacity declarations in deterministic plugin and declaration order
      */
-    public List<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations() {
+    public ObjectList<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations() {
         return this.craftingMachineCapacityRegistrations;
     }
 
     /**
      * @return workstation upload declarations in deterministic plugin and declaration order
      */
-    public List<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations() {
+    public ObjectList<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations() {
         return this.patternUploadWorkstationRegistrations;
     }
 
@@ -156,7 +154,7 @@ public final class DataEnergisticsRegistrySnapshot {
         return this.aeKeyTypeRegistrations;
     }
 
-    /** Returns world-energy adapters declared by successfully committed plugins. */
+    /** Returns digital-supply adapters declared by successfully committed plugins. */
     public ObjectList<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaces() {
         return this.digitalSupplyInterfaceRegistrations;
     }
@@ -178,7 +176,7 @@ public final class DataEnergisticsRegistrySnapshot {
     /**
      * @return machine-specific search contributors in deterministic plugin and declaration order
      */
-    public List<TrinityPatternSearchTermRegistration> trinityPatternSearchTermRegistrations() {
+    public ObjectList<TrinityPatternSearchTermRegistration> trinityPatternSearchTermRegistrations() {
         return this.trinityPatternSearchTermRegistrations;
     }
 

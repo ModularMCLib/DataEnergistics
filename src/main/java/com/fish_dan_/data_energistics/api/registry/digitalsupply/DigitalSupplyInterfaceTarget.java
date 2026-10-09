@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 
@@ -34,7 +34,7 @@ public interface DigitalSupplyInterfaceTarget {
 
     ConnectorEndpoint connectorEndpoint();
 
-    WorldEnergyLinkContext links();
+    DigitalSupplyLinkContext links();
 
     /** Returns the live type-presence keys; callers must not mutate the returned set. */
     ObjectSet<AEKey> presenceKeys();
@@ -42,6 +42,6 @@ public interface DigitalSupplyInterfaceTarget {
     /** Adds or removes one type-presence marker without changing real network quantities. */
     void setPresence(AEKey key, boolean present);
 
-    /** Publishes a changed marker/link state to the world and client. */
+    /** Publishes a changed marker/link state to the native target and client. */
     void refreshState();
 }

@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 /** Registration-stage surface for AE2 key types discovered by a common Data Energistics plugin. */
 public interface AeKeyTypeRegistry {

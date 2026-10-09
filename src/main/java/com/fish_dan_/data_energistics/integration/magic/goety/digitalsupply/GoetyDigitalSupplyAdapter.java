@@ -1,16 +1,15 @@
 package com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResources;
 import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferDirection;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUnitConversion;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -42,7 +41,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
 
     private static final ResourceLocation ADAPTER_ID = Data_Energistics.id("goety_digital_supply");
     private static final long TICK_LIMIT = Integer.MAX_VALUE;
-    private static final ObjectList<WorldEnergyResourceDefinition> RESOURCES = createResources();
+    private static final ObjectList<DigitalSupplyResourceDefinition> RESOURCES = createResources();
 
     @Override
     public ResourceLocation id() {
@@ -50,7 +49,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
     }
 
     @Override
-    public ObjectList<WorldEnergyResourceDefinition> resources() {
+    public ObjectList<DigitalSupplyResourceDefinition> resources() {
         return RESOURCES;
     }
 
@@ -90,7 +89,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
     }
 
     @Override
-    public void tick(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer) {
+    public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
         ObjectSet<BlockPos> visitedCages = new ObjectLinkedOpenHashSet<>();
         ObjectSet<BlockPos> visitedAltars = new ObjectLinkedOpenHashSet<>();
         for (ConnectorLink link : target.links().bindings()) {
@@ -110,16 +109,15 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
         }
     }
 
-    private static ObjectList<WorldEnergyResourceDefinition> createResources() {
-        ObjectArrayList<WorldEnergyResourceDefinition> resources = new ObjectArrayList<>();
-        resources.add(new WorldEnergyResourceDefinition(
+    private static ObjectList<DigitalSupplyResourceDefinition> createResources() {
+        ObjectArrayList<DigitalSupplyResourceDefinition> resources = new ObjectArrayList<>();
+        resources.add(new DigitalSupplyResourceDefinition(
                 GoetySoulKey.ID,
                 GoetySoulKey.INSTANCE,
                 GoetySoulKey.INSTANCE.getDisplayName(),
-                WorldEnergyUnitConversion.IDENTITY,
+                DigitalSupplyUnitConversion.IDENTITY,
                 true,
-                EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
-        resources.add(DigitalBiologicalResources.EXPERIENCE);
+                EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         return resources;
     }
 
@@ -160,15 +158,17 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
     }
 
     private static void transferSouls(CursedCageBlockEntity cage, ConnectorMode mode,
-                                      WorldEnergyTransferContext transfer) {
+                                      DigitalSupplyTransferContext transfer) {
         if (!soulEndpoint(cage)) {
             return;
         }
         if (mode.supportsInput()) {
-            transfer.networkToWorld(GoetySoulKey.INSTANCE, TICK_LIMIT, (amount, simulate) -> changeSouls(cage, amount, simulate, true));
+            transfer.networkToTarget(GoetySoulKey.INSTANCE, TICK_LIMIT, (amount, simulate) -> changeSouls(cage, amount, simulate, true));
         }
         if (mode.supportsPull()) {
-            transfer.worldToNetwork(GoetySoulKey.INSTANCE, TICK_LIMIT, (amount, simulate) -> changeSouls(cage, amount, simulate, false));
+            transfer.targetToNetwork(GoetySoulKey.INSTANCE, TICK_LIMIT, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                    (amount, simulate) -> changeSouls(cage, amount, simulate, false),
+                    amount -> changeSouls(cage, amount, false, true)));
         }
     }
 
@@ -228,17 +228,18 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
     }
 
     private static void transferExperience(Level level, DarkAltarBlockEntity altar, ConnectorMode mode,
-                                           WorldEnergyTransferContext transfer) {
+                                           DigitalSupplyTransferContext transfer) {
         if (!experienceEndpoint(level, altar)) {
             return;
         }
         if (mode.supportsInput()) {
-            transfer.networkToWorld(ExperienceKey.INSTANCE, TICK_LIMIT,
+            transfer.networkToTarget(ExperienceKey.INSTANCE, TICK_LIMIT,
                     (amount, simulate) -> changeExperience(level, altar, amount, simulate, true));
         }
         if (mode.supportsPull()) {
-            transfer.worldToNetwork(ExperienceKey.INSTANCE, TICK_LIMIT,
-                    (amount, simulate) -> changeExperience(level, altar, amount, simulate, false));
+            transfer.targetToNetwork(ExperienceKey.INSTANCE, TICK_LIMIT, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                    (amount, simulate) -> changeExperience(level, altar, amount, simulate, false),
+                    amount -> changeExperience(level, altar, amount, false, true)));
         }
     }
 

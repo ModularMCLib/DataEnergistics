@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.ae2.worldenergy;
+package com.fish_dan_.data_energistics.ae2.digitalsupply;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

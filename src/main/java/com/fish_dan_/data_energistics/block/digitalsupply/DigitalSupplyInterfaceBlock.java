@@ -1,6 +1,6 @@
-package com.fish_dan_.data_energistics.block.worldenergy;
+package com.fish_dan_.data_energistics.block.digitalsupply;
 
-import com.fish_dan_.data_energistics.blockentity.worldenergy.DigitalSupplyInterfaceBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 
 import appeng.block.AEBaseBlock;
@@ -20,7 +20,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import org.jspecify.annotations.Nullable;
 
-/** Standalone AE network node that exposes only the public world-energy adapter lifecycle. */
+/** Standalone AE network node that exposes only the public digital-supply adapter lifecycle. */
 public final class DigitalSupplyInterfaceBlock extends AEBaseBlock implements EntityBlock {
 
     private static final VoxelShape SHAPE = Shapes.block();

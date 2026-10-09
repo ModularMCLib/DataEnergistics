@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 
@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Read-only view of native links associated with a Digital Supply Interface target. */
-public interface WorldEnergyLinkContext {
+public interface DigitalSupplyLinkContext {
 
     /** Returns an immutable snapshot of connector and native links in registration order. */
     ObjectList<ConnectorLink> bindings();

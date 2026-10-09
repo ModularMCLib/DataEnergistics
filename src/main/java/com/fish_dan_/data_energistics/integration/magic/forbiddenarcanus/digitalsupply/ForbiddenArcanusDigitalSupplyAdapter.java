@@ -2,15 +2,14 @@ package com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.digita
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.BloodKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResources;
 import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferDirection;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUnitConversion;
 
 import appeng.api.stacks.AEKey;
 
@@ -25,11 +24,11 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.EnumSet;
 
-/** Transfers Forbidden Arcanus forge essence through public two-phase world-energy transactions. */
+/** Transfers Forbidden Arcanus forge essence through public two-phase digital-supply transactions. */
 public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
     private static final long RATE_LIMIT = 256L;
-    private final ObjectList<WorldEnergyResourceDefinition> resources = createResources();
+    private final ObjectList<DigitalSupplyResourceDefinition> resources = createResources();
 
     @Override
     public ResourceLocation id() {
@@ -37,7 +36,7 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
     }
 
     @Override
-    public ObjectList<WorldEnergyResourceDefinition> resources() {
+    public ObjectList<DigitalSupplyResourceDefinition> resources() {
         return resources;
     }
 
@@ -51,7 +50,7 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
 
     @Override
     public void discover(DigitalSupplyInterfaceTarget target) {
-        for (WorldEnergyResourceDefinition resource : resources) target.setPresence(resource.key(), false);
+        for (DigitalSupplyResourceDefinition resource : resources) target.setPresence(resource.key(), false);
         boolean present = false;
         for (ConnectorLink link : target.links().bindings()) {
             if (forgeAt(target, link.position()) != null) {
@@ -59,19 +58,21 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
                 break;
             }
         }
-        for (WorldEnergyResourceDefinition resource : resources) target.setPresence(resource.key(), present);
+        for (DigitalSupplyResourceDefinition resource : resources) target.setPresence(resource.key(), present);
         if (present) target.refreshState();
     }
 
     @Override
-    public void tick(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer) {
+    public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
         for (ConnectorLink link : target.links().bindings()) {
             HephaestusForgeBlockEntity forge = forgeAt(target, link.position());
             if (forge == null || !target.links().isOnline(link)) continue;
             for (EssenceType type : EssenceType.values()) {
                 AEKey key = keyFor(type);
-                if (link.mode().supportsInput()) transfer.networkToWorld(key, RATE_LIMIT, (amount, simulate) -> change(forge, type, amount, simulate, true));
-                if (link.mode().supportsPull()) transfer.worldToNetwork(key, RATE_LIMIT, (amount, simulate) -> change(forge, type, amount, simulate, false));
+                if (link.mode().supportsInput()) transfer.networkToTarget(key, RATE_LIMIT, (amount, simulate) -> change(forge, type, amount, simulate, true));
+                if (link.mode().supportsPull()) transfer.targetToNetwork(key, RATE_LIMIT, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                        (amount, simulate) -> change(forge, type, amount, simulate, false),
+                        amount -> change(forge, type, amount, false, true)));
             }
         }
     }
@@ -98,15 +99,13 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
         return entity instanceof HephaestusForgeBlockEntity forge ? forge : null;
     }
 
-    private static ObjectList<WorldEnergyResourceDefinition> createResources() {
-        var result = new ObjectArrayList<WorldEnergyResourceDefinition>();
+    private static ObjectList<DigitalSupplyResourceDefinition> createResources() {
+        var result = new ObjectArrayList<DigitalSupplyResourceDefinition>();
         for (ForbiddenArcanusEssenceKey key : ForbiddenArcanusEssenceKey.all()) {
-            result.add(new WorldEnergyResourceDefinition(key.getId(), key, key.getDisplayName(),
-                    WorldEnergyUnitConversion.IDENTITY, false,
-                    EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
+            result.add(new DigitalSupplyResourceDefinition(key.getId(), key, key.getDisplayName(),
+                    DigitalSupplyUnitConversion.IDENTITY, false,
+                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         }
-        result.add(DigitalBiologicalResources.BLOOD);
-        result.add(DigitalBiologicalResources.EXPERIENCE);
         return result;
     }
 

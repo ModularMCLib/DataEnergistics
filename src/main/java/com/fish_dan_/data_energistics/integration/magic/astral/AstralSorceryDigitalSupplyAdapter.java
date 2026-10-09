@@ -2,12 +2,12 @@ package com.fish_dan_.data_energistics.integration.magic.astral;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferDirection;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUnitConversion;
 
 import appeng.api.stacks.AEFluidKey;
 
@@ -56,38 +56,38 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     }
 
     @Override
-    public ObjectList<WorldEnergyResourceDefinition> resources() {
-        ObjectArrayList<WorldEnergyResourceDefinition> result = new ObjectArrayList<>();
+    public ObjectList<DigitalSupplyResourceDefinition> resources() {
+        ObjectArrayList<DigitalSupplyResourceDefinition> result = new ObjectArrayList<>();
         for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
             ResourceLocation registryId = RegistriesAS.REGISTRY_LUMEN.getKey(entry.getValue());
             if (registryId == null || entry.getValue() == null || entry.getValue() == LumenAS.NONE.get() || entry.getValue() == LumenAS.PRISMATIC.get()) {
                 continue;
             }
             AstralSorceryKey key = AstralSorceryKey.lumen(registryId, entry.getValue());
-            result.add(new WorldEnergyResourceDefinition(key.getId(), key, entry.getValue().getName(),
-                    WorldEnergyUnitConversion.IDENTITY, false,
-                    EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
+            result.add(new DigitalSupplyResourceDefinition(key.getId(), key, entry.getValue().getName(),
+                    DigitalSupplyUnitConversion.IDENTITY, false,
+                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         }
         for (var entry : RegistriesAS.REGISTRY_CONSTELLATIONS.entrySet()) {
             ResourceLocation registryId = RegistriesAS.REGISTRY_CONSTELLATIONS.getKey(entry.getValue());
             if (registryId == null || entry.getValue() == null) continue;
             AstralSorceryKey key = AstralSorceryKey.constellation(registryId, entry.getValue());
-            result.add(new WorldEnergyResourceDefinition(key.getId(), key, entry.getValue().getName(),
-                    WorldEnergyUnitConversion.IDENTITY, true,
-                    EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD)));
+            result.add(new DigitalSupplyResourceDefinition(key.getId(), key, entry.getValue().getName(),
+                    DigitalSupplyUnitConversion.IDENTITY, true,
+                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET)));
         }
         if (FluidsAS.LIQUID_STARLIGHT.getSource().isBound()) {
             AEFluidKey key = AEFluidKey.of(FluidsAS.LIQUID_STARLIGHT.getSource().get());
-            result.add(new WorldEnergyResourceDefinition(STARLIGHT_ID, key, FluidsAS.LIQUID_STARLIGHT.getFluidType().getDescription(),
-                    WorldEnergyUnitConversion.IDENTITY, false,
-                    EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
+            result.add(new DigitalSupplyResourceDefinition(STARLIGHT_ID, key, FluidsAS.LIQUID_STARLIGHT.getFluidType().getDescription(),
+                    DigitalSupplyUnitConversion.IDENTITY, false,
+                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         }
         return result;
     }
 
     @Override
     public void discover(DigitalSupplyInterfaceTarget target) {
-        for (WorldEnergyResourceDefinition definition : resources()) {
+        for (DigitalSupplyResourceDefinition definition : resources()) {
             if (definition.presenceMarker()) {
                 // A registry entry proves that a constellation type exists, not that this interface received it.
                 // Native transmission callbacks are responsible for setting this marker.
@@ -119,10 +119,10 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     }
 
     @Override
-    public void tick(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer) {
+    public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) continue;
-            for (WorldEnergyResourceDefinition definition : resources()) {
+            for (DigitalSupplyResourceDefinition definition : resources()) {
                 if (definition.key() instanceof AstralSorceryKey key && key.getKind() == AstralSorceryKey.Kind.LUMEN) {
                     transferLumen(target, transfer, link, definition, key);
                 } else if (definition.key() instanceof AEFluidKey fluid) {
@@ -135,36 +135,43 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         }
     }
 
-    private static void transferLumen(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer,
-                                      ConnectorLink link, WorldEnergyResourceDefinition definition, AstralSorceryKey key) {
+    private static void transferLumen(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer,
+                                      ConnectorLink link, DigitalSupplyResourceDefinition definition, AstralSorceryKey key) {
         ILumenHandler handler = target.level().getCapability(ILumenHandler.BLOCK, link.position(), link.side());
         if (handler == null) return;
         Lumen lumen = (Lumen) key.getValue();
-        if (link.mode().supportsInput() && definition.allows(WorldEnergyTransferDirection.NETWORK_TO_WORLD)) {
-            transfer.networkToWorld(key, TICK_LIMIT, (amount, simulate) -> {
+        if (link.mode().supportsInput() && definition.allows(DigitalSupplyTransferDirection.NETWORK_TO_TARGET)) {
+            transfer.networkToTarget(key, TICK_LIMIT, (amount, simulate) -> {
                 int nativeAmount = Math.min((int) Math.min(amount, NATIVE_LIMIT), NATIVE_LIMIT);
                 return handler.fill(LumenStack.of(lumen, nativeAmount), simulate ? ILumenHandler.Action.SIMULATE : ILumenHandler.Action.EXECUTE);
             });
         }
-        if (link.mode().supportsPull() && definition.allows(WorldEnergyTransferDirection.WORLD_TO_NETWORK)) {
-            transfer.worldToNetwork(key, TICK_LIMIT, (amount, simulate) -> {
-                int nativeAmount = Math.min((int) Math.min(amount, NATIVE_LIMIT), NATIVE_LIMIT);
-                return handler.drain(lumen, nativeAmount, simulate ? ILumenHandler.Action.SIMULATE : ILumenHandler.Action.EXECUTE).getAmount();
-            });
+        if (link.mode().supportsPull() && definition.allows(DigitalSupplyTransferDirection.TARGET_TO_NETWORK)) {
+            transfer.targetToNetwork(key, TICK_LIMIT, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                    (amount, simulate) -> {
+                        int nativeAmount = Math.min((int) Math.min(amount, NATIVE_LIMIT), NATIVE_LIMIT);
+                        return handler.drain(lumen, nativeAmount,
+                                simulate ? ILumenHandler.Action.SIMULATE : ILumenHandler.Action.EXECUTE).getAmount();
+                    },
+                    amount -> handler.fill(LumenStack.of(lumen, (int) Math.min(amount, NATIVE_LIMIT)),
+                            ILumenHandler.Action.EXECUTE)));
         }
     }
 
-    private static void transferFluid(DigitalSupplyInterfaceTarget target, WorldEnergyTransferContext transfer,
-                                      ConnectorLink link, WorldEnergyResourceDefinition definition, AEFluidKey key) {
+    private static void transferFluid(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer,
+                                      ConnectorLink link, DigitalSupplyResourceDefinition definition, AEFluidKey key) {
         IFluidHandler handler = target.level().getCapability(Capabilities.FluidHandler.BLOCK, link.position(), link.side());
         if (handler == null) return;
-        if (link.mode().supportsInput() && definition.allows(WorldEnergyTransferDirection.NETWORK_TO_WORLD)) {
-            transfer.networkToWorld(key, TICK_LIMIT, (amount, simulate) -> handler.fill(new FluidStack(key.getFluid(), (int) Math.min(amount, NATIVE_LIMIT)),
+        if (link.mode().supportsInput() && definition.allows(DigitalSupplyTransferDirection.NETWORK_TO_TARGET)) {
+            transfer.networkToTarget(key, TICK_LIMIT, (amount, simulate) -> handler.fill(new FluidStack(key.getFluid(), (int) Math.min(amount, NATIVE_LIMIT)),
                     simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE));
         }
-        if (link.mode().supportsPull() && definition.allows(WorldEnergyTransferDirection.WORLD_TO_NETWORK)) {
-            transfer.worldToNetwork(key, TICK_LIMIT, (amount, simulate) -> handler.drain(new FluidStack(key.getFluid(), (int) Math.min(amount, NATIVE_LIMIT)),
-                    simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE).getAmount());
+        if (link.mode().supportsPull() && definition.allows(DigitalSupplyTransferDirection.TARGET_TO_NETWORK)) {
+            transfer.targetToNetwork(key, TICK_LIMIT, DigitalSupplyTransferContext.NativeTransfer.reversible(
+                    (amount, simulate) -> handler.drain(new FluidStack(key.getFluid(), (int) Math.min(amount, NATIVE_LIMIT)),
+                            simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE).getAmount(),
+                    amount -> handler.fill(new FluidStack(key.getFluid(), (int) Math.min(amount, NATIVE_LIMIT)),
+                            IFluidHandler.FluidAction.EXECUTE)));
         }
     }
 }

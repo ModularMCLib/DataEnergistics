@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.blockentity.TuningForkBaseBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.TuningForkBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.beam.BeamFormerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.decor.DollBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataChargerBlockEntity;
@@ -33,7 +34,6 @@ import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlo
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityPatternCoreBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.worldenergy.DigitalSupplyInterfaceBlockEntity;
 
 import appeng.blockentity.networking.EnergyCellBlockEntity;
 

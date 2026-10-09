@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.ae2.key.EchoKey;
 import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.ae2.key.ManifestBinaryKeyType;
 import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 
 import appeng.api.stacks.AEKey;
@@ -89,13 +89,13 @@ public final class DEAE2Keys {
      * Identifies whether a type belongs to this mod's custom resource catalog.
      */
     public static boolean isCustomType(AEKeyType type) {
-        return type != null && registeredTypes.contains(type);
+        return registeredTypes.contains(type);
     }
 
     /**
      * Identifies whether a key belongs to this mod's custom resource catalog.
      */
     public static boolean isCustomKey(AEKey key) {
-        return key != null && isCustomType(key.getType());
+        return registeredTypes.contains(key.getType());
     }
 }

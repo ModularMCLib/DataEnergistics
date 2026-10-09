@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
@@ -20,20 +20,20 @@ import java.util.EnumSet;
  * device is deliberately separate and always has amount one.
  * </p>
  */
-public record WorldEnergyResourceDefinition(ResourceLocation id,
-                                            AEKey key,
-                                            Component displayName,
-                                            WorldEnergyUnitConversion unitConversion,
-                                            boolean presenceMarker,
-                                            EnumSet<WorldEnergyTransferDirection> directions) {
+public record DigitalSupplyResourceDefinition(ResourceLocation id,
+                                              AEKey key,
+                                              Component displayName,
+                                              DigitalSupplyUnitConversion unitConversion,
+                                              boolean presenceMarker,
+                                              EnumSet<DigitalSupplyTransferDirection> directions) {
 
-    public WorldEnergyResourceDefinition {
+    public DigitalSupplyResourceDefinition {
         if (key.getType() == null) {
-            throw new IllegalArgumentException("World-energy resource key must have a key type");
+            throw new IllegalArgumentException("Digital Supply resource key must have a key type");
         }
-        unitConversion = unitConversion == null ? WorldEnergyUnitConversion.IDENTITY : unitConversion;
+        unitConversion = unitConversion == null ? DigitalSupplyUnitConversion.IDENTITY : unitConversion;
         if (directions.isEmpty()) {
-            throw new IllegalArgumentException("World-energy resource must declare at least one transfer direction");
+            throw new IllegalArgumentException("Digital Supply resource must declare at least one transfer direction");
         }
         directions = EnumSet.copyOf(directions);
     }
@@ -44,13 +44,13 @@ public record WorldEnergyResourceDefinition(ResourceLocation id,
     }
 
     /** Returns an immutable FastUtil view for callers that need to enumerate directions. */
-    public ObjectList<WorldEnergyTransferDirection> directionsFast() {
-        ObjectArrayList<WorldEnergyTransferDirection> result = new ObjectArrayList<>(directions);
+    public ObjectList<DigitalSupplyTransferDirection> directionsFast() {
+        ObjectArrayList<DigitalSupplyTransferDirection> result = new ObjectArrayList<>(directions);
         return ObjectLists.unmodifiable(result);
     }
 
     /** Returns whether this definition allows the requested transfer direction. */
-    public boolean allows(WorldEnergyTransferDirection direction) {
+    public boolean allows(DigitalSupplyTransferDirection direction) {
         return directions.contains(direction);
     }
 }

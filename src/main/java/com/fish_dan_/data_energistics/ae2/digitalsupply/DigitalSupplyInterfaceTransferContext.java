@@ -1,6 +1,6 @@
-package com.fish_dan_.data_energistics.ae2.worldenergy;
+package com.fish_dan_.data_energistics.ae2.digitalsupply;
 
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -10,7 +10,7 @@ import appeng.api.storage.MEStorage;
 import org.jspecify.annotations.Nullable;
 
 /** Adapts an AE grid's ordinary aggregate storage to the public two-phase transfer contract. */
-public final class DigitalSupplyInterfaceTransferContext implements WorldEnergyTransferContext {
+public final class DigitalSupplyInterfaceTransferContext implements DigitalSupplyTransferContext {
 
     private final @Nullable MEStorage storage;
     private final IActionSource source;

@@ -1,10 +1,10 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
-/** Converts the fixed AE unit used by a resource definition to its native world unit. */
-public interface WorldEnergyUnitConversion {
+/** Converts the fixed AE unit used by a resource definition to its native native unit. */
+public interface DigitalSupplyUnitConversion {
 
     /** Identity conversion for resources whose native unit is already an AE unit. */
-    WorldEnergyUnitConversion IDENTITY = new WorldEnergyUnitConversion() {
+    DigitalSupplyUnitConversion IDENTITY = new DigitalSupplyUnitConversion() {
 
         @Override
         public long toNative(long aeUnits) {
@@ -25,7 +25,7 @@ public interface WorldEnergyUnitConversion {
 
     private static long nonNegative(long amount) {
         if (amount < 0) {
-            throw new IllegalArgumentException("World-energy amounts must be non-negative");
+            throw new IllegalArgumentException("Digital Supply amounts must be non-negative");
         }
         return amount;
     }

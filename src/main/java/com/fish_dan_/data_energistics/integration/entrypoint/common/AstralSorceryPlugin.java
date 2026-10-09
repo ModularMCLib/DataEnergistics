@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryKeyType;
 

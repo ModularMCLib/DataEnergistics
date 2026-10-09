@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.api.registry.worldenergy;
+package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import net.minecraft.resources.ResourceLocation;
 
@@ -9,15 +9,15 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /** One atomically registered Digital Supply Interface adapter and its resource catalog. */
 public record DigitalSupplyInterfaceRegistration(ResourceLocation id,
-                                                 ObjectList<WorldEnergyResourceDefinition> resources,
+                                                 ObjectList<DigitalSupplyResourceDefinition> resources,
                                                  DigitalSupplyInterfaceAdapter adapter) {
 
     public DigitalSupplyInterfaceRegistration {
         resources = ObjectLists.unmodifiable(new ObjectArrayList<>(resources));
         ObjectLinkedOpenHashSet<ResourceLocation> ids = new ObjectLinkedOpenHashSet<>();
-        for (WorldEnergyResourceDefinition resource : resources) {
+        for (DigitalSupplyResourceDefinition resource : resources) {
             if (!ids.add(resource.id())) {
-                throw new IllegalArgumentException("Duplicate world-energy resource ID " + resource.id());
+                throw new IllegalArgumentException("Duplicate digital-supply resource ID " + resource.id());
             }
         }
         if (!id.equals(adapter.id())) {

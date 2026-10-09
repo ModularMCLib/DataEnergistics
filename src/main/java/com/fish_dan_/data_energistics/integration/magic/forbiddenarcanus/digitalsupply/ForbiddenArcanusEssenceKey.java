@@ -122,6 +122,9 @@ public final class ForbiddenArcanusEssenceKey extends AEKey {
     private static Object2ObjectMap<ResourceLocation, ForbiddenArcanusEssenceKey> createKeys() {
         var result = new Object2ObjectLinkedOpenHashMap<ResourceLocation, ForbiddenArcanusEssenceKey>();
         for (EssenceType type : EssenceType.values()) {
+            if (type == EssenceType.BLOOD || type == EssenceType.EXPERIENCE) {
+                continue;
+            }
             ResourceLocation id = Data_Energistics.id("forbidden_arcanus/" + type.getSerializedName());
             result.put(id, new ForbiddenArcanusEssenceKey(id, type));
         }

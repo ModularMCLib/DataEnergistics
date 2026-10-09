@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.ae2.key.BloodKey;
+import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResources;
+import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
@@ -8,6 +11,8 @@ import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResour
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
+
+import appeng.api.stacks.AEKey;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -64,7 +69,7 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
             HephaestusForgeBlockEntity forge = forgeAt(target, link.position());
             if (forge == null || !target.links().isOnline(link)) continue;
             for (EssenceType type : EssenceType.values()) {
-                ForbiddenArcanusEssenceKey key = ForbiddenArcanusEssenceKey.of(type);
+                AEKey key = keyFor(type);
                 if (link.mode().supportsInput()) transfer.networkToWorld(key, RATE_LIMIT, (amount, simulate) -> change(forge, type, amount, simulate, true));
                 if (link.mode().supportsPull()) transfer.worldToNetwork(key, RATE_LIMIT, (amount, simulate) -> change(forge, type, amount, simulate, false));
             }
@@ -100,6 +105,16 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
                     WorldEnergyUnitConversion.IDENTITY, false,
                     EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
         }
+        result.add(DigitalBiologicalResources.BLOOD);
+        result.add(DigitalBiologicalResources.EXPERIENCE);
         return result;
+    }
+
+    private static AEKey keyFor(EssenceType type) {
+        return switch (type) {
+            case BLOOD -> BloodKey.INSTANCE;
+            case EXPERIENCE -> ExperienceKey.INSTANCE;
+            default -> ForbiddenArcanusEssenceKey.of(type);
+        };
     }
 }

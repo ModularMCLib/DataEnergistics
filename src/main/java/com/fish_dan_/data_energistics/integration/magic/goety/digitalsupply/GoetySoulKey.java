@@ -60,7 +60,7 @@ public final class GoetySoulKey extends AEKey {
 
     @Override
     protected Component computeDisplayName() {
-        return Component.translatable("key." + Data_Energistics.MODID + ".goety_souls");
+        return Component.translatable("item.goety.soul_energy");
     }
 
     @Override

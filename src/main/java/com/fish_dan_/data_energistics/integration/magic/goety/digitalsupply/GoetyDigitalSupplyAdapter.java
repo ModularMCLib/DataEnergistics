@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResources;
+import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
@@ -83,7 +85,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
             }
         }
         target.setPresence(GoetySoulKey.INSTANCE, souls);
-        target.setPresence(GoetyExperienceKey.INSTANCE, experience);
+        target.setPresence(ExperienceKey.INSTANCE, experience);
         target.refreshState();
     }
 
@@ -117,13 +119,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
                 WorldEnergyUnitConversion.IDENTITY,
                 true,
                 EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
-        resources.add(new WorldEnergyResourceDefinition(
-                GoetyExperienceKey.ID,
-                GoetyExperienceKey.INSTANCE,
-                GoetyExperienceKey.INSTANCE.getDisplayName(),
-                WorldEnergyUnitConversion.IDENTITY,
-                true,
-                EnumSet.of(WorldEnergyTransferDirection.NETWORK_TO_WORLD, WorldEnergyTransferDirection.WORLD_TO_NETWORK)));
+        resources.add(DigitalBiologicalResources.EXPERIENCE);
         return resources;
     }
 
@@ -237,11 +233,11 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
             return;
         }
         if (mode.supportsInput()) {
-            transfer.networkToWorld(GoetyExperienceKey.INSTANCE, TICK_LIMIT,
+            transfer.networkToWorld(ExperienceKey.INSTANCE, TICK_LIMIT,
                     (amount, simulate) -> changeExperience(level, altar, amount, simulate, true));
         }
         if (mode.supportsPull()) {
-            transfer.worldToNetwork(GoetyExperienceKey.INSTANCE, TICK_LIMIT,
+            transfer.worldToNetwork(ExperienceKey.INSTANCE, TICK_LIMIT,
                     (amount, simulate) -> changeExperience(level, altar, amount, simulate, false));
         }
     }

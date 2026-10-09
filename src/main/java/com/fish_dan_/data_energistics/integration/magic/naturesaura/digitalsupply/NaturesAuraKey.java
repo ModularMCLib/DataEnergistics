@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.integration.magic.naturesaura.digitalsupply;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
-
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
@@ -94,7 +92,7 @@ public final class NaturesAuraKey extends AEKey {
 
     @Override
     protected Component computeDisplayName() {
-        return Component.translatable("key." + Data_Energistics.MODID + ".natures_aura", id);
+        return Component.translatable("item.naturesaura.aura_bottle." + id);
     }
 
     @Override

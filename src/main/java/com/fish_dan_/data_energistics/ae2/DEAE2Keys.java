@@ -1,9 +1,12 @@
 package com.fish_dan_.data_energistics.ae2;
 
+import com.fish_dan_.data_energistics.ae2.key.BloodKey;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.ae2.key.DataKey;
+import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResourceKeyType;
 import com.fish_dan_.data_energistics.ae2.key.DigitalizationKeyType;
 import com.fish_dan_.data_energistics.ae2.key.EchoKey;
+import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.ae2.key.ManifestBinaryKeyType;
 import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
@@ -29,13 +32,16 @@ public final class DEAE2Keys {
 
     private static final ObjectList<AEKeyType> BUILTIN_TYPES = ObjectList.of(
             DigitalizationKeyType.TYPE,
-            ManifestBinaryKeyType.TYPE);
+            ManifestBinaryKeyType.TYPE,
+            DigitalBiologicalResourceKeyType.TYPE);
     private static volatile ObjectList<AEKeyType> registeredTypes = BUILTIN_TYPES;
     private static final ObjectList<AEKey> KEYS = ObjectList.of(
             DataFlowKey.of(),
             DataKey.of(),
             EchoKey.of(),
-            StellarFluxKey.of());
+            StellarFluxKey.of(),
+            BloodKey.of(),
+            ExperienceKey.of());
 
     private DEAE2Keys() {}
 

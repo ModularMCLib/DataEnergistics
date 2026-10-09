@@ -168,7 +168,8 @@ final class PluginRegistrationAccumulator {
             }
         }
         for (WorldEnergyResourceDefinition resource : staging.worldEnergyResources.values()) {
-            if (this.worldEnergyResources.containsKey(resource.id())) {
+            WorldEnergyResourceDefinition existing = this.worldEnergyResources.get(resource.id());
+            if (existing != null && !existing.equals(resource)) {
                 throw new IllegalStateException("Duplicate world-energy resource ID '" + resource.id() + "' from " + staging.description());
             }
         }

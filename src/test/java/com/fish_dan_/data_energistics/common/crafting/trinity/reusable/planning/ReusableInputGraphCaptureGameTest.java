@@ -51,7 +51,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -73,7 +72,7 @@ public final class ReusableInputGraphCaptureGameTest {
         ReusableInputGraphCaptureService service = new ReusableInputGraphCaptureService(source, clock::getAndIncrement);
         var limits = new TrinityPlanningLimits(16, 8, 64, 1000);
         var actor = new BaseActionSource();
-        var withoutRules = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), List.of(), limits);
+        var withoutRules = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), ObjectList.of(), limits);
         helper.assertFalse(withoutRules.isDone(), "Requests without reusable rules must still await server capture");
         for (int tick = 0; tick < 5000 && !withoutRules.isDone(); tick++) {
             service.advance(8L);
@@ -86,7 +85,7 @@ public final class ReusableInputGraphCaptureGameTest {
         helper.assertTrue(unchanged.value().reusableInputFallbacks().isEmpty(), "Unchanged capture must not report a fallback");
         helper.assertValueEqual(source.callbacks, 0, "Disabled reusable rules must not receive capture callbacks");
         source.enabled = true;
-        var capture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), List.of(tool(1)), limits);
+        var capture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), ObjectList.of(tool(1)), limits);
         AtomicInteger planningStarts = new AtomicInteger();
         var future = new CapturedPlanningFuture<>(capture, result -> {
             helper.assertTrue(result.successful(), "Capture should complete without truncating the model");
@@ -113,7 +112,7 @@ public final class ReusableInputGraphCaptureGameTest {
                     "A changed epoch must discard all model values captured before the restart");
         }
         helper.assertValueEqual(planningStarts.get(), 1, "Only the complete immutable graph starts planning");
-        var cancelledCapture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), List.of(), limits);
+        var cancelledCapture = service.submit(helper.getLevel(), actor, AEItemKey.of(Items.DIAMOND), ObjectList.of(), limits);
         var cancelled = new CapturedPlanningFuture<>(cancelledCapture, ignored -> {
             throw new IllegalStateException("Cancelled capture must never start planning");
         });
@@ -131,7 +130,7 @@ public final class ReusableInputGraphCaptureGameTest {
             source.enabled = true;
             AtomicLong clock = new AtomicLong();
             var service = new ReusableInputGraphCaptureService(source, clock::getAndIncrement);
-            var capture = service.submit(helper.getLevel(), new BaseActionSource(), AEItemKey.of(Items.DIAMOND), List.of(),
+            var capture = service.submit(helper.getLevel(), new BaseActionSource(), AEItemKey.of(Items.DIAMOND), ObjectList.of(),
                     new TrinityPlanningLimits(16, alias ? 8 : 1, 64, 1000));
             for (int tick = 0; tick < 5000 && !capture.isDone(); tick++) {
                 service.advance(8L);
@@ -171,9 +170,9 @@ public final class ReusableInputGraphCaptureGameTest {
 
         private TestSource(GameTestHelper helper, boolean aliasMaterial, boolean firstTargetUnchanged) {
             pattern = new TestPattern(aliasMaterial);
-            publications.publish(new TestProvider(pattern), List.of(pattern));
+            publications.publish(new TestProvider(pattern), ObjectList.of(pattern));
             var publication = TrinityPatternPublicationSignature.capture(pattern);
-            graph = new TrinityCraftingGraphSnapshot(publications.publicationRevision(), List.of(new TrinityCraftingGraphPattern(
+            graph = new TrinityCraftingGraphSnapshot(publications.publicationRevision(), ObjectList.of(new TrinityCraftingGraphPattern(
                     TrinityPatternIdentity.capture(publication, helper.getLevel().registryAccess()), publication)));
             rules = context -> {
                 helper.assertTrue(helper.getLevel().getServer().isSameThread(), "All rule callbacks must remain on the server");
@@ -204,13 +203,13 @@ public final class ReusableInputGraphCaptureGameTest {
         }
 
         @Override
-        public List<IPatternDetails> patternsFor(AEKey primaryOutput) {
-            return List.of(pattern);
+        public ObjectList<IPatternDetails> patternsFor(AEKey primaryOutput) {
+            return ObjectList.of(pattern);
         }
 
         @Override
-        public List<AEItemKey> visibleItemKeys() {
-            return List.of(tool(0));
+        public ObjectList<AEItemKey> visibleItemKeys() {
+            return ObjectList.of(tool(0));
         }
 
         @Override
@@ -237,8 +236,8 @@ public final class ReusableInputGraphCaptureGameTest {
     private record TestProvider(IPatternDetails pattern) implements ICraftingProvider, ReusableCraftingProviderAdapter {
 
         @Override
-        public List<IPatternDetails> getAvailablePatterns() {
-            return List.of(pattern);
+        public ObjectList<IPatternDetails> getAvailablePatterns() {
+            return ObjectList.of(pattern);
         }
 
         @Override
@@ -334,8 +333,8 @@ public final class ReusableInputGraphCaptureGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
         }
 
         @Override

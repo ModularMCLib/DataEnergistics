@@ -30,6 +30,7 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost;
 
 import net.minecraft.server.level.ServerLevel;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -185,18 +186,18 @@ public abstract class PatternProviderLogicMixin
     }
 
     @Override
-    public List<ProviderCapacitySnapshot> snapshotCapacity(
-                                                           CraftingProviderId providerId,
-                                                           IPatternDetails patternDetails,
-                                                           KeyCounter[] prototype,
-                                                           long requestedCrafts,
-                                                           String patternIdentity,
-                                                           long publicationRevision,
-                                                           long capacityRevision,
-                                                           long captureTick) {
+    public ObjectList<ProviderCapacitySnapshot> snapshotCapacity(
+                                                                 CraftingProviderId providerId,
+                                                                 IPatternDetails patternDetails,
+                                                                 KeyCounter[] prototype,
+                                                                 long requestedCrafts,
+                                                                 String patternIdentity,
+                                                                 long publicationRevision,
+                                                                 long capacityRevision,
+                                                                 long captureTick) {
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
         if (logic.getClass() != PatternProviderLogic.class) {
-            return List.of(new ProviderCapacitySnapshot(
+            return ObjectList.of(new ProviderCapacitySnapshot(
                     providerId,
                     CraftingDispatchTarget.provider(),
                     Optional.empty(),

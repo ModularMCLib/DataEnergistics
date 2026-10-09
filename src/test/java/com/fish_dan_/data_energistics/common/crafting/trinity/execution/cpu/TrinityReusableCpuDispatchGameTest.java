@@ -35,6 +35,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.R
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.AccessRestriction;
@@ -77,13 +78,13 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -679,14 +680,14 @@ public final class TrinityReusableCpuDispatchGameTest {
                 rule.advance(tool(), 1).successor(), rule, ObjectList.of(), pattern.lifetime()),
                 new TrinityBoundPatternInput(1, 0, new GenericStack(material(), 1L), 1L, null));
         var firing = new TrinityPlanPatternFiring(identity, product(), 0, total,
-                pattern.lifetime() ? Map.of(material(), BigInteger.ONE) : Map.of(tool(), BigInteger.ONE, material(), BigInteger.ONE),
-                Map.of(product(), BigInteger.ONE), pattern.lifetime() ? Map.of() : Map.of(tool(), BigInteger.ONE), bindings);
-        Map<AEKey, BigInteger> initial = Map.of(tool(), pattern.lifetime() ? BigInteger.valueOf(3) : BigInteger.ONE, material(), total);
-        Map<AEKey, BigInteger> delta = Map.of(material(), total.negate(), product(), total);
+                pattern.lifetime() ? FastUtilCollections.mapOf(material(), BigInteger.ONE) : FastUtilCollections.mapOf(tool(), BigInteger.ONE, material(), BigInteger.ONE),
+                FastUtilCollections.mapOf(product(), BigInteger.ONE), pattern.lifetime() ? FastUtilCollections.mapOf() : FastUtilCollections.mapOf(tool(), BigInteger.ONE), bindings);
+        Object2ObjectMap<AEKey, BigInteger> initial = FastUtilCollections.mapOf(tool(), pattern.lifetime() ? BigInteger.valueOf(3) : BigInteger.ONE, material(), total);
+        Object2ObjectMap<AEKey, BigInteger> delta = FastUtilCollections.mapOf(material(), total.negate(), product(), total);
         var stage = new TrinityPlanStage(0, pattern.lifetime(), IntSet.of(), ObjectList.of(firing), initial, delta);
         var builder = TrinityCraftingPlan.builder().finalOutput(new GenericStack(product(), count)).bytes(BigInteger.valueOf(1024L))
                 .catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW).initialExpectedInputs(initial)
-                .patternFirings(Map.of(identity, total)).stages(ObjectList.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta);
+                .patternFirings(FastUtilCollections.mapOf(identity, total)).stages(ObjectList.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta);
         if (pattern.lifetime()) builder.minimumSeed(initial).cycleRepeatBlocks(ObjectList.of(new TrinityCycleRepeatBlock(0, IntList.of(0), BigInteger.ONE, initial, delta)));
         return builder.build();
     }

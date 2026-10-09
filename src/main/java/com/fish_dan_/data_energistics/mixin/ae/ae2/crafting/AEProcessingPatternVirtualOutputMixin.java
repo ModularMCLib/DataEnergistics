@@ -13,6 +13,7 @@ import appeng.crafting.pattern.AEProcessingPattern;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -43,7 +44,7 @@ public abstract class AEProcessingPatternVirtualOutputMixin implements VirtualCr
     @Inject(method = "<init>", at = @At("RETURN"))
     private void dataEnergistics$projectVirtualOutputs(AEItemKey definition, CallbackInfo ci) {
         this.dataEnergistics$encodedOutputs = List.copyOf(this.condensedOutputs);
-        this.dataEnergistics$virtualOutputProjection = VirtualCraftingOutputAdapters.project(this.condensedOutputs);
+        this.dataEnergistics$virtualOutputProjection = VirtualCraftingOutputAdapters.project(new ObjectArrayList<>(this.condensedOutputs));
     }
 
     @Override

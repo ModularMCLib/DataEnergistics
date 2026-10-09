@@ -20,6 +20,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Pro
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters.Observation;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.LockCraftingMode;
@@ -38,6 +39,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -190,7 +192,7 @@ public final class PatternProviderBatching {
             return rejected(CraftingDispatchStatus.REJECTED);
         }
 
-        List<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
+        ObjectArrayList<CraftingDispatchRejection> rejections = new ObjectArrayList<>();
         boolean priority = logic instanceof AdaptivePatternProviderLogic adaptive &&
                 adaptive.getConnectorPolicy() == ConnectorPolicy.PRIORITY;
         int roundRobinIndex = priority ? 0 : access.dataEnergistics$getRoundRobinIndex();
@@ -418,17 +420,17 @@ public final class PatternProviderBatching {
      * Offline, busy and unpublished patterns expose no route.
      * </p>
      */
-    public static List<ProviderCapacitySnapshot> snapshotStandardCapacity(
-                                                                          PatternProviderLogic logic,
-                                                                          PatternProviderBatchAccess access,
-                                                                          CraftingProviderId providerId,
-                                                                          IPatternDetails patternDetails,
-                                                                          KeyCounter[] prototype,
-                                                                          long requestedCount,
-                                                                          String patternIdentity,
-                                                                          long publicationRevision,
-                                                                          long capacityRevision,
-                                                                          long captureTick) {
+    public static ObjectList<ProviderCapacitySnapshot> snapshotStandardCapacity(
+                                                                                PatternProviderLogic logic,
+                                                                                PatternProviderBatchAccess access,
+                                                                                CraftingProviderId providerId,
+                                                                                IPatternDetails patternDetails,
+                                                                                KeyCounter[] prototype,
+                                                                                long requestedCount,
+                                                                                String patternIdentity,
+                                                                                long publicationRevision,
+                                                                                long capacityRevision,
+                                                                                long captureTick) {
         validateRequestedCount(requestedCount);
         if (patternIdentity.isBlank()) {
             throw new IllegalArgumentException("Pattern provider capacity identity must not be blank");
@@ -440,17 +442,17 @@ public final class PatternProviderBatching {
                 !access.dataEnergistics$getMainNode().isActive() ||
                 !access.dataEnergistics$getPatterns().contains(patternDetails) ||
                 logic.getCraftingLockedReason() != LockCraftingMode.NONE) {
-            return List.of();
+            return ObjectList.of();
         }
 
         var blockEntity = access.dataEnergistics$getHost().getBlockEntity();
         var level = blockEntity.getLevel();
         if (level == null) {
-            return List.of();
+            return ObjectList.of();
         }
         var lockMode = logic.getConfigManager().getSetting(Settings.LOCK_CRAFTING_MODE);
         if (requiresSingleCraftPath(lockMode, false)) {
-            return List.of(singleRouteSnapshot(
+            return ObjectList.of(singleRouteSnapshot(
                     providerId,
                     patternIdentity,
                     publicationRevision,
@@ -569,7 +571,7 @@ public final class PatternProviderBatching {
                         new DispatchCapacity.Known(capacity)));
             }
         }
-        return List.copyOf(snapshots);
+        return FastUtilCollections.immutableList(snapshots);
     }
 
     /** Keeps a batch on its observed machine and transfers ownership at that machine's actual input-write boundary. */
@@ -808,10 +810,10 @@ public final class PatternProviderBatching {
         }
     }
 
-    static List<GenericStack> expandPatternInputs(
-                                                  IPatternDetails patternDetails,
-                                                  KeyCounter[] prototype,
-                                                  long count) {
+    static ObjectList<GenericStack> expandPatternInputs(
+                                                        IPatternDetails patternDetails,
+                                                        KeyCounter[] prototype,
+                                                        long count) {
         if (count <= 0L) {
             throw new IllegalArgumentException("count must be positive");
         }

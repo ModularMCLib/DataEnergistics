@@ -181,7 +181,7 @@ public final class AtomicReconstructorAdapter implements PackagedMachineAdapter 
         }
         if (drops.isEmpty()) throw new IllegalStateException("Atomic Reconstructor lens did not produce a captured item result");
         if (!PackagedOutputMatching.matches(operation, ObjectList.of(expected.copyWithCount(batch)),
-                drops.stream().map(ItemEntity::getItem).toList()))
+                drops.stream().map(ItemEntity::getItem).collect(ObjectArrayList.toList())))
             throw new IllegalStateException("Atomic Reconstructor produced an unexpected item result");
         if (machine.getEnergy() >= beforeEnergy) throw new IllegalStateException("Atomic Reconstructor did not consume its energy");
         for (ItemEntity drop : drops) {

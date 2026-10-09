@@ -784,15 +784,15 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
     }
 
     @Override
-    public List<ProviderCapacitySnapshot> snapshotCapacity(
-                                                           CraftingProviderId providerId,
-                                                           IPatternDetails patternDetails,
-                                                           KeyCounter[] prototype,
-                                                           long requestedCrafts,
-                                                           String patternIdentity,
-                                                           long publicationRevision,
-                                                           long capacityRevision,
-                                                           long captureTick) {
+    public ObjectList<ProviderCapacitySnapshot> snapshotCapacity(
+                                                                 CraftingProviderId providerId,
+                                                                 IPatternDetails patternDetails,
+                                                                 KeyCounter[] prototype,
+                                                                 long requestedCrafts,
+                                                                 String patternIdentity,
+                                                                 long publicationRevision,
+                                                                 long capacityRevision,
+                                                                 long captureTick) {
         if (usesSpecialBatchRoute(patternDetails)) {
             var counted = activeRouteCountedAdapter();
             if (counted != null) {
@@ -802,7 +802,7 @@ public class AdaptivePatternProviderLogic extends PatternProviderLogic
                         patternIdentity, publicationRevision, capacityRevision, captureTick, ProviderRoutingMode.AGGREGATE,
                         new DispatchCapacity.Known(capacity), new DispatchCapacity.Known(capacity)));
             }
-            return List.of(new ProviderCapacitySnapshot(
+            return ObjectList.of(new ProviderCapacitySnapshot(
                     providerId,
                     CraftingDispatchTarget.provider(),
                     Optional.empty(),

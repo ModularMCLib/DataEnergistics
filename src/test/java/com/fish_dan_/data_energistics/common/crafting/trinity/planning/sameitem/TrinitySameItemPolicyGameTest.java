@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -39,11 +40,11 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -59,9 +60,9 @@ public final class TrinitySameItemPolicyGameTest {
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
         AEKey unrelated = AEItemKey.of(Items.DIAMOND);
-        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(List.of(representative));
+        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative));
 
-        Map<AEKey, BigInteger> normalized = policy.normalizeAmounts(Map.of(
+        Object2ObjectMap<AEKey, BigInteger> normalized = policy.normalizeAmounts(FastUtilCollections.mapOf(
                 representative, BigInteger.valueOf(2L),
                 first, BigInteger.valueOf(3L),
                 second, BigInteger.valueOf(5L),
@@ -94,11 +95,11 @@ public final class TrinitySameItemPolicyGameTest {
                 physicalOutput,
                 0,
                 IntList.of(0),
-                List.of(binding),
-                List.of(new GenericStack(physicalOutput, 2L)));
+                ObjectList.of(binding),
+                ObjectList.of(new GenericStack(physicalOutput, 2L)));
 
         TrinityPatternVariant normalized = exact.normalized(
-                TrinitySameItemPolicy.ofRepresentatives(List.of(representative)));
+                TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative)));
 
         helper.assertValueEqual(normalized.primaryOutput(), physicalOutput,
                 "Provider lookup must retain the raw primary output");
@@ -122,19 +123,19 @@ public final class TrinitySameItemPolicyGameTest {
         AEItemKey representative = namedPaper("representative");
         AEItemKey finiteVariant = namedPaper("finite");
         AEItemKey unlimitedVariant = namedPaper("unlimited");
-        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(List.of(representative));
+        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative));
 
         TrinityPlanningInventory finite = new TrinityPlanningInventory(
-                Map.of(representative, BigInteger.valueOf(2L), finiteVariant, BigInteger.valueOf(3L)),
-                Set.of()).normalized(policy);
+                FastUtilCollections.mapOf(representative, BigInteger.valueOf(2L), finiteVariant, BigInteger.valueOf(3L)),
+                ObjectSet.of()).normalized(policy);
         helper.assertValueEqual(finite.finiteAmount(representative), BigInteger.valueOf(5L),
                 "Each exact physical key must contribute to the pool once");
         helper.assertValueEqual(finite.finiteAmounts().size(), 1,
                 "Physical aliases must not remain as duplicate planning balances");
 
         TrinityPlanningInventory unlimited = new TrinityPlanningInventory(
-                Map.of(finiteVariant, BigInteger.valueOf(3L)),
-                Set.of(unlimitedVariant)).normalized(policy);
+                FastUtilCollections.mapOf(finiteVariant, BigInteger.valueOf(3L)),
+                ObjectSet.of(unlimitedVariant)).normalized(policy);
         helper.assertTrue(unlimited.unlimited(representative),
                 "One unlimited physical variant must make the logical pool unlimited");
         helper.assertValueEqual(unlimited.finiteAmount(representative), BigInteger.ZERO,
@@ -149,35 +150,35 @@ public final class TrinitySameItemPolicyGameTest {
         AEItemKey representative = namedPaper("target");
         AEItemKey physicalInput = namedPaper("input");
         AEItemKey physicalOutput = namedPaper("output");
-        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(List.of(representative));
+        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative));
         TrinityPatternIdentity identity = new TrinityPatternIdentity("definition", "publication");
         TrinityPlanPatternFiring firing = new TrinityPlanPatternFiring(
                 identity,
                 physicalOutput,
                 0,
                 BigInteger.ONE,
-                Map.of(physicalInput, BigInteger.ONE),
-                Map.of(physicalOutput, BigInteger.valueOf(2L)),
-                Map.of(),
-                List.of());
+                FastUtilCollections.mapOf(physicalInput, BigInteger.ONE),
+                FastUtilCollections.mapOf(physicalOutput, BigInteger.valueOf(2L)),
+                FastUtilCollections.mapOf(),
+                ObjectList.of());
         TrinityPlanStage stage = new TrinityPlanStage(
                 0,
                 false,
                 IntSet.of(),
-                List.of(firing),
-                Map.of(representative, BigInteger.ONE),
-                Map.of(representative, BigInteger.ONE));
+                ObjectList.of(firing),
+                FastUtilCollections.mapOf(representative, BigInteger.ONE),
+                FastUtilCollections.mapOf(representative, BigInteger.ONE));
         TrinityCraftingPlan plan = TrinityCraftingPlan.builder()
                 .finalOutput(new GenericStack(representative, 1L))
                 .bytes(BigInteger.ZERO)
                 .catalogRevision(1L)
                 .quantityMode(CraftingQuantityMode.NET_NEW)
                 .sameItemPolicy(policy)
-                .initialExpectedInputs(Map.of(representative, BigInteger.ONE))
-                .patternFirings(Map.of(identity, BigInteger.ONE))
-                .stages(List.of(stage))
+                .initialExpectedInputs(FastUtilCollections.mapOf(representative, BigInteger.ONE))
+                .patternFirings(FastUtilCollections.mapOf(identity, BigInteger.ONE))
+                .stages(ObjectList.of(stage))
                 .stageOrder(IntList.of(0))
-                .targetNetChange(Map.of(representative, BigInteger.ONE))
+                .targetNetChange(FastUtilCollections.mapOf(representative, BigInteger.ONE))
                 .build();
 
         CompoundTag saved = TrinityPlanExecution.create(plan, 10L).save(
@@ -205,11 +206,11 @@ public final class TrinitySameItemPolicyGameTest {
         AEItemKey representative = namedPaper("representative");
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
-        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(List.of(representative));
-        FiniteStorage storage = new FiniteStorage(Map.of(first, 2L, second, 3L));
+        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative));
+        FiniteStorage storage = new FiniteStorage(FastUtilCollections.mapOf(first, 2L, second, 3L));
 
         TrinityPlanningInventorySnapshot snapshot = TrinityPlanningInventorySnapshot.capture(
-                List.of(representative, first),
+                ObjectList.of(representative, first),
                 policy,
                 storage,
                 IActionSource.empty(),
@@ -229,13 +230,13 @@ public final class TrinitySameItemPolicyGameTest {
         AEItemKey representative = namedPaper("representative");
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
-        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(List.of(representative));
-        FiniteStorage storage = new FiniteStorage(Map.of(first, 1L, second, 1L));
+        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative));
+        FiniteStorage storage = new FiniteStorage(FastUtilCollections.mapOf(first, 1L, second, 1L));
         ListCraftingInventory physical = new ListCraftingInventory(ignored -> {});
         TrinityExactWorkingInventory exact = new TrinityExactWorkingInventory();
 
         GenericStack missing = TrinityInitialInputExtractor.reserveReplacement(
-                Map.of(representative, BigInteger.valueOf(2L)),
+                FastUtilCollections.mapOf(representative, BigInteger.valueOf(2L)),
                 policy,
                 storage,
                 physical,
@@ -258,13 +259,13 @@ public final class TrinitySameItemPolicyGameTest {
         AEItemKey representative = namedPaper("representative");
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
-        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(List.of(representative));
-        FiniteStorage storage = new FiniteStorage(Map.of(first, 1L, second, 1L));
+        TrinitySameItemPolicy policy = TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(representative));
+        FiniteStorage storage = new FiniteStorage(FastUtilCollections.mapOf(first, 1L, second, 1L));
         ListCraftingInventory physical = new ListCraftingInventory(ignored -> {});
         TrinityExactWorkingInventory exact = new TrinityExactWorkingInventory();
 
         GenericStack missing = TrinityInitialInputExtractor.reserveReplacement(
-                Map.of(representative, BigInteger.valueOf(3L)),
+                FastUtilCollections.mapOf(representative, BigInteger.valueOf(3L)),
                 policy,
                 storage,
                 physical,
@@ -289,7 +290,7 @@ public final class TrinitySameItemPolicyGameTest {
 
         private final KeyCounter available = new KeyCounter();
 
-        private FiniteStorage(Map<AEKey, Long> amounts) {
+        private FiniteStorage(Object2ObjectMap<AEKey, Long> amounts) {
             amounts.forEach(this.available::add);
         }
 

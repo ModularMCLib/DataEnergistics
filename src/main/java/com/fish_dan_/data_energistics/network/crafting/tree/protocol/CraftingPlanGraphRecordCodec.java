@@ -22,10 +22,10 @@ import net.minecraft.network.chat.ComponentSerialization;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 
 /** Bounded typed graph record codec; collection lengths are checked before allocation or iteration. */
 final class CraftingPlanGraphRecordCodec {
@@ -154,7 +154,7 @@ final class CraftingPlanGraphRecordCodec {
         return ids;
     }
 
-    private static void amounts(RegistryFriendlyByteBuf buffer, Map<AEKey, BigInteger> amounts) {
+    private static void amounts(RegistryFriendlyByteBuf buffer, Object2ObjectMap<AEKey, BigInteger> amounts) {
         buffer.writeVarInt(amounts.size());
         amounts.forEach((key, value) -> {
             AEKey.STREAM_CODEC.encode(buffer, key);
@@ -162,9 +162,9 @@ final class CraftingPlanGraphRecordCodec {
         });
     }
 
-    private static Map<AEKey, BigInteger> amounts(RegistryFriendlyByteBuf buffer) {
+    private static Object2ObjectMap<AEKey, BigInteger> amounts(RegistryFriendlyByteBuf buffer) {
         int count = count(buffer);
-        Map<AEKey, BigInteger> values = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<AEKey, BigInteger> values = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < count; index++) {
             AEKey key = readKey(buffer);
             if (values.putIfAbsent(key, amount(buffer)) != null) {

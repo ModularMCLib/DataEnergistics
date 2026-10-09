@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.DynamicCraftingOutputLedger.Match;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.DynamicCraftingOutputLedger.Registration;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.DynamicCraftingOutputLedger.Route;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -27,7 +28,6 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.function.Supplier;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -88,16 +88,16 @@ public final class CancelledCraftingAccountingGameTest {
         AEItemKey diamond = AEItemKey.of(Items.DIAMOND);
         AEFluidKey water = AEFluidKey.of(Fluids.WATER);
         TrinityDataCoreElapsedTimeTracker tracker = new TrinityDataCoreElapsedTimeTracker();
-        tracker.initializePlanBaseline(Map.of(paper, BigInteger.valueOf(5L), diamond, BigInteger.valueOf(5L),
+        tracker.initializePlanBaseline(FastUtilCollections.mapOf(paper, BigInteger.valueOf(5L), diamond, BigInteger.valueOf(5L),
                 water, BigInteger.valueOf(1000L)));
         tracker.decrementItems(3L, paper.getType());
         tracker.decrementItems(250L, water.getType());
         CompoundTag completedBefore = tracker.writeToTag();
-        assertRejectedAtomically(helper, () -> tracker.prepareUncompletedWithdrawal(Map.of(
+        assertRejectedAtomically(helper, () -> tracker.prepareUncompletedWithdrawal(FastUtilCollections.mapOf(
                 paper, BigInteger.ONE, water, BigInteger.valueOf(751L))), tracker::writeToTag);
 
         CompoundTag beforePrepared = tracker.writeToTag();
-        Runnable withdrawal = tracker.prepareUncompletedWithdrawal(Map.of(paper, BigInteger.valueOf(2L), diamond, BigInteger.valueOf(5L),
+        Runnable withdrawal = tracker.prepareUncompletedWithdrawal(FastUtilCollections.mapOf(paper, BigInteger.valueOf(2L), diamond, BigInteger.valueOf(5L),
                 water, BigInteger.valueOf(500L)));
         helper.assertValueEqual(tracker.writeToTag(), beforePrepared, "Preparing a valid cancellation must not mutate progress or elapsed time");
         withdrawal.run();
@@ -111,11 +111,11 @@ public final class CancelledCraftingAccountingGameTest {
                 "Fluid cancellation stays in native amount units rather than GUI display units");
         helper.assertTrue(tracker.remainingItemCount() > 0L, "Uncompleted fluid output must remain in visible progress");
         TrinityDataCoreElapsedTimeTracker restored = new TrinityDataCoreElapsedTimeTracker(state);
-        restored.prepareUncompletedWithdrawal(Map.of(water, BigInteger.valueOf(250L))).run();
+        restored.prepareUncompletedWithdrawal(FastUtilCollections.mapOf(water, BigInteger.valueOf(250L))).run();
         helper.assertValueEqual(restored.remainingItemCount(), 0L, "Withdrawing exactly all uncompleted work leaves only real completion");
         assertCompletedWorkEqual(helper, restored.writeToTag(), completedBefore,
                 "Reload does not turn cancellation into a completion receipt");
-        assertRejectedAtomically(helper, () -> restored.prepareUncompletedWithdrawal(Map.of(paper, BigInteger.ONE)), restored::writeToTag);
+        assertRejectedAtomically(helper, () -> restored.prepareUncompletedWithdrawal(FastUtilCollections.mapOf(paper, BigInteger.ONE)), restored::writeToTag);
         helper.succeed();
     }
 

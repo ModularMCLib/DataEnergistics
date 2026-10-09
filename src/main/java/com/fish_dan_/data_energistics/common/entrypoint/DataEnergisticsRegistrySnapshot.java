@@ -167,14 +167,14 @@ public final class DataEnergisticsRegistrySnapshot {
     /**
      * @return virtual-output adapters in deterministic plugin and declaration order
      */
-    public List<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters() {
+    public ObjectList<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters() {
         return this.virtualCraftingOutputAdapters;
     }
 
     /**
      * @return dynamic-output adapters in deterministic plugin and declaration order
      */
-    public List<DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters() {
+    public ObjectList<DynamicCraftingOutputAdapter> dynamicCraftingOutputAdapters() {
         return this.dynamicCraftingOutputAdapters;
     }
 

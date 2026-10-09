@@ -5,8 +5,8 @@ import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceAdapter;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceTarget;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyResourceDefinition;
-import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferContext;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransferDirection;
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
 
 import net.minecraft.core.BlockPos;

@@ -6,10 +6,6 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 
-import hellfirepvp.astralsorcery.common.constellation.BaseConstellation;
-import hellfirepvp.astralsorcery.common.lib.RegistriesAS;
-import hellfirepvp.astralsorcery.common.lumen.Lumen;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +15,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import hellfirepvp.astralsorcery.common.constellation.BaseConstellation;
+import hellfirepvp.astralsorcery.common.lib.RegistriesAS;
+import hellfirepvp.astralsorcery.common.lumen.Lumen;
+import lombok.Getter;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,9 +28,13 @@ public final class AstralSorceryKey extends AEKey {
 
     private static final String LUMEN_PREFIX = "lumen/";
     private static final String CONSTELLATION_PREFIX = "constellation/";
+    @Getter
     private final ResourceLocation resourceId;
+    @Getter
     private final ResourceLocation registryId;
+    @Getter
     private final Kind kind;
+    @Getter
     private final Object value;
 
     private AstralSorceryKey(ResourceLocation resourceId, ResourceLocation registryId, Kind kind, Object value) {
@@ -55,14 +60,14 @@ public final class AstralSorceryKey extends AEKey {
     }
 
     public static AstralSorceryKey lumen(ResourceLocation registryId, Lumen lumen) {
-        return new AstralSorceryKey(resourceId(LUMEN_PREFIX, registryId), registryId, Kind.LUMEN, lumen);
+        return new AstralSorceryKey(getResourceId(LUMEN_PREFIX, registryId), registryId, Kind.LUMEN, lumen);
     }
 
     public static AstralSorceryKey constellation(ResourceLocation registryId, BaseConstellation constellation) {
-        return new AstralSorceryKey(resourceId(CONSTELLATION_PREFIX, registryId), registryId, Kind.CONSTELLATION, constellation);
+        return new AstralSorceryKey(getResourceId(CONSTELLATION_PREFIX, registryId), registryId, Kind.CONSTELLATION, constellation);
     }
 
-    private static ResourceLocation resourceId(String prefix, ResourceLocation id) {
+    private static ResourceLocation getResourceId(String prefix, ResourceLocation id) {
         return Data_Energistics.id(prefix + id.getNamespace() + "/" + id.getPath());
     }
 
@@ -72,24 +77,75 @@ public final class AstralSorceryKey extends AEKey {
         return ResourceLocation.fromNamespaceAndPath(path.substring(0, slash), path.substring(slash + 1));
     }
 
-    public ResourceLocation resourceId() { return this.resourceId; }
-    public ResourceLocation registryId() { return this.registryId; }
-    public Kind kind() { return this.kind; }
-    public Object value() { return this.value; }
+    @Override
+    public AEKeyType getType() {
+        return AstralSorceryKeyType.TYPE;
+    }
 
-    @Override public AEKeyType getType() { return AstralSorceryKeyType.TYPE; }
-    @Override public AEKey dropSecondary() { return this; }
-    @Override public CompoundTag toTag(HolderLookup.Provider provider) { CompoundTag tag = new CompoundTag(); tag.putString("resource", this.resourceId.toString()); return tag; }
-    @Override public Object getPrimaryKey() { return this.resourceId; }
-    @Override public ResourceLocation getId() { return this.resourceId; }
-    @Override public void writeToPacket(RegistryFriendlyByteBuf buffer) { ResourceLocation.STREAM_CODEC.encode(buffer, this.resourceId); }
-    @Override protected Component computeDisplayName() { return this.kind == Kind.LUMEN ? ((Lumen) this.value).getName() : ((BaseConstellation) this.value).getName(); }
-    @Override public void addDrops(long amount, List<ItemStack> drops, Level level, BlockPos pos) { if (amount > 0) drops.add(GenericStack.wrapInItemStack(this, amount)); }
-    @Override public boolean hasComponents() { return false; }
-    @Override public ItemStack wrapForDisplayOrFilter() { return GenericStack.wrapInItemStack(this, 1); }
-    @Override public boolean equals(Object other) { return other instanceof AstralSorceryKey key && this.resourceId.equals(key.resourceId); }
-    @Override public int hashCode() { return this.resourceId.hashCode(); }
-    @Override public String toString() { return "AstralSorceryKey[" + this.resourceId + "]"; }
+    @Override
+    public AEKey dropSecondary() {
+        return this;
+    }
 
-    public enum Kind { LUMEN, CONSTELLATION }
+    @Override
+    public CompoundTag toTag(HolderLookup.Provider provider) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("resource", this.resourceId.toString());
+        return tag;
+    }
+
+    @Override
+    public Object getPrimaryKey() {
+        return this.resourceId;
+    }
+
+    @Override
+    public ResourceLocation getId() {
+        return this.resourceId;
+    }
+
+    @Override
+    public void writeToPacket(RegistryFriendlyByteBuf buffer) {
+        ResourceLocation.STREAM_CODEC.encode(buffer, this.resourceId);
+    }
+
+    @Override
+    protected Component computeDisplayName() {
+        return this.kind == Kind.LUMEN ? ((Lumen) this.value).getName() : ((BaseConstellation) this.value).getName();
+    }
+
+    @Override
+    public void addDrops(long amount, List<ItemStack> drops, Level level, BlockPos pos) {
+        if (amount > 0) drops.add(GenericStack.wrapInItemStack(this, amount));
+    }
+
+    @Override
+    public boolean hasComponents() {
+        return false;
+    }
+
+    @Override
+    public ItemStack wrapForDisplayOrFilter() {
+        return GenericStack.wrapInItemStack(this, 1);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof AstralSorceryKey key && this.resourceId.equals(key.resourceId);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.resourceId.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "AstralSorceryKey[" + this.resourceId + "]";
+    }
+
+    public enum Kind {
+        LUMEN,
+        CONSTELLATION
+    }
 }

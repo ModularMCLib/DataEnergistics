@@ -16,9 +16,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 import com.stal111.forbidden_arcanus.common.block.entity.forge.essence.EssenceType;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,7 @@ public final class ForbiddenArcanusEssenceKey extends AEKey {
 
     private static final Object2ObjectMap<ResourceLocation, ForbiddenArcanusEssenceKey> KEYS = createKeys();
     private final ResourceLocation id;
+    @Getter
     private final EssenceType essenceType;
 
     private ForbiddenArcanusEssenceKey(ResourceLocation id, EssenceType essenceType) {
@@ -48,10 +50,6 @@ public final class ForbiddenArcanusEssenceKey extends AEKey {
 
     public static ObjectList<ForbiddenArcanusEssenceKey> all() {
         return ObjectList.of(KEYS.values().toArray(ForbiddenArcanusEssenceKey[]::new));
-    }
-
-    public EssenceType essenceType() {
-        return essenceType;
     }
 
     @Override

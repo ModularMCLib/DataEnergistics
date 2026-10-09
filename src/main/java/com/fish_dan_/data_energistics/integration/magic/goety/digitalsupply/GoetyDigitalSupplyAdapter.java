@@ -11,13 +11,14 @@ import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransf
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import com.Polarice3.Goety.api.items.magic.ITotem;
 import com.Polarice3.Goety.common.blocks.entities.CursedCageBlockEntity;
 import com.Polarice3.Goety.common.blocks.entities.DarkAltarBlockEntity;
-import com.Polarice3.Goety.api.items.magic.ITotem;
 import com.Polarice3.Goety.config.MainConfig;
 import com.Polarice3.Goety.utils.SEHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -25,16 +26,15 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-
 import java.util.EnumSet;
 
 /**
  * Exposes Goety souls and ritual experience through public block-entity and player APIs.
  *
- * <p>Experience is deliberately represented as levels: one AE unit is one value of
- * {@link Player#experienceLevel}. No raw-point conversion is implied by this adapter.</p>
+ * <p>
+ * Experience is deliberately represented as levels: one AE unit is one value of
+ * {@link Player#experienceLevel}. No raw-point conversion is implied by this adapter.
+ * </p>
  */
 public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
@@ -101,9 +101,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
             } else if (entity instanceof DarkAltarBlockEntity altar && visitedAltars.add(altar.getBlockPos())) {
                 transferExperience(target.level(), altar, link.mode(), transfer);
                 BlockPos cagePosition = altar.getBlockPos().below();
-                if (target.level().isLoaded(cagePosition)
-                        && target.level().getBlockEntity(cagePosition) instanceof CursedCageBlockEntity cage
-                        && visitedCages.add(cage.getBlockPos())) {
+                if (target.level().isLoaded(cagePosition) && target.level().getBlockEntity(cagePosition) instanceof CursedCageBlockEntity cage && visitedCages.add(cage.getBlockPos())) {
                     transferSouls(cage, link.mode(), transfer);
                 }
             }
@@ -147,9 +145,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
                     entities.add(entity);
                     if (entity instanceof DarkAltarBlockEntity) {
                         BlockPos cagePosition = link.position().below();
-                        if (target.level().isLoaded(cagePosition)
-                                && positions.add(cagePosition)
-                                && target.level().getBlockEntity(cagePosition) instanceof CursedCageBlockEntity cage) {
+                        if (target.level().isLoaded(cagePosition) && positions.add(cagePosition) && target.level().getBlockEntity(cagePosition) instanceof CursedCageBlockEntity cage) {
                             entities.add(cage);
                         }
                     }
@@ -164,9 +160,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
     }
 
     private static boolean experienceEndpoint(Level level, DarkAltarBlockEntity altar) {
-        return altar.getCurrentRitualRecipe() != null
-                && altar.castingPlayer != null
-                && altar.castingPlayer.level() == level;
+        return altar.getCurrentRitualRecipe() != null && altar.castingPlayer != null && altar.castingPlayer.level() == level;
     }
 
     private static void transferSouls(CursedCageBlockEntity cage, ConnectorMode mode,

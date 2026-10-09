@@ -10,9 +10,12 @@ import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyTransf
 import com.fish_dan_.data_energistics.api.registry.worldenergy.WorldEnergyUnitConversion;
 
 import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEKey;
 
-import hellfirepvp.astralsorcery.common.constellation.BaseConstellation;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+
 import hellfirepvp.astralsorcery.common.lib.FluidsAS;
 import hellfirepvp.astralsorcery.common.lib.LumenAS;
 import hellfirepvp.astralsorcery.common.lib.RegistriesAS;
@@ -20,12 +23,6 @@ import hellfirepvp.astralsorcery.common.lumen.ILumenHandler;
 import hellfirepvp.astralsorcery.common.lumen.Lumen;
 import hellfirepvp.astralsorcery.common.lumen.LumenStack;
 import hellfirepvp.astralsorcery.common.lumen.transfer.LumenNetworkHelper;
-
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
@@ -51,9 +48,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     public boolean supports(DigitalSupplyInterfaceTarget target) {
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) continue;
-            if (target.level().getCapability(ILumenHandler.BLOCK, link.position(), link.side()) != null
-                    || target.level().getCapability(Capabilities.FluidHandler.BLOCK, link.position(), link.side()) != null
-                    || LumenNetworkHelper.getNode(target.level(), link.position()).isPresent()) {
+            if (target.level().getCapability(ILumenHandler.BLOCK, link.position(), link.side()) != null || target.level().getCapability(Capabilities.FluidHandler.BLOCK, link.position(), link.side()) != null || LumenNetworkHelper.getNode(target.level(), link.position()).isPresent()) {
                 return true;
             }
         }
@@ -65,8 +60,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         ObjectArrayList<WorldEnergyResourceDefinition> result = new ObjectArrayList<>();
         for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
             ResourceLocation registryId = RegistriesAS.REGISTRY_LUMEN.getKey(entry.getValue());
-            if (registryId == null || entry.getValue() == null || entry.getValue() == LumenAS.NONE.get()
-                    || entry.getValue() == LumenAS.PRISMATIC.get()) {
+            if (registryId == null || entry.getValue() == null || entry.getValue() == LumenAS.NONE.get() || entry.getValue() == LumenAS.PRISMATIC.get()) {
                 continue;
             }
             AstralSorceryKey key = AstralSorceryKey.lumen(registryId, entry.getValue());
@@ -102,8 +96,8 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             boolean present = false;
             for (ConnectorLink link : target.links().bindings()) {
                 if (!target.links().isOnline(link)) continue;
-                if (definition.key() instanceof AstralSorceryKey key && key.kind() == AstralSorceryKey.Kind.LUMEN) {
-                    Lumen lumen = (Lumen) key.value();
+                if (definition.key() instanceof AstralSorceryKey key && key.getKind() == AstralSorceryKey.Kind.LUMEN) {
+                    Lumen lumen = (Lumen) key.getValue();
                     ILumenHandler handler = target.level().getCapability(ILumenHandler.BLOCK, link.position(), link.side());
                     present |= handler != null && handler.getContainedLumen(lumen).map(stack -> stack.getAmount() > 0).orElse(false);
                     present |= LumenNetworkHelper.getNode(target.level(), link.position())
@@ -129,7 +123,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) continue;
             for (WorldEnergyResourceDefinition definition : resources()) {
-                if (definition.key() instanceof AstralSorceryKey key && key.kind() == AstralSorceryKey.Kind.LUMEN) {
+                if (definition.key() instanceof AstralSorceryKey key && key.getKind() == AstralSorceryKey.Kind.LUMEN) {
                     transferLumen(target, transfer, link, definition, key);
                 } else if (definition.key() instanceof AEFluidKey fluid) {
                     transferFluid(target, transfer, link, definition, fluid);
@@ -145,7 +139,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
                                       ConnectorLink link, WorldEnergyResourceDefinition definition, AstralSorceryKey key) {
         ILumenHandler handler = target.level().getCapability(ILumenHandler.BLOCK, link.position(), link.side());
         if (handler == null) return;
-        Lumen lumen = (Lumen) key.value();
+        Lumen lumen = (Lumen) key.getValue();
         if (link.mode().supportsInput() && definition.allows(WorldEnergyTransferDirection.NETWORK_TO_WORLD)) {
             transfer.networkToWorld(key, TICK_LIMIT, (amount, simulate) -> {
                 int nativeAmount = Math.min((int) Math.min(amount, NATIVE_LIMIT), NATIVE_LIMIT);
@@ -173,5 +167,4 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
                     simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE).getAmount());
         }
     }
-
 }

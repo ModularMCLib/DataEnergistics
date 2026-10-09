@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAd
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistration;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
@@ -49,6 +51,8 @@ public final class DataEnergisticsRegistrySnapshot {
     private final ObjectList<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations;
     private final ObjectList<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations;
     private final ObjectList<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations;
+    private final ObjectList<AeKeyTypeRegistration> aeKeyTypeRegistrations;
+    private final ObjectList<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaceRegistrations;
     private final TrinityPatternRecipeIdResolvers trinityPatternRecipes;
     private final ObjectList<TrinityPatternSearchTermRegistration> trinityPatternSearchTermRegistrations;
     private final ObjectList<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters;
@@ -66,6 +70,8 @@ public final class DataEnergisticsRegistrySnapshot {
                                     Collection<CraftingMachineCapacityRegistration> craftingMachineCapacityRegistrations,
                                     Collection<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations,
                                     Collection<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations,
+                                    Collection<AeKeyTypeRegistration> aeKeyTypeRegistrations,
+                                    Collection<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaceRegistrations,
                                     Map<ResourceLocation, TrinityPatternRecipeIdResolver> trinityPatternRecipeIdResolvers,
                                     Map<ResourceLocation, TrinityPatternSearchTermRegistration> trinityPatternSearchTerms,
                                     Collection<VirtualCraftingOutputAdapter> virtualCraftingOutputAdapters,
@@ -83,6 +89,8 @@ public final class DataEnergisticsRegistrySnapshot {
         this.craftingMachineCapacityRegistrations = immutableList(craftingMachineCapacityRegistrations);
         this.patternUploadWorkstationRegistrations = immutableList(patternUploadWorkstationRegistrations);
         this.adaptivePatternProviderRegistrations = immutableList(adaptivePatternProviderRegistrations);
+        this.aeKeyTypeRegistrations = immutableList(aeKeyTypeRegistrations);
+        this.digitalSupplyInterfaceRegistrations = immutableList(digitalSupplyInterfaceRegistrations);
         this.trinityPatternRecipes = new TrinityPatternRecipeIdResolvers(trinityPatternRecipeIdResolvers);
         this.trinityPatternSearchTermRegistrations = immutableList(trinityPatternSearchTerms.values());
         this.virtualCraftingOutputAdapters = immutableList(virtualCraftingOutputAdapters);
@@ -141,6 +149,16 @@ public final class DataEnergisticsRegistrySnapshot {
      */
     public ObjectList<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations() {
         return this.adaptivePatternProviderRegistrations;
+    }
+
+    /** Returns dynamic AE2 key types declared by successfully committed plugins. */
+    public ObjectList<AeKeyTypeRegistration> aeKeyTypes() {
+        return this.aeKeyTypeRegistrations;
+    }
+
+    /** Returns world-energy adapters declared by successfully committed plugins. */
+    public ObjectList<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaces() {
+        return this.digitalSupplyInterfaceRegistrations;
     }
 
     /**

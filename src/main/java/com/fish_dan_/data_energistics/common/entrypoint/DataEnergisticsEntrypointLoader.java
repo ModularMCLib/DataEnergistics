@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Discovers and invokes the single public Data Energistics plugin entrypoint during common setup.
+ * Discovers and invokes the single public Data Energistics plugin entrypoint during early common initialization.
  *
  * <p>
  * This class is the sole reflection boundary. Runtime provider matching and dispatch consume only the frozen values
@@ -72,9 +72,11 @@ public final class DataEnergisticsEntrypointLoader {
 
         publishedSnapshot = registry.freeze();
         Data_Energistics.LOGGER.info(
-                "Loaded {} of {} Data Energistics plugins: {} terminals, {} provider declarations, {} provider workstation sources, {} machine capacity declarations, {} pattern upload workstation declarations, {} adaptive provider definitions, {} Trinity recipe resolvers, {} Trinity search contributors, {} virtual output adapters",
+                "Loaded {} of {} Data Energistics plugins: {} AEKeyTypes, {} world-energy adapters, {} terminals, {} provider declarations, {} provider workstation sources, {} machine capacity declarations, {} pattern upload workstation declarations, {} adaptive provider definitions, {} Trinity recipe resolvers, {} Trinity search contributors, {} virtual output adapters",
                 loaded,
                 candidates.size(),
+                publishedSnapshot.aeKeyTypes().size(),
+                publishedSnapshot.digitalSupplyInterfaces().size(),
                 publishedSnapshot.universalTerminalRegistrations().size(),
                 publishedSnapshot.patternProviderRegistrations().size(),
                 publishedSnapshot.patternProviderWorkstationSourceRegistrations().size(),

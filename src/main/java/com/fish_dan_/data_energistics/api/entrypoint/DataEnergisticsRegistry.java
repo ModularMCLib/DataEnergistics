@@ -12,6 +12,8 @@ import com.fish_dan_.data_energistics.api.registry.search.TrinityPatternSearchRe
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistry;
 import com.fish_dan_.data_energistics.api.registry.tower.energy.TowerEnergyIntegrationRegistry;
 import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegistry;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.AeKeyTypeRegistry;
+import com.fish_dan_.data_energistics.api.registry.worldenergy.DigitalSupplyInterfaceRegistry;
 
 /**
  * Root registration-stage surface passed to a Data Energistics plugin.
@@ -22,6 +24,12 @@ import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegist
  * </p>
  */
 public interface DataEnergisticsRegistry {
+
+    /** Returns the transaction-local AE2 key-type registration facet. */
+    AeKeyTypeRegistry aeKeyTypes();
+
+    /** Returns the transaction-local Digital Supply Interface adapter facet. */
+    DigitalSupplyInterfaceRegistry digitalSupplyInterfaces();
 
     /** Returns transaction-local global recipe matching rules during common setup. */
     RecipeMatchingRegistry recipeMatching();

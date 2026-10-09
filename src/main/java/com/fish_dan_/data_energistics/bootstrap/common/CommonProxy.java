@@ -51,6 +51,10 @@ public class CommonProxy {
     public static void init(IEventBus modEventBus) {
         CommonProxy instance = new CommonProxy();
 
+        // Plugin discovery must complete before AE2 receives its AEKeyType RegisterEvent. The resulting snapshot is
+        // shared by the key-type event, common setup installation and every runtime consumer.
+        DataEnergisticsEntrypointLoader.initialize();
+
         TowerGridServices.init();
 
         DEFluids.register(modEventBus);
@@ -86,7 +90,7 @@ public class CommonProxy {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.initialize();
+            DataEnergisticsRegistrySnapshot snapshot = DataEnergisticsEntrypointLoader.snapshot();
             UniversalTerminalAdapters.install(snapshot.universalTerminalRegistrations());
             VirtualCraftingOutputAdapters.install(snapshot.virtualCraftingOutputAdapters());
             DynamicCraftingOutputAdapters.install(snapshot.dynamicCraftingOutputAdapters());

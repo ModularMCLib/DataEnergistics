@@ -102,7 +102,7 @@ public final class OrbitalAttackSavedData extends SavedData {
             OrbitalAttackSavedData::new,
             OrbitalAttackSavedData::load);
 
-    private final Object2ObjectMap<UUID, OrbitalAttackRecord> attacks = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<UUID, @Nullable OrbitalAttackRecord> attacks = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2LongOpenHashMap<UUID> phaseStartedAt = new Object2LongOpenHashMap<>();
     private final Object2ObjectOpenHashMap<UUID, BeamFrame> beamFrames = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<UUID, OrbitalErasureStrike> erasureStrikes = new Object2ObjectOpenHashMap<>();
@@ -122,7 +122,7 @@ public final class OrbitalAttackSavedData extends SavedData {
      * Returns a persisted attack by its immutable ID.
      */
     public Optional<OrbitalAttackRecord> find(UUID attackId) {
-        return Optional.of(this.attacks.get(attackId));
+        return Optional.ofNullable(this.attacks.get(attackId));
     }
 
     /**

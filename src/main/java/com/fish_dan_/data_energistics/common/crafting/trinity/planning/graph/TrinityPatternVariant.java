@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -10,12 +11,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * One immutable, fully bound transition in the Trinity crafting hypergraph.
@@ -39,15 +39,15 @@ public record TrinityPatternVariant(
                                     AEKey primaryOutput,
                                     int ordinal,
                                     IntList alternativeOrdinals,
-                                    List<TrinityBoundPatternInput> bindings,
-                                    Map<AEKey, BigInteger> inputs,
-                                    Map<AEKey, BigInteger> declaredOutputs,
-                                    Map<AEKey, BigInteger> outputs,
-                                    Map<AEKey, BigInteger> netChange,
-                                    Map<AEKey, BigInteger> physicalInputs,
-                                    Map<AEKey, BigInteger> physicalOutputs,
+                                    ObjectList<TrinityBoundPatternInput> bindings,
+                                    Object2ObjectMap<AEKey, BigInteger> inputs,
+                                    Object2ObjectMap<AEKey, BigInteger> declaredOutputs,
+                                    Object2ObjectMap<AEKey, BigInteger> outputs,
+                                    Object2ObjectMap<AEKey, BigInteger> netChange,
+                                    Object2ObjectMap<AEKey, BigInteger> physicalInputs,
+                                    Object2ObjectMap<AEKey, BigInteger> physicalOutputs,
                                     boolean requiresExactBinding,
-                                    Map<AEKey, BigInteger> lifetimeTools)
+                                    Object2ObjectMap<AEKey, BigInteger> lifetimeTools)
         implements Comparable<TrinityPatternVariant> {
 
     /**
@@ -58,7 +58,7 @@ public record TrinityPatternVariant(
             throw new IllegalArgumentException("A Trinity pattern variant requires one legal binding per input slot");
         }
         alternativeOrdinals = IntLists.unmodifiable(new IntArrayList(alternativeOrdinals));
-        bindings = List.copyOf(bindings);
+        bindings = FastUtilCollections.immutableList(bindings);
         for (int slot = 0; slot < bindings.size(); slot++) {
             TrinityBoundPatternInput binding = bindings.get(slot);
             int alternative = alternativeOrdinals.getInt(slot);
@@ -76,7 +76,7 @@ public record TrinityPatternVariant(
         if (!declaredOutputs.containsKey(primaryOutput)) {
             throw new IllegalArgumentException("A Trinity pattern variant must retain its primary output");
         }
-        for (Map.Entry<AEKey, BigInteger> entry : declaredOutputs.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> entry : declaredOutputs.object2ObjectEntrySet()) {
             BigInteger total = physicalOutputs.get(entry.getKey());
             if (total == null || total.compareTo(entry.getValue()) < 0) {
                 throw new IllegalArgumentException(
@@ -104,8 +104,8 @@ public record TrinityPatternVariant(
                                                AEKey primaryOutput,
                                                int ordinal,
                                                IntList alternativeOrdinals,
-                                               List<TrinityBoundPatternInput> bindings,
-                                               List<GenericStack> declaredOutputs) {
+                                               ObjectList<TrinityBoundPatternInput> bindings,
+                                               ObjectList<GenericStack> declaredOutputs) {
         return create(patternIdentity, primaryOutput, ordinal, alternativeOrdinals, bindings, declaredOutputs, false);
     }
 
@@ -114,17 +114,17 @@ public record TrinityPatternVariant(
                                                AEKey primaryOutput,
                                                int ordinal,
                                                IntList alternativeOrdinals,
-                                               List<TrinityBoundPatternInput> bindings,
-                                               List<GenericStack> declaredOutputs,
+                                               ObjectList<TrinityBoundPatternInput> bindings,
+                                               ObjectList<GenericStack> declaredOutputs,
                                                boolean requiresExactBinding) {
         return create(patternIdentity, primaryOutput, ordinal, alternativeOrdinals, bindings, declaredOutputs,
-                requiresExactBinding, Map.of());
+                requiresExactBinding, FastUtilCollections.mapOf());
     }
 
     public static TrinityPatternVariant create(TrinityPatternIdentity patternIdentity, AEKey primaryOutput,
                                                int ordinal, IntList alternativeOrdinals,
-                                               List<TrinityBoundPatternInput> bindings, List<GenericStack> declaredOutputs,
-                                               boolean requiresExactBinding, Map<AEKey, BigInteger> reservations) {
+                                               ObjectList<TrinityBoundPatternInput> bindings, ObjectList<GenericStack> declaredOutputs,
+                                               boolean requiresExactBinding, Object2ObjectMap<AEKey, BigInteger> reservations) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> declared = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> outputs = new Object2ObjectLinkedOpenHashMap<>();
@@ -188,8 +188,8 @@ public record TrinityPatternVariant(
             }
         }
         policy = policy.preservingExactItems(exactTools);
-        Map<AEKey, BigInteger> normalizedInputs = policy.normalizeAmounts(this.physicalInputs);
-        Map<AEKey, BigInteger> normalizedOutputs = policy.normalizeAmounts(this.physicalOutputs);
+        Object2ObjectMap<AEKey, BigInteger> normalizedInputs = policy.normalizeAmounts(this.physicalInputs);
+        Object2ObjectMap<AEKey, BigInteger> normalizedOutputs = policy.normalizeAmounts(this.physicalOutputs);
         if (!lifetimeTools.isEmpty()) {
             normalizedInputs = new Object2ObjectLinkedOpenHashMap<>(normalizedInputs);
             normalizedOutputs = new Object2ObjectLinkedOpenHashMap<>(normalizedOutputs);
@@ -218,7 +218,7 @@ public record TrinityPatternVariant(
     }
 
     /** Returns exact physical input remainders without mixing them with logical planning representatives. */
-    public Map<AEKey, BigInteger> physicalRemainingOutputs() {
+    public Object2ObjectMap<AEKey, BigInteger> physicalRemainingOutputs() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> remaining = new Object2ObjectLinkedOpenHashMap<>();
         this.physicalOutputs.forEach((key, amount) -> {
             BigInteger remainder = amount.subtract(this.declaredOutputs.getOrDefault(key, BigInteger.ZERO));
@@ -226,7 +226,7 @@ public record TrinityPatternVariant(
                 remaining.put(key, remainder);
             }
         });
-        return Collections.unmodifiableMap(remaining);
+        return FastUtilCollections.immutableMap(remaining);
     }
 
     /**
@@ -241,7 +241,7 @@ public record TrinityPatternVariant(
      *
      * @return declared and changing remainder outputs, excluding unchanged reusable reservations
      */
-    public Map<AEKey, BigInteger> dependencyOutputs() {
+    public Object2ObjectMap<AEKey, BigInteger> dependencyOutputs() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> dependencyOutputs = new Object2ObjectLinkedOpenHashMap<>(this.outputs);
         for (TrinityBoundPatternInput binding : this.bindings) {
             if (binding.lifetimeBudget() || binding.reusableRule() == null || binding.remainingKey() == null ||
@@ -259,7 +259,7 @@ public record TrinityPatternVariant(
                 dependencyOutputs.remove(binding.remainingKey());
             }
         }
-        return Collections.unmodifiableMap(dependencyOutputs);
+        return FastUtilCollections.immutableMap(dependencyOutputs);
     }
 
     @Override
@@ -268,7 +268,7 @@ public record TrinityPatternVariant(
         return patternOrder != 0 ? patternOrder : Integer.compare(this.ordinal, other.ordinal);
     }
 
-    private static Map<AEKey, BigInteger> copyPositive(Map<AEKey, BigInteger> source, String role) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyPositive(Object2ObjectMap<AEKey, BigInteger> source, String role) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() <= 0) {
@@ -276,10 +276,10 @@ public record TrinityPatternVariant(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copySignedNonZero(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copySignedNonZero(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() == 0) {
@@ -287,19 +287,19 @@ public record TrinityPatternVariant(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> calculateNetChange(Map<AEKey, BigInteger> inputs,
-                                                             Map<AEKey, BigInteger> outputs) {
+    private static Object2ObjectMap<AEKey, BigInteger> calculateNetChange(Object2ObjectMap<AEKey, BigInteger> inputs,
+                                                                          Object2ObjectMap<AEKey, BigInteger> outputs) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         inputs.forEach((key, amount) -> merge(net, key, amount.negate()));
         outputs.forEach((key, amount) -> merge(net, key, amount));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        return Collections.unmodifiableMap(net);
+        return FastUtilCollections.immutableMap(net);
     }
 
-    private static void merge(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
+    private static void merge(Object2ObjectMap<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
         amounts.merge(key, amount, BigInteger::add);
     }
 }

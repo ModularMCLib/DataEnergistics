@@ -3,16 +3,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Deduplicated quantity-independent unit proofs with reservoir aliases for constant-time selection.
@@ -29,7 +28,7 @@ public record TrinityCycleUnitProofIndex(
             0);
 
     public TrinityCycleUnitProofIndex {
-        byReservoir = Object2ObjectMaps.unmodifiable(byReservoir);
+        byReservoir = FastUtilCollections.immutableMap(byReservoir);
     }
 
     /** @return shared empty proof index */
@@ -54,7 +53,7 @@ public record TrinityCycleUnitProofIndex(
     }
 
     /** Merges cached component families while preserving one canonical object for every strict unit identity. */
-    public static TrinityCycleUnitProofIndex merge(List<TrinityCycleUnitProofIndex> indexes) {
+    public static TrinityCycleUnitProofIndex merge(ObjectList<TrinityCycleUnitProofIndex> indexes) {
         if (indexes.isEmpty()) {
             return EMPTY;
         }
@@ -78,11 +77,11 @@ public record TrinityCycleUnitProofIndex(
     }
 
     private record UnitSemanticKey(
-                                   List<TrinityVariantFiring> order,
-                                   Map<TrinityPatternVariant, BigInteger> firings,
-                                   Map<AEKey, BigInteger> netChange,
-                                   Map<AEKey, BigInteger> internalSeed,
-                                   Map<AEKey, BigInteger> externalInput) {
+                                   ObjectList<TrinityVariantFiring> order,
+                                   Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                   Object2ObjectMap<AEKey, BigInteger> netChange,
+                                   Object2ObjectMap<AEKey, BigInteger> internalSeed,
+                                   Object2ObjectMap<AEKey, BigInteger> externalInput) {
 
         private static UnitSemanticKey from(TrinityCycleUnitProof proof) {
             return new UnitSemanticKey(

@@ -33,7 +33,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Set;
+import java.util.EnumSet;
 
 /**
  * Shared runtime shell for a compartment block entity.
@@ -60,8 +60,8 @@ public abstract class CompartmentBlockEntity extends AEBaseBlockEntity implement
         super(blockEntityType, pos, state);
     }
 
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return Set.of();
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
+        return EnumSet.noneOf(Direction.class);
     }
 
     public AECableType getCableConnectionType(Direction dir) {

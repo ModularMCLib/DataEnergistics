@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CountedCraftingProviderAdapters;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.CraftingProviderPublicationIndex;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
@@ -12,8 +13,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Complete immutable identity for one server-tick provider-capacity capture.
@@ -32,20 +32,20 @@ public record ProviderCapacityCaptureKey(
                                          long publicationRevision,
                                          long capacityRevision,
                                          long capacityEpoch,
-                                         List<CraftingProviderId> providerFingerprint,
+                                         ObjectList<CraftingProviderId> providerFingerprint,
                                          String patternIdentity,
-                                         List<Object2LongMap<AEKey>> inputPrototype,
+                                         ObjectList<Object2LongMap<AEKey>> inputPrototype,
                                          long requestedMaximum) {
 
     public ProviderCapacityCaptureKey {
         if (gridScope <= 0L || publicationRevision < 0L || capacityRevision < 0L || capacityEpoch < 0L) {
             throw new IllegalArgumentException("Provider capacity cache revisions must be valid");
         }
-        providerFingerprint = List.copyOf(providerFingerprint);
+        providerFingerprint = FastUtilCollections.immutableList(providerFingerprint);
         if (patternIdentity == null || patternIdentity.isBlank()) {
             throw new IllegalArgumentException("Provider capacity cache pattern identity must not be blank");
         }
-        inputPrototype = inputPrototype.stream().map(slot -> Object2LongMaps.unmodifiable(new Object2LongLinkedOpenHashMap<>(slot))).toList();
+        inputPrototype = inputPrototype.stream().map(slot -> Object2LongMaps.unmodifiable(new Object2LongLinkedOpenHashMap<>(slot))).collect(ObjectArrayList.toList());
         if (requestedMaximum <= 0L) {
             throw new IllegalArgumentException("Provider capacity cache maximum must be positive");
         }

@@ -5,24 +5,25 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 /**
  * Finds the minimum exact internal seed for a fixed MIP firing vector using bounded compressed scheduling.
@@ -53,11 +54,11 @@ public final class TrinityMinimumSeedScheduler {
      * @return minimum seed and executable schedule, or stable rejection
      */
     public TrinityAlgorithmResult<TrinityMinimumSeedSchedule> find(
-                                                                   Map<TrinityPatternVariant, BigInteger> firings,
-                                                                   Set<AEKey> externalKeys,
-                                                                   Set<AEKey> seedableKeys,
-                                                                   Map<AEKey, BigInteger> minimumInputs,
-                                                                   Map<AEKey, BigInteger> maximumInputs,
+                                                                   Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                   ObjectSet<AEKey> externalKeys,
+                                                                   ObjectSet<AEKey> seedableKeys,
+                                                                   Object2ObjectMap<AEKey, BigInteger> minimumInputs,
+                                                                   Object2ObjectMap<AEKey, BigInteger> maximumInputs,
                                                                    int maxStates,
                                                                    TrinityPlanningControl control) {
         return search(
@@ -80,11 +81,11 @@ public final class TrinityMinimumSeedScheduler {
      * @param externalTotal exact global external-input budget
      */
     public TrinityAlgorithmResult<TrinityMinimumSeedSchedule> findWithinExternalTotal(
-                                                                                      Map<TrinityPatternVariant, BigInteger> firings,
-                                                                                      Set<AEKey> externalKeys,
-                                                                                      Set<AEKey> seedableKeys,
-                                                                                      Map<AEKey, BigInteger> minimumInputs,
-                                                                                      Map<AEKey, BigInteger> maximumInputs,
+                                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                                      ObjectSet<AEKey> externalKeys,
+                                                                                      ObjectSet<AEKey> seedableKeys,
+                                                                                      Object2ObjectMap<AEKey, BigInteger> minimumInputs,
+                                                                                      Object2ObjectMap<AEKey, BigInteger> maximumInputs,
                                                                                       BigInteger externalTotal,
                                                                                       int maxStates,
                                                                                       TrinityPlanningControl control) {
@@ -104,11 +105,11 @@ public final class TrinityMinimumSeedScheduler {
     }
 
     private TrinityAlgorithmResult<TrinityMinimumSeedSchedule> search(
-                                                                      Map<TrinityPatternVariant, BigInteger> firings,
-                                                                      Set<AEKey> externalKeys,
-                                                                      Set<AEKey> seedableKeys,
-                                                                      Map<AEKey, BigInteger> minimumInputs,
-                                                                      Map<AEKey, BigInteger> maximumInputs,
+                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                      ObjectSet<AEKey> externalKeys,
+                                                                      ObjectSet<AEKey> seedableKeys,
+                                                                      Object2ObjectMap<AEKey, BigInteger> minimumInputs,
+                                                                      Object2ObjectMap<AEKey, BigInteger> maximumInputs,
                                                                       BigInteger externalLimit,
                                                                       boolean seedFirst,
                                                                       int maxStates,
@@ -119,8 +120,8 @@ public final class TrinityMinimumSeedScheduler {
                     "A Trinity seed search requires complete inputs and a positive state limit");
         }
 
-        List<TrinityPatternVariant> variants = firings.keySet().stream().sorted().toList();
-        List<BigInteger> remaining = variants.stream().map(variant -> requirePositive(firings.get(variant))).toList();
+        ObjectList<TrinityPatternVariant> variants = firings.keySet().stream().sorted().collect(ObjectArrayList.toList());
+        ObjectList<BigInteger> remaining = variants.stream().map(variant -> requirePositive(firings.get(variant))).collect(ObjectArrayList.toList());
         if (!Collections.disjoint(externalKeys, seedableKeys)) {
             throw new IllegalArgumentException("A Trinity input key cannot be both external and internal seed");
         }
@@ -128,20 +129,20 @@ public final class TrinityMinimumSeedScheduler {
         allBalanceKeys.addAll(seedableKeys);
         allBalanceKeys.addAll(minimumInputs.keySet());
         allBalanceKeys.addAll(maximumInputs.keySet());
-        List<AEKey> keys = TrinityCompressedScheduler.relevantKeys(variants, toZeroMap(allBalanceKeys));
+        ObjectList<AEKey> keys = TrinityCompressedScheduler.relevantKeys(variants, toZeroMap(allBalanceKeys));
         validateInputBounds(externalKeys, seedableKeys, minimumInputs, maximumInputs);
-        List<BigInteger> balances = keys.stream()
+        ObjectList<BigInteger> balances = keys.stream()
                 .map(key -> minimumInputs.getOrDefault(key, BigInteger.ZERO))
-                .toList();
-        List<BigInteger> external = categoryVector(keys, minimumInputs, externalKeys);
-        List<BigInteger> seed = categoryVector(keys, minimumInputs, seedableKeys);
+                .collect(ObjectArrayList.toList());
+        ObjectList<BigInteger> external = categoryVector(keys, minimumInputs, externalKeys);
+        ObjectList<BigInteger> seed = categoryVector(keys, minimumInputs, seedableKeys);
         BigInteger externalUnits = external.stream().reduce(BigInteger.ZERO, BigInteger::add);
         BigInteger seedUnits = seed.stream().reduce(BigInteger.ZERO, BigInteger::add);
         if (externalLimit != null && externalUnits.compareTo(externalLimit) > 0) {
             return failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     NO_EXECUTABLE_ORDER_KEY,
-                    Map.of("states", "0"));
+                    FastUtilCollections.mapOf("states", "0"));
         }
 
         Comparator<SearchNode> ordering = seedFirst ? Comparator
@@ -162,7 +163,7 @@ public final class TrinityMinimumSeedScheduler {
                 balances,
                 external,
                 seed,
-                List.of(),
+                ObjectList.of(),
                 externalUnits,
                 seedUnits,
                 sequence++));
@@ -173,13 +174,13 @@ public final class TrinityMinimumSeedScheduler {
                 return failure(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         CANCELLED_KEY,
-                        Map.of("states", Integer.toString(statesVisited)));
+                        FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
             }
             if (control.deadlineExceeded()) {
                 return failure(
                         TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                         SEARCH_LIMIT_KEY,
-                        Map.of("reason", "timeout", "states", Integer.toString(statesVisited)));
+                        FastUtilCollections.mapOf("reason", "timeout", "states", Integer.toString(statesVisited)));
             }
 
             SearchNode node = pending.remove();
@@ -200,7 +201,7 @@ public final class TrinityMinimumSeedScheduler {
                 return failure(
                         TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                         SEARCH_LIMIT_KEY,
-                        Map.of(
+                        FastUtilCollections.mapOf(
                                 "limit", Integer.toString(maxStates),
                                 "states", Integer.toString(statesVisited)));
             }
@@ -275,20 +276,20 @@ public final class TrinityMinimumSeedScheduler {
         return failure(
                 TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                 NO_EXECUTABLE_ORDER_KEY,
-                Map.of("states", Integer.toString(statesVisited)));
+                FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
     }
 
     private static long enqueueBatches(
                                        PriorityQueue<SearchNode> pending,
                                        long nextSequence,
-                                       List<TrinityPatternVariant> variants,
-                                       List<AEKey> keys,
+                                       ObjectList<TrinityPatternVariant> variants,
+                                       ObjectList<AEKey> keys,
                                        SearchNode node,
                                        int variantIndex,
                                        BigInteger maximum,
-                                       List<BigInteger> startingBalances,
-                                       List<BigInteger> external,
-                                       List<BigInteger> seed,
+                                       ObjectList<BigInteger> startingBalances,
+                                       ObjectList<BigInteger> external,
+                                       ObjectList<BigInteger> seed,
                                        BigInteger externalUnits,
                                        BigInteger seedUnits) {
         TrinityPatternVariant variant = variants.get(variantIndex);
@@ -312,11 +313,11 @@ public final class TrinityMinimumSeedScheduler {
             ObjectArrayList<TrinityVariantFiring> batches = new ObjectArrayList<>(node.batches());
             batches.add(new TrinityVariantFiring(variant, batch));
             pending.add(new SearchNode(
-                    List.copyOf(remaining),
-                    List.copyOf(balances),
+                    FastUtilCollections.immutableList(remaining),
+                    FastUtilCollections.immutableList(balances),
                     external,
                     seed,
-                    List.copyOf(batches),
+                    FastUtilCollections.immutableList(batches),
                     externalUnits,
                     seedUnits,
                     nextSequence++));
@@ -326,19 +327,19 @@ public final class TrinityMinimumSeedScheduler {
 
     private static Optional<SeedInjection> requiredInjection(
                                                              TrinityPatternVariant variant,
-                                                             List<AEKey> keys,
-                                                             List<BigInteger> balances,
-                                                             List<BigInteger> external,
-                                                             List<BigInteger> seed,
-                                                             Set<AEKey> externalKeys,
-                                                             Set<AEKey> seedableKeys,
-                                                             Map<AEKey, BigInteger> maximumInputs) {
+                                                             ObjectList<AEKey> keys,
+                                                             ObjectList<BigInteger> balances,
+                                                             ObjectList<BigInteger> external,
+                                                             ObjectList<BigInteger> seed,
+                                                             ObjectSet<AEKey> externalKeys,
+                                                             ObjectSet<AEKey> seedableKeys,
+                                                             Object2ObjectMap<AEKey, BigInteger> maximumInputs) {
         ObjectArrayList<BigInteger> injectedBalances = new ObjectArrayList<>(balances);
         ObjectArrayList<BigInteger> injectedExternal = new ObjectArrayList<>(external);
         ObjectArrayList<BigInteger> injectedSeed = new ObjectArrayList<>(seed);
         BigInteger addedExternal = BigInteger.ZERO;
         BigInteger addedSeed = BigInteger.ZERO;
-        for (Map.Entry<AEKey, BigInteger> input : variant.inputs().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> input : variant.inputs().object2ObjectEntrySet()) {
             int keyIndex = keys.indexOf(input.getKey());
             BigInteger deficit = input.getValue().subtract(injectedBalances.get(keyIndex));
             if (deficit.signum() <= 0) {
@@ -348,7 +349,7 @@ public final class TrinityMinimumSeedScheduler {
             if (!externalInput && !seedableKeys.contains(input.getKey())) {
                 return Optional.empty();
             }
-            List<BigInteger> category = externalInput ? injectedExternal : injectedSeed;
+            ObjectList<BigInteger> category = externalInput ? injectedExternal : injectedSeed;
             BigInteger newAmount = category.get(keyIndex).add(deficit);
             if (newAmount.compareTo(maximumInputs.getOrDefault(input.getKey(), BigInteger.ZERO)) > 0) {
                 return Optional.empty();
@@ -367,17 +368,17 @@ public final class TrinityMinimumSeedScheduler {
         BigInteger previousExternal = external.stream().reduce(BigInteger.ZERO, BigInteger::add);
         BigInteger previousUnits = seed.stream().reduce(BigInteger.ZERO, BigInteger::add);
         return Optional.of(new SeedInjection(
-                List.copyOf(injectedBalances),
-                List.copyOf(injectedExternal),
-                List.copyOf(injectedSeed),
+                FastUtilCollections.immutableList(injectedBalances),
+                FastUtilCollections.immutableList(injectedExternal),
+                FastUtilCollections.immutableList(injectedSeed),
                 previousExternal.add(addedExternal),
                 previousUnits.add(addedSeed)));
     }
 
-    private static void validateInputBounds(Set<AEKey> externalKeys,
-                                            Set<AEKey> seedableKeys,
-                                            Map<AEKey, BigInteger> minimumInputs,
-                                            Map<AEKey, BigInteger> maximumInputs) {
+    private static void validateInputBounds(ObjectSet<AEKey> externalKeys,
+                                            ObjectSet<AEKey> seedableKeys,
+                                            Object2ObjectMap<AEKey, BigInteger> minimumInputs,
+                                            Object2ObjectMap<AEKey, BigInteger> maximumInputs) {
         for (AEKey key : externalKeys) {
             if (key == null) {
                 throw new IllegalArgumentException("A Trinity external key cannot be null");
@@ -404,24 +405,24 @@ public final class TrinityMinimumSeedScheduler {
         });
     }
 
-    private static Map<AEKey, BigInteger> toZeroMap(Set<AEKey> keys) {
+    private static Object2ObjectMap<AEKey, BigInteger> toZeroMap(ObjectSet<AEKey> keys) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> zero = new Object2ObjectLinkedOpenHashMap<>();
         keys.forEach(key -> zero.put(key, BigInteger.ZERO));
         return zero;
     }
 
-    private static List<BigInteger> categoryVector(
-                                                   List<AEKey> keys,
-                                                   Map<AEKey, BigInteger> minimumInputs,
-                                                   Set<AEKey> categoryKeys) {
+    private static ObjectList<BigInteger> categoryVector(
+                                                         ObjectList<AEKey> keys,
+                                                         Object2ObjectMap<AEKey, BigInteger> minimumInputs,
+                                                         ObjectSet<AEKey> categoryKeys) {
         return keys.stream()
                 .map(key -> categoryKeys.contains(key) ?
                         minimumInputs.getOrDefault(key, BigInteger.ZERO) :
                         BigInteger.ZERO)
-                .toList();
+                .collect(ObjectArrayList.toList());
     }
 
-    private static Map<AEKey, BigInteger> positiveVector(List<AEKey> keys, List<BigInteger> values) {
+    private static Object2ObjectMap<AEKey, BigInteger> positiveVector(ObjectList<AEKey> keys, ObjectList<BigInteger> values) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < keys.size(); index++) {
             if (values.get(index).signum() > 0) {
@@ -441,7 +442,7 @@ public final class TrinityMinimumSeedScheduler {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
@@ -449,21 +450,21 @@ public final class TrinityMinimumSeedScheduler {
     }
 
     private record SearchNode(
-                              List<BigInteger> remaining,
-                              List<BigInteger> balances,
-                              List<BigInteger> external,
-                              List<BigInteger> seed,
-                              List<TrinityVariantFiring> batches,
+                              ObjectList<BigInteger> remaining,
+                              ObjectList<BigInteger> balances,
+                              ObjectList<BigInteger> external,
+                              ObjectList<BigInteger> seed,
+                              ObjectList<TrinityVariantFiring> batches,
                               BigInteger externalUnits,
                               BigInteger seedUnits,
                               long sequence) {}
 
-    private record StateKey(List<BigInteger> remaining, List<BigInteger> balances) {}
+    private record StateKey(ObjectList<BigInteger> remaining, ObjectList<BigInteger> balances) {}
 
     private record SeedInjection(
-                                 List<BigInteger> balances,
-                                 List<BigInteger> external,
-                                 List<BigInteger> seed,
+                                 ObjectList<BigInteger> balances,
+                                 ObjectList<BigInteger> external,
+                                 ObjectList<BigInteger> seed,
                                  BigInteger externalUnits,
                                  BigInteger seedUnits) {}
 }

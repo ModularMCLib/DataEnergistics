@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FixedToolIdentity;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.GenericStack;
 
@@ -18,11 +19,9 @@ import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Deterministically materializes legal Cartesian input bindings from an immutable crafting graph.
@@ -46,19 +45,19 @@ public final class TrinityPatternVariantExpander {
      *                    request graph
      * @return complete identity-ordered variants or {@code VARIANT_LIMIT}
      */
-    public TrinityAlgorithmResult<List<TrinityPatternVariant>> expand(
-                                                                      TrinityCraftingGraphSnapshot snapshot,
-                                                                      int maxVariants) {
+    public TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expand(
+                                                                            TrinityCraftingGraphSnapshot snapshot,
+                                                                            int maxVariants) {
         return expand(snapshot, maxVariants, TrinityPlanningControl.unbounded());
     }
 
     /**
      * Expands bindings while observing the request-wide cancellation and deadline boundary.
      */
-    public TrinityAlgorithmResult<List<TrinityPatternVariant>> expand(
-                                                                      TrinityCraftingGraphSnapshot snapshot,
-                                                                      int maxVariants,
-                                                                      TrinityPlanningControl control) {
+    public TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expand(
+                                                                            TrinityCraftingGraphSnapshot snapshot,
+                                                                            int maxVariants,
+                                                                            TrinityPlanningControl control) {
         if (snapshot == null || maxVariants <= 0 || control == null) {
             throw new IllegalArgumentException(
                     "A Trinity variant expansion requires a snapshot and a positive variant limit");
@@ -68,7 +67,7 @@ public final class TrinityPatternVariantExpander {
         BigInteger materializedVariants = BigInteger.ZERO;
         ObjectArrayList<TrinityPatternVariant> variants = new ObjectArrayList<>();
         for (TrinityCraftingGraphPattern pattern : snapshot.patterns()) {
-            TrinityAlgorithmResult<List<TrinityPatternVariant>> expanded = expandPattern(
+            TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expanded = expandPattern(
                     pattern,
                     maxVariants,
                     control);
@@ -82,16 +81,16 @@ public final class TrinityPatternVariantExpander {
             }
             variants.addAll(expanded.value());
         }
-        return TrinityAlgorithmResult.success(ObjectLists.unmodifiable(variants));
+        return TrinityAlgorithmResult.success(FastUtilCollections.immutableList(variants));
     }
 
     /**
      * Expands one semantic pattern independently so completed expansion can be reused by other target closures.
      */
-    public TrinityAlgorithmResult<List<TrinityPatternVariant>> expandPattern(
-                                                                             TrinityCraftingGraphPattern pattern,
-                                                                             int maxVariants,
-                                                                             TrinityPlanningControl control) {
+    public TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expandPattern(
+                                                                                   TrinityCraftingGraphPattern pattern,
+                                                                                   int maxVariants,
+                                                                                   TrinityPlanningControl control) {
         StopState state = stopState(control);
         if (state != StopState.RUNNING) {
             return stopped(state);
@@ -106,7 +105,7 @@ public final class TrinityPatternVariantExpander {
                 if (state != StopState.RUNNING) {
                     return stopped(state);
                 }
-                List<TrinityBoundPatternInput> assignment = pattern.reusableBindings().get(ordinal).stream().map(binding -> {
+                ObjectList<TrinityBoundPatternInput> assignment = pattern.reusableBindings().get(ordinal).stream().map(binding -> {
                     var lifetime = binding.lifetimeRule();
                     if (lifetime == null) return binding;
                     var rule = FixedToolIdentity.rule(lifetime);
@@ -114,18 +113,18 @@ public final class TrinityPatternVariantExpander {
                     return new TrinityBoundPatternInput(binding.slotIndex(), 0,
                             new GenericStack(rule.initialKey(), binding.template().amount()), binding.multiplier(),
                             transition.successor(), rule, transition.byproductsFast(), true);
-                }).toList();
+                }).collect(ObjectArrayList.toList());
                 IntArrayList alternativeOrdinals = new IntArrayList(assignment.size());
                 assignment.forEach(binding -> alternativeOrdinals.add(binding.alternativeIndex()));
                 variants.add(TrinityPatternVariant.create(pattern.identity(), pattern.outputs().getFirst().what(),
                         ordinal, alternativeOrdinals, assignment, pattern.outputs(), true, pattern.lifetimeTools()));
             }
-            return TrinityAlgorithmResult.success(ObjectLists.unmodifiable(variants));
+            return TrinityAlgorithmResult.success(FastUtilCollections.immutableList(variants));
         }
         TrinityPatternBindingEnumerator.Result enumeration = this.bindingEnumerator.enumerate(
                 pattern.inputs(),
                 maxVariants);
-        List<TrinityPatternBindingEnumerator.Binding> bindings;
+        ObjectList<TrinityPatternBindingEnumerator.Binding> bindings;
         switch (enumeration) {
             case TrinityPatternBindingEnumerator.LimitExceeded(var required, var limitValue) -> {
                 return variantLimit(pattern, limitValue, required);
@@ -137,29 +136,29 @@ public final class TrinityPatternVariantExpander {
         }
         ObjectArrayList<TrinityPatternVariant> variants = new ObjectArrayList<>(bindings.size());
         expandPattern(pattern, bindings, variants);
-        return TrinityAlgorithmResult.success(ObjectLists.unmodifiable(variants));
+        return TrinityAlgorithmResult.success(FastUtilCollections.immutableList(variants));
     }
 
-    private static TrinityAlgorithmResult<List<TrinityPatternVariant>> variantLimit(
-                                                                                    TrinityCraftingGraphPattern pattern,
-                                                                                    int maxVariants,
-                                                                                    BigInteger required) {
+    private static TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> variantLimit(
+                                                                                          TrinityCraftingGraphPattern pattern,
+                                                                                          int maxVariants,
+                                                                                          BigInteger required) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.VARIANT_LIMIT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.variant_limit"),
-                Map.of(
+                FastUtilCollections.mapOf(
                         "limit", Integer.toString(maxVariants),
                         "required", required.toString(),
                         "pattern", pattern.identity().publicationEncoding())));
     }
 
-    private static TrinityAlgorithmResult<List<TrinityPatternVariant>> arithmeticOverflow(
-                                                                                          TrinityCraftingGraphPattern pattern,
-                                                                                          String axis) {
+    private static TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> arithmeticOverflow(
+                                                                                                TrinityCraftingGraphPattern pattern,
+                                                                                                String axis) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),
-                Map.of(
+                FastUtilCollections.mapOf(
                         "pattern", pattern.identity().publicationEncoding(),
                         "axis", axis)));
     }
@@ -176,18 +175,18 @@ public final class TrinityPatternVariantExpander {
             case CANCELLED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    Map.of("phase", "variant_expansion")));
+                    FastUtilCollections.mapOf("phase", "variant_expansion")));
             case DEADLINE_EXCEEDED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.timeout"),
-                    Map.of("phase", "variant_expansion")));
+                    FastUtilCollections.mapOf("phase", "variant_expansion")));
             case RUNNING -> throw new IllegalArgumentException("A running Trinity variant expansion is not stopped");
         };
     }
 
     private static void expandPattern(TrinityCraftingGraphPattern pattern,
-                                      List<TrinityPatternBindingEnumerator.Binding> enumeratedBindings,
-                                      List<TrinityPatternVariant> destination) {
+                                      ObjectList<TrinityPatternBindingEnumerator.Binding> enumeratedBindings,
+                                      ObjectList<TrinityPatternVariant> destination) {
         for (TrinityPatternBindingEnumerator.Binding enumerated : enumeratedBindings) {
             ObjectArrayList<TrinityBoundPatternInput> bindings = new ObjectArrayList<>(pattern.inputs().size());
             for (int slot = 0; slot < pattern.inputs().size(); slot++) {

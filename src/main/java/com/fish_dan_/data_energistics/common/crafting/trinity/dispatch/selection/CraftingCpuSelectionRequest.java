@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.selection;
 
-import java.util.Map;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 /**
  * Immutable request facts used to select a CPU without reading live grid objects.
@@ -13,7 +15,7 @@ import java.util.Map;
 public record CraftingCpuSelectionRequest(long requiredBytes,
                                           boolean playerRequest,
                                           boolean prioritizePower,
-                                          Map<CraftingCpuSelectionGroup, String> roundRobinStarts) {
+                                          Object2ObjectMap<CraftingCpuSelectionGroup, String> roundRobinStarts) {
 
     public CraftingCpuSelectionRequest {
         if (requiredBytes < 0L) {
@@ -22,11 +24,11 @@ public record CraftingCpuSelectionRequest(long requiredBytes,
         if (roundRobinStarts == null) {
             throw new IllegalArgumentException("Crafting CPU round-robin starts must not be null");
         }
-        for (Map.Entry<CraftingCpuSelectionGroup, String> entry : roundRobinStarts.entrySet()) {
+        for (Object2ObjectMap.Entry<CraftingCpuSelectionGroup, String> entry : roundRobinStarts.object2ObjectEntrySet()) {
             if (entry.getKey() == null || entry.getValue() == null || entry.getValue().isBlank()) {
                 throw new IllegalArgumentException("Crafting CPU round-robin starts must contain valid groups and identities");
             }
         }
-        roundRobinStarts = Map.copyOf(roundRobinStarts);
+        roundRobinStarts = FastUtilCollections.immutableMap(roundRobinStarts);
     }
 }

@@ -29,13 +29,15 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity {
@@ -51,7 +53,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
     private static final String TARGET_Z_TAG = "target_z";
     private static final int TELEPORT_RADIUS = 1;
     private static final int TELEPORT_HEIGHT = 3;
-    private static final Map<ResourceLocation, Map<BlockPos, DataTeleportAnchorBlockEntity>> LOADED_ANCHORS = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectMap<ResourceLocation, Long2ObjectMap<DataTeleportAnchorBlockEntity>> LOADED_ANCHORS = new Object2ObjectOpenHashMap<>();
 
     private boolean redstoneControlled;
     private boolean hasTarget;
@@ -81,7 +83,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP;
     }
 
-    private static Set<Direction> getCableExposedSides(BlockState blockState) {
+    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(Direction.UP);
         return sides;
@@ -171,9 +173,9 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         return "default";
     }
 
-    public List<AnchorSummary> getAvailableAnchors() {
+    public ObjectList<AnchorSummary> getAvailableAnchors() {
         if (!(this.level instanceof ServerLevel serverLevel)) {
-            return List.of();
+            return ObjectList.of();
         }
 
         pruneInvalidAnchorsIfNeeded(serverLevel);
@@ -195,7 +197,7 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
                 .thenComparing(summary -> summary.pos().getX())
                 .thenComparing(summary -> summary.pos().getY())
                 .thenComparing(summary -> summary.pos().getZ()));
-        return List.copyOf(anchors);
+        return anchors;
     }
 
     public TeleportResult teleportEntitiesToRecordedTarget() {
@@ -245,8 +247,8 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
 
         AABB sourceArea = getTeleportArea(this.worldPosition);
         AABB targetArea = getTeleportArea(targetAnchor.getBlockPos());
-        List<Entity> entities = sourceLevel.getEntities((Entity) null, sourceArea,
-                entity -> entity.isAlive() && entity.getVehicle() == null);
+        ObjectList<Entity> entities = new ObjectArrayList<>(sourceLevel.getEntities((Entity) null, sourceArea,
+                entity -> entity.isAlive() && entity.getVehicle() == null));
         if (entities.isEmpty()) {
             return new TeleportResult(TeleportStatus.NO_ENTITIES, 0);
         }
@@ -389,8 +391,8 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
         TeleportAnchorSavedData.get(serverLevel.getServer())
                 .registerAnchor(serverLevel.dimension().location(), this.worldPosition, getAnchorDisplayName(), getChannelId());
         LOADED_ANCHORS
-                .computeIfAbsent(serverLevel.dimension().location(), ignored -> new Object2ObjectOpenHashMap<>())
-                .put(this.worldPosition.immutable(), this);
+                .computeIfAbsent(serverLevel.dimension().location(), ignored -> new Long2ObjectOpenHashMap<>())
+                .put(this.worldPosition.asLong(), this);
     }
 
     public void removePersistedAnchor() {
@@ -403,11 +405,11 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void unregisterRuntimeAnchor(ServerLevel serverLevel) {
-        Map<BlockPos, DataTeleportAnchorBlockEntity> anchorsByPos = LOADED_ANCHORS.get(serverLevel.dimension().location());
+        Long2ObjectMap<DataTeleportAnchorBlockEntity> anchorsByPos = LOADED_ANCHORS.get(serverLevel.dimension().location());
         if (anchorsByPos == null) {
             return;
         }
-        anchorsByPos.remove(this.worldPosition);
+        anchorsByPos.remove(this.worldPosition.asLong());
         if (anchorsByPos.isEmpty()) {
             LOADED_ANCHORS.remove(serverLevel.dimension().location());
         }
@@ -430,14 +432,15 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private static DataTeleportAnchorBlockEntity getLoadedAnchor(ServerLevel level, BlockPos pos) {
-        Map<BlockPos, DataTeleportAnchorBlockEntity> anchorsByPos = LOADED_ANCHORS.get(level.dimension().location());
+        Long2ObjectMap<DataTeleportAnchorBlockEntity> anchorsByPos = LOADED_ANCHORS.get(level.dimension().location());
         if (anchorsByPos != null) {
-            DataTeleportAnchorBlockEntity anchor = anchorsByPos.get(pos);
+            long positionKey = pos.asLong();
+            DataTeleportAnchorBlockEntity anchor = anchorsByPos.get(positionKey);
             if (isAnchorValid(level, pos, anchor)) {
                 return anchor;
             }
             if (anchor != null) {
-                anchorsByPos.remove(pos);
+                anchorsByPos.remove(positionKey);
                 if (anchorsByPos.isEmpty()) {
                     LOADED_ANCHORS.remove(level.dimension().location());
                 }
@@ -449,8 +452,8 @@ public class DataTeleportAnchorBlockEntity extends AENetworkedPoweredBlockEntity
 
         if (level.getBlockEntity(pos) instanceof DataTeleportAnchorBlockEntity anchor) {
             LOADED_ANCHORS
-                    .computeIfAbsent(level.dimension().location(), ignored -> new Object2ObjectOpenHashMap<>())
-                    .put(pos.immutable(), anchor);
+                    .computeIfAbsent(level.dimension().location(), ignored -> new Long2ObjectOpenHashMap<>())
+                    .put(pos.asLong(), anchor);
             return anchor;
         }
         return null;

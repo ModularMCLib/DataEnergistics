@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView;
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView.Expansion;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 
@@ -30,10 +31,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /** Numeric layout regressions; no rendering, client, optional mods or screenshot assertions. */
 @PrefixGameTestTemplate(false)
@@ -44,13 +44,13 @@ public final class CraftingPlanGraphLayoutGameTest {
 
     @GameTest(template = "empty_5x5")
     public static void keepsUnevenDependencyBranchesTogether(GameTestHelper helper) {
-        CraftingPlanGraph graph = graph(List.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
+        CraftingPlanGraph graph = graph(ObjectList.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
                 material(2, Items.GOLD_INGOT), material(3, Items.COAL), material(4, Items.STONE),
                 material(5, Items.DIRT), material(6, Items.SAND), process(7, Items.DIAMOND),
                 process(8, Items.IRON_INGOT), process(9, Items.GOLD_INGOT)),
                 new int[][] { { 0, 7 }, { 7, 1 }, { 7, 2 }, { 1, 8 }, { 8, 3 },
                         { 2, 9 }, { 9, 4 }, { 9, 5 }, { 9, 6 } },
-                List.of());
+                ObjectList.of());
         for (boolean compact : new boolean[] { false, true }) {
             var view = new CraftingPlanGraphView(graph).visible(Expansion.empty(), false);
             Layout layout = CraftingPlanGraphLayout.layout(view, compact);
@@ -82,10 +82,10 @@ public final class CraftingPlanGraphLayoutGameTest {
 
     @GameTest(template = "empty_5x5")
     public static void sharedSupplyRemainsOneNodeAfterAllConsumers(GameTestHelper helper) {
-        CraftingPlanGraph graph = graph(List.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
+        CraftingPlanGraph graph = graph(ObjectList.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
                 material(2, Items.GOLD_INGOT), material(3, Items.COAL), process(4, Items.DIAMOND),
                 process(5, Items.IRON_INGOT), process(6, Items.GOLD_INGOT)),
-                new int[][] { { 0, 4 }, { 4, 1 }, { 4, 2 }, { 1, 5 }, { 5, 3 }, { 2, 6 }, { 6, 3 } }, List.of());
+                new int[][] { { 0, 4 }, { 4, 1 }, { 4, 2 }, { 1, 5 }, { 5, 3 }, { 2, 6 }, { 6, 3 } }, ObjectList.of());
         var projection = new CraftingPlanGraphView(graph);
         var view = projection.visible(Expansion.empty(), false);
         Layout layout = CraftingPlanGraphLayout.layout(view, false);
@@ -107,13 +107,13 @@ public final class CraftingPlanGraphLayoutGameTest {
     public static void keepsSamePatternSupplierAndSeedOutsideDeclaredLoop(GameTestHelper helper) {
         var diamond = AEItemKey.of(Items.DIAMOND);
         var iron = AEItemKey.of(Items.IRON_INGOT);
-        CraftingPlanGraph graph = graph(List.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
+        CraftingPlanGraph graph = graph(ObjectList.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
                 new Process(2, 0, "shared-pattern", 0, diamond, BigInteger.ONE, false, IntList.of()),
                 new Process(3, 1, "shared-pattern", 0, diamond, BigInteger.TWO, false, IntList.of(0)),
                 new Process(4, 2, "return-pattern", 0, iron, BigInteger.TWO, false, IntList.of(0))),
                 new int[][] { { 0, 2 }, { 2, 1 }, { 0, 3 }, { 3, 1 }, { 1, 4 }, { 4, 0 } },
-                List.of(new Cycle(0, 1, IntList.of(0, 1, 3, 4), IntList.of(1, 2), BigInteger.TWO,
-                        Map.of(iron, BigInteger.ONE), Map.of())));
+                ObjectList.of(new Cycle(0, 1, IntList.of(0, 1, 3, 4), IntList.of(1, 2), BigInteger.TWO,
+                        FastUtilCollections.mapOf(iron, BigInteger.ONE), FastUtilCollections.mapOf())));
         var projection = new CraftingPlanGraphView(graph);
         var view = projection.visible(Expansion.empty(), false);
         Layout layout = CraftingPlanGraphLayout.layout(view, false);
@@ -136,13 +136,13 @@ public final class CraftingPlanGraphLayoutGameTest {
         var diamond = AEItemKey.of(Items.DIAMOND);
         var iron = AEItemKey.of(Items.IRON_INGOT);
         var gold = AEItemKey.of(Items.GOLD_INGOT);
-        CraftingPlanGraph graph = graph(List.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
+        CraftingPlanGraph graph = graph(ObjectList.of(material(0, Items.DIAMOND), material(1, Items.IRON_INGOT),
                 material(2, Items.GOLD_INGOT),
                 new Process(3, 0, "loop-input", 0, gold, BigInteger.TWO, false, IntList.of(0)),
                 new Process(4, 1, "loop-output", 0, diamond, BigInteger.TWO, false, IntList.of(0))),
                 new int[][] { { 0, 4 }, { 4, 2 }, { 2, 3 }, { 3, 1 }, { 1, 4 } },
-                List.of(new Cycle(0, 1, IntList.of(0, 1, 2, 3, 4), IntList.of(0, 1), BigInteger.TWO,
-                        Map.of(iron, BigInteger.ONE), Map.of(diamond, BigInteger.TWO))));
+                ObjectList.of(new Cycle(0, 1, IntList.of(0, 1, 2, 3, 4), IntList.of(0, 1), BigInteger.TWO,
+                        FastUtilCollections.mapOf(iron, BigInteger.ONE), FastUtilCollections.mapOf(diamond, BigInteger.TWO))));
         var view = new CraftingPlanGraphView(graph).visible(Expansion.empty(), false);
         Layout layout = CraftingPlanGraphLayout.layout(view, true);
         var nodes = index(layout);
@@ -165,10 +165,10 @@ public final class CraftingPlanGraphLayoutGameTest {
         return new Process(id, id, "layout/" + id, 0, AEItemKey.of(output), BigInteger.ONE, false, IntList.of());
     }
 
-    private static CraftingPlanGraph graph(List<Node> nodes, int[][] connections, List<Cycle> cycles) {
+    private static CraftingPlanGraph graph(ObjectList<Node> nodes, int[][] connections, ObjectList<Cycle> cycles) {
         var byId = new Int2ObjectOpenHashMap<Node>();
         for (Node node : nodes) byId.put(node.id(), node);
-        List<Edge> edges = new ObjectArrayList<>();
+        ObjectList<Edge> edges = new ObjectArrayList<>();
         for (int[] connection : connections) {
             Role role = byId.get(connection[0]) instanceof Process ? Role.INPUT : Role.OUTPUT;
             edges.add(new Edge(edges.size(), connection[0], connection[1], role, BigInteger.ONE));

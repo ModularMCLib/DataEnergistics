@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -14,13 +15,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Immutable schema-independent view of every durable Trinity execution field.
@@ -60,15 +60,15 @@ public record TrinityExecutionSnapshot(
                                        TrinityPlanExecution.Status status,
                                        String failureReason,
                                        long generation,
-                                       List<Stage> stages,
+                                       ObjectList<Stage> stages,
                                        IntList stageOrder,
-                                       List<RepeatBlock> repeatBlocks,
-                                       Map<AEKey, BigInteger> seedReserve,
+                                       ObjectList<RepeatBlock> repeatBlocks,
+                                       Object2ObjectMap<AEKey, BigInteger> seedReserve,
                                        boolean completionSealed,
                                        BigInteger completionBuffer,
-                                       Map<AEKey, BigInteger> actualFinalOutputs,
+                                       Object2ObjectMap<AEKey, BigInteger> actualFinalOutputs,
                                        BigInteger deliveryRemaining,
-                                       Map<AEKey, TrinityBorrowingLedger.Balances> borrowingEntries,
+                                       Object2ObjectMap<AEKey, TrinityBorrowingLedger.Balances> borrowingEntries,
                                        long savedAtTick,
                                        long budgetRetryAt,
                                        boolean streamingDag,
@@ -78,9 +78,9 @@ public record TrinityExecutionSnapshot(
      * Copies ordered collections so persistence cannot mutate the live scheduler.
      */
     public TrinityExecutionSnapshot {
-        stages = List.copyOf(stages);
+        stages = FastUtilCollections.immutableList(stages);
         stageOrder = IntList.of(stageOrder.toIntArray());
-        repeatBlocks = List.copyOf(repeatBlocks);
+        repeatBlocks = FastUtilCollections.immutableList(repeatBlocks);
         seedReserve = immutableBigAmounts(seedReserve, false, "seed reserve");
         actualFinalOutputs = immutableBigAmounts(actualFinalOutputs, false, "actual final output");
         borrowingEntries = immutableMap(borrowingEntries);
@@ -131,16 +131,16 @@ public record TrinityExecutionSnapshot(
                          AEKey primaryOutput,
                          int variantOrdinal,
                          BigInteger plannedCount,
-                         Map<AEKey, BigInteger> outputs,
+                         Object2ObjectMap<AEKey, BigInteger> outputs,
                          BigInteger remainingCount,
                          boolean initialized,
-                         List<TrinityBoundPatternInput> exactBindings) {
+                         ObjectList<TrinityBoundPatternInput> exactBindings) {
 
         /**
          * Rejects cursors that could create work absent from the plan.
          */
         public Firing {
-            exactBindings = List.copyOf(exactBindings);
+            exactBindings = FastUtilCollections.immutableList(exactBindings);
             outputs = immutableBigAmounts(outputs, false, "firing output");
             if (!outputs.containsKey(primaryOutput)) {
                 throw new IllegalArgumentException("A Trinity firing state must retain its primary output");
@@ -177,16 +177,16 @@ public record TrinityExecutionSnapshot(
                         IntList dependencies,
                         int currentFiring,
                         boolean completed,
-                        Set<AEKey> inputKeys,
-                        Set<AEKey> waitingKeys,
+                        ObjectSet<AEKey> inputKeys,
+                        ObjectSet<AEKey> waitingKeys,
                         WaitKind waitKind,
                         long retryAt,
                         int nextDynamicDelay,
                         int nextProviderDelay,
                         long retryVersion,
-                        List<Firing> firings,
-                        Map<AEKey, BigInteger> requiredAtStart,
-                        Map<AEKey, BigInteger> netChange) {
+                        ObjectList<Firing> firings,
+                        Object2ObjectMap<AEKey, BigInteger> requiredAtStart,
+                        Object2ObjectMap<AEKey, BigInteger> netChange) {
 
         /**
          * Copies ordered collections and rejects malformed local stage metadata.
@@ -195,7 +195,7 @@ public record TrinityExecutionSnapshot(
             dependencies = immutableIndexes(dependencies, "stage dependency");
             inputKeys = immutableSet(inputKeys);
             waitingKeys = immutableSet(waitingKeys);
-            firings = List.copyOf(firings);
+            firings = FastUtilCollections.immutableList(firings);
             requiredAtStart = immutableBigAmounts(requiredAtStart, false, "stage start requirement");
             netChange = immutableBigAmounts(netChange, true, "stage net change");
             if (index < 0 || dependencies.contains(index) || firings.isEmpty()) {
@@ -237,13 +237,13 @@ public record TrinityExecutionSnapshot(
         }
     }
 
-    private static <K, V> Map<K, V> immutableMap(Map<K, V> source) {
-        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(source));
+    private static <K, V> Object2ObjectMap<K, V> immutableMap(Object2ObjectMap<K, V> source) {
+        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(source));
     }
 
-    private static Map<AEKey, BigInteger> immutableBigAmounts(Map<AEKey, BigInteger> source,
-                                                              boolean signed,
-                                                              String role) {
+    private static Object2ObjectMap<AEKey, BigInteger> immutableBigAmounts(Object2ObjectMap<AEKey, BigInteger> source,
+                                                                           boolean signed,
+                                                                           String role) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (signed ? amount.signum() == 0 : amount.signum() <= 0) {
@@ -251,11 +251,11 @@ public record TrinityExecutionSnapshot(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static <E> Set<E> immutableSet(Set<E> source) {
-        return Collections.unmodifiableSet(new ObjectLinkedOpenHashSet<>(source));
+    private static <E> ObjectSet<E> immutableSet(ObjectSet<E> source) {
+        return FastUtilCollections.immutableSet(new ObjectLinkedOpenHashSet<>(source));
     }
 
     private static IntList immutableIndexes(IntList source, String role) {

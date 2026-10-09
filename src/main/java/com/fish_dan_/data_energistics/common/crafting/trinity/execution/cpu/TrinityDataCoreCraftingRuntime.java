@@ -10,7 +10,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server.Cr
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuContribution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuPartitionProfile;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuProfile;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.CpuSelectionMode;
@@ -38,17 +39,17 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -61,8 +62,6 @@ public final class TrinityDataCoreCraftingRuntime {
 
     private static final AtomicLong RUNTIME_GENERATION_SEQUENCE = new AtomicLong();
 
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 3;
     private static final String CONTRIBUTIONS_TAG = "contributions";
     private static final String CONTRIBUTION_NAME_TAG = "name";
     private static final String STORAGE_CAPACITY_TAG = "storage_capacity";
@@ -76,7 +75,7 @@ public final class TrinityDataCoreCraftingRuntime {
 
     private final TrinityDataCoreBlockEntity host;
     private final long runtimeGeneration = RUNTIME_GENERATION_SEQUENCE.updateAndGet(Math::incrementExact);
-    private final Map<String, TrinityDataCoreCpuContribution> externalContributions = new Object2ObjectRBTreeMap<>();
+    private final Object2ObjectMap<String, TrinityDataCoreCpuContribution> externalContributions = new Object2ObjectRBTreeMap<>();
     private final Int2ObjectAVLTreeMap<TrinityDataCoreVirtualCpu> retainedWorkers = new Int2ObjectAVLTreeMap<>();
     private final Int2ObjectAVLTreeMap<CompoundTag> pendingWorkerLogic = new Int2ObjectAVLTreeMap<>();
     /**
@@ -100,7 +99,7 @@ public final class TrinityDataCoreCraftingRuntime {
     /**
      * Immutable publication snapshot remains identity-stable until CPU topology changes.
      */
-    private List<TrinityDataCoreVirtualCpu> publishedCpus = List.of();
+    private ObjectList<TrinityDataCoreVirtualCpu> publishedCpus = ObjectList.of();
     /**
      * Cached latest change tick is updated while workers are already being visited.
      */
@@ -259,7 +258,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (contribution.equals(this.externalContributions.get(checkedStructureName))) {
             return;
         }
-        Map<String, TrinityDataCoreCpuContribution> nextContributions = new Object2ObjectRBTreeMap<>(this.externalContributions);
+        Object2ObjectMap<String, TrinityDataCoreCpuContribution> nextContributions = new Object2ObjectRBTreeMap<>(this.externalContributions);
         nextContributions.put(checkedStructureName, contribution);
         TrinityDataCoreCpuProfile nextProfile = TrinityDataCoreCpuProfile.fromContributions(nextContributions);
         this.externalContributions.clear();
@@ -275,7 +274,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (!this.externalContributions.containsKey(checkedStructureName)) {
             return;
         }
-        Map<String, TrinityDataCoreCpuContribution> nextContributions = new Object2ObjectRBTreeMap<>(this.externalContributions);
+        Object2ObjectMap<String, TrinityDataCoreCpuContribution> nextContributions = new Object2ObjectRBTreeMap<>(this.externalContributions);
         nextContributions.remove(checkedStructureName);
         TrinityDataCoreCpuProfile nextProfile = TrinityDataCoreCpuProfile.fromContributions(nextContributions);
         this.externalContributions.clear();
@@ -293,7 +292,7 @@ public final class TrinityDataCoreCraftingRuntime {
     /**
      * Returns the AE2-visible CPU view: the reserved CPU first, followed by active busy workers in numeric order.
      */
-    public List<TrinityDataCoreVirtualCpu> publishedCpus() {
+    public ObjectList<TrinityDataCoreVirtualCpu> publishedCpus() {
         return this.publishedCpus;
     }
 
@@ -531,7 +530,7 @@ public final class TrinityDataCoreCraftingRuntime {
     /**
      * Adds all currently awaited keys to AE2's request set.
      */
-    public void getAllWaitingFor(Set<AEKey> waitingFor) {
+    public void getAllWaitingFor(ObjectSet<AEKey> waitingFor) {
         this.waitingIndex.addWaitingKeys(waitingFor);
     }
 
@@ -612,10 +611,8 @@ public final class TrinityDataCoreCraftingRuntime {
      * Serializes contributions and only workers that retain a job, inventory, or pending raw logic.
      */
     public void writeToTag(CompoundTag data, HolderLookup.Provider registries) {
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
-
         ListTag contributionsTag = new ListTag();
-        for (Map.Entry<String, TrinityDataCoreCpuContribution> entry : this.externalContributions.entrySet()) {
+        for (Object2ObjectMap.Entry<String, TrinityDataCoreCpuContribution> entry : this.externalContributions.object2ObjectEntrySet()) {
             CompoundTag contributionTag = new CompoundTag();
             contributionTag.putString(CONTRIBUTION_NAME_TAG, entry.getKey());
             writeContribution(contributionTag, entry.getValue());
@@ -650,18 +647,6 @@ public final class TrinityDataCoreCraftingRuntime {
      */
     public void readFromTag(CompoundTag data, HolderLookup.Provider registries) {
         clearPersistedState();
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            Data_Energistics.LOGGER.warn("Ignoring Trinity Data Core CPU runtime without a schema version");
-            return;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            Data_Energistics.LOGGER.warn(
-                    "Ignoring Trinity Data Core CPU runtime schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return;
-        }
         ListTag contributionsTag;
         ListTag partitionsTag;
         try {
@@ -672,7 +657,7 @@ public final class TrinityDataCoreCraftingRuntime {
             return;
         }
 
-        Map<String, TrinityDataCoreCpuContribution> restoredContributions = readContributions(contributionsTag);
+        Object2ObjectMap<String, TrinityDataCoreCpuContribution> restoredContributions = readContributions(contributionsTag);
         TrinityDataCoreCpuProfile restoredProfile;
         try {
             restoredProfile = TrinityDataCoreCpuProfile.fromContributions(restoredContributions);
@@ -884,7 +869,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (this.readyWorkers.size() < 2) {
             return;
         }
-        List<WorkerScheduleEntry> ordered = new ObjectArrayList<>(this.readyWorkers);
+        ObjectList<WorkerScheduleEntry> ordered = new ObjectArrayList<>(this.readyWorkers);
         ordered.sort((left, right) -> {
             boolean leftAfterCursor = left.workerNumber() >= this.nextWorkerTickStartNumber;
             boolean rightAfterCursor = right.workerNumber() >= this.nextWorkerTickStartNumber;
@@ -1064,7 +1049,7 @@ public final class TrinityDataCoreCraftingRuntime {
      */
     private void refreshWorkerWaiting(TrinityDataCoreVirtualCpu worker) {
         this.waitingIndex.removeWorker(worker.number());
-        Set<AEKey> workerKeys = new ObjectOpenHashSet<>();
+        ObjectSet<AEKey> workerKeys = new ObjectOpenHashSet<>();
         worker.getAllWaitingFor(workerKeys);
         for (AEKey what : workerKeys) {
             this.waitingIndex.update(worker.number(), what, worker.getWaitingFor(what));
@@ -1084,24 +1069,24 @@ public final class TrinityDataCoreCraftingRuntime {
     private void rebuildPublishedCpus() {
         TrinityDataCoreVirtualCpu coordinator = this.reservedCpu;
         if (this.paused || !this.mainStructureFormed || !this.profile.active() || coordinator == null) {
-            replacePublishedCpus(List.of());
+            replacePublishedCpus(ObjectList.of());
             return;
         }
 
-        List<TrinityDataCoreVirtualCpu> published = new ObjectArrayList<>(this.retainedWorkers.size() + 1);
+        ObjectList<TrinityDataCoreVirtualCpu> published = new ObjectArrayList<>(this.retainedWorkers.size() + 1);
         published.add(coordinator);
         for (Int2ObjectMap.Entry<TrinityDataCoreVirtualCpu> entry : this.retainedWorkers.int2ObjectEntrySet()) {
             if (entry.getIntKey() <= this.profile.partitionCount() && entry.getValue().isBusy()) {
                 published.add(entry.getValue());
             }
         }
-        replacePublishedCpus(List.copyOf(published));
+        replacePublishedCpus(FastUtilCollections.immutableList(published));
     }
 
     /**
      * Preserves the list identity when a repeated lifecycle event leaves CPU publication unchanged.
      */
-    private void replacePublishedCpus(List<TrinityDataCoreVirtualCpu> nextPublishedCpus) {
+    private void replacePublishedCpus(ObjectList<TrinityDataCoreVirtualCpu> nextPublishedCpus) {
         if (!this.publishedCpus.equals(nextPublishedCpus)) {
             this.publishedCpus = nextPublishedCpus;
         }
@@ -1134,8 +1119,8 @@ public final class TrinityDataCoreCraftingRuntime {
         advanceAvailableWorkerNumber();
     }
 
-    private Map<String, TrinityDataCoreCpuContribution> readContributions(ListTag contributionsTag) {
-        Map<String, TrinityDataCoreCpuContribution> restored = new Object2ObjectRBTreeMap<>();
+    private Object2ObjectMap<String, TrinityDataCoreCpuContribution> readContributions(ListTag contributionsTag) {
+        Object2ObjectMap<String, TrinityDataCoreCpuContribution> restored = new Object2ObjectRBTreeMap<>();
         for (int index = 0; index < contributionsTag.size(); index++) {
             CompoundTag contributionTag = contributionsTag.getCompound(index);
             try {
@@ -1234,7 +1219,7 @@ public final class TrinityDataCoreCraftingRuntime {
         this.pendingWorkerLogic.clear();
         this.waitingIndex.clear();
         this.profile = TrinityDataCoreCpuProfile.EMPTY;
-        this.publishedCpus = List.of();
+        this.publishedCpus = ObjectList.of();
         this.lastModifiedOnTick = 0L;
         this.nextAvailableWorkerNumber = 1;
         this.nextWorkerTickStartNumber = 1;
@@ -1284,7 +1269,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (!unlimited) {
             data.putByteArray(
                     STORAGE_CAPACITY_TAG,
-                    TrinityBigIntegerEncoding.encode(
+                    NbtCodecs.encode(
                             ((TrinityCpuStorageCapacity.Finite) capacity).bytes(),
                             "CPU storage capacity"));
         }
@@ -1303,7 +1288,7 @@ public final class TrinityDataCoreCraftingRuntime {
         if (!data.contains(STORAGE_CAPACITY_TAG, Tag.TAG_BYTE_ARRAY)) {
             throw new IllegalArgumentException("Persisted finite Trinity CPU storage capacity is missing");
         }
-        return new TrinityCpuStorageCapacity.Finite(TrinityBigIntegerEncoding.decode(
+        return new TrinityCpuStorageCapacity.Finite(NbtCodecs.decode(
                 data.getByteArray(STORAGE_CAPACITY_TAG),
                 "CPU storage capacity"));
     }

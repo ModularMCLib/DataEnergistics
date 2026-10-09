@@ -2,13 +2,13 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.runtime
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory.TrinityExactWorkingInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
@@ -55,6 +55,6 @@ public final class TrinityCompletionInputExtractor {
             return null;
         }
         slices.forEach((key, quantity) -> exactInventory.discard(key, quantity, inventory));
-        return Object2ObjectMaps.unmodifiable(slices);
+        return FastUtilCollections.immutableMap(slices);
     }
 }

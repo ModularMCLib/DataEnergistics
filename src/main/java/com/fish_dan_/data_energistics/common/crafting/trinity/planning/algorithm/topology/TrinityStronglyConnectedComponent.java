@@ -1,14 +1,14 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * One deterministic strongly connected key component and the transitions wholly contained by it.
@@ -22,9 +22,9 @@ import java.util.List;
  */
 public record TrinityStronglyConnectedComponent(
                                                 int index,
-                                                List<AEKey> keys,
+                                                ObjectList<AEKey> keys,
                                                 boolean cyclic,
-                                                List<TrinityPatternVariant> cycleVariants,
+                                                ObjectList<TrinityPatternVariant> cycleVariants,
                                                 IntList predecessorIndexes,
                                                 IntList successorIndexes) {
 
@@ -36,8 +36,8 @@ public record TrinityStronglyConnectedComponent(
                 predecessorIndexes == null || successorIndexes == null) {
             throw new IllegalArgumentException("A Trinity strongly connected component requires complete topology");
         }
-        keys = List.copyOf(keys);
-        cycleVariants = List.copyOf(cycleVariants);
+        keys = FastUtilCollections.immutableList(keys);
+        cycleVariants = FastUtilCollections.immutableList(cycleVariants);
         predecessorIndexes = copyComponentIndexes(predecessorIndexes, index);
         successorIndexes = copyComponentIndexes(successorIndexes, index);
     }

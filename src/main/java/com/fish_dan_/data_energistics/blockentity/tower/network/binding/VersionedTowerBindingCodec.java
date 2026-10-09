@@ -13,22 +13,17 @@ import net.minecraft.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Reads and writes the current tower binding schema.
  */
 public final class VersionedTowerBindingCodec {
-
-    /** Current persistent binding schema. */
-    public static final int CURRENT_VERSION = 4;
-
-    /** Version tag identifying the supported binding representation. */
-    public static final String VERSION_TAG = "tower_bindings_version";
 
     /** Current binding-list tag. */
     public static final String BINDINGS_TAG = "tower_bindings";
@@ -39,11 +34,7 @@ public final class VersionedTowerBindingCodec {
      * @param root tower block-entity tag
      * @return immutable bindings ordered by FIFO sequence
      */
-    public List<TowerBinding> read(CompoundTag root) {
-        int version = root.getInt(VERSION_TAG);
-        if (version != CURRENT_VERSION) {
-            throw new IllegalArgumentException("Unsupported tower binding version: " + version);
-        }
+    public ObjectList<TowerBinding> read(CompoundTag root) {
         return readCurrent(root);
     }
 
@@ -53,7 +44,7 @@ public final class VersionedTowerBindingCodec {
      * @param root     tower block-entity tag
      * @param bindings bindings to persist
      */
-    public void write(CompoundTag root, List<TowerBinding> bindings) {
+    public void write(CompoundTag root, ObjectList<TowerBinding> bindings) {
         ObjectArrayList<TowerBinding> orderedBindings = new ObjectArrayList<>(bindings);
         orderedBindings.sort(Comparator.comparingLong(TowerBinding::fifoSequence));
 
@@ -85,11 +76,10 @@ public final class VersionedTowerBindingCodec {
             bindingTag.put("disabled_devices", disabledTags);
             bindingTags.add(bindingTag);
         }
-        root.putInt(VERSION_TAG, CURRENT_VERSION);
         root.put(BINDINGS_TAG, bindingTags);
     }
 
-    private static List<TowerBinding> readCurrent(CompoundTag root) {
+    private static ObjectList<TowerBinding> readCurrent(CompoundTag root) {
         if (!root.contains(BINDINGS_TAG, Tag.TAG_LIST)) {
             throw new IllegalArgumentException("Versioned tower data is missing its binding list");
         }
@@ -112,14 +102,14 @@ public final class VersionedTowerBindingCodec {
                 throw new IllegalArgumentException("Tower bindings contain duplicate FIFO sequence " + fifoSequence);
             }
             boolean enabled = !bindingTag.contains("enabled") || bindingTag.getBoolean("enabled");
-            Set<TowerDeviceKey> disabledDeviceKeys = readDeviceKeys(bindingTag);
+            ObjectSet<TowerDeviceKey> disabledDeviceKeys = readDeviceKeys(bindingTag);
             EnergyTransferDirection direction = readEnergyDirection(bindingTag);
             int targetSide = bindingTag.contains("target_side") ? bindingTag.getInt("target_side") : -1;
             bindings.add(new TowerBinding(
                     dimensionId, anchor, source, fifoSequence, enabled, disabledDeviceKeys, direction, targetSide));
         }
         bindings.sort(Comparator.comparingLong(TowerBinding::fifoSequence));
-        return List.copyOf(bindings);
+        return new ObjectImmutableList<>(bindings);
     }
 
     private static EnergyTransferDirection readEnergyDirection(CompoundTag bindingTag) {
@@ -134,9 +124,9 @@ public final class VersionedTowerBindingCodec {
         }
     }
 
-    private static Set<TowerDeviceKey> readDeviceKeys(CompoundTag bindingTag) {
+    private static ObjectSet<TowerDeviceKey> readDeviceKeys(CompoundTag bindingTag) {
         if (!bindingTag.contains("disabled_devices")) {
-            return Set.of();
+            return new ObjectOpenHashSet<>();
         }
         if (!bindingTag.contains("disabled_devices", Tag.TAG_LIST)) {
             throw new IllegalArgumentException("Tower binding disabled-device data is not a list");
@@ -156,7 +146,7 @@ public final class VersionedTowerBindingCodec {
                 throw new IllegalArgumentException("Tower binding contains a duplicate disabled-device key");
             }
         }
-        return Set.copyOf(result);
+        return result;
     }
 
     private static ResourceLocation parseId(String serializedId, String fieldName) {

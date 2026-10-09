@@ -9,7 +9,7 @@ import appeng.blockentity.grid.AENetworkedBlockEntity;
 
 import net.minecraft.server.level.ServerLevel;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Typed tower-facing contract consumed by the grid-level network domain.
@@ -35,10 +35,10 @@ public interface TowerNetworkParticipant {
     boolean towerAllowsFe();
 
     /** @return persisted manual and automatic bindings */
-    List<TowerBinding> towerBindings();
+    ObjectList<TowerBinding> towerBindings();
 
     /** @return loaded FE candidate locations discovered by this tower */
-    List<TowerEnergyLocation> towerEnergyLocations();
+    ObjectList<TowerEnergyLocation> towerEnergyLocations();
 
     /** @return AE host used as the Applied Flux action source */
     AENetworkedBlockEntity towerEnergyHost();

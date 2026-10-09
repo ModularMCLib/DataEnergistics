@@ -2,7 +2,8 @@ package com.fish_dan_.data_energistics.blockentity.tower.network.domain;
 
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerBindingRuntimeSnapshot;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Complete immutable domain result published to one active tower.
@@ -13,13 +14,13 @@ import java.util.List;
  */
 public record TowerNetworkTowerSnapshot(long revision,
                                         TowerChannelOverview channels,
-                                        List<TowerBindingRuntimeSnapshot> bindings) {
+                                        ObjectList<TowerBindingRuntimeSnapshot> bindings) {
 
     /** Validates and defensively copies one tower result. */
     public TowerNetworkTowerSnapshot {
         if (revision < 0) {
             throw new IllegalArgumentException("Tower network snapshot fields are invalid");
         }
-        bindings = List.copyOf(bindings);
+        bindings = new ObjectImmutableList<>(bindings);
     }
 }

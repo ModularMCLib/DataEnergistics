@@ -11,11 +11,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import lombok.Builder;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,19 +36,10 @@ import java.util.Optional;
  * @param target       exact execution target selected for this query
  */
 @Builder
-public record ReusableInputContext(IPatternDetails pattern, GenericStack actualInput, List<GenericStack> exactInputs, int inputSlot,
+public record ReusableInputContext(IPatternDetails pattern, GenericStack actualInput, ObjectList<GenericStack> exactInputs, int inputSlot,
                                    Ownership ownership, IActionSource actionSource, ServerLevel level,
                                    Optional<ResourceLocation> recipeId, Optional<ResourceLocation> machineMode,
                                    CountedCraftingTarget target) {
-
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #exactInputsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<GenericStack> exactInputs() {
-        return exactInputs;
-    }
 
     /** Returns an immutable FastUtil view of the complete input snapshot. */
     public ObjectList<GenericStack> exactInputsFast() {
@@ -56,7 +47,7 @@ public record ReusableInputContext(IPatternDetails pattern, GenericStack actualI
     }
 
     public ReusableInputContext {
-        exactInputs = List.copyOf(exactInputs);
+        exactInputs = new ObjectImmutableList<>(exactInputs);
         if (!(actualInput.what() instanceof AEItemKey) || actualInput.amount() <= 0L) {
             throw new IllegalArgumentException("Reusable input must be an exact item with positive quantity");
         }

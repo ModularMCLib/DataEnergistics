@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.machine.mimetic;
 
+import com.fish_dan_.data_energistics.util.AmountMath;
+
 import appeng.api.stacks.AEItemKey;
 
 import net.minecraft.world.item.ItemStack;
@@ -95,7 +97,7 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
 
         Object2LongLinkedOpenHashMap<AEItemKey> merged = new Object2LongLinkedOpenHashMap<>(this.items);
         other.items.forEach((key, amount) -> merged.mergeLong(key, amount, Math::addExact));
-        return new MimeticGeneratedOutput(merged, saturatedAdd(this.experience, other.experience));
+        return new MimeticGeneratedOutput(merged, AmountMath.addNonNegative(this.experience, other.experience));
     }
 
     /**
@@ -117,7 +119,7 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
 
         Object2LongLinkedOpenHashMap<AEItemKey> repeated = new Object2LongLinkedOpenHashMap<>(this.items.size());
         this.items.forEach((key, amount) -> repeated.put(key, Math.multiplyExact(amount, repetitions)));
-        return new MimeticGeneratedOutput(repeated, saturatedMultiply(this.experience, repetitions));
+        return new MimeticGeneratedOutput(repeated, AmountMath.multiplyNonNegative(this.experience, repetitions));
     }
 
     /**
@@ -128,7 +130,7 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
     public long itemAmount() {
         long total = 0L;
         for (long amount : this.items.values()) {
-            total = saturatedAdd(total, amount);
+            total = AmountMath.addNonNegative(total, amount);
         }
         return total;
     }
@@ -197,7 +199,7 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
          */
         public Accumulator add(MimeticGeneratedOutput output) {
             output.items.forEach((key, amount) -> this.items.mergeLong(key, amount, Math::addExact));
-            this.experience = saturatedAdd(this.experience, output.experience);
+            this.experience = AmountMath.addNonNegative(this.experience, output.experience);
             return this;
         }
 
@@ -219,9 +221,9 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
                     key,
                     Math.multiplyExact(amount, repetitions),
                     Math::addExact));
-            this.experience = saturatedAdd(
+            this.experience = AmountMath.addNonNegative(
                     this.experience,
-                    saturatedMultiply(output.experience, repetitions));
+                    AmountMath.multiplyNonNegative(output.experience, repetitions));
             return this;
         }
 
@@ -235,7 +237,7 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
             if (amount < 0L) {
                 throw new IllegalArgumentException("Mimetic generated experience cannot be negative");
             }
-            this.experience = saturatedAdd(this.experience, amount);
+            this.experience = AmountMath.addNonNegative(this.experience, amount);
             return this;
         }
 
@@ -247,16 +249,5 @@ public record MimeticGeneratedOutput(Object2LongMap<AEItemKey> items, long exper
         public MimeticGeneratedOutput build() {
             return new MimeticGeneratedOutput(this.items, this.experience);
         }
-    }
-
-    private static long saturatedAdd(long left, long right) {
-        return right > 0L && left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right;
-    }
-
-    private static long saturatedMultiply(long left, long right) {
-        if (left <= 0L || right <= 0L) {
-            return 0L;
-        }
-        return left > Long.MAX_VALUE / right ? Long.MAX_VALUE : left * right;
     }
 }

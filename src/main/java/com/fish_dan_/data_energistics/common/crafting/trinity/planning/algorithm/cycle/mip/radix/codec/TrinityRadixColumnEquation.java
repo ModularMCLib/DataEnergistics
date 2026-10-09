@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Exact normalized carry-column equation replayed after every ojAlgo result.
@@ -12,5 +12,5 @@ import java.util.Map;
  * @param rightHandSide exact column constant
  */
 public record TrinityRadixColumnEquation(
-                                         Map<Variable, BigInteger> terms,
+                                         Object2ObjectMap<Variable, BigInteger> terms,
                                          BigInteger rightHandSide) {}

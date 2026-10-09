@@ -25,8 +25,6 @@ public final class DataAsynchronousProcessingFactoryBlockEntity extends DataRipp
     public static final int FLUID_OUTPUT_SLOT_COUNT = 4;
     public static final int KEY_INPUT_SLOT_COUNT = 3;
     public static final int KEY_OUTPUT_SLOT_COUNT = 2;
-    private static final String STORAGE_LAYOUT_VERSION_TAG = "storage_layout_version";
-    private static final int STORAGE_LAYOUT_VERSION = 3;
 
     public DataAsynchronousProcessingFactoryBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_ASYNCHRONOUS_PROCESSING_FACTORY_BLOCK_ENTITY.get(),
@@ -124,16 +122,11 @@ public final class DataAsynchronousProcessingFactoryBlockEntity extends DataRipp
 
     @Override
     public void loadTag(CompoundTag data, HolderLookup.Provider registries) {
-        int storageLayoutVersion = data.getInt(STORAGE_LAYOUT_VERSION_TAG);
-        if (storageLayoutVersion != STORAGE_LAYOUT_VERSION) {
-            throw new IllegalArgumentException("Unsupported asynchronous factory storage layout: " + storageLayoutVersion);
-        }
         super.loadTag(data, registries);
     }
 
     @Override
     public void saveAdditional(CompoundTag data, HolderLookup.Provider registries) {
         super.saveAdditional(data, registries);
-        data.putInt(STORAGE_LAYOUT_VERSION_TAG, STORAGE_LAYOUT_VERSION);
     }
 }

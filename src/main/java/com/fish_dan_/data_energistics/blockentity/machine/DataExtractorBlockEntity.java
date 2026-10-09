@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock.Type;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataExtractorSchema;
@@ -16,6 +15,7 @@ import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -199,7 +199,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private int debuffCooldown;
     private AABB cachedCoverageAabb;
     private List<LivingEntity> cachedTargets = List.of();
-    private final Set<Direction> outputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> outputSides = EnumSet.allOf(Direction.class);
     private int cachedCapacityCardCount = -1;
     private int cachedSpeedCardCount = -1;
     private int cachedEnergyCardCount = -1;
@@ -238,9 +238,9 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP && dir != front;
     }
 
-    private static Set<Direction> getCableExposedSides(BlockState blockState) {
+    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
         Direction front = blockState.getValue(DataExtractorBlock.FACING);
-        Set<Direction> exposedSides = EnumSet.allOf(Direction.class);
+        EnumSet<Direction> exposedSides = EnumSet.allOf(Direction.class);
         exposedSides.remove(Direction.UP);
         exposedSides.remove(front);
         return exposedSides;
@@ -314,7 +314,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         settings.putBoolean(REDSTONE_CONTROLLED_TAG, this.redstoneControlled);
         settings.putBoolean(SHOW_RANGE_TAG, this.showRange);
         settings.putInt(AUTO_EXPORT_MODE_TAG, this.autoExportMode.ordinal());
-        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.outputSides));
+        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.outputSides));
         builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
     }
 
@@ -606,7 +606,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.autoExportMode;
     }
 
-    public Set<Direction> getOutputSides() {
+    public EnumSet<Direction> getOutputSides() {
         if (this.outputSides.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }
@@ -646,7 +646,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 changed = true;
             }
         }
-        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsHelper.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
+        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsUtils.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
             changed = true;
         }
         if (changed) {

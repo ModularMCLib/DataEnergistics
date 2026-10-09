@@ -17,16 +17,15 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /** Brief impact-only FE arcs. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class RailImpactPresentation {
 
-    private static final List<Chain> CHAINS = new ObjectArrayList<>();
+    private static final ObjectList<Chain> CHAINS = new ObjectArrayList<>();
     private static @Nullable ClientLevel trackedLevel;
 
     private RailImpactPresentation() {}
@@ -88,5 +87,5 @@ public final class RailImpactPresentation {
         vertices.addVertex(pose, (float) to.x, (float) to.y, (float) to.z).setColor(138, 189, 255, 255).setNormal(pose, direction.x, direction.y, direction.z);
     }
 
-    private record Chain(List<Vec3> points, long until) {}
+    private record Chain(ObjectList<Vec3> points, long until) {}
 }

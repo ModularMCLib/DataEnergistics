@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern.
 import com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding.TrinityPatternBindingEnumerator;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -20,12 +21,9 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.ToLongFunction;
 
@@ -66,7 +64,7 @@ public final class TrinityPatternSelector {
          */
         public Selected {
             inputsPerCraft = new ObjectImmutableList<>(inputsPerCraft);
-            observedKeys = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(observedKeys));
+            observedKeys = FastUtilCollections.immutableSet(new ObjectLinkedOpenHashSet<>(observedKeys));
         }
     }
 
@@ -79,7 +77,7 @@ public final class TrinityPatternSelector {
          * Isolates the wake set from mutable callers.
          */
         public Unavailable {
-            observedKeys = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(observedKeys));
+            observedKeys = FastUtilCollections.immutableSet(new ObjectLinkedOpenHashSet<>(observedKeys));
         }
     }
 
@@ -100,7 +98,7 @@ public final class TrinityPatternSelector {
      * Selects a server-captured complete assignment without interpreting its expanded ordinal against the original
      * pattern's alternatives. Exact assignments deliberately cannot switch material aliases behind a frozen rule.
      */
-    public Result selectExact(IPatternDetails pattern, int ordinal, List<TrinityBoundPatternInput> bindings,
+    public Result selectExact(IPatternDetails pattern, int ordinal, ObjectList<TrinityBoundPatternInput> bindings,
                               long remainingCrafts, ToLongFunction<AEKey> cpuAvailability,
                               ToLongFunction<AEKey> networkAvailability, Level level) {
         if (ordinal < 0 || remainingCrafts <= 0L || bindings.isEmpty()) {
@@ -165,15 +163,15 @@ public final class TrinityPatternSelector {
                          long remainingCrafts,
                          ToLongFunction<AEKey> cpuAvailability,
                          ToLongFunction<AEKey> networkAvailability,
-                         Function<AEKey, List<GenericStack>> dynamicInputResolver,
+                         Function<AEKey, ObjectList<GenericStack>> dynamicInputResolver,
                          int maxVariants) {
         if (plannedOrdinal < 0 || remainingCrafts <= 0L || maxVariants <= 0) {
             throw new IllegalArgumentException("A Trinity runtime binding requires an ordinal, work and variant limit");
         }
 
-        List<RuntimeInput> inputs = captureInputs(pattern.getInputs());
+        ObjectList<RuntimeInput> inputs = captureInputs(pattern.getInputs());
         ObjectLinkedOpenHashSet<AEKey> observedKeys = allAlternativeKeys(inputs);
-        List<TrinityPatternBindingEnumerator.Binding> bindings;
+        ObjectList<TrinityPatternBindingEnumerator.Binding> bindings;
         if (dynamic) {
             TrinityPatternBindingEnumerator.Result enumeration = this.bindingEnumerator.enumerate(
                     inputs.stream().map(RuntimeInput::signature).collect(ObjectImmutableList.toList()),
@@ -230,7 +228,7 @@ public final class TrinityPatternSelector {
                 observedKeys);
     }
 
-    private static List<RuntimeInput> captureInputs(IPatternDetails.IInput[] inputs) {
+    private static ObjectList<RuntimeInput> captureInputs(IPatternDetails.IInput[] inputs) {
         ObjectArrayList<RuntimeInput> captured = new ObjectArrayList<>(inputs.length);
         for (IPatternDetails.IInput input : inputs) {
             captured.add(new RuntimeInput(input, TrinityPatternPublicationSignature.Input.capture(input)));
@@ -238,7 +236,7 @@ public final class TrinityPatternSelector {
         return new ObjectImmutableList<>(captured);
     }
 
-    private static ObjectLinkedOpenHashSet<AEKey> allAlternativeKeys(List<RuntimeInput> inputs) {
+    private static ObjectLinkedOpenHashSet<AEKey> allAlternativeKeys(ObjectList<RuntimeInput> inputs) {
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         for (RuntimeInput input : inputs) {
             for (TrinityPatternPublicationSignature.Alternative alternative : input.signature().alternatives()) {
@@ -248,16 +246,16 @@ public final class TrinityPatternSelector {
         return keys;
     }
 
-    private static Candidate evaluate(AEItemKey definition, List<RuntimeInput> inputs,
+    private static Candidate evaluate(AEItemKey definition, ObjectList<RuntimeInput> inputs,
                                       IntList alternatives,
                                       int ordinal,
                                       long remainingCrafts,
                                       ToLongFunction<AEKey> cpuAvailability,
                                       ToLongFunction<AEKey> networkAvailability,
-                                      Function<AEKey, List<GenericStack>> dynamicInputResolver,
-                                      Set<AEKey> observedKeys) {
+                                      Function<AEKey, ObjectList<GenericStack>> dynamicInputResolver,
+                                      ObjectSet<AEKey> observedKeys) {
         ObjectArrayList<GenericStack> templates = new ObjectArrayList<>(inputs.size());
-        ObjectArrayList<List<GenericStack>> aliases = new ObjectArrayList<>(inputs.size());
+        ObjectArrayList<ObjectList<GenericStack>> aliases = new ObjectArrayList<>(inputs.size());
         ObjectArrayList<Object2LongLinkedOpenHashMap<AEKey>> allocations = new ObjectArrayList<>(inputs.size());
         Object2LongLinkedOpenHashMap<AEKey> cpuAmounts = new Object2LongLinkedOpenHashMap<>();
         Object2LongLinkedOpenHashMap<AEKey> totalAmounts = new Object2LongLinkedOpenHashMap<>();
@@ -275,7 +273,7 @@ public final class TrinityPatternSelector {
             remaining[slot] = Math.multiplyExact(template.amount(), input.signature().multiplier());
             allocations.add(new Object2LongLinkedOpenHashMap<>());
             captureAvailability(template.what(), cpuAvailability, networkAvailability, cpuAmounts, totalAmounts);
-            List<GenericStack> candidates = new ObjectArrayList<>();
+            ObjectList<GenericStack> candidates = new ObjectArrayList<>();
             for (var candidate : dynamicInputResolver.apply(template.what())) {
                 if (candidate.amount() <= 0) throw new IllegalArgumentException("Dynamic input resolver returned invalid quantity");
                 if (EncodedPatternMatching.matchesInput(definition, slot, template.what(), candidate.what())) candidates.add(candidate);
@@ -383,7 +381,7 @@ public final class TrinityPatternSelector {
         return left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right;
     }
 
-    private static @Nullable IntList decodeCartesianOrdinal(int ordinal, List<RuntimeInput> inputs) {
+    private static @Nullable IntList decodeCartesianOrdinal(int ordinal, ObjectList<RuntimeInput> inputs) {
         int remaining = ordinal;
         int[] alternatives = new int[inputs.size()];
         for (int slot = inputs.size() - 1; slot >= 0; slot--) {
@@ -397,7 +395,7 @@ public final class TrinityPatternSelector {
     private record Candidate(int ordinal,
                              long maximumCrafts,
                              long networkBorrow,
-                             List<SlotBinding> selectedInputs,
+                             ObjectList<SlotBinding> selectedInputs,
                              ObjectList<GenericStack> aggregatedInputs) {
 
         private boolean isBetterThan(Candidate other) {

@@ -64,9 +64,9 @@ public final class CraftingPlanGraphAssembler {
             if (this.records != expected.totalRecords() || this.bytes != expected.totalBytes()) {
                 throw new IllegalArgumentException("Graph assembly totals do not match metadata");
             }
-            List<Node> nodes = new ObjectArrayList<>();
-            List<Edge> edges = new ObjectArrayList<>();
-            List<Cycle> cycles = new ObjectArrayList<>();
+            ObjectArrayList<Node> nodes = new ObjectArrayList<>();
+            ObjectArrayList<Edge> edges = new ObjectArrayList<>();
+            ObjectArrayList<Cycle> cycles = new ObjectArrayList<>();
             GraphHeader header = null;
             for (int index = 0; index < expected.batchCount(); index++) {
                 for (CraftingPlanGraphRecord record : this.batches.get(index)) {

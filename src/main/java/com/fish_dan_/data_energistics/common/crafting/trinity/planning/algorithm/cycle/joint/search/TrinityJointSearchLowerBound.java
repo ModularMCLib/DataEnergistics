@@ -5,8 +5,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityLexicographicObjective;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Optimistic exact objective for one firing box. Conservation model seed is a valid lower bound because every
@@ -29,7 +30,7 @@ public record TrinityJointSearchLowerBound(
      * Creates the exact optimistic tuple decoded from one sequential MIP solve.
      */
     public static TrinityJointSearchLowerBound from(
-                                                    List<TrinityPatternVariant> variants,
+                                                    ObjectList<TrinityPatternVariant> variants,
                                                     TrinityCycleFeasibilitySolution solution) {
         if (variants == null || solution == null) {
             throw new IllegalArgumentException("A Trinity joint lower bound requires variants and a solution");

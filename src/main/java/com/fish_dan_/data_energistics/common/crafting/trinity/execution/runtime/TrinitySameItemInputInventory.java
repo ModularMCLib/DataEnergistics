@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.runtime;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -8,8 +9,8 @@ import appeng.api.stacks.KeyCounter;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.function.ToLongFunction;
 
 /** Server-thread view of physical component variants available to one dispatch allocation. */
@@ -32,9 +33,9 @@ public final class TrinitySameItemInputInventory {
      * Lists each authorised physical variant once. Network counts are permission-checked simulations, and merely
      * permit a subsequent borrowing transaction; they never create CPU ownership.
      */
-    public List<GenericStack> candidates(AEKey plannedKey) {
+    public ObjectList<GenericStack> candidates(AEKey plannedKey) {
         if (!this.policy.allowsSameItem(plannedKey)) {
-            return List.of();
+            return ObjectList.of();
         }
         AEKey logicalKey = this.policy.normalizeKey(plannedKey);
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
@@ -52,6 +53,6 @@ public final class TrinitySameItemInputInventory {
                 candidates.add(new GenericStack(actual, available));
             }
         }
-        return List.copyOf(candidates);
+        return FastUtilCollections.immutableList(candidates);
     }
 }

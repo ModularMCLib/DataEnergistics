@@ -9,29 +9,30 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /** Visits direct slots before nested containers, keeping containers out of the consumable material set. */
 final class AutoBuildInventoryTraversal {
 
     private static final int MAX_CONTAINER_DEPTH = 4;
-    private final Set<IItemHandler> visited = new ReferenceOpenHashSet<>();
-    private final List<Slot> slots = new ObjectArrayList<>();
+    private final ReferenceSet<IItemHandler> visited = new ReferenceOpenHashSet<>();
+    private final ObjectList<Slot> slots = new ObjectArrayList<>();
 
-    List<Slot> collect(IItemHandler root) {
+    ObjectList<Slot> collect(IItemHandler root) {
         collect(() -> root, 0);
-        return List.copyOf(slots);
+        return ObjectLists.unmodifiable(slots);
     }
 
     private void collect(Supplier<@Nullable IItemHandler> binding, int depth) {
         IItemHandler handler = binding.get();
         if (handler == null || !visited.add(handler)) return;
-        List<Supplier<@Nullable IItemHandler>> children = new ObjectArrayList<>();
+        ObjectList<Supplier<@Nullable IItemHandler>> children = new ObjectArrayList<>();
         for (int index = 0; index < handler.getSlots(); index++) {
             Slot slot = new Slot(binding, index);
             ItemStack container = handler.getStackInSlot(index);

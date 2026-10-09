@@ -4,25 +4,20 @@ import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassResp
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
-import appeng.core.definitions.AEBlocks;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -46,21 +41,6 @@ public final class DataMeteoriteCompassTargetInvalidation {
     }
 
     @SubscribeEvent
-    public void onChunkLoad(ChunkEvent.Load event) {
-        if (event.isNewChunk() || !(event.getLevel() instanceof ServerLevel level)) {
-            return;
-        }
-
-        List<BlockPos> legacyCenters = event.getChunk().getBlockEntitiesPos().stream()
-                .filter(pos -> event.getChunk().getBlockState(pos).is(AEBlocks.MYSTERIOUS_CUBE.block()))
-                .map(BlockPos::immutable)
-                .toList();
-        if (!legacyCenters.isEmpty()) {
-            level.getServer().execute(() -> migrateLegacyCenters(level, legacyCenters));
-        }
-    }
-
-    @SubscribeEvent
     public void onServerTick(ServerTickEvent.Post event) {
         int pendingCount = this.pendingRefreshes.size();
         for (int i = 0; i < pendingCount; i++) {
@@ -76,17 +56,8 @@ public final class DataMeteoriteCompassTargetInvalidation {
         }
     }
 
-    private static void migrateLegacyCenters(ServerLevel level, List<BlockPos> candidates) {
-        DataMeteoriteSavedData savedData = DataMeteoriteSavedData.get(level);
-        for (BlockPos pos : candidates) {
-            if (level.isLoaded(pos) && savedData.contains(pos) && level.getBlockState(pos).is(AEBlocks.MYSTERIOUS_CUBE.block())) {
-                level.setBlock(pos, DEBlocks.DATA_MYSTERIOUS_CUBE.get().defaultBlockState(), Block.UPDATE_ALL);
-            }
-        }
-    }
-
     private static boolean isDataMeteoriteCenter(BlockState state) {
-        return state.is(DEBlocks.DATA_MYSTERIOUS_CUBE.get()) || state.is(AEBlocks.MYSTERIOUS_CUBE.block());
+        return state.is(DEBlocks.DATA_MYSTERIOUS_CUBE.get());
     }
 
     private void refreshPlayers(ServerLevel level) {

@@ -4,9 +4,8 @@ import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMult
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-
-import java.util.Collections;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 
 /**
  * Immutable generation of all active JSON multiblock definitions.
@@ -16,7 +15,7 @@ import java.util.Map;
  */
 public record JsonMultiBlockDefinitionRegistrySnapshot(
                                                        long revision,
-                                                       Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions) {
+                                                       Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions) {
 
     /**
      * Copies the complete generation so readers can safely retain it across reloads.
@@ -29,7 +28,7 @@ public record JsonMultiBlockDefinitionRegistrySnapshot(
             throw new IllegalArgumentException("JSON multiblock definition snapshot map cannot be null");
         }
         Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> copy = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> entry : definitions.entrySet()) {
+        for (Object2ObjectMap.Entry<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> entry : definitions.object2ObjectEntrySet()) {
             JsonMultiBlockStructureKey key = entry.getKey();
             JsonMultiBlockDefinition definition = entry.getValue();
             if (key == null || definition == null) {
@@ -41,6 +40,6 @@ public record JsonMultiBlockDefinitionRegistrySnapshot(
             }
             copy.put(key, definition);
         }
-        definitions = Collections.unmodifiableMap(copy);
+        definitions = Object2ObjectMaps.unmodifiable(copy);
     }
 }

@@ -21,8 +21,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.List;
-
 /**
  * Resolves explicit ingredient tag declarations; item membership alone never invents a recipe constraint.
  */
@@ -73,14 +71,14 @@ public final class RecipeIngredientTags {
         return matched ? new ObjectImmutableList<>(common) : ObjectList.of();
     }
 
-    private static List<Ingredient> ingredients(ServerLevel level, ResourceLocation recipeId,
-                                                Recipe<?> recipe, boolean output) {
+    private static ObjectList<Ingredient> ingredients(ServerLevel level, ResourceLocation recipeId,
+                                                      Recipe<?> recipe, boolean output) {
         for (var adapter : DataEnergisticsEntrypointLoader.snapshot().recipeMatching()) {
             var roles = output ? adapter.outputIngredients(level, recipeId) : adapter.inputIngredients(level, recipeId);
             if (roles != null) return roles;
         }
         if (output) return ObjectList.of();
-        return recipe.getIngredients();
+        return new ObjectImmutableList<>(recipe.getIngredients());
     }
 
     private static void collectVanillaTags(JsonElement value, ObjectLinkedOpenHashSet<ResourceLocation> tags) {

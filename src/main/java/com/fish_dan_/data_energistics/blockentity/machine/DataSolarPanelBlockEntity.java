@@ -36,7 +36,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity implements IUpgradeableObject, DataSolarPanelMenuHost {
 
@@ -69,7 +68,7 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.of(Direction.DOWN);
     }
 

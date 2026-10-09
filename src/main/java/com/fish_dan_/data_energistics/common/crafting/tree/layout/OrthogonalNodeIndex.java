@@ -4,9 +4,8 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGr
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Point;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /** Static rectangle BVH for point visibility and nearest axis-aligned obstruction queries. */
 final class OrthogonalNodeIndex {
@@ -15,7 +14,7 @@ final class OrthogonalNodeIndex {
     private final Box[] boxes;
     private final Branch root;
 
-    OrthogonalNodeIndex(List<PlacedNode> nodes, double clearance) {
+    OrthogonalNodeIndex(ObjectList<PlacedNode> nodes, double clearance) {
         boxes = new Box[nodes.size()];
         int[] order = new int[nodes.size()];
         for (int index = 0; index < nodes.size(); index++) {

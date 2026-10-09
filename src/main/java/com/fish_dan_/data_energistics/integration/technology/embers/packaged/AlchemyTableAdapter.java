@@ -34,6 +34,8 @@ import com.rekindled.embers.blockentity.AlchemyTabletBlockEntity;
 import com.rekindled.embers.blockentity.BeamCannonBlockEntity;
 import com.rekindled.embers.recipe.AlchemyContext;
 import com.rekindled.embers.recipe.IAlchemyRecipe;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -110,14 +112,14 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter, Packag
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var result = new ObjectArrayList<BlockPos>();
-        result.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var result = new LongArrayList();
+        result.add(position.asLong());
         ListTag list = preparation.getList("pedestals", Tag.TAG_COMPOUND);
         for (int index = 0; index < list.size(); index++) {
             BlockPos top = BlockPos.of(list.getCompound(index).getLong("position"));
-            result.add(top);
-            result.add(top.below());
+            result.add(top.asLong());
+            result.add(top.below().asLong());
         }
         return result;
     }
@@ -220,7 +222,8 @@ public final class AlchemyTableAdapter implements PackagedMachineAdapter, Packag
 
     @Override
     public boolean recoverRemoved(PackagedMachineOperation operation) {
-        for (BlockPos position : occupiedPositions(operation.level(), operation.position(), operation.progress())) {
+        for (long packedPosition : occupiedPositions(operation.level(), operation.position(), operation.progress())) {
+            BlockPos position = BlockPos.of(packedPosition);
             if (!operation.level().isLoaded(position)) return false;
         }
         ListTag plan = operation.progress().getList("pedestals", Tag.TAG_COMPOUND);

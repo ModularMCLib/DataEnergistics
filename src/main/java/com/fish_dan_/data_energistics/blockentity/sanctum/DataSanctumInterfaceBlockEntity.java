@@ -43,7 +43,6 @@ import lombok.Getter;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity implements DataSanctumLargeInterfaceHost {
 
@@ -82,7 +81,7 @@ public class DataSanctumInterfaceBlockEntity extends AENetworkedBlockEntity impl
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.allOf(Direction.class);
     }
 

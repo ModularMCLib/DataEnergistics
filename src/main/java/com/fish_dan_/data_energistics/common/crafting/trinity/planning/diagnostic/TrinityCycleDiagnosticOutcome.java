@@ -2,16 +2,16 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnost
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.InputRequirement;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.PartialPlan;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Request-local accounting used to continue graph diagnosis around one fully proved cycle without making it
@@ -24,9 +24,9 @@ import java.util.Set;
  */
 public record TrinityCycleDiagnosticOutcome(
                                             TrinityCycleDiagnosticEvidence evidence,
-                                            Map<AEKey, BigInteger> actualInputs,
-                                            Map<AEKey, InputRequirement> inputRequirements,
-                                            Map<AEKey, BigInteger> boundaryInputs) {
+                                            Object2ObjectMap<AEKey, BigInteger> actualInputs,
+                                            Object2ObjectMap<AEKey, InputRequirement> inputRequirements,
+                                            Object2ObjectMap<AEKey, BigInteger> boundaryInputs) {
 
     /**
      * Validates the owned accounting and rejects overlapping actual, missing and predecessor-produced allocations.
@@ -34,7 +34,7 @@ public record TrinityCycleDiagnosticOutcome(
     public TrinityCycleDiagnosticOutcome {
         actualInputs = validatePositiveAmounts(actualInputs, "actual input");
         boundaryInputs = validatePositiveAmounts(boundaryInputs, "boundary input");
-        for (Map.Entry<AEKey, InputRequirement> shortage : inputRequirements.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, InputRequirement> shortage : inputRequirements.object2ObjectEntrySet()) {
             if (!actualInputs.getOrDefault(shortage.getKey(), BigInteger.ZERO).equals(shortage.getValue().available())) {
                 throw new IllegalArgumentException("A Trinity diagnostic cycle shortage must match its actual input");
             }
@@ -45,7 +45,7 @@ public record TrinityCycleDiagnosticOutcome(
                         "A Trinity diagnostic cycle input cannot be both reserved and predecessor-produced");
             }
         }
-        inputRequirements = Collections.unmodifiableMap(inputRequirements);
+        inputRequirements = FastUtilCollections.immutableMap(inputRequirements);
     }
 
     /**
@@ -53,8 +53,8 @@ public record TrinityCycleDiagnosticOutcome(
      */
     public static TrinityCycleDiagnosticOutcome create(
                                                        TrinityCycleDiagnosticEvidence evidence,
-                                                       Map<AEKey, BigInteger> available,
-                                                       Set<AEKey> producibleInputs) {
+                                                       Object2ObjectMap<AEKey, BigInteger> available,
+                                                       ObjectSet<AEKey> producibleInputs) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> actual = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, InputRequirement> shortages = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> boundary = new Object2ObjectLinkedOpenHashMap<>();
@@ -89,17 +89,17 @@ public record TrinityCycleDiagnosticOutcome(
                 this.evidence.emittedItems(),
                 missing,
                 this.inputRequirements,
-                List.of());
+                ObjectList.of());
     }
 
-    private static Map<AEKey, BigInteger> validatePositiveAmounts(
-                                                                  Map<AEKey, BigInteger> source,
-                                                                  String role) {
+    private static Object2ObjectMap<AEKey, BigInteger> validatePositiveAmounts(
+                                                                               Object2ObjectMap<AEKey, BigInteger> source,
+                                                                               String role) {
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity diagnostic cycle " + role + " must be positive");
             }
         });
-        return Collections.unmodifiableMap(source);
+        return FastUtilCollections.immutableMap(source);
     }
 }

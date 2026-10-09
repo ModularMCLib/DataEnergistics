@@ -16,8 +16,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.UUID;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -46,9 +47,9 @@ public final class StellarErasureDeviceSavedDataGameTest {
                 .withoutRole(operator).withRole(operator, OrbitalAccessRole.OBSERVER);
         helper.assertValueEqual(active.customName(), renamed.customName(), "Runtime transitions must preserve the name");
         helper.assertValueEqual(active.weaponId(), original.weaponId(), "Rename must preserve the stable ID");
-        helper.assertValueEqual(StellarErasureDeviceNbtCodec.load(StellarErasureDeviceNbtCodec.save(new CompoundTag(), List.of(active))).getFirst(),
+        helper.assertValueEqual(StellarErasureDeviceNbtCodec.load(StellarErasureDeviceNbtCodec.save(new CompoundTag(), ObjectList.of(active))).getFirst(),
                 active, "Names and runtime state must round-trip together");
-        for (String invalid : List.of("x".repeat(49), "bad\nname", "\nname", "§cname", "bad\u0000name")) {
+        for (String invalid : ObjectList.of("x".repeat(49), "bad\nname", "\nname", "§cname", "bad\u0000name")) {
             try {
                 data.rename(server, original.weaponId(), owner, invalid);
                 helper.fail("Invalid name was accepted");
@@ -97,7 +98,7 @@ public final class StellarErasureDeviceSavedDataGameTest {
         StellarErasureDeviceRecord sharedWeaponWithAccess = data.find(sharedWeapon.weaponId()).orElseThrow();
         helper.assertValueEqual(
                 data.accessibleTo(operatorId),
-                List.of(sharedWeaponWithAccess),
+                ObjectList.of(sharedWeaponWithAccess),
                 "An authorized player must be routed to the shared weapon");
 
         StellarErasureDeviceRecord operatorOwnedWeapon = data.createForOwner(server, operatorId);
@@ -105,7 +106,7 @@ public final class StellarErasureDeviceSavedDataGameTest {
                 operatorOwnedWeapon.weaponId().equals(sharedWeapon.weaponId()),
                 "Delegated access must not prevent a player from creating an independent owned weapon");
         helper.assertTrue(
-                data.accessibleTo(operatorId).containsAll(List.of(sharedWeaponWithAccess, operatorOwnedWeapon)),
+                data.accessibleTo(operatorId).containsAll(ObjectList.of(sharedWeaponWithAccess, operatorOwnedWeapon)),
                 "The control terminal must list both owned and delegated weapons");
 
         assertUnauthorizedRoleChangeRejected(
@@ -119,7 +120,7 @@ public final class StellarErasureDeviceSavedDataGameTest {
         data.revoke(server, sharedWeapon.weaponId(), ownerId, operatorId);
         helper.assertValueEqual(
                 data.accessibleTo(operatorId),
-                List.of(operatorOwnedWeapon),
+                ObjectList.of(operatorOwnedWeapon),
                 "Revoking delegated access must leave the player's own weapon accessible");
         helper.assertValueEqual(
                 data.ownedBy(ownerId).orElseThrow().weaponId(),
@@ -139,14 +140,14 @@ public final class StellarErasureDeviceSavedDataGameTest {
         StellarErasureDeviceRecord source = new StellarErasureDeviceRecord(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                Map.of(),
-                Map.of(),
+                new Object2ObjectOpenHashMap<>(),
+                new Object2ObjectOpenHashMap<>(),
                 new OrbitalEnergyReserve(12_345L, 67_890L),
                 grace,
                 null,
                 "");
 
-        CompoundTag saved = StellarErasureDeviceNbtCodec.save(new CompoundTag(), List.of(source));
+        CompoundTag saved = StellarErasureDeviceNbtCodec.save(new CompoundTag(), ObjectList.of(source));
         StellarErasureDeviceRecord restored = StellarErasureDeviceNbtCodec.load(saved).getFirst();
         helper.assertValueEqual(
                 restored.lifecycle(),

@@ -5,9 +5,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Server-thread index that separates immutable provider identities from AE2's live provider objects.
@@ -50,10 +49,10 @@ public interface CraftingProviderPublicationIndex {
      * @param patternIdentity live pattern identity; equality-equivalent objects remain isolated
      * @return immutable provider IDs in publication order, including multiplicity
      */
-    List<CraftingProviderId> providerIdsFor(IPatternDetails patternIdentity);
+    ObjectList<CraftingProviderId> providerIdsFor(IPatternDetails patternIdentity);
 
     /** Server-thread snapshot including providers with no current patterns, for outstanding asset recovery. */
-    List<CraftingProviderId> providerIds();
+    ObjectList<CraftingProviderId> providerIds();
 
     /**
      * Resolves a current ID immediately before server-thread capacity capture or commit.

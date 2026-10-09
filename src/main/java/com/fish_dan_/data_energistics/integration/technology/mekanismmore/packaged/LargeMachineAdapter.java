@@ -19,8 +19,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
 import mekanism.api.Action;
@@ -141,7 +141,7 @@ public final class LargeMachineAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         return kind.occupiedPositions(position, preparation);
     }
 
@@ -165,7 +165,7 @@ public final class LargeMachineAdapter implements PackagedMachineAdapter {
             var unit = LargeMachineRecipePlan.unit(holder.get().value(), plan.inputs().getFirst().what(),
                     plan.inputs().getLast().what(), layout.fluidToChemical());
             if (unit == null || !unit.inputs().equals(plan.inputs()) ||
-                    !PackagedOutputMatching.matchesResources(operation, plan.outputs(), unit.outputs())) {
+                    !PackagedOutputMatching.matchesResources(operation, new ObjectArrayList<>(plan.outputs()), new ObjectArrayList<>(unit.outputs()))) {
                 throw new IllegalStateException("Mekanism recipe changed after admission");
             }
             boolean perTickChemical = holder.get().value() instanceof NucleosynthesizingRecipe nuclear && nuclear.perTickUsage();
@@ -190,7 +190,7 @@ public final class LargeMachineAdapter implements PackagedMachineAdapter {
             var selectedPlan = selectedRecipe == null ? null : LargeMachineRecipePlan.unit(selectedRecipe,
                     plan.inputs().getFirst().what(), plan.inputs().getLast().what(), layout.fluidToChemical());
             if (selectedPlan == null || !selectedPlan.inputs().equals(plan.inputs()) ||
-                    !PackagedOutputMatching.matchesResources(operation, plan.outputs(), selectedPlan.outputs())) {
+                    !PackagedOutputMatching.matchesResources(operation, new ObjectArrayList<>(plan.outputs()), new ObjectArrayList<>(selectedPlan.outputs()))) {
                 throw new IllegalStateException("Mekanism native machine selected a different recipe");
             }
             layout.tile().setChanged();

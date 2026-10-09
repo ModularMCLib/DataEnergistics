@@ -25,13 +25,14 @@ import com.hollingsworth.arsnouveau.common.block.ArcaneCore;
 import com.hollingsworth.arsnouveau.common.block.tile.ArcanePedestalTile;
 import com.hollingsworth.arsnouveau.common.block.tile.EnchantingApparatusTile;
 import com.hollingsworth.arsnouveau.common.crafting.recipes.ImbuementRecipe;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 
 /** Owns only the selected empty pedestals and the center; the actual Ars tile produces and consumes everything. */
 public final class ArsPedestalAdapter implements PackagedMachineAdapter {
@@ -139,13 +140,13 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         for (var name : ObjectList.of("pedestals", "catalysts", "displaced")) {
             var slots = preparation.getList(name, Tag.TAG_COMPOUND);
             for (int index = 0; index < slots.size(); index++) {
-                BlockPos target = BlockPos.of(slots.getCompound(index).getLong("position"));
+                long target = slots.getCompound(index).getLong("position");
                 if (!positions.contains(target)) positions.add(target);
             }
         }
@@ -295,8 +296,8 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 return null;
         }
         var pedestals = new ObjectArrayList<ArcanePedestalTile>();
-        for (BlockPos pedestalPosition : this.kind.positions(tile)) {
-            if (!(level.getBlockEntity(pedestalPosition) instanceof ArcanePedestalTile pedestal)) return null;
+        for (long packedPedestalPosition : this.kind.positions(tile)) {
+            if (!(level.getBlockEntity(BlockPos.of(packedPedestalPosition)) instanceof ArcanePedestalTile pedestal)) return null;
             pedestals.add(pedestal);
         }
         return new Layout(tile, (Container) tile, pedestals);
@@ -307,7 +308,7 @@ public final class ArsPedestalAdapter implements PackagedMachineAdapter {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ars persisted " + key));
     }
 
-    private record Layout(BlockEntity tile, Container inventory, List<ArcanePedestalTile> pedestals) {
+    private record Layout(BlockEntity tile, Container inventory, ObjectList<ArcanePedestalTile> pedestals) {
 
         boolean centerEmpty() {
             return this.inventory.isEmpty() && (!(this.tile instanceof EnchantingApparatusTile apparatus) || !apparatus.isCrafting);

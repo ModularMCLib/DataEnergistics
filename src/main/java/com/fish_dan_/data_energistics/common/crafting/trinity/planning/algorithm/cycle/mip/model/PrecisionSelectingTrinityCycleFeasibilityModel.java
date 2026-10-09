@@ -11,18 +11,19 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityExactConservationVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Selects the ordinary model only while every exact input remains inside its conservative integer window.
@@ -74,19 +75,19 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                        Map.of()));
+                        FastUtilCollections.mapOf()));
             }
             if (control.deadlineExceeded()) {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         Component.translatable("gui.data_energistics.trinity_planning.mip.timeout"),
-                        Map.of("phase", "cycle_feasibility")));
+                        FastUtilCollections.mapOf("phase", "cycle_feasibility")));
             }
             if (TrinityExactCycleBalanceBounds.contradictory(request)) {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_integer_solution"),
-                        Map.of("phase", "exact_balance_bounds")));
+                        FastUtilCollections.mapOf("phase", "exact_balance_bounds")));
             }
             if (request.shortageDiagnostic()) return solveShortage(request, control);
             if (requiresRadix(request)) {
@@ -154,7 +155,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                             TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                             Component.translatable(
                                     "gui.data_energistics.trinity_planning.mip.radix_model_limit"),
-                            Map.of("phase", "bounded_ordinary_precision")));
+                            FastUtilCollections.mapOf("phase", "bounded_ordinary_precision")));
                 }
                 TrinityCycleFeasibilitySession session = this.ordinarySession;
                 if (session == null) {
@@ -178,7 +179,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable(
                             "gui.data_energistics.trinity_planning.mip.schedule_search_limit"),
-                    Map.of(
+                    FastUtilCollections.mapOf(
                             "phase", "bounded_ordinary_expansion",
                             "states", Integer.toString(MAX_BOUNDED_ORDINARY_DOMAINS))));
         }
@@ -207,7 +208,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 .anyMatch(PrecisionSelectingTrinityCycleFeasibilityModel::exceedsWindow)) {
             return true;
         }
-        Set<AEKey> externalKeys = OBJECTIVE_BOUNDS.externalReserveKeys(request);
+        ObjectSet<AEKey> externalKeys = OBJECTIVE_BOUNDS.externalReserveKeys(request);
         ObjectLinkedOpenHashSet<AEKey> touchedKeys = new ObjectLinkedOpenHashSet<>();
         request.variants().forEach(variant -> touchedKeys.addAll(variant.netChange().keySet()));
         touchedKeys.addAll(request.demand().finalBalanceLowerBounds().keySet());
@@ -270,7 +271,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
                 completed = result.value().solverPasses();
                 elapsed = result.value().solverNanos();
             } else {
-                Map<String, String> metadata = result.diagnostic().metadata();
+                Object2ObjectMap<String, String> metadata = result.diagnostic().metadata();
                 consumed = Integer.parseInt(metadata.get("states"));
                 completed = Integer.parseInt(metadata.get("passes"));
                 elapsed = Long.parseLong(metadata.get("nanos"));
@@ -307,7 +308,7 @@ final class PrecisionSelectingTrinityCycleFeasibilityModel implements TrinityCyc
             return finish(TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable("gui.data_energistics.trinity_planning.mip.schedule_search_limit"),
-                    Map.of("phase", "shortage_state_limit"))));
+                    FastUtilCollections.mapOf("phase", "shortage_state_limit"))));
         }
     }
 

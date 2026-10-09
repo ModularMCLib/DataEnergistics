@@ -2,16 +2,15 @@ package com.fish_dan_.data_energistics.common.crafting.packaged.recipe;
 
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
@@ -40,10 +39,10 @@ public final class PackagedRecipeCatalog {
             recipeCategoryIds.addAll(adapter.recipeTypes());
             workstationItemIds.addAll(adapter.workstationItemIds());
         }
-        types.replaceAll((type, values) -> ObjectLists.unmodifiable(values));
-        this.adapters = Object2ObjectMaps.unmodifiable(indexed);
-        this.adapterList = ObjectLists.unmodifiable(new ObjectArrayList<>(indexed.values()));
-        this.byType = Object2ObjectMaps.unmodifiable(types);
+        types.replaceAll((type, values) -> FastUtilCollections.immutableList(values));
+        this.adapters = FastUtilCollections.immutableMap(indexed);
+        this.adapterList = FastUtilCollections.immutableList(new ObjectArrayList<>(indexed.values()));
+        this.byType = FastUtilCollections.immutableMap(types);
         this.recipeCategoryIds = canonicalIds(recipeCategoryIds);
         this.workstationItemIds = canonicalIds(workstationItemIds);
     }
@@ -78,6 +77,6 @@ public final class PackagedRecipeCatalog {
     private static ObjectList<ResourceLocation> canonicalIds(ObjectLinkedOpenHashSet<ResourceLocation> ids) {
         var canonical = new ObjectArrayList<>(ids);
         canonical.sort(Comparator.comparing(ResourceLocation::toString));
-        return ObjectLists.unmodifiable(canonical);
+        return FastUtilCollections.immutableList(canonical);
     }
 }

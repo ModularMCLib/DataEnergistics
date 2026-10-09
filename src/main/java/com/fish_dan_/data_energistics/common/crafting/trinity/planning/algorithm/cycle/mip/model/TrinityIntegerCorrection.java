@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
@@ -12,10 +13,9 @@ import org.ojalgo.optimisation.Variable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.List;
 
 /** A request-private, bounded integer neighbourhood around a linear witness, not a restriction on the full plan. */
-record TrinityIntegerCorrection(List<BigInteger> origin, IntList lowerBounds, IntList upperBounds) {
+record TrinityIntegerCorrection(ObjectList<BigInteger> origin, IntList lowerBounds, IntList upperBounds) {
 
     private static final BigDecimal RADIUS = BigDecimal.valueOf(64);
 
@@ -53,7 +53,7 @@ record TrinityIntegerCorrection(List<BigInteger> origin, IntList lowerBounds, In
 
     /** Checks the original delta domains before restoring coordinates; null rejects an out-of-domain candidate. */
     @Nullable
-    List<BigInteger> restore(List<BigInteger> delta) {
+    ObjectList<BigInteger> restore(ObjectList<BigInteger> delta) {
         ObjectArrayList<BigInteger> restored = new ObjectArrayList<>(origin.size());
         for (int index = 0; index < origin.size(); index++) {
             BigInteger adjustment = delta.get(index);

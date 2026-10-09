@@ -6,8 +6,9 @@ import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMult
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.io.Reader;
-import java.util.Map;
 
 /**
  * Loader for JSON multiblock resources.
@@ -21,13 +22,13 @@ public interface JsonMultiBlockDefinitionLoader {
     /**
      * Loads all JSON resources below {@code data/<namespace>/multiblock/} from a server resource manager.
      */
-    Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> load(ResourceManager resourceManager);
+    Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> load(ResourceManager resourceManager);
 
     /**
      * Loads already-read JSON documents keyed by their path relative to {@code multiblock/}, without the {@code .json}
      * suffix.
      */
-    Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> load(Map<ResourceLocation, String> resources);
+    Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> load(Object2ObjectMap<ResourceLocation, String> resources);
 
     /**
      * Parses one resource document into a definition.

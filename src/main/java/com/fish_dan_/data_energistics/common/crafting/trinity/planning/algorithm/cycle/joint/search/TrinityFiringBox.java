@@ -2,15 +2,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityFiringBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Stable Cartesian firing domain used by exact first-difference branch-and-bound.
@@ -19,8 +19,8 @@ import java.util.Map;
  * @param bounds   exact inclusive bounds aligned with {@code variants}
  */
 public record TrinityFiringBox(
-                               List<TrinityPatternVariant> variants,
-                               List<TrinityFiringBounds> bounds) {
+                               ObjectList<TrinityPatternVariant> variants,
+                               ObjectList<TrinityFiringBounds> bounds) {
 
     /**
      * Validates alignment and stable identity order once for the owned lists.
@@ -29,7 +29,7 @@ public record TrinityFiringBox(
         if (variants.isEmpty() || variants.size() != bounds.size()) {
             throw new IllegalArgumentException("A Trinity firing box requires aligned variants and bounds");
         }
-        if (!variants.equals(variants.stream().sorted().toList())) {
+        if (!variants.equals(variants.stream().sorted().collect(ObjectArrayList.toList()))) {
             throw new IllegalArgumentException("A Trinity firing box requires stable sorted variants");
         }
         if (new ObjectLinkedOpenHashSet<>(variants).size() != variants.size()) {
@@ -40,22 +40,22 @@ public record TrinityFiringBox(
     /**
      * Creates the complete downstream-representable search domain.
      */
-    public static TrinityFiringBox full(List<TrinityPatternVariant> variants) {
-        List<TrinityPatternVariant> ordered = variants.stream().sorted().toList();
+    public static TrinityFiringBox full(ObjectList<TrinityPatternVariant> variants) {
+        ObjectList<TrinityPatternVariant> ordered = variants.stream().sorted().collect(ObjectArrayList.toList());
         return new TrinityFiringBox(
                 ordered,
-                ordered.stream().map(variant -> TrinityFiringBounds.full()).toList());
+                ordered.stream().map(variant -> TrinityFiringBounds.full()).collect(ObjectArrayList.toList()));
     }
 
     /**
      * @return stable map accepted by the exact feasibility backend
      */
-    public Map<TrinityPatternVariant, TrinityFiringBounds> asMap() {
+    public Object2ObjectMap<TrinityPatternVariant, TrinityFiringBounds> asMap() {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, TrinityFiringBounds> mapped = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < variants.size(); index++) {
             mapped.put(variants.get(index), bounds.get(index));
         }
-        return Collections.unmodifiableMap(mapped);
+        return FastUtilCollections.immutableMap(mapped);
     }
 
     /**
@@ -72,7 +72,7 @@ public record TrinityFiringBox(
      * while another axis can still differ, so the disjoint children cover this box minus {@code candidate} with at most
      * three boxes instead of eagerly creating two boxes per axis.
      */
-    public List<TrinityFiringBox> excluding(Map<TrinityPatternVariant, BigInteger> candidate) {
+    public ObjectList<TrinityFiringBox> excluding(Object2ObjectMap<TrinityPatternVariant, BigInteger> candidate) {
         if (candidate == null) {
             throw new IllegalArgumentException("A Trinity firing-box split requires a candidate");
         }
@@ -87,7 +87,7 @@ public record TrinityFiringBox(
 
         int splitAxis = mostConstrainedAxis();
         if (splitAxis < 0) {
-            return List.of();
+            return ObjectList.of();
         }
         TrinityFiringBounds parent = bounds.get(splitAxis);
         BigInteger value = vector.get(splitAxis);
@@ -105,7 +105,7 @@ public record TrinityFiringBox(
                     splitAxis,
                     new TrinityFiringBounds(value.add(BigInteger.ONE), parent.upperInclusive())));
         }
-        return List.copyOf(children);
+        return FastUtilCollections.immutableList(children);
     }
 
     private int mostConstrainedAxis() {

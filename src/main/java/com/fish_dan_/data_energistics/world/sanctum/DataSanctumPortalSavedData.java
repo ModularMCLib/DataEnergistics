@@ -12,11 +12,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 public class DataSanctumPortalSavedData extends SavedData {
 
@@ -29,7 +29,7 @@ public class DataSanctumPortalSavedData extends SavedData {
             DataSanctumPortalSavedData::new,
             DataSanctumPortalSavedData::load);
 
-    private final Map<BlockPos, PortalRecord> portals = new Object2ObjectLinkedOpenHashMap<>();
+    private final Long2ObjectMap<PortalRecord> portals = new Long2ObjectLinkedOpenHashMap<>();
 
     public static DataSanctumPortalSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
@@ -52,7 +52,7 @@ public class DataSanctumPortalSavedData extends SavedData {
                 }
 
                 ResourceLocation sourceDimension = ResourceLocation.parse(sourceDimensionId);
-                data.portals.put(returnPos.immutable(),
+                data.portals.put(returnPos.asLong(),
                         new PortalRecord(returnPos.immutable(), sourceDimension, sourcePos.immutable()));
             }
         }
@@ -61,28 +61,28 @@ public class DataSanctumPortalSavedData extends SavedData {
 
     public void registerPortal(BlockPos returnPos, ResourceLocation sourceDimensionId, BlockPos sourcePos) {
         PortalRecord record = new PortalRecord(returnPos.immutable(), sourceDimensionId, sourcePos.immutable());
-        PortalRecord existing = this.portals.get(record.returnPos());
+        PortalRecord existing = this.portals.get(record.returnPos().asLong());
         if (record.equals(existing)) {
             return;
         }
 
-        this.portals.put(record.returnPos(), record);
+        this.portals.put(record.returnPos().asLong(), record);
         this.setDirty();
     }
 
     public void removePortal(BlockPos returnPos, ResourceLocation sourceDimensionId, BlockPos sourcePos) {
-        PortalRecord existing = this.portals.get(returnPos);
+        PortalRecord existing = this.portals.get(returnPos.asLong());
         if (existing != null && existing.sourceDimensionId().equals(sourceDimensionId) && existing.sourcePos().equals(sourcePos)) {
-            this.portals.remove(returnPos);
+            this.portals.remove(returnPos.asLong());
             this.setDirty();
         }
     }
 
-    public List<PortalRecord> getPortals() {
-        return List.copyOf(this.portals.values());
+    public ObjectList<PortalRecord> getPortals() {
+        return new ObjectImmutableList<>(this.portals.values());
     }
 
-    public List<PortalRecord> getPortalsForSource(ResourceLocation sourceDimensionId, BlockPos sourcePos) {
+    public ObjectList<PortalRecord> getPortalsForSource(ResourceLocation sourceDimensionId, BlockPos sourcePos) {
         ObjectArrayList<PortalRecord> matches = new ObjectArrayList<>();
         for (PortalRecord portal : this.portals.values()) {
             if (portal.sourceDimensionId().equals(sourceDimensionId) && portal.sourcePos().equals(sourcePos)) {

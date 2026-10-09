@@ -24,7 +24,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -49,7 +48,7 @@ public abstract class OrbitalEndpointBlockEntity extends AENetworkedBlockEntity 
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.allOf(Direction.class);
     }
 

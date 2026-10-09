@@ -14,6 +14,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -23,17 +25,17 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Proves when first-level acyclic competition regions are independent, solves them separately, and exactly verifies
@@ -60,8 +62,8 @@ public final class TrinityAcyclicCompetitionPlanner {
      */
     public Optional<Attempt> plan(
                                   TrinityCraftingTopology topology,
-                                  List<TrinityPatternVariant> planningVariants,
-                                  Map<AEKey, List<TrinityPatternVariant>> producers,
+                                  ObjectList<TrinityPatternVariant> planningVariants,
+                                  Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers,
                                   AEKey target,
                                   BigInteger requestedAmount,
                                   CraftingQuantityMode quantityMode,
@@ -77,7 +79,7 @@ public final class TrinityAcyclicCompetitionPlanner {
                 requestedAmount,
                 quantityMode,
                 available,
-                Set.of(),
+                ObjectSet.of(),
                 maxSearchStates,
                 mode,
                 control);
@@ -86,13 +88,13 @@ public final class TrinityAcyclicCompetitionPlanner {
     /** Uses cached route identities only as local exact-feasibility incumbents. */
     public Optional<Attempt> plan(
                                   TrinityCraftingTopology topology,
-                                  List<TrinityPatternVariant> planningVariants,
-                                  Map<AEKey, List<TrinityPatternVariant>> producers,
+                                  ObjectList<TrinityPatternVariant> planningVariants,
+                                  Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers,
                                   AEKey target,
                                   BigInteger requestedAmount,
                                   CraftingQuantityMode quantityMode,
                                   TrinityPlanningInventory available,
-                                  Set<TrinityPatternIdentity> routeHint,
+                                  ObjectSet<TrinityPatternIdentity> routeHint,
                                   int maxSearchStates,
                                   TrinityPlanningMode mode,
                                   TrinityPlanningControl control) {
@@ -106,7 +108,7 @@ public final class TrinityAcyclicCompetitionPlanner {
         if (preparation == null || preparation.frontiers().size() < 2) {
             return Optional.empty();
         }
-        List<CompetitionRegion> regions = regions(preparation.frontiers(), producers);
+        ObjectList<CompetitionRegion> regions = regions(preparation.frontiers(), producers);
         if (!provablyIndependent(regions, preparation)) {
             return Optional.empty();
         }
@@ -198,12 +200,12 @@ public final class TrinityAcyclicCompetitionPlanner {
 
     private TrinityAlgorithmResult<TrinityAcyclicPlan> optimizeWholeGraph(
                                                                           TrinityCraftingTopology topology,
-                                                                          List<TrinityPatternVariant> variants,
+                                                                          ObjectList<TrinityPatternVariant> variants,
                                                                           AEKey target,
                                                                           BigInteger requestedAmount,
                                                                           CraftingQuantityMode quantityMode,
                                                                           TrinityPlanningInventory available,
-                                                                          Set<TrinityPatternIdentity> routeHint,
+                                                                          ObjectSet<TrinityPatternIdentity> routeHint,
                                                                           int maxSearchStates,
                                                                           TrinityPlanningMode mode,
                                                                           TrinityPlanningControl control) {
@@ -222,7 +224,7 @@ public final class TrinityAcyclicCompetitionPlanner {
 
     private static @Nullable Preparation prepare(
                                                  TrinityCraftingTopology topology,
-                                                 Map<AEKey, List<TrinityPatternVariant>> producers,
+                                                 Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers,
                                                  AEKey target,
                                                  BigInteger requestedAmount,
                                                  CraftingQuantityMode quantityMode,
@@ -265,7 +267,7 @@ public final class TrinityAcyclicCompetitionPlanner {
                 if (missing.signum() <= 0 && !forceFinalTotalProduction) {
                     continue;
                 }
-                List<TrinityPatternVariant> candidates = producers.getOrDefault(key, List.of());
+                ObjectList<TrinityPatternVariant> candidates = producers.getOrDefault(key, ObjectList.of());
                 if (candidates.isEmpty()) {
                     return null;
                 }
@@ -276,7 +278,7 @@ public final class TrinityAcyclicCompetitionPlanner {
 
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger count = missing.signum() > 0 ?
-                        ceilDivide(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
+                        AmountMath.ceilDivideNonNegative(missing, selected.dependencyOutputs().get(key)) : BigInteger.ONE;
                 deterministicFirings.merge(selected, count, BigInteger::add);
                 deterministicPatterns.add(selected.patternIdentity());
                 deterministicTouchedKeys.addAll(selected.inputs().keySet());
@@ -286,17 +288,17 @@ public final class TrinityAcyclicCompetitionPlanner {
             }
         }
         return new Preparation(
-                List.copyOf(frontiers.values()),
+                FastUtilCollections.immutableList(frontiers.values()),
                 deterministicFirings,
                 reservedInputs,
                 new TrinityPlanningInventory(finiteInventory, available.unlimitedKeys()),
-                Set.copyOf(deterministicTouchedKeys),
-                Set.copyOf(deterministicPatterns));
+                FastUtilCollections.immutableSet(deterministicTouchedKeys),
+                FastUtilCollections.immutableSet(deterministicPatterns));
     }
 
-    private static List<CompetitionRegion> regions(
-                                                   List<FrontierDemand> frontiers,
-                                                   Map<AEKey, List<TrinityPatternVariant>> producers) {
+    private static ObjectList<CompetitionRegion> regions(
+                                                         ObjectList<FrontierDemand> frontiers,
+                                                         Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers) {
         ObjectArrayList<CompetitionRegion> regions = new ObjectArrayList<>(frontiers.size());
         for (FrontierDemand frontier : frontiers) {
             ObjectArrayList<AEKey> pending = new ObjectArrayList<>();
@@ -308,7 +310,7 @@ public final class TrinityAcyclicCompetitionPlanner {
                 if (!visitedKeys.add(key)) {
                     continue;
                 }
-                for (TrinityPatternVariant producer : producers.getOrDefault(key, List.of())) {
+                for (TrinityPatternVariant producer : producers.getOrDefault(key, ObjectList.of())) {
                     if (regionVariants.add(producer)) {
                         pending.addAll(producer.inputs().keySet());
                     }
@@ -326,14 +328,14 @@ public final class TrinityAcyclicCompetitionPlanner {
             regions.add(new CompetitionRegion(
                     frontier.key(),
                     frontier.amount(),
-                    List.copyOf(ordered),
-                    Set.copyOf(touchedKeys),
-                    Set.copyOf(patterns)));
+                    FastUtilCollections.immutableList(ordered),
+                    FastUtilCollections.immutableSet(touchedKeys),
+                    FastUtilCollections.immutableSet(patterns)));
         }
-        return List.copyOf(regions);
+        return FastUtilCollections.immutableList(regions);
     }
 
-    private static boolean provablyIndependent(List<CompetitionRegion> regions, Preparation preparation) {
+    private static boolean provablyIndependent(ObjectList<CompetitionRegion> regions, Preparation preparation) {
         boolean reservedCraftableSuffix = preparation.deterministicFirings().keySet().stream()
                 .flatMap(variant -> variant.dependencyOutputs().keySet().stream())
                 .anyMatch(preparation.reservedInputs()::containsKey);
@@ -363,21 +365,21 @@ public final class TrinityAcyclicCompetitionPlanner {
 
     private static @Nullable TrinityAcyclicPlan verifyCombined(
                                                                TrinityCraftingTopology topology,
-                                                               List<TrinityPatternVariant> legalVariants,
+                                                               ObjectList<TrinityPatternVariant> legalVariants,
                                                                AEKey target,
                                                                BigInteger requestedAmount,
                                                                CraftingQuantityMode quantityMode,
                                                                TrinityPlanningInventory available,
-                                                               Map<TrinityPatternVariant, BigInteger> firings,
-                                                               Map<AEKey, BigInteger> externalInputs,
+                                                               Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                               Object2ObjectMap<AEKey, BigInteger> externalInputs,
                                                                int states,
                                                                TrinityPlanQuality quality) {
-        Set<TrinityPatternVariant> legal = new ObjectOpenHashSet<>(legalVariants);
+        ObjectSet<TrinityPatternVariant> legal = new ObjectOpenHashSet<>(legalVariants);
         if (firings.isEmpty() || firings.entrySet().stream().anyMatch(
                 entry -> !legal.contains(entry.getKey()) || entry.getValue().signum() <= 0)) {
             return null;
         }
-        for (Map.Entry<AEKey, BigInteger> input : externalInputs.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> input : externalInputs.object2ObjectEntrySet()) {
             if (input.getValue().signum() <= 0 ||
                     !available.covers(input.getKey(), input.getValue()) ||
                     quantityMode == CraftingQuantityMode.NET_NEW && input.getKey().equals(target)) {
@@ -405,13 +407,13 @@ public final class TrinityAcyclicCompetitionPlanner {
 
         Int2IntMap positions = topologicalPositions(topology);
         ObjectArrayList<TrinityVariantFiring> executionOrder = new ObjectArrayList<>();
-        firings.entrySet().stream()
+        firings.object2ObjectEntrySet().stream()
                 .sorted(Comparator
-                        .comparingInt((Map.Entry<TrinityPatternVariant, BigInteger> entry) -> producerPosition(
+                        .comparingInt((Object2ObjectMap.Entry<TrinityPatternVariant, BigInteger> entry) -> producerPosition(
                                 topology,
                                 positions,
                                 entry.getKey()))
-                        .thenComparing(Map.Entry::getKey))
+                        .thenComparing(Object2ObjectMap.Entry::getKey))
                 .forEach(entry -> executionOrder.add(new TrinityVariantFiring(entry.getKey(), entry.getValue())));
         if (!executionPrefixNonNegative(executionOrder, externalInputs)) {
             return null;
@@ -429,16 +431,16 @@ public final class TrinityAcyclicCompetitionPlanner {
 
     private static TrinityPlanningInventory projectInventory(
                                                              TrinityPlanningInventory inventory,
-                                                             Set<AEKey> touchedKeys) {
+                                                             ObjectSet<AEKey> touchedKeys) {
         return inventory.project(touchedKeys);
     }
 
     private static boolean executionPrefixNonNegative(
-                                                      List<TrinityVariantFiring> executionOrder,
-                                                      Map<AEKey, BigInteger> externalInputs) {
+                                                      ObjectList<TrinityVariantFiring> executionOrder,
+                                                      Object2ObjectMap<AEKey, BigInteger> externalInputs) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balance = new Object2ObjectLinkedOpenHashMap<>(externalInputs);
         for (TrinityVariantFiring firing : executionOrder) {
-            for (Map.Entry<AEKey, BigInteger> input : firing.variant().inputs().entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> input : firing.variant().inputs().object2ObjectEntrySet()) {
                 BigInteger required = input.getValue().multiply(firing.count());
                 BigInteger present = balance.getOrDefault(input.getKey(), BigInteger.ZERO);
                 if (present.compareTo(required) < 0) {
@@ -455,7 +457,7 @@ public final class TrinityAcyclicCompetitionPlanner {
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> aggregateNetChange(
-                                                                                        Map<TrinityPatternVariant, BigInteger> firings) {
+                                                                                        Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
@@ -484,18 +486,13 @@ public final class TrinityAcyclicCompetitionPlanner {
         return earliestOutput;
     }
 
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
-    }
-
-    private static void merge(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
+    private static void merge(Object2ObjectMap<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
         amounts.merge(key, amount, BigInteger::add);
     }
 
-    private static Set<TrinityPatternIdentity> localHint(
-                                                         Set<TrinityPatternIdentity> routeHint,
-                                                         Set<TrinityPatternIdentity> regionPatterns) {
+    private static ObjectSet<TrinityPatternIdentity> localHint(
+                                                               ObjectSet<TrinityPatternIdentity> routeHint,
+                                                               ObjectSet<TrinityPatternIdentity> regionPatterns) {
         ObjectOpenHashSet<TrinityPatternIdentity> selected = new ObjectOpenHashSet<>(routeHint);
         selected.retainAll(regionPatterns);
         return selected;
@@ -509,7 +506,7 @@ public final class TrinityAcyclicCompetitionPlanner {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                Map.of("phase", "dag_competition")));
+                FastUtilCollections.mapOf("phase", "dag_competition")));
     }
 
     /** Result from either a verified partition or its state-budgeted whole-graph fallback. */
@@ -527,15 +524,15 @@ public final class TrinityAcyclicCompetitionPlanner {
     private record CompetitionRegion(
                                      AEKey target,
                                      BigInteger amount,
-                                     List<TrinityPatternVariant> variants,
-                                     Set<AEKey> touchedKeys,
-                                     Set<TrinityPatternIdentity> patterns) {}
+                                     ObjectList<TrinityPatternVariant> variants,
+                                     ObjectSet<AEKey> touchedKeys,
+                                     ObjectSet<TrinityPatternIdentity> patterns) {}
 
     private record Preparation(
-                               List<FrontierDemand> frontiers,
-                               Map<TrinityPatternVariant, BigInteger> deterministicFirings,
-                               Map<AEKey, BigInteger> reservedInputs,
+                               ObjectList<FrontierDemand> frontiers,
+                               Object2ObjectMap<TrinityPatternVariant, BigInteger> deterministicFirings,
+                               Object2ObjectMap<AEKey, BigInteger> reservedInputs,
                                TrinityPlanningInventory remainingInventory,
-                               Set<AEKey> deterministicTouchedKeys,
-                               Set<TrinityPatternIdentity> deterministicPatterns) {}
+                               ObjectSet<AEKey> deterministicTouchedKeys,
+                               ObjectSet<TrinityPatternIdentity> deterministicPatterns) {}
 }

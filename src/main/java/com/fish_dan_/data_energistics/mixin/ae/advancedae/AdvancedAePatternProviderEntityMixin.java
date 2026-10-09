@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.mixin.ae.advancedae;
 
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningInventoryHelper;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.UpgradeInventories;
@@ -82,7 +82,7 @@ public abstract class AdvancedAePatternProviderEntityMixin implements PatternPro
 
     @Override
     public boolean dataEnergistics$hasRedstoneTuningCard() {
-        return RedstoneTuningInventoryHelper.hasRedstoneTuningCard(this, this.dataEnergistics$ensureUpgradeInventory());
+        return RedstoneTuningUtils.hasRedstoneTuningCard(this, this.dataEnergistics$ensureUpgradeInventory());
     }
 
     @Override

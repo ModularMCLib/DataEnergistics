@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.T
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -36,9 +37,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -57,13 +59,13 @@ public final class TrinitySameItemPlanningGameTest {
         AEItemKey fuel = AEItemKey.of(Items.COAL);
         AEItemKey target = AEItemKey.of(Items.DIAMOND);
         TrinityCraftingGraphSnapshot graph = graph(helper,
-                processing(List.of(new GenericStack(fuel, 1L)), new GenericStack(producerOutput, 1L), true),
-                processing(List.of(new GenericStack(consumerInput, 1L)), new GenericStack(target, 1L), true, false));
+                processing(ObjectList.of(new GenericStack(fuel, 1L)), new GenericStack(producerOutput, 1L), true),
+                processing(ObjectList.of(new GenericStack(consumerInput, 1L)), new GenericStack(target, 1L), true, false));
 
         TrinityAlgorithmResult<TrinityCraftingPlan> result = plan(
                 graph,
                 target,
-                TrinityPlanningInventory.finite(Map.of(fuel, BigInteger.ONE)));
+                TrinityPlanningInventory.finite(FastUtilCollections.mapOf(fuel, BigInteger.ONE)));
 
         helper.assertTrue(result.successful(),
                 "A marked processing output must connect to a downstream same-item input with different components");
@@ -85,10 +87,10 @@ public final class TrinitySameItemPlanningGameTest {
         AEItemKey secondStock = namedPaper("stock-b");
         AEItemKey target = AEItemKey.of(Items.DIAMOND);
         TrinityCraftingGraphSnapshot graph = graph(helper,
-                processing(List.of(new GenericStack(AEItemKey.of(Items.COAL), 1L)),
+                processing(ObjectList.of(new GenericStack(AEItemKey.of(Items.COAL), 1L)),
                         new GenericStack(producerOutput, 1L), true),
-                processing(List.of(new GenericStack(consumerInput, 2L)), new GenericStack(target, 1L), true, false));
-        TrinityPlanningInventory inventory = TrinityPlanningInventory.finite(Map.of(
+                processing(ObjectList.of(new GenericStack(consumerInput, 2L)), new GenericStack(target, 1L), true, false));
+        TrinityPlanningInventory inventory = TrinityPlanningInventory.finite(FastUtilCollections.mapOf(
                 firstStock, BigInteger.ONE,
                 secondStock, BigInteger.ONE));
 
@@ -114,13 +116,13 @@ public final class TrinitySameItemPlanningGameTest {
         AEItemKey fuel = AEItemKey.of(Items.COAL);
         AEItemKey target = AEItemKey.of(Items.DIAMOND);
         TrinityCraftingGraphSnapshot graph = graph(helper,
-                processing(List.of(new GenericStack(fuel, 1L)), new GenericStack(producerOutput, 1L), false),
-                processing(List.of(new GenericStack(consumerInput, 1L)), new GenericStack(target, 1L), false));
+                processing(ObjectList.of(new GenericStack(fuel, 1L)), new GenericStack(producerOutput, 1L), false),
+                processing(ObjectList.of(new GenericStack(consumerInput, 1L)), new GenericStack(target, 1L), false));
 
         TrinityAlgorithmResult<TrinityCraftingPlan> result = plan(
                 graph,
                 target,
-                TrinityPlanningInventory.finite(Map.of(fuel, BigInteger.ONE)));
+                TrinityPlanningInventory.finite(FastUtilCollections.mapOf(fuel, BigInteger.ONE)));
 
         helper.assertTrue(!result.successful(),
                 "Without the marker, component-distinct outputs and inputs must remain disconnected");
@@ -134,7 +136,7 @@ public final class TrinitySameItemPlanningGameTest {
         AEItemKey oak = AEItemKey.of(Items.OAK_PLANKS);
         AEItemKey birch = AEItemKey.of(Items.BIRCH_PLANKS);
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(
-                List.of(new GenericStack(oak, 1L)), List.of(new GenericStack(birch, 1L)));
+                ObjectList.of(new GenericStack(oak, 1L)), ObjectList.of(new GenericStack(birch, 1L)));
         CompoundTag rule = new CompoundTag();
         rule.putInt("mode", ProcessingMatchMode.TAG.ordinal());
         ListTag tags = new ListTag();
@@ -170,9 +172,9 @@ public final class TrinitySameItemPlanningGameTest {
     }
 
     private static TrinityCraftingGraphSnapshot graph(GameTestHelper helper, IPatternDetails... patterns) {
-        return new TrinityCraftingGraphSnapshot(1L, List.of(patterns).stream()
+        return new TrinityCraftingGraphSnapshot(1L, ObjectList.of(patterns).stream()
                 .map(pattern -> capture(helper, pattern))
-                .toList());
+                .collect(ObjectArrayList.toList()));
     }
 
     private static TrinityCraftingGraphPattern capture(GameTestHelper helper, IPatternDetails pattern) {
@@ -182,13 +184,13 @@ public final class TrinitySameItemPlanningGameTest {
                 publication);
     }
 
-    private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output, boolean sameItem) {
+    private static IPatternDetails processing(ObjectList<GenericStack> inputs, GenericStack output, boolean sameItem) {
         return processing(inputs, output, sameItem, sameItem);
     }
 
-    private static IPatternDetails processing(List<GenericStack> inputs, GenericStack output,
+    private static IPatternDetails processing(ObjectList<GenericStack> inputs, GenericStack output,
                                               boolean flexibleInputs, boolean flexibleOutput) {
-        ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs, List.of(output));
+        ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(inputs, ObjectList.of(output));
         var rules = new CompoundTag();
         if (flexibleInputs || flexibleOutput) {
             var rule = new CompoundTag();

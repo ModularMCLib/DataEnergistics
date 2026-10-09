@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -19,7 +21,7 @@ public record VirtualChannelLedgerSnapshot<B, N>(VirtualChannelCapacity totalCap
                                                  long physicalChannelUsage,
                                                  long virtualChannelUsage,
                                                  OptionalLong remainingChannelCapacity,
-                                                 List<VirtualChannelBindingAllocation<B, N>> bindings) {
+                                                 ObjectList<VirtualChannelBindingAllocation<B, N>> bindings) {
 
     /**
      * Validates counters and defensively copies binding results.
@@ -31,7 +33,7 @@ public record VirtualChannelLedgerSnapshot<B, N>(VirtualChannelCapacity totalCap
         if (remainingChannelCapacity.isPresent() && remainingChannelCapacity.getAsLong() < 0) {
             throw new IllegalArgumentException("Remaining virtual channel capacity must not be negative");
         }
-        bindings = List.copyOf(bindings);
+        bindings = new ObjectImmutableList<>(bindings);
     }
 
     /**

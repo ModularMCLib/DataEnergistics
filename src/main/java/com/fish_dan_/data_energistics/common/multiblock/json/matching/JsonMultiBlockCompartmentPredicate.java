@@ -18,13 +18,12 @@ import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.PatternMatchContext;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * MDLib predicate wrapper that requires a JSON symbol to be a declared compartment role.
@@ -91,36 +90,32 @@ public record JsonMultiBlockCompartmentPredicate(CompartmentType compartmentType
     }
 
     @Override
-    public List<Block> blockCandidates() {
-        return List.of(blockFor(this.compartmentType));
+    public ObjectList<Block> blockCandidates() {
+        return ObjectList.of(blockFor(this.compartmentType));
     }
 
     @Override
-    public List<BlockState> blockStateCandidates() {
-        return List.of(blockFor(this.compartmentType).defaultBlockState());
+    public ObjectList<BlockState> blockStateCandidates() {
+        return ObjectList.of(blockFor(this.compartmentType).defaultBlockState());
     }
 
     @Override
-    public List<ItemStack> placementCandidates() {
-        return List.of(blockFor(this.compartmentType).asItem().getDefaultInstance());
+    public ObjectList<ItemStack> placementCandidates() {
+        return ObjectList.of(blockFor(this.compartmentType).asItem().getDefaultInstance());
     }
 
-    private List<String> expected() {
-        return List.of(BuiltInRegistries.BLOCK.getKey(blockFor(this.compartmentType)).toString());
+    private ObjectList<String> expected() {
+        return ObjectList.of(BuiltInRegistries.BLOCK.getKey(blockFor(this.compartmentType)).toString());
     }
 
-    public static Map<BlockPos, CompartmentType> declaredCompartments(PatternMatchContext context) {
+    public static Long2ObjectMap<CompartmentType> declaredCompartments(PatternMatchContext context) {
         Long2ObjectMap<CompartmentType> matchedCompartments = context.get(
                 MATCHED_COMPARTMENTS_CONTEXT_KEY,
                 Long2ObjectMap.class);
         if (matchedCompartments == null || matchedCompartments.isEmpty()) {
-            return Map.of();
+            return Long2ObjectMaps.emptyMap();
         }
-        Map<BlockPos, CompartmentType> compartments = new Object2ObjectLinkedOpenHashMap<>();
-        for (Long2ObjectMap.Entry<CompartmentType> entry : matchedCompartments.long2ObjectEntrySet()) {
-            compartments.put(BlockPos.of(entry.getLongKey()), entry.getValue());
-        }
-        return Map.copyOf(compartments);
+        return new Long2ObjectLinkedOpenHashMap<>(matchedCompartments);
     }
 
     private static Long2ObjectOpenHashMap<CompartmentType> matchedCompartments(PatternMatchContext context) {

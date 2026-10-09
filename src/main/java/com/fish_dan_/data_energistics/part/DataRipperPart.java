@@ -4,12 +4,12 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
-import com.fish_dan_.data_energistics.common.dataripper.DataRipperConfigParsingUtils;
-import com.fish_dan_.data_energistics.common.dataripper.DataRipperPowerUtils;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataRipperSchema;
 import com.fish_dan_.data_energistics.registry.DEItems;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
+import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.Setting;
@@ -262,12 +262,12 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
     private TickContext getTickContext(Level level, BlockPos targetPos, BlockState targetState, @Nullable BlockEntity targetBlockEntity) {
         String blockId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock()).toString();
         DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.dataRipper;
-        boolean blacklisted = DataRipperConfigParsingUtils.isBlockBlacklisted(
+        boolean blacklisted = ConfigParsingUtils.isBlockBlacklisted(
                 blockId,
-                DataRipperConfigParsingUtils.precompilePatterns(Arrays.asList(settings.blacklist)));
-        double powerMultiplier = DataRipperConfigParsingUtils.getMultiplierForBlock(
+                ConfigParsingUtils.precompilePatterns(Arrays.asList(settings.blacklist)));
+        double powerMultiplier = ConfigParsingUtils.getMultiplierForBlock(
                 blockId,
-                DataRipperConfigParsingUtils.precompileMultipliers(
+                ConfigParsingUtils.precompileMultipliers(
                         settings.multipliers.patterns,
                         settings.multipliers.values));
         RandomTickTarget randomTickTarget = this.getRandomTickTarget(level, targetPos, targetState);
@@ -352,7 +352,7 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
         if (aeSpeedCardCount != this.cachedAeSpeedCards || saberCardCount != this.cachedSaberSpeedCards) {
             this.cachedAeSpeedCards = aeSpeedCardCount;
             this.cachedSaberSpeedCards = saberCardCount;
-            this.cachedSpeedProduct = DataRipperPowerUtils.computeProductWithCap(this.getUpgrades());
+            this.cachedSpeedProduct = PowerCalculationUtils.computeDataRipperProductWithCap(this.getUpgrades());
         }
         return this.cachedSpeedProduct;
     }
@@ -363,8 +363,8 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
         if (energyCardCount != this.cachedEnergyCards) {
             this.cachedEnergyCards = energyCardCount;
         }
-        double adjustedMultiplier = DataRipperPowerUtils.getAdjustedExtraMultiplier(multiplier, inverterCardCount);
-        return DataRipperPowerUtils.computeFinalPowerForProduct(speed, energyCardCount) * adjustedMultiplier;
+        double adjustedMultiplier = PowerCalculationUtils.adjustedExtraPowerMultiplier(multiplier, inverterCardCount);
+        return PowerCalculationUtils.computeDataRipperPower(speed, energyCardCount) * adjustedMultiplier;
     }
 
     private <T extends BlockEntity> void performBlockEntityTicks(T blockEntity, BlockEntityTicker<T> ticker, int speed) {
@@ -463,7 +463,7 @@ public class DataRipperPart extends UpgradeablePart implements IGridTickable {
     }
 
     private boolean extractPower(double requiredPower) {
-        long requiredDataFlow = DataRipperPowerUtils.toDataFlowCost(requiredPower);
+        long requiredDataFlow = PowerCalculationUtils.toDataFlowCost(requiredPower);
         if (requiredDataFlow <= 0L) {
             return true;
         }

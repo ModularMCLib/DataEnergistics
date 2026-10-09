@@ -25,8 +25,7 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -53,7 +52,7 @@ public final class BoundPatternInputEmitterGameTest {
 
         BoundPatternInputEmitter.emit(
                 pattern,
-                List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)),
+                ObjectList.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)),
                 new KeyCounter[] { paperInputs, bookInputs },
                 (key, amount) -> emitted.add(new GenericStack(key, amount)));
 
@@ -88,7 +87,7 @@ public final class BoundPatternInputEmitterGameTest {
         try {
             BoundPatternInputEmitter.emit(
                     pattern,
-                    List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)),
+                    ObjectList.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L)),
                     new KeyCounter[] { invalidPaperInputs, bookInputs },
                     (key, amount) -> {});
         } catch (IllegalArgumentException expected) {
@@ -131,7 +130,7 @@ public final class BoundPatternInputEmitterGameTest {
         @Override
         public AEItemKey getDefinition() {
             var definition = PatternDetailsHelper.encodeProcessingPattern(
-                    List.of(new GenericStack(paper, 2), new GenericStack(book, 1)), getOutputs());
+                    ObjectList.of(new GenericStack(paper, 2), new GenericStack(book, 1)), getOutputs());
             var rule = new CompoundTag();
             rule.putInt("mode", ProcessingMatchMode.ID.ordinal());
             var rules = new CompoundTag();
@@ -146,8 +145,8 @@ public final class BoundPatternInputEmitterGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
         }
 
         @Override

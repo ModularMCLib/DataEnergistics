@@ -28,14 +28,15 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -100,7 +101,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     return shortageFailure(TrinityRadixDiagnostics.failure(
                             TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                             "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                            Map.of("phase", "shortage_feasibility")).diagnostic(), stateBudget, metrics);
+                            FastUtilCollections.mapOf("phase", "shortage_feasibility")).diagnostic(), stateBudget, metrics);
                 }
                 if (control.deadlineExceeded()) {
                     return shortageFailure(TrinityRadixDiagnostics.timeout(
@@ -111,11 +112,11 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                     control.recordSolverModel();
                     TrinityRadixModelPass pass = TrinityRadixModelPass.Feasibility.INSTANCE;
                     TrinityRadixBuiltModel built = this.modelAssembler.assemble(request, pass, logicalUpper);
-                    TrinityAlgorithmResult<Map<Variable, BigInteger>> candidate = this.objectiveSearch.findFeasible(
+                    TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> candidate = this.objectiveSearch.findFeasible(
                             built, control, metrics, stateBudget);
                     if (candidate.successful()) {
                         TrinityRadixSolvedModel solved = built.decode(candidate.value());
-                        TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
+                        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
                         if (!exact.successful()) return shortageFailure(exact.diagnostic(), stateBudget, metrics);
                         TrinityShortageInputAllocation allocation = TrinityShortageInputAllocation.from(
                                 request, solved.modelSeed(), solved.externalInputs());
@@ -138,7 +139,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
             return shortageFailure(TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
-                    Map.of("phase", stateBudget.used() >= stateBudget.limit() ? "shortage_state_limit" : "shortage_domain",
+                    FastUtilCollections.mapOf("phase", stateBudget.used() >= stateBudget.limit() ? "shortage_state_limit" : "shortage_domain",
                             "domainUpper", logicalUpper.toString()))
                     .diagnostic(), stateBudget, metrics);
         } catch (TrinityRadixModelLimitException exception) {
@@ -178,14 +179,14 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 TrinityRadixModelPass pass = TrinityRadixModelPass.Feasibility.INSTANCE;
                 control.recordSolverModel();
                 TrinityRadixBuiltModel built = this.modelAssembler.assemble(request, pass, logicalUpper);
-                TrinityAlgorithmResult<Map<Variable, BigInteger>> witness = this.objectiveSearch.findFeasible(
+                TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> witness = this.objectiveSearch.findFeasible(
                         built,
                         control,
                         metrics,
                         stateBudget);
                 if (witness.successful()) {
                     TrinityRadixSolvedModel solved = built.decode(witness.value());
-                    TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
+                    TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
                     if (!exact.successful()) {
                         return TrinityAlgorithmResult.failure(exact.diagnostic());
                     }
@@ -197,8 +198,8 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                             metrics.nanos(),
                             true,
                             TrinityPlanQuality.VERIFIED_FEASIBLE,
-                            Map.of(),
-                            Map.of(),
+                            FastUtilCollections.mapOf(),
+                            FastUtilCollections.mapOf(),
                             0));
                 }
                 if (witness.diagnostic().code() != TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION) {
@@ -228,7 +229,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    Map.of("constraint", exception.getMessage()));
+                    FastUtilCollections.mapOf("constraint", exception.getMessage()));
         }
     }
 
@@ -385,8 +386,8 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 metrics.nanos(),
                 true,
                 TrinityPlanQuality.PROVED_OPTIMAL,
-                Map.of(),
-                Map.of(),
+                FastUtilCollections.mapOf(),
+                FastUtilCollections.mapOf(),
                 0)));
     }
 
@@ -435,7 +436,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         try {
             control.recordSolverModel();
             TrinityRadixBuiltModel built = this.modelAssembler.assemble(request, pass, logicalUpper);
-            TrinityAlgorithmResult<Map<Variable, BigInteger>> optimized = this.objectiveSearch.optimize(
+            TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> optimized = this.objectiveSearch.optimize(
                     built,
                     control,
                     metrics,
@@ -444,7 +445,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 return TrinityAlgorithmResult.failure(optimized.diagnostic());
             }
             TrinityRadixSolvedModel solved = built.decode(optimized.value());
-            TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
+            TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
             if (!exact.successful()) {
                 return TrinityAlgorithmResult.failure(exact.diagnostic());
             }
@@ -458,21 +459,21 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
             return TrinityRadixDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    Map.of("constraint", exception.getMessage()));
+                    FastUtilCollections.mapOf("constraint", exception.getMessage()));
         }
     }
 
-    private TrinityAlgorithmResult<Map<AEKey, BigInteger>> verifyExact(
-                                                                       TrinityCycleFeasibilityRequest request,
-                                                                       TrinityRadixModelPass pass,
-                                                                       TrinityRadixSolvedModel solved) {
+    private TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> verifyExact(
+                                                                                    TrinityCycleFeasibilityRequest request,
+                                                                                    TrinityRadixModelPass pass,
+                                                                                    TrinityRadixSolvedModel solved) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>(solved.externalInputs());
         solved.modelSeed().forEach((key, amount) -> initialInputs.merge(key, amount, BigInteger::add));
-        TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = this.conservationVerifier.verify(
+        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = this.conservationVerifier.verify(
                 request.variants(),
                 solved.firings(),
                 initialInputs,
-                request.shortageDiagnostic() ? Map.of() : this.exactBounds.finiteInputUpperBounds(request),
+                request.shortageDiagnostic() ? FastUtilCollections.mapOf() : this.exactBounds.finiteInputUpperBounds(request),
                 request.demand().finalBalanceLowerBounds(),
                 request.demand().requiredNetChangeLowerBounds());
         if (!exact.successful()) {
@@ -526,7 +527,7 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
         return exact;
     }
 
-    private static BigInteger total(Map<?, BigInteger> amounts) {
+    private static BigInteger total(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 
@@ -547,8 +548,8 @@ public final class TrinityRadixCycleFeasibilityModel implements TrinityCycleFeas
                 metrics.nanos(),
                 true,
                 TrinityPlanQuality.VERIFIED_FEASIBLE,
-                Map.of(),
-                Map.of(),
+                FastUtilCollections.mapOf(),
+                FastUtilCollections.mapOf(),
                 0);
     }
 

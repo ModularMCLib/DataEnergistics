@@ -3,10 +3,9 @@ package com.fish_dan_.data_energistics.api.registry.provider.runtime;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-
-import java.util.List;
 
 /**
  * Public location-independent identity supplied by an external pattern-provider integration.
@@ -23,16 +22,7 @@ import java.util.List;
 public record ExternalPatternProviderIdentity(
                                               ResourceLocation type,
                                               int schemaVersion,
-                                              List<String> canonicalFields) {
-
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #canonicalFieldsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<String> canonicalFields() {
-        return canonicalFields;
-    }
+                                              ObjectList<String> canonicalFields) {
 
     /** Returns an immutable FastUtil view of canonical identity fields. */
     public ObjectList<String> canonicalFieldsFast() {
@@ -46,6 +36,6 @@ public record ExternalPatternProviderIdentity(
         if (schemaVersion <= 0) {
             throw new IllegalArgumentException("External provider identity schema version must be positive");
         }
-        canonicalFields = List.copyOf(canonicalFields);
+        canonicalFields = new ObjectImmutableList<>(canonicalFields);
     }
 }

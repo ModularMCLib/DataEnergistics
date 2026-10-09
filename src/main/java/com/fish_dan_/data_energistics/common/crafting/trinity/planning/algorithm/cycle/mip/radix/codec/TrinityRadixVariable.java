@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * One non-negative logical value represented by least-significant-first base-2^15 integer digits.
@@ -14,12 +14,12 @@ import java.util.Map;
  * @param digits     ojAlgo digit variables
  * @param upperBound exact logical upper bound
  */
-public record TrinityRadixVariable(String name, List<Variable> digits, BigInteger upperBound) {
+public record TrinityRadixVariable(String name, ObjectList<Variable> digits, BigInteger upperBound) {
 
     /**
      * Reconstructs and bounds-checks the exact logical value from decoded digit assignments.
      */
-    public BigInteger decode(Map<Variable, BigInteger> values) {
+    public BigInteger decode(Object2ObjectMap<Variable, BigInteger> values) {
         IntArrayList decoded = new IntArrayList(digits.size());
         for (Variable digit : digits) {
             decoded.add(values.get(digit).intValueExact());

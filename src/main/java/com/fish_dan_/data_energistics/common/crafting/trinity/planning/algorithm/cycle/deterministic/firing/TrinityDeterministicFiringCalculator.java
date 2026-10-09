@@ -6,18 +6,19 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.applicability.TrinityDeterministicBasis;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.applicability.TrinityDeterministicResidualResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.support.TrinityDeterministicDiagnostics;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.support.TrinityDeterministicFiringMath;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.TrinityDeterministicFiringMath;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Calculates an exact feasible firing vector for one applicable deterministic cycle basis.
@@ -39,12 +40,12 @@ public final class TrinityDeterministicFiringCalculator {
     public TrinityAlgorithmResult<TrinityDeterministicFiringSolution> calculate(
                                                                                 TrinityStronglyConnectedComponent component,
                                                                                 TrinityCycleDemand demand,
-                                                                                Map<AEKey, BigInteger> available,
-                                                                                Set<AEKey> producibleInputs,
+                                                                                Object2ObjectMap<AEKey, BigInteger> available,
+                                                                                ObjectSet<AEKey> producibleInputs,
                                                                                 TrinityDeterministicBasis basis,
                                                                                 TrinityPlanningControl control) {
-        Map<TrinityPatternVariant, BigInteger> primitiveFirings = basis.primitiveFirings();
-        Map<AEKey, BigInteger> primitiveNet = basis.primitiveNet();
+        Object2ObjectMap<TrinityPatternVariant, BigInteger> primitiveFirings = basis.primitiveFirings();
+        Object2ObjectMap<AEKey, BigInteger> primitiveNet = basis.primitiveNet();
         BigInteger reservoirEffect = primitiveNet.getOrDefault(
                 basis.reservoir(),
                 TrinityDeterministicFiringMath.ZERO);
@@ -57,7 +58,7 @@ public final class TrinityDeterministicFiringCalculator {
                 return TrinityDeterministicDiagnostics.unsupported();
             }
         }
-        Map<AEKey, BigInteger> netLowerBounds = internalNetLowerBounds(
+        Object2ObjectMap<AEKey, BigInteger> netLowerBounds = internalNetLowerBounds(
                 component,
                 demand,
                 available,
@@ -80,7 +81,7 @@ public final class TrinityDeterministicFiringCalculator {
                 return TrinityAlgorithmResult.failure(solvedResidual.diagnostic());
             }
             residual = solvedResidual.value();
-            Map<AEKey, BigInteger> combinedNet = TrinityDeterministicFiringMath.addSigned(
+            Object2ObjectMap<AEKey, BigInteger> combinedNet = TrinityDeterministicFiringMath.addSigned(
                     TrinityDeterministicFiringMath.multiplySigned(primitiveNet, repetitions),
                     residual.netChange());
             BigInteger jump = requiredRepetitionJump(combinedNet, netLowerBounds, primitiveNet);
@@ -107,9 +108,9 @@ public final class TrinityDeterministicFiringCalculator {
         if (baselineFirings.isEmpty()) {
             return TrinityDeterministicDiagnostics.unsupported();
         }
-        Map<TrinityPatternVariant, BigInteger> firings = Collections.unmodifiableMap(
+        Object2ObjectMap<TrinityPatternVariant, BigInteger> firings = FastUtilCollections.immutableMap(
                 new Object2ObjectLinkedOpenHashMap<>(baselineFirings));
-        Map<AEKey, BigInteger> totalNet = TrinityDeterministicFiringMath.netChange(firings);
+        Object2ObjectMap<AEKey, BigInteger> totalNet = TrinityDeterministicFiringMath.netChange(firings);
         if (violatesLowerBounds(totalNet, netLowerBounds)) {
             return TrinityDeterministicDiagnostics.unsupported();
         }
@@ -124,11 +125,11 @@ public final class TrinityDeterministicFiringCalculator {
      * Adds only finite internal-balance constraints to the requested exports. External inputs intentionally remain
      * unbounded here so the graph aggregator can build the complete plan and report their exact shortage afterwards.
      */
-    private static Map<AEKey, BigInteger> internalNetLowerBounds(
-                                                                 TrinityStronglyConnectedComponent component,
-                                                                 TrinityCycleDemand demand,
-                                                                 Map<AEKey, BigInteger> available,
-                                                                 Set<AEKey> producibleInputs) {
+    private static Object2ObjectMap<AEKey, BigInteger> internalNetLowerBounds(
+                                                                              TrinityStronglyConnectedComponent component,
+                                                                              TrinityCycleDemand demand,
+                                                                              Object2ObjectMap<AEKey, BigInteger> available,
+                                                                              ObjectSet<AEKey> producibleInputs) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> lower = new Object2ObjectLinkedOpenHashMap<>(demand.requiredNetChangeLowerBounds());
         for (AEKey key : component.keys()) {
             if (producibleInputs.contains(key)) {
@@ -139,20 +140,20 @@ public final class TrinityDeterministicFiringCalculator {
                     .subtract(available.getOrDefault(key, TrinityDeterministicFiringMath.ZERO));
             lower.merge(key, finiteLower, BigInteger::max);
         }
-        return Collections.unmodifiableMap(lower);
+        return FastUtilCollections.immutableMap(lower);
     }
 
     private static BigInteger initialRepetitions(
-                                                 Map<AEKey, BigInteger> netLowerBounds,
-                                                 Map<AEKey, BigInteger> primitiveNet) {
+                                                 Object2ObjectMap<AEKey, BigInteger> netLowerBounds,
+                                                 Object2ObjectMap<AEKey, BigInteger> primitiveNet) {
         BigInteger repetitions = TrinityDeterministicFiringMath.ZERO;
-        for (Map.Entry<AEKey, BigInteger> required : netLowerBounds.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> required : netLowerBounds.object2ObjectEntrySet()) {
             if (required.getValue().signum() <= 0) {
                 continue;
             }
             BigInteger effect = primitiveNet.getOrDefault(required.getKey(), TrinityDeterministicFiringMath.ZERO);
             if (effect.signum() > 0) {
-                repetitions = repetitions.max(TrinityDeterministicFiringMath.ceilDivide(
+                repetitions = repetitions.max(AmountMath.ceilDivideNonNegative(
                         required.getValue(),
                         effect));
             }
@@ -161,11 +162,11 @@ public final class TrinityDeterministicFiringCalculator {
     }
 
     private static BigInteger requiredRepetitionJump(
-                                                     Map<AEKey, BigInteger> combinedNet,
-                                                     Map<AEKey, BigInteger> lowerBounds,
-                                                     Map<AEKey, BigInteger> primitiveNet) {
+                                                     Object2ObjectMap<AEKey, BigInteger> combinedNet,
+                                                     Object2ObjectMap<AEKey, BigInteger> lowerBounds,
+                                                     Object2ObjectMap<AEKey, BigInteger> primitiveNet) {
         BigInteger jump = TrinityDeterministicFiringMath.ZERO;
-        for (Map.Entry<AEKey, BigInteger> bound : lowerBounds.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : lowerBounds.object2ObjectEntrySet()) {
             BigInteger deficit = bound.getValue().subtract(
                     combinedNet.getOrDefault(bound.getKey(), TrinityDeterministicFiringMath.ZERO));
             if (deficit.signum() <= 0) {
@@ -175,14 +176,14 @@ public final class TrinityDeterministicFiringCalculator {
             if (effect.signum() <= 0) {
                 return BigInteger.valueOf(-1L);
             }
-            jump = jump.max(TrinityDeterministicFiringMath.ceilDivide(deficit, effect));
+            jump = jump.max(AmountMath.ceilDivideNonNegative(deficit, effect));
         }
         return jump;
     }
 
     private static boolean violatesLowerBounds(
-                                               Map<AEKey, BigInteger> net,
-                                               Map<AEKey, BigInteger> lowerBounds) {
+                                               Object2ObjectMap<AEKey, BigInteger> net,
+                                               Object2ObjectMap<AEKey, BigInteger> lowerBounds) {
         return lowerBounds.entrySet().stream().anyMatch(entry -> net
                 .getOrDefault(entry.getKey(), TrinityDeterministicFiringMath.ZERO)
                 .compareTo(entry.getValue()) < 0);

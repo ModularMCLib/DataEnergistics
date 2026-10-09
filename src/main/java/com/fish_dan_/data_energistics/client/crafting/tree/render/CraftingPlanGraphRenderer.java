@@ -16,7 +16,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRo
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.GraphViewLod;
 
@@ -240,9 +240,9 @@ public final class CraftingPlanGraphRenderer {
             boolean materialNode = node.viewNode().sourceNode() instanceof Material;
             boolean missing = materialNode && (((Material) node.viewNode().sourceNode()).missing().signum() > 0 || ((Material) node.viewNode().sourceNode()).unresolved().signum() > 0);
             BigInteger amount = node.id() == this.graph.rootId() ? this.graph.header().requested() : node.viewNode().sourceNode() instanceof Material material ? material.required().signum() > 0 ? material.required() : material.crafting() : ((Process) node.viewNode().sourceNode()).executions();
-            String embedded = node.embeddedProcessId() == null ? "" : "× " + AmountFormatter.format(((Process) this.graph.node(node.embeddedProcessId())).executions());
+            String embedded = node.embeddedProcessId() == null ? "" : "× " + FormattingUtils.format(((Process) this.graph.node(node.embeddedProcessId())).executions());
             this.nodeDrawings.add(new NodeDrawing(node, key, key.getDisplayName().getString(),
-                    (materialNode ? "" : "× ") + AmountFormatter.format(amount), embedded, missing));
+                    (materialNode ? "" : "× ") + FormattingUtils.format(amount), embedded, missing));
         }
         this.styledLayout = layout;
     }

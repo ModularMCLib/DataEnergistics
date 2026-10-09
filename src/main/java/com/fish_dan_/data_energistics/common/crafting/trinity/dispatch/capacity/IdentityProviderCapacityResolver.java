@@ -11,9 +11,8 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.KeyCounter;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Identity-index implementation that delegates provider-kind resolution to the counted adapter boundary.
@@ -44,7 +43,7 @@ final class IdentityProviderCapacityResolver implements ProviderCapacityResolver
             if (provider == null) {
                 throw new IllegalStateException("Current crafting-provider publication did not resolve its provider");
             }
-            List<ProviderCapacitySnapshot> providerSnapshots = CountedCraftingProviderAdapters.captureCapacity(
+            ObjectList<ProviderCapacitySnapshot> providerSnapshots = CountedCraftingProviderAdapters.captureCapacity(
                     provider,
                     providerId,
                     pattern,
@@ -92,7 +91,7 @@ final class IdentityProviderCapacityResolver implements ProviderCapacityResolver
         if (provider == null) {
             return null;
         }
-        List<ProviderCapacitySnapshot> currentSnapshots = CountedCraftingProviderAdapters.captureCapacity(
+        ObjectList<ProviderCapacitySnapshot> currentSnapshots = CountedCraftingProviderAdapters.captureCapacity(
                 provider,
                 snapshot.providerId(),
                 pattern,

@@ -10,7 +10,6 @@ import com.fish_dan_.data_energistics.blockentity.machine.mimetic.MimeticGenerat
 import com.fish_dan_.data_energistics.common.acceleration.BatchTickProgression;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
-import com.fish_dan_.data_energistics.common.memorycard.MemoryCardSettingsHelper;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.item.carrier.BiologyDataCarrierData;
@@ -20,6 +19,8 @@ import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
@@ -195,7 +196,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     private boolean powerUsageDirty = true;
     private int cachedActiveCarrierCount;
     private int clientActiveSlotCount = BASE_ACTIVE_SLOTS;
-    private final Set<Direction> outputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> outputSides = EnumSet.allOf(Direction.class);
     private boolean syncingKeyMenu;
     private int runtimeBatchDepth;
     private boolean runtimePersistenceDirty;
@@ -241,7 +242,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         return dir != Direction.UP && dir != front;
     }
 
-    private static Set<Direction> getCableExposedSides(BlockState blockState) {
+    private static EnumSet<Direction> getCableExposedSides(BlockState blockState) {
         Direction front = blockState.getValue(DataMimeticFieldBlock.FACING);
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(Direction.UP);
@@ -332,7 +333,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         settings.putBoolean(REDSTONE_CONTROLLED_TAG, this.redstoneControlled);
         settings.putBoolean(AUTO_PULL_KEY_INPUT_TAG, this.autoPullKeyInput);
         settings.putInt(DROP_ROUTING_MODE_TAG, this.dropRoutingMode.ordinal());
-        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsHelper.encodeSides(this.outputSides));
+        settings.putInt(OUTPUT_SIDES_TAG, MemoryCardSettingsUtils.encodeSides(this.outputSides));
         builder.set(DEDataComponents.MACHINE_MEMORY_CARD_SETTINGS.get(), settings);
     }
 
@@ -536,7 +537,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
         return this.dropRoutingMode;
     }
 
-    public Set<Direction> getOutputSides() {
+    public EnumSet<Direction> getOutputSides() {
         if (this.outputSides.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }
@@ -632,7 +633,7 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
                 changed = true;
             }
         }
-        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsHelper.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
+        if (settings.contains(OUTPUT_SIDES_TAG) && MemoryCardSettingsUtils.replaceSides(this.outputSides, settings.getInt(OUTPUT_SIDES_TAG))) {
             changed = true;
         }
         if (powerUsageChanged) {
@@ -1517,9 +1518,9 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void convertGeneratedLootToDataFlow(MimeticGeneratedOutput generated) {
-        long amount = saturatedAdd(
-                saturatedMultiply(generated.itemAmount(), DATA_FLOW_PER_CONVERTED_ITEM),
-                saturatedMultiply(Math.max(0L, generated.experience()), DATA_FLOW_PER_CONVERTED_EXPERIENCE));
+        long amount = AmountMath.addNonNegative(
+                AmountMath.multiplyNonNegative(generated.itemAmount(), DATA_FLOW_PER_CONVERTED_ITEM),
+                AmountMath.multiplyNonNegative(Math.max(0L, generated.experience()), DATA_FLOW_PER_CONVERTED_EXPERIENCE));
         if (amount <= 0) {
             return;
         }
@@ -1561,23 +1562,6 @@ public class DataMimeticFieldBlockEntity extends AENetworkedPoweredBlockEntity
 
     private boolean hasOverflowDestructionCard() {
         return this.upgrades.getInstalledUpgrades(AEItems.VOID_CARD) > 0;
-    }
-
-    private static long saturatedAdd(long left, long right) {
-        if (right > 0L && left > Long.MAX_VALUE - right) {
-            return Long.MAX_VALUE;
-        }
-        return left + right;
-    }
-
-    private static long saturatedMultiply(long left, long right) {
-        if (left <= 0L || right <= 0L) {
-            return 0L;
-        }
-        if (left > Long.MAX_VALUE / right) {
-            return Long.MAX_VALUE;
-        }
-        return left * right;
     }
 
     private boolean isReceivingRedstonePower() {

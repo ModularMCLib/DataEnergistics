@@ -24,28 +24,28 @@ import net.neoforged.neoforge.client.model.BakedModelWrapper;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 final class CrossbowBakedModel extends BakedModelWrapper<BakedModel> {
 
     // The handle center after its authored -22.5 degree rotation, in model coordinates.
     private static final Vector3f GRIP = new Vector3f(8.0F, 3.072985F, 11.880588F).div(16.0F);
 
-    private final List<List<CrossbowGeometry.Part>> frames;
-    private final List<CrossbowGeometry.Part> specialAmmo;
+    private final ObjectList<ObjectList<CrossbowGeometry.Part>> frames;
+    private final ObjectList<CrossbowGeometry.Part> specialAmmo;
     private final Matrix4f root;
     private final ItemOverrides overrides;
-    private final List<BakedQuad> foldedQuads;
-    private final List<BakedQuad> idleQuads;
-    private final List<BakedQuad> loadedQuads;
-    private final List<BakedQuad> specialQuads;
+    private final ObjectList<BakedQuad> foldedQuads;
+    private final ObjectList<BakedQuad> idleQuads;
+    private final ObjectList<BakedQuad> loadedQuads;
+    private final ObjectList<BakedQuad> specialQuads;
 
-    CrossbowBakedModel(BakedModel originalModel, List<List<CrossbowGeometry.Part>> frames,
-                       List<CrossbowGeometry.Part> specialAmmo, Matrix4f root, ItemOverrides resourceOverrides) {
+    CrossbowBakedModel(BakedModel originalModel, ObjectList<ObjectList<CrossbowGeometry.Part>> frames,
+                       ObjectList<CrossbowGeometry.Part> specialAmmo, Matrix4f root, ItemOverrides resourceOverrides) {
         super(originalModel);
         this.frames = frames;
         this.specialAmmo = specialAmmo;
@@ -79,7 +79,7 @@ final class CrossbowBakedModel extends BakedModelWrapper<BakedModel> {
         private final @Nullable LivingEntity entity;
         private final ItemStack stack;
         private final boolean special;
-        private List<BakedQuad> quads;
+        private ObjectList<BakedQuad> quads;
 
         private RenderedCrossbow(ItemStack stack, @Nullable LivingEntity entity) {
             super(CrossbowBakedModel.this.originalModel);
@@ -90,7 +90,7 @@ final class CrossbowBakedModel extends BakedModelWrapper<BakedModel> {
             this.quads = foldedQuads;
         }
 
-        private List<BakedQuad> geometry(CrossbowAnimation.Pose pose) {
+        private ObjectList<BakedQuad> geometry(CrossbowAnimation.Pose pose) {
             if (pose.mode() == MatterConvergingCrossbowMode.CROSSBOW && pose.recoil() == 0.0F && pose.deployment() == 1.0F && pose.draw() == 0.0F && pose.stage() == 0) {
                 return idleQuads;
             }
@@ -124,19 +124,19 @@ final class CrossbowBakedModel extends BakedModelWrapper<BakedModel> {
         }
 
         @Override
-        public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random) {
-            return side == null ? this.quads : List.of();
+        public ObjectList<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random) {
+            return side == null ? this.quads : ObjectLists.emptyList();
         }
 
         @Override
-        public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random,
-                                        ModelData data, @Nullable RenderType renderType) {
+        public ObjectList<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random,
+                                              ModelData data, @Nullable RenderType renderType) {
             return getQuads(state, side, random);
         }
 
         @Override
-        public List<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous) {
-            return List.of(this);
+        public ObjectList<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous) {
+            return ObjectLists.singleton(this);
         }
     }
 

@@ -5,16 +5,17 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.seed.TrinityCycleSeedRequirement;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Proves a fixed deterministic unit repeated an arbitrary BigInteger number of times by affine prefix bounds.
@@ -31,9 +32,9 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
      */
     @Override
     public TrinityAlgorithmResult<TrinityCompressedSchedule> schedule(
-                                                                      List<TrinityVariantFiring> oneCycleOrder,
+                                                                      ObjectList<TrinityVariantFiring> oneCycleOrder,
                                                                       BigInteger repetitions,
-                                                                      Map<AEKey, BigInteger> initialBalances,
+                                                                      Object2ObjectMap<AEKey, BigInteger> initialBalances,
                                                                       int maxStates,
                                                                       TrinityPlanningControl control) {
         if (oneCycleOrder.isEmpty() || repetitions.signum() <= 0 || maxStates <= 0) {
@@ -43,43 +44,43 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     CANCELLED_KEY,
-                    Map.of("states", "0"));
+                    FastUtilCollections.mapOf("states", "0"));
         }
         if (control.deadlineExceeded()) {
             return failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
-                    Map.of("reason", "timeout", "states", "0"));
+                    FastUtilCollections.mapOf("reason", "timeout", "states", "0"));
         }
 
-        List<TrinityVariantFiring> unit = oneCycleOrder;
+        ObjectList<TrinityVariantFiring> unit = oneCycleOrder;
         int statesVisited = Math.addExact(unit.size(), 1);
         if (statesVisited > maxStates) {
             return failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
-                    Map.of("limit", Integer.toString(maxStates), "states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf("limit", Integer.toString(maxStates), "states", Integer.toString(statesVisited)));
         }
 
-        Map<AEKey, BigInteger> unitNet = unitNet(unit);
-        Map<AEKey, BigInteger> required = TrinityCycleSeedRequirement.repeatedMinimumInputs(unit, repetitions);
+        Object2ObjectMap<AEKey, BigInteger> unitNet = unitNet(unit);
+        Object2ObjectMap<AEKey, BigInteger> required = TrinityCycleSeedRequirement.repeatedMinimumInputs(unit, repetitions);
         if (control.cancellationRequested()) {
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     CANCELLED_KEY,
-                    Map.of("states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
         }
         if (control.deadlineExceeded()) {
             return failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
-                    Map.of("reason", "timeout", "states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf("reason", "timeout", "states", Integer.toString(statesVisited)));
         }
         if (!hasInputs(initialBalances, required)) {
             return failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     NO_EXECUTABLE_ORDER_KEY,
-                    Map.of("states", Integer.toString(statesVisited)));
+                    FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
         }
 
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finalBalances = copyBalances(initialBalances);
@@ -96,15 +97,15 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
             }
         });
         return TrinityAlgorithmResult.success(TrinityCompressedSchedule.repeated(
-                List.of(),
+                ObjectList.of(),
                 unit,
                 repetitions,
-                List.of(),
+                ObjectList.of(),
                 finalBalances,
                 statesVisited));
     }
 
-    private static Map<AEKey, BigInteger> unitNet(List<TrinityVariantFiring> unit) {
+    private static Object2ObjectMap<AEKey, BigInteger> unitNet(ObjectList<TrinityVariantFiring> unit) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : unit) {
             firing.variant().netChange().forEach((key, amount) -> {
@@ -116,14 +117,14 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
         return netChange;
     }
 
-    private static boolean hasInputs(Map<AEKey, BigInteger> balances, Map<AEKey, BigInteger> required) {
+    private static boolean hasInputs(Object2ObjectMap<AEKey, BigInteger> balances, Object2ObjectMap<AEKey, BigInteger> required) {
         return required.entrySet().stream().allMatch(entry -> balances
                 .getOrDefault(entry.getKey(), BigInteger.ZERO)
                 .compareTo(entry.getValue()) >= 0);
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyBalances(
-                                                                                  Map<AEKey, BigInteger> source) {
+                                                                                  Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() < 0) {
@@ -139,7 +140,7 @@ final class AffineTrinityDeterministicRepeatScheduler implements TrinityDetermin
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

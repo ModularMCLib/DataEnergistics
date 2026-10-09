@@ -51,11 +51,6 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
     private static final String NBT_DIRECTION_MAP = "adaptive_advanced_direction_map";
 
     @Override
-    public String legacyStateKey() {
-        return NBT_SEND_LIST;
-    }
-
-    @Override
     public boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
         return true;
     }
@@ -131,7 +126,7 @@ public final class AdvancedAeAdaptiveRoute implements AdaptivePatternProviderDis
         return flushSendList(target);
     }
 
-    /** Writes directional remainder state using the legacy compatible keys. */
+    /** Writes directional remainder state using the route's current keys. */
     @Override
     public void writeState(
                            AdaptivePatternProviderDispatchTarget target,

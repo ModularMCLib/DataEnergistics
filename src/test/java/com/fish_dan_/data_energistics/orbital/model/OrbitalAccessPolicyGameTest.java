@@ -10,9 +10,8 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -29,7 +28,7 @@ public final class OrbitalAccessPolicyGameTest {
         UUID operatorId = UUID.randomUUID();
         UUID observerId = UUID.randomUUID();
         UUID outsiderId = UUID.randomUUID();
-        Map<UUID, OrbitalAccessRole> delegatedRoles = new Object2ObjectOpenHashMap<>();
+        Object2ObjectOpenHashMap<UUID, OrbitalAccessRole> delegatedRoles = new Object2ObjectOpenHashMap<>();
         delegatedRoles.put(operatorId, OrbitalAccessRole.OPERATOR);
         delegatedRoles.put(observerId, OrbitalAccessRole.OBSERVER);
 
@@ -76,11 +75,11 @@ public final class OrbitalAccessPolicyGameTest {
                         StellarErasureDeviceAction.VIEW_STATUS),
                 "An unauthorized player must not open weapon status");
 
-        Set<UUID> exemptionSnapshot = OrbitalAccessPolicy.damageExemptionSnapshot(ownerId, delegatedRoles);
+        ObjectSet<UUID> exemptionSnapshot = OrbitalAccessPolicy.damageExemptionSnapshot(ownerId, delegatedRoles);
         delegatedRoles.clear();
         helper.assertValueEqual(
                 exemptionSnapshot,
-                Set.of(ownerId, operatorId, observerId),
+                ObjectSet.of(ownerId, operatorId, observerId),
                 "Attack confirmation must freeze all authorized players into one damage-exemption snapshot");
         helper.succeed();
     }

@@ -24,14 +24,14 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -43,8 +43,6 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
     private static final String DATA_NAME = Data_Energistics.MODID + "_trinity_data_core_storage";
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 2;
     private static final String DETACHED_RUNTIMES_TAG = "detached_cpu_runtimes";
     private static final String HOSTS_TAG = "hosts";
     private static final String HOST_ID_TAG = "host_id";
@@ -58,7 +56,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     private final Object2ObjectOpenHashMap<UUID, HostState> hosts = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectLinkedOpenHashMap<RecoveryKey, DetachedRuntime> detachedRuntimes = new Object2ObjectLinkedOpenHashMap<>();
-    private final List<Tag> quarantinedRuntimeRecords = new ObjectArrayList<>();
+    private final ObjectList<Tag> quarantinedRuntimeRecords = new ObjectArrayList<>();
 
     public static TrinityDataCoreStorageSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
@@ -66,18 +64,6 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     static TrinityDataCoreStorageSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         TrinityDataCoreStorageSavedData data = new TrinityDataCoreStorageSavedData();
-        if (!tag.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            LOGGER.warn("Ignoring Trinity Data Core storage SavedData without a schema version");
-            return data;
-        }
-        int schemaVersion = tag.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            LOGGER.warn(
-                    "Ignoring Trinity Data Core storage SavedData schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return data;
-        }
         data.readDetachedRuntimes(tag);
         Tag hostsTag = tag.get(HOSTS_TAG);
         if (!(hostsTag instanceof ListTag hostList)) {
@@ -191,7 +177,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         TrinityDataCoreStorageStatus status = storageStatus(hostId, profile);
         HostState hostState = this.hosts.get(hostId);
         if (hostState == null) {
-            return new TrinityDataCoreStorageView(status, 0, List.of());
+            return new TrinityDataCoreStorageView(status, 0, ObjectList.of());
         }
         return hostState.storageView(status, firstEntry);
     }
@@ -233,13 +219,12 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        tag.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         ListTag hostList = new ListTag();
         for (Object2ObjectMap.Entry<UUID, HostState> hostEntry : this.hosts.object2ObjectEntrySet()) {
             CompoundTag hostTag = new CompoundTag();
             hostTag.putUUID(HOST_ID_TAG, hostEntry.getKey());
             ListTag entryList = new ListTag();
-            for (Map.Entry<AEKey, BigInteger> storageEntry : hostEntry.getValue().entries().entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> storageEntry : hostEntry.getValue().entries().object2ObjectEntrySet()) {
                 CompoundTag entryTag = new CompoundTag();
                 entryTag.put(KEY_TAG, storageEntry.getKey().toTagGeneric(registries));
                 entryTag.putString(AMOUNT_TAG, storageEntry.getValue().toString());
@@ -525,7 +510,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
         private BigInteger itemAmount = BigInteger.ZERO;
         private BigInteger fluidAmount = BigInteger.ZERO;
         private BigInteger otherKeyAmount = BigInteger.ZERO;
-        private List<TrinityDataCoreStorageView.Entry> cachedOrderedEntries;
+        private ObjectList<TrinityDataCoreStorageView.Entry> cachedOrderedEntries;
 
         private void insert(AEKey key, long amount) {
             BigInteger insertedAmount = BigInteger.valueOf(amount);
@@ -570,7 +555,7 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
 
         private TrinityDataCoreStorageView storageView(TrinityDataCoreStorageStatus status,
                                                        int requestedFirstEntry) {
-            List<TrinityDataCoreStorageView.Entry> orderedEntries = orderedEntries();
+            ObjectList<TrinityDataCoreStorageView.Entry> orderedEntries = orderedEntries();
             int firstEntry = TrinityDataCoreStorageView.normalizeFirstEntry(
                     requestedFirstEntry,
                     orderedEntries.size());
@@ -581,15 +566,15 @@ public class TrinityDataCoreStorageSavedData extends SavedData {
                     orderedEntries.subList(firstEntry, lastEntry));
         }
 
-        private List<TrinityDataCoreStorageView.Entry> orderedEntries() {
+        private ObjectList<TrinityDataCoreStorageView.Entry> orderedEntries() {
             if (this.cachedOrderedEntries != null) {
                 return this.cachedOrderedEntries;
             }
-            List<TrinityDataCoreStorageView.Entry> snapshot = this.entries.object2ObjectEntrySet().stream()
+            ObjectArrayList<TrinityDataCoreStorageView.Entry> snapshot = this.entries.object2ObjectEntrySet().stream()
                     .map(entry -> new TrinityDataCoreStorageView.Entry(entry.getKey(), entry.getValue()))
                     .sorted(ENTRY_ORDER)
-                    .toList();
-            this.cachedOrderedEntries = snapshot;
+                    .collect(ObjectArrayList.toList());
+            this.cachedOrderedEntries = new ObjectImmutableList<>(snapshot);
             return snapshot;
         }
 

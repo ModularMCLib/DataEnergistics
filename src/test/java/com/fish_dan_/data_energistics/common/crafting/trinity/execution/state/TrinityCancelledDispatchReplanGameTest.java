@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCycleRepeatBlock;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -27,10 +28,10 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -135,19 +136,19 @@ public final class TrinityCancelledDispatchReplanGameTest {
         BigInteger perStage = cycle ? BigInteger.ONE : total;
         var identity = new TrinityPatternIdentity("cancelled-dispatch", "recipe");
         var firing = new TrinityPlanPatternFiring(identity, output, 0, perStage,
-                Map.of(input, BigInteger.ONE), Map.of(output, BigInteger.ONE),
-                cycle ? Map.of(input, BigInteger.ONE) : Map.of(), List.of());
-        Map<AEKey, BigInteger> stageDelta = cycle ? Map.of(output, BigInteger.ONE) :
-                Map.of(input, total.negate(), output, total);
-        Map<AEKey, BigInteger> net = cycle ? Map.of(output, total) : stageDelta;
-        Map<AEKey, BigInteger> initial = Map.of(input, cycle ? BigInteger.ONE : total);
-        var stage = new TrinityPlanStage(0, cycle, IntSet.of(), List.of(firing), initial, stageDelta);
+                FastUtilCollections.mapOf(input, BigInteger.ONE), FastUtilCollections.mapOf(output, BigInteger.ONE),
+                cycle ? FastUtilCollections.mapOf(input, BigInteger.ONE) : FastUtilCollections.mapOf(), ObjectList.of());
+        Object2ObjectMap<AEKey, BigInteger> stageDelta = cycle ? FastUtilCollections.mapOf(output, BigInteger.ONE) :
+                FastUtilCollections.mapOf(input, total.negate(), output, total);
+        Object2ObjectMap<AEKey, BigInteger> net = cycle ? FastUtilCollections.mapOf(output, total) : stageDelta;
+        Object2ObjectMap<AEKey, BigInteger> initial = FastUtilCollections.mapOf(input, cycle ? BigInteger.ONE : total);
+        var stage = new TrinityPlanStage(0, cycle, IntSet.of(), ObjectList.of(firing), initial, stageDelta);
         var builder = TrinityCraftingPlan.builder().finalOutput(new GenericStack(output, count))
                 .bytes(BigInteger.ZERO).catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW)
-                .initialExpectedInputs(initial).patternFirings(Map.of(identity, total)).stages(List.of(stage))
+                .initialExpectedInputs(initial).patternFirings(FastUtilCollections.mapOf(identity, total)).stages(ObjectList.of(stage))
                 .stageOrder(IntList.of(0)).targetNetChange(net);
         if (cycle) {
-            builder.cycleRepeatBlocks(List.of(new TrinityCycleRepeatBlock(0, IntList.of(0), total, initial, net)))
+            builder.cycleRepeatBlocks(ObjectList.of(new TrinityCycleRepeatBlock(0, IntList.of(0), total, initial, net)))
                     .minimumSeed(initial);
         }
         return builder.build();

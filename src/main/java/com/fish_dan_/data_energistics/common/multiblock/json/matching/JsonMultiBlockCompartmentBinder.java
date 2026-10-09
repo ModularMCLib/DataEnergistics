@@ -3,14 +3,11 @@ package com.fish_dan_.data_energistics.common.multiblock.json.matching;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentHost;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
 
-import net.minecraft.core.BlockPos;
-
 import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.StructureMatchResult;
 import com.modularmc.mdl.api.multiblock.StructureWorldView;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Binds JSON-declared compartment symbols to a multiblock host after MDLib matching succeeds.
@@ -37,7 +34,7 @@ public interface JsonMultiBlockCompartmentBinder {
     @Nullable
     PatternDiagnostic validate(StructureWorldView world,
                                StructureMatchResult result,
-                               Map<BlockPos, CompartmentType> declaredCompartments);
+                               Long2ObjectMap<CompartmentType> declaredCompartments);
 
     /**
      * Binds all declared compartment parts to the host for a formed named structure.
@@ -54,7 +51,7 @@ public interface JsonMultiBlockCompartmentBinder {
     void bind(StructureWorldView world,
               String structureName,
               CompartmentHost host,
-              Map<BlockPos, CompartmentType> declaredCompartments);
+              Long2ObjectMap<CompartmentType> declaredCompartments);
 
     /**
      * Recreates missing host bindings when a structure remains formed across a recheck.
@@ -71,7 +68,7 @@ public interface JsonMultiBlockCompartmentBinder {
     void ensureBound(StructureWorldView world,
                      String structureName,
                      CompartmentHost host,
-                     Map<BlockPos, CompartmentType> declaredCompartments);
+                     Long2ObjectMap<CompartmentType> declaredCompartments);
 
     /**
      * Unbinds every currently registered compartment from a named host structure.

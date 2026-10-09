@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Quantity-free identities selected by one previously verified local DAG route.
@@ -12,4 +12,4 @@ import java.util.List;
  * @param output             exact competition output
  * @param selectedIdentities stable real pattern identities; firing counts remain request-local
  */
-public record TrinityAcyclicRouteHint(AEKey output, List<TrinityPatternIdentity> selectedIdentities) {}
+public record TrinityAcyclicRouteHint(AEKey output, ObjectList<TrinityPatternIdentity> selectedIdentities) {}

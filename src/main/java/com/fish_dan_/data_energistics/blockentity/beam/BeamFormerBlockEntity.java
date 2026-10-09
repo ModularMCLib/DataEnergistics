@@ -30,10 +30,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.List;
 
 public final class BeamFormerBlockEntity extends AENetworkedBlockEntity implements BeamEndpoint {
@@ -53,8 +52,8 @@ public final class BeamFormerBlockEntity extends AENetworkedBlockEntity implemen
     }
 
     @Override
-    public ObjectSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return ObjectSets.singleton(beamFacing().getOpposite());
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
+        return EnumSet.of(beamFacing().getOpposite());
     }
 
     @Override

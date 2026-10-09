@@ -16,9 +16,11 @@ import java.util.Locale;
  * capacities remain representable without falling back to AE2's binary byte units.
  * </p>
  */
-public final class AmountFormatter {
+public final class FormattingUtils {
 
     private static final BigInteger UNIT_BASE = BigInteger.valueOf(1_000L);
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
+    private static final long NANOS_PER_SECOND = 1_000_000_000L;
     private static final String[] COMPACT_UNITS = {
             "", "K", "M", "G", "T", "P", "E", "Z", "Y", "B", "N", "D", "C", "S", "O", "Q", "X", "W", "V",
             "U", "Tt", "Gt", "Mt", "St", "Ot", "Nt", "Dt", "Ct", "Lt", "Kt", "Jt", "It", "Ht", "Gtt", "Ett",
@@ -26,7 +28,35 @@ public final class AmountFormatter {
     };
     private static final BigDecimal SCIENTIFIC_THRESHOLD = new BigDecimal(UNIT_BASE.pow(COMPACT_UNITS.length));
 
-    private AmountFormatter() {}
+    private FormattingUtils() {}
+
+    /**
+     * Formats a non-negative planning duration with a compact unit selected from microseconds, milliseconds, and
+     * seconds.
+     *
+     * @param nanos duration measured with {@link System#nanoTime()}
+     * @return duration rounded to one decimal place with a dynamically selected unit
+     */
+    public static String formatDuration(long nanos) {
+        if (nanos < 0L) {
+            throw new IllegalArgumentException("A Trinity duration must not be negative");
+        }
+        if (nanos < NANOS_PER_MILLISECOND) {
+            return formatDuration(nanos, 3, " μs");
+        }
+        if (nanos < NANOS_PER_SECOND) {
+            return formatDuration(nanos, 6, " ms");
+        }
+        return formatDuration(nanos, 9, " s");
+    }
+
+    private static String formatDuration(long nanos, int scale, String unit) {
+        BigDecimal rounded = BigDecimal.valueOf(nanos, scale).setScale(1, RoundingMode.HALF_EVEN);
+        if (nanos > 0L && rounded.signum() == 0) {
+            return "<0.1" + unit;
+        }
+        return rounded.stripTrailingZeros().toPlainString() + unit;
+    }
 
     /**
      * Parses and formats one signed decimal integer.

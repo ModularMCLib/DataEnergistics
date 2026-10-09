@@ -43,13 +43,15 @@ import de.ellpeck.naturesaura.blocks.multi.Multiblocks;
 import de.ellpeck.naturesaura.blocks.tiles.BlockEntityWoodStand;
 import de.ellpeck.naturesaura.recipes.ModRecipes;
 import de.ellpeck.naturesaura.recipes.TreeRitualRecipe;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongComparators;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Comparator;
 
 /** Native tree growth and ritual execution, bound permanently to the soil below the sapling. */
 public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
@@ -74,10 +76,12 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
     @Override
     public boolean recognizes(ServerLevel level, BlockPos anchor) {
         if (!level.isLoaded(anchor) || level.getBlockState(anchor).isAir()) return false;
-        for (BlockPos stand : positions(anchor, 'W')) {
+        for (long packedStand : positions(anchor, 'W')) {
+            BlockPos stand = BlockPos.of(packedStand);
             if (!level.isLoaded(stand) || !(level.getBlockEntity(stand) instanceof BlockEntityWoodStand)) return false;
         }
-        for (BlockPos powder : positions(anchor, 'G')) {
+        for (long packedPowder : positions(anchor, 'G')) {
+            BlockPos powder = BlockPos.of(packedPowder);
             if (!level.isLoaded(powder) || !ModBlocks.GOLD_POWDER.defaultBlockState().canSurvive(level, powder)) return false;
         }
         return true;
@@ -120,8 +124,8 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
         if (!recognizes(level, anchor)) return null;
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof TreeRitualRecipe recipe) || recipe.getType() != ModRecipes.TREE_RITUAL_TYPE) return null;
-        var stands = positions(anchor, 'W');
-        var powders = positions(anchor, 'G');
+        LongList stands = positions(anchor, 'W');
+        LongList powders = positions(anchor, 'G');
         if (recipe.ingredients.isEmpty() || recipe.ingredients.size() > stands.size()) return null;
         var required = new ObjectArrayList<>(recipe.ingredients);
         required.add(recipe.saplingType);
@@ -132,18 +136,18 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
         if (!(sapling.getItem() instanceof BlockItem blockItem) || !(blockItem.getBlock() instanceof SaplingBlock)) return null;
         BlockPos saplingPos = anchor.above();
         if (!level.getBlockState(saplingPos).isAir() || !blockItem.getBlock().defaultBlockState().canSurvive(level, saplingPos)) return null;
-        for (BlockPos stand : stands) if (!((BlockEntityWoodStand) level.getBlockEntity(stand)).items.getStackInSlot(0).isEmpty()) return null;
-        for (BlockPos powder : powders) if (!level.getBlockState(powder).isAir()) return null;
+        for (long packedStand : stands) if (!((BlockEntityWoodStand) level.getBlockEntity(BlockPos.of(packedStand))).items.getStackInSlot(0).isEmpty()) return null;
+        for (long packedPowder : powders) if (!level.getBlockState(BlockPos.of(packedPowder)).isAir()) return null;
         if (!selectsRecipe(level, recipeId, sapling, assigned.subList(0, recipe.ingredients.size()), stands, anchor)) return null;
         var progress = new CompoundTag();
         progress.putLong("anchor", anchor.asLong());
         progress.putLong("sapling", saplingPos.asLong());
         progress.putString("recipe", recipeId.toString());
-        progress.putLongArray("stands", stands.stream().mapToLong(BlockPos::asLong).toArray());
-        progress.putLongArray("powders", powders.stream().mapToLong(BlockPos::asLong).toArray());
-        var changing = new ObjectArrayList<>(powders);
-        changing.add(saplingPos);
-        progress.putLongArray("changing_positions", changing.stream().mapToLong(BlockPos::asLong).toArray());
+        progress.putLongArray("stands", stands.toLongArray());
+        progress.putLongArray("powders", powders.toLongArray());
+        var changing = new LongArrayList(powders);
+        changing.add(saplingPos.asLong());
+        progress.putLongArray("changing_positions", changing.toLongArray());
         progress.putLong("capture_min", anchor.offset(-12, 0, -12).asLong());
         progress.putLong("capture_max", anchor.offset(13, 33, 13).asLong());
         progress.put("sapling_item", sapling.save(level.registryAccess()));
@@ -156,14 +160,14 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos anchor, CompoundTag preparation) {
-        var occupied = new ObjectArrayList<BlockPos>();
-        occupied.add(anchor);
-        occupied.add(anchor.above());
-        for (long stand : preparation.getLongArray("stands")) occupied.add(BlockPos.of(stand));
+    public LongList occupiedPositions(ServerLevel level, BlockPos anchor, CompoundTag preparation) {
+        var occupied = new LongArrayList();
+        occupied.add(anchor.asLong());
+        occupied.add(anchor.above().asLong());
+        for (long stand : preparation.getLongArray("stands")) occupied.add(stand);
         for (long powder : preparation.getLongArray("powders")) {
-            occupied.add(BlockPos.of(powder));
-            occupied.add(BlockPos.of(powder).below());
+            occupied.add(powder);
+            occupied.add(BlockPos.of(powder).below().asLong());
         }
         return occupied;
     }
@@ -182,7 +186,9 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
             }
             return resumeRitual(operation, saplingPos);
         }
-        for (var occupied : occupiedPositions(operation.level(), anchor, progress)) if (!operation.level().isLoaded(occupied)) return false;
+        for (long packedPosition : occupiedPositions(operation.level(), anchor, progress)) {
+            if (!operation.level().isLoaded(BlockPos.of(packedPosition))) return false;
+        }
         if (!recognizes(operation.level(), anchor)) {
             PackagedMachineClaims.get(operation.level()).blockReplaced(anchor);
             return true;
@@ -227,7 +233,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
                 BlockPos pos = BlockPos.of(powders[index]);
                 var key = AEItemKey.of(ModBlocks.GOLD_POWDER.asItem());
                 if (operation.available(key).compareTo(BigInteger.ONE) < 0 || !operation.level().getBlockState(pos).isAir()) return false;
-                PackagedMachineClaims.get(operation.level()).markChanging(ObjectList.of(pos), operation.id());
+                PackagedMachineClaims.get(operation.level()).markChanging(LongList.of(pos.asLong()), operation.id());
                 if (!operation.level().setBlockAndUpdate(pos, ModBlocks.GOLD_POWDER.defaultBlockState())) return false;
                 operation.delivered(key, 1);
                 progress.putInt("powder_cursor", index + 1);
@@ -241,7 +247,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
         if (progress.getString("phase").equals("sapling")) {
             if (!operation.level().getBlockState(saplingPos).isAir() || !saplingBlock.defaultBlockState().canSurvive(operation.level(), saplingPos)) return false;
             if (operation.available(AEItemKey.of(sapling)).compareTo(BigInteger.ONE) < 0) return false;
-            PackagedMachineClaims.get(operation.level()).markChanging(ObjectList.of(saplingPos), operation.id());
+            PackagedMachineClaims.get(operation.level()).markChanging(LongList.of(saplingPos.asLong()), operation.id());
             if (!operation.level().setBlockAndUpdate(saplingPos, saplingBlock.defaultBlockState())) return false;
             operation.delivered(AEItemKey.of(sapling), 1);
             progress.putString("phase", "growing");
@@ -256,7 +262,7 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
                     if (!operation.level().hasChunk(x, z)) return false;
                 }
             }
-            PackagedMachineClaims.get(operation.level()).markChanging(ObjectList.of(saplingPos), operation.id());
+            PackagedMachineClaims.get(operation.level()).markChanging(LongList.of(saplingPos.asLong()), operation.id());
             // Two native stages, no bone meal item or fake player. The grower emits BlockGrowFeatureEvent.
             var changes = PackagedBlockChanges.record(operation.level(), () -> PackagedEntityCapture.run(operation.level(), operation.id(), () -> PackagedMachineClaims.get(operation.level()).nativeChange(operation.id(), () -> {
                 for (int attempt = 0; attempt < 2; attempt++) {
@@ -329,12 +335,12 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
     }
 
     private static boolean selectsRecipe(ServerLevel level, ResourceLocation recipeId, ItemStack sapling,
-                                         ObjectList<ItemStack> materials, ObjectList<BlockPos> stands, BlockPos anchor) {
+                                         ObjectList<ItemStack> materials, LongList stands, BlockPos anchor) {
         for (var holder : level.getRecipeManager().getAllRecipesFor(ModRecipes.TREE_RITUAL_TYPE)) {
             if (!holder.value().saplingType.test(sapling)) continue;
             var required = new ObjectArrayList<>(holder.value().ingredients);
             boolean matches = Multiblocks.TREE_RITUAL.forEach(anchor.above(), 'W', (pos, matcher) -> {
-                int slot = stands.indexOf(pos);
+                int slot = stands.indexOf(pos.asLong());
                 if (slot >= materials.size()) return true;
                 ItemStack material = materials.get(slot);
                 for (int index = required.size() - 1; index >= 0; index--) {
@@ -479,13 +485,13 @@ public final class NatureForestRitualAdapter implements PackagedMachineAdapter {
         for (int index = 0; index < positions(BlockPos.ZERO, 'G').size(); index++) ingredients.add(Ingredient.of(ModBlocks.GOLD_POWDER));
     }
 
-    private static ObjectList<BlockPos> positions(BlockPos anchor, char marker) {
-        var result = new ObjectArrayList<BlockPos>();
+    private static LongList positions(BlockPos anchor, char marker) {
+        var result = new LongArrayList();
         Multiblocks.TREE_RITUAL.forEach(anchor.above(), marker, (position, matcher) -> {
-            result.add(position.immutable());
+            result.add(position.asLong());
             return true;
         });
-        result.sort(Comparator.comparingLong(BlockPos::asLong));
+        result.sort(LongComparators.NATURAL_COMPARATOR);
         return result;
     }
 

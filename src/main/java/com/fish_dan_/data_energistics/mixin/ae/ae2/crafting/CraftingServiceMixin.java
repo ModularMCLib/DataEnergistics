@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.grid.VirtualGridBridge;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
-import com.fish_dan_.data_energistics.common.crafting.LongAmountMath;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.EncodedPatternDynamicOutput;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCpuStorageCapacity;
@@ -62,6 +61,8 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.RoutedCraftingPatte
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.CpuSelectionMode;
@@ -97,10 +98,13 @@ import net.minecraft.world.level.Level;
 import com.google.common.collect.ImmutableSet;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -160,7 +164,7 @@ public abstract class CraftingServiceMixin
      * Transient per-hardware cursors balance successful auto-submissions without coupling unrelated CPU groups.
      */
     @Unique
-    private final Map<CraftingCpuSelectionGroup, String> dataEnergistics$nextCpuSubmitByGroup = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<CraftingCpuSelectionGroup, String> dataEnergistics$nextCpuSubmitByGroup = new Object2ObjectOpenHashMap<>();
 
     /**
      * Runtime-derived Governor is rebuilt only when the live dispatch schema changes.
@@ -292,7 +296,7 @@ public abstract class CraftingServiceMixin
         TrinityPlanningLimits planningLimits = TrinityPlanningLimits.capture(settings);
         Supplier<Future<ICraftingPlan>> nativeCalculation = () -> original.call(level, simRequester, what, amount, strategy);
         if (DataEnergisticsEntrypointLoader.snapshot().hasReusableInputRules()) {
-            var capture = data_energistics$captureReusableGraph((ServerLevel) level, actionSource, what, List.of(), planningLimits);
+            var capture = data_energistics$captureReusableGraph((ServerLevel) level, actionSource, what, ObjectList.of(), planningLimits);
             return new CapturedPlanningFuture<>(capture, captured -> {
                 if (!captured.successful()) {
                     return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
@@ -328,7 +332,7 @@ public abstract class CraftingServiceMixin
             TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.internal_error"),
-                    Map.of(
+                    FastUtilCollections.mapOf(
                             "key", exception.key().toString(),
                             "phase", "inventory_capture",
                             "reason", exception.getCause().getClass().getSimpleName()));
@@ -378,7 +382,7 @@ public abstract class CraftingServiceMixin
 
     @Override
     public CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>> data_energistics$captureReusableGraph(
-                                                                                                                         ServerLevel level, IActionSource source, AEKey target, List<AEItemKey> additionalInventoryStates,
+                                                                                                                         ServerLevel level, IActionSource source, AEKey target, ObjectList<AEItemKey> additionalInventoryStates,
                                                                                                                          TrinityPlanningLimits limits) {
         if (this.dataEnergistics$reusableGraphCapture == null) {
             this.dataEnergistics$reusableGraphCapture = new ReusableInputGraphCaptureService(new ReusableInputGraphCaptureService.Source() {
@@ -394,12 +398,12 @@ public abstract class CraftingServiceMixin
                 }
 
                 @Override
-                public List<IPatternDetails> patternsFor(AEKey primaryOutput) {
-                    return List.copyOf(craftingProviders.getCraftingFor(primaryOutput));
+                public ObjectList<IPatternDetails> patternsFor(AEKey primaryOutput) {
+                    return new ObjectArrayList<>(craftingProviders.getCraftingFor(primaryOutput));
                 }
 
                 @Override
-                public List<AEItemKey> visibleItemKeys() {
+                public ObjectList<AEItemKey> visibleItemKeys() {
                     ObjectArrayList<AEItemKey> keys = new ObjectArrayList<>();
                     for (var entry : grid.getStorageService().getInventory().getAvailableStacks()) {
                         if (entry.getKey() instanceof AEItemKey item) {
@@ -496,7 +500,7 @@ public abstract class CraftingServiceMixin
                 TrinityPlanningDiagnosticCode.NO_ELIGIBLE_TRINITY_CPU,
                 Component.translatable(
                         "gui.data_energistics.trinity_planning.dynamic_output_requires_trinity_cpu"),
-                Map.of(
+                FastUtilCollections.mapOf(
                         "graphRevision", Long.toString(graphRevision),
                         "target", target.toString()));
         return CompletableFuture.completedFuture(TrinityDiagnosedCraftingPlan.forDiagnostic(
@@ -520,7 +524,7 @@ public abstract class CraftingServiceMixin
             TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.STALE_GRAPH,
                     Component.translatable("gui.data_energistics.trinity_planning.graph_unavailable"),
-                    Map.of("request", Long.toString(requestId)));
+                    FastUtilCollections.mapOf("request", Long.toString(requestId)));
             if (DataEnergisticsConfiguration.INSTANCE.developer.craftingServiceLogging) {
                 Data_Energistics.LOGGER.info(
                         "Trinity planning fallback request={} target={} mode={} revision=-1 reason={} metadata={}",
@@ -632,7 +636,7 @@ public abstract class CraftingServiceMixin
 
     @Inject(method = "updateCPUClusters", at = @At("RETURN"))
     private void dataEnergistics$updateTrinityDataCoreCpuClusters(CallbackInfo ci) {
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> scannedRuntimes = new Reference2ReferenceOpenHashMap<>();
+        Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> scannedRuntimes = new Reference2ReferenceOpenHashMap<>();
         for (IGridNode node : this.grid.getMachineNodes(TrinityInformationExchangeDepotBlockEntity.class)) {
             TrinityInformationExchangeDepotBlockEntity hatch = (TrinityInformationExchangeDepotBlockEntity) node.getOwner();
             TrinityDataCoreCraftingRuntime runtime = hatch.boundCraftingRuntime();
@@ -641,7 +645,7 @@ public abstract class CraftingServiceMixin
             }
         }
 
-        List<TrinityDataCoreCraftingRuntime> reconciledRuntimes = this.dataEnergistics$trinityCraftingRuntimeRegistry.reconcile(scannedRuntimes);
+        ObjectList<TrinityDataCoreCraftingRuntime> reconciledRuntimes = this.dataEnergistics$trinityCraftingRuntimeRegistry.reconcile(scannedRuntimes);
         CraftingService service = (CraftingService) (Object) this;
         for (TrinityDataCoreCraftingRuntime runtime : reconciledRuntimes) {
             runtime.restoreLinks(service);
@@ -657,7 +661,7 @@ public abstract class CraftingServiceMixin
         CraftingDispatchGovernor governor = this.dataEnergistics$dispatchGovernor;
         MinecraftServer server = this.grid.getPivot().getLevel().getServer();
         long gridGeneration = data_energistics$craftingProviderPublicationIndex().publicationScope();
-        List<TrinityDataCoreCraftingRuntime> runtimes = dataEnergistics$trinityDataCoreRuntimes();
+        ObjectList<TrinityDataCoreCraftingRuntime> runtimes = dataEnergistics$trinityDataCoreRuntimes();
         if (runtimes.isEmpty()) {
             CraftingDispatchCompletion completion = new GridCraftingDispatchCompletion(
                     "publicationScope=" + gridGeneration + ", gridIdentity=" + System.identityHashCode(this.grid),
@@ -673,7 +677,7 @@ public abstract class CraftingServiceMixin
         CraftingDispatchWindow dispatchWindow = CraftingDispatchWindow.create(
                 dispatchBudget.dispatchLimits(),
                 TrinityServerTickMetrics.dispatchBudget(server));
-        List<TrinityDataCoreCraftingRuntime> preparedRuntimes = runtimes;
+        ObjectList<TrinityDataCoreCraftingRuntime> preparedRuntimes = runtimes;
         try {
             for (TrinityDataCoreCraftingRuntime runtime : runtimes) {
                 runtime.prepareTick();
@@ -684,9 +688,9 @@ public abstract class CraftingServiceMixin
                     gridGeneration,
                     failure);
             governor.recordUnexpectedFailure("Grid dispatch preparation", failure);
-            preparedRuntimes = List.of();
+            preparedRuntimes = ObjectList.of();
         }
-        List<TrinityDataCoreCraftingRuntime> dispatchRuntimes = preparedRuntimes;
+        ObjectList<TrinityDataCoreCraftingRuntime> dispatchRuntimes = preparedRuntimes;
         GridCraftingDispatchParticipant participant = new GridCraftingDispatchParticipant(
                 "publicationScope=" + gridGeneration + ", gridIdentity=" + System.identityHashCode(this.grid),
                 dispatchRuntimes,
@@ -777,7 +781,7 @@ public abstract class CraftingServiceMixin
 
     @Unique
     private void dataEnergistics$refreshLastProcessedTrinityCraftingLogicChange(
-                                                                                List<TrinityDataCoreCraftingRuntime> runtimes) {
+                                                                                ObjectList<TrinityDataCoreCraftingRuntime> runtimes) {
         long latestChange = 0L;
         for (TrinityDataCoreCraftingRuntime runtime : runtimes) {
             latestChange = Math.max(latestChange, runtime.getLastModifiedOnTick());
@@ -796,7 +800,7 @@ public abstract class CraftingServiceMixin
     @Unique
     private void dataEnergistics$completeTrinityDispatchTick(MinecraftServer server,
                                                              long gridGeneration,
-                                                             List<TrinityDataCoreCraftingRuntime> runtimes,
+                                                             ObjectList<TrinityDataCoreCraftingRuntime> runtimes,
                                                              CraftingDispatchWindow dispatchWindow,
                                                              CraftingDispatchGovernor governor) {
         dataEnergistics$refreshLastProcessedTrinityCraftingLogicChange(runtimes);
@@ -892,7 +896,7 @@ public abstract class CraftingServiceMixin
                      ordinal = 0))
     private void dataEnergistics$collectTrinityDataCoreCpuWaitingKeys(CallbackInfo ci) {
         for (TrinityDataCoreCraftingRuntime runtime : dataEnergistics$trinityDataCoreRuntimes()) {
-            runtime.getAllWaitingFor(this.currentlyCrafting);
+            runtime.getAllWaitingFor(new ObjectOpenHashSet<>(this.currentlyCrafting));
         }
     }
 
@@ -1024,7 +1028,7 @@ public abstract class CraftingServiceMixin
     private long dataEnergistics$getTrinityDataCoreRequestedAmount(AEKey what, Operation<Long> original) {
         long requested = original.call(what);
         for (TrinityDataCoreCraftingRuntime runtime : dataEnergistics$trinityDataCoreRuntimes()) {
-            requested = LongAmountMath.saturatingAddNonNegative(requested, runtime.getRequestedAmount(what));
+            requested = AmountMath.addNonNegative(requested, runtime.getRequestedAmount(what));
         }
         return requested;
     }
@@ -1037,7 +1041,7 @@ public abstract class CraftingServiceMixin
     }
 
     @Unique
-    private List<TrinityDataCoreCraftingRuntime> dataEnergistics$trinityDataCoreRuntimes() {
+    private ObjectList<TrinityDataCoreCraftingRuntime> dataEnergistics$trinityDataCoreRuntimes() {
         return this.dataEnergistics$trinityCraftingRuntimeRegistry.snapshot();
     }
 

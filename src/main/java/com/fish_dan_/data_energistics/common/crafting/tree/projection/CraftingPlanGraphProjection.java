@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCycleRepeatBlock;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -37,11 +38,11 @@ import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /** Projects only retained planning facts; native AE2 pattern/input binding remains explicitly estimated. */
 public final class CraftingPlanGraphProjection {
@@ -81,10 +82,10 @@ public final class CraftingPlanGraphProjection {
 
         private final Header header;
         private final KeyCounter available;
-        private final Map<AEKey, Amounts> materials = new Object2ObjectLinkedOpenHashMap<>();
-        private final List<Process> processes = new ObjectArrayList<>();
-        private final List<Edge> edges = new ObjectArrayList<>();
-        private final List<Cycle> cycles = new ObjectArrayList<>();
+        private final Object2ObjectMap<AEKey, Amounts> materials = new Object2ObjectLinkedOpenHashMap<>();
+        private final ObjectList<Process> processes = new ObjectArrayList<>();
+        private final ObjectList<Edge> edges = new ObjectArrayList<>();
+        private final ObjectList<Cycle> cycles = new ObjectArrayList<>();
         private int nextId;
 
         private Projection(Header header, KeyCounter available) {
@@ -118,8 +119,8 @@ public final class CraftingPlanGraphProjection {
         }
 
         private void firing(int stage, String identity, int variant, AEKey primary, BigInteger count,
-                            boolean estimated, IntList memberships, Map<AEKey, BigInteger> inputs,
-                            Map<AEKey, BigInteger> outputs, Map<AEKey, BigInteger> remainders) {
+                            boolean estimated, IntList memberships, Object2ObjectMap<AEKey, BigInteger> inputs,
+                            Object2ObjectMap<AEKey, BigInteger> outputs, Object2ObjectMap<AEKey, BigInteger> remainders) {
             int processId = this.nextId++;
             this.processes.add(new Process(processId, stage, identity, variant, primary, count, estimated, memberships));
             inputs.forEach((key, value) -> {
@@ -132,7 +133,7 @@ public final class CraftingPlanGraphProjection {
             outputEdges(processId, count, remainders, Role.REMAINDER);
         }
 
-        private void outputEdges(int process, BigInteger count, Map<AEKey, BigInteger> outputs, Role role) {
+        private void outputEdges(int process, BigInteger count, Object2ObjectMap<AEKey, BigInteger> outputs, Role role) {
             outputs.forEach((key, value) -> {
                 BigInteger amount = value.multiply(count);
                 Amounts material = material(key);
@@ -142,7 +143,7 @@ public final class CraftingPlanGraphProjection {
         }
 
         private void cycle(int id, int ordinal, IntList stages, BigInteger repetitions,
-                           Map<AEKey, BigInteger> seed, Map<AEKey, BigInteger> net) {
+                           Object2ObjectMap<AEKey, BigInteger> seed, Object2ObjectMap<AEKey, BigInteger> net) {
             IntSet ids = new IntLinkedOpenHashSet();
             IntSet processIds = new IntLinkedOpenHashSet();
             for (Process process : this.processes) {
@@ -180,7 +181,7 @@ public final class CraftingPlanGraphProjection {
             });
             int stage = 0;
             for (TrinityVariantFiring firing : diagnostic.partialPlan()
-                    .map(TrinityPlanningDiagnostic.PartialPlan::selectedFirings).orElse(List.of())) {
+                    .map(TrinityPlanningDiagnostic.PartialPlan::selectedFirings).orElse(ObjectList.of())) {
                 evidenceFiring(stage++, firing, BigInteger.ONE, IntList.of());
             }
             // Proven local cycle schedules may be displayed as evidence, never as an executable complete route.
@@ -212,7 +213,7 @@ public final class CraftingPlanGraphProjection {
 
         private void evidenceFiring(int stage, TrinityVariantFiring firing, BigInteger repetitions, IntList memberships) {
             var variant = firing.variant();
-            Map<AEKey, BigInteger> remainders = new Object2ObjectLinkedOpenHashMap<>(variant.outputs());
+            Object2ObjectMap<AEKey, BigInteger> remainders = new Object2ObjectLinkedOpenHashMap<>(variant.outputs());
             variant.declaredOutputs().forEach((key, amount) -> remainders.merge(key, amount.negate(), BigInteger::add));
             remainders.values().removeIf(amount -> amount.signum() == 0);
             firing(stage, variant.patternIdentity().publicationEncoding(), variant.ordinal(), variant.primaryOutput(),
@@ -224,12 +225,12 @@ public final class CraftingPlanGraphProjection {
             plan.usedItems().forEach(entry -> material(entry.getKey()).stored = BigInteger.valueOf(entry.getLongValue()));
             plan.missingItems().forEach(entry -> material(entry.getKey()).missing = BigInteger.valueOf(entry.getLongValue()));
             int stage = 0;
-            for (Map.Entry<IPatternDetails, Long> entry : plan.patternTimes().entrySet()) {
+            for (var entry : plan.patternTimes().entrySet()) {
                 IPatternDetails pattern = entry.getKey();
                 BigInteger count = BigInteger.valueOf(entry.getValue());
-                Map<AEKey, BigInteger> outputs = new Object2ObjectLinkedOpenHashMap<>();
+                Object2ObjectMap<AEKey, BigInteger> outputs = new Object2ObjectLinkedOpenHashMap<>();
                 pattern.getOutputs().forEach(output -> outputs.merge(output.what(), BigInteger.valueOf(output.amount()), BigInteger::add));
-                Map<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
+                Object2ObjectMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
                 for (var input : pattern.getInputs()) {
                     GenericStack[] candidates = input.getPossibleInputs();
                     if (candidates.length == 1) {
@@ -245,7 +246,7 @@ public final class CraftingPlanGraphProjection {
                     }
                 }
                 firing(stage, "ae2-estimate:" + stage, 0, pattern.getPrimaryOutput().what(), count,
-                        true, IntList.of(), inputs, outputs, Map.of());
+                        true, IntList.of(), inputs, outputs, FastUtilCollections.mapOf());
                 stage++;
             }
             plan.emittedItems().forEach(entry -> {
@@ -297,7 +298,7 @@ public final class CraftingPlanGraphProjection {
         }
 
         private CraftingPlanGraph build() {
-            List<Node> nodes = new ObjectArrayList<>();
+            ObjectList<Node> nodes = new ObjectArrayList<>();
             this.materials.forEach((key, amounts) -> {
                 BigInteger required = amounts.required.max(amounts.input).max(amounts.stored.add(amounts.missing).add(amounts.unresolved));
                 long stock = this.available.get(key);

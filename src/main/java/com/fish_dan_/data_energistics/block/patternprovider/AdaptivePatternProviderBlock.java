@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.block.patternprovider;
 
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
-import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseEntityBlock;
 import appeng.block.crafting.PatternProviderBlock;
@@ -98,7 +98,7 @@ public class AdaptivePatternProviderBlock<T extends AdaptivePatternProviderBlock
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hitResult) {
-        ItemInteractionResult memoryCardResult = BlockMemoryCardInteractionHelper.useOnBlockEntity(stack, level, pos, player);
+        ItemInteractionResult memoryCardResult = MemoryCardInteractionUtils.useOnBlockEntity(stack, level, pos, player);
         if (memoryCardResult.consumesAction()) {
             return memoryCardResult;
         }

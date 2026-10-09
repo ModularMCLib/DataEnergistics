@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
@@ -99,8 +99,8 @@ public interface PackagedMachineAdapter {
      * immediately after prepare on the same server thread; every position must be loaded. The dispatcher acquires
      * the complete set atomically and persists it, preventing overlapping machines from sharing a pedestal.
      */
-    default ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        return ObjectList.of(position);
+    default LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        return LongList.of(position.asLong());
     }
 
     /**

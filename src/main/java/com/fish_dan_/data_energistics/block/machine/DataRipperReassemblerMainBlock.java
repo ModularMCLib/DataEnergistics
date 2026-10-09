@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.block.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
-import com.fish_dan_.data_energistics.common.memorycard.BlockMemoryCardInteractionHelper;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 
 import appeng.hooks.WrenchHook;
 import appeng.menu.MenuOpener;
@@ -45,7 +45,7 @@ public class DataRipperReassemblerMainBlock extends DataRipperReassemblerBlock i
                                               Player player,
                                               InteractionHand hand,
                                               BlockHitResult hitResult) {
-        ItemInteractionResult memoryCardResult = BlockMemoryCardInteractionHelper.useOnBlockEntity(stack, level, pos, player);
+        ItemInteractionResult memoryCardResult = MemoryCardInteractionUtils.useOnBlockEntity(stack, level, pos, player);
         if (memoryCardResult.consumesAction()) {
             return memoryCardResult;
         }

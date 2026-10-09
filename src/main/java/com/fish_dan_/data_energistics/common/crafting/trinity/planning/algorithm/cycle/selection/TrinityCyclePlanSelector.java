@@ -23,21 +23,21 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -88,8 +88,8 @@ public final class TrinityCyclePlanSelector {
     public TrinityAlgorithmResult<TrinityCycleSelection> select(
                                                                 TrinityStronglyConnectedComponent component,
                                                                 TrinityCycleDemand demand,
-                                                                Map<AEKey, BigInteger> available,
-                                                                Set<AEKey> producibleInputs,
+                                                                Object2ObjectMap<AEKey, BigInteger> available,
+                                                                ObjectSet<AEKey> producibleInputs,
                                                                 int maxStates,
                                                                 TrinityPlanningMode mode,
                                                                 TrinityPlanningControl control) {
@@ -115,8 +115,8 @@ public final class TrinityCyclePlanSelector {
     public TrinityAlgorithmResult<TrinityCycleSelection> select(
                                                                 TrinityStronglyConnectedComponent component,
                                                                 TrinityCycleDemand demand,
-                                                                Map<AEKey, BigInteger> available,
-                                                                Set<AEKey> producibleInputs,
+                                                                Object2ObjectMap<AEKey, BigInteger> available,
+                                                                ObjectSet<AEKey> producibleInputs,
                                                                 int maxStates,
                                                                 TrinityPlanningMode mode,
                                                                 TrinityPlanningControl control,
@@ -137,8 +137,8 @@ public final class TrinityCyclePlanSelector {
     private TrinityAlgorithmResult<TrinityCycleSelection> selectRetainingSeed(
                                                                               TrinityStronglyConnectedComponent component,
                                                                               TrinityCycleDemand demand,
-                                                                              Map<AEKey, BigInteger> inventory,
-                                                                              Set<AEKey> producibleInputs,
+                                                                              Object2ObjectMap<AEKey, BigInteger> inventory,
+                                                                              ObjectSet<AEKey> producibleInputs,
                                                                               int maxStates,
                                                                               TrinityPlanningMode mode,
                                                                               TrinityPlanningControl control,
@@ -156,7 +156,7 @@ public final class TrinityCyclePlanSelector {
         long accumulatedNanos = 0L;
         int seedRefinementPasses = 0;
         TrinityPlanQuality retainedQuality = TrinityPlanQuality.PROVED_OPTIMAL;
-        Set<AEKey> internalKeys = new ObjectOpenHashSet<>(component.keys());
+        ObjectSet<AEKey> internalKeys = new ObjectOpenHashSet<>(component.keys());
         while (true) {
             TrinityAlgorithmResult<TrinityCycleSelection> selectedResult = selectOnce(
                     component,
@@ -181,7 +181,7 @@ public final class TrinityCyclePlanSelector {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.internal_error"),
-                        Map.of(
+                        FastUtilCollections.mapOf(
                                 "component", Integer.toString(component.index()),
                                 "phase", "seed_retention_demand_validation")));
             }
@@ -203,7 +203,7 @@ public final class TrinityCyclePlanSelector {
                     return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                             TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                             Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                            Map.of()));
+                            FastUtilCollections.mapOf()));
                 }
                 return TrinityAlgorithmResult.success(new TrinityCycleSelection(
                         selected.componentIndex(),
@@ -232,7 +232,7 @@ public final class TrinityCyclePlanSelector {
                         TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                         Component.translatable(
                                 "gui.data_energistics.trinity_planning.mip.schedule_search_limit"),
-                        Map.of(
+                        FastUtilCollections.mapOf(
                                 "limit", Integer.toString(maxStates),
                                 "states", Integer.toString(maxStates),
                                 "phase", "seed_retention")));
@@ -254,14 +254,14 @@ public final class TrinityCyclePlanSelector {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    Map.of()));
+                    FastUtilCollections.mapOf()));
         }
         int remainingStates = maxStates - selected.scheduleStates();
         if (remainingStates <= 0) {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.search_limit"),
-                    Map.of("limit", Integer.toString(maxStates), "phase", "finite_route_schedule")));
+                    FastUtilCollections.mapOf("limit", Integer.toString(maxStates), "phase", "finite_route_schedule")));
         }
         var firings = new Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger>();
         selected.prefixOrder().forEach(batch -> firings.merge(batch.variant(), batch.count(), BigInteger::add));
@@ -274,7 +274,7 @@ public final class TrinityCyclePlanSelector {
             return TrinityAlgorithmResult.failure(scheduled.diagnostic());
         }
         return TrinityAlgorithmResult.success(new TrinityCycleSelection(
-                selected.componentIndex(), List.of(), scheduled.value().batches(), BigInteger.ONE, List.of(),
+                selected.componentIndex(), ObjectList.of(), scheduled.value().batches(), BigInteger.ONE, ObjectList.of(),
                 selected.minimumSeed(), selected.initialInputs(), selected.netChange(), selected.exportableNet(),
                 Math.addExact(selected.scheduleStates(), scheduled.value().statesVisited()), selected.mipNanos(),
                 selected.quality(), selected.retainedSeed(), selected.seedRefinementPasses()));
@@ -310,8 +310,8 @@ public final class TrinityCyclePlanSelector {
     private TrinityAlgorithmResult<TrinityCycleSelection> selectOnce(
                                                                      TrinityStronglyConnectedComponent component,
                                                                      TrinityCycleDemand demand,
-                                                                     Map<AEKey, BigInteger> inventory,
-                                                                     Set<AEKey> producible,
+                                                                     Object2ObjectMap<AEKey, BigInteger> inventory,
+                                                                     ObjectSet<AEKey> producible,
                                                                      int maxStates,
                                                                      TrinityPlanningMode mode,
                                                                      TrinityPlanningControl control,
@@ -320,7 +320,7 @@ public final class TrinityCyclePlanSelector {
         Optional<ScalarDemand> scalar = scalarDemand(component, demand);
         if (scalar.isPresent()) {
             ScalarDemand request = scalar.orElseThrow();
-            Optional<List<TrinityVariantFiring>> deterministicOrder = unitProof != null &&
+            Optional<ObjectList<TrinityVariantFiring>> deterministicOrder = unitProof != null &&
                     unitProof.reservoir().equals(request.target()) ?
                             Optional.of(unitProof.order()) :
                             this.deterministicCycleSequence.resolve(component, request.target(), inventory, producible);
@@ -397,8 +397,8 @@ public final class TrinityCyclePlanSelector {
     private TrinityAlgorithmResult<TrinityCycleSelection> planJointCycle(
                                                                          TrinityStronglyConnectedComponent component,
                                                                          TrinityCycleDemand demand,
-                                                                         Map<AEKey, BigInteger> available,
-                                                                         Set<AEKey> producibleInputs,
+                                                                         Object2ObjectMap<AEKey, BigInteger> available,
+                                                                         ObjectSet<AEKey> producibleInputs,
                                                                          int maxStates,
                                                                          TrinityPlanningMode mode,
                                                                          TrinityPlanningControl control,
@@ -419,10 +419,10 @@ public final class TrinityCyclePlanSelector {
         TrinityJointCyclePlan plan = joint.value();
         return TrinityAlgorithmResult.success(new TrinityCycleSelection(
                 component.index(),
-                List.of(),
+                ObjectList.of(),
                 plan.schedule().batches(),
                 BigInteger.ONE,
-                List.of(),
+                ObjectList.of(),
                 maximumAmounts(plan.minimumSeed(), plan.externalInputs()),
                 plan.initialInputs(),
                 plan.netChange(),
@@ -430,7 +430,7 @@ public final class TrinityCyclePlanSelector {
                 plan.searchStates(),
                 Math.addExact(componentNanos, plan.solverNanos()),
                 plan.quality(),
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 0));
     }
 
@@ -439,10 +439,10 @@ public final class TrinityCyclePlanSelector {
                                                     TrinityCyclePlan plan) {
         return new TrinityCycleSelection(
                 component.index(),
-                List.of(),
+                ObjectList.of(),
                 plan.oneCycleOrder(),
                 plan.repetitions(),
-                List.of(),
+                ObjectList.of(),
                 plan.minimumSeed(),
                 plan.initialInputs(),
                 plan.netChange(),
@@ -450,7 +450,7 @@ public final class TrinityCyclePlanSelector {
                 plan.schedule().statesVisited(),
                 0L,
                 TrinityPlanQuality.VERIFIED_FEASIBLE,
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 0);
     }
 
@@ -464,10 +464,10 @@ public final class TrinityCyclePlanSelector {
         boolean repeated = schedule.hasRepeatBlock();
         return new TrinityCycleSelection(
                 component.index(),
-                repeated ? schedule.prefixBatches() : List.of(),
+                repeated ? schedule.prefixBatches() : ObjectList.of(),
                 repeated ? schedule.repeatUnit() : schedule.batches(),
                 repeated ? schedule.repeatCount() : BigInteger.ONE,
-                repeated ? schedule.suffixBatches() : List.of(),
+                repeated ? schedule.suffixBatches() : ObjectList.of(),
                 plan.minimumSeed(),
                 plan.initialInputs(),
                 plan.netChange(),
@@ -475,7 +475,7 @@ public final class TrinityCyclePlanSelector {
                 plan.schedule().statesVisited(),
                 componentNanos,
                 quality,
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 0);
     }
 
@@ -485,8 +485,8 @@ public final class TrinityCyclePlanSelector {
         if (demand.requiredNetChangeLowerBounds().size() != 1) {
             return Optional.empty();
         }
-        Map.Entry<AEKey, BigInteger> net = demand.requiredNetChangeLowerBounds()
-                .entrySet()
+        Object2ObjectMap.Entry<AEKey, BigInteger> net = demand.requiredNetChangeLowerBounds()
+                .object2ObjectEntrySet()
                 .iterator()
                 .next();
         if (!component.keys().contains(net.getKey()) || demand.netNewKeys().contains(net.getKey()) ||
@@ -504,8 +504,8 @@ public final class TrinityCyclePlanSelector {
 
     private static boolean completeUniqueRoute(
                                                TrinityStronglyConnectedComponent component,
-                                               List<TrinityVariantFiring> order) {
-        Set<TrinityPatternVariant> selected = order.stream()
+                                               ObjectList<TrinityVariantFiring> order) {
+        ObjectSet<TrinityPatternVariant> selected = order.stream()
                 .map(TrinityVariantFiring::variant)
                 .collect(Collectors.toCollection(ObjectOpenHashSet::new));
         if (selected.size() != order.size() ||
@@ -520,18 +520,18 @@ public final class TrinityCyclePlanSelector {
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> maximumAmounts(
-                                                                                    Map<AEKey, BigInteger> first,
-                                                                                    Map<AEKey, BigInteger> second) {
+                                                                                    Object2ObjectMap<AEKey, BigInteger> first,
+                                                                                    Object2ObjectMap<AEKey, BigInteger> second) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> maximum = new Object2ObjectLinkedOpenHashMap<>(first);
         second.forEach((key, amount) -> maximum.merge(key, amount, BigInteger::max));
         return maximum;
     }
 
-    private static Map<AEKey, BigInteger> settledExports(
-                                                         TrinityStronglyConnectedComponent component,
-                                                         TrinityCycleDemand demand,
-                                                         Map<AEKey, BigInteger> netChange) {
-        Set<AEKey> internalKeys = new ObjectOpenHashSet<>(component.keys());
+    private static Object2ObjectMap<AEKey, BigInteger> settledExports(
+                                                                      TrinityStronglyConnectedComponent component,
+                                                                      TrinityCycleDemand demand,
+                                                                      Object2ObjectMap<AEKey, BigInteger> netChange) {
+        ObjectSet<AEKey> internalKeys = new ObjectOpenHashSet<>(component.keys());
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> exports = new Object2ObjectLinkedOpenHashMap<>();
         netChange.forEach((key, amount) -> {
             if (amount.signum() > 0 &&
@@ -540,17 +540,17 @@ public final class TrinityCyclePlanSelector {
                 exports.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(exports);
+        return FastUtilCollections.immutableMap(exports);
     }
 
-    private static Map<AEKey, BigInteger> positiveAmounts(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> positiveAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() > 0) {
                 positive.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(positive);
+        return FastUtilCollections.immutableMap(positive);
     }
 
     private record ScalarDemand(

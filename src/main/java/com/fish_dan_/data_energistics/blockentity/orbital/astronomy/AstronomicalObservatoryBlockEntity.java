@@ -22,7 +22,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Performs the low-tier observatory's server-authoritative AE energy-to-Stellar Flux transaction.
@@ -41,7 +40,7 @@ public final class AstronomicalObservatoryBlockEntity extends AENetworkedBlockEn
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.allOf(Direction.class);
     }
 

@@ -13,6 +13,8 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,8 +22,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Server-issued Trinity definition generation and the exact JSON sources used to render and submit automatic builds.
@@ -37,7 +37,7 @@ import java.util.Map;
  * @param definitionSources  ordered logical definition ids and their authoritative UTF-8 JSON sources
  */
 public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
-                                               Map<ResourceLocation, String> definitionSources) {
+                                               Object2ObjectMap<ResourceLocation, String> definitionSources) {
 
     /**
      * Maximum UTF-8 bytes accepted for one Trinity definition in menu-opening data.
@@ -66,7 +66,7 @@ public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
         }
         Object2ObjectLinkedOpenHashMap<ResourceLocation, String> ordered = new Object2ObjectLinkedOpenHashMap<>();
         int totalBytes = 0;
-        for (Map.Entry<ResourceLocation, String> entry : definitionSources.entrySet()) {
+        for (Object2ObjectMap.Entry<ResourceLocation, String> entry : definitionSources.object2ObjectEntrySet()) {
             ResourceLocation definitionId = entry.getKey();
             String source = entry.getValue();
             if (source.isBlank()) {
@@ -84,7 +84,7 @@ public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
             throw new IllegalArgumentException("Trinity auto-build definitions exceed " +
                     MAX_TOTAL_DEFINITION_BYTES + " combined UTF-8 bytes");
         }
-        definitionSources = Collections.unmodifiableMap(ordered);
+        definitionSources = Object2ObjectMaps.unmodifiable(ordered);
     }
 
     /**
@@ -131,7 +131,7 @@ public record TrinityAutoBuildDefinitionBundle(long definitionRevision,
      * Parses the synchronized sources into the same revision-bound preview model on either logical side.
      */
     public MultiblockPreviewSpec previewSpec() {
-        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions = new MdlibJsonMultiBlockDefinitionLoader().load(this.definitionSources);
+        Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions = new MdlibJsonMultiBlockDefinitionLoader().load(this.definitionSources);
         return new TrinityMultiblockPreviewSpecFactory().create(
                 new JsonMultiBlockDefinitionRegistrySnapshot(this.definitionRevision, definitions));
     }

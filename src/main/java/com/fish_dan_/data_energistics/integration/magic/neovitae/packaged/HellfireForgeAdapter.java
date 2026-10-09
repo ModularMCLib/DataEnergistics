@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackUtils;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -14,7 +16,6 @@ import appeng.api.stacks.KeyCounter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -73,7 +74,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
                 !PackagedOutputMatching.matches(pattern, recipe.resultItem, recipe.resultItem.getCount()))
             return null;
         var result = new CompoundTag();
-        result.put(SLOTS, saveStacks(slots, level));
+        result.put(SLOTS, NbtCodecs.encodeItemStacks(slots, level.registryAccess()));
         result.put(OUTPUT, recipe.resultItem.save(level.registryAccess()));
         return result;
     }
@@ -98,7 +99,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
                 ItemStack actual = forge.inv.getStackInSlot(slot);
                 if (actual.isEmpty()) continue;
                 ItemStack recovered = forge.inv.extractItem(slot, actual.getCount(), false);
-                if (!sameStack(actual, recovered)) throw new IllegalStateException("Hellfire Forge recovery extraction was incomplete");
+                if (!ItemStackUtils.sameItemAndCount(actual, recovered)) throw new IllegalStateException("Hellfire Forge recovery extraction was incomplete");
                 operation.returned(AEItemKey.of(recovered), recovered.getCount());
             }
             forge.getPersistentData().remove(OWNER);
@@ -117,7 +118,8 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
         if (!emptyInputsAndOutput(forge)) return false;
         ForgeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null || !validCosts(recipe)) return false;
-        ObjectList<ItemStack> slots = readStacks(operation, operation.progress().getList(SLOTS, Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> slots = NbtCodecs.decodeItemStacks(
+                operation.progress().getList(SLOTS, Tag.TAG_COMPOUND), operation.level().registryAccess());
         if (slots.size() != HellfireForgeBlockEntity.GEM_SLOT) return false;
 
         for (int slot = 0; slot < slots.size(); slot++) {
@@ -134,7 +136,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
             ItemStack stack = slots.get(slot);
             if (stack.isEmpty()) continue;
             ItemStack remainder = forge.inv.insertItem(slot, stack.copy(), false);
-            if (!remainder.isEmpty() || !sameStack(stack, forge.inv.getStackInSlot(slot)))
+            if (!remainder.isEmpty() || !ItemStackUtils.sameItemAndCount(stack, forge.inv.getStackInSlot(slot)))
                 throw new IllegalStateException("Hellfire Forge rejected a preflighted ingredient");
             operation.delivered(AEItemKey.of(stack), 1);
             operation.progress().putInt(INSERTED, operation.progress().getInt(INSERTED) | 1 << slot);
@@ -153,7 +155,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
             if (!PackagedOutputMatching.matches(operation, expected, output))
                 return false;
             ItemStack extractedOutput = forge.inv.extractItem(HellfireForgeBlockEntity.OUTPUT_SLOT, output.getCount(), false);
-            if (!sameStack(output, extractedOutput)) throw new IllegalStateException("Hellfire Forge output extraction was incomplete");
+            if (!ItemStackUtils.sameItemAndCount(output, extractedOutput)) throw new IllegalStateException("Hellfire Forge output extraction was incomplete");
             operation.returned(AEItemKey.of(extractedOutput), extractedOutput.getCount());
             progress.putInt(HARVEST_SLOT, 1);
             operation.changed();
@@ -164,7 +166,7 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
             ItemStack remainder = forge.inv.getStackInSlot(inputSlot);
             if (!remainder.isEmpty()) {
                 ItemStack extracted = forge.inv.extractItem(inputSlot, remainder.getCount(), false);
-                if (!sameStack(remainder, extracted))
+                if (!ItemStackUtils.sameItemAndCount(remainder, extracted))
                     throw new IllegalStateException("Hellfire Forge remainder extraction was incomplete");
                 operation.returned(AEItemKey.of(extracted), extracted.getCount());
             }
@@ -204,24 +206,6 @@ public final class HellfireForgeAdapter implements PackagedMachineAdapter {
             if (!forge.inv.getStackInSlot(slot).isEmpty()) return false;
         }
         return true;
-    }
-
-    private static boolean sameStack(ItemStack expected, ItemStack actual) {
-        return expected.getCount() == actual.getCount() && ItemStack.isSameItemSameComponents(expected, actual);
-    }
-
-    private static ListTag saveStacks(ObjectList<ItemStack> stacks, ServerLevel level) {
-        var result = new ListTag();
-        for (ItemStack stack : stacks) result.add(stack.saveOptional(level.registryAccess()));
-        return result;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        var result = new ObjectArrayList<ItemStack>();
-        for (int index = 0; index < encoded.size(); index++) {
-            result.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
-        }
-        return result;
     }
 
     private static ItemStack readStack(PackagedMachineOperation operation, String key) {

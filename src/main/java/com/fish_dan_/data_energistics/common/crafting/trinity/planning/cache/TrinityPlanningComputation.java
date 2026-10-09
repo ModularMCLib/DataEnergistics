@@ -29,6 +29,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.ReusableToolBudget;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -36,13 +37,11 @@ import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -135,12 +134,12 @@ public final class TrinityPlanningComputation {
             return new TrinityPlanningComputationResult(TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.search_limit"),
-                    Map.of("phase", "reusable_capacity", "states", Long.toString(chargedStates)))), PlanningCachePath.MISS);
+                    FastUtilCollections.mapOf("phase", "reusable_capacity", "states", Long.toString(chargedStates)))), PlanningCachePath.MISS);
         } catch (ReusableToolBudget.Unsupported unsupported) {
             return new TrinityPlanningComputationResult(TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.unsupported_pattern"),
-                    Map.of("phase", "reusable_capacity", "reason", unsupported.getMessage()))), PlanningCachePath.MISS);
+                    FastUtilCollections.mapOf("phase", "reusable_capacity", "reason", unsupported.getMessage()))), PlanningCachePath.MISS);
         }
     }
 
@@ -278,7 +277,7 @@ public final class TrinityPlanningComputation {
         int totalVariants = 0;
         int completedPatterns = 0;
         for (TrinityCraftingGraphPattern pattern : reachable.patterns()) {
-            TrinityComputationValue<TrinityAlgorithmResult<List<TrinityPatternVariant>>> patternExpansion = this.cache
+            TrinityComputationValue<TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>>> patternExpansion = this.cache
                     .computeInline(
                             gridScope,
                             TrinityComputationNamespace.PATTERN_EXPANSION,
@@ -314,7 +313,7 @@ public final class TrinityPlanningComputation {
         TrinityAlgorithmResult<TrinityCompiledGraph> compiled = this.pipeline.compileExpanded(
                 reachable,
                 target,
-                ObjectLists.unmodifiable(expanded),
+                FastUtilCollections.immutableList(expanded),
                 limits.maxSccKeys(),
                 control);
         if (!compiled.successful()) {
@@ -352,9 +351,9 @@ public final class TrinityPlanningComputation {
                 TrinityPlanningProgressSnapshot.exact(TrinityPlanningProgressPhase.BUILDING_STRUCTURAL_PROOFS, 0, proofCount));
         int completedProofs = 0;
         Object2ObjectLinkedOpenHashMap<AEKey, TrinityAcyclicRouteFamily> routeFamilies = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<AEKey, List<TrinityPatternVariant>> indexed : compiled.topology()
+        for (Object2ObjectMap.Entry<AEKey, ObjectList<TrinityPatternVariant>> indexed : compiled.topology()
                 .variantsByOutputKey()
-                .entrySet()) {
+                .object2ObjectEntrySet()) {
             if (!compiled.topology().componentByKey().containsKey(indexed.getKey())) {
                 continue;
             }
@@ -424,7 +423,7 @@ public final class TrinityPlanningComputation {
                     proofCount);
         }
         return compiled.withStructuralProofs(
-                Object2ObjectMaps.unmodifiable(routeFamilies),
+                FastUtilCollections.immutableMap(routeFamilies),
                 TrinityCycleUnitProofIndex.merge(cycleUnitProofs),
                 mipTemplates);
     }
@@ -464,7 +463,7 @@ public final class TrinityPlanningComputation {
                     completedHints,
                     totalHints);
         }
-        return new TrinityCompiledGraphProofView(compiled, Object2ObjectMaps.unmodifiable(hints));
+        return new TrinityCompiledGraphProofView(compiled, FastUtilCollections.immutableMap(hints));
     }
 
     private void publishRouteHints(
@@ -486,7 +485,7 @@ public final class TrinityPlanningComputation {
             }
             TrinityAcyclicRouteHint hint = new TrinityAcyclicRouteHint(
                     family.output(),
-                    ObjectLists.unmodifiable(selected));
+                    FastUtilCollections.immutableList(selected));
             this.cache.publishIfAbsent(
                     gridScope,
                     TrinityComputationNamespace.DAG_ROUTE_HINT,
@@ -511,7 +510,7 @@ public final class TrinityPlanningComputation {
                 .map(component -> new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.SCC_KEY_LIMIT,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.scc_key_limit"),
-                        Map.of(
+                        FastUtilCollections.mapOf(
                                 "limit", Integer.toString(limits.maxSccKeys()),
                                 "required", Integer.toString(component.keys().size()))));
     }
@@ -523,7 +522,7 @@ public final class TrinityPlanningComputation {
         return new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.VARIANT_LIMIT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.variant_limit"),
-                Map.of(
+                FastUtilCollections.mapOf(
                         "limit", Integer.toString(limit),
                         "required", Long.toString(required),
                         "pattern", pattern.publicationEncoding()));
@@ -638,12 +637,12 @@ public final class TrinityPlanningComputation {
                 TrinityCachedComputation.transientValue(result);
     }
 
-    private record ReachableGraphKey(AEKey target, List<TrinityCraftingGraphPattern> patterns,
-                                     Map<TrinityPatternIdentity, TrinityPlanningDiagnostic> reusableInputFallbacks) {}
+    private record ReachableGraphKey(AEKey target, ObjectList<TrinityCraftingGraphPattern> patterns,
+                                     Object2ObjectMap<TrinityPatternIdentity, TrinityPlanningDiagnostic> reusableInputFallbacks) {}
 
     private record CompiledGraphKey(
                                     AEKey target,
-                                    List<TrinityCraftingGraphPattern> patterns,
+                                    ObjectList<TrinityCraftingGraphPattern> patterns,
                                     TrinitySameItemPolicy sameItemPolicy,
                                     int structureVersion) {}
 
@@ -651,17 +650,17 @@ public final class TrinityPlanningComputation {
 
     private record RouteFamilyKey(
                                   AEKey output,
-                                  List<TrinityPatternVariant> candidates,
+                                  ObjectList<TrinityPatternVariant> candidates,
                                   int proofVersion) {}
 
     private record RouteHintKey(
                                 AEKey output,
-                                List<TrinityPatternVariant> candidates,
+                                ObjectList<TrinityPatternVariant> candidates,
                                 int hintVersion) {}
 
     private record ComponentSemanticKey(
-                                        List<AEKey> keys,
-                                        List<TrinityPatternVariant> variants) {}
+                                        ObjectList<AEKey> keys,
+                                        ObjectList<TrinityPatternVariant> variants) {}
 
     private record CycleUnitProofKey(
                                      ComponentSemanticKey component,

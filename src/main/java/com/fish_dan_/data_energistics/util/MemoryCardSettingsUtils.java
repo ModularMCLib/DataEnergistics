@@ -1,16 +1,15 @@
-package com.fish_dan_.data_energistics.common.memorycard;
+package com.fish_dan_.data_energistics.util;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.EnumSet;
-import java.util.Set;
 
-public final class MemoryCardSettingsHelper {
+public final class MemoryCardSettingsUtils {
 
     public static final int ALL_DIRECTIONS_MASK = 63;
 
-    private MemoryCardSettingsHelper() {}
+    private MemoryCardSettingsUtils() {}
 
     public static int encodeSides(Iterable<Direction> sides) {
         int mask = 0;
@@ -22,7 +21,7 @@ public final class MemoryCardSettingsHelper {
         return mask;
     }
 
-    public static Set<Direction> decodeSides(int mask) {
+    public static EnumSet<Direction> decodeSides(int mask) {
         EnumSet<Direction> sides = EnumSet.noneOf(Direction.class);
         for (Direction side : Direction.values()) {
             if ((mask & (1 << side.ordinal())) != 0) {
@@ -32,8 +31,8 @@ public final class MemoryCardSettingsHelper {
         return sides;
     }
 
-    public static boolean replaceSides(Set<Direction> target, int mask) {
-        Set<Direction> updatedSides = decodeSides(mask);
+    public static boolean replaceSides(EnumSet<Direction> target, int mask) {
+        EnumSet<Direction> updatedSides = decodeSides(mask);
         if (target.equals(updatedSides)) {
             return false;
         }

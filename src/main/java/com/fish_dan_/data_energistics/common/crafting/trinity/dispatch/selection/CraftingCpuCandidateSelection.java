@@ -1,8 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.selection;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.networking.crafting.UnsuitableCpus;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable result of evaluating explicitly supported CPU facts before any server-thread submission.
@@ -10,7 +12,7 @@ import java.util.List;
  * @param candidates     deterministically ordered eligible candidates
  * @param unsuitableCpus aggregate reasons why known candidates were excluded from the attempt list
  */
-public record CraftingCpuCandidateSelection(List<CraftingCpuCandidate> candidates,
+public record CraftingCpuCandidateSelection(ObjectList<CraftingCpuCandidate> candidates,
                                             UnsuitableCpus unsuitableCpus) {
 
     public CraftingCpuCandidateSelection {
@@ -28,7 +30,7 @@ public record CraftingCpuCandidateSelection(List<CraftingCpuCandidate> candidate
                 unsuitableCpus.excluded() < 0) {
             throw new IllegalArgumentException("Crafting CPU unsuitable counts must not be negative");
         }
-        candidates = List.copyOf(candidates);
+        candidates = FastUtilCollections.immutableList(candidates);
     }
 
     /**

@@ -4,14 +4,13 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -260,7 +259,7 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
         if (gridScope < 0L) {
             throw new IllegalArgumentException("A Trinity Grid scope must be non-negative");
         }
-        List<CacheEntry<?>> cancelled;
+        ObjectList<CacheEntry<?>> cancelled;
         synchronized (this.cacheLock) {
             requireOpen();
             if (!this.partitions.containsKey(gridScope)) {
@@ -283,7 +282,7 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
             }
             this.closed = true;
             for (GridPartition partition : this.partitions.values()) {
-                List<CacheEntry<?>> partitionEntries = partition.allEntries();
+                ObjectList<CacheEntry<?>> partitionEntries = partition.allEntries();
                 partitionEntries.forEach(CacheEntry::markCancellation);
                 cancelled.addAll(partitionEntries);
                 partition.clear();
@@ -312,7 +311,7 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
         if (partition.entries.size() < this.gridEntryLimit) {
             return true;
         }
-        Iterator<Map.Entry<ScopedKey, CacheEntry<?>>> entries = partition.entries.entrySet().iterator();
+        Iterator<Object2ObjectMap.Entry<ScopedKey, CacheEntry<?>>> entries = partition.entries.object2ObjectEntrySet().iterator();
         while (entries.hasNext()) {
             if (entries.next().getValue().result.isDone()) {
                 entries.remove();
@@ -323,12 +322,12 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
     }
 
     private static void removeObsoleteEntries(
-                                              Iterator<Map.Entry<ScopedKey, CacheEntry<?>>> entries,
+                                              Iterator<Object2ObjectMap.Entry<ScopedKey, CacheEntry<?>>> entries,
                                               TrinityComputationNamespace.RevisionDomain revisionDomain,
                                               long currentRevision,
-                                              List<CacheEntry<?>> cancelled) {
+                                              ObjectList<CacheEntry<?>> cancelled) {
         while (entries.hasNext()) {
-            Map.Entry<ScopedKey, CacheEntry<?>> mapped = entries.next();
+            Object2ObjectMap.Entry<ScopedKey, CacheEntry<?>> mapped = entries.next();
             if (isObsolete(mapped.getKey(), revisionDomain, currentRevision)) {
                 CacheEntry<?> obsolete = mapped.getValue();
                 entries.remove();
@@ -348,7 +347,7 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
                                            GridPartition partition,
                                            TrinityComputationNamespace namespace,
                                            long revision,
-                                           List<CacheEntry<?>> cancelled) {
+                                           ObjectList<CacheEntry<?>> cancelled) {
         if (!namespace.revisionBound()) {
             return false;
         }
@@ -361,10 +360,10 @@ final class BoundedTrinityComputationCache implements TrinityComputationCache {
             return false;
         }
         partition.currentRevisions.put(revisionDomain, revision);
-        removeObsoleteEntries(partition.entries.entrySet().iterator(), revisionDomain, revision, cancelled);
-        Iterator<Map.Entry<ScopedKey, CacheEntry<?>>> bypass = partition.bypassEntries.entrySet().iterator();
+        removeObsoleteEntries(partition.entries.object2ObjectEntrySet().iterator(), revisionDomain, revision, cancelled);
+        Iterator<Object2ObjectMap.Entry<ScopedKey, CacheEntry<?>>> bypass = partition.bypassEntries.object2ObjectEntrySet().iterator();
         while (bypass.hasNext()) {
-            Map.Entry<ScopedKey, CacheEntry<?>> mapped = bypass.next();
+            Object2ObjectMap.Entry<ScopedKey, CacheEntry<?>> mapped = bypass.next();
             if (isObsolete(mapped.getKey(), revisionDomain, revision)) {
                 CacheEntry<?> obsolete = mapped.getValue();
                 bypass.remove();

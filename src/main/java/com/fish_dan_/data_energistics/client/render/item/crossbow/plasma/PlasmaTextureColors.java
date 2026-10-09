@@ -13,22 +13,21 @@ import com.mojang.blaze3d.platform.NativeImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.EnumMap;
-import java.util.Map;
 
 /** Texture IO occurs once per resource reload, never on the per-frame ammunition render path. */
-public final class PlasmaTextureColors extends SimplePreparableReloadListener<Map<RailAmmunition, PlasmaPalette>> {
+public final class PlasmaTextureColors extends SimplePreparableReloadListener<EnumMap<RailAmmunition, PlasmaPalette>> {
 
     private static final ResourceLocation DATA_TEXTURE = Data_Energistics.id("textures/block/key/data_flow.png");
     private static final ResourceLocation FE_TEXTURE = ResourceLocation.fromNamespaceAndPath("appflux", "textures/energy/fe.png");
-    private static Map<RailAmmunition, PlasmaPalette> colors = Map.of();
+    private static EnumMap<RailAmmunition, PlasmaPalette> colors = new EnumMap<>(RailAmmunition.class);
 
     public static PlasmaPalette palette(RailAmmunition ammo) {
         return colors.getOrDefault(ammo, PlasmaPalette.NEUTRAL);
     }
 
     @Override
-    protected Map<RailAmmunition, PlasmaPalette> prepare(ResourceManager manager, ProfilerFiller profiler) {
-        Map<RailAmmunition, PlasmaPalette> result = new EnumMap<>(RailAmmunition.class);
+    protected EnumMap<RailAmmunition, PlasmaPalette> prepare(ResourceManager manager, ProfilerFiller profiler) {
+        EnumMap<RailAmmunition, PlasmaPalette> result = new EnumMap<>(RailAmmunition.class);
         result.put(RailAmmunition.DATA, read(manager, DATA_TEXTURE));
         // Applied Flux is optional; the FE resource exists whenever that ammunition is available.
         if (manager.getResource(FE_TEXTURE).isPresent()) result.put(RailAmmunition.FE, read(manager, FE_TEXTURE));
@@ -44,7 +43,7 @@ public final class PlasmaTextureColors extends SimplePreparableReloadListener<Ma
     }
 
     @Override
-    protected void apply(Map<RailAmmunition, PlasmaPalette> prepared, ResourceManager manager, ProfilerFiller profiler) {
-        colors = Map.copyOf(prepared);
+    protected void apply(EnumMap<RailAmmunition, PlasmaPalette> prepared, ResourceManager manager, ProfilerFiller profiler) {
+        colors = new EnumMap<>(prepared);
     }
 }

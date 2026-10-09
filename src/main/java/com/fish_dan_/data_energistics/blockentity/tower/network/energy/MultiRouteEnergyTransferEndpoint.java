@@ -6,11 +6,11 @@ import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergy
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointRole;
 import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Represents one physical energy backing exposed through multiple context-sensitive access routes.
@@ -30,7 +30,7 @@ public final class MultiRouteEnergyTransferEndpoint implements TowerEnergyTransf
     /**
      * Deterministically ordered access routes sharing one proven backing identity.
      */
-    private final List<TowerEnergyTransferEndpoint> routes;
+    private final ObjectList<TowerEnergyTransferEndpoint> routes;
 
     /**
      * Extraction route selected by the latest successful freeze.
@@ -47,7 +47,7 @@ public final class MultiRouteEnergyTransferEndpoint implements TowerEnergyTransf
     /**
      * Routes that performed a real mutation since the latest freeze.
      */
-    private final Set<TowerEnergyTransferEndpoint> mutatedRoutes = new ReferenceOpenHashSet<>();
+    private final ReferenceSet<TowerEnergyTransferEndpoint> mutatedRoutes = new ReferenceOpenHashSet<>();
 
     /**
      * Prevents a persistently unavailable alternative route from logging every server tick.
@@ -59,8 +59,8 @@ public final class MultiRouteEnergyTransferEndpoint implements TowerEnergyTransf
      *
      * @param routes non-empty deterministic access-route list
      */
-    public MultiRouteEnergyTransferEndpoint(List<TowerEnergyTransferEndpoint> routes) {
-        this.routes = List.copyOf(routes);
+    public MultiRouteEnergyTransferEndpoint(ObjectList<TowerEnergyTransferEndpoint> routes) {
+        this.routes = new ObjectImmutableList<>(routes);
         if (this.routes.isEmpty()) {
             throw new IllegalArgumentException("Energy transfer route group must not be empty");
         }

@@ -14,9 +14,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.Tags;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
-import java.util.Set;
 import java.util.function.Predicate;
 
 public final class PoweredToolSaberEnergyHelper {
@@ -38,8 +38,8 @@ public final class PoweredToolSaberEnergyHelper {
         return extracted >= DATA_FLOW_COST;
     }
 
-    public static Set<BlockPos> collectTree(Level level, BlockPos startPos, int maxBlocks) {
-        Set<BlockPos> result = new ObjectOpenHashSet<>();
+    public static LongSet collectTree(Level level, BlockPos startPos, int maxBlocks) {
+        LongSet result = new LongOpenHashSet();
         if (!isTreeBlock(level.getBlockState(startPos))) {
             return result;
         }
@@ -47,8 +47,8 @@ public final class PoweredToolSaberEnergyHelper {
         return result;
     }
 
-    public static Set<BlockPos> collectOreVein(Level level, BlockPos startPos, int maxBlocks) {
-        Set<BlockPos> result = new ObjectOpenHashSet<>();
+    public static LongSet collectOreVein(Level level, BlockPos startPos, int maxBlocks) {
+        LongSet result = new LongOpenHashSet();
         BlockState startState = level.getBlockState(startPos);
         if (!isOreBlock(startState)) {
             return result;
@@ -58,33 +58,34 @@ public final class PoweredToolSaberEnergyHelper {
         return result;
     }
 
-    private static void floodFill(Level level, BlockPos startPos, int maxBlocks, Set<BlockPos> result,
+    private static void floodFill(Level level, BlockPos startPos, int maxBlocks, LongSet result,
                                   Predicate<BlockState> predicate) {
-        Set<BlockPos> frontier = new ObjectOpenHashSet<>();
-        frontier.add(startPos.immutable());
+        LongSet frontier = new LongOpenHashSet();
+        frontier.add(startPos.asLong());
 
         while (!frontier.isEmpty() && result.size() < maxBlocks) {
-            BlockPos current = frontier.iterator().next();
-            frontier.remove(current);
-            if (result.contains(current)) {
+            long currentPosition = frontier.iterator().nextLong();
+            frontier.remove(currentPosition);
+            if (result.contains(currentPosition)) {
                 continue;
             }
 
+            BlockPos current = BlockPos.of(currentPosition);
             BlockState state = level.getBlockState(current);
             if (!predicate.test(state)) {
                 continue;
             }
 
-            result.add(current);
+            result.add(currentPosition);
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
                         if (dx == 0 && dy == 0 && dz == 0) {
                             continue;
                         }
-                        BlockPos next = current.offset(dx, dy, dz);
-                        if (!result.contains(next) && result.size() + frontier.size() < maxBlocks) {
-                            frontier.add(next.immutable());
+                        long nextPosition = current.offset(dx, dy, dz).asLong();
+                        if (!result.contains(nextPosition) && result.size() + frontier.size() < maxBlocks) {
+                            frontier.add(nextPosition);
                         }
                     }
                 }

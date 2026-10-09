@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
 
 /**
  * Supplies one device binding and all capability nodes currently exposed by that device.
@@ -19,7 +19,7 @@ import java.util.List;
  */
 public record VirtualChannelBindingRequest<B, N>(B bindingKey, VirtualChannelBindingSource source,
                                                  long fifoOrder, boolean enabled,
-                                                 List<VirtualChannelNodeRequest<N>> nodes) {
+                                                 ObjectList<VirtualChannelNodeRequest<N>> nodes) {
 
     /**
      * Validates binding metadata and rejects ambiguous node ordering.
@@ -28,7 +28,7 @@ public record VirtualChannelBindingRequest<B, N>(B bindingKey, VirtualChannelBin
         if (fifoOrder < 0) {
             throw new IllegalArgumentException("Virtual channel binding FIFO order must not be negative");
         }
-        nodes = List.copyOf(nodes);
+        nodes = new ObjectImmutableList<>(nodes);
         ObjectOpenHashSet<N> nodeKeys = new ObjectOpenHashSet<>();
         LongSet nodeOrders = new LongOpenHashSet();
         for (VirtualChannelNodeRequest<N> node : nodes) {

@@ -5,10 +5,11 @@ import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Ordered choices for one independently selectable business tier category.
@@ -20,7 +21,7 @@ import java.util.Set;
  */
 public record PreviewTierDomain(String id,
                                 Component label,
-                                List<PreviewTierOption> options,
+                                ObjectList<PreviewTierOption> options,
                                 int defaultValue) {
 
     /**
@@ -34,9 +35,9 @@ public record PreviewTierDomain(String id,
             throw new IllegalArgumentException("Preview tier domain requires at least one option: " + id);
         }
         label = label.copy();
-        options = List.copyOf(options);
+        options = ObjectLists.unmodifiable(new ObjectArrayList<>(options));
         IntSet values = new IntOpenHashSet();
-        Set<ResourceLocation> blockIds = new ObjectOpenHashSet<>();
+        ObjectSet<ResourceLocation> blockIds = new ObjectOpenHashSet<>();
         for (PreviewTierOption option : options) {
             if (!values.add(option.value())) {
                 throw new IllegalArgumentException(

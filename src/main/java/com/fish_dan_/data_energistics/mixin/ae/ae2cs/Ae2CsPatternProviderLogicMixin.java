@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2cs;
 
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderHostAccessor;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningAutoRequestHelper;
 import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.PatternProviderLogicFieldAccessor;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;
@@ -58,7 +58,7 @@ public abstract class Ae2CsPatternProviderLogicMixin {
         var host = ((PatternProviderLogicFieldAccessor) this).dataEnergistics$getHost();
         if (host instanceof PatternProviderHostAccessor accessor) {
             if (accessor.dataEnergistics$consumeRedstoneInputPulse() && host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
-                RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+                RedstoneTuningUtils.requestPrimaryOutputs(
                         serverLevel,
                         host.getGrid(),
                         ((PatternProviderLogicFieldAccessor) this).dataEnergistics$getActionSource(),

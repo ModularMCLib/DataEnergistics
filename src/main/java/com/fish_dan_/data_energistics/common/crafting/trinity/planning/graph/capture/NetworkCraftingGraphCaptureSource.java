@@ -1,12 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.capture;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 import appeng.me.service.helpers.NetworkCraftingProviders;
 
 import net.minecraft.core.HolderLookup;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.function.LongSupplier;
 
 /**
@@ -66,13 +69,13 @@ public final class NetworkCraftingGraphCaptureSource implements TrinityCraftingG
     }
 
     @Override
-    public List<AEKey> captureCraftableKeys() {
-        return List.copyOf(this.providers.getCraftableKeys());
+    public ObjectList<AEKey> captureCraftableKeys() {
+        return FastUtilCollections.immutableList(this.providers.getCraftableKeys());
     }
 
     @Override
-    public List<IPatternDetails> capturePatternsFor(AEKey primaryOutput) {
-        return List.copyOf(this.providers.getCraftingFor(primaryOutput));
+    public ObjectList<IPatternDetails> capturePatternsFor(AEKey primaryOutput) {
+        return FastUtilCollections.immutableList(this.providers.getCraftingFor(primaryOutput));
     }
 
     private static LongSupplier requiredRevisionSource(NetworkCraftingProviders providers) {

@@ -13,12 +13,13 @@ import net.minecraft.server.MinecraftServer;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSets;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
@@ -43,7 +44,7 @@ public final class TowerGridOwnershipRegistry {
                                                            TowerRuntimeKey towerKey,
                                                            IGrid sourceGrid,
                                                            boolean available,
-                                                           Set<IGrid> targetGrids) {
+                                                           ReferenceSet<IGrid> targetGrids) {
         ServerOwnership state = SERVERS.computeIfAbsent(server, ignored -> new ServerOwnership());
         state.replaceTowerCandidates(towerKey, sourceGrid, available, targetGrids);
     }
@@ -112,22 +113,22 @@ public final class TowerGridOwnershipRegistry {
     private static final class ServerOwnership {
 
         private final VirtualGridOwnership<IGrid, TowerRuntimeKey> ownership = new AcyclicFifoVirtualGridOwnership<>();
-        private final Map<TowerRuntimeKey, Set<IGrid>> targetsByTower = new Object2ObjectOpenHashMap<>();
+        private final Object2ObjectMap<TowerRuntimeKey, ReferenceSet<IGrid>> targetsByTower = new Object2ObjectOpenHashMap<>();
         private final Object2LongMap<CandidateKey> candidateOrders = new Object2LongOpenHashMap<>();
-        private final Map<TowerRuntimeKey, TowerState> towerStates = new Object2ObjectOpenHashMap<>();
+        private final Object2ObjectMap<TowerRuntimeKey, TowerState> towerStates = new Object2ObjectOpenHashMap<>();
         private long nextCandidateOrder;
         private long revision;
 
         private void replaceTowerCandidates(TowerRuntimeKey towerKey,
                                             IGrid sourceGrid,
                                             boolean available,
-                                            Set<IGrid> targetGrids) {
+                                            ReferenceSet<IGrid> targetGrids) {
             this.ownership.upsertTower(new VirtualGridTower<>(towerKey, sourceGrid, available));
-            Set<IGrid> normalizedTargets = identitySet(targetGrids);
-            Set<IGrid> previousTargets = this.targetsByTower.getOrDefault(towerKey, Set.of());
+            ReferenceSet<IGrid> normalizedTargets = identitySet(targetGrids);
+            ReferenceSet<IGrid> previousTargets = this.targetsByTower.getOrDefault(towerKey, ReferenceSets.emptySet());
             TowerState previousTower = this.towerStates.put(towerKey, new TowerState(sourceGrid, available));
             boolean changed = previousTower == null || previousTower.sourceGrid() != sourceGrid || previousTower.available() != available || !previousTargets.equals(normalizedTargets);
-            for (IGrid previousTarget : List.copyOf(previousTargets)) {
+            for (IGrid previousTarget : previousTargets) {
                 if (!normalizedTargets.contains(previousTarget)) {
                     this.ownership.removeCandidate(previousTarget, towerKey);
                     this.candidateOrders.removeLong(new CandidateKey(previousTarget, towerKey));
@@ -157,7 +158,7 @@ public final class TowerGridOwnershipRegistry {
         }
 
         private void removeTower(TowerRuntimeKey towerKey) {
-            Set<IGrid> targets = this.targetsByTower.remove(towerKey);
+            ReferenceSet<IGrid> targets = this.targetsByTower.remove(towerKey);
             TowerState towerState = this.towerStates.remove(towerKey);
             if (targets != null) {
                 for (IGrid target : targets) {
@@ -181,8 +182,8 @@ public final class TowerGridOwnershipRegistry {
         }
     }
 
-    private static Set<IGrid> identitySet(Set<IGrid> grids) {
-        Set<IGrid> result = new ReferenceOpenHashSet<>();
+    private static ReferenceSet<IGrid> identitySet(ReferenceSet<IGrid> grids) {
+        ReferenceSet<IGrid> result = new ReferenceOpenHashSet<>();
         result.addAll(grids);
         return result;
     }

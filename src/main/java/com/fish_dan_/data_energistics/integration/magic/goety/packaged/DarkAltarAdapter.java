@@ -37,6 +37,8 @@ import com.Polarice3.Goety.common.ritual.LocateRitual;
 import com.Polarice3.Goety.common.ritual.RitualRequirements;
 import com.Polarice3.Goety.config.MainConfig;
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -113,13 +115,13 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
-        positions.add(position.below());
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
+        positions.add(position.below().asLong());
         ListTag ingredients = preparation.getList("ingredients", Tag.TAG_COMPOUND);
         for (int index = 0; index < ingredients.size(); index++) {
-            positions.add(BlockPos.of(ingredients.getCompound(index).getLong("position")));
+            positions.add(ingredients.getCompound(index).getLong("position"));
         }
         return positions;
     }
@@ -218,7 +220,8 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
 
     @Override
     public boolean recoverRemoved(PackagedMachineOperation operation) {
-        for (BlockPos position : occupiedPositions(operation.level(), operation.position(), operation.progress())) {
+        for (long packedPosition : occupiedPositions(operation.level(), operation.position(), operation.progress())) {
+            BlockPos position = BlockPos.of(packedPosition);
             if (!operation.level().isLoaded(position)) return false;
         }
         CompoundTag progress = operation.progress();
@@ -288,7 +291,7 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
         if (cage.getSouls() <= 0 || cage.getSouls() < recipe.getSoulCost()) return false;
         if (!RitualRequirements.getProperStructure(recipe.getCraftType(), player, altar, operation.position(), operation.level())) return false;
         if (recipe.getRitual() instanceof EnchantItemRitual enchant) {
-            if (!MainConfig.RitualEnchants.get() || !enchant.compatibleEnchant(activation)) return false;
+            return MainConfig.RitualEnchants.get() && enchant.compatibleEnchant(activation);
         }
         return true;
     }

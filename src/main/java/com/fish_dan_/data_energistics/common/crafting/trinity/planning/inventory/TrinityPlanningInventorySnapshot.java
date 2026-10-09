@@ -74,7 +74,7 @@ public record TrinityPlanningInventorySnapshot(
                 if (!(liveInventory instanceof FiniteNetworkStorageAccess storageAccess)) {
                     throw new IllegalStateException("AE network storage does not expose exact mount availability");
                 }
-                TrinityAvailableAmount exact = storageAccess.exactAvailability(key, actionSource);
+                TrinityAvailableAmount exact = storageAccess.data_energistics$exactAvailability(key, actionSource);
                 AEKey planningKey = sameItemPolicy.normalizeKey(key);
                 if (exact.unlimited()) {
                     unlimitedKeys.add(planningKey);

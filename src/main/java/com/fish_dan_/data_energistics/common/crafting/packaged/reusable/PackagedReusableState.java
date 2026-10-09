@@ -29,6 +29,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.ToolOutcome;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
@@ -54,13 +55,11 @@ import net.minecraft.server.level.ServerLevel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -210,6 +209,12 @@ public final class PackagedReusableState {
         }
 
         @Override
+        public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] prototype,
+                                                                        long count, CountedCraftingTarget target) {
+            return null;
+        }
+
+        @Override
         public ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel queryLevel) {
             if (frozen || queryLevel != level || !available.test(pattern)) return ObjectList.of();
             var reference = EncodedPatternRecipeReference.get(pattern.getDefinition().getReadOnlyStack());
@@ -224,7 +229,7 @@ public final class PackagedReusableState {
                     if (!result.contains(candidate)) result.add(candidate);
                 }
             }
-            return ObjectLists.unmodifiable(result);
+            return FastUtilCollections.immutableList(result);
         }
 
         @Override
@@ -413,7 +418,9 @@ public final class PackagedReusableState {
                         var preparation = machine.prepare(level, entry.position, entry.face, recipeId, pattern, inputs);
                         if (preparation == null) return NativeResult.inFlight();
                         var occupied = machine.occupiedPositions(level, entry.position, preparation);
-                        if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) return NativeResult.inFlight();
+                        for (long occupiedPosition : occupied) {
+                            if (!level.isLoaded(BlockPos.of(occupiedPosition))) return NativeResult.inFlight();
+                        }
                         PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
                         var work = new PackagedOperationState(entry.adapter, recipeId, entry.position, entry.face, preparation, inputs, occupied);
                         if (!claims.acquireAll(occupied, work.id(), work.progress().getLongArray("changing_positions"))) return NativeResult.inFlight();
@@ -473,7 +480,7 @@ public final class PackagedReusableState {
                 }
 
                 @Override
-                public void acceptOutputs(Identity identity, List<GenericStack> produced) {
+                public void acceptOutputs(Identity identity, ObjectList<GenericStack> produced) {
                     for (GenericStack stack : produced) outputs.merge(stack.what(), BigInteger.valueOf(stack.amount()), BigInteger::add);
                 }
 
@@ -545,7 +552,7 @@ public final class PackagedReusableState {
                     successors.add(new GenericStack(successor, recovered));
                 }
             }
-            tools.add(new ToolOutcome(tool.slot(), successors, List.of()));
+            tools.add(new ToolOutcome(tool.slot(), successors, ObjectList.of()));
         }
         var returned = new ObjectArrayList<GenericStack>();
         for (var stack : actual) if (stack.getLongValue() > 0) returned.add(new GenericStack(stack.getKey(), stack.getLongValue()));

@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.pattern;
 
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -15,9 +16,9 @@ import appeng.crafting.inv.ICraftingInventory;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * One server-thread dispatch allocation. Keeps exact physical slices for extraction while retaining the registered
@@ -26,15 +27,15 @@ import java.util.List;
 public final class TrinityBoundPatternDetails implements IPatternDetails {
 
     private final IPatternDetails delegate;
-    private final List<SlotBinding> slots;
+    private final ObjectList<SlotBinding> slots;
     private final IInput[] inputs;
-    private final List<GenericStack> plannedTemplates;
+    private final ObjectList<GenericStack> plannedTemplates;
 
-    TrinityBoundPatternDetails(IPatternDetails delegate, List<SlotBinding> slots) {
+    TrinityBoundPatternDetails(IPatternDetails delegate, ObjectList<SlotBinding> slots) {
         this.delegate = delegate;
-        this.slots = List.copyOf(slots);
+        this.slots = FastUtilCollections.immutableList(slots);
         this.inputs = slots.stream().map(BoundInput::new).toArray(IInput[]::new);
-        this.plannedTemplates = slots.stream().map(SlotBinding::plannedTemplate).toList();
+        this.plannedTemplates = slots.stream().map(SlotBinding::plannedTemplate).collect(ObjectImmutableList.toList());
     }
 
     /**
@@ -113,8 +114,8 @@ public final class TrinityBoundPatternDetails implements IPatternDetails {
     }
 
     @Override
-    public List<GenericStack> getOutputs() {
-        return this.delegate.getOutputs();
+    public ObjectList<GenericStack> getOutputs() {
+        return new ObjectImmutableList<>(this.delegate.getOutputs());
     }
 
     @Override
@@ -132,10 +133,10 @@ public final class TrinityBoundPatternDetails implements IPatternDetails {
         return this.delegate.getTooltip(level, flags);
     }
 
-    record SlotBinding(IPatternDetails.IInput delegate, GenericStack plannedTemplate, List<GenericStack> actualInputs) {
+    record SlotBinding(IPatternDetails.IInput delegate, GenericStack plannedTemplate, ObjectList<GenericStack> actualInputs) {
 
         SlotBinding {
-            actualInputs = List.copyOf(actualInputs);
+            actualInputs = FastUtilCollections.immutableList(actualInputs);
         }
     }
 

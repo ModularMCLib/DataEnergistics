@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
-import com.fish_dan_.data_energistics.common.dataripper.DataRipperConfigParsingUtils;
-import com.fish_dan_.data_energistics.common.dataripper.DataRipperPowerUtils;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataRipperSchema;
 import com.fish_dan_.data_energistics.menu.patternencoding.MenuClientRefresh;
 import com.fish_dan_.data_energistics.part.DataRipperPart;
 import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
+import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 
 import appeng.api.config.YesNo;
 import appeng.api.util.IConfigManager;
@@ -106,18 +106,18 @@ public class DataRipperMenu extends UpgradeableMenu<DataRipperPart> {
 
         String blockId = BuiltInRegistries.BLOCK.getKey(target.getBlockState().getBlock()).toString();
         DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.dataRipper;
-        this.multiplier = DataRipperConfigParsingUtils.getMultiplierForBlock(
+        this.multiplier = ConfigParsingUtils.getMultiplierForBlock(
                 blockId,
-                DataRipperConfigParsingUtils.precompileMultipliers(
+                ConfigParsingUtils.precompileMultipliers(
                         settings.multipliers.patterns,
                         settings.multipliers.values));
-        this.targetBlacklisted = DataRipperConfigParsingUtils.isBlockBlacklisted(
+        this.targetBlacklisted = ConfigParsingUtils.isBlockBlacklisted(
                 blockId,
-                DataRipperConfigParsingUtils.precompilePatterns(Arrays.asList(settings.blacklist)));
+                ConfigParsingUtils.precompilePatterns(Arrays.asList(settings.blacklist)));
     }
 
     private void updateEffectiveSpeed() {
-        this.effectiveSpeed = this.targetBlacklisted ? 0 : this.logic == null ? 0 : DataRipperPowerUtils.computeProductWithCap(this.getUpgrades());
+        this.effectiveSpeed = this.targetBlacklisted ? 0 : this.logic == null ? 0 : PowerCalculationUtils.computeDataRipperProductWithCap(this.getUpgrades());
     }
 
     private void refreshClientGui() {

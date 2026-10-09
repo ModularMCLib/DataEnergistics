@@ -38,8 +38,8 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -78,7 +78,7 @@ public final class ReusableYieldGameTest {
         helper.assertValueEqual(endpoint.tick(119, 2, host), 2, "Native work is not interrupted before the deadline");
         helper.assertValueEqual(endpoint.tick(120, 2, host), 0, "Repeated signal and owner append cannot extend the first deadline");
         helper.assertValueEqual(endpoint.query(owner).orElseThrow().state(), State.RETURN_PENDING, "Busy owner closes at its safe point");
-        List<Settlement> received = new ObjectArrayList<>();
+        ObjectList<Settlement> received = new ObjectArrayList<>();
         helper.assertTrue(endpoint.settle(owner, settlement -> received.add(settlement), host), "Existing directed settlement handles the yielded assets");
         helper.assertValueEqual(amount(received.getFirst().returnedAssetsFast(), MATERIAL), 100L,
                 "Refund contains the 100 actual unexecuted materials from both accepted appends");
@@ -143,9 +143,9 @@ public final class ReusableYieldGameTest {
                                                    String target, Optional<ResourceLocation> mode, long ruleRevision, GameTestHelper helper) {
         ReusableInputRule rule = ReusableInputRule.unchanged(RULE_ID, ruleRevision, TOOL);
         return new ReusableCraftingRequest(id, job, cpu, sequence, new Target(target, CountedCraftingTarget.route(target), mode), new TestPattern(),
-                List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, rule, Optional.of(TOOL)))),
-                        new Input(1, List.of(new GenericStack(MATERIAL, 1)), Optional.empty())),
-                supplyTool ? List.of(new SlotStack(0, new GenericStack(TOOL, 1))) : List.of(), count,
+                ObjectList.of(new Input(0, ObjectList.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, rule, Optional.of(TOOL)))),
+                        new Input(1, ObjectList.of(new GenericStack(MATERIAL, 1)), Optional.empty())),
+                supplyTool ? ObjectList.of(new SlotStack(0, new GenericStack(TOOL, 1))) : ObjectList.of(), count,
                 Optional.empty(), new BaseActionSource(), helper.getLevel());
     }
 
@@ -161,7 +161,7 @@ public final class ReusableYieldGameTest {
         }
     }
 
-    private static long amount(List<GenericStack> stacks, AEKey key) {
+    private static long amount(ObjectList<GenericStack> stacks, AEKey key) {
         return stacks.stream().filter(stack -> stack.what().equals(key)).mapToLong(GenericStack::amount).sum();
     }
 
@@ -170,7 +170,7 @@ public final class ReusableYieldGameTest {
         private boolean available = true;
         private long executed;
         private int saves;
-        private final List<GenericStack> outputs = new ObjectArrayList<>();
+        private final ObjectList<GenericStack> outputs = new ObjectArrayList<>();
 
         @Override
         public boolean isAvailable(Binding binding) {
@@ -180,12 +180,13 @@ public final class ReusableYieldGameTest {
         @Override
         public NativeResult execute(Binding binding, Operation operation) {
             executed++;
-            return new NativeResult(true, List.of(new ToolOutcome(0, operation.tools().stream().map(tool -> tool.stack()).toList(), List.of())),
-                    List.of(new GenericStack(PRODUCT, 1)), Optional.empty());
+            return new NativeResult(true, ObjectList.of(new ToolOutcome(0, new ObjectArrayList<>(operation.tools().stream()
+                    .map(tool -> tool.stack()).toList()), ObjectList.of())),
+                    ObjectList.of(new GenericStack(PRODUCT, 1)), Optional.empty());
         }
 
         @Override
-        public void acceptOutputs(Identity identity, List<GenericStack> produced) {
+        public void acceptOutputs(Identity identity, ObjectList<GenericStack> produced) {
             outputs.addAll(produced);
         }
 
@@ -208,8 +209,8 @@ public final class ReusableYieldGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(PRODUCT, 1));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(PRODUCT, 1));
         }
     }
 

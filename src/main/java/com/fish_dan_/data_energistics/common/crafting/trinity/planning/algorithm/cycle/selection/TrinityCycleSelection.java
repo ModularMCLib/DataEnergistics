@@ -6,10 +6,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Immutable cycle algorithm selection consumed by graph-stage assembly.
@@ -31,18 +31,18 @@ import java.util.Map;
  */
 public record TrinityCycleSelection(
                                     int componentIndex,
-                                    List<TrinityVariantFiring> prefixOrder,
-                                    List<TrinityVariantFiring> localOrder,
+                                    ObjectList<TrinityVariantFiring> prefixOrder,
+                                    ObjectList<TrinityVariantFiring> localOrder,
                                     BigInteger repetitions,
-                                    List<TrinityVariantFiring> suffixOrder,
-                                    Map<AEKey, BigInteger> minimumSeed,
-                                    Map<AEKey, BigInteger> initialInputs,
-                                    Map<AEKey, BigInteger> netChange,
-                                    Map<AEKey, BigInteger> exportableNet,
+                                    ObjectList<TrinityVariantFiring> suffixOrder,
+                                    Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                    Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                    Object2ObjectMap<AEKey, BigInteger> netChange,
+                                    Object2ObjectMap<AEKey, BigInteger> exportableNet,
                                     int scheduleStates,
                                     long mipNanos,
                                     TrinityPlanQuality quality,
-                                    Map<AEKey, BigInteger> retainedSeed,
+                                    Object2ObjectMap<AEKey, BigInteger> retainedSeed,
                                     int seedRefinementPasses) {
 
     /**
@@ -52,7 +52,7 @@ public record TrinityCycleSelection(
      * @param internalKeys keys owned by this selection's SCC
      * @return whether the local unit may be represented by a productive repeat block
      */
-    public boolean hasProductiveRepeat(List<AEKey> internalKeys) {
+    public boolean hasProductiveRepeat(ObjectList<AEKey> internalKeys) {
         var localNet = new Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>();
         for (TrinityVariantFiring batch : this.localOrder) {
             batch.variant().netChange().forEach((key, amount) -> localNet.merge(key, amount.multiply(batch.count()), BigInteger::add));

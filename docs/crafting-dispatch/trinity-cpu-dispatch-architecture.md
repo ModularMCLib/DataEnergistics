@@ -8,7 +8,7 @@
 - 核心目标：在保留 256 份完整独立硬件资源、高容量和高并行的前提下，提高 CPU 选择、合批、容量切分、供应器发配和输出回收效率
 - 本文档只负责“计划提交后的派发”架构；计算、循环配方和数量语义见
   `trinity-cpu-planning-and-cycle-architecture.md`
-- 当前缺陷证据、修复映射和验证矩阵见 `trinity-cpu-calculation-audit-and-remediation.md`
+- 当前实现以代码、测试和本目录中的契约文档为准。
 
 ## 2. 已确认需求
 
@@ -924,6 +924,4 @@ provider 类不得实现或引用这些类型。这样 DataEnergistics 缺失时
 - `src/main/java/com/fish_dan_/data_energistics/api/registry/provider/PatternProviderRegistry.java`
 - `src/main/java/com/fish_dan_/data_energistics/ae2/PatternProviderBatching.java`
 - `src/main/java/com/fish_dan_/data_energistics/mixin/core/PatternProviderLogicMixin.java`
-- `docs/crafting-dispatch/trinity-cpu-dispatch-phase-0-baseline.md`
 - `docs/crafting-dispatch/trinity-cpu-planning-and-cycle-architecture.md`
-- `docs/crafting-dispatch/trinity-cpu-calculation-audit-and-remediation.md`

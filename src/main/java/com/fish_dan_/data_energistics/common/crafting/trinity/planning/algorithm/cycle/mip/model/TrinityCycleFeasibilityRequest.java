@@ -7,13 +7,13 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Complete exact input for one sequential feasibility optimisation.
@@ -32,12 +32,12 @@ import java.util.Set;
  * @param coefficientTemplate immutable sparse transition layout shared across request-local models
  */
 public record TrinityCycleFeasibilityRequest(
-                                             List<TrinityPatternVariant> variants,
-                                             Set<AEKey> internalKeys,
+                                             ObjectList<TrinityPatternVariant> variants,
+                                             ObjectSet<AEKey> internalKeys,
                                              TrinityCycleDemand demand,
-                                             Map<AEKey, BigInteger> available,
-                                             Set<AEKey> producibleInputs,
-                                             Map<TrinityPatternVariant, TrinityFiringBounds> firingBounds,
+                                             Object2ObjectMap<AEKey, BigInteger> available,
+                                             ObjectSet<AEKey> producibleInputs,
+                                             Object2ObjectMap<TrinityPatternVariant, TrinityFiringBounds> firingBounds,
                                              Optional<BigInteger> fixedExternalTotal,
                                              BigInteger seedLowerBound,
                                              BigInteger firingLowerBound,
@@ -140,7 +140,7 @@ public record TrinityCycleFeasibilityRequest(
      * Replaces only firing domains while preserving all other immutable feasibility inputs.
      */
     public TrinityCycleFeasibilityRequest withFiringBounds(
-                                                           Map<TrinityPatternVariant, TrinityFiringBounds> bounds) {
+                                                           Object2ObjectMap<TrinityPatternVariant, TrinityFiringBounds> bounds) {
         return new TrinityCycleFeasibilityRequest(
                 variants,
                 internalKeys,
@@ -158,7 +158,7 @@ public record TrinityCycleFeasibilityRequest(
 
     /** Caps only currently open firing axes for one request-private bounded feasibility model. */
     public TrinityCycleFeasibilityRequest withOpenFiringUpper(BigInteger upper) {
-        Map<TrinityPatternVariant, TrinityFiringBounds> bounded = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<TrinityPatternVariant, TrinityFiringBounds> bounded = new Object2ObjectLinkedOpenHashMap<>();
         firingBounds.forEach((variant, bounds) -> bounded.put(
                 variant,
                 bounds.upperInclusive().isPresent() ? bounds : new TrinityFiringBounds(

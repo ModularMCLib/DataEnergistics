@@ -100,7 +100,8 @@ public class DataSanctumStatusMenu extends AEBaseMenu {
         }
 
         Direction facing = state.getValue(DataSanctumBlock.FACING);
-        for (BlockPos partPos : DataSanctumBlockEntity.iterFootprint(host.getBlockPos(), facing)) {
+        for (long packedPartPos : DataSanctumBlockEntity.iterFootprint(host.getBlockPos(), facing)) {
+            BlockPos partPos = BlockPos.of(packedPartPos);
             BlockState partState = level.getBlockState(partPos);
             if (partState.is(state.getBlock()) && DataSanctumBlockEntity.isNetworkPortPart(partState)) {
                 return true;

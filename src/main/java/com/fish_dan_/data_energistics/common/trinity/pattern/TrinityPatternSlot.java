@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.trinity.pattern;
 
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdLookup;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdResolution;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -424,15 +424,15 @@ public final class TrinityPatternSlot {
                 outputAmounts.merge(AEItemKey.of(remainder), BigInteger.valueOf(remainder.getCount()), BigInteger::add);
             }
         }
-        BigInteger maximumAmount = BigInteger.ONE.shiftLeft(TrinityBigIntegerEncoding.MAX_BYTES * Byte.SIZE - 1)
+        BigInteger maximumAmount = BigInteger.ONE.shiftLeft(NbtCodecs.MAX_BYTES * Byte.SIZE - 1)
                 .subtract(BigInteger.ONE);
         BigInteger maximumCount = maximumAmount;
         for (BigInteger amount : inputAmounts.values()) {
-            TrinityBigIntegerEncoding.encode(amount.multiply(count), "queued crafting refund");
+            NbtCodecs.encode(amount.multiply(count), "queued crafting refund");
             maximumCount = maximumCount.min(maximumAmount.divide(amount));
         }
         for (BigInteger amount : outputAmounts.values()) {
-            TrinityBigIntegerEncoding.encode(amount.multiply(count), "queued crafting output");
+            NbtCodecs.encode(amount.multiply(count), "queued crafting output");
             maximumCount = maximumCount.min(maximumAmount.divide(amount));
         }
         return maximumCount;
@@ -738,14 +738,10 @@ public final class TrinityPatternSlot {
                                                  TrinityPatternRecipeIdLookup recipeIdResolvers,
                                                  ChangeListener changeListener,
                                                  HolderLookup.Provider registries) {
-        if (!data.contains(SLOT_TAG, Tag.TAG_INT) || !data.contains(DEFINITIONS_TAG, Tag.TAG_LIST) ||
-                !data.contains(BATCHES_TAG, Tag.TAG_LIST) || !data.contains(PENDING_OUTPUTS_TAG, Tag.TAG_LIST)) {
-            throw new IllegalArgumentException("Trinity pattern slot is incomplete");
-        }
         TrinityPatternSlot slot = new TrinityPatternSlot(
                 data.getInt(SLOT_TAG), decoder, recipeIdResolvers, changeListener);
         Long2ObjectMap<IMolecularAssemblerSupportedPattern> validatedPatterns = new Long2ObjectLinkedOpenHashMap<>();
-        ListTag definitionList = compoundList(data, DEFINITIONS_TAG);
+        ListTag definitionList = data.getList(DEFINITIONS_TAG, Tag.TAG_COMPOUND);
         for (int index = 0; index < definitionList.size(); index++) {
             TrinityPatternDefinition definition = readDefinition(definitionList.getCompound(index), registries);
             IMolecularAssemblerSupportedPattern decoded = slot.validatePersistedDefinition(definition);
@@ -755,9 +751,6 @@ public final class TrinityPatternSlot {
             slot.retainParsedDefinition(definition);
         }
         boolean hasPattern = data.contains(PATTERN_TAG, Tag.TAG_COMPOUND);
-        if (hasPattern != data.contains(INSTALLED_DEFINITION_ID_TAG, Tag.TAG_LONG)) {
-            throw new IllegalArgumentException("Trinity pattern slot has an incomplete installed definition");
-        }
         if (hasPattern) {
             slot.pattern = normalizePattern(ItemStack.parseOptional(registries, data.getCompound(PATTERN_TAG)));
             long installedId = data.getLong(INSTALLED_DEFINITION_ID_TAG);
@@ -766,16 +759,13 @@ public final class TrinityPatternSlot {
                 throw new IllegalArgumentException("Installed Trinity pattern does not match its definition");
             }
         }
-        ListTag batchList = compoundList(data, BATCHES_TAG);
+        ListTag batchList = data.getList(BATCHES_TAG, Tag.TAG_COMPOUND);
         for (int index = 0; index < batchList.size(); index++) {
             CompoundTag batchData = batchList.getCompound(index);
-            if (!batchData.contains(DEFINITION_ID_TAG, Tag.TAG_LONG)) {
-                throw new IllegalArgumentException("Queued crafting group is missing its definition reference");
-            }
             TrinityPatternDefinition definition = slot.requiredDefinition(batchData.getLong(DEFINITION_ID_TAG));
             slot.queue.add(TrinityCraftingBatch.readFromTag(batchData, definition, registries));
         }
-        slot.readPendingOutputs(compoundList(data, PENDING_OUTPUTS_TAG), registries);
+        slot.readPendingOutputs(data.getList(PENDING_OUTPUTS_TAG, Tag.TAG_COMPOUND), registries);
         slot.validateDefinitionReferences();
         if (hasPattern) {
             slot.bindValidatedInstalledPattern(validatedPatterns.get(slot.installedDefinition.id()));
@@ -969,7 +959,7 @@ public final class TrinityPatternSlot {
                 CompoundTag outputData = new CompoundTag();
                 outputData.put(PROTOTYPE_TAG, output.key().toStack(1).saveOptional(registries));
                 outputData.putByteArray(AMOUNT_TAG,
-                        TrinityBigIntegerEncoding.encode(output.exactAmount(), "pending crafting output"));
+                        NbtCodecs.encode(output.exactAmount(), "pending crafting output"));
                 outputs.add(outputData);
             }
             groupData.put(OUTPUTS_TAG, outputs);
@@ -982,31 +972,25 @@ public final class TrinityPatternSlot {
         ObjectSet<PatternRoute> populated = new ObjectOpenHashSet<>();
         for (int groupIndex = 0; groupIndex < groups.size(); groupIndex++) {
             CompoundTag groupData = groups.getCompound(groupIndex);
-            if (!groupData.contains(ROUTE_TAG, Tag.TAG_COMPOUND)) {
-                throw new IllegalArgumentException("Trinity pending-output group is missing its route");
-            }
             PatternRoute route = PatternRoute.readFromTag(groupData.getCompound(ROUTE_TAG));
             validateRoute(route);
             if (!populated.add(route)) {
                 throw new IllegalArgumentException("Duplicate Trinity pending-output route " + route);
             }
-            ListTag outputEntries = compoundList(groupData, OUTPUTS_TAG);
+            ListTag outputEntries = groupData.getList(OUTPUTS_TAG, Tag.TAG_COMPOUND);
             if (outputEntries.isEmpty()) {
                 throw new IllegalArgumentException("Trinity pending-output route " + route + " is empty");
             }
             ObjectArrayList<TrinityItemAmount> outputs = new ObjectArrayList<>(outputEntries.size());
             for (int outputIndex = 0; outputIndex < outputEntries.size(); outputIndex++) {
                 CompoundTag outputData = outputEntries.getCompound(outputIndex);
-                if (!outputData.contains(PROTOTYPE_TAG, Tag.TAG_COMPOUND)) {
-                    throw new IllegalArgumentException("Trinity pending-output entry is incomplete");
-                }
                 ItemStack prototype = ItemStack.parseOptional(registries, outputData.getCompound(PROTOTYPE_TAG));
                 if (prototype.isEmpty() || prototype.getCount() != 1) {
                     throw new IllegalArgumentException(
                             "Trinity pending-output prototype must contain exactly one item");
                 }
                 outputs.add(TrinityItemAmount.of(prototype).withAmount(
-                        TrinityBigIntegerEncoding.readTag(outputData, AMOUNT_TAG, "pending crafting output")));
+                        NbtCodecs.readTag(outputData, AMOUNT_TAG, "pending crafting output")));
             }
             this.pendingOutputs.put(route, outputs);
         }
@@ -1097,7 +1081,7 @@ public final class TrinityPatternSlot {
             TrinityItemAmount previous = outputs.getLast();
             if (previous.key().equals(output.key())) {
                 BigInteger merged = previous.exactAmount().add(output.exactAmount());
-                if (merged.bitLength() < TrinityBigIntegerEncoding.MAX_BYTES * Byte.SIZE) {
+                if (merged.bitLength() < NbtCodecs.MAX_BYTES * Byte.SIZE) {
                     outputs.set(outputs.size() - 1, previous.withAmount(merged));
                     return;
                 }
@@ -1151,24 +1135,12 @@ public final class TrinityPatternSlot {
     }
 
     private static TrinityPatternDefinition readDefinition(CompoundTag data, HolderLookup.Provider registries) {
-        if (!data.contains(DEFINITION_ID_TAG, Tag.TAG_LONG) || !data.contains(STACK_TAG, Tag.TAG_COMPOUND) ||
-                !data.contains(RESOLVER_ID_TAG, Tag.TAG_STRING) || !data.contains(RECIPE_ID_TAG, Tag.TAG_STRING)) {
-            throw new IllegalArgumentException("Trinity pattern definition is incomplete");
-        }
         TrinityPatternRecipeIdResolution resolution = new TrinityPatternRecipeIdResolution(
                 ResourceLocation.parse(data.getString(RESOLVER_ID_TAG)),
                 ResourceLocation.parse(data.getString(RECIPE_ID_TAG)));
         long definitionId = data.getLong(DEFINITION_ID_TAG);
         ItemStack pattern = normalizePattern(ItemStack.parseOptional(registries, data.getCompound(STACK_TAG)));
         return TrinityPatternDefinition.resolved(definitionId, pattern, resolution);
-    }
-
-    private static ListTag compoundList(CompoundTag data, String name) {
-        if (!(data.get(name) instanceof ListTag entries) ||
-                !entries.isEmpty() && entries.getElementType() != Tag.TAG_COMPOUND) {
-            throw new IllegalArgumentException("Trinity pattern slot requires compound list '" + name + "'");
-        }
-        return entries;
     }
 
     private static boolean stackListsMatch(ObjectList<ItemStack> first, ObjectList<ItemStack> second) {

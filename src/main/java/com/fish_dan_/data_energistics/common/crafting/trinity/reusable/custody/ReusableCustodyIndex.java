@@ -5,16 +5,18 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
 /** Server-thread derived owner index. Only real accepted-history/acknowledgement changes invalidate snapshots. */
 public final class ReusableCustodyIndex {
 
     private final UUID loadedEpoch = UUID.randomUUID();
-    private final ReusableCraftingCustodyCensus empty = new ReusableCraftingCustodyCensus(loadedEpoch, 0, true, List.of());
+    private final ReusableCraftingCustodyCensus empty = new ReusableCraftingCustodyCensus(loadedEpoch, 0, true, ObjectList.of());
     private final Object2ObjectOpenHashMap<String, Owner> owners = new Object2ObjectOpenHashMap<>();
 
     public void record(Entry entry) {
@@ -30,7 +32,8 @@ public final class ReusableCustodyIndex {
         Owner owner = owners.get(cpuOwner);
         if (owner == null) return empty;
         if (owner.snapshot == null) {
-            owner.snapshot = new ReusableCraftingCustodyCensus(loadedEpoch, owner.revision, true, List.copyOf(owner.entries.values()));
+            owner.snapshot = new ReusableCraftingCustodyCensus(loadedEpoch, owner.revision, true,
+                    new ObjectImmutableList<>(new ObjectArrayList<>(owner.entries.values())));
         }
         return owner.snapshot;
     }

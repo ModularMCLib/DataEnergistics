@@ -18,16 +18,16 @@ import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 /**
  * Predicate wrapper that allows selected normal structure blocks to be replaced by declared compartment roles.
  */
-public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType> compartmentTypes,
+public record JsonMultiBlockReplaceableCompartmentPredicate(ObjectSet<CompartmentType> compartmentTypes,
                                                             StructurePredicate delegate)
         implements StructurePredicate {
 
@@ -42,7 +42,7 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
         if (compartmentTypes.isEmpty()) {
             throw new IllegalArgumentException("Replaceable compartment predicate requires at least one compartment type");
         }
-        compartmentTypes = Collections.unmodifiableSet(new ObjectLinkedOpenHashSet<>(compartmentTypes));
+        compartmentTypes = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(compartmentTypes));
     }
 
     public static synchronized void registerType() {
@@ -96,25 +96,25 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
     }
 
     @Override
-    public List<Block> blockCandidates() {
+    public ObjectList<Block> blockCandidates() {
         ObjectArrayList<Block> candidates = new ObjectArrayList<>(this.delegate.blockCandidates());
         for (CompartmentType type : this.compartmentTypes) {
             candidates.add(JsonMultiBlockCompartmentPredicate.blockFor(type));
         }
-        return List.copyOf(candidates);
+        return new ObjectImmutableList<>(candidates);
     }
 
     @Override
-    public List<BlockState> blockStateCandidates() {
+    public ObjectList<BlockState> blockStateCandidates() {
         ObjectArrayList<BlockState> candidates = new ObjectArrayList<>(this.delegate.blockStateCandidates());
         for (CompartmentType type : this.compartmentTypes) {
             candidates.add(JsonMultiBlockCompartmentPredicate.blockFor(type).defaultBlockState());
         }
-        return List.copyOf(candidates);
+        return new ObjectImmutableList<>(candidates);
     }
 
     @Override
-    public List<ItemStack> placementCandidates() {
+    public ObjectList<ItemStack> placementCandidates() {
         ObjectArrayList<ItemStack> candidates = new ObjectArrayList<>();
         for (CompartmentType type : this.compartmentTypes) {
             ItemStack stack = JsonMultiBlockCompartmentPredicate.blockFor(type).asItem().getDefaultInstance();
@@ -123,11 +123,11 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
             }
         }
         candidates.addAll(this.delegate.placementCandidates());
-        return List.copyOf(candidates);
+        return new ObjectImmutableList<>(candidates);
     }
 
     @Override
-    public List<PatternCandidate> patternCandidates() {
+    public ObjectList<PatternCandidate> patternCandidates() {
         ObjectArrayList<PatternCandidate> candidates = new ObjectArrayList<>();
         for (CompartmentType type : this.compartmentTypes) {
             Block block = JsonMultiBlockCompartmentPredicate.blockFor(type);
@@ -138,18 +138,18 @@ public record JsonMultiBlockReplaceableCompartmentPredicate(Set<CompartmentType>
             candidates.add(new PatternCandidate(block.defaultBlockState(), stack));
         }
         candidates.addAll(this.delegate.patternCandidates());
-        return List.copyOf(candidates);
+        return new ObjectImmutableList<>(candidates);
     }
 
-    private List<String> expected() {
+    private ObjectList<String> expected() {
         ObjectArrayList<String> values = new ObjectArrayList<>();
         for (CompartmentType type : this.compartmentTypes) {
             values.add(type.id());
         }
-        return List.copyOf(values);
+        return new ObjectImmutableList<>(values);
     }
 
-    private static Set<CompartmentType> readCompartmentTypes(JsonObject object) {
+    private static ObjectSet<CompartmentType> readCompartmentTypes(JsonObject object) {
         JsonElement compartmentsElement = object.get(COMPARTMENTS_PROPERTY);
         if (compartmentsElement == null || !compartmentsElement.isJsonArray()) {
             throw new IllegalArgumentException("Replaceable compartment predicate requires array property '" +

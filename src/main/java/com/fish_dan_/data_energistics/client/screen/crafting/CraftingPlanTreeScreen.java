@@ -23,8 +23,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGrap
 import com.fish_dan_.data_energistics.gui.ldlib2.crafting.tree.CraftingPlanTreeUi;
 import com.fish_dan_.data_energistics.menu.crafting.tree.CraftingPlanTreeMenu;
 import com.fish_dan_.data_energistics.network.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
-import com.fish_dan_.data_energistics.util.DurationFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
@@ -381,8 +380,8 @@ public final class CraftingPlanTreeScreen extends AbstractContainerScreen<Crafti
         if (this.titleLabel == null || this.statusLabel == null) return;
         CraftingPlanGraph graph = this.graph;
         this.titleLabel.setText(graph == null ? text("title") : Component.translatable("gui.data_energistics.plan_tree.heading",
-                graph.header().target().getDisplayName(), AmountFormatter.format(graph.header().requested()),
-                AmountFormatter.format(graph.header().bytes()), DurationFormatter.format(graph.header().planningNanos())));
+                graph.header().target().getDisplayName(), FormattingUtils.format(graph.header().requested()),
+                FormattingUtils.format(graph.header().bytes()), FormattingUtils.formatDuration(graph.header().planningNanos())));
         Component message = this.localStatus;
         if (this.menu.planning) message = text("loading");
         else if (!this.menu.graphError.getString().isEmpty()) message = this.menu.graphError;
@@ -402,7 +401,7 @@ public final class CraftingPlanTreeScreen extends AbstractContainerScreen<Crafti
         this.buttons.get("replan").setActive(!this.menu.planning);
         this.buttons.get("cpu").setActive(this.menu.resultReady && !this.menu.planning);
         this.buttons.get("cpu").setText(Component.translatable("gui.data_energistics.plan_tree.cpu_value", this.menu.cpuName,
-                AmountFormatter.format(this.menu.cpuBytes), this.menu.cpuCoProcessors));
+                FormattingUtils.format(this.menu.cpuBytes), this.menu.cpuCoProcessors));
         this.buttons.get("missing").setText(text(this.missingOnly ? "missing_on" : "missing"));
         this.buttons.get("density").setText(text(this.compact ? "compact" : "loose"));
         this.buttons.get("pref_missing").setText(Component.translatable("gui.data_energistics.plan_tree.pref_missing_value", text(this.preferences.missingOnly() ? "enabled" : "disabled")));

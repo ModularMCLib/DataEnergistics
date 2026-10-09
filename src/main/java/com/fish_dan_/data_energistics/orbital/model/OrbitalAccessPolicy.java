@@ -1,9 +1,10 @@
 package com.fish_dan_.data_energistics.orbital.model;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -18,7 +19,7 @@ public final class OrbitalAccessPolicy {
      */
     public static boolean canPerform(
                                      UUID ownerId,
-                                     Map<UUID, OrbitalAccessRole> delegatedRoles,
+                                     Object2ObjectMap<UUID, OrbitalAccessRole> delegatedRoles,
                                      UUID playerId,
                                      StellarErasureDeviceAction action) {
         if (ownerId.equals(playerId)) {
@@ -32,11 +33,11 @@ public final class OrbitalAccessPolicy {
      * Captures every currently authorized UUID for attack damage exemption. Later role changes do not mutate the
      * returned snapshot.
      */
-    public static Set<UUID> damageExemptionSnapshot(
-                                                    UUID ownerId,
-                                                    Map<UUID, OrbitalAccessRole> delegatedRoles) {
-        Set<UUID> exemptions = new ObjectOpenHashSet<>(delegatedRoles.keySet());
+    public static ObjectSet<UUID> damageExemptionSnapshot(
+                                                          UUID ownerId,
+                                                          Object2ObjectMap<UUID, OrbitalAccessRole> delegatedRoles) {
+        ObjectSet<UUID> exemptions = new ObjectOpenHashSet<>(delegatedRoles.keySet());
         exemptions.add(ownerId);
-        return Set.copyOf(exemptions);
+        return ObjectSets.unmodifiable(exemptions);
     }
 }

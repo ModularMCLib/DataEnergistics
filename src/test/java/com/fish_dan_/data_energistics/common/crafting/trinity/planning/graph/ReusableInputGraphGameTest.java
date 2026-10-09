@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Alternative;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Input;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -36,11 +37,9 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -57,10 +56,10 @@ public final class ReusableInputGraphGameTest {
         var publication = publication();
         var identity = TrinityPatternIdentity.capture(publication, helper.getLevel().registryAccess());
         ReusableInputRule rule = ReusableInputRule.unchanged(RULE_ID, 1L, tool(1));
-        List<TrinityBoundPatternInput> first = ObjectList.of(
+        ObjectList<TrinityBoundPatternInput> first = ObjectList.of(
                 new TrinityBoundPatternInput(0, 0, stack(tool(0)), 1L, null),
                 new TrinityBoundPatternInput(1, 0, stack(AEItemKey.of(Items.REDSTONE)), 1L, null));
-        List<TrinityBoundPatternInput> second = ObjectList.of(
+        ObjectList<TrinityBoundPatternInput> second = ObjectList.of(
                 bound(0, 1, rule, 1L, 1L),
                 new TrinityBoundPatternInput(1, 1, stack(AEItemKey.of(Items.COAL)), 1L, null));
         var pattern = new TrinityCraftingGraphPattern(identity, publication, ObjectList.of(first, second));
@@ -140,7 +139,7 @@ public final class ReusableInputGraphGameTest {
                 var pattern = new TrinityCraftingGraphPattern(identity, publication, ObjectList.of(ObjectList.of(bound(0, 0, rule, 1L, 1L))));
                 var input = new TrinityPlanningInput(1L, new TrinityCraftingGraphSnapshot(1L, ObjectList.of(pattern)), output,
                         BigInteger.ONE, CraftingQuantityMode.NET_NEW,
-                        TrinityPlanningInventory.finite(Map.of(tool, BigInteger.ONE)),
+                        TrinityPlanningInventory.finite(FastUtilCollections.mapOf(tool, BigInteger.ONE)),
                         new TrinityPlanningLimits(16, 16, 128, 1000));
                 var result = computation.calculate(input, TrinityPlanningProgressReporter.none());
                 helper.assertTrue(result.result().successful(), "Single-use tool can produce one requested output");
@@ -182,14 +181,14 @@ public final class ReusableInputGraphGameTest {
         try (TrinityComputationCache cache = TrinityComputationCache.create(Runnable::run)) {
             var computation = TrinityPlanningComputation.create(cache, TrinityGraphPlanner.pipeline());
             var request = new TrinityPlanningInput(1L, graph, output, BigInteger.valueOf(250), CraftingQuantityMode.NET_NEW,
-                    new TrinityPlanningInventory(Map.of(worn, BigInteger.ONE), Set.of(material, shard)),
+                    new TrinityPlanningInventory(FastUtilCollections.mapOf(worn, BigInteger.ONE), ObjectSet.of(material, shard)),
                     new TrinityPlanningLimits(64, 128, 500000, 10000));
             var result = computation.calculate(request, TrinityPlanningProgressReporter.none());
             if (!result.result().successful()) helper.fail("Existing worn tool must cover 250 uses: " + result.result().diagnostic());
             helper.assertValueEqual(result.result().value().initialExpectedInputs().get(worn), BigInteger.ONE,
                     "The CPU must withdraw the actual damaged tool, not its pristine planning prototype");
             var larger = computation.calculate(new TrinityPlanningInput(1L, graph, output, BigInteger.valueOf(2000),
-                    CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(Map.of(), Set.of(material, shard)), request.limits()),
+                    CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(FastUtilCollections.mapOf(), ObjectSet.of(material, shard)), request.limits()),
                     TrinityPlanningProgressReporter.none());
             if (!larger.result().successful()) helper.fail("Fresh tool production must follow the use budget: " + larger.result().diagnostic());
             helper.assertValueEqual(larger.result().value().patternFirings().get(factory.identity()), BigInteger.valueOf(2),
@@ -219,7 +218,7 @@ public final class ReusableInputGraphGameTest {
             helper.assertValueEqual(TrinityPatternVariantExpander.create().expand(tieredGraph, 16).value().size(), 9,
                     "Four reversible tiers retain nine recipes regardless of tool lifetime");
             var tiered = computation.calculate(new TrinityPlanningInput(1L, tieredGraph, output, BigInteger.valueOf(1000),
-                    CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(Map.of(), Set.of(material, shard)), request.limits()),
+                    CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(FastUtilCollections.mapOf(), ObjectSet.of(material, shard)), request.limits()),
                     TrinityPlanningProgressReporter.none());
             if (!tiered.result().successful()) helper.fail("Four-tier request must use arithmetic tool capacity: " + tiered.result().diagnostic());
             helper.assertValueEqual(tiered.result().value().patternFirings().get(factory.identity()), BigInteger.valueOf(85),
@@ -231,7 +230,7 @@ public final class ReusableInputGraphGameTest {
                     tierPatterns.get(1), tierPatterns.get(3), tierPatterns.get(5), tierPatterns.get(7)));
             for (BigInteger amount : ObjectList.of(BigInteger.valueOf(1000), BigInteger.TEN.pow(18))) {
                 var forward = computation.calculate(new TrinityPlanningInput(1L, forwardGraph, output, amount,
-                        CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(Map.of(), Set.of(material, shard)), request.limits()),
+                        CraftingQuantityMode.NET_NEW, new TrinityPlanningInventory(FastUtilCollections.mapOf(), ObjectSet.of(material, shard)), request.limits()),
                         TrinityPlanningProgressReporter.none());
                 if (!forward.result().successful()) helper.fail("Fixed-wear startup tools must not require MIP: " + forward.result().diagnostic());
                 var plan = forward.result().value();
@@ -275,8 +274,8 @@ public final class ReusableInputGraphGameTest {
         var factory = new TrinityCraftingGraphPattern(TrinityPatternIdentity.capture(toolRecipe, helper.getLevel().registryAccess()), toolRecipe);
         patterns.add(factory);
         var graph = new TrinityCraftingGraphSnapshot(1, patterns);
-        var inventory = new TrinityPlanningInventory(Map.of(tool, BigInteger.valueOf(75489), tiers.get(1), BigInteger.valueOf(4227072),
-                tiers.getLast(), BigInteger.valueOf(656354)), Set.of(tiers.getFirst(), rawGem, shard));
+        var inventory = new TrinityPlanningInventory(FastUtilCollections.mapOf(tool, BigInteger.valueOf(75489), tiers.get(1), BigInteger.valueOf(4227072),
+                tiers.getLast(), BigInteger.valueOf(656354)), ObjectSet.of(tiers.getFirst(), rawGem, shard));
         try (var cache = TrinityComputationCache.create(Runnable::run)) {
             var computation = TrinityPlanningComputation.create(cache, TrinityGraphPlanner.pipeline());
             for (BigInteger amount : ObjectList.of(BigInteger.valueOf(1000), BigInteger.valueOf(1_000_000), BigInteger.TEN.pow(18))) {

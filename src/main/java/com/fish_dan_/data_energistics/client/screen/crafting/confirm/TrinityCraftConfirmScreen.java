@@ -10,8 +10,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayo
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanSessionTransfer;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
-import com.fish_dan_.data_energistics.util.DurationFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -280,14 +279,14 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
             return Component.translatable(TRANSLATION_PREFIX + "metrics.planning");
         }
         String bytes = summary == null ?
-                AmountFormatter.format(plan.getUsedBytes()) :
+                FormattingUtils.format(plan.getUsedBytes()) :
                 summary.exactBytes()
-                        .map(AmountFormatter::format)
-                        .orElseGet(() -> AmountFormatter.format(plan.getUsedBytes()));
+                        .map(FormattingUtils::format)
+                        .orElseGet(() -> FormattingUtils.format(plan.getUsedBytes()));
         return Component.translatable(
                 TRANSLATION_PREFIX + "metrics",
                 bytes,
-                DurationFormatter.format(state.data_energistics$planningNanos()));
+                FormattingUtils.formatDuration(state.data_energistics$planningNanos()));
     }
 
     private Component cpuButtonText(boolean hasTrinityCpu) {
@@ -308,8 +307,8 @@ public final class TrinityCraftConfirmScreen extends AbstractContainerScreen<Cra
         }
         return Component.translatable(
                 TRANSLATION_PREFIX + "cpu_stats",
-                AmountFormatter.format(this.menu.getCpuAvailableBytes()),
-                AmountFormatter.format(this.menu.getCpuCoProcessors()));
+                FormattingUtils.format(this.menu.getCpuAvailableBytes()),
+                FormattingUtils.format(this.menu.getCpuCoProcessors()));
     }
 
     private void refreshRevision(TrinityCraftConfirmMenuState state,

@@ -52,8 +52,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
             EntityDataSerializers.BOOLEAN);
     private static final String TAG_ORIGIN = "Origin";
     private static final String TAG_ACTIVE = "DataNukeActive";
-    private static final String TAG_WORK_TICKS = "DataNukeWorkTicks";
-    private static final String TAG_EXPANSION_RADIUS = "DataNukeExpansionRadius";
     private static final String TAG_WORK_STATE = "DataNukeWorkState";
     private static final String TAG_ORBITAL_PAYLOAD = "DataNukeOrbitalPayload";
     private static final String TAG_ORBITAL_ATTACK_ID = "DataNukeOrbitalAttackId";
@@ -69,8 +67,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
     private static final double CENTER_Y_OFFSET = 0.5D;
 
     private BlockPos origin = BlockPos.ZERO;
-    private int workTicks;
-    private int expansionRadius;
     @Nullable
     private DigitalAnnihilationWork annihilationWork;
     @Nullable
@@ -200,8 +196,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
         super.addAdditionalSaveData(tag);
         tag.putLong(TAG_ORIGIN, this.origin.asLong());
         tag.putBoolean(TAG_ACTIVE, this.isActive());
-        tag.putInt(TAG_WORK_TICKS, this.workTicks);
-        tag.putInt(TAG_EXPANSION_RADIUS, this.expansionRadius);
         if (this.annihilationWork != null) {
             CompoundTag workTag = new CompoundTag();
             this.annihilationWork.save(workTag);
@@ -228,11 +222,8 @@ public class DataNukePrimedEntity extends PrimedTnt {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains(TAG_ORIGIN)) {
-            this.origin = BlockPos.of(tag.getLong(TAG_ORIGIN));
-        }
+        this.origin = BlockPos.of(tag.getLong(TAG_ORIGIN));
         this.setActive(tag.getBoolean(TAG_ACTIVE));
-        this.workTicks = Math.max(0, tag.getInt(TAG_WORK_TICKS));
         boolean orbitalMarkerPresent = tag.contains(TAG_ORBITAL_PAYLOAD, Tag.TAG_BYTE);
         boolean orbitalMarker = orbitalMarkerPresent && tag.getBoolean(TAG_ORBITAL_PAYLOAD);
         boolean attackIdPresent = tag.hasUUID(TAG_ORBITAL_ATTACK_ID);
@@ -251,8 +242,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
             invalidatePersistedState("missing orbital payload settings");
         }
 
-        int maximumRadius = this.capturedWorkSettings != null ? this.capturedWorkSettings.maxRadius() : DataEnergisticsConfiguration.INSTANCE.explosives.dataNuke.maxRadius;
-        this.expansionRadius = Math.clamp(tag.getInt(TAG_EXPANSION_RADIUS), 0, maximumRadius);
         Set<UUID> exemptions = new ObjectOpenHashSet<>();
         Tag rawExemptions = tag.get(TAG_DAMAGE_EXEMPTIONS);
         if (rawExemptions instanceof ListTag exemptionList) {
@@ -288,12 +277,8 @@ public class DataNukePrimedEntity extends PrimedTnt {
                 this.annihilationWork = DigitalAnnihilationWork.restoreManual(
                         this.origin,
                         this.getUUID(),
-                        this.capturedWorkSettings != null ? this.capturedWorkSettings : currentWorkSettings(),
-                        this.workTicks,
-                        this.expansionRadius,
                         tag.getCompound(TAG_WORK_STATE));
             }
-            syncLegacyWorkFields();
         } catch (IllegalArgumentException exception) {
             invalidatePersistedState(exception.getMessage() == null ? "invalid persisted annihilation work" : exception.getMessage());
         }
@@ -313,7 +298,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
                 this.origin,
                 this.getUUID(),
                 this.capturedWorkSettings != null ? this.capturedWorkSettings : currentWorkSettings());
-        syncLegacyWorkFields();
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -348,7 +332,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
                         this.capturedWorkSettings != null ? this.capturedWorkSettings : currentWorkSettings());
             }
             DigitalAnnihilationWork.TickResult result = this.annihilationWork.tick(serverLevel);
-            syncLegacyWorkFields();
             consumeCenterEntities(level, this.annihilationWork.centerEntityConsumeRadius());
             if (this.annihilationWork.expansionRadius() > 0) {
                 consumeExpandedEntities(level, this.annihilationWork.expansionRadius());
@@ -399,7 +382,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
                 serverLevel,
                 mutationBudget,
                 chunkReady);
-        syncLegacyWorkFields();
         consumeCenterEntities(serverLevel, this.annihilationWork.centerEntityConsumeRadius());
         if (this.annihilationWork.expansionRadius() > 0) {
             consumeExpandedEntities(serverLevel, this.annihilationWork.expansionRadius());
@@ -509,14 +491,6 @@ public class DataNukePrimedEntity extends PrimedTnt {
 
     private void setActive(boolean active) {
         this.entityData.set(DATA_ACTIVE, active);
-    }
-
-    private void syncLegacyWorkFields() {
-        if (this.annihilationWork == null) {
-            return;
-        }
-        this.workTicks = this.annihilationWork.workTicks();
-        this.expansionRadius = this.annihilationWork.expansionRadius();
     }
 
     private static DigitalAnnihilationWork.Settings currentWorkSettings() {

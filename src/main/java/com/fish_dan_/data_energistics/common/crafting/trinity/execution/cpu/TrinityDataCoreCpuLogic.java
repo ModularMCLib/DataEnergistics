@@ -83,7 +83,6 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.Reusa
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.ReusableInputGraphCaptureAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.ReusableReplanGraphCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.FixedToolIdentity;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus.Phase;
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputAdapters;
@@ -91,6 +90,8 @@ import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOut
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -139,15 +140,12 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
@@ -162,8 +160,6 @@ import java.util.function.Consumer;
  */
 final class TrinityDataCoreCpuLogic {
 
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 5;
     private static final String INVENTORY_TAG = "inventory";
     private static final String EXACT_INVENTORY_TAG = "exact_inventory";
     private static final String VIRTUAL_COMPLETIONS_TAG = "virtual_completions";
@@ -172,7 +168,7 @@ final class TrinityDataCoreCpuLogic {
     private static final String REUSABLE_LEDGER_TAG = "reusable_sessions";
     private static final double ENERGY_TOLERANCE = 0.01D;
     private static final BigInteger MAX_EXACT_DISPATCH_AMOUNT = BigInteger.ONE
-            .shiftLeft(TrinityBigIntegerEncoding.MAX_BYTES * Byte.SIZE - 1).subtract(BigInteger.ONE);
+            .shiftLeft(NbtCodecs.MAX_BYTES * Byte.SIZE - 1).subtract(BigInteger.ONE);
     /** The shared dispatch window, rather than structure co-processors, owns the physical-operation limit. */
     private static final int UNLIMITED_WORKER_OPERATIONS = Integer.MAX_VALUE;
 
@@ -1154,7 +1150,7 @@ final class TrinityDataCoreCpuLogic {
             return cpuAmount.add(BigInteger.valueOf(simulateNetworkExtraction(network, key)))
                     .min(usefulUpper);
         }
-        TrinityAvailableAmount networkAmount = storageAccess.exactAvailability(key, this.cpu.actionSource());
+        TrinityAvailableAmount networkAmount = storageAccess.data_energistics$exactAvailability(key, this.cpu.actionSource());
         return cpuAmount.add(networkAmount.availableUpTo(usefulUpper.subtract(cpuAmount)));
     }
 
@@ -2619,7 +2615,7 @@ final class TrinityDataCoreCpuLogic {
         }
         ObjectList<GenericStack> expectedOutputs = scaleAmounts(extractedInputs.expectedOutputs(), count);
         ObjectList<GenericStack> expectedContainerItems = scaleAmounts(extractedInputs.expectedContainerItems(), count);
-        ObjectList<GenericStack> scheduledOutputs = scaleStacks(details.getOutputs(), count);
+        ObjectList<GenericStack> scheduledOutputs = scaleStacks(new ObjectArrayList<>(details.getOutputs()), count);
         if (expectedOutputs == null || expectedContainerItems == null || scheduledOutputs == null) {
             Data_Energistics.LOGGER.error("Trinity Data Core CPU cannot commit overflowing pattern outputs");
             return null;
@@ -2679,7 +2675,7 @@ final class TrinityDataCoreCpuLogic {
                 dynamicOutputs,
                 virtualCompletions,
                 new PreparedScheduledOutputs(details.getDefinition(), scheduledOutputs),
-                ObjectSets.unmodifiable(changedKeys));
+                FastUtilCollections.immutableSet(changedKeys));
     }
 
     private ObjectList<DynamicCraftingOutputLedger.Registration> resolveDynamicOutputs(
@@ -2766,7 +2762,7 @@ final class TrinityDataCoreCpuLogic {
     }
 
     @Nullable
-    private static ObjectList<GenericStack> scaleStacks(List<GenericStack> stacks, long count) {
+    private static ObjectList<GenericStack> scaleStacks(ObjectList<GenericStack> stacks, long count) {
         KeyCounter scaled = new KeyCounter();
         for (GenericStack stack : stacks) {
             long amount = stack.amount();
@@ -3671,7 +3667,7 @@ final class TrinityDataCoreCpuLogic {
      *
      * @param waitingFor output key set
      */
-    void getAllWaitingFor(Set<AEKey> waitingFor) {
+    void getAllWaitingFor(ObjectSet<AEKey> waitingFor) {
         if (this.job == null) {
             return;
         }
@@ -3695,7 +3691,6 @@ final class TrinityDataCoreCpuLogic {
      */
     CompoundTag writeToTag(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         data.put(REUSABLE_LEDGER_TAG, this.quarantinedReusableState == null ?
                 ReusableCpuSessionLedgerNbtCodec.encode(this.reusableLedger, registries) : this.quarantinedReusableState.copy());
         data.put(INVENTORY_TAG, this.inventory.writeToNBT(registries));
@@ -3720,18 +3715,6 @@ final class TrinityDataCoreCpuLogic {
         this.reusableDispatch.resetObservation();
         discardPersistedState();
         readReusableLedger(data, registries);
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            Data_Energistics.LOGGER.warn("Ignoring Trinity Data Core CPU logic without a schema version");
-            return;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            Data_Energistics.LOGGER.warn(
-                    "Ignoring Trinity Data Core CPU logic schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return;
-        }
         Tag rawInventory = data.get(INVENTORY_TAG);
         if (!(rawInventory instanceof ListTag inventoryTag) ||
                 (!inventoryTag.isEmpty() && inventoryTag.getElementType() != Tag.TAG_COMPOUND)) {
@@ -3800,9 +3783,6 @@ final class TrinityDataCoreCpuLogic {
         }
 
         CompoundTag jobData = data.getCompound(JOB_TAG);
-        if (!TrinityDataCoreExecutingCraftingJob.hasSupportedSchema(jobData)) {
-            return;
-        }
         try {
             this.job = new TrinityDataCoreExecutingCraftingJob(
                     jobData,
@@ -3841,10 +3821,9 @@ final class TrinityDataCoreCpuLogic {
 
     private void readReusableLedger(CompoundTag data, HolderLookup.Provider registries) {
         this.reusableLedger = new ReusableCpuSessionLedger(UUID.randomUUID());
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
         Tag raw = data.get(REUSABLE_LEDGER_TAG);
         this.quarantinedReusableState = raw == null ? null : raw.copy();
-        if (schemaVersion != SCHEMA_VERSION || !(raw instanceof CompoundTag encoded)) {
+        if (!(raw instanceof CompoundTag encoded)) {
             if (raw == null) {
                 this.quarantinedReusableState = new CompoundTag();
             }

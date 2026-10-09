@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.api.crafting.reusable.dispatch;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -13,16 +13,7 @@ import java.util.UUID;
  * The loaded epoch changes with the source instance; revision changes when its custody evidence or coverage
  * changes, not when a tool merely advances its damage. This metadata never authorizes inventory reconstruction.
  */
-public record ReusableCraftingCustodyCensus(UUID loadedEpoch, long revision, boolean complete, List<Entry> sessions) {
-
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #sessionsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<Entry> sessions() {
-        return sessions;
-    }
+public record ReusableCraftingCustodyCensus(UUID loadedEpoch, long revision, boolean complete, ObjectList<Entry> sessions) {
 
     /** Returns an immutable FastUtil view of custody sessions. */
     public ObjectList<Entry> sessionsFast() {
@@ -33,7 +24,7 @@ public record ReusableCraftingCustodyCensus(UUID loadedEpoch, long revision, boo
         if (revision < 0) {
             throw new IllegalArgumentException("Negative reusable custody census revision");
         }
-        sessions = List.copyOf(sessions);
+        sessions = new ObjectImmutableList<>(sessions);
     }
 
     /** Closed acknowledgements remain evidence when a CPU restores an older snapshot without their history. */

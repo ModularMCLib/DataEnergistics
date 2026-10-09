@@ -14,13 +14,13 @@ public interface FiniteNetworkStorageAccess {
     /**
      * Returns a monotonically increasing revision for mount and unmount requests on this network storage.
      */
-    long storageStructureRevision();
+    long data_energistics$storageStructureRevision();
 
     /**
      * Captures one exact key across concrete mounts, preserving finite BigInteger totals and explicit unlimited
      * sources. The action source participates in every mount-level extraction simulation.
      */
-    TrinityAvailableAmount exactAvailability(AEKey what, IActionSource source);
+    TrinityAvailableAmount data_energistics$exactAvailability(AEKey what, IActionSource source);
 
     /**
      * Transfers at most {@code amount} from concrete mounts in AE2's normal extraction order.
@@ -30,10 +30,10 @@ public interface FiniteNetworkStorageAccess {
      * eligible even when their reported amount equals an integer sentinel value.
      * </p>
      */
-    FiniteTransferResult transferFinite(AEKey what,
-                                        long amount,
-                                        IActionSource source,
-                                        FiniteTransferTarget target);
+    FiniteTransferResult data_energistics$transferFinite(AEKey what,
+                                                         long amount,
+                                                         IActionSource source,
+                                                         FiniteTransferTarget target);
 
     /** Destination participating in the simulate-then-commit transfer transaction. */
     interface FiniteTransferTarget {

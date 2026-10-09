@@ -33,9 +33,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 /** Materializes real per-slot escrow and executes one native batch with actual final grid remainders. */
@@ -70,7 +71,7 @@ public final class NativeReusableCrafting {
      * Server-thread candidate validation shared by planning, exact selection and native execution. Only slots
      * already proven reusable may advance beyond the encoded key; ordinary input substitution restrictions remain.
      */
-    public static boolean matches(IPatternDetails pattern, List<GenericStack> exactInputs, IntSet reusableSlots,
+    public static boolean matches(IPatternDetails pattern, ObjectList<GenericStack> exactInputs, IntSet reusableSlots,
                                   Optional<ResourceLocation> recipeId, ServerLevel level) {
         IPatternDetails nativePattern = original(pattern);
         IPatternDetails.IInput[] inputs = nativePattern.getInputs();
@@ -113,7 +114,8 @@ public final class NativeReusableCrafting {
 
     /** Rejects patterns whose compressed inputs cannot be mapped independently to native grid positions. */
     public static boolean supports(IMolecularAssemblerSupportedPattern pattern, Binding binding) {
-        List<ToolDelivery> initial = binding.tools().stream().map(tool -> new ToolDelivery(tool.slot(), new GenericStack(tool.rule().initialKey(), tool.heldAmount()))).toList();
+        ObjectList<ToolDelivery> initial = new ObjectImmutableList<>(new ObjectArrayList<>(binding.tools().stream()
+                .map(tool -> new ToolDelivery(tool.slot(), new GenericStack(tool.rule().initialKey(), tool.heldAmount()))).collect(ObjectArrayList.toList())));
         try {
             materialize(pattern, binding, new Operation(0, 0, 1, binding.consumed(), initial));
             return true;
@@ -146,7 +148,7 @@ public final class NativeReusableCrafting {
         binding.tools().forEach(tool -> rules.put(tool.slot(), tool.rule()));
         Operation sample = operation;
         if (operation.count() > 1) {
-            List<ToolDelivery> lastTools = new ObjectArrayList<>();
+            ObjectArrayList<ToolDelivery> lastTools = new ObjectArrayList<>();
             for (ToolDelivery tool : operation.tools()) {
                 var state = rules.get(tool.slot()).advance((AEItemKey) tool.stack().what(), operation.count() - 1).successor();
                 lastTools.add(new ToolDelivery(tool.slot(), new GenericStack(state, tool.stack().amount())));
@@ -178,13 +180,13 @@ public final class NativeReusableCrafting {
         if (remainders.size() != input.size()) {
             throw new IllegalStateException("Native reusable recipe returned a remainder grid of the wrong size");
         }
-        Int2ObjectOpenHashMap<List<GenericStack>> successors = new Int2ObjectOpenHashMap<>();
-        Int2ObjectOpenHashMap<List<GenericStack>> byproducts = new Int2ObjectOpenHashMap<>();
+        Int2ObjectOpenHashMap<ObjectList<GenericStack>> successors = new Int2ObjectOpenHashMap<>();
+        Int2ObjectOpenHashMap<ObjectList<GenericStack>> byproducts = new Int2ObjectOpenHashMap<>();
         binding.tools().forEach(tool -> {
             successors.put(tool.slot(), new ObjectArrayList<>());
             byproducts.put(tool.slot(), new ObjectArrayList<>());
         });
-        List<GenericStack> outputs = new ObjectArrayList<>();
+        ObjectArrayList<GenericStack> outputs = new ObjectArrayList<>();
         outputs.add(new GenericStack(AEItemKey.of(output), Math.multiplyExact(output.getCount(), operation.count())));
         for (int index = 0; index < input.size(); index++) {
             ItemStack remainder = remainders.get(index);
@@ -212,8 +214,11 @@ public final class NativeReusableCrafting {
                 successors.get(owner).add(actual);
             }
         }
-        List<ToolOutcome> outcomes = binding.tools().stream().map(tool -> new ToolOutcome(tool.slot(), successors.get(tool.slot()), byproducts.get(tool.slot()))).toList();
-        return new NativeResult(true, outcomes, outputs, Optional.empty());
+        ObjectArrayList<ToolOutcome> outcomes = new ObjectArrayList<>();
+        for (var tool : binding.tools()) {
+            outcomes.add(new ToolOutcome(tool.slot(), successors.get(tool.slot()), byproducts.get(tool.slot())));
+        }
+        return new NativeResult(true, outcomes, new ObjectImmutableList<>(outputs), Optional.empty());
     }
 
     private static Grid materialize(IMolecularAssemblerSupportedPattern pattern, Binding binding, Operation operation) {
@@ -226,7 +231,7 @@ public final class NativeReusableCrafting {
     }
 
     private static Grid materialize(IMolecularAssemblerSupportedPattern pattern, KeyCounter[] all, KeyCounter[] held) {
-        List<ItemStack> grid = new ObjectArrayList<>(GRID_SIZE);
+        ObjectList<ItemStack> grid = new ObjectArrayList<>(GRID_SIZE);
         for (int index = 0; index < GRID_SIZE; index++) {
             grid.add(ItemStack.EMPTY);
         }
@@ -294,5 +299,5 @@ public final class NativeReusableCrafting {
         return result;
     }
 
-    private record Grid(List<ItemStack> items, int[] toolOwners, Int2ObjectMap<AEItemKey> toolStates) {}
+    private record Grid(ObjectList<ItemStack> items, int[] toolOwners, Int2ObjectMap<AEItemKey> toolStates) {}
 }

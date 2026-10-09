@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.mixin.ae.advancedae;
 
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderHostAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningAutoRequestHelper;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;
@@ -69,7 +69,7 @@ public abstract class AdvancedAePatternProviderLogicMixin implements PatternProv
     @Override
     public boolean dataEnergistics$forcePulseUnlock() {
         if (this.host instanceof PatternProviderHostAccessor accessor && accessor.dataEnergistics$getRedstoneTuningMode() == RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE && this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
-            RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+            RedstoneTuningUtils.requestPrimaryOutputs(
                     serverLevel,
                     this.host.getGrid(),
                     ((AdvancedAePatternProviderLogicFieldAccessor) this).dataEnergistics$getActionSource(),
@@ -98,7 +98,7 @@ public abstract class AdvancedAePatternProviderLogicMixin implements PatternProv
         if (!accessor.dataEnergistics$hasRedstoneTuningCard() || accessor.dataEnergistics$getRedstoneTuningMode() != RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE || !accessor.dataEnergistics$consumeRedstoneInputPulse() || !(this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
-        RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+        RedstoneTuningUtils.requestPrimaryOutputs(
                 serverLevel,
                 this.host.getGrid(),
                 ((AdvancedAePatternProviderLogicFieldAccessor) this).dataEnergistics$getActionSource(),

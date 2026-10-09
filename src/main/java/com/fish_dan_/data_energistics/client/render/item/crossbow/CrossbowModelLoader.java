@@ -11,11 +11,12 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
 
 public final class CrossbowModelLoader implements IGeometryLoader<CrossbowGeometry> {
@@ -23,23 +24,23 @@ public final class CrossbowModelLoader implements IGeometryLoader<CrossbowGeomet
     @Override
     public CrossbowGeometry read(JsonObject json, JsonDeserializationContext context) {
         JsonObject poses = GsonHelper.getAsJsonObject(json, "poses");
-        List<List<CrossbowGeometry.Element>> frames = new ObjectArrayList<>();
-        for (String name : List.of("off", "on", "0", "1", "2")) {
-            List<CrossbowGeometry.Element> frame = readPose(poses, name, context);
+        ObjectArrayList<ObjectList<CrossbowGeometry.Element>> frames = new ObjectArrayList<>();
+        for (String name : ObjectList.of("off", "on", "0", "1", "2")) {
+            ObjectList<CrossbowGeometry.Element> frame = readPose(poses, name, context);
             if (frame.isEmpty() || !frames.isEmpty() && frame.size() != frames.getFirst().size()) {
                 throw new JsonParseException("Crossbow pose " + name + " must contain the same nonzero number of parts");
             }
             frames.add(frame);
         }
-        return new CrossbowGeometry(List.copyOf(frames), readPose(poses, "light_saber", context));
+        return new CrossbowGeometry(new ObjectImmutableList<>(frames), readPose(poses, "light_saber", context));
     }
 
-    private static List<CrossbowGeometry.Element> readPose(JsonObject poses, String name,
-                                                           JsonDeserializationContext context) {
+    private static ObjectList<CrossbowGeometry.Element> readPose(JsonObject poses, String name,
+                                                                 JsonDeserializationContext context) {
         ResourceLocation file = ResourceLocation.parse(GsonHelper.getAsString(poses, name));
         try (var reader = Minecraft.getInstance().getResourceManager().getResourceOrThrow(file).openAsReader()) {
             JsonArray elements = GsonHelper.getAsJsonArray(GsonHelper.parse(reader), "elements");
-            List<CrossbowGeometry.Element> result = new ObjectArrayList<>(elements.size());
+            ObjectArrayList<CrossbowGeometry.Element> result = new ObjectArrayList<>(elements.size());
             for (var value : elements) {
                 JsonObject element = value.getAsJsonObject().deepCopy();
                 Quaternionf rotation = new Quaternionf();
@@ -76,7 +77,7 @@ public final class CrossbowModelLoader implements IGeometryLoader<CrossbowGeomet
                 CrossbowDeployment deployment = CrossbowDeployment.valueOf(GsonHelper.getAsString(element, "deployment", "frame").toUpperCase(Locale.ROOT));
                 result.add(new CrossbowGeometry.Element(cube, new CrossbowPartPose(center, rotation, size), motion, deployment));
             }
-            return List.copyOf(result);
+            return new ObjectImmutableList<>(result);
         } catch (IOException | IllegalArgumentException exception) {
             throw new JsonParseException("Unable to read crossbow pose " + file, exception);
         }

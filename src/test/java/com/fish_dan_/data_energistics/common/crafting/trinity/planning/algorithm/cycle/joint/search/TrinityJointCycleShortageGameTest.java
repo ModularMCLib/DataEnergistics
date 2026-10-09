@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -32,13 +33,13 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -55,7 +56,7 @@ public final class TrinityJointCycleShortageGameTest {
     @EmptyTemplate("5")
     @GameTest(template = "empty_5x5")
     public static void stoppedRootRetainsFailureWithoutShortageDiagnosis(GameTestHelper helper) {
-        for (TrinityPlanningDiagnosticCode stop : List.of(
+        for (TrinityPlanningDiagnosticCode stop : ObjectList.of(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT)) {
             CycleFixture fixture = cycle(100);
@@ -167,7 +168,7 @@ public final class TrinityJointCycleShortageGameTest {
                                                                         TrinityPlanningControl control) {
         TrinityJointCycleSearch search = new TrinityJointCycleSearch(
                 model, TrinityJointCandidateEvaluator.create(), TrinityExternalPrefixCut.create());
-        return search.search(fixture.component(), fixture.demand(), fixture.available(), Set.of(),
+        return search.search(fixture.component(), fixture.demand(), fixture.available(), ObjectSet.of(),
                 maxStates, TrinityPlanningMode.FIRST_FEASIBLE, control);
     }
 
@@ -176,15 +177,15 @@ public final class TrinityJointCycleShortageGameTest {
         AEKey fuel = AEItemKey.of(Items.COAL);
         TrinityPatternVariant variant = TrinityPatternVariant.create(
                 new TrinityPatternIdentity("shortage_cycle", "diamond_and_coal_to_two_diamonds"), target, 0,
-                IntList.of(0, 0), List.of(
+                IntList.of(0, 0), ObjectList.of(
                         new TrinityBoundPatternInput(0, 0, new GenericStack(target, 1), 1, null),
                         new TrinityBoundPatternInput(1, 0, new GenericStack(fuel, 1), 1, null)),
-                List.of(new GenericStack(target, 2)));
+                ObjectList.of(new GenericStack(target, 2)));
         TrinityStronglyConnectedComponent component = new TrinityStronglyConnectedComponent(
-                0, List.of(target), true, List.of(variant), IntList.of(), IntList.of());
+                0, ObjectList.of(target), true, ObjectList.of(variant), IntList.of(), IntList.of());
         TrinityCycleDemand demand = new TrinityCycleDemand(
-                Map.of(), Map.of(), Map.of(target, BigInteger.valueOf(requested)), Set.of(target));
-        return new CycleFixture(target, fuel, component, demand, Map.of(target, BigInteger.ONE, fuel, BigInteger.TEN));
+                FastUtilCollections.mapOf(), FastUtilCollections.mapOf(), FastUtilCollections.mapOf(target, BigInteger.valueOf(requested)), ObjectSet.of(target));
+        return new CycleFixture(target, fuel, component, demand, FastUtilCollections.mapOf(target, BigInteger.ONE, fuel, BigInteger.TEN));
     }
 
     private record CycleFixture(
@@ -192,7 +193,7 @@ public final class TrinityJointCycleShortageGameTest {
                                 AEKey fuel,
                                 TrinityStronglyConnectedComponent component,
                                 TrinityCycleDemand demand,
-                                Map<AEKey, BigInteger> available) {}
+                                Object2ObjectMap<AEKey, BigInteger> available) {}
 
     /** Controls only terminal solver boundaries; successful diagnosis and scheduling use production algorithms. */
     private static final class StoppedRootFeasibility implements TrinityCycleFeasibilityModel {
@@ -235,7 +236,7 @@ public final class TrinityJointCycleShortageGameTest {
                                                                                        TrinityPlanningDiagnosticCode code,
                                                                                        String state) {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
-                    code, Component.literal("Controlled solver stop"), Map.of("state", state, "states", "0")));
+                    code, Component.literal("Controlled solver stop"), FastUtilCollections.mapOf("state", state, "states", "0")));
         }
     }
 }

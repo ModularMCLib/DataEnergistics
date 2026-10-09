@@ -4,15 +4,16 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.core.HolderLookup;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -142,7 +143,7 @@ public final class TrinityCraftingGraphRebuilder {
                     return publishCompleted(active);
                 }
                 active.primaryOutput = active.craftableKeys.get(active.keyIndex);
-                active.patternsForKey = List.copyOf(this.source.capturePatternsFor(active.primaryOutput));
+                active.patternsForKey = FastUtilCollections.immutableList(this.source.capturePatternsFor(active.primaryOutput));
                 active.patternIndex = 0;
                 performedWork = true;
                 currentRevision = checkedRevision();
@@ -196,7 +197,7 @@ public final class TrinityCraftingGraphRebuilder {
         if (currentRevision != completed.revision) {
             return restartAt(currentRevision);
         }
-        TrinityCraftingGraphSnapshot snapshot = new TrinityCraftingGraphSnapshot(completed.revision, List.copyOf(completed.patterns.values()));
+        TrinityCraftingGraphSnapshot snapshot = new TrinityCraftingGraphSnapshot(completed.revision, FastUtilCollections.immutableList(completed.patterns.values()));
         currentRevision = checkedRevision();
         if (currentRevision != completed.revision) {
             return restartAt(currentRevision);
@@ -213,7 +214,7 @@ public final class TrinityCraftingGraphRebuilder {
 
     private boolean beginBuild(long revision) {
         HolderLookup.Provider registries = this.source.registries();
-        List<AEKey> craftableKeys = List.copyOf(this.source.captureCraftableKeys());
+        ObjectList<AEKey> craftableKeys = FastUtilCollections.immutableList(this.source.captureCraftableKeys());
         if (checkedRevision() != revision) {
             return false;
         }
@@ -258,7 +259,7 @@ public final class TrinityCraftingGraphRebuilder {
 
         private final long revision;
         private final HolderLookup.Provider registries;
-        private final List<AEKey> craftableKeys;
+        private final ObjectList<AEKey> craftableKeys;
         private final TreeMap<TrinityPatternIdentity, TrinityCraftingGraphPattern> patterns = new TreeMap<>();
 
         private int keyIndex;
@@ -266,11 +267,11 @@ public final class TrinityCraftingGraphRebuilder {
         @Nullable
         private AEKey primaryOutput;
         @Nullable
-        private List<IPatternDetails> patternsForKey;
+        private ObjectList<IPatternDetails> patternsForKey;
 
         private BuildState(long revision,
                            HolderLookup.Provider registries,
-                           List<AEKey> craftableKeys) {
+                           ObjectList<AEKey> craftableKeys) {
             this.revision = revision;
             this.registries = registries;
             this.craftableKeys = craftableKeys;

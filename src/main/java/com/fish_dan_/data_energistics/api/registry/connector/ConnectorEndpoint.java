@@ -4,12 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.NullMarked;
-
-import java.util.List;
 
 /**
  * Common editing surface for a provider or interface's remote links. The connector uses this contract so keyboard,
@@ -19,22 +15,8 @@ import java.util.List;
 @NullMarked
 public interface ConnectorEndpoint {
 
-    /**
-     * Returns links in registration order, including face, mode and optional interface slot.
-     *
-     * @deprecated scheduled for removal in plan 340; use {@link #bindingsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default List<ConnectorLink> bindings() {
-        return List.of();
-    }
-
-    /** Returns the configured links through the FastUtil collection API. */
-    @SuppressWarnings("unchecked")
-    default ObjectList<ConnectorLink> bindingsFast() {
-        List<ConnectorLink> legacy = bindings();
-        return legacy instanceof ObjectList<?> fast ? (ObjectList<ConnectorLink>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
-    }
+    /** Returns links in registration order, including face, mode and optional interface slot. */
+    ObjectList<ConnectorLink> bindingsFast();
 
     /**
      * Tests whether a link belongs to the dimension currently being rendered.
@@ -73,15 +55,11 @@ public interface ConnectorEndpoint {
      * and first registration order are preserved. Interface slots must remain in the valid logical range, but may be
      * locked after a capacity card was removed. Invalid slots throw IllegalArgumentException.
      *
-     * @deprecated scheduled for removal in plan 340; use {@link #replaceFast(ObjectList)}
+     * <p>
+     * Endpoints without replacement support retain their current bindings and return zero.
+     * </p>
      */
-    @Deprecated(forRemoval = true)
-    default int replace(List<ConnectorLink> bindings) {
-        return 0;
-    }
-
-    /** Replaces links through the FastUtil collection API. */
     default int replaceFast(ObjectList<ConnectorLink> bindings) {
-        return replace((List<ConnectorLink>) bindings);
+        return 0;
     }
 }

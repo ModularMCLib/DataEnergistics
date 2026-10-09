@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.api.crafting.dynamic;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -12,10 +11,6 @@ import java.util.Objects;
  * @param outputs non-empty dynamic physical outputs in deterministic declaration order
  */
 public record DynamicCraftingOutputSemantics(ObjectList<DynamicCraftingOutput> outputs) {
-
-    public DynamicCraftingOutputSemantics(List<DynamicCraftingOutput> outputs) {
-        this(new ObjectImmutableList<>(outputs));
-    }
 
     /** Returns an immutable FastUtil view of the declared outputs. */
     public ObjectList<DynamicCraftingOutput> outputsFast() {

@@ -15,7 +15,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import de.ellpeck.naturesaura.blocks.multi.Multiblocks;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public final class NatureCrimsonAltarAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         return delegate.occupiedPositions(level, position, preparation);
     }
 

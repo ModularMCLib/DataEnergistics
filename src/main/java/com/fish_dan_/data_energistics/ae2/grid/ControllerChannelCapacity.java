@@ -7,13 +7,13 @@ import appeng.api.networking.pathing.ControllerState;
 import appeng.api.networking.pathing.IPathingService;
 import appeng.blockentity.networking.ControllerBlockEntity;
 
-import net.minecraft.core.BlockPos;
-
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Set;
 
 /**
  * Resolves every controller's total supply and converts it to the domain capacity available after native physical
@@ -91,10 +91,10 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
                                       ControllerState controllerState,
                                       ChannelMode channelMode) {
         if (controllerState == ControllerState.CONTROLLER_CONFLICT || controllerState == ControllerState.NO_CONTROLLER || channelMode == ChannelMode.INFINITE) {
-            return calculate(controllerState, channelMode, Set.of());
+            return calculate(controllerState, channelMode, LongSets.emptySet());
         }
 
-        Set<Object> controllerOwners = new ReferenceOpenHashSet<>();
+        ReferenceSet<Object> controllerOwners = new ReferenceOpenHashSet<>();
         int totalSupply = 0;
         for (IGridNode node : grid.getNodes()) {
             Object owner = node.getOwner();
@@ -109,7 +109,7 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
             totalSupply = Math.addExact(totalSupply, requireNonNegativeSupply(owner, controllerSupply));
         }
         if (controllerOwners.isEmpty()) {
-            return calculate(controllerState, channelMode, Set.of());
+            return calculate(controllerState, channelMode, LongSets.emptySet());
         }
         return totalSupply;
     }
@@ -126,7 +126,7 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
     @Override
     public int calculate(ControllerState controllerState,
                          ChannelMode channelMode,
-                         Iterable<BlockPos> controllerPositions) {
+                         LongCollection controllerPositions) {
         if (controllerState == ControllerState.CONTROLLER_CONFLICT) {
             return 0;
         }
@@ -137,7 +137,7 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
             return controllerlessCapacity(channelMode);
         }
 
-        Set<BlockPos> positions = immutablePositionSet(controllerPositions);
+        LongSet positions = immutablePositionSet(controllerPositions);
         if (positions.isEmpty()) {
             return controllerlessCapacity(channelMode);
         }
@@ -181,10 +181,10 @@ public final class ControllerChannelCapacity implements TowerChannelCapacity {
      * @param controllerPositions positions supplied by the caller
      * @return immutable-position set used by the controller calculation
      */
-    private static Set<BlockPos> immutablePositionSet(Iterable<BlockPos> controllerPositions) {
-        Set<BlockPos> positions = new ObjectOpenHashSet<>();
-        for (BlockPos position : controllerPositions) {
-            positions.add(position.immutable());
+    private static LongSet immutablePositionSet(LongCollection controllerPositions) {
+        LongSet positions = new LongOpenHashSet();
+        for (long position : controllerPositions) {
+            positions.add(position);
         }
         return positions;
     }

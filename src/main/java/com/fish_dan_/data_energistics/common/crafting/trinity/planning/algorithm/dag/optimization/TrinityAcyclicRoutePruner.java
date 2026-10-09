@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -10,12 +11,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Removes target routes that cannot be reached from the captured inventory in an acyclic transition graph.
@@ -40,21 +40,21 @@ public final class TrinityAcyclicRoutePruner {
      * @param inventory finite/unlimited captured inventory
      * @return stable identity-ordered executable target routes
      */
-    public List<TrinityPatternVariant> retainExecutableTargetRoutes(
-                                                                    List<TrinityPatternVariant> variants,
-                                                                    AEKey target,
-                                                                    TrinityPlanningInventory inventory) {
-        List<TrinityPatternVariant> backward = targetReachableVariants(variants, target);
+    public ObjectList<TrinityPatternVariant> retainExecutableTargetRoutes(
+                                                                          ObjectList<TrinityPatternVariant> variants,
+                                                                          AEKey target,
+                                                                          TrinityPlanningInventory inventory) {
+        ObjectList<TrinityPatternVariant> backward = targetReachableVariants(variants, target);
         if (backward.isEmpty()) {
-            return List.of();
+            return ObjectList.of();
         }
-        List<TrinityPatternVariant> executable = forwardExecutableVariants(backward, inventory);
+        ObjectList<TrinityPatternVariant> executable = forwardExecutableVariants(backward, inventory);
         return executable.size() == backward.size() ? backward : targetReachableVariants(executable, target);
     }
 
-    private static List<TrinityPatternVariant> forwardExecutableVariants(
-                                                                         List<TrinityPatternVariant> variants,
-                                                                         TrinityPlanningInventory inventory) {
+    private static ObjectList<TrinityPatternVariant> forwardExecutableVariants(
+                                                                               ObjectList<TrinityPatternVariant> variants,
+                                                                               TrinityPlanningInventory inventory) {
         ObjectOpenHashSet<AEKey> producibleKeys = new ObjectOpenHashSet<>(inventory.unlimitedKeys());
         inventory.finiteAmounts().forEach((key, amount) -> {
             if (amount.signum() > 0) {
@@ -108,12 +108,12 @@ public final class TrinityAcyclicRoutePruner {
                 retained.add(variants.get(index));
             }
         }
-        return List.copyOf(retained);
+        return FastUtilCollections.immutableList(retained);
     }
 
-    private static List<TrinityPatternVariant> targetReachableVariants(
-                                                                       List<TrinityPatternVariant> variants,
-                                                                       AEKey target) {
+    private static ObjectList<TrinityPatternVariant> targetReachableVariants(
+                                                                             ObjectList<TrinityPatternVariant> variants,
+                                                                             AEKey target) {
         ObjectArrayList<TrinityPatternVariant> ordered = new ObjectArrayList<>(variants.size());
         for (TrinityPatternVariant variant : variants) {
             if (variant == null) {
@@ -139,7 +139,7 @@ public final class TrinityAcyclicRoutePruner {
             if (!visitedKeys.add(required)) {
                 continue;
             }
-            List<TrinityPatternVariant> producers = producersByOutput.get(required);
+            ObjectList<TrinityPatternVariant> producers = producersByOutput.get(required);
             if (producers == null) {
                 continue;
             }
@@ -151,6 +151,6 @@ public final class TrinityAcyclicRoutePruner {
         }
         ObjectArrayList<TrinityPatternVariant> result = new ObjectArrayList<>(reachable);
         result.sort(Comparator.naturalOrder());
-        return Collections.unmodifiableList(result);
+        return FastUtilCollections.immutableList(result);
     }
 }

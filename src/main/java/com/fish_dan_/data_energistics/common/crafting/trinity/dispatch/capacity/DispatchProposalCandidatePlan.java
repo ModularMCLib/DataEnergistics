@@ -2,18 +2,19 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model.CraftingDispatchCursor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable linear proposal order calculated before reservation state is consulted.
  *
  * @param candidates provider-first candidates that may be reserved in one linear pass
  */
-public record DispatchProposalCandidatePlan(List<Candidate> candidates) {
+public record DispatchProposalCandidatePlan(ObjectList<Candidate> candidates) {
 
     public DispatchProposalCandidatePlan {
-        candidates = List.copyOf(candidates);
+        candidates = FastUtilCollections.immutableList(candidates);
     }
 
     /**

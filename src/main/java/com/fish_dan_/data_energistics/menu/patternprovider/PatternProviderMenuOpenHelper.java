@@ -18,7 +18,8 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 
 /** Opens provider menus through exact plugin declarations or AE2's typed core contracts. */
@@ -27,7 +28,7 @@ public final class PatternProviderMenuOpenHelper {
     private PatternProviderMenuOpenHelper() {}
 
     /** Attempts to open the exact provider group selected by a server-side terminal row. */
-    public static boolean openProviderGroup(List<PatternContainer> providers, Player player) {
+    public static boolean openProviderGroup(ObjectList<PatternContainer> providers, Player player) {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return false;
         }

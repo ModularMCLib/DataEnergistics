@@ -22,6 +22,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -34,15 +36,15 @@ import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Propagates aggregate demand through acyclic keys without expanding one state per requested item.
@@ -85,7 +87,7 @@ public final class TrinityAcyclicDemandPropagator {
      */
     public TrinityAlgorithmResult<TrinityAcyclicPlan> propagate(
                                                                 TrinityCraftingTopology topology,
-                                                                List<TrinityPatternVariant> variants,
+                                                                ObjectList<TrinityPatternVariant> variants,
                                                                 AEKey target,
                                                                 BigInteger requestedAmount,
                                                                 CraftingQuantityMode quantityMode,
@@ -99,8 +101,8 @@ public final class TrinityAcyclicDemandPropagator {
         return propagate(
                 topology,
                 variants,
-                Map.of(),
-                Map.of(),
+                FastUtilCollections.mapOf(),
+                FastUtilCollections.mapOf(),
                 target,
                 requestedAmount,
                 quantityMode,
@@ -115,9 +117,9 @@ public final class TrinityAcyclicDemandPropagator {
      */
     public TrinityAlgorithmResult<TrinityAcyclicPlan> propagate(
                                                                 TrinityCraftingTopology topology,
-                                                                List<TrinityPatternVariant> variants,
-                                                                Map<AEKey, TrinityAcyclicRouteFamily> routeFamilies,
-                                                                Map<AEKey, TrinityAcyclicRouteHint> routeHints,
+                                                                ObjectList<TrinityPatternVariant> variants,
+                                                                Object2ObjectMap<AEKey, TrinityAcyclicRouteFamily> routeFamilies,
+                                                                Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> routeHints,
                                                                 AEKey target,
                                                                 BigInteger requestedAmount,
                                                                 CraftingQuantityMode quantityMode,
@@ -134,7 +136,7 @@ public final class TrinityAcyclicDemandPropagator {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.target_absent"),
-                    Map.of("key", target.toString())));
+                    FastUtilCollections.mapOf("key", target.toString())));
         }
         IntList reachableComponents = reachablePredecessors(topology, targetComponent);
         for (int componentIndex : reachableComponents) {
@@ -147,16 +149,16 @@ public final class TrinityAcyclicDemandPropagator {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.NO_PRODUCTIVE_CYCLE,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cyclic_demand"),
-                        Map.of("component", Integer.toString(component.index()))));
+                        FastUtilCollections.mapOf("component", Integer.toString(component.index()))));
             }
         }
-        List<TrinityPatternVariant> executableRoutes = this.routePruner.retainExecutableTargetRoutes(
+        ObjectList<TrinityPatternVariant> executableRoutes = this.routePruner.retainExecutableTargetRoutes(
                 variants,
                 target,
                 inventory);
-        List<TrinityPatternVariant> planningVariants = executableRoutes.isEmpty() ? variants : executableRoutes;
-        Map<AEKey, List<TrinityPatternVariant>> producers = indexProducers(planningVariants, routeFamilies);
-        Set<TrinityPatternIdentity> routeHint = routeHintIdentities(routeFamilies, routeHints);
+        ObjectList<TrinityPatternVariant> planningVariants = executableRoutes.isEmpty() ? variants : executableRoutes;
+        Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers = indexProducers(planningVariants, routeFamilies);
+        ObjectSet<TrinityPatternIdentity> routeHint = routeHintIdentities(routeFamilies, routeHints);
         if (requiresGlobalRouteOptimization(topology, reachableComponents, producers)) {
             if (mode == TrinityPlanningMode.FIRST_FEASIBLE) {
                 TrinityAlgorithmResult<TrinityAcyclicPlan> constructed = propagateSelectedRoutes(
@@ -176,7 +178,7 @@ public final class TrinityAcyclicDemandPropagator {
                     return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                             TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                             Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_executable_order"),
-                            Map.of("phase", "dag_constructive_route")));
+                            FastUtilCollections.mapOf("phase", "dag_constructive_route")));
                 }
                 return TrinityAlgorithmResult.failure(constructed.diagnostic());
             }
@@ -224,7 +226,7 @@ public final class TrinityAcyclicDemandPropagator {
     /** Builds one aggregate candidate in graph order; competing routes still require exact execution replay. */
     private static TrinityAlgorithmResult<TrinityAcyclicPlan> propagateSelectedRoutes(
                                                                                       TrinityCraftingTopology topology,
-                                                                                      Map<AEKey, List<TrinityPatternVariant>> producers,
+                                                                                      Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers,
                                                                                       AEKey target,
                                                                                       BigInteger requestedAmount,
                                                                                       CraftingQuantityMode quantityMode,
@@ -271,7 +273,7 @@ public final class TrinityAcyclicDemandPropagator {
                     merge(need, key, reserved.negate());
                 }
                 BigInteger missing = need.getOrDefault(key, BigInteger.ZERO).max(BigInteger.ZERO);
-                List<TrinityPatternVariant> candidates = producers.getOrDefault(key, List.of());
+                ObjectList<TrinityPatternVariant> candidates = producers.getOrDefault(key, ObjectList.of());
                 if (missing.signum() <= 0 && !forceFinalTotalProduction) {
                     continue;
                 }
@@ -285,7 +287,7 @@ public final class TrinityAcyclicDemandPropagator {
                     TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(
                             TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                             Component.translatable("gui.data_energistics.trinity_planning.diagnostic.insufficient_input"),
-                            Map.of(
+                            FastUtilCollections.mapOf(
                                     "key", key.toString(),
                                     "required", positiveRequired.toString(),
                                     "available", availableAmount.toString()));
@@ -299,7 +301,7 @@ public final class TrinityAcyclicDemandPropagator {
                 TrinityPatternVariant selected = candidates.getFirst();
                 BigInteger outputPerFiring = selected.dependencyOutputs().get(key);
                 BigInteger count = missing.signum() > 0 ?
-                        ceilDivide(missing, outputPerFiring) :
+                        AmountMath.ceilDivideNonNegative(missing, outputPerFiring) :
                         BigInteger.ONE;
                 firings.merge(selected, count, BigInteger::add);
                 selected.inputs().forEach((input, amount) -> merge(need, input, amount.multiply(count)));
@@ -312,10 +314,10 @@ public final class TrinityAcyclicDemandPropagator {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = aggregateNetChange(firings);
         ObjectArrayList<TrinityVariantFiring> executionOrder = new ObjectArrayList<>();
         Int2IntMap topologicalPositions = topologicalPositions(topology);
-        firings.entrySet().stream()
+        firings.object2ObjectEntrySet().stream()
                 .sorted(Comparator
-                        .comparingInt((Map.Entry<TrinityPatternVariant, BigInteger> entry) -> producerPosition(topology, topologicalPositions, entry.getKey()))
-                        .thenComparing(Map.Entry::getKey))
+                        .comparingInt((Object2ObjectMap.Entry<TrinityPatternVariant, BigInteger> entry) -> producerPosition(topology, topologicalPositions, entry.getKey()))
+                        .thenComparing(Object2ObjectMap.Entry::getKey))
                 .forEach(entry -> executionOrder.add(new TrinityVariantFiring(entry.getKey(), entry.getValue())));
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> orderedFirings = new Object2ObjectLinkedOpenHashMap<>();
         executionOrder.forEach(firing -> orderedFirings.put(firing.variant(), firing.count()));
@@ -324,7 +326,7 @@ public final class TrinityAcyclicDemandPropagator {
             return stopped(completedState, reservedInputs, firings, need, shortages);
         }
         reserveRetainedInputs(reservedInputs, firings);
-        for (Map.Entry<AEKey, BigInteger> retained : reservedInputs.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> retained : reservedInputs.object2ObjectEntrySet()) {
             if (!inventory.covers(retained.getKey(), retained.getValue())) {
                 BigInteger available = inventory.finiteAmount(retained.getKey());
                 mergeRequirement(
@@ -355,11 +357,11 @@ public final class TrinityAcyclicDemandPropagator {
                                                CraftingQuantityMode quantityMode,
                                                TrinityPlanningInventory inventory) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balance = new Object2ObjectLinkedOpenHashMap<>(plan.externalInputs());
-        for (Map.Entry<AEKey, BigInteger> input : plan.externalInputs().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> input : plan.externalInputs().object2ObjectEntrySet()) {
             if (!inventory.covers(input.getKey(), input.getValue())) return false;
         }
         for (TrinityVariantFiring firing : plan.executionOrder()) {
-            for (Map.Entry<AEKey, BigInteger> input : firing.variant().inputs().entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> input : firing.variant().inputs().object2ObjectEntrySet()) {
                 BigInteger required = input.getValue().multiply(firing.count());
                 BigInteger retained = unchangedReusableAmount(firing.variant(), input.getKey())
                         .multiply(firing.count());
@@ -408,13 +410,13 @@ public final class TrinityAcyclicDemandPropagator {
 
     private TrinityAlgorithmResult<TrinityAcyclicPlan> optimizeWholeGraph(
                                                                           TrinityCraftingTopology topology,
-                                                                          List<TrinityPatternVariant> planningVariants,
-                                                                          List<TrinityPatternVariant> diagnosticVariants,
+                                                                          ObjectList<TrinityPatternVariant> planningVariants,
+                                                                          ObjectList<TrinityPatternVariant> diagnosticVariants,
                                                                           AEKey target,
                                                                           BigInteger requestedAmount,
                                                                           CraftingQuantityMode quantityMode,
                                                                           TrinityPlanningInventory inventory,
-                                                                          Set<TrinityPatternIdentity> routeHint,
+                                                                          ObjectSet<TrinityPatternIdentity> routeHint,
                                                                           int maxSearchStates,
                                                                           TrinityPlanningMode mode,
                                                                           TrinityPlanningControl control) {
@@ -442,7 +444,7 @@ public final class TrinityAcyclicDemandPropagator {
 
     private TrinityAlgorithmResult<TrinityAcyclicPlan> completeOptimizedResult(
                                                                                TrinityAlgorithmResult<TrinityAcyclicPlan> optimized,
-                                                                               List<TrinityPatternVariant> diagnosticVariants,
+                                                                               ObjectList<TrinityPatternVariant> diagnosticVariants,
                                                                                AEKey target,
                                                                                BigInteger requestedAmount,
                                                                                CraftingQuantityMode quantityMode,
@@ -469,11 +471,11 @@ public final class TrinityAcyclicDemandPropagator {
             }
             return TrinityAlgorithmResult.failure(diagnosed.diagnostic().withDetail(
                     new TrinityPlanningDiagnostic.PartialPlan(
-                            Map.of(),
-                            Map.of(),
-                            Map.of(target, requestedAmount),
-                            Map.of(),
-                            List.of())));
+                            FastUtilCollections.mapOf(),
+                            FastUtilCollections.mapOf(),
+                            FastUtilCollections.mapOf(target, requestedAmount),
+                            FastUtilCollections.mapOf(),
+                            ObjectList.of())));
         }
         if (optimized.diagnostic().inputShortage().isPresent() ||
                 optimized.diagnostic().partialPlan().isPresent()) {
@@ -481,18 +483,18 @@ public final class TrinityAcyclicDemandPropagator {
         }
         return TrinityAlgorithmResult.failure(optimized.diagnostic().withDetail(
                 new TrinityPlanningDiagnostic.PartialPlan(
-                        Map.of(),
-                        Map.of(),
-                        Map.of(target, requestedAmount),
-                        Map.of(),
-                        List.of())));
+                        FastUtilCollections.mapOf(),
+                        FastUtilCollections.mapOf(),
+                        FastUtilCollections.mapOf(target, requestedAmount),
+                        FastUtilCollections.mapOf(),
+                        ObjectList.of())));
     }
 
-    private static Map<AEKey, List<TrinityPatternVariant>> indexProducers(
-                                                                          List<TrinityPatternVariant> variants,
-                                                                          Map<AEKey, TrinityAcyclicRouteFamily> routeFamilies) {
+    private static Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> indexProducers(
+                                                                                             ObjectList<TrinityPatternVariant> variants,
+                                                                                             Object2ObjectMap<AEKey, TrinityAcyclicRouteFamily> routeFamilies) {
         ObjectOpenHashSet<TrinityPatternVariant> retained = new ObjectOpenHashSet<>(variants);
-        Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityPatternVariant>> producers = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, ObjectList<TrinityPatternVariant>> producers = new Object2ObjectLinkedOpenHashMap<>();
         routeFamilies.forEach((key, family) -> {
             ObjectArrayList<TrinityPatternVariant> candidates = new ObjectArrayList<>();
             family.candidates().stream().filter(retained::contains).forEach(candidates::add);
@@ -511,11 +513,11 @@ public final class TrinityAcyclicDemandPropagator {
         return producers;
     }
 
-    private static Set<TrinityPatternIdentity> routeHintIdentities(
-                                                                   Map<AEKey, TrinityAcyclicRouteFamily> families,
-                                                                   Map<AEKey, TrinityAcyclicRouteHint> hints) {
+    private static ObjectSet<TrinityPatternIdentity> routeHintIdentities(
+                                                                         Object2ObjectMap<AEKey, TrinityAcyclicRouteFamily> families,
+                                                                         Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> hints) {
         if (hints.isEmpty()) {
-            return Set.of();
+            return ObjectSet.of();
         }
         ObjectOpenHashSet<TrinityPatternIdentity> selected = new ObjectOpenHashSet<>();
         families.values().forEach(family -> family.provedUniqueProducer()
@@ -542,10 +544,10 @@ public final class TrinityAcyclicDemandPropagator {
     private static boolean requiresGlobalRouteOptimization(
                                                            TrinityCraftingTopology topology,
                                                            IntList reachableComponents,
-                                                           Map<AEKey, List<TrinityPatternVariant>> producers) {
+                                                           Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> producers) {
         for (int componentIndex : reachableComponents) {
             for (AEKey key : topology.components().get(componentIndex).keys()) {
-                List<TrinityPatternVariant> candidates = producers.getOrDefault(key, List.of());
+                ObjectList<TrinityPatternVariant> candidates = producers.getOrDefault(key, ObjectList.of());
                 if (candidates.size() > 1 ||
                         candidates.stream().anyMatch(variant -> variant.dependencyOutputs().size() > 1)) {
                     return true;
@@ -581,7 +583,7 @@ public final class TrinityAcyclicDemandPropagator {
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> aggregateNetChange(
-                                                                                        Map<TrinityPatternVariant, BigInteger> firings) {
+                                                                                        Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange()
                 .forEach((key, amount) -> merge(net, key, amount.multiply(count))));
@@ -591,10 +593,10 @@ public final class TrinityAcyclicDemandPropagator {
 
     private static <T> TrinityAlgorithmResult<T> stopped(
                                                          StopState state,
-                                                         Map<AEKey, BigInteger> reservedInputs,
-                                                         Map<TrinityPatternVariant, BigInteger> firings,
-                                                         Map<AEKey, BigInteger> need,
-                                                         Map<AEKey, InputRequirement> shortages) {
+                                                         Object2ObjectMap<AEKey, BigInteger> reservedInputs,
+                                                         Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                         Object2ObjectMap<AEKey, BigInteger> need,
+                                                         Object2ObjectMap<AEKey, InputRequirement> shortages) {
         TrinityPlanningDiagnostic diagnostic = stopped(state).diagnostic();
         return TrinityAlgorithmResult.failure(withPartial(
                 diagnostic,
@@ -606,10 +608,10 @@ public final class TrinityAcyclicDemandPropagator {
 
     private static TrinityPlanningDiagnostic withPartial(
                                                          TrinityPlanningDiagnostic diagnostic,
-                                                         Map<AEKey, BigInteger> reservedInputs,
-                                                         Map<TrinityPatternVariant, BigInteger> firings,
-                                                         Map<AEKey, BigInteger> need,
-                                                         Map<AEKey, InputRequirement> shortages) {
+                                                         Object2ObjectMap<AEKey, BigInteger> reservedInputs,
+                                                         Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                         Object2ObjectMap<AEKey, BigInteger> need,
+                                                         Object2ObjectMap<AEKey, InputRequirement> shortages) {
         if (diagnostic.inputShortage().isPresent() || diagnostic.partialPlan().isPresent()) {
             return diagnostic;
         }
@@ -623,18 +625,18 @@ public final class TrinityAcyclicDemandPropagator {
                 reservedInputs,
                 aggregateOutputs(firings),
                 unresolved,
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 selectedFirings(firings)));
     }
 
     private static <T> TrinityAlgorithmResult<T> insufficient(
-                                                              Map<AEKey, BigInteger> reservedInputs,
-                                                              Map<TrinityPatternVariant, BigInteger> firings,
-                                                              Map<AEKey, InputRequirement> shortages) {
+                                                              Object2ObjectMap<AEKey, BigInteger> reservedInputs,
+                                                              Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                              Object2ObjectMap<AEKey, InputRequirement> shortages) {
         Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
         metadata.put("shortageKinds", Integer.toString(shortages.size()));
         if (shortages.size() == 1) {
-            Map.Entry<AEKey, InputRequirement> shortage = shortages.entrySet().iterator().next();
+            Object2ObjectMap.Entry<AEKey, InputRequirement> shortage = shortages.object2ObjectEntrySet().iterator().next();
             metadata.put("key", shortage.getKey().toString());
             metadata.put("required", shortage.getValue().required().toString());
             metadata.put("available", shortage.getValue().available().toString());
@@ -669,15 +671,15 @@ public final class TrinityAcyclicDemandPropagator {
         return insufficient(evidence.actualReserves(), evidence.firings(), shortages);
     }
 
-    private static List<TrinityVariantFiring> selectedFirings(Map<TrinityPatternVariant, BigInteger> firings) {
-        List<TrinityVariantFiring> selected = new ObjectArrayList<>(firings.size());
+    private static ObjectList<TrinityVariantFiring> selectedFirings(Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
+        ObjectList<TrinityVariantFiring> selected = new ObjectArrayList<>(firings.size());
         firings.forEach((variant, count) -> selected.add(new TrinityVariantFiring(variant, count)));
         selected.sort(Comparator.comparing(TrinityVariantFiring::variant));
         return selected;
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> aggregateOutputs(
-                                                                                      Map<TrinityPatternVariant, BigInteger> firings) {
+                                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> emitted = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.outputs().forEach(
                 (key, amount) -> emitted.merge(key, amount.multiply(count), BigInteger::add)));
@@ -685,14 +687,14 @@ public final class TrinityAcyclicDemandPropagator {
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> missingAmounts(
-                                                                                    Map<AEKey, InputRequirement> shortages) {
+                                                                                    Object2ObjectMap<AEKey, InputRequirement> shortages) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> missing = new Object2ObjectLinkedOpenHashMap<>();
         shortages.forEach((key, requirement) -> missing.put(key, requirement.missing()));
         return missing;
     }
 
     private static void mergeRequirement(
-                                         Map<AEKey, InputRequirement> shortages,
+                                         Object2ObjectMap<AEKey, InputRequirement> shortages,
                                          AEKey key,
                                          BigInteger required,
                                          BigInteger available,
@@ -706,8 +708,8 @@ public final class TrinityAcyclicDemandPropagator {
 
     /** Retained reusable inputs need one initial lot even though their aggregate net change is zero. */
     private static void reserveRetainedInputs(
-                                              Map<AEKey, BigInteger> reservedInputs,
-                                              Map<TrinityPatternVariant, BigInteger> firings) {
+                                              Object2ObjectMap<AEKey, BigInteger> reservedInputs,
+                                              Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         for (TrinityPatternVariant variant : firings.keySet()) {
             variant.bindings().forEach(binding -> {
                 if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
@@ -718,15 +720,7 @@ public final class TrinityAcyclicDemandPropagator {
         }
     }
 
-    private static BigInteger ceilDivide(BigInteger numerator, BigInteger denominator) {
-        if (numerator.signum() <= 0 || denominator.signum() <= 0) {
-            throw new IllegalArgumentException("Trinity ceil division requires positive values");
-        }
-        BigInteger[] division = numerator.divideAndRemainder(denominator);
-        return division[1].signum() == 0 ? division[0] : division[0].add(BigInteger.ONE);
-    }
-
-    private static void merge(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
+    private static void merge(Object2ObjectMap<AEKey, BigInteger> amounts, AEKey key, BigInteger amount) {
         amounts.merge(key, amount, BigInteger::add);
     }
 
@@ -742,11 +736,11 @@ public final class TrinityAcyclicDemandPropagator {
             case CANCELLED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    Map.of("phase", "dag")));
+                    FastUtilCollections.mapOf("phase", "dag")));
             case DEADLINE_EXCEEDED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.timeout"),
-                    Map.of("phase", "dag")));
+                    FastUtilCollections.mapOf("phase", "dag")));
             case RUNNING -> throw new IllegalArgumentException("A running Trinity propagation is not stopped");
         };
     }

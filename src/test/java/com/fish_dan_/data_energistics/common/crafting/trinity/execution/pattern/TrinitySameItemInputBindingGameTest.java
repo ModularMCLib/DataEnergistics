@@ -27,9 +27,8 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -44,7 +43,7 @@ public final class TrinitySameItemInputBindingGameTest {
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
         ListCraftingInventory inventory = inventory(new GenericStack(first, 1), new GenericStack(second, 1));
-        var selected = select(new ExactPattern(2), inventory, List.of(new GenericStack(first, 1), new GenericStack(second, 1)));
+        var selected = select(new ExactPattern(2), inventory, ObjectList.of(new GenericStack(first, 1), new GenericStack(second, 1)));
         helper.assertValueEqual(selected.maximumCrafts(), 1L, "Two variants must satisfy one two-item craft");
         KeyCounter[] inputs = ((TrinityBoundPatternDetails) selected.extractionPattern())
                 .extractInputs(inventory, new KeyCounter(), new KeyCounter());
@@ -62,7 +61,7 @@ public final class TrinitySameItemInputBindingGameTest {
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
         ListCraftingInventory inventory = inventory(new GenericStack(first, 1), new GenericStack(second, 1));
-        var selected = select(new ExactPattern(1, 1), inventory, List.of(new GenericStack(first, 1), new GenericStack(second, 1)));
+        var selected = select(new ExactPattern(1, 1), inventory, ObjectList.of(new GenericStack(first, 1), new GenericStack(second, 1)));
         KeyCounter[] inputs = ((TrinityBoundPatternDetails) selected.extractionPattern())
                 .extractInputs(inventory, new KeyCounter(), new KeyCounter());
         helper.assertTrue(inputs != null, "Independent input slots must not reserve the same physical unit twice");
@@ -78,7 +77,7 @@ public final class TrinitySameItemInputBindingGameTest {
         AEItemKey exact = AEItemKey.of(Items.PAPER);
         AEItemKey actual = namedPaper("actual");
         ListCraftingInventory inventory = inventory(new GenericStack(exact, 1), new GenericStack(actual, 1));
-        var selected = select(new ExactPattern(2), inventory, List.of(new GenericStack(actual, 1)));
+        var selected = select(new ExactPattern(2), inventory, ObjectList.of(new GenericStack(actual, 1)));
         helper.assertValueEqual(selected.maximumCrafts(), 1L, "Exact and actual quantities must combine");
         helper.assertValueEqual(selected.inputsPerCraft().size(), 2, "Both physical keys must be retained");
         helper.succeed();
@@ -91,7 +90,7 @@ public final class TrinitySameItemInputBindingGameTest {
         AEItemKey actual = namedPaper("actual");
         ListCraftingInventory inventory = inventory(new GenericStack(actual, 2));
         var result = TrinityPatternSelector.create().select(new ExactPattern(false, 2), 0, false, 1,
-                inventory.list::get, ignored -> 0L, ignored -> List.of(), 8);
+                inventory.list::get, ignored -> 0L, ignored -> ObjectList.of(), 8);
         helper.assertTrue(result instanceof TrinityPatternSelector.Unavailable, "Unmarked inputs must not accept another component variant");
         helper.assertValueEqual(inventory.list.get(actual), 2L, "Selection must not mutate physical inventory");
         helper.succeed();
@@ -104,7 +103,7 @@ public final class TrinitySameItemInputBindingGameTest {
         AEItemKey first = namedPaper("first");
         AEItemKey second = namedPaper("second");
         ListCraftingInventory inventory = inventory(new GenericStack(first, 1), new GenericStack(second, 1));
-        var selected = select(new ExactPattern(2), inventory, List.of(new GenericStack(first, 1), new GenericStack(second, 1)));
+        var selected = select(new ExactPattern(2), inventory, ObjectList.of(new GenericStack(first, 1), new GenericStack(second, 1)));
         inventory.extract(second, 1, Actionable.MODULATE);
         KeyCounter outputs = new KeyCounter();
         KeyCounter remainders = new KeyCounter();
@@ -116,7 +115,7 @@ public final class TrinitySameItemInputBindingGameTest {
     }
 
     private static TrinityPatternSelector.Selected select(IPatternDetails pattern, ListCraftingInventory inventory,
-                                                          List<GenericStack> aliases) {
+                                                          ObjectList<GenericStack> aliases) {
         var result = TrinityPatternSelector.create().select(pattern, 0, false, 10,
                 inventory.list::get, ignored -> 0L, ignored -> aliases, 8);
         if (result instanceof TrinityPatternSelector.Selected selected) {
@@ -180,8 +179,8 @@ public final class TrinitySameItemInputBindingGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(AEItemKey.of(Items.BOOK), 1));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(AEItemKey.of(Items.BOOK), 1));
         }
     }
 

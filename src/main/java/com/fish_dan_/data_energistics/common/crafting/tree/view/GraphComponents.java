@@ -16,25 +16,22 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /** Explicit plan loops own their stage instances; only graphs without loop metadata use iterative SCC decomposition. */
-public record GraphComponents(Map<Integer, Integer> componentByNode, List<List<Integer>> members,
-                              Set<Integer> cyclicComponents) {
+public record GraphComponents(Int2IntMap componentByNode, ObjectList<IntList> members, IntSet cyclicComponents) {
 
     public GraphComponents {
         componentByNode = Int2IntMaps.unmodifiable(new Int2IntAVLTreeMap(componentByNode));
-        members = members.stream().map(group -> (List<Integer>) IntLists.unmodifiable(new IntArrayList(group))).toList();
+        ObjectList<IntList> frozenMembers = new ObjectArrayList<>(members.size());
+        for (IntList group : members) frozenMembers.add(IntLists.unmodifiable(new IntArrayList(group)));
+        members = ObjectLists.unmodifiable(frozenMembers);
         cyclicComponents = IntSets.unmodifiable(new IntOpenHashSet(cyclicComponents));
     }
 
-    public static GraphComponents find(CraftingPlanGraph graph, Collection<Integer> nodes,
-                                       Map<Integer, ? extends List<Integer>> outgoing) {
+    public static GraphComponents find(CraftingPlanGraph graph, IntSet nodes,
+                                       Int2ObjectMap<? extends IntList> outgoing) {
         if (graph.cycles().isEmpty()) return findTopology(nodes, outgoing);
         Int2IntMap parents = new Int2IntOpenHashMap();
         for (int node : nodes) parents.put(node, node);
@@ -47,11 +44,11 @@ public record GraphComponents(Map<Integer, Integer> componentByNode, List<List<I
                 cyclicNodes.add(member);
             }
         }
-        Int2ObjectMap<List<Integer>> grouped = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<IntList> grouped = new Int2ObjectOpenHashMap<>();
         for (int node : nodes) grouped.computeIfAbsent(representative(parents, node), unused -> new IntArrayList()).add(node);
-        List<List<Integer>> groups = new ObjectArrayList<>(grouped.values());
-        for (List<Integer> group : groups) group.sort(Integer::compare);
-        groups.sort(Comparator.comparingInt(List::getFirst));
+        ObjectList<IntList> groups = new ObjectArrayList<>(grouped.values());
+        for (IntList group : groups) group.sort(IntComparators.NATURAL_COMPARATOR);
+        groups.sort((left, right) -> Integer.compare(left.getInt(0), right.getInt(0)));
         Int2IntMap byNode = new Int2IntOpenHashMap();
         IntSet cyclic = new IntOpenHashSet();
         for (int index = 0; index < groups.size(); index++) {
@@ -74,17 +71,13 @@ public record GraphComponents(Map<Integer, Integer> componentByNode, List<List<I
         return root;
     }
 
-    private static GraphComponents findTopology(Collection<Integer> nodes, Map<Integer, ? extends List<Integer>> outgoing) {
+    private static GraphComponents findTopology(IntSet nodes, Int2ObjectMap<? extends IntList> outgoing) {
         IntList ordered = new IntArrayList(nodes);
         ordered.sort(IntComparators.NATURAL_COMPARATOR);
         Int2ObjectMap<IntList> reverse = new Int2ObjectOpenHashMap<>();
-        for (int id : ordered) {
-            reverse.put(id, new IntArrayList());
-        }
+        for (int id : ordered) reverse.put(id, new IntArrayList());
         for (int source : ordered) {
-            for (int target : outgoing.get(source)) {
-                reverse.get(target).add(source);
-            }
+            for (int target : outgoing.get(source)) reverse.get(target).add(source);
         }
         reverse.values().forEach(list -> list.sort(IntComparators.NATURAL_COMPARATOR));
         IntSet visited = new IntOpenHashSet();
@@ -94,54 +87,42 @@ public record GraphComponents(Map<Integer, Integer> componentByNode, List<List<I
             stack.push(start);
             while (!stack.isEmpty()) {
                 int visit = stack.popInt();
-                // Validated graph IDs are nonnegative, so complemented IDs encode the finish phase without objects.
-                if (visit < 0) {
-                    finished.add(~visit);
-                } else if (visited.add(visit)) {
+                if (visit < 0) finished.add(~visit);
+                else if (visited.add(visit)) {
                     stack.push(~visit);
-                    List<Integer> targets = outgoing.get(visit);
+                    IntList targets = outgoing.get(visit);
                     for (int index = targets.size() - 1; index >= 0; index--) {
-                        int target = targets.get(index);
-                        if (!visited.contains(target)) {
-                            stack.push(target);
-                        }
+                        int target = targets.getInt(index);
+                        if (!visited.contains(target)) stack.push(target);
                     }
                 }
             }
         }
         visited.clear();
-        List<List<Integer>> groups = new ObjectArrayList<>();
+        ObjectList<IntList> groups = new ObjectArrayList<>();
         IntArrayList pending = new IntArrayList();
         for (int index = finished.size() - 1; index >= 0; index--) {
             int start = finished.getInt(index);
-            if (visited.contains(start)) {
-                continue;
-            }
+            if (visited.contains(start)) continue;
             IntList group = new IntArrayList();
             pending.push(start);
             while (!pending.isEmpty()) {
                 int node = pending.popInt();
                 if (visited.add(node)) {
                     group.add(node);
-                    for (int predecessor : reverse.get(node)) {
-                        pending.push(predecessor);
-                    }
+                    for (int predecessor : reverse.get(node)) pending.push(predecessor);
                 }
             }
             group.sort(IntComparators.NATURAL_COMPARATOR);
             groups.add(group);
         }
-        groups.sort(Comparator.comparingInt(List::getFirst));
+        groups.sort((left, right) -> Integer.compare(left.getInt(0), right.getInt(0)));
         Int2IntMap byNode = new Int2IntOpenHashMap();
         IntSet cyclic = new IntOpenHashSet();
         for (int index = 0; index < groups.size(); index++) {
-            List<Integer> group = groups.get(index);
-            for (int id : group) {
-                byNode.put(id, index);
-            }
-            if (group.size() > 1 || outgoing.get(group.getFirst()).contains(group.getFirst())) {
-                cyclic.add(index);
-            }
+            IntList group = groups.get(index);
+            for (int id : group) byNode.put(id, index);
+            if (group.size() > 1 || outgoing.get(group.getInt(0)).contains(group.getInt(0))) cyclic.add(index);
         }
         return new GraphComponents(byNode, groups, cyclic);
     }

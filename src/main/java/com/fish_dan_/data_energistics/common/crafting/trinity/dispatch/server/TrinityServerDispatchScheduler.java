@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Owns the server-level round-robin boundary that interleaves bounded provider passes from independent AE Grids.
@@ -28,8 +28,8 @@ public final class TrinityServerDispatchScheduler {
     private static final String STEP_FAILURE_SOURCE = "server dispatch step";
     private static final String COMPLETION_FAILURE_SOURCE = "server dispatch completion";
 
-    private final List<CraftingDispatchParticipant> registeredParticipants = new ObjectArrayList<>();
-    private final List<CraftingDispatchCompletion> registeredCompletions = new ObjectArrayList<>();
+    private final ObjectList<CraftingDispatchParticipant> registeredParticipants = new ObjectArrayList<>();
+    private final ObjectList<CraftingDispatchCompletion> registeredCompletions = new ObjectArrayList<>();
     private String nextParticipantIdentity;
     private boolean tickOpen;
 
@@ -83,8 +83,8 @@ public final class TrinityServerDispatchScheduler {
         if (this.registeredParticipants.isEmpty() && this.registeredCompletions.isEmpty()) {
             return;
         }
-        List<CraftingDispatchParticipant> participants = List.copyOf(this.registeredParticipants);
-        List<CraftingDispatchCompletion> completions = List.copyOf(this.registeredCompletions);
+        ObjectList<CraftingDispatchParticipant> participants = FastUtilCollections.immutableList(this.registeredParticipants);
+        ObjectList<CraftingDispatchCompletion> completions = FastUtilCollections.immutableList(this.registeredCompletions);
         this.registeredParticipants.clear();
         this.registeredCompletions.clear();
         try {
@@ -106,8 +106,8 @@ public final class TrinityServerDispatchScheduler {
         this.tickOpen = false;
     }
 
-    private List<CraftingDispatchParticipant> participantsFromPersistentCursor(
-                                                                               List<CraftingDispatchParticipant> participants) {
+    private ObjectList<CraftingDispatchParticipant> participantsFromPersistentCursor(
+                                                                                     ObjectList<CraftingDispatchParticipant> participants) {
         if (participants.size() < 2 || this.nextParticipantIdentity == null) {
             return participants;
         }
@@ -121,14 +121,14 @@ public final class TrinityServerDispatchScheduler {
         if (start <= 0) {
             return participants;
         }
-        List<CraftingDispatchParticipant> rotated = new ObjectArrayList<>(participants.size());
+        ObjectList<CraftingDispatchParticipant> rotated = new ObjectArrayList<>(participants.size());
         rotated.addAll(participants.subList(start, participants.size()));
         rotated.addAll(participants.subList(0, start));
-        return List.copyOf(rotated);
+        return FastUtilCollections.immutableList(rotated);
     }
 
-    private void dispatchParticipants(List<CraftingDispatchParticipant> participants) {
-        Map<CraftingDispatchParticipant, String> successorIdentities = successorIdentities(participants);
+    private void dispatchParticipants(ObjectList<CraftingDispatchParticipant> participants) {
+        Reference2ReferenceMap<CraftingDispatchParticipant, String> successorIdentities = successorIdentities(participants);
         ObjectArrayFIFOQueue<CraftingDispatchParticipant> ready = new ObjectArrayFIFOQueue<>();
         participants.forEach(ready::enqueue);
         int remainingInRound = ready.size();
@@ -165,9 +165,9 @@ public final class TrinityServerDispatchScheduler {
         }
     }
 
-    private static Map<CraftingDispatchParticipant, String> successorIdentities(
-                                                                                List<CraftingDispatchParticipant> participants) {
-        Map<CraftingDispatchParticipant, String> successors = new Reference2ReferenceOpenHashMap<>(participants.size());
+    private static Reference2ReferenceMap<CraftingDispatchParticipant, String> successorIdentities(
+                                                                                                   ObjectList<CraftingDispatchParticipant> participants) {
+        Reference2ReferenceMap<CraftingDispatchParticipant, String> successors = new Reference2ReferenceOpenHashMap<>(participants.size());
         for (int index = 0; index < participants.size(); index++) {
             int successorIndex = (index + 1) % participants.size();
             successors.put(participants.get(index), participants.get(successorIndex).diagnosticIdentity());
@@ -175,7 +175,7 @@ public final class TrinityServerDispatchScheduler {
         return successors;
     }
 
-    private static void completeCompletions(List<CraftingDispatchCompletion> completions) {
+    private static void completeCompletions(ObjectList<CraftingDispatchCompletion> completions) {
         for (CraftingDispatchCompletion completion : completions) {
             try {
                 completion.completeTick();

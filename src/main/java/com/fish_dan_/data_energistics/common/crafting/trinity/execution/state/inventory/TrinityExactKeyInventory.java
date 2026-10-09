@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory;
 
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEKey;
@@ -12,7 +13,6 @@ import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
@@ -37,7 +37,7 @@ public final class TrinityExactKeyInventory {
 
     /** Returns a stable read-only copy whose entries cannot mutate the live ledger. */
     public Object2ObjectMap<AEKey, BigInteger> snapshot() {
-        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(this.amounts));
+        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(this.amounts));
     }
 
     public boolean isEmpty() {
@@ -92,7 +92,7 @@ public final class TrinityExactKeyInventory {
         ListTag encoded = new ListTag();
         this.amounts.forEach((key, amount) -> {
             CompoundTag entry = key.toTagGeneric(registries);
-            entry.putByteArray("#", TrinityBigIntegerEncoding.encode(amount, "exact output balance"));
+            entry.putByteArray("#", NbtCodecs.encode(amount, "exact output balance"));
             encoded.add(entry);
         });
         return encoded;
@@ -106,7 +106,7 @@ public final class TrinityExactKeyInventory {
                 throw new IllegalArgumentException("Exact output balances require compound entries");
             }
             AEKey key = AEKey.fromTagGeneric(registries, entry);
-            BigInteger amount = TrinityBigIntegerEncoding.readTag(entry, "#", "exact output balance");
+            BigInteger amount = NbtCodecs.readTag(entry, "#", "exact output balance");
             if (key == null || amount.signum() < 0 || restored.putIfAbsent(key, amount) != null) {
                 throw new IllegalArgumentException("Exact output balances require unique keys and non-negative amounts");
             }

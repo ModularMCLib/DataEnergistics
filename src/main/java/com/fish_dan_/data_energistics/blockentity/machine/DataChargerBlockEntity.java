@@ -49,7 +49,6 @@ import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.Set;
 
 public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implements InternalInventoryHost {
 
@@ -95,7 +94,7 @@ public class DataChargerBlockEntity extends AENetworkedPoweredBlockEntity implem
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.complementOf(EnumSet.of(orientation.getSide(RelativeSide.FRONT)));
     }
 

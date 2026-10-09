@@ -15,8 +15,6 @@ import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
-
 /** Checks crossing geometry and line counts, without invoking any client renderer. */
 @PrefixGameTestTemplate(false)
 @GameTestHolder(Data_Energistics.MODID)
@@ -27,13 +25,13 @@ public final class CraftingPlanRouteCrossingGameTest {
     @GameTest(template = "empty_5x5")
     public static void sparseWireBridgesWholeDenseBundleInEitherOrientation(GameTestHelper helper) {
         for (boolean transposed : new boolean[] { false, true }) {
-            List<Segment> segments = new ObjectArrayList<>();
-            List<Run> runs = new ObjectArrayList<>();
+            ObjectList<Segment> segments = new ObjectArrayList<>();
+            ObjectList<Run> runs = new ObjectArrayList<>();
             for (int coordinate : new int[] { -6, -2, 2, 6 }) {
                 add(segments, runs, point(coordinate, -20, transposed), point(coordinate, 20, transposed));
             }
             add(segments, runs, point(-20, 0, transposed), point(20, 0, transposed));
-            var crossings = CraftingPlanRouteCrossing.find(List.of(), List.of(), segments, runs);
+            var crossings = CraftingPlanRouteCrossing.find(ObjectList.of(), ObjectList.of(), segments, runs);
             helper.assertTrue(crossings.size() == 1, "One sparse wire must span the bundle in a single bridge");
             var crossing = crossings.getFirst();
             helper.assertTrue(crossing.bridgeSegmentId() == 4 && crossing.underpasses().size() == 4,
@@ -44,7 +42,7 @@ public final class CraftingPlanRouteCrossingGameTest {
             helper.assertTrue(transposed ? entry.x() == 0 : entry.y() == 0,
                     "Bridge-local coordinates must map back to its owning graph segment");
         }
-        ObjectList<Underpass> gaps = new ObjectArrayList<>(List.of(new Underpass(7, 2, 1.5), new Underpass(7, 0, 1.5)));
+        ObjectList<Underpass> gaps = new ObjectArrayList<>(ObjectList.of(new Underpass(7, 2, 1.5), new Underpass(7, 0, 1.5)));
         var merged = CraftingPlanRouteCrossing.mergeUnderpasses(gaps);
         helper.assertTrue(merged.size() == 1 && merged.getFirst().x() == 1 && merged.getFirst().gapHalfWidth() == 2.5,
                 "Overlapping cuts must merge rather than draw backwards through an earlier gap");
@@ -55,7 +53,7 @@ public final class CraftingPlanRouteCrossingGameTest {
         return transposed ? new Point(y, x) : new Point(x, y);
     }
 
-    private static void add(List<Segment> segments, List<Run> runs, Point from, Point to) {
+    private static void add(ObjectList<Segment> segments, ObjectList<Run> runs, Point from, Point to) {
         int id = segments.size();
         var group = new CraftingPlanRouteGroup(new CraftingPlanRouteGroup.Style(true, IntLists.emptyList()), id);
         segments.add(new Segment(from, to, group, IntLists.singleton(id)));

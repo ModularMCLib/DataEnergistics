@@ -1,5 +1,5 @@
 /**
- * Mixin adaptations for AE2 cells, network storage, encoded patterns, and wrapped-key persistence.
+ * Mixin adaptations for AE2 cells, network storage, and encoded patterns.
  */
 @NullMarked
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.storage;

@@ -27,7 +27,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,7 +35,6 @@ public final class AdaptiveReusableCraftingState {
 
     public static final String NBT_KEY = "adaptive_reusable_state";
     public static final ResourceLocation MODE = ResourceLocation.fromNamespaceAndPath("data_energistics", "meteorite");
-    private static final int SCHEMA = 1;
 
     public static final class Slot {
 
@@ -106,7 +104,7 @@ public final class AdaptiveReusableCraftingState {
         return slots.get(index);
     }
 
-    public List<Slot> slots() {
+    public ObjectList<Slot> slots() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(slots.values()));
     }
 
@@ -115,7 +113,7 @@ public final class AdaptiveReusableCraftingState {
         if (!sourceVisible || this.handoffPrepared) {
             return this.custodyCoverage.census(cpuOwner, false, ObjectArrayList.of());
         }
-        List<ReusableCraftingCustodyCensus> sources = new ObjectArrayList<>(this.slots.size());
+        ObjectList<ReusableCraftingCustodyCensus> sources = new ObjectArrayList<>(this.slots.size());
         for (Slot slot : this.slots.values()) {
             sources.add(slot.endpoint.reusableCustody(cpuOwner));
         }
@@ -173,7 +171,8 @@ public final class AdaptiveReusableCraftingState {
                 if (request.requestedCount() < append.operations()) {
                     return null;
                 }
-                List<SlotStack> supplied = append.deliveredTools().stream().map(tool -> new SlotStack(tool.slot(), tool.stack())).toList();
+                ObjectList<SlotStack> supplied = new ObjectArrayList<>(append.deliveredTools().stream()
+                        .map(tool -> new SlotStack(tool.slot(), tool.stack())).toList());
                 return existing.endpoint.prepare(bounded(request, append.operations(), supplied), currentTick, host);
             }
             if (existing.endpoint.hasResidentSession() &&
@@ -186,7 +185,7 @@ public final class AdaptiveReusableCraftingState {
             return null;
         }
         PersistentReusableCraftingEndpoint endpoint = existing == null ? new PersistentReusableCraftingEndpoint(targetIdentity(index)) : existing.endpoint;
-        List<SlotStack> supplied = requiredTools(request, endpoint, endpoint.query(request.sessionId()), count);
+        ObjectList<SlotStack> supplied = requiredTools(request, endpoint, endpoint.query(request.sessionId()), count);
         ReusableCraftingAdmission prepared = endpoint.prepare(bounded(request, count, supplied), currentTick, host);
         if (prepared == null) {
             return null;
@@ -231,15 +230,15 @@ public final class AdaptiveReusableCraftingState {
         };
     }
 
-    private static ReusableCraftingRequest bounded(ReusableCraftingRequest request, long count, List<SlotStack> tools) {
+    private static ReusableCraftingRequest bounded(ReusableCraftingRequest request, long count, ObjectList<SlotStack> tools) {
         return new ReusableCraftingRequest(request.sessionId(), request.jobId(), request.cpuOwner(), request.sequence(), request.target(),
                 request.pattern(), request.inputsFast(), tools, count, request.recipeId(), request.actionSource(), request.level());
     }
 
-    private static List<SlotStack> requiredTools(ReusableCraftingRequest request, PersistentReusableCraftingEndpoint endpoint,
-                                                 Optional<ReusableCraftingSessionView> current, long count) {
+    private static ObjectList<SlotStack> requiredTools(ReusableCraftingRequest request, PersistentReusableCraftingEndpoint endpoint,
+                                                       Optional<ReusableCraftingSessionView> current, long count) {
         long reserved = count;
-        List<SlotStack> held = List.of();
+        ObjectList<SlotStack> held = ObjectList.of();
         if (current.isPresent()) {
             ReusableCraftingSessionView view = current.orElseThrow();
             reserved = Math.addExact(reserved, view.accepted() - view.completed() - view.cancelled());
@@ -325,7 +324,6 @@ public final class AdaptiveReusableCraftingState {
 
     private CompoundTag encode(HolderLookup.Provider registries, boolean itemHandoff) {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("schema", SCHEMA);
         tag.putUUID("provider", providerId);
         tag.putBoolean("handoff_prepared", !itemHandoff && handoffPrepared);
         ListTag encoded = new ListTag();
@@ -343,7 +341,7 @@ public final class AdaptiveReusableCraftingState {
     }
 
     public static AdaptiveReusableCraftingState readFromTag(CompoundTag tag, HolderLookup.Provider registries) {
-        if (!tag.contains("schema", Tag.TAG_INT) || tag.getInt("schema") != SCHEMA || !tag.hasUUID("provider") ||
+        if (!tag.hasUUID("provider") ||
                 !tag.contains("handoff_prepared", Tag.TAG_BYTE) || !(tag.get("slots") instanceof ListTag entries) ||
                 !entries.isEmpty() && entries.getElementType() != Tag.TAG_COMPOUND) {
             throw new IllegalArgumentException("Malformed adaptive reusable state");

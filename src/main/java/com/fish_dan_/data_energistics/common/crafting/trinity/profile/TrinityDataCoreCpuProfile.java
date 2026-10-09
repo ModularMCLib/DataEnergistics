@@ -5,9 +5,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCp
 import appeng.api.config.CpuSelectionMode;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Aggregate CPU data for a formed Trinity Data Core host.
@@ -55,13 +55,13 @@ public record TrinityDataCoreCpuProfile(TrinityCpuStorageCapacity storageCapacit
      * @return aggregate profile
      */
     public static TrinityDataCoreCpuProfile fromContributions(
-                                                              Map<String, TrinityDataCoreCpuContribution> contributions) {
-        Map<String, TrinityDataCoreCpuContribution> sorted = new Object2ObjectAVLTreeMap<>(contributions);
+                                                              Object2ObjectMap<String, TrinityDataCoreCpuContribution> contributions) {
+        Object2ObjectMap<String, TrinityDataCoreCpuContribution> sorted = new Object2ObjectAVLTreeMap<>(contributions);
 
         TrinityCpuStorageCapacity storageCapacity = new TrinityCpuStorageCapacity.Finite(BigInteger.ZERO);
         int partitionCount = 0;
         CpuSelectionMode selectionMode = CpuSelectionMode.ANY;
-        for (Map.Entry<String, TrinityDataCoreCpuContribution> entry : sorted.entrySet()) {
+        for (Object2ObjectMap.Entry<String, TrinityDataCoreCpuContribution> entry : sorted.object2ObjectEntrySet()) {
             String structureName = entry.getKey();
             if (structureName.isBlank()) {
                 throw new IllegalArgumentException("CPU contribution structure name must not be blank");

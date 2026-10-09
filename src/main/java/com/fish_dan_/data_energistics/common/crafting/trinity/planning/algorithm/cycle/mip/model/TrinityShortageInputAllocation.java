@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Read-only inventory allocation for an exactly verified candidate, not an optimization objective.
@@ -20,8 +20,8 @@ public record TrinityShortageInputAllocation(
                                              Object2ObjectMap<AEKey, BigInteger> missingInputs) {
 
     public TrinityShortageInputAllocation {
-        actualInputs = Object2ObjectMaps.unmodifiable(actualInputs);
-        missingInputs = Object2ObjectMaps.unmodifiable(missingInputs);
+        actualInputs = FastUtilCollections.immutableMap(actualInputs);
+        missingInputs = FastUtilCollections.immutableMap(missingInputs);
     }
 
     /**
@@ -30,8 +30,8 @@ public record TrinityShortageInputAllocation(
      */
     public static TrinityShortageInputAllocation from(
                                                       TrinityCycleFeasibilityRequest request,
-                                                      Map<AEKey, BigInteger> seed,
-                                                      Map<AEKey, BigInteger> external) {
+                                                      Object2ObjectMap<AEKey, BigInteger> seed,
+                                                      Object2ObjectMap<AEKey, BigInteger> external) {
         Object2ObjectMap<AEKey, BigInteger> actual = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectMap<AEKey, BigInteger> missing = new Object2ObjectLinkedOpenHashMap<>();
         allocate(request, external, actual, missing);
@@ -41,7 +41,7 @@ public record TrinityShortageInputAllocation(
 
     private static void allocate(
                                  TrinityCycleFeasibilityRequest request,
-                                 Map<AEKey, BigInteger> required,
+                                 Object2ObjectMap<AEKey, BigInteger> required,
                                  Object2ObjectMap<AEKey, BigInteger> actual,
                                  Object2ObjectMap<AEKey, BigInteger> missing) {
         required.forEach((key, amount) -> {

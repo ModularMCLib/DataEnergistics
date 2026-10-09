@@ -1,12 +1,13 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Minimum internal seed found for one fixed firing vector within the bounded compressed state space.
@@ -16,8 +17,8 @@ import java.util.Map;
  * @param schedule       executable proof starting with both input categories
  */
 public record TrinityMinimumSeedSchedule(
-                                         Map<AEKey, BigInteger> externalInputs,
-                                         Map<AEKey, BigInteger> minimumSeed,
+                                         Object2ObjectMap<AEKey, BigInteger> externalInputs,
+                                         Object2ObjectMap<AEKey, BigInteger> minimumSeed,
                                          TrinityCompressedSchedule schedule) {
 
     /**
@@ -31,7 +32,7 @@ public record TrinityMinimumSeedSchedule(
         minimumSeed = copyPositive(minimumSeed, "minimum seed");
     }
 
-    private static Map<AEKey, BigInteger> copyPositive(Map<AEKey, BigInteger> source, String role) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyPositive(Object2ObjectMap<AEKey, BigInteger> source, String role) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() <= 0) {
@@ -39,6 +40,6 @@ public record TrinityMinimumSeedSchedule(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 }

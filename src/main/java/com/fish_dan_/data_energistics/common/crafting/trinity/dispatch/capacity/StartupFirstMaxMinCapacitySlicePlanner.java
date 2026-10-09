@@ -3,13 +3,14 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.DispatchCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Sort-based water-filling implementation of startup-first max-min target allocation.
@@ -33,20 +34,20 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
      */
     @Override
     public CapacitySlicePlan plan(
-                                  List<ProviderCapacitySnapshot> snapshots,
+                                  ObjectList<ProviderCapacitySnapshot> snapshots,
                                   BigInteger remainingCrafts,
                                   int physicalCallLimit,
                                   int cursor) {
-        List<ProviderCapacitySnapshot> stableSnapshots = List.copyOf(snapshots);
+        ObjectList<ProviderCapacitySnapshot> stableSnapshots = FastUtilCollections.immutableList(snapshots);
         validateRequest(remainingCrafts, physicalCallLimit, cursor);
         int targetCount = stableSnapshots.size();
         if (targetCount == 0) {
-            return new CapacitySlicePlan(List.of(), 0);
+            return new CapacitySlicePlan(ObjectList.of(), 0);
         }
 
         int start = Math.floorMod(cursor, targetCount);
         if (remainingCrafts.signum() == 0 || physicalCallLimit == 0) {
-            return new CapacitySlicePlan(List.of(), start);
+            return new CapacitySlicePlan(ObjectList.of(), start);
         }
 
         ObjectArrayList<TargetCapacity> eligible = new ObjectArrayList<>(targetCount);
@@ -59,14 +60,14 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
             }
         }
         if (eligible.isEmpty()) {
-            return new CapacitySlicePlan(List.of(), start);
+            return new CapacitySlicePlan(ObjectList.of(), start);
         }
 
         int selectionLimit = Math.min(physicalCallLimit, eligible.size());
         if (remainingCrafts.compareTo(BigInteger.valueOf(selectionLimit)) < 0) {
             selectionLimit = remainingCrafts.intValueExact();
         }
-        List<TargetCapacity> selected = List.copyOf(eligible.subList(0, selectionLimit));
+        ObjectList<TargetCapacity> selected = FastUtilCollections.immutableList(eligible.subList(0, selectionLimit));
         long[] allocations = fairAllocations(
                 selected,
                 remainingCrafts.subtract(BigInteger.valueOf(selectionLimit)));
@@ -121,7 +122,7 @@ final class StartupFirstMaxMinCapacitySlicePlanner implements CapacitySlicePlann
     /**
      * Gives every selected target one startup craft, then computes one max-min water level in O(n log n).
      */
-    private static long[] fairAllocations(List<TargetCapacity> selected, BigInteger remainingCrafts) {
+    private static long[] fairAllocations(ObjectList<TargetCapacity> selected, BigInteger remainingCrafts) {
         int selectedCount = selected.size();
         LongArrayList residualCapacities = new LongArrayList(selectedCount);
         for (TargetCapacity target : selected) {

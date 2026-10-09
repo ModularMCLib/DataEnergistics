@@ -5,7 +5,7 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.core.HolderLookup;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Small server-thread read surface used to derive a graph without exposing a provider cache to planner threads.
@@ -27,7 +27,7 @@ public interface TrinityCraftingGraphCaptureSource {
      *
      * @return detached key list whose elements are immutable AE values
      */
-    List<AEKey> captureCraftableKeys();
+    ObjectList<AEKey> captureCraftableKeys();
 
     /**
      * Captures the decoded patterns currently published for one primary output.
@@ -40,5 +40,5 @@ public interface TrinityCraftingGraphCaptureSource {
      * @param primaryOutput craftable key captured from this source
      * @return detached list of runtime pattern references
      */
-    List<IPatternDetails> capturePatternsFor(AEKey primaryOutput);
+    ObjectList<IPatternDetails> capturePatternsFor(AEKey primaryOutput);
 }

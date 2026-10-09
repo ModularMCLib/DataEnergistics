@@ -4,8 +4,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Carries an exactly decoded radix candidate between objective search, proof verification, and publication.
@@ -15,6 +16,6 @@ import java.util.Map;
  * @param externalInputs positive initial balances on boundary keys
  */
 public record TrinityRadixSolvedModel(
-                                      Map<TrinityPatternVariant, BigInteger> firings,
-                                      Map<AEKey, BigInteger> modelSeed,
-                                      Map<AEKey, BigInteger> externalInputs) {}
+                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                      Object2ObjectMap<AEKey, BigInteger> modelSeed,
+                                      Object2ObjectMap<AEKey, BigInteger> externalInputs) {}

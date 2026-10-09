@@ -3,14 +3,14 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityCompressedSchedule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Exact multi-route SCC result after joint objective selection and compressed reachability validation.
@@ -27,11 +27,11 @@ import java.util.Map;
  * @param quality        exact proof strength retained by this executable plan
  */
 public record TrinityJointCyclePlan(
-                                    Map<TrinityPatternVariant, BigInteger> firings,
-                                    Map<AEKey, BigInteger> externalInputs,
-                                    Map<AEKey, BigInteger> minimumSeed,
-                                    Map<AEKey, BigInteger> initialInputs,
-                                    Map<AEKey, BigInteger> netChange,
+                                    Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                    Object2ObjectMap<AEKey, BigInteger> externalInputs,
+                                    Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                    Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                    Object2ObjectMap<AEKey, BigInteger> netChange,
                                     TrinityCompressedSchedule schedule,
                                     int searchStates,
                                     int solverPasses,
@@ -60,10 +60,10 @@ public record TrinityJointCyclePlan(
         if (!calculatedNet.equals(netChange)) {
             throw new IllegalArgumentException("A Trinity joint cycle net change must equal its firing vector");
         }
-        for (Map.Entry<AEKey, BigInteger> external : externalInputs.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> external : externalInputs.object2ObjectEntrySet()) {
             requireIncluded(initialInputs, external.getKey(), external.getValue(), "external input");
         }
-        for (Map.Entry<AEKey, BigInteger> seed : minimumSeed.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> seed : minimumSeed.object2ObjectEntrySet()) {
             requireIncluded(initialInputs, seed.getKey(), seed.getValue(), "minimum seed");
         }
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finalBalances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
@@ -77,7 +77,7 @@ public record TrinityJointCyclePlan(
         }
     }
 
-    private static void requireIncluded(Map<AEKey, BigInteger> initialInputs,
+    private static void requireIncluded(Object2ObjectMap<AEKey, BigInteger> initialInputs,
                                         AEKey key,
                                         BigInteger amount,
                                         String role) {
@@ -86,8 +86,8 @@ public record TrinityJointCyclePlan(
         }
     }
 
-    private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
-                                                                              Map<TrinityPatternVariant, BigInteger> source) {
+    private static Object2ObjectMap<TrinityPatternVariant, BigInteger> copyPositiveFirings(
+                                                                                           Object2ObjectMap<TrinityPatternVariant, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, amount) -> {
             if (amount.signum() <= 0) {
@@ -95,10 +95,10 @@ public record TrinityJointCyclePlan(
             }
             copied.put(variant, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copyPositiveAmounts(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyPositiveAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
@@ -106,10 +106,10 @@ public record TrinityJointCyclePlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copySignedNonZero(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copySignedNonZero(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() == 0) {
@@ -117,6 +117,6 @@ public record TrinityJointCyclePlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 }

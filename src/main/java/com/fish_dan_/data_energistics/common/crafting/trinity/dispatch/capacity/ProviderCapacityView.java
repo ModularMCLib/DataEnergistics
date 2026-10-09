@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Pro
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Compile-time compatibility boundary for capturing provider-owned capacity facts on the server thread.
@@ -31,13 +31,13 @@ public interface ProviderCapacityView {
      * @param captureTick         current server tick used only for diagnostics and latency accounting
      * @return immutable snapshots; an empty list means the provider exposes no currently usable target
      */
-    List<ProviderCapacitySnapshot> snapshotCapacity(
-                                                    CraftingProviderId providerId,
-                                                    IPatternDetails patternDetails,
-                                                    KeyCounter[] prototype,
-                                                    long requestedCrafts,
-                                                    String patternIdentity,
-                                                    long publicationRevision,
-                                                    long capacityRevision,
-                                                    long captureTick);
+    ObjectList<ProviderCapacitySnapshot> snapshotCapacity(
+                                                          CraftingProviderId providerId,
+                                                          IPatternDetails patternDetails,
+                                                          KeyCounter[] prototype,
+                                                          long requestedCrafts,
+                                                          String patternIdentity,
+                                                          long publicationRevision,
+                                                          long capacityRevision,
+                                                          long captureTick);
 }

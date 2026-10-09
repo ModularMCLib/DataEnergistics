@@ -5,21 +5,20 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.TrinityDeterministicFiringMath;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Exact quantity-independent unit route and restart seed for one deterministic productive cycle axis.
@@ -33,27 +32,27 @@ import java.util.Set;
  */
 public record TrinityCycleUnitProof(
                                     AEKey reservoir,
-                                    List<TrinityVariantFiring> order,
-                                    Map<TrinityPatternVariant, BigInteger> firings,
-                                    Map<AEKey, BigInteger> netChange,
-                                    Map<AEKey, BigInteger> internalSeed,
-                                    Map<AEKey, BigInteger> externalInput) {
+                                    ObjectList<TrinityVariantFiring> order,
+                                    Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                    Object2ObjectMap<AEKey, BigInteger> netChange,
+                                    Object2ObjectMap<AEKey, BigInteger> internalSeed,
+                                    Object2ObjectMap<AEKey, BigInteger> externalInput) {
 
     /** Derives a proof only for a complete unique-producer component route. */
     public static Optional<TrinityCycleUnitProof> derive(
                                                          TrinityStronglyConnectedComponent component,
                                                          AEKey reservoir) {
-        Optional<List<TrinityVariantFiring>> resolved = TrinityDeterministicCycleSequence.create()
-                .resolve(component, reservoir, Map.of(), Set.of());
+        Optional<ObjectList<TrinityVariantFiring>> resolved = TrinityDeterministicCycleSequence.create()
+                .resolve(component, reservoir, FastUtilCollections.mapOf(), ObjectSet.of());
         if (resolved.isEmpty() || !completeUniqueRoute(component, resolved.orElseThrow())) {
             return Optional.empty();
         }
-        List<TrinityVariantFiring> order = resolved.orElseThrow();
-        Map<TrinityPatternVariant, BigInteger> firings = Object2ObjectMaps.unmodifiable(
+        ObjectList<TrinityVariantFiring> order = resolved.orElseThrow();
+        Object2ObjectMap<TrinityPatternVariant, BigInteger> firings = FastUtilCollections.immutableMap(
                 new Object2ObjectLinkedOpenHashMap<>(TrinityDeterministicFiringMath.aggregate(order)));
-        Map<AEKey, BigInteger> net = TrinityDeterministicFiringMath.netChange(firings);
-        Set<AEKey> internalKeys = new ObjectOpenHashSet<>(component.keys());
-        Map<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.minimumInputs(order);
+        Object2ObjectMap<AEKey, BigInteger> net = TrinityDeterministicFiringMath.netChange(firings);
+        ObjectSet<AEKey> internalKeys = new ObjectOpenHashSet<>(component.keys());
+        Object2ObjectMap<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.minimumInputs(order);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> internalSeed = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> externalInput = new Object2ObjectLinkedOpenHashMap<>();
         minimumInputs.forEach((key, amount) -> (internalKeys.contains(key) ? internalSeed : externalInput)
@@ -63,22 +62,22 @@ public record TrinityCycleUnitProof(
                 order,
                 firings,
                 net,
-                Object2ObjectMaps.unmodifiable(internalSeed),
-                Object2ObjectMaps.unmodifiable(externalInput)));
+                FastUtilCollections.immutableMap(internalSeed),
+                FastUtilCollections.immutableMap(externalInput)));
     }
 
     /**
      * Reorders the cached unit firing ratio against current inventory and recomputes its exact prefix reserves.
      */
     public TrinityCycleUnitProof instantiate(
-                                             Map<AEKey, BigInteger> available,
-                                             List<AEKey> internalKeys,
-                                             Set<AEKey> producibleInputs) {
+                                             Object2ObjectMap<AEKey, BigInteger> available,
+                                             ObjectList<AEKey> internalKeys,
+                                             ObjectSet<AEKey> producibleInputs) {
         ObjectArrayList<TrinityVariantFiring> remaining = new ObjectArrayList<>(order);
         ObjectArrayList<TrinityVariantFiring> ordered = new ObjectArrayList<>(order.size());
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(available);
-        Set<AEKey> internal = new ObjectOpenHashSet<>(internalKeys);
-        Set<AEKey> startupKeys = new ObjectOpenHashSet<>(internal);
+        ObjectSet<AEKey> internal = new ObjectOpenHashSet<>(internalKeys);
+        ObjectSet<AEKey> startupKeys = new ObjectOpenHashSet<>(internal);
         startupKeys.removeAll(producibleInputs);
         while (!remaining.isEmpty()) {
             TrinityVariantFiring selected = remaining.stream()
@@ -92,21 +91,21 @@ public record TrinityCycleUnitProof(
                     amount.multiply(selected.count()),
                     BigInteger::add));
         }
-        Map<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.minimumInputs(ordered);
+        Object2ObjectMap<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.minimumInputs(ordered);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> newInternalSeed = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> newExternalInput = new Object2ObjectLinkedOpenHashMap<>();
         minimumInputs.forEach((key, amount) -> (internal.contains(key) ? newInternalSeed : newExternalInput)
                 .put(key, amount));
         return new TrinityCycleUnitProof(
                 reservoir,
-                ObjectLists.unmodifiable(ordered),
+                FastUtilCollections.immutableList(ordered),
                 firings,
                 netChange,
-                Object2ObjectMaps.unmodifiable(newInternalSeed),
-                Object2ObjectMaps.unmodifiable(newExternalInput));
+                FastUtilCollections.immutableMap(newInternalSeed),
+                FastUtilCollections.immutableMap(newExternalInput));
     }
 
-    private static Map<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
+    private static Object2ObjectMap<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         firing.variant().inputs().forEach((key, input) -> {
             BigInteger net = firing.variant().netChange().getOrDefault(key, BigInteger.ZERO);
@@ -117,9 +116,9 @@ public record TrinityCycleUnitProof(
     }
 
     private static boolean hasInputs(
-                                     Map<AEKey, BigInteger> balances,
-                                     Map<AEKey, BigInteger> required,
-                                     Set<AEKey> internalKeys) {
+                                     Object2ObjectMap<AEKey, BigInteger> balances,
+                                     Object2ObjectMap<AEKey, BigInteger> required,
+                                     ObjectSet<AEKey> internalKeys) {
         return required.entrySet().stream().allMatch(entry -> !internalKeys.contains(entry.getKey()) || balances
                 .getOrDefault(entry.getKey(), BigInteger.ZERO)
                 .compareTo(entry.getValue()) >= 0);
@@ -127,8 +126,8 @@ public record TrinityCycleUnitProof(
 
     private static boolean completeUniqueRoute(
                                                TrinityStronglyConnectedComponent component,
-                                               List<TrinityVariantFiring> order) {
-        Set<TrinityPatternVariant> selected = new ObjectOpenHashSet<>();
+                                               ObjectList<TrinityVariantFiring> order) {
+        ObjectSet<TrinityPatternVariant> selected = new ObjectOpenHashSet<>();
         order.forEach(firing -> selected.add(firing.variant()));
         if (selected.size() != order.size() ||
                 !selected.equals(new ObjectOpenHashSet<>(component.cycleVariants()))) {

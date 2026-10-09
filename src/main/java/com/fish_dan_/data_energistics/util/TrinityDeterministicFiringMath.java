@@ -6,11 +6,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Provides the single exact BigInteger implementation of firing-vector arithmetic shared by deterministic stages.
@@ -21,16 +20,16 @@ public final class TrinityDeterministicFiringMath {
 
     private TrinityDeterministicFiringMath() {}
 
-    public static Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate(List<TrinityVariantFiring> order) {
+    public static Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate(ObjectList<TrinityVariantFiring> order) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate = new Object2ObjectLinkedOpenHashMap<>();
         order.forEach(firing -> aggregate.merge(firing.variant(), firing.count(), BigInteger::add));
         return aggregate;
     }
 
     public static Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregateRepeated(
-                                                                                                      Map<TrinityPatternVariant, BigInteger> primitive,
+                                                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> primitive,
                                                                                                       BigInteger repetitions,
-                                                                                                      Map<TrinityPatternVariant, BigInteger> residual) {
+                                                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> residual) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate = new Object2ObjectLinkedOpenHashMap<>();
         primitive.forEach((variant, count) -> {
             BigInteger repeated = count.multiply(repetitions);
@@ -42,17 +41,17 @@ public final class TrinityDeterministicFiringMath {
         return aggregate;
     }
 
-    public static Map<AEKey, BigInteger> netChange(Map<TrinityPatternVariant, BigInteger> firings) {
+    public static Object2ObjectMap<AEKey, BigInteger> netChange(Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        return Collections.unmodifiableMap(net);
+        return FastUtilCollections.immutableMap(net);
     }
 
-    public static Map<AEKey, BigInteger> multiplySigned(
-                                                        Map<AEKey, BigInteger> amounts,
-                                                        BigInteger multiplier) {
+    public static Object2ObjectMap<AEKey, BigInteger> multiplySigned(
+                                                                     Object2ObjectMap<AEKey, BigInteger> amounts,
+                                                                     BigInteger multiplier) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> multiplied = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             BigInteger result = amount.multiply(multiplier);
@@ -60,19 +59,19 @@ public final class TrinityDeterministicFiringMath {
                 multiplied.put(key, result);
             }
         });
-        return Collections.unmodifiableMap(multiplied);
+        return FastUtilCollections.immutableMap(multiplied);
     }
 
-    public static Map<AEKey, BigInteger> addSigned(
-                                                   Map<AEKey, BigInteger> first,
-                                                   Map<AEKey, BigInteger> second) {
+    public static Object2ObjectMap<AEKey, BigInteger> addSigned(
+                                                                Object2ObjectMap<AEKey, BigInteger> first,
+                                                                Object2ObjectMap<AEKey, BigInteger> second) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(first);
         second.forEach((key, amount) -> result.merge(key, amount, BigInteger::add));
         result.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        return Collections.unmodifiableMap(result);
+        return FastUtilCollections.immutableMap(result);
     }
 
-    public static BigInteger sum(Map<?, BigInteger> amounts) {
+    public static BigInteger sum(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(ZERO, BigInteger::add);
     }
 }

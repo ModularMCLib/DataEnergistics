@@ -6,16 +6,15 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCycleSelection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Complete non-executable proof that one cyclic component has an exact firing vector and prefix-safe compressed order.
@@ -29,13 +28,13 @@ public final class TrinityCycleDiagnosticEvidence {
 
     private final int componentIndex;
     private final TrinityCycleDemand demand;
-    private final List<TrinityVariantFiring> prefixOrder;
-    private final List<TrinityVariantFiring> localOrder;
+    private final ObjectList<TrinityVariantFiring> prefixOrder;
+    private final ObjectList<TrinityVariantFiring> localOrder;
     private final BigInteger repetitions;
-    private final List<TrinityVariantFiring> suffixOrder;
-    private final Map<AEKey, BigInteger> minimumSeed;
-    private final Map<AEKey, BigInteger> initialInputs;
-    private final Map<AEKey, BigInteger> netChange;
+    private final ObjectList<TrinityVariantFiring> suffixOrder;
+    private final Object2ObjectMap<AEKey, BigInteger> minimumSeed;
+    private final Object2ObjectMap<AEKey, BigInteger> initialInputs;
+    private final Object2ObjectMap<AEKey, BigInteger> netChange;
     private final int scheduleStates;
     private final long mipNanos;
     private final TrinityPlanQuality quality;
@@ -46,13 +45,13 @@ public final class TrinityCycleDiagnosticEvidence {
     private TrinityCycleDiagnosticEvidence(
                                            int componentIndex,
                                            TrinityCycleDemand demand,
-                                           List<TrinityVariantFiring> prefixOrder,
-                                           List<TrinityVariantFiring> localOrder,
+                                           ObjectList<TrinityVariantFiring> prefixOrder,
+                                           ObjectList<TrinityVariantFiring> localOrder,
                                            BigInteger repetitions,
-                                           List<TrinityVariantFiring> suffixOrder,
-                                           Map<AEKey, BigInteger> minimumSeed,
-                                           Map<AEKey, BigInteger> initialInputs,
-                                           Map<AEKey, BigInteger> netChange,
+                                           ObjectList<TrinityVariantFiring> suffixOrder,
+                                           Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                           Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                           Object2ObjectMap<AEKey, BigInteger> netChange,
                                            int scheduleStates,
                                            long mipNanos,
                                            TrinityPlanQuality quality) {
@@ -60,9 +59,9 @@ public final class TrinityCycleDiagnosticEvidence {
                 mipNanos < 0L) {
             throw new IllegalArgumentException("A Trinity diagnostic cycle requires a complete schedule proof");
         }
-        prefixOrder = Collections.unmodifiableList(prefixOrder);
-        localOrder = Collections.unmodifiableList(localOrder);
-        suffixOrder = Collections.unmodifiableList(suffixOrder);
+        prefixOrder = FastUtilCollections.immutableList(prefixOrder);
+        localOrder = FastUtilCollections.immutableList(localOrder);
+        suffixOrder = FastUtilCollections.immutableList(suffixOrder);
         minimumSeed = validatePositiveAmounts(minimumSeed, "minimum seed");
         initialInputs = validatePositiveAmounts(initialInputs, "initial input");
         netChange = validateSignedAmounts(netChange);
@@ -75,7 +74,7 @@ public final class TrinityCycleDiagnosticEvidence {
         if (!calculatedNet.equals(netChange)) {
             throw new IllegalArgumentException("A Trinity diagnostic cycle order must match its exact net change");
         }
-        for (Map.Entry<AEKey, BigInteger> seed : minimumSeed.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> seed : minimumSeed.object2ObjectEntrySet()) {
             if (initialInputs.getOrDefault(seed.getKey(), BigInteger.ZERO).compareTo(seed.getValue()) < 0) {
                 throw new IllegalArgumentException("A Trinity diagnostic cycle input must include its minimum seed");
             }
@@ -110,10 +109,10 @@ public final class TrinityCycleDiagnosticEvidence {
         return new TrinityCycleDiagnosticEvidence(
                 componentIndex,
                 demand,
-                List.of(),
+                ObjectList.of(),
                 plan.oneCycleOrder(),
                 plan.repetitions(),
-                List.of(),
+                ObjectList.of(),
                 plan.minimumSeed(),
                 plan.initialInputs(),
                 plan.netChange(),
@@ -132,10 +131,10 @@ public final class TrinityCycleDiagnosticEvidence {
         return new TrinityCycleDiagnosticEvidence(
                 componentIndex,
                 demand,
-                List.of(),
+                ObjectList.of(),
                 plan.schedule().batches(),
                 BigInteger.ONE,
-                List.of(),
+                ObjectList.of(),
                 plan.minimumSeed(),
                 plan.initialInputs(),
                 plan.netChange(),
@@ -173,21 +172,21 @@ public final class TrinityCycleDiagnosticEvidence {
         return this.demand;
     }
 
-    public List<TrinityVariantFiring> localOrder() {
+    public ObjectList<TrinityVariantFiring> localOrder() {
         return this.localOrder;
     }
 
     /**
      * Returns immutable one-time prefix evidence; display-only callers must not multiply it by repetitions.
      */
-    public List<TrinityVariantFiring> prefixOrder() {
+    public ObjectList<TrinityVariantFiring> prefixOrder() {
         return this.prefixOrder;
     }
 
     /**
      * Returns immutable one-time suffix evidence, after all repeats; this does not expose an executable plan.
      */
-    public List<TrinityVariantFiring> suffixOrder() {
+    public ObjectList<TrinityVariantFiring> suffixOrder() {
         return this.suffixOrder;
     }
 
@@ -195,15 +194,15 @@ public final class TrinityCycleDiagnosticEvidence {
         return this.repetitions;
     }
 
-    public Map<AEKey, BigInteger> minimumSeed() {
+    public Object2ObjectMap<AEKey, BigInteger> minimumSeed() {
         return this.minimumSeed;
     }
 
-    public Map<AEKey, BigInteger> initialInputs() {
+    public Object2ObjectMap<AEKey, BigInteger> initialInputs() {
         return this.initialInputs;
     }
 
-    public Map<AEKey, BigInteger> netChange() {
+    public Object2ObjectMap<AEKey, BigInteger> netChange() {
         return this.netChange;
     }
 
@@ -222,17 +221,17 @@ public final class TrinityCycleDiagnosticEvidence {
     /**
      * Reconstructs every declared output produced by the validated prefix/repeat/suffix schedule.
      */
-    public Map<AEKey, BigInteger> emittedItems() {
+    public Object2ObjectMap<AEKey, BigInteger> emittedItems() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> emitted = new Object2ObjectLinkedOpenHashMap<>();
         mergeOutputs(emitted, this.prefixOrder, BigInteger.ONE);
         mergeOutputs(emitted, this.localOrder, this.repetitions);
         mergeOutputs(emitted, this.suffixOrder, BigInteger.ONE);
-        return Object2ObjectMaps.unmodifiable(emitted);
+        return FastUtilCollections.immutableMap(emitted);
     }
 
     private static void mergeNet(
-                                 Map<AEKey, BigInteger> target,
-                                 List<TrinityVariantFiring> order,
+                                 Object2ObjectMap<AEKey, BigInteger> target,
+                                 ObjectList<TrinityVariantFiring> order,
                                  BigInteger multiplier) {
         order.forEach(firing -> firing.variant().netChange().forEach(
                 (key, amount) -> target.merge(
@@ -242,8 +241,8 @@ public final class TrinityCycleDiagnosticEvidence {
     }
 
     private static void mergeOutputs(
-                                     Map<AEKey, BigInteger> target,
-                                     List<TrinityVariantFiring> order,
+                                     Object2ObjectMap<AEKey, BigInteger> target,
+                                     ObjectList<TrinityVariantFiring> order,
                                      BigInteger multiplier) {
         order.forEach(firing -> firing.variant().outputs().forEach(
                 (key, amount) -> target.merge(
@@ -252,23 +251,23 @@ public final class TrinityCycleDiagnosticEvidence {
                         BigInteger::add)));
     }
 
-    private static Map<AEKey, BigInteger> validatePositiveAmounts(
-                                                                  Map<AEKey, BigInteger> source,
-                                                                  String role) {
+    private static Object2ObjectMap<AEKey, BigInteger> validatePositiveAmounts(
+                                                                               Object2ObjectMap<AEKey, BigInteger> source,
+                                                                               String role) {
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
                 throw new IllegalArgumentException("A Trinity diagnostic cycle " + role + " must be positive");
             }
         });
-        return Collections.unmodifiableMap(source);
+        return FastUtilCollections.immutableMap(source);
     }
 
-    private static Map<AEKey, BigInteger> validateSignedAmounts(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> validateSignedAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
         source.forEach((key, amount) -> {
             if (amount.signum() == 0) {
                 throw new IllegalArgumentException("A Trinity diagnostic cycle net amount must be non-zero");
             }
         });
-        return Collections.unmodifiableMap(source);
+        return FastUtilCollections.immutableMap(source);
     }
 }

@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressReporter;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.stacks.GenericStack;
@@ -21,7 +22,6 @@ import net.minecraft.network.chat.Component;
 
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -146,7 +146,7 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
                             TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
                             Component.translatable(
                                     "gui.data_energistics.trinity_planning.diagnostic.planner_queue_full"),
-                            Map.of("reason", exception.getClass().getSimpleName()))));
+                            FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()))));
             progress.publish(TrinityPlanningProgressSnapshot.withoutUnits(
                     TrinityPlanningProgressPhase.AWAITING_MENU_RESULT,
                     TrinityPlanningProgressMeasure.NONE));
@@ -171,7 +171,7 @@ final class ConcurrentTrinityPlanningGateway implements TrinityPlanningGateway {
                     TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
                     Component.translatable(
                             "gui.data_energistics.trinity_planning.diagnostic.planner_queue_full_replan"),
-                    Map.of("reason", exception.getClass().getSimpleName()))));
+                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()))));
         }
     }
 

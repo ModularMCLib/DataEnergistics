@@ -16,20 +16,19 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnosti
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Solves a stable deterministic cycle by closed-form net effect and maximum prefix deficit.
@@ -57,12 +56,12 @@ public final class TrinityDeterministicCyclePlanner {
     public TrinityAlgorithmResult<TrinityCyclePlan> plan(
                                                          int componentIndex,
                                                          TrinityCycleDemand diagnosticDemand,
-                                                         List<TrinityVariantFiring> oneCycleOrder,
+                                                         ObjectList<TrinityVariantFiring> oneCycleOrder,
                                                          AEKey target,
                                                          BigInteger requestedAmount,
                                                          CraftingQuantityMode quantityMode,
-                                                         Map<AEKey, BigInteger> available,
-                                                         Set<AEKey> producibleInputs,
+                                                         Object2ObjectMap<AEKey, BigInteger> available,
+                                                         ObjectSet<AEKey> producibleInputs,
                                                          int maxScheduleStates,
                                                          TrinityPlanningControl control) {
         if (componentIndex < 0) {
@@ -71,14 +70,14 @@ public final class TrinityDeterministicCyclePlanner {
         if (oneCycleOrder.isEmpty() || requestedAmount.signum() <= 0 || maxScheduleStates <= 0) {
             throw new IllegalArgumentException("A Trinity deterministic cycle request is incomplete");
         }
-        Map<AEKey, BigInteger> inventory = copyAvailable(available);
-        Map<AEKey, BigInteger> oneCycleNet = cycleNetChange(oneCycleOrder);
+        Object2ObjectMap<AEKey, BigInteger> inventory = copyAvailable(available);
+        Object2ObjectMap<AEKey, BigInteger> oneCycleNet = cycleNetChange(oneCycleOrder);
         BigInteger targetEffect = oneCycleNet.getOrDefault(target, BigInteger.ZERO);
         if (targetEffect.signum() <= 0) {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.NO_PRODUCTIVE_CYCLE,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.no_productive_cycle"),
-                    Map.of("target_effect", targetEffect.toString())));
+                    FastUtilCollections.mapOf("target_effect", targetEffect.toString())));
         }
 
         BigInteger requiredNet = quantityMode == CraftingQuantityMode.NET_NEW ?
@@ -88,10 +87,10 @@ public final class TrinityDeterministicCyclePlanner {
         if (quantityMode == CraftingQuantityMode.FINAL_TOTAL) {
             repetitions = repetitions.max(BigInteger.ONE);
         }
-        Map<AEKey, BigInteger> minimumSeed = TrinityCycleSeedRequirement.repeatedMinimumInputs(
+        Object2ObjectMap<AEKey, BigInteger> minimumSeed = TrinityCycleSeedRequirement.repeatedMinimumInputs(
                 oneCycleOrder,
                 repetitions);
-        Map<AEKey, BigInteger> netChange = multiply(oneCycleNet, repetitions);
+        Object2ObjectMap<AEKey, BigInteger> netChange = multiply(oneCycleNet, repetitions);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>(minimumSeed);
         if (quantityMode == CraftingQuantityMode.FINAL_TOTAL) {
             BigInteger targetContribution = requestedAmount
@@ -111,7 +110,7 @@ public final class TrinityDeterministicCyclePlanner {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> usedInputs = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> missingInputs = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, InputRequirement> shortages = new Object2ObjectLinkedOpenHashMap<>();
-        for (Map.Entry<AEKey, BigInteger> input : initialInputs.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> input : initialInputs.object2ObjectEntrySet()) {
             BigInteger required = input.getValue();
             BigInteger allocated = required.min(inventory.getOrDefault(input.getKey(), BigInteger.ZERO));
             BigInteger missing = required.subtract(allocated);
@@ -133,7 +132,7 @@ public final class TrinityDeterministicCyclePlanner {
             return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    Map.of()));
+                    FastUtilCollections.mapOf()));
         }
         if (!shortages.isEmpty()) {
             if (!schedule.successful() &&
@@ -183,18 +182,18 @@ public final class TrinityDeterministicCyclePlanner {
                 schedule.value()));
     }
 
-    private static Map<AEKey, BigInteger> cycleNetChange(List<TrinityVariantFiring> order) {
+    private static Object2ObjectMap<AEKey, BigInteger> cycleNetChange(ObjectList<TrinityVariantFiring> order) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : order) {
             firing.variant().netChange().forEach(
                     (key, amount) -> net.merge(key, amount.multiply(firing.count()), BigInteger::add));
         }
         net.values().removeIf(amount -> amount.signum() == 0);
-        return Object2ObjectMaps.unmodifiable(net);
+        return FastUtilCollections.immutableMap(net);
     }
 
-    private static Map<AEKey, BigInteger> multiply(Map<AEKey, BigInteger> amounts,
-                                                   BigInteger multiplier) {
+    private static Object2ObjectMap<AEKey, BigInteger> multiply(Object2ObjectMap<AEKey, BigInteger> amounts,
+                                                                BigInteger multiplier) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> multiplied = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             BigInteger result = amount.multiply(multiplier);
@@ -202,10 +201,10 @@ public final class TrinityDeterministicCyclePlanner {
                 multiplied.put(key, result);
             }
         });
-        return Collections.unmodifiableMap(multiplied);
+        return FastUtilCollections.immutableMap(multiplied);
     }
 
-    private static Map<AEKey, BigInteger> copyAvailable(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyAvailable(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() < 0) {
@@ -215,17 +214,17 @@ public final class TrinityDeterministicCyclePlanner {
                 copied.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
     private static <T> TrinityAlgorithmResult<T> insufficientInputs(
                                                                     AEKey target,
-                                                                    Map<AEKey, BigInteger> minimumSeed,
-                                                                    Map<AEKey, BigInteger> netChange,
-                                                                    Map<TrinityPatternVariant, BigInteger> aggregateFirings,
-                                                                    Map<AEKey, BigInteger> usedInputs,
-                                                                    Map<AEKey, BigInteger> missingInputs,
-                                                                    Map<AEKey, InputRequirement> shortages,
+                                                                    Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                                                    Object2ObjectMap<AEKey, BigInteger> netChange,
+                                                                    Object2ObjectMap<TrinityPatternVariant, BigInteger> aggregateFirings,
+                                                                    Object2ObjectMap<AEKey, BigInteger> usedInputs,
+                                                                    Object2ObjectMap<AEKey, BigInteger> missingInputs,
+                                                                    Object2ObjectMap<AEKey, InputRequirement> shortages,
                                                                     Optional<TrinityCycleDiagnosticOutcome> diagnosticOutcome,
                                                                     Optional<TrinityPlanningDiagnostic> proofFailure) {
         Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>();
@@ -238,7 +237,7 @@ public final class TrinityDeterministicCyclePlanner {
         Component message = Component.translatable(
                 "gui.data_energistics.trinity_planning.diagnostic.insufficient_input");
         if (shortages.size() == 1) {
-            Map.Entry<AEKey, InputRequirement> shortage = shortages.entrySet().iterator().next();
+            Object2ObjectMap.Entry<AEKey, InputRequirement> shortage = shortages.object2ObjectEntrySet().iterator().next();
             AEKey key = shortage.getKey();
             InputRequirement requirement = shortage.getValue();
             BigInteger netConsumed = netChange.getOrDefault(key, BigInteger.ZERO).negate().max(BigInteger.ZERO);
@@ -274,10 +273,10 @@ public final class TrinityDeterministicCyclePlanner {
                         emitted,
                         missingInputs,
                         shortages,
-                        List.of()));
+                        ObjectList.of()));
         TrinityPlanningDiagnostic.Detail detail = diagnosticOutcome.<TrinityPlanningDiagnostic.Detail>map(outcome -> new TrinityPlanningDiagnostic.CompositeEvidence(
                 materials,
-                List.of(outcome.evidence())))
+                ObjectList.of(outcome.evidence())))
                 .orElse(materials);
         TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,

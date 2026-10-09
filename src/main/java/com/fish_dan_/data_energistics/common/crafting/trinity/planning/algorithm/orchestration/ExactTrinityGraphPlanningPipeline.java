@@ -28,6 +28,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -36,11 +37,12 @@ import net.minecraft.network.chat.Component;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Coordinates graph expansion, topology analysis, demand solving, and final plan assembly at one exact boundary.
@@ -103,7 +105,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return compiled.successful() ?
                     solveExact(
                             compiled.value(),
-                            Map.of(),
+                            FastUtilCollections.mapOf(),
                             snapshot.revision(),
                             requestedAmount,
                             quantityMode,
@@ -116,7 +118,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    Map.of("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
         }
     }
 
@@ -136,15 +138,15 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    Map.of("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
         }
     }
 
     @Override
-    public TrinityAlgorithmResult<List<TrinityPatternVariant>> expandPattern(
-                                                                             TrinityCraftingGraphPattern pattern,
-                                                                             int maxBindingVariants,
-                                                                             TrinityPlanningControl control) {
+    public TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expandPattern(
+                                                                                   TrinityCraftingGraphPattern pattern,
+                                                                                   int maxBindingVariants,
+                                                                                   TrinityPlanningControl control) {
         return this.variantExpander.expandPattern(pattern, maxBindingVariants, control);
     }
 
@@ -152,7 +154,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
     public TrinityAlgorithmResult<TrinityCompiledGraph> compileExpanded(
                                                                         TrinityCraftingGraphSnapshot reachableSnapshot,
                                                                         AEKey target,
-                                                                        List<TrinityPatternVariant> expandedVariants,
+                                                                        ObjectList<TrinityPatternVariant> expandedVariants,
                                                                         int maxSccKeys,
                                                                         TrinityPlanningControl control) {
         try {
@@ -161,7 +163,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    Map.of("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
         }
     }
 
@@ -182,9 +184,9 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
-                    Map.of("target", target.toString()));
+                    FastUtilCollections.mapOf("target", target.toString()));
         }
-        TrinityAlgorithmResult<List<TrinityPatternVariant>> expanded = this.variantExpander.expand(
+        TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expanded = this.variantExpander.expand(
                 reachableSnapshot,
                 maxBindingVariants,
                 control);
@@ -197,7 +199,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
     private TrinityAlgorithmResult<TrinityCompiledGraph> compileExpandedExact(
                                                                               TrinityCraftingGraphSnapshot reachableSnapshot,
                                                                               AEKey target,
-                                                                              List<TrinityPatternVariant> expandedVariants,
+                                                                              ObjectList<TrinityPatternVariant> expandedVariants,
                                                                               int maxSccKeys,
                                                                               TrinityPlanningControl control) {
         StopState state = stopState(control);
@@ -211,13 +213,13 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
-                    Map.of("target", target.toString()));
+                    FastUtilCollections.mapOf("target", target.toString()));
         }
         TrinitySameItemPolicy sameItemPolicy = reachableSnapshot.sameItemPolicy(target);
-        List<TrinityPatternVariant> normalizedVariants = expandedVariants.stream()
+        ObjectList<TrinityPatternVariant> normalizedVariants = expandedVariants.stream()
                 .map(variant -> variant.normalized(sameItemPolicy))
-                .toList();
-        List<TrinityPatternVariant> compacted = this.effectCompactor.compact(normalizedVariants);
+                .collect(ObjectArrayList.toList());
+        ObjectList<TrinityPatternVariant> compacted = this.effectCompactor.compact(normalizedVariants);
         control.beginProgressPhase(TrinityPlanningProgressPhase.ANALYZING_TOPOLOGY, 0);
         TrinityAlgorithmResult<TrinityCraftingTopology> analyzed = this.topologyAnalyzer.analyze(
                 reachableSnapshot,
@@ -231,17 +233,17 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     TARGET_ABSENT_KEY,
-                    Map.of("target", target.toString()));
+                    FastUtilCollections.mapOf("target", target.toString()));
         }
 
         int targetComponent = analyzed.value().componentByKey().getInt(target);
         boolean reachableCycle = hasReachableCycle(analyzed.value(), targetComponent);
-        List<AEKey> relevantInventoryKeys = sameItemPolicy.normalizeKeys(reachableSnapshot.keys()).stream()
+        ObjectList<AEKey> relevantInventoryKeys = sameItemPolicy.normalizeKeys(reachableSnapshot.keys()).stream()
                 .filter(analyzed.value().componentByKey()::containsKey)
-                .toList();
+                .collect(ObjectArrayList.toList());
         return TrinityAlgorithmResult.success(new TrinityCompiledGraph(
                 target,
-                reachableSnapshot.patterns().stream().map(TrinityCraftingGraphPattern::identity).toList(),
+                reachableSnapshot.patterns().stream().map(TrinityCraftingGraphPattern::identity).collect(ObjectArrayList.toList()),
                 expandedVariants.size(),
                 compacted,
                 analyzed.value(),
@@ -249,7 +251,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
                 reachableCycle,
                 relevantInventoryKeys,
                 sameItemPolicy,
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 TrinityCycleUnitProofIndex.empty(),
                 Int2ObjectMaps.emptyMap()));
     }
@@ -257,7 +259,7 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
     @Override
     public TrinityAlgorithmResult<TrinityCraftingPlan> solve(
                                                              TrinityCompiledGraph compiled,
-                                                             Map<AEKey, TrinityAcyclicRouteHint> routeHints,
+                                                             Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> routeHints,
                                                              long catalogRevision,
                                                              BigInteger requestedAmount,
                                                              CraftingQuantityMode quantityMode,
@@ -283,13 +285,13 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
             return failure(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     ARITHMETIC_OVERFLOW_KEY,
-                    Map.of("reason", exception.getClass().getSimpleName()));
+                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName()));
         }
     }
 
     private TrinityAlgorithmResult<TrinityCraftingPlan> solveExact(
                                                                    TrinityCompiledGraph compiled,
-                                                                   Map<AEKey, TrinityAcyclicRouteHint> routeHints,
+                                                                   Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> routeHints,
                                                                    long catalogRevision,
                                                                    BigInteger requestedAmount,
                                                                    CraftingQuantityMode quantityMode,
@@ -371,9 +373,9 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
 
     private TrinityAlgorithmResult<TrinityGraphPlanAssembly> solveAcyclic(
                                                                           TrinityCraftingTopology topology,
-                                                                          List<TrinityPatternVariant> variants,
-                                                                          Map<AEKey, TrinityAcyclicRouteFamily> routeFamilies,
-                                                                          Map<AEKey, TrinityAcyclicRouteHint> routeHints,
+                                                                          ObjectList<TrinityPatternVariant> variants,
+                                                                          Object2ObjectMap<AEKey, TrinityAcyclicRouteFamily> routeFamilies,
+                                                                          Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> routeHints,
                                                                           AEKey target,
                                                                           BigInteger requestedAmount,
                                                                           CraftingQuantityMode quantityMode,
@@ -433,20 +435,20 @@ final class ExactTrinityGraphPlanningPipeline implements TrinityGraphPlanningPip
         return failure(
                 TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                 CANCELLED_KEY,
-                Map.of());
+                FastUtilCollections.mapOf());
     }
 
     private static <T> TrinityAlgorithmResult<T> deadlineExceeded() {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 TIMEOUT_KEY,
-                Map.of("phase", "graph"));
+                FastUtilCollections.mapOf("phase", "graph"));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

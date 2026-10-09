@@ -11,13 +11,13 @@ import com.fish_dan_.data_energistics.util.TrinityDeterministicFiringMath;
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Determines whether one reservoir yields the unique productive basis required by the deterministic fast path.
@@ -46,9 +46,9 @@ public final class TrinityDeterministicApplicability {
                                                           TrinityStronglyConnectedComponent component,
                                                           TrinityCycleDemand demand,
                                                           AEKey reservoir,
-                                                          Map<AEKey, BigInteger> available,
-                                                          Set<AEKey> producibleInputs) {
-        Optional<List<TrinityVariantFiring>> primitive = this.cycleSequence.resolve(
+                                                          Object2ObjectMap<AEKey, BigInteger> available,
+                                                          ObjectSet<AEKey> producibleInputs) {
+        Optional<ObjectList<TrinityVariantFiring>> primitive = this.cycleSequence.resolve(
                 component,
                 reservoir,
                 available, producibleInputs);
@@ -56,7 +56,7 @@ public final class TrinityDeterministicApplicability {
             return TrinityDeterministicApplicabilityResult.skip();
         }
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> primitiveFirings = TrinityDeterministicFiringMath.aggregate(primitive.orElseThrow());
-        Map<AEKey, BigInteger> primitiveNet = TrinityDeterministicFiringMath.netChange(primitiveFirings);
+        Object2ObjectMap<AEKey, BigInteger> primitiveNet = TrinityDeterministicFiringMath.netChange(primitiveFirings);
         if (!isProductiveBasis(component, demand, reservoir, primitiveNet)) {
             return TrinityDeterministicApplicabilityResult.skip();
         }
@@ -77,8 +77,8 @@ public final class TrinityDeterministicApplicability {
                                                           TrinityStronglyConnectedComponent component,
                                                           TrinityCycleDemand demand,
                                                           TrinityCycleUnitProof unitProof,
-                                                          Map<AEKey, BigInteger> available,
-                                                          Set<AEKey> producibleInputs) {
+                                                          Object2ObjectMap<AEKey, BigInteger> available,
+                                                          ObjectSet<AEKey> producibleInputs) {
         if (!component.keys().contains(unitProof.reservoir()) ||
                 !new ObjectOpenHashSet<>(unitProof.firings().keySet())
                         .equals(new ObjectOpenHashSet<>(component.cycleVariants()))) {
@@ -86,7 +86,7 @@ public final class TrinityDeterministicApplicability {
         }
         TrinityCycleUnitProof instantiated = unitProof.instantiate(available, component.keys(), producibleInputs);
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = TrinityDeterministicFiringMath.aggregate(instantiated.order());
-        Map<AEKey, BigInteger> net = TrinityDeterministicFiringMath.netChange(firings);
+        Object2ObjectMap<AEKey, BigInteger> net = TrinityDeterministicFiringMath.netChange(firings);
         if (!firings.equals(instantiated.firings()) || !net.equals(instantiated.netChange()) ||
                 !isProductiveBasis(component, demand, instantiated.reservoir(), net)) {
             return TrinityDeterministicApplicabilityResult.skip();
@@ -106,7 +106,7 @@ public final class TrinityDeterministicApplicability {
                                              TrinityStronglyConnectedComponent component,
                                              TrinityCycleDemand demand,
                                              AEKey reservoir,
-                                             Map<AEKey, BigInteger> primitiveNet) {
+                                             Object2ObjectMap<AEKey, BigInteger> primitiveNet) {
         if (primitiveNet.getOrDefault(reservoir, TrinityDeterministicFiringMath.ZERO).signum() <= 0) {
             return false;
         }

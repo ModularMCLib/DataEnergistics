@@ -14,12 +14,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.network.chat.Component;
 
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -75,7 +75,7 @@ public final class TrinityInitialPlanCalculation {
                             "gui.data_energistics.trinity_planning.cpu_too_small",
                             plan.exactBytes(),
                             request.maxTrinityCapacity().diagnosticValue()),
-                    Map.of(
+                    FastUtilCollections.mapOf(
                             "planBytes", plan.exactBytes().toString(),
                             "maxTrinityBytes", request.maxTrinityCapacity().diagnosticValue()));
             logFailure(request, diagnostic, computation.cachePath(), computation.cacheStatistics());
@@ -141,7 +141,7 @@ public final class TrinityInitialPlanCalculation {
             return TrinityPlanningAttempt.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ARITHMETIC_OVERFLOW,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.arithmetic_overflow"),
-                    Map.of("reason", exception.getClass().getSimpleName())));
+                    FastUtilCollections.mapOf("reason", exception.getClass().getSimpleName())));
         }
     }
 

@@ -11,13 +11,13 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Assembles one bounded radix feasibility model from immutable logical inputs and one objective pass.
@@ -126,7 +126,7 @@ public final class TrinityRadixModelAssembler {
                                                TrinityRadixLinearEncoder model,
                                                TrinityCycleFeasibilityRequest request,
                                                TrinityRadixModelPass pass,
-                                               Map<TrinityPatternVariant, TrinityRadixVariable> firingVariables,
+                                               Object2ObjectMap<TrinityPatternVariant, TrinityRadixVariable> firingVariables,
                                                TrinityRadixVariable seedTotal,
                                                TrinityRadixVariable externalTotal,
                                                TrinityRadixVariable firingTotal,
@@ -187,7 +187,7 @@ public final class TrinityRadixModelAssembler {
 
     private Object2ObjectLinkedOpenHashMap<AEKey, TrinityRadixVariable> reserveVariables(
                                                                                          TrinityRadixLinearEncoder model,
-                                                                                         Set<AEKey> keys,
+                                                                                         ObjectSet<AEKey> keys,
                                                                                          TrinityCycleFeasibilityRequest request,
                                                                                          String prefix,
                                                                                          BigInteger logicalUpper) {
@@ -206,9 +206,9 @@ public final class TrinityRadixModelAssembler {
     private static void addConservation(
                                         TrinityRadixLinearEncoder model,
                                         TrinityCycleFeasibilityRequest request,
-                                        Map<TrinityPatternVariant, TrinityRadixVariable> firingVariables,
-                                        Map<AEKey, TrinityRadixVariable> seedVariables,
-                                        Map<AEKey, TrinityRadixVariable> externalVariables) {
+                                        Object2ObjectMap<TrinityPatternVariant, TrinityRadixVariable> firingVariables,
+                                        Object2ObjectMap<AEKey, TrinityRadixVariable> seedVariables,
+                                        Object2ObjectMap<AEKey, TrinityRadixVariable> externalVariables) {
         ObjectArrayList<AEKey> touchedKeys = new ObjectArrayList<>(request.coefficientTemplate().touchedKeys());
         ObjectOpenHashSet<AEKey> seenKeys = new ObjectOpenHashSet<>(touchedKeys);
         request.demand().finalBalanceLowerBounds().keySet().forEach(key -> addStableKey(key, seenKeys, touchedKeys));
@@ -228,7 +228,7 @@ public final class TrinityRadixModelAssembler {
                     request.demand().finalBalanceLowerBounds().getOrDefault(key, BigInteger.ZERO));
         }
         int netIndex = 0;
-        for (Map.Entry<AEKey, BigInteger> bound : request.demand().requiredNetChangeLowerBounds().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : request.demand().requiredNetChangeLowerBounds().object2ObjectEntrySet()) {
             model.addGreaterOrEqual(
                     "required_net_" + netIndex++,
                     netTerms(request, bound.getKey(), firingVariables),
@@ -241,7 +241,7 @@ public final class TrinityRadixModelAssembler {
     private static Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> netTerms(
                                                                                              TrinityCycleFeasibilityRequest request,
                                                                                              AEKey key,
-                                                                                             Map<TrinityPatternVariant, TrinityRadixVariable> firings) {
+                                                                                             Object2ObjectMap<TrinityPatternVariant, TrinityRadixVariable> firings) {
         Object2ObjectLinkedOpenHashMap<TrinityRadixVariable, BigInteger> terms = new Object2ObjectLinkedOpenHashMap<>();
         for (Coefficient coefficient : request.coefficientTemplate().coefficients(key)) {
             TrinityPatternVariant variant = request.variants().get(coefficient.variantIndex());
@@ -250,7 +250,7 @@ public final class TrinityRadixModelAssembler {
         return terms;
     }
 
-    private static void addStableKey(AEKey key, Set<AEKey> seen, List<AEKey> destination) {
+    private static void addStableKey(AEKey key, ObjectSet<AEKey> seen, ObjectList<AEKey> destination) {
         if (seen.add(key)) {
             destination.add(key);
         }

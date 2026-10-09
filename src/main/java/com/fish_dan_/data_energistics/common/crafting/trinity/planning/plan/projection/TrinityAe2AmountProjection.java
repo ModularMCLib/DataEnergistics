@@ -3,8 +3,9 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.pro
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.math.BigInteger;
-import java.util.Map;
 
 /** Owns the single compatibility boundary between exact Trinity quantities and AE2's long-only public views. */
 public final class TrinityAe2AmountProjection {
@@ -14,7 +15,7 @@ public final class TrinityAe2AmountProjection {
     private TrinityAe2AmountProjection() {}
 
     /** The returned counter is compatibility data; the source map remains the executable authority. */
-    public static KeyCounter toKeyCounter(Map<AEKey, BigInteger> exactAmounts) {
+    public static KeyCounter toKeyCounter(Object2ObjectMap<AEKey, BigInteger> exactAmounts) {
         KeyCounter projected = new KeyCounter();
         exactAmounts.forEach((key, amount) -> projected.add(key, toAe2Amount(amount)));
         return projected;

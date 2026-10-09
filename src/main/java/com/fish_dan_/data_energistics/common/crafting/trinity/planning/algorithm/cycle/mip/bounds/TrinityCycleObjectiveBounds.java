@@ -3,17 +3,18 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilityRequest;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityFiringBounds;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Derives exact objective bounds and reserve domains shared by every Trinity cycle MIP representation.
@@ -34,9 +35,9 @@ public final class TrinityCycleObjectiveBounds {
      */
     public BigInteger minimumFirstInternalInput(TrinityCycleFeasibilityRequest request) {
         return request.variants().stream()
-                .map(variant -> variant.inputs().entrySet().stream()
+                .map(variant -> variant.inputs().object2ObjectEntrySet().stream()
                         .filter(entry -> request.internalKeys().contains(entry.getKey()))
-                        .map(Map.Entry::getValue)
+                        .map(entry -> entry.getValue())
                         .reduce(BigInteger.ZERO, BigInteger::add))
                 .filter(amount -> amount.signum() > 0)
                 .min(BigInteger::compareTo)
@@ -49,9 +50,9 @@ public final class TrinityCycleObjectiveBounds {
      */
     public BigInteger minimumFirstExternalInput(TrinityCycleFeasibilityRequest request) {
         return request.variants().stream()
-                .map(variant -> variant.inputs().entrySet().stream()
+                .map(variant -> variant.inputs().object2ObjectEntrySet().stream()
                         .filter(entry -> !request.internalKeys().contains(entry.getKey()))
-                        .map(Map.Entry::getValue)
+                        .map(entry -> entry.getValue())
                         .reduce(BigInteger.ZERO, BigInteger::add))
                 .min(BigInteger::compareTo)
                 .orElse(BigInteger.ZERO);
@@ -100,7 +101,7 @@ public final class TrinityCycleObjectiveBounds {
         requireNonNegative(fixedSeed, "seed");
         BigInteger lowerBound = BigInteger.ZERO;
         ObjectLinkedOpenHashSet<AEKey> touchedKeys = touchedKeys(request);
-        Set<AEKey> externalKeys = externalReserveKeys(request);
+        ObjectSet<AEKey> externalKeys = externalReserveKeys(request);
         for (AEKey key : touchedKeys) {
             BigInteger reserveUpper = request.internalKeys().contains(key) ? fixedSeed :
                     externalKeys.contains(key) ? fixedExternal : BigInteger.ZERO;
@@ -109,9 +110,9 @@ public final class TrinityCycleObjectiveBounds {
                     .subtract(reserveUpper);
             lowerBound = lowerBound.max(rowFiringLowerBound(request, key, deficit));
         }
-        for (Map.Entry<AEKey, BigInteger> required : request.demand()
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> required : request.demand()
                 .requiredNetChangeLowerBounds()
-                .entrySet()) {
+                .object2ObjectEntrySet()) {
             lowerBound = lowerBound.max(rowFiringLowerBound(request, required.getKey(), required.getValue()));
         }
         return lowerBound.max(aggregateFiringLowerBound(
@@ -128,7 +129,7 @@ public final class TrinityCycleObjectiveBounds {
                                                   BigInteger fixedExternal,
                                                   BigInteger fixedSeed,
                                                   BigInteger fixedFirings,
-                                                  Map<TrinityPatternVariant, BigInteger> fixedCounts,
+                                                  Object2ObjectMap<TrinityPatternVariant, BigInteger> fixedCounts,
                                                   TrinityPatternVariant variant) {
         requireNonNegative(fixedExternal, "external");
         requireNonNegative(fixedSeed, "seed");
@@ -137,16 +138,16 @@ public final class TrinityCycleObjectiveBounds {
         if (remainingFirings.signum() < 0) {
             throw new IllegalStateException("Fixed Trinity identity counts exceed the total firing objective");
         }
-        List<TrinityPatternVariant> otherVariants = request.variants().stream()
+        ObjectList<TrinityPatternVariant> otherVariants = request.variants().stream()
                 .filter(candidate -> !candidate.equals(variant))
                 .filter(candidate -> !fixedCounts.containsKey(candidate))
-                .toList();
+                .collect(ObjectArrayList.toList());
         if (otherVariants.isEmpty()) {
             return remainingFirings;
         }
 
         BigInteger upper = remainingFirings;
-        Set<AEKey> externalKeys = externalReserveKeys(request);
+        ObjectSet<AEKey> externalKeys = externalReserveKeys(request);
         for (AEKey key : touchedKeys(request)) {
             BigInteger reserveUpper = request.internalKeys().contains(key) ? fixedSeed :
                     externalKeys.contains(key) ? fixedExternal : BigInteger.ZERO;
@@ -159,7 +160,7 @@ public final class TrinityCycleObjectiveBounds {
                     reserveUpper,
                     remainingFirings));
         }
-        for (Map.Entry<AEKey, BigInteger> required : request.demand().requiredNetChangeLowerBounds().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> required : request.demand().requiredNetChangeLowerBounds().object2ObjectEntrySet()) {
             upper = upper.min(identityRowUpperBound(
                     fixedCounts,
                     variant,
@@ -175,7 +176,7 @@ public final class TrinityCycleObjectiveBounds {
     /**
      * Identifies boundary keys that may receive an initial external reserve variable.
      */
-    public Set<AEKey> externalReserveKeys(TrinityCycleFeasibilityRequest request) {
+    public ObjectSet<AEKey> externalReserveKeys(TrinityCycleFeasibilityRequest request) {
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         request.variants().forEach(variant -> variant.inputs().keySet().stream()
                 .filter(key -> !request.internalKeys().contains(key))
@@ -183,7 +184,7 @@ public final class TrinityCycleObjectiveBounds {
         request.demand().finalBalanceLowerBounds().keySet().stream()
                 .filter(key -> !request.internalKeys().contains(key))
                 .forEach(keys::add);
-        return Collections.unmodifiableSet(keys);
+        return FastUtilCollections.immutableSet(keys);
     }
 
     /**
@@ -253,7 +254,7 @@ public final class TrinityCycleObjectiveBounds {
     /**
      * Captures finite current-inventory caps for exact post-solve conservation replay.
      */
-    public Map<AEKey, BigInteger> finiteInputUpperBounds(TrinityCycleFeasibilityRequest request) {
+    public Object2ObjectMap<AEKey, BigInteger> finiteInputUpperBounds(TrinityCycleFeasibilityRequest request) {
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>(request.internalKeys());
         request.variants().forEach(variant -> keys.addAll(variant.inputs().keySet()));
         keys.addAll(request.demand().finalBalanceLowerBounds().keySet());
@@ -261,7 +262,7 @@ public final class TrinityCycleObjectiveBounds {
         keys.stream()
                 .filter(key -> !request.producibleInputs().contains(key))
                 .forEach(key -> bounds.put(key, request.available().getOrDefault(key, BigInteger.ZERO)));
-        return Collections.unmodifiableMap(bounds);
+        return FastUtilCollections.immutableMap(bounds);
     }
 
     private static ObjectLinkedOpenHashSet<AEKey> touchedKeys(TrinityCycleFeasibilityRequest request) {
@@ -276,9 +277,9 @@ public final class TrinityCycleObjectiveBounds {
     }
 
     private static BigInteger identityRowUpperBound(
-                                                    Map<TrinityPatternVariant, BigInteger> fixedCounts,
+                                                    Object2ObjectMap<TrinityPatternVariant, BigInteger> fixedCounts,
                                                     TrinityPatternVariant variant,
-                                                    List<TrinityPatternVariant> otherVariants,
+                                                    ObjectList<TrinityPatternVariant> otherVariants,
                                                     AEKey key,
                                                     BigInteger rowLower,
                                                     BigInteger reserveUpper,
@@ -291,7 +292,7 @@ public final class TrinityCycleObjectiveBounds {
         if (objectiveCoefficient.compareTo(maximumOtherCoefficient) >= 0) {
             return remainingFirings;
         }
-        BigInteger fixedContribution = fixedCounts.entrySet().stream()
+        BigInteger fixedContribution = fixedCounts.object2ObjectEntrySet().stream()
                 .map(entry -> entry.getKey().netChange()
                         .getOrDefault(key, BigInteger.ZERO)
                         .multiply(entry.getValue()))
@@ -325,7 +326,7 @@ public final class TrinityCycleObjectiveBounds {
 
     private static BigInteger aggregateFiringLowerBound(
                                                         TrinityCycleFeasibilityRequest request,
-                                                        Set<AEKey> touchedKeys,
+                                                        ObjectSet<AEKey> touchedKeys,
                                                         BigInteger fixedReserve) {
         BigInteger combinedBalance = touchedKeys.stream()
                 .map(key -> request.demand().finalBalanceLowerBounds()
@@ -362,7 +363,7 @@ public final class TrinityCycleObjectiveBounds {
         }
     }
 
-    private static BigInteger total(Map<?, BigInteger> amounts) {
+    private static BigInteger total(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 }

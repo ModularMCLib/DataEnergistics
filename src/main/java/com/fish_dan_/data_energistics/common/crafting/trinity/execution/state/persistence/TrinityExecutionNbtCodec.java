@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.pe
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -22,14 +23,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Strict NBT codec for durable Trinity execution snapshots.
@@ -180,8 +180,8 @@ public final class TrinityExecutionNbtCodec {
      * @param registries server registry lookup used by AE key codecs
      * @return immutable keyed contents safe to move into CPU recovery inventory
      */
-    public static Map<AEKey, BigInteger> recoverCompletionContents(CompoundTag tag,
-                                                                   HolderLookup.Provider registries) {
+    public static Object2ObjectMap<AEKey, BigInteger> recoverCompletionContents(CompoundTag tag,
+                                                                                HolderLookup.Provider registries) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> recovered = new Object2ObjectLinkedOpenHashMap<>();
         BigInteger actualAmount = BigInteger.ZERO;
         boolean actualLedgerComplete = true;
@@ -218,7 +218,7 @@ public final class TrinityExecutionNbtCodec {
         if (!tag.contains(COMPLETION_SEALED_TAG, Tag.TAG_BYTE) ||
                 !tag.getBoolean(COMPLETION_SEALED_TAG) ||
                 !tag.contains(COMPLETION_BUFFER_TAG, Tag.TAG_BYTE_ARRAY)) {
-            return Collections.unmodifiableMap(recovered);
+            return FastUtilCollections.immutableMap(recovered);
         }
         BigInteger completionBuffer;
         try {
@@ -227,14 +227,14 @@ public final class TrinityExecutionNbtCodec {
             Data_Energistics.LOGGER.error(
                     "Cannot recover a damaged Trinity exact completion amount",
                     exception);
-            return Collections.unmodifiableMap(recovered);
+            return FastUtilCollections.immutableMap(recovered);
         }
         if (completionBuffer.signum() <= 0 || !actualLedgerComplete) {
-            return Collections.unmodifiableMap(recovered);
+            return FastUtilCollections.immutableMap(recovered);
         }
         BigInteger exactAmount = completionBuffer.subtract(actualAmount);
         if (exactAmount.signum() <= 0 || !tag.contains(TARGET_KEY_TAG, Tag.TAG_COMPOUND)) {
-            return Collections.unmodifiableMap(recovered);
+            return FastUtilCollections.immutableMap(recovered);
         }
         try {
             AEKey targetKey = decodeKey(
@@ -247,7 +247,7 @@ public final class TrinityExecutionNbtCodec {
                     "Could not recover the exact Trinity completion remainder",
                     exception);
         }
-        return Collections.unmodifiableMap(recovered);
+        return FastUtilCollections.immutableMap(recovered);
     }
 
     private static IntList readStageOrder(CompoundTag root) {
@@ -255,8 +255,8 @@ public final class TrinityExecutionNbtCodec {
         return order;
     }
 
-    private static List<Stage> readStages(CompoundTag root,
-                                          HolderLookup.Provider registries) {
+    private static ObjectList<Stage> readStages(CompoundTag root,
+                                                HolderLookup.Provider registries) {
         ListTag encodedStages = root.getList(STAGES_TAG, Tag.TAG_COMPOUND);
         ObjectArrayList<Stage> stages = new ObjectArrayList<>();
         IntOpenHashSet indexes = new IntOpenHashSet();
@@ -290,8 +290,8 @@ public final class TrinityExecutionNbtCodec {
                 readBigAmountMap(tag, NET_CHANGE_TAG, registries, "stage net change", true));
     }
 
-    private static List<Firing> readFirings(CompoundTag stageTag,
-                                            HolderLookup.Provider registries) {
+    private static ObjectList<Firing> readFirings(CompoundTag stageTag,
+                                                  HolderLookup.Provider registries) {
         ListTag encodedFirings = stageTag.getList(FIRINGS_TAG, Tag.TAG_COMPOUND);
         ObjectArrayList<Firing> firings = new ObjectArrayList<>();
         for (Tag encoded : encodedFirings) {
@@ -319,7 +319,7 @@ public final class TrinityExecutionNbtCodec {
         return firings;
     }
 
-    private static List<RepeatBlock> readRepeatBlocks(CompoundTag root) {
+    private static ObjectList<RepeatBlock> readRepeatBlocks(CompoundTag root) {
         ListTag encodedRepeats = root.getList(REPEAT_BLOCKS_TAG, Tag.TAG_COMPOUND);
         ObjectArrayList<RepeatBlock> repeats = new ObjectArrayList<>();
         IntOpenHashSet indexes = new IntOpenHashSet();
@@ -339,12 +339,12 @@ public final class TrinityExecutionNbtCodec {
         return repeats;
     }
 
-    private static Map<AEKey, BigInteger> readBigAmountMap(
-                                                           CompoundTag root,
-                                                           String field,
-                                                           HolderLookup.Provider registries,
-                                                           String role,
-                                                           boolean signed) {
+    private static Object2ObjectMap<AEKey, BigInteger> readBigAmountMap(
+                                                                        CompoundTag root,
+                                                                        String field,
+                                                                        HolderLookup.Provider registries,
+                                                                        String role,
+                                                                        boolean signed) {
         ListTag entries = root.getList(field, Tag.TAG_COMPOUND);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> target = new Object2ObjectLinkedOpenHashMap<>();
         for (Tag encoded : entries) {
@@ -371,10 +371,10 @@ public final class TrinityExecutionNbtCodec {
         return indexes;
     }
 
-    private static Set<AEKey> readKeys(CompoundTag tag,
-                                       String field,
-                                       HolderLookup.Provider registries,
-                                       String role) {
+    private static ObjectSet<AEKey> readKeys(CompoundTag tag,
+                                             String field,
+                                             HolderLookup.Provider registries,
+                                             String role) {
         ListTag encodedKeys = tag.getList(field, Tag.TAG_COMPOUND);
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         for (Tag encoded : encodedKeys) {
@@ -391,7 +391,7 @@ public final class TrinityExecutionNbtCodec {
         return TrinitySameItemPolicy.load(tag.getList(SAME_ITEM_POLICY_TAG, Tag.TAG_COMPOUND), registries);
     }
 
-    private static ListTag saveStages(List<Stage> stages, HolderLookup.Provider registries) {
+    private static ListTag saveStages(ObjectList<Stage> stages, HolderLookup.Provider registries) {
         ListTag encoded = new ListTag();
         stages.forEach(stage -> encoded.add(saveStage(stage, registries)));
         return encoded;
@@ -433,7 +433,7 @@ public final class TrinityExecutionNbtCodec {
         return tag;
     }
 
-    private static ListTag saveRepeatBlocks(List<RepeatBlock> repeats) {
+    private static ListTag saveRepeatBlocks(ObjectList<RepeatBlock> repeats) {
         ListTag encoded = new ListTag();
         repeats.forEach(repeat -> {
             CompoundTag tag = new CompoundTag();
@@ -447,7 +447,7 @@ public final class TrinityExecutionNbtCodec {
         return encoded;
     }
 
-    private static ListTag saveBigAmounts(Map<AEKey, BigInteger> amounts, HolderLookup.Provider registries) {
+    private static ListTag saveBigAmounts(Object2ObjectMap<AEKey, BigInteger> amounts, HolderLookup.Provider registries) {
         ListTag encoded = new ListTag();
         amounts.forEach((key, amount) -> {
             CompoundTag entry = new CompoundTag();

@@ -3,15 +3,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec.TrinityRadixLinearEncoder;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.codec.TrinityRadixVariable;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Couples one assembled ojAlgo model with the logical axes needed for exact decoding and objective search.
@@ -27,9 +27,9 @@ import java.util.Map;
  */
 public record TrinityRadixBuiltModel(
                                      TrinityRadixLinearEncoder model,
-                                     Map<TrinityPatternVariant, TrinityRadixVariable> firingVariables,
-                                     Map<AEKey, TrinityRadixVariable> seedVariables,
-                                     Map<AEKey, TrinityRadixVariable> externalVariables,
+                                     Object2ObjectMap<TrinityPatternVariant, TrinityRadixVariable> firingVariables,
+                                     Object2ObjectMap<AEKey, TrinityRadixVariable> seedVariables,
+                                     Object2ObjectMap<AEKey, TrinityRadixVariable> externalVariables,
                                      TrinityRadixVariable objective,
                                      boolean minimize,
                                      BigInteger objectiveLowerBound,
@@ -38,24 +38,24 @@ public record TrinityRadixBuiltModel(
     /**
      * Reconstructs all published logical values from solver digits using exact {@link BigInteger} arithmetic.
      */
-    public TrinityRadixSolvedModel decode(Map<Variable, BigInteger> values) {
+    public TrinityRadixSolvedModel decode(Object2ObjectMap<Variable, BigInteger> values) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
         firingVariables.forEach((variant, variable) -> putPositive(firings, variant, variable.decode(values)));
         return new TrinityRadixSolvedModel(
-                Collections.unmodifiableMap(firings),
+                FastUtilCollections.immutableMap(firings),
                 decodePositive(seedVariables, values),
                 decodePositive(externalVariables, values));
     }
 
-    private static Map<AEKey, BigInteger> decodePositive(
-                                                         Map<AEKey, TrinityRadixVariable> variables,
-                                                         Map<Variable, BigInteger> values) {
+    private static Object2ObjectMap<AEKey, BigInteger> decodePositive(
+                                                                      Object2ObjectMap<AEKey, TrinityRadixVariable> variables,
+                                                                      Object2ObjectMap<Variable, BigInteger> values) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> decoded = new Object2ObjectLinkedOpenHashMap<>();
         variables.forEach((key, variable) -> putPositive(decoded, key, variable.decode(values)));
-        return Collections.unmodifiableMap(decoded);
+        return FastUtilCollections.immutableMap(decoded);
     }
 
-    private static <K> void putPositive(Map<K, BigInteger> target, K key, BigInteger value) {
+    private static <K> void putPositive(Object2ObjectMap<K, BigInteger> target, K key, BigInteger value) {
         if (value.signum() > 0) {
             target.put(key, value);
         }

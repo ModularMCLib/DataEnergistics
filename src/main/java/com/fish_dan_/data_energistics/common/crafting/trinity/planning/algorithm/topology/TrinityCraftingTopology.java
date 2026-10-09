@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -14,10 +15,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Deterministic Tarjan partition and condensation DAG for one immutable variant graph.
@@ -30,11 +29,11 @@ import java.util.Map;
  * @param cyclicOwnerByVariant      unique cyclic component that owns a transition with internal feedback
  */
 public record TrinityCraftingTopology(
-                                      List<TrinityStronglyConnectedComponent> components,
+                                      ObjectList<TrinityStronglyConnectedComponent> components,
                                       Object2IntMap<AEKey> componentByKey,
                                       IntList topologicalOrder,
-                                      Int2ObjectMap<List<TrinityPatternVariant>> variantsByOutputComponent,
-                                      Map<AEKey, List<TrinityPatternVariant>> variantsByOutputKey,
+                                      Int2ObjectMap<ObjectList<TrinityPatternVariant>> variantsByOutputComponent,
+                                      Object2ObjectMap<AEKey, ObjectList<TrinityPatternVariant>> variantsByOutputKey,
                                       Object2IntMap<TrinityPatternVariant> cyclicOwnerByVariant) {
 
     /**
@@ -44,7 +43,7 @@ public record TrinityCraftingTopology(
         if (components.isEmpty() || components.size() != topologicalOrder.size()) {
             throw new IllegalArgumentException("A Trinity crafting topology requires complete components and order");
         }
-        components = List.copyOf(components);
+        components = FastUtilCollections.immutableList(components);
         int componentCount = components.size();
         Object2IntLinkedOpenHashMap<AEKey> copiedMapping = new Object2IntLinkedOpenHashMap<>();
         Object2IntMaps.fastForEach(componentByKey, entry -> {
@@ -64,23 +63,23 @@ public record TrinityCraftingTopology(
                 }
             }
         }
-        Int2ObjectLinkedOpenHashMap<List<TrinityPatternVariant>> copiedVariants = new Int2ObjectLinkedOpenHashMap<>();
+        Int2ObjectLinkedOpenHashMap<ObjectList<TrinityPatternVariant>> copiedVariants = new Int2ObjectLinkedOpenHashMap<>();
         Int2ObjectMaps.fastForEach(variantsByOutputComponent, entry -> {
             int index = entry.getIntKey();
             if (index < 0 || index >= componentCount) {
                 throw new IllegalArgumentException("A Trinity output transition index must reference a component");
             }
-            copiedVariants.put(index, List.copyOf(entry.getValue()));
+            copiedVariants.put(index, FastUtilCollections.immutableList(entry.getValue()));
         });
         variantsByOutputComponent = Int2ObjectMaps.unmodifiable(copiedVariants);
-        Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityPatternVariant>> copiedProducers = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, ObjectList<TrinityPatternVariant>> copiedProducers = new Object2ObjectLinkedOpenHashMap<>();
         variantsByOutputKey.forEach((key, variants) -> {
             if (!copiedMapping.containsKey(key)) {
                 throw new IllegalArgumentException("A Trinity producer index must reference a topology key");
             }
-            copiedProducers.put(key, List.copyOf(variants));
+            copiedProducers.put(key, FastUtilCollections.immutableList(variants));
         });
-        variantsByOutputKey = Collections.unmodifiableMap(copiedProducers);
+        variantsByOutputKey = FastUtilCollections.immutableMap(copiedProducers);
         Object2IntLinkedOpenHashMap<TrinityPatternVariant> copiedOwners = new Object2IntLinkedOpenHashMap<>();
         for (Object2IntMap.Entry<TrinityPatternVariant> owner : cyclicOwnerByVariant.object2IntEntrySet()) {
             TrinityPatternVariant variant = owner.getKey();

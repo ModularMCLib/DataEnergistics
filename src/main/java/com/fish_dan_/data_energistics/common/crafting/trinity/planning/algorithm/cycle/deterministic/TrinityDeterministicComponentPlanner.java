@@ -18,11 +18,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Solves every demanded output of a unique-producer SCC without expanding logical firing counts.
@@ -68,8 +68,8 @@ public final class TrinityDeterministicComponentPlanner {
     public TrinityPlanningAttempt<TrinityDeterministicComponentPlan> plan(
                                                                           TrinityStronglyConnectedComponent component,
                                                                           TrinityCycleDemand demand,
-                                                                          Map<AEKey, BigInteger> available,
-                                                                          Set<AEKey> producibleInputs,
+                                                                          Object2ObjectMap<AEKey, BigInteger> available,
+                                                                          ObjectSet<AEKey> producibleInputs,
                                                                           int maxStates,
                                                                           TrinityPlanningControl control) {
         return plan(component, demand, available, producibleInputs, maxStates, control, null);
@@ -79,8 +79,8 @@ public final class TrinityDeterministicComponentPlanner {
     public TrinityPlanningAttempt<TrinityDeterministicComponentPlan> plan(
                                                                           TrinityStronglyConnectedComponent component,
                                                                           TrinityCycleDemand demand,
-                                                                          Map<AEKey, BigInteger> available,
-                                                                          Set<AEKey> producibleInputs,
+                                                                          Object2ObjectMap<AEKey, BigInteger> available,
+                                                                          ObjectSet<AEKey> producibleInputs,
                                                                           int maxStates,
                                                                           TrinityPlanningControl control,
                                                                           @Nullable TrinityCycleUnitProof unitProof) {
@@ -146,8 +146,8 @@ public final class TrinityDeterministicComponentPlanner {
     private TrinityPlanningAttempt<TrinityDeterministicComponentPlan> attemptBasis(
                                                                                    TrinityStronglyConnectedComponent component,
                                                                                    TrinityCycleDemand demand,
-                                                                                   Map<AEKey, BigInteger> available,
-                                                                                   Set<AEKey> producibleInputs,
+                                                                                   Object2ObjectMap<AEKey, BigInteger> available,
+                                                                                   ObjectSet<AEKey> producibleInputs,
                                                                                    int maxStates,
                                                                                    TrinityPlanningControl control,
                                                                                    TrinityDeterministicBasis basis) {

@@ -1,15 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.networking.IGridNode;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Synchronous Trinity runtime publication contract exposed by one AE2 crafting service.
@@ -51,13 +51,13 @@ public interface TrinityCraftingRuntimeRegistry {
         /**
          * Returns the immutable snapshot, deduplicated by runtime identity.
          */
-        List<TrinityDataCoreCraftingRuntime> snapshot();
+        ObjectList<TrinityDataCoreCraftingRuntime> snapshot();
 
         /**
          * Atomically replaces node publications from one complete AE2 machine scan.
          */
-        List<TrinityDataCoreCraftingRuntime> reconcile(
-                                                       Map<IGridNode, TrinityDataCoreCraftingRuntime> scannedRegistrations);
+        ObjectList<TrinityDataCoreCraftingRuntime> reconcile(
+                                                             Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> scannedRegistrations);
     }
 }
 
@@ -69,12 +69,12 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
     /**
      * Exact access-node publications; node equality must never merge distinct AE2 nodes.
      */
-    private final Map<IGridNode, TrinityDataCoreCraftingRuntime> registrations = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> registrations = new Reference2ReferenceOpenHashMap<>();
 
     /**
      * Immutable service-visible runtime membership replaced only after a complete mutation succeeds.
      */
-    private volatile List<TrinityDataCoreCraftingRuntime> snapshot = List.of();
+    private volatile ObjectList<TrinityDataCoreCraftingRuntime> snapshot = ObjectList.of();
 
     @Override
     public synchronized boolean data_energistics$publish(IGridNode node, TrinityDataCoreCraftingRuntime runtime) {
@@ -91,7 +91,7 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
             throw new IllegalStateException("A different Trinity crafting runtime is already published for this node");
         }
 
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>(this.registrations);
+        Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>(this.registrations);
         replacements.put(node, runtime);
         commitRegistrations(replacements);
         return true;
@@ -102,21 +102,21 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
         if (!this.registrations.containsKey(node)) {
             return false;
         }
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>(this.registrations);
+        Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>(this.registrations);
         replacements.remove(node);
         commitRegistrations(replacements);
         return true;
     }
 
     @Override
-    public List<TrinityDataCoreCraftingRuntime> snapshot() {
+    public ObjectList<TrinityDataCoreCraftingRuntime> snapshot() {
         return this.snapshot;
     }
 
     @Override
-    public synchronized List<TrinityDataCoreCraftingRuntime> reconcile(
-                                                                       Map<IGridNode, TrinityDataCoreCraftingRuntime> scannedRegistrations) {
-        Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>();
+    public synchronized ObjectList<TrinityDataCoreCraftingRuntime> reconcile(
+                                                                             Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> scannedRegistrations) {
+        Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> replacements = new Reference2ReferenceOpenHashMap<>();
         replacements.putAll(scannedRegistrations);
         return commitRegistrations(replacements);
     }
@@ -124,24 +124,24 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
     /**
      * Builds the complete immutable view before changing live identity registrations.
      */
-    private List<TrinityDataCoreCraftingRuntime> commitRegistrations(
-                                                                     Map<IGridNode, TrinityDataCoreCraftingRuntime> replacements) {
-        List<TrinityDataCoreCraftingRuntime> replacementSnapshot = createSnapshot(replacements.values(), this.snapshot);
+    private ObjectList<TrinityDataCoreCraftingRuntime> commitRegistrations(
+                                                                           Reference2ReferenceMap<IGridNode, TrinityDataCoreCraftingRuntime> replacements) {
+        ObjectList<TrinityDataCoreCraftingRuntime> replacementSnapshot = createSnapshot(replacements.values(), this.snapshot);
         this.registrations.clear();
         this.registrations.putAll(replacements);
         this.snapshot = replacementSnapshot;
         return replacementSnapshot;
     }
 
-    private static List<TrinityDataCoreCraftingRuntime> createSnapshot(
-                                                                       Iterable<TrinityDataCoreCraftingRuntime> registrations,
-                                                                       List<TrinityDataCoreCraftingRuntime> previousSnapshot) {
+    private static ObjectList<TrinityDataCoreCraftingRuntime> createSnapshot(
+                                                                             Iterable<TrinityDataCoreCraftingRuntime> registrations,
+                                                                             ObjectList<TrinityDataCoreCraftingRuntime> previousSnapshot) {
         ReferenceOpenHashSet<TrinityDataCoreCraftingRuntime> present = new ReferenceOpenHashSet<>();
         for (TrinityDataCoreCraftingRuntime runtime : registrations) {
             present.add(runtime);
         }
         ReferenceOpenHashSet<TrinityDataCoreCraftingRuntime> seen = new ReferenceOpenHashSet<>();
-        List<TrinityDataCoreCraftingRuntime> runtimes = new ObjectArrayList<>();
+        ObjectList<TrinityDataCoreCraftingRuntime> runtimes = new ObjectArrayList<>();
         for (TrinityDataCoreCraftingRuntime runtime : previousSnapshot) {
             if (present.contains(runtime)) {
                 seen.add(runtime);
@@ -154,7 +154,7 @@ final class LocalTrinityCraftingRuntimeRegistry implements TrinityCraftingRuntim
                 runtimes.add(runtime);
             }
         }
-        return List.copyOf(runtimes);
+        return FastUtilCollections.immutableList(runtimes);
     }
 
     private static String identity(Object value) {

@@ -3,10 +3,11 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 /**
  * Creates the stable translated diagnostics shared by radix orchestration and objective probing.
@@ -22,7 +23,7 @@ public final class TrinityRadixDiagnostics {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 "gui.data_energistics.trinity_planning.diagnostic.inexact_result",
-                Map.of("constraint", constraint, "value", value));
+                FastUtilCollections.mapOf("constraint", constraint, "value", value));
     }
 
     /**
@@ -31,7 +32,7 @@ public final class TrinityRadixDiagnostics {
     public static <T> TrinityAlgorithmResult<T> failure(
                                                         TrinityPlanningDiagnosticCode code,
                                                         String translationKey,
-                                                        Map<String, String> metadata) {
+                                                        Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
@@ -49,7 +50,7 @@ public final class TrinityRadixDiagnostics {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 "gui.data_energistics.trinity_planning.mip.timeout",
-                Map.of(
+                FastUtilCollections.mapOf(
                         "passes", Integer.toString(metrics.passes()),
                         "state", state,
                         "objective", objective,

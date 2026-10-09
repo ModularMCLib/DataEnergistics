@@ -20,6 +20,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.T
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.cache.TrinityCaptureCache;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.security.IActionSource;
@@ -32,6 +33,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
@@ -39,8 +41,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.LongSupplier;
@@ -65,14 +65,14 @@ public final class ReusableInputGraphCaptureService {
         CraftingProviderPublicationIndex publications();
 
         /** @return stable list snapshot of live patterns advertised for this exact primary output */
-        List<IPatternDetails> patternsFor(AEKey primaryOutput);
+        ObjectList<IPatternDetails> patternsFor(AEKey primaryOutput);
 
         /**
          * @return snapshot of visible physical item keys, without asserting available quantity or extraction rights
          *         This enumeration occurs once per capture generation. Its current synchronous network-copy cost is
          *         separate from the resumable rule-expansion cursor and must be included in provider budget audits.
          */
-        List<AEItemKey> visibleItemKeys();
+        ObjectList<AEItemKey> visibleItemKeys();
 
         /** @return frozen rule lookup with stable object identity until registrations change */
         ReusableInputRules rules();
@@ -98,7 +98,7 @@ public final class ReusableInputGraphCaptureService {
     }
 
     public CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>> submit(
-                                                                                          ServerLevel level, IActionSource actor, AEKey target, List<AEItemKey> additionalStates,
+                                                                                          ServerLevel level, IActionSource actor, AEKey target, ObjectList<AEItemKey> additionalStates,
                                                                                           TrinityPlanningLimits limits) {
         Task task = new Task(level, actor, target, additionalStates, limits);
         pending.enqueue(task);
@@ -142,23 +142,23 @@ public final class ReusableInputGraphCaptureService {
         private final ServerLevel level;
         private final IActionSource actor;
         private final AEKey target;
-        private final List<AEItemKey> additionalStates;
+        private final ObjectList<AEItemKey> additionalStates;
         private final TrinityPlanningLimits limits;
         private final CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>> future = new CompletableFuture<>();
         private final TrinityPlanningControl control;
         private @Nullable CaptureGeneration generation;
         private @Nullable TrinityCraftingGraphSnapshot base;
         private ReusableInputRules rules;
-        private List<AEItemKey> inventory = List.of();
+        private ObjectList<AEItemKey> inventory = ObjectList.of();
         private boolean inventoryCaptured;
         private boolean recipeInputsCaptured;
         private @Nullable TrinityRecipeInputCapture recipeInputCursor;
-        private final List<TrinityCraftingGraphPattern> completed = new ObjectArrayList<>();
-        private final List<List<Endpoint>> completedEndpoints = new ObjectArrayList<>();
+        private final ObjectList<TrinityCraftingGraphPattern> completed = new ObjectArrayList<>();
+        private final ObjectList<ObjectList<Endpoint>> completedEndpoints = new ObjectArrayList<>();
         private final ObjectList<TrinityCraftingGraphPattern> validationPatterns = new ObjectArrayList<>();
-        private final Map<TrinityPatternIdentity, TrinityPlanningDiagnostic> fallbacks = new Object2ObjectLinkedOpenHashMap<>();
-        private final ObjectLinkedOpenHashSet<List<TrinityBoundPatternInput>> merged = new ObjectLinkedOpenHashSet<>();
-        private List<Endpoint> endpoints = List.of();
+        private final Object2ObjectMap<TrinityPatternIdentity, TrinityPlanningDiagnostic> fallbacks = new Object2ObjectLinkedOpenHashMap<>();
+        private final ObjectLinkedOpenHashSet<ObjectList<TrinityBoundPatternInput>> merged = new ObjectLinkedOpenHashSet<>();
+        private ObjectList<Endpoint> endpoints = ObjectList.of();
         private boolean endpointsDiscovered;
         private int patternIndex;
         private int endpointIndex;
@@ -167,12 +167,12 @@ public final class ReusableInputGraphCaptureService {
         private @Nullable ReusableInputPlanningCursor cursor;
         private @Nullable TrinityPlanningDiagnostic patternFallback;
 
-        private Task(ServerLevel level, IActionSource actor, AEKey target, List<AEItemKey> additionalStates,
+        private Task(ServerLevel level, IActionSource actor, AEKey target, ObjectList<AEItemKey> additionalStates,
                      TrinityPlanningLimits limits) {
             this.level = level;
             this.actor = actor;
             this.target = target;
-            this.additionalStates = List.copyOf(additionalStates);
+            this.additionalStates = FastUtilCollections.immutableList(additionalStates);
             this.limits = limits;
             this.rules = source.rules();
             // Capture spans server ticks and may wait for a current publication. The initial solve time budget
@@ -233,7 +233,7 @@ public final class ReusableInputGraphCaptureService {
                 if (!inventoryCaptured) {
                     ObjectLinkedOpenHashSet<AEItemKey> states = new ObjectLinkedOpenHashSet<>(source.visibleItemKeys());
                     states.addAll(additionalStates);
-                    inventory = List.copyOf(states);
+                    inventory = FastUtilCollections.immutableList(states);
                     inventoryCaptured = true;
                 }
                 if (recipeInputCursor == null) {
@@ -310,11 +310,11 @@ public final class ReusableInputGraphCaptureService {
             }
             expandedCount += merged.size();
             completed.add(patternFallback != null || merged.isEmpty() ? pattern :
-                    new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), List.copyOf(merged)));
+                    new TrinityCraftingGraphPattern(pattern.identity(), pattern.publication(), FastUtilCollections.immutableList(merged)));
             completedEndpoints.add(endpoints);
             validationPatterns.add(pattern);
             patternIndex++;
-            endpoints = List.of();
+            endpoints = ObjectList.of();
             endpointsDiscovered = false;
             endpointIndex = 0;
             merged.clear();
@@ -329,7 +329,7 @@ public final class ReusableInputGraphCaptureService {
                 cache = new TrinityCaptureCache(graph, rules, epoch, level.registryAccess());
             }
             generation = new CaptureGeneration(graph, new TrinityCaptureDependencies(graph, target, cache, this::mayHaveRule), cache);
-            inventory = List.of();
+            inventory = ObjectList.of();
             inventoryCaptured = false;
             recipeInputsCaptured = false;
             recipeInputCursor = null;
@@ -338,7 +338,7 @@ public final class ReusableInputGraphCaptureService {
             validationPatterns.clear();
             fallbacks.clear();
             merged.clear();
-            endpoints = List.of();
+            endpoints = ObjectList.of();
             endpointsDiscovered = false;
             patternIndex = 0;
             endpointIndex = 0;
@@ -373,7 +373,7 @@ public final class ReusableInputGraphCaptureService {
             var captured = (ReusableInputPlanningExpansion.Captured) result;
             if (captured.hasReusableInputs()) {
                 TrinitySameItemPolicy policy = dependencies.policy();
-                for (List<TrinityBoundPatternInput> assignment : captured.bindings()) {
+                for (ObjectList<TrinityBoundPatternInput> assignment : captured.bindings()) {
                     if (assignment.stream().anyMatch(input -> input.reusableRule() == null && policy.allowsSameItem(input.template().what()))) {
                         retainLegacy(TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN, "unsupported_pattern", "component_aliased_material");
                         return;
@@ -386,7 +386,7 @@ public final class ReusableInputGraphCaptureService {
         private void retainLegacy(TrinityPlanningDiagnosticCode code, String translation, String reason) {
             patternFallback = new TrinityPlanningDiagnostic(code,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                    Map.of("phase", "reusable_input_capture", "reason", reason, "action", "legacy_pattern"));
+                    FastUtilCollections.mapOf("phase", "reusable_input_capture", "reason", reason, "action", "legacy_pattern"));
             merged.clear();
             endpointIndex = endpoints.size();
         }
@@ -402,8 +402,8 @@ public final class ReusableInputGraphCaptureService {
             return false;
         }
 
-        private List<Endpoint> discover(TrinityCraftingGraphPattern pattern) {
-            List<Endpoint> result = new ObjectArrayList<>();
+        private ObjectList<Endpoint> discover(TrinityCraftingGraphPattern pattern) {
+            ObjectList<Endpoint> result = new ObjectArrayList<>();
             ObjectLinkedOpenHashSet<Target> targets = new ObjectLinkedOpenHashSet<>();
             for (IPatternDetails live : source.patternsFor(pattern.outputs().getFirst().what())) {
                 if (!live.getDefinition().equals(pattern.definition()) ||
@@ -433,7 +433,7 @@ public final class ReusableInputGraphCaptureService {
             result.sort(Comparator.comparing((Endpoint endpoint) -> endpoint.target().persistentIdentity())
                     .thenComparing(endpoint -> endpoint.target().route().stableIdentity())
                     .thenComparing(endpoint -> endpoint.target().mode().map(ResourceLocation::toString).orElse("")));
-            return List.copyOf(result);
+            return FastUtilCollections.immutableList(result);
         }
     }
 
@@ -444,7 +444,7 @@ public final class ReusableInputGraphCaptureService {
                             Optional<ResourceLocation> recipeId) {}
 
     /** Discovery already proved the publication signature; replacement recipe objects are not model changes. */
-    private static boolean sameEndpoints(List<Endpoint> captured, List<Endpoint> current) {
+    private static boolean sameEndpoints(ObjectList<Endpoint> captured, ObjectList<Endpoint> current) {
         if (captured.size() != current.size()) return false;
         for (int index = 0; index < captured.size(); index++) {
             Endpoint before = captured.get(index);
@@ -461,6 +461,6 @@ public final class ReusableInputGraphCaptureService {
                                                                                 String translation, String reason) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic." + translation),
-                Map.of("phase", "reusable_input_capture", "reason", reason)));
+                FastUtilCollections.mapOf("phase", "reusable_input_capture", "reason", reason)));
     }
 }

@@ -6,22 +6,22 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 
 /**
@@ -50,8 +50,8 @@ public final class TrinityCompressedScheduler {
      * @return executable compressed order or stable rejection
      */
     public TrinityAlgorithmResult<TrinityCompressedSchedule> schedule(
-                                                                      Map<TrinityPatternVariant, BigInteger> firings,
-                                                                      Map<AEKey, BigInteger> initialBalances,
+                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                      Object2ObjectMap<AEKey, BigInteger> initialBalances,
                                                                       int maxStates,
                                                                       TrinityPlanningControl control) {
         if (firings == null || firings.isEmpty() || initialBalances == null || maxStates <= 0 ||
@@ -59,17 +59,17 @@ public final class TrinityCompressedScheduler {
             throw new IllegalArgumentException("A Trinity schedule requires complete inputs and a positive state limit");
         }
 
-        List<TrinityPatternVariant> variants = firings.keySet().stream().sorted().toList();
-        List<BigInteger> remaining = variants.stream()
+        ObjectList<TrinityPatternVariant> variants = firings.keySet().stream().sorted().collect(ObjectArrayList.toList());
+        ObjectList<BigInteger> remaining = variants.stream()
                 .map(variant -> requirePositive(firings.get(variant)))
-                .toList();
-        List<AEKey> keys = relevantKeys(variants, initialBalances);
-        List<BigInteger> balances = keys.stream()
+                .collect(ObjectArrayList.toList());
+        ObjectList<AEKey> keys = relevantKeys(variants, initialBalances);
+        ObjectList<BigInteger> balances = keys.stream()
                 .map(key -> requireNonNegative(initialBalances.getOrDefault(key, BigInteger.ZERO)))
-                .toList();
+                .collect(ObjectArrayList.toList());
 
         ArrayDeque<SearchNode> pending = new ArrayDeque<>();
-        pending.push(new SearchNode(remaining, balances, List.of()));
+        pending.push(new SearchNode(remaining, balances, ObjectList.of()));
         ObjectOpenHashSet<StateKey> visited = new ObjectOpenHashSet<>();
         int statesVisited = 0;
         while (!pending.isEmpty()) {
@@ -77,13 +77,13 @@ public final class TrinityCompressedScheduler {
                 return failure(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         CANCELLED_KEY,
-                        Map.of("states", Integer.toString(statesVisited)));
+                        FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
             }
             if (control.deadlineExceeded()) {
                 return failure(
                         TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                         SEARCH_LIMIT_KEY,
-                        Map.of("reason", "timeout", "states", Integer.toString(statesVisited)));
+                        FastUtilCollections.mapOf("reason", "timeout", "states", Integer.toString(statesVisited)));
             }
 
             SearchNode node = pending.pop();
@@ -102,12 +102,12 @@ public final class TrinityCompressedScheduler {
                 return failure(
                         TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                         SEARCH_LIMIT_KEY,
-                        Map.of(
+                        FastUtilCollections.mapOf(
                                 "limit", Integer.toString(maxStates),
                                 "states", Integer.toString(statesVisited)));
             }
 
-            List<SearchNode> successors = successors(variants, keys, node);
+            ObjectList<SearchNode> successors = successors(variants, keys, node);
             for (int index = successors.size() - 1; index >= 0; index--) {
                 pending.push(successors.get(index));
             }
@@ -115,13 +115,13 @@ public final class TrinityCompressedScheduler {
         return failure(
                 TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                 NO_EXECUTABLE_ORDER_KEY,
-                Map.of("states", Integer.toString(statesVisited)));
+                FastUtilCollections.mapOf("states", Integer.toString(statesVisited)));
     }
 
-    private static List<SearchNode> successors(
-                                               List<TrinityPatternVariant> variants,
-                                               List<AEKey> keys,
-                                               SearchNode node) {
+    private static ObjectList<SearchNode> successors(
+                                                     ObjectList<TrinityPatternVariant> variants,
+                                                     ObjectList<AEKey> keys,
+                                                     SearchNode node) {
         ObjectArrayList<SearchNode> successors = new ObjectArrayList<>();
         for (int variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
             BigInteger remaining = node.remaining().get(variantIndex);
@@ -148,9 +148,9 @@ public final class TrinityCompressedScheduler {
                 ObjectArrayList<TrinityVariantFiring> nextBatches = new ObjectArrayList<>(node.batches());
                 nextBatches.add(new TrinityVariantFiring(variant, batch));
                 successors.add(new SearchNode(
-                        List.copyOf(nextRemaining),
-                        List.copyOf(nextBalances),
-                        List.copyOf(nextBatches)));
+                        FastUtilCollections.immutableList(nextRemaining),
+                        FastUtilCollections.immutableList(nextBalances),
+                        FastUtilCollections.immutableList(nextBatches)));
             }
         }
         return successors;
@@ -158,10 +158,10 @@ public final class TrinityCompressedScheduler {
 
     static BigInteger maximumSafeBatch(TrinityPatternVariant variant,
                                        BigInteger remaining,
-                                       List<AEKey> keys,
-                                       List<BigInteger> balances) {
+                                       ObjectList<AEKey> keys,
+                                       ObjectList<BigInteger> balances) {
         BigInteger safe = remaining;
-        for (Map.Entry<AEKey, BigInteger> input : variant.inputs().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> input : variant.inputs().object2ObjectEntrySet()) {
             int keyIndex = keys.indexOf(input.getKey());
             BigInteger balance = balances.get(keyIndex);
             BigInteger consumption = input.getValue();
@@ -179,12 +179,12 @@ public final class TrinityCompressedScheduler {
         return safe;
     }
 
-    static List<BigInteger> batchCandidates(
-                                            List<TrinityPatternVariant> variants,
-                                            TrinityPatternVariant firing,
-                                            BigInteger maximum,
-                                            List<AEKey> keys,
-                                            List<BigInteger> balances) {
+    static ObjectList<BigInteger> batchCandidates(
+                                                  ObjectList<TrinityPatternVariant> variants,
+                                                  TrinityPatternVariant firing,
+                                                  BigInteger maximum,
+                                                  ObjectList<AEKey> keys,
+                                                  ObjectList<BigInteger> balances) {
         TreeSet<BigInteger> candidates = new TreeSet<>(Comparator.reverseOrder());
         candidates.add(maximum);
         if (maximum.compareTo(BigInteger.ONE) > 0) {
@@ -196,7 +196,7 @@ public final class TrinityCompressedScheduler {
             }
             BigInteger breakpoint = BigInteger.ZERO;
             boolean reachable = true;
-            for (Map.Entry<AEKey, BigInteger> input : waiting.inputs().entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> input : waiting.inputs().object2ObjectEntrySet()) {
                 int keyIndex = keys.indexOf(input.getKey());
                 BigInteger shortage = input.getValue().subtract(balances.get(keyIndex));
                 if (shortage.signum() <= 0) {
@@ -213,32 +213,32 @@ public final class TrinityCompressedScheduler {
                 candidates.add(breakpoint);
             }
         }
-        return List.copyOf(candidates);
+        return FastUtilCollections.immutableList(candidates);
     }
 
-    static List<AEKey> relevantKeys(
-                                    List<TrinityPatternVariant> variants,
-                                    Map<AEKey, BigInteger> initialBalances) {
+    static ObjectList<AEKey> relevantKeys(
+                                          ObjectList<TrinityPatternVariant> variants,
+                                          Object2ObjectMap<AEKey, BigInteger> initialBalances) {
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         variants.forEach(variant -> {
             keys.addAll(variant.inputs().keySet());
             keys.addAll(variant.outputs().keySet());
         });
         keys.addAll(initialBalances.keySet());
-        return List.copyOf(keys);
+        return FastUtilCollections.immutableList(keys);
     }
 
-    static Map<AEKey, BigInteger> positiveBalances(List<AEKey> keys, List<BigInteger> balances) {
+    static Object2ObjectMap<AEKey, BigInteger> positiveBalances(ObjectList<AEKey> keys, ObjectList<BigInteger> balances) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < keys.size(); index++) {
             if (balances.get(index).signum() > 0) {
                 positive.put(keys.get(index), balances.get(index));
             }
         }
-        return Collections.unmodifiableMap(positive);
+        return FastUtilCollections.immutableMap(positive);
     }
 
-    static boolean allComplete(List<BigInteger> remaining) {
+    static boolean allComplete(ObjectList<BigInteger> remaining) {
         return remaining.stream().allMatch(amount -> amount.signum() == 0);
     }
 
@@ -259,7 +259,7 @@ public final class TrinityCompressedScheduler {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
@@ -267,9 +267,9 @@ public final class TrinityCompressedScheduler {
     }
 
     private record SearchNode(
-                              List<BigInteger> remaining,
-                              List<BigInteger> balances,
-                              List<TrinityVariantFiring> batches) {}
+                              ObjectList<BigInteger> remaining,
+                              ObjectList<BigInteger> balances,
+                              ObjectList<TrinityVariantFiring> batches) {}
 
-    private record StateKey(List<BigInteger> remaining, List<BigInteger> balances) {}
+    private record StateKey(ObjectList<BigInteger> remaining, ObjectList<BigInteger> balances) {}
 }

@@ -37,7 +37,6 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 /** Materializes real per-slot escrow and executes one native batch with actual final grid remainders. */
@@ -72,7 +71,7 @@ public final class NativeReusableCrafting {
      * Server-thread candidate validation shared by planning, exact selection and native execution. Only slots
      * already proven reusable may advance beyond the encoded key; ordinary input substitution restrictions remain.
      */
-    public static boolean matches(IPatternDetails pattern, List<GenericStack> exactInputs, IntSet reusableSlots,
+    public static boolean matches(IPatternDetails pattern, ObjectList<GenericStack> exactInputs, IntSet reusableSlots,
                                   Optional<ResourceLocation> recipeId, ServerLevel level) {
         IPatternDetails nativePattern = original(pattern);
         IPatternDetails.IInput[] inputs = nativePattern.getInputs();
@@ -116,7 +115,7 @@ public final class NativeReusableCrafting {
     /** Rejects patterns whose compressed inputs cannot be mapped independently to native grid positions. */
     public static boolean supports(IMolecularAssemblerSupportedPattern pattern, Binding binding) {
         ObjectList<ToolDelivery> initial = new ObjectImmutableList<>(new ObjectArrayList<>(binding.tools().stream()
-                .map(tool -> new ToolDelivery(tool.slot(), new GenericStack(tool.rule().initialKey(), tool.heldAmount()))).toList()));
+                .map(tool -> new ToolDelivery(tool.slot(), new GenericStack(tool.rule().initialKey(), tool.heldAmount()))).collect(ObjectArrayList.toList())));
         try {
             materialize(pattern, binding, new Operation(0, 0, 1, binding.consumed(), initial));
             return true;
@@ -232,7 +231,7 @@ public final class NativeReusableCrafting {
     }
 
     private static Grid materialize(IMolecularAssemblerSupportedPattern pattern, KeyCounter[] all, KeyCounter[] held) {
-        List<ItemStack> grid = new ObjectArrayList<>(GRID_SIZE);
+        ObjectList<ItemStack> grid = new ObjectArrayList<>(GRID_SIZE);
         for (int index = 0; index < GRID_SIZE; index++) {
             grid.add(ItemStack.EMPTY);
         }
@@ -300,5 +299,5 @@ public final class NativeReusableCrafting {
         return result;
     }
 
-    private record Grid(List<ItemStack> items, int[] toolOwners, Int2ObjectMap<AEItemKey> toolStates) {}
+    private record Grid(ObjectList<ItemStack> items, int[] toolOwners, Int2ObjectMap<AEItemKey> toolStates) {}
 }

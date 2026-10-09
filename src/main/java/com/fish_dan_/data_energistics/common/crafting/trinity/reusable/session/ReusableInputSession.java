@@ -850,7 +850,7 @@ public final class ReusableInputSession {
 
     private static ObjectList<SlotInput> scaledInputs(ObjectList<SlotInput> inputs, long count) {
         return new ObjectImmutableList<>(new ObjectArrayList<>(inputs.stream().map(input -> new SlotInput(input.slot(), new GenericStack(input.stack().what(),
-                Math.multiplyExact(input.stack().amount(), count)))).toList()));
+                Math.multiplyExact(input.stack().amount(), count)))).collect(ObjectArrayList.toList())));
     }
 
     private static void requireAcknowledgment(ReturnBatch batch, ObjectList<GenericStack> exactAssets) {
@@ -860,7 +860,7 @@ public final class ReusableInputSession {
     }
 
     private static ObjectList<GenericStack> materials(ObjectList<SlotInput> slots) {
-        return new ObjectImmutableList<>(new ObjectArrayList<>(slots.stream().map(SlotInput::stack).toList()));
+        return new ObjectImmutableList<>(new ObjectArrayList<>(slots.stream().map(SlotInput::stack).collect(ObjectArrayList.toList())));
     }
 
     private static ObjectList<ToolDelivery> deliveries(Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> assets) {

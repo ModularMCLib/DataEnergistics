@@ -4,11 +4,13 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQ
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityCraftingTopology;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Immutable graph-level context needed to finalise one assembled plan without retaining mutable grid state.
@@ -27,12 +29,12 @@ public record TrinityGraphPlanContext(
                                       AEKey target,
                                       BigInteger requestedAmount,
                                       CraftingQuantityMode quantityMode,
-                                      List<TrinityPatternVariant> variants,
+                                      ObjectList<TrinityPatternVariant> variants,
                                       TrinityCraftingTopology topology,
                                       TrinitySameItemPolicy sameItemPolicy,
                                       long startedNanos) {
 
     public TrinityGraphPlanContext {
-        variants = List.copyOf(variants);
+        variants = FastUtilCollections.immutableList(variants);
     }
 }

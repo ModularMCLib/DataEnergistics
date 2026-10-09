@@ -4,20 +4,20 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Completes an externally optimal cycle vector through a unique-producer acyclic remainder.
@@ -45,32 +45,32 @@ public final class TrinityFiringComplementOptimizer {
      * @param fixedVariants    variants whose external cost fixes their firing count
      * @return componentwise least complement, or empty when the unfixed remainder is not a unique DAG
      */
-    public Optional<Map<TrinityPatternVariant, BigInteger>> minimize(
-                                                                     TrinityStronglyConnectedComponent component,
-                                                                     TrinityCycleDemand demand,
-                                                                     Map<AEKey, BigInteger> available,
-                                                                     Set<AEKey> producibleInputs,
-                                                                     Map<TrinityPatternVariant, BigInteger> firingUpperBound,
-                                                                     Map<TrinityPatternVariant, BigInteger> reductions,
-                                                                     Set<TrinityPatternVariant> fixedVariants) {
+    public Optional<Object2ObjectMap<TrinityPatternVariant, BigInteger>> minimize(
+                                                                                  TrinityStronglyConnectedComponent component,
+                                                                                  TrinityCycleDemand demand,
+                                                                                  Object2ObjectMap<AEKey, BigInteger> available,
+                                                                                  ObjectSet<AEKey> producibleInputs,
+                                                                                  Object2ObjectMap<TrinityPatternVariant, BigInteger> firingUpperBound,
+                                                                                  Object2ObjectMap<TrinityPatternVariant, BigInteger> reductions,
+                                                                                  ObjectSet<TrinityPatternVariant> fixedVariants) {
         if (component == null || demand == null || available == null || producibleInputs == null ||
                 firingUpperBound == null || reductions == null || fixedVariants == null) {
             throw new IllegalArgumentException("A Trinity firing-complement request is incomplete");
         }
-        List<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().toList();
+        ObjectList<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().collect(ObjectArrayList.toList());
         if (fixedVariants.isEmpty() || !firingUpperBound.keySet().containsAll(variants) ||
                 !variants.containsAll(fixedVariants)) {
             return Optional.empty();
         }
 
-        Optional<Map<AEKey, TrinityPatternVariant>> uniqueProducers = uniqueProducers(variants);
+        Optional<Object2ObjectMap<AEKey, TrinityPatternVariant>> uniqueProducers = uniqueProducers(variants);
         if (uniqueProducers.isEmpty()) {
             return Optional.empty();
         }
-        List<TrinityPatternVariant> adjustable = variants.stream()
+        ObjectList<TrinityPatternVariant> adjustable = variants.stream()
                 .filter(variant -> !fixedVariants.contains(variant))
-                .toList();
-        Optional<List<TrinityPatternVariant>> order = topologicalOrder(
+                .collect(ObjectArrayList.toList());
+        Optional<ObjectList<TrinityPatternVariant>> order = topologicalOrder(
                 adjustable,
                 uniqueProducers.orElseThrow());
         if (order.isEmpty()) {
@@ -92,17 +92,17 @@ public final class TrinityFiringComplementOptimizer {
             }
         }
 
-        Map<AEKey, BigInteger> lowerBounds = lowerBounds(
+        Object2ObjectMap<AEKey, BigInteger> lowerBounds = lowerBounds(
                 component,
                 demand,
                 available,
                 producibleInputs);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = netChange(firings);
-        List<TrinityPatternVariant> executionOrder = order.orElseThrow();
+        ObjectList<TrinityPatternVariant> executionOrder = order.orElseThrow();
         for (int index = executionOrder.size() - 1; index >= 0; index--) {
             TrinityPatternVariant variant = executionOrder.get(index);
             BigInteger count = ZERO;
-            for (Map.Entry<AEKey, BigInteger> output : variant.outputs().entrySet()) {
+            for (Object2ObjectMap.Entry<AEKey, BigInteger> output : variant.outputs().object2ObjectEntrySet()) {
                 if (!variant.equals(uniqueProducers.orElseThrow().get(output.getKey()))) {
                     continue;
                 }
@@ -132,11 +132,11 @@ public final class TrinityFiringComplementOptimizer {
                 ordered.put(variant, count);
             }
         });
-        return Optional.of(Collections.unmodifiableMap(ordered));
+        return Optional.of(FastUtilCollections.immutableMap(ordered));
     }
 
-    private static Optional<Map<AEKey, TrinityPatternVariant>> uniqueProducers(
-                                                                               List<TrinityPatternVariant> variants) {
+    private static Optional<Object2ObjectMap<AEKey, TrinityPatternVariant>> uniqueProducers(
+                                                                                            ObjectList<TrinityPatternVariant> variants) {
         Object2ObjectLinkedOpenHashMap<AEKey, TrinityPatternVariant> producers = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             for (AEKey output : variant.outputs().keySet()) {
@@ -146,13 +146,13 @@ public final class TrinityFiringComplementOptimizer {
                 }
             }
         }
-        return Optional.of(Collections.unmodifiableMap(producers));
+        return Optional.of(FastUtilCollections.immutableMap(producers));
     }
 
-    private static Optional<List<TrinityPatternVariant>> topologicalOrder(
-                                                                          List<TrinityPatternVariant> variants,
-                                                                          Map<AEKey, TrinityPatternVariant> producerByKey) {
-        Set<TrinityPatternVariant> adjustable = Set.copyOf(variants);
+    private static Optional<ObjectList<TrinityPatternVariant>> topologicalOrder(
+                                                                                ObjectList<TrinityPatternVariant> variants,
+                                                                                Object2ObjectMap<AEKey, TrinityPatternVariant> producerByKey) {
+        ObjectSet<TrinityPatternVariant> adjustable = FastUtilCollections.immutableSet(variants);
         Object2IntLinkedOpenHashMap<TrinityPatternVariant> indegrees = new Object2IntLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, ObjectLinkedOpenHashSet<TrinityPatternVariant>> successors = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> {
@@ -192,14 +192,14 @@ public final class TrinityFiringComplementOptimizer {
                 }
             }
         }
-        return ordered.size() == variants.size() ? Optional.of(List.copyOf(ordered)) : Optional.empty();
+        return ordered.size() == variants.size() ? Optional.of(FastUtilCollections.immutableList(ordered)) : Optional.empty();
     }
 
-    private static Map<AEKey, BigInteger> lowerBounds(
-                                                      TrinityStronglyConnectedComponent component,
-                                                      TrinityCycleDemand demand,
-                                                      Map<AEKey, BigInteger> available,
-                                                      Set<AEKey> producibleInputs) {
+    private static Object2ObjectMap<AEKey, BigInteger> lowerBounds(
+                                                                   TrinityStronglyConnectedComponent component,
+                                                                   TrinityCycleDemand demand,
+                                                                   Object2ObjectMap<AEKey, BigInteger> available,
+                                                                   ObjectSet<AEKey> producibleInputs) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> lower = new Object2ObjectLinkedOpenHashMap<>(demand.requiredNetChangeLowerBounds());
         ObjectLinkedOpenHashSet<AEKey> touched = new ObjectLinkedOpenHashSet<>(component.keys());
         component.cycleVariants().forEach(variant -> touched.addAll(variant.netChange().keySet()));
@@ -213,11 +213,11 @@ public final class TrinityFiringComplementOptimizer {
                     .subtract(available.getOrDefault(key, ZERO));
             lower.merge(key, finiteLower, BigInteger::max);
         }
-        return Collections.unmodifiableMap(lower);
+        return FastUtilCollections.immutableMap(lower);
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange(
-                                                                               Map<TrinityPatternVariant, BigInteger> firings) {
+                                                                               Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach((key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.model.TrinityCycleFeasibilityRequest;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -9,14 +10,12 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Eliminates monotone reserve axes from a request-owned, zero-objective feasibility model. With no fixed
@@ -71,8 +70,8 @@ public final class TrinityFeasibilityReserveProjection {
      */
     public static Object2ObjectMap<AEKey, BigInteger> reduce(
                                                              TrinityCycleFeasibilityRequest request,
-                                                             Map<TrinityPatternVariant, BigInteger> firings,
-                                                             Map<AEKey, BigInteger> caps,
+                                                             Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                             Object2ObjectMap<AEKey, BigInteger> caps,
                                                              BigInteger minimumTotal) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>();
         BigInteger total = BigInteger.ZERO;
@@ -94,7 +93,7 @@ public final class TrinityFeasibilityReserveProjection {
             if (addition.signum() > 0) result.put(cap.getKey(), current.add(addition));
             remaining = remaining.subtract(addition);
         }
-        return Object2ObjectMaps.unmodifiable(result);
+        return FastUtilCollections.immutableMap(result);
     }
 
     private static void fixReserves(ExpressionsBasedModel model, Object2IntMap<AEKey> indexes) {

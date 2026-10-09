@@ -9,11 +9,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationNamespace;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationValue;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -50,7 +51,7 @@ final class CachedDispatchProposalCandidatePlanner implements DispatchProposalCa
                     ignored -> {},
                     () -> TrinityCachedComputation.cacheable(calculate(key)))
                     .map(TrinityComputationValue::value)
-                    .orElseGet(() -> new DispatchProposalCandidatePlan(List.of()));
+                    .orElseGet(() -> new DispatchProposalCandidatePlan(ObjectList.of()));
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Dispatch proposal candidate cache wait was interrupted", exception);
@@ -125,12 +126,12 @@ final class CachedDispatchProposalCandidatePlanner implements DispatchProposalCa
      */
     private record CandidateKey(
                                 ProviderCapacityCaptureKey captureKey,
-                                List<ProviderCapacitySnapshot> snapshots,
+                                ObjectList<ProviderCapacitySnapshot> snapshots,
                                 BigInteger remainingCrafts,
                                 CraftingDispatchCursor cursor) {
 
         private CandidateKey {
-            snapshots = List.copyOf(snapshots);
+            snapshots = FastUtilCollections.immutableList(snapshots);
             if (remainingCrafts.signum() <= 0) {
                 throw new IllegalArgumentException("Dispatch proposal candidate work must be positive");
             }

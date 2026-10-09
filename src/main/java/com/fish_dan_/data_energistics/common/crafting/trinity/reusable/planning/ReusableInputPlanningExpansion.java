@@ -4,10 +4,12 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Bounded server-thread capture of complete input assignments and their deterministic successor
@@ -25,10 +27,10 @@ public final class ReusableInputPlanningExpansion {
      * @param bindings          exact complete assignments in stable capture order; list index is the expanded ordinal
      * @param hasReusableInputs whether at least one explicit rule was applicable
      */
-    public record Captured(List<List<TrinityBoundPatternInput>> bindings, boolean hasReusableInputs) implements Result {
+    public record Captured(ObjectList<ObjectList<TrinityBoundPatternInput>> bindings, boolean hasReusableInputs) implements Result {
 
         public Captured {
-            bindings = bindings.stream().map(List::copyOf).toList();
+            bindings = bindings.stream().map(FastUtilCollections::immutableList).collect(ObjectArrayList.toList());
         }
     }
 
@@ -54,7 +56,7 @@ public final class ReusableInputPlanningExpansion {
      * @param control         capture deadline/cancellation shared by the request
      * @return complete frozen capture or an explicit stop with no partial binding list
      */
-    public static Result capture(ReusableInputContext context, List<AEItemKey> inventoryStates,
+    public static Result capture(ReusableInputContext context, ObjectList<AEItemKey> inventoryStates,
                                  ReusableInputRules rules, int maximumBindings, TrinityPlanningControl control) {
         if (maximumBindings <= 0) {
             throw new IllegalArgumentException("Reusable input capture requires a positive binding limit");

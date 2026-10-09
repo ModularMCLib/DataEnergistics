@@ -13,12 +13,12 @@ import com.fish_dan_.data_energistics.util.AmountMath;
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Exact affine execution for one recipe whose feedback ingredients have proven external supply. A partial return
@@ -34,8 +34,8 @@ final class TrinitySuppliedSingleRecipePlanner {
     static TrinityPlanningAttempt<TrinityDeterministicComponentPlan> plan(
                                                                           TrinityStronglyConnectedComponent component,
                                                                           TrinityCycleDemand demand,
-                                                                          Map<AEKey, BigInteger> available,
-                                                                          Set<AEKey> producibleInputs,
+                                                                          Object2ObjectMap<AEKey, BigInteger> available,
+                                                                          ObjectSet<AEKey> producibleInputs,
                                                                           int maxStates,
                                                                           TrinityPlanningControl control) {
         if (component.cycleVariants().size() != 1 || !producibleInputs.containsAll(component.keys())) {
@@ -66,8 +66,8 @@ final class TrinitySuppliedSingleRecipePlanner {
         }
 
         BigInteger repetitions = count;
-        List<TrinityVariantFiring> unit = List.of(new TrinityVariantFiring(variant, BigInteger.ONE));
-        Map<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.repeatedMinimumInputs(unit, repetitions);
+        ObjectList<TrinityVariantFiring> unit = ObjectList.of(new TrinityVariantFiring(variant, BigInteger.ONE));
+        Object2ObjectMap<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.repeatedMinimumInputs(unit, repetitions);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         variant.netChange().forEach((key, amount) -> net.put(key, amount.multiply(repetitions)));
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initial = new Object2ObjectLinkedOpenHashMap<>(minimumInputs);

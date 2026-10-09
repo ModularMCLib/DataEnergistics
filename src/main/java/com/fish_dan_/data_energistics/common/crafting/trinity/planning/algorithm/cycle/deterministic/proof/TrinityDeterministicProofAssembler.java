@@ -14,20 +14,19 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.TrinityDeterministicFiringMath;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Converts an exact deterministic firing vector into an executable seed, prefix, repeat, and suffix proof.
@@ -55,8 +54,8 @@ public final class TrinityDeterministicProofAssembler {
     public TrinityAlgorithmResult<TrinityDeterministicComponentPlan> assemble(
                                                                               TrinityStronglyConnectedComponent component,
                                                                               TrinityCycleDemand demand,
-                                                                              Map<AEKey, BigInteger> available,
-                                                                              Set<AEKey> producibleInputs,
+                                                                              Object2ObjectMap<AEKey, BigInteger> available,
+                                                                              ObjectSet<AEKey> producibleInputs,
                                                                               TrinityDeterministicFiringSolution firingSolution,
                                                                               int maxStates,
                                                                               TrinityPlanningControl control) {
@@ -64,8 +63,8 @@ public final class TrinityDeterministicProofAssembler {
             throw new IllegalArgumentException("A deterministic proof assembly request is incomplete");
         }
         TrinityDeterministicBasis basis = firingSolution.basis();
-        Map<TrinityPatternVariant, BigInteger> firings = firingSolution.firings();
-        Map<AEKey, BigInteger> totalNet = firingSolution.totalNet();
+        Object2ObjectMap<TrinityPatternVariant, BigInteger> firings = firingSolution.firings();
+        Object2ObjectMap<AEKey, BigInteger> totalNet = firingSolution.totalNet();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> conservationInputs = conservationInputs(
                 component,
                 demand,
@@ -80,7 +79,7 @@ public final class TrinityDeterministicProofAssembler {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> cycleStart = simulate(
                 initialInputs,
                 decomposition.prefixOrder());
-        Map<AEKey, BigInteger> cycleMaximum = cycleStartMaximum(
+        Object2ObjectMap<AEKey, BigInteger> cycleMaximum = cycleStartMaximum(
                 component,
                 basis.primitiveFirings(),
                 available,
@@ -97,14 +96,14 @@ public final class TrinityDeterministicProofAssembler {
         if (!normalized.successful()) {
             return TrinityAlgorithmResult.failure(normalized.diagnostic());
         }
-        Map<AEKey, BigInteger> requiredCycleStart = normalized.value().initialBalances();
+        Object2ObjectMap<AEKey, BigInteger> requiredCycleStart = normalized.value().initialBalances();
         if (decomposition.repetitions().signum() > 0) {
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> repeatedStart = new Object2ObjectLinkedOpenHashMap<>(requiredCycleStart);
             TrinityCycleSeedRequirement.repeatedMinimumInputs(
                     normalized.value().order(),
                     decomposition.repetitions()).forEach(
                             (key, amount) -> repeatedStart.merge(key, amount, BigInteger::max));
-            requiredCycleStart = Object2ObjectMaps.unmodifiable(repeatedStart);
+            requiredCycleStart = FastUtilCollections.immutableMap(repeatedStart);
         }
         mergeRequiredCycleStart(initialInputs, cycleStart, requiredCycleStart);
         applyRequiredSuffix(
@@ -120,7 +119,7 @@ public final class TrinityDeterministicProofAssembler {
         if (totalStates > maxStates) {
             return TrinityDeterministicDiagnostics.searchLimit(maxStates, totalStates);
         }
-        Map<AEKey, BigInteger> minimumSeed = internalAmounts(initialInputs, component.keys());
+        Object2ObjectMap<AEKey, BigInteger> minimumSeed = internalAmounts(initialInputs, component.keys());
         int remainingStates = Math.subtractExact(maxStates, totalStates);
         if (remainingStates <= 0) {
             return TrinityDeterministicDiagnostics.searchLimit(maxStates, totalStates);
@@ -152,9 +151,9 @@ public final class TrinityDeterministicProofAssembler {
 
     private static TrinityAlgorithmResult<NormalizedCycle> normalizePrimitiveCycle(
                                                                                    TrinityStronglyConnectedComponent component,
-                                                                                   List<TrinityVariantFiring> primitiveOrder,
-                                                                                   Map<AEKey, BigInteger> minimumBalances,
-                                                                                   Map<AEKey, BigInteger> maximumBalances,
+                                                                                   ObjectList<TrinityVariantFiring> primitiveOrder,
+                                                                                   Object2ObjectMap<AEKey, BigInteger> minimumBalances,
+                                                                                   Object2ObjectMap<AEKey, BigInteger> maximumBalances,
                                                                                    int maxStates,
                                                                                    TrinityPlanningControl control) {
         TrinityDeterministicDiagnostics.StopState stop = TrinityDeterministicDiagnostics.stopState(control);
@@ -165,7 +164,7 @@ public final class TrinityDeterministicProofAssembler {
         if (states > maxStates) {
             return TrinityDeterministicDiagnostics.searchLimit(maxStates, states);
         }
-        Set<AEKey> internalKeys = Set.copyOf(component.keys());
+        ObjectSet<AEKey> internalKeys = FastUtilCollections.immutableSet(component.keys());
         ObjectLinkedOpenHashSet<AEKey> externalKeys = new ObjectLinkedOpenHashSet<>();
         primitiveOrder.forEach(firing -> firing.variant().inputs().keySet().forEach(key -> {
             if (!internalKeys.contains(key)) {
@@ -181,33 +180,33 @@ public final class TrinityDeterministicProofAssembler {
             return TrinityDeterministicDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     TrinityDeterministicDiagnostics.NO_EXECUTABLE_ORDER_KEY,
-                    Map.of("states", Integer.toString(states)));
+                    FastUtilCollections.mapOf("states", Integer.toString(states)));
         }
         return TrinityAlgorithmResult.success(new NormalizedCycle(
-                List.copyOf(primitiveOrder),
-                Collections.unmodifiableMap(requiredBalances),
+                FastUtilCollections.immutableList(primitiveOrder),
+                FastUtilCollections.immutableMap(requiredBalances),
                 states));
     }
 
-    private static Map<AEKey, BigInteger> schedulableInputBalances(
-                                                                   Map<AEKey, BigInteger> balances,
-                                                                   Set<AEKey> externalKeys,
-                                                                   Set<AEKey> internalKeys) {
+    private static Object2ObjectMap<AEKey, BigInteger> schedulableInputBalances(
+                                                                                Object2ObjectMap<AEKey, BigInteger> balances,
+                                                                                ObjectSet<AEKey> externalKeys,
+                                                                                ObjectSet<AEKey> internalKeys) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> inputs = new Object2ObjectLinkedOpenHashMap<>();
         balances.forEach((key, amount) -> {
             if (externalKeys.contains(key) || internalKeys.contains(key)) {
                 inputs.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(inputs);
+        return FastUtilCollections.immutableMap(inputs);
     }
 
     private TrinityAlgorithmResult<TrinityCompressedSchedule> schedule(
-                                                                       List<TrinityVariantFiring> prefixOrder,
-                                                                       List<TrinityVariantFiring> baseOrder,
+                                                                       ObjectList<TrinityVariantFiring> prefixOrder,
+                                                                       ObjectList<TrinityVariantFiring> baseOrder,
                                                                        BigInteger repetitions,
-                                                                       List<TrinityVariantFiring> suffixOrder,
-                                                                       Map<AEKey, BigInteger> initialInputs,
+                                                                       ObjectList<TrinityVariantFiring> suffixOrder,
+                                                                       Object2ObjectMap<AEKey, BigInteger> initialInputs,
                                                                        int maxStates,
                                                                        TrinityPlanningControl control) {
         if (maxStates <= 0) {
@@ -215,7 +214,7 @@ public final class TrinityDeterministicProofAssembler {
         }
         ObjectArrayList<TrinityVariantFiring> prefixBatches = new ObjectArrayList<>();
         ObjectArrayList<TrinityVariantFiring> suffixBatches = new ObjectArrayList<>();
-        List<TrinityVariantFiring> repeatUnit = List.of();
+        ObjectList<TrinityVariantFiring> repeatUnit = ObjectList.of();
         BigInteger repeatCount = BigInteger.ZERO;
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         int states = 1;
@@ -268,7 +267,7 @@ public final class TrinityDeterministicProofAssembler {
             }
             states = executed.value();
         }
-        Map<AEKey, BigInteger> finalBalances = positiveBalances(balances);
+        Object2ObjectMap<AEKey, BigInteger> finalBalances = positiveBalances(balances);
         if (repeatCount.signum() > 0) {
             return TrinityAlgorithmResult.success(TrinityCompressedSchedule.repeated(
                     prefixBatches,
@@ -284,8 +283,8 @@ public final class TrinityDeterministicProofAssembler {
 
     private static TrinityAlgorithmResult<Integer> executeBatch(
                                                                 TrinityVariantFiring firing,
-                                                                Map<AEKey, BigInteger> balances,
-                                                                List<TrinityVariantFiring> batches,
+                                                                Object2ObjectMap<AEKey, BigInteger> balances,
+                                                                ObjectList<TrinityVariantFiring> batches,
                                                                 int states,
                                                                 int maxStates,
                                                                 TrinityPlanningControl control) {
@@ -300,7 +299,7 @@ public final class TrinityDeterministicProofAssembler {
             return TrinityDeterministicDiagnostics.failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     TrinityDeterministicDiagnostics.NO_EXECUTABLE_ORDER_KEY,
-                    Map.of("variant", firing.variant().patternIdentity().publicationEncoding()));
+                    FastUtilCollections.mapOf("variant", firing.variant().patternIdentity().publicationEncoding()));
         }
         apply(firing, balances);
         appendBatch(batches, firing);
@@ -308,12 +307,12 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static CycleDecomposition decompose(
-                                                Map<TrinityPatternVariant, BigInteger> primitiveFirings,
-                                                Map<TrinityPatternVariant, BigInteger> firings,
+                                                Object2ObjectMap<TrinityPatternVariant, BigInteger> primitiveFirings,
+                                                Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
                                                 AEKey reservoir,
-                                                List<TrinityPatternVariant> topologicalOrder) {
+                                                ObjectList<TrinityPatternVariant> topologicalOrder) {
         BigInteger repetitions = null;
-        for (Map.Entry<TrinityPatternVariant, BigInteger> primitive : primitiveFirings.entrySet()) {
+        for (Object2ObjectMap.Entry<TrinityPatternVariant, BigInteger> primitive : primitiveFirings.object2ObjectEntrySet()) {
             BigInteger available = firings.getOrDefault(
                     primitive.getKey(),
                     TrinityDeterministicFiringMath.ZERO);
@@ -348,14 +347,14 @@ public final class TrinityDeterministicProofAssembler {
         });
         return new CycleDecomposition(
                 repetitions,
-                List.copyOf(prefix),
-                List.copyOf(suffix));
+                FastUtilCollections.immutableList(prefix),
+                FastUtilCollections.immutableList(suffix));
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> conservationInputs(
                                                                                         TrinityStronglyConnectedComponent component,
                                                                                         TrinityCycleDemand demand,
-                                                                                        Map<AEKey, BigInteger> netChange) {
+                                                                                        Object2ObjectMap<AEKey, BigInteger> netChange) {
         ObjectLinkedOpenHashSet<AEKey> keys = new ObjectLinkedOpenHashSet<>();
         component.cycleVariants().forEach(variant -> keys.addAll(variant.netChange().keySet()));
         keys.addAll(demand.finalBalanceLowerBounds().keySet());
@@ -373,8 +372,8 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static void applyRequiredPrefix(
-                                            List<TrinityVariantFiring> prefix,
-                                            Map<AEKey, BigInteger> initialInputs) {
+                                            ObjectList<TrinityVariantFiring> prefix,
+                                            Object2ObjectMap<AEKey, BigInteger> initialInputs) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initialInputs);
         for (TrinityVariantFiring firing : prefix) {
             requiredAtStart(firing).forEach((key, required) -> {
@@ -390,8 +389,8 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> simulate(
-                                                                              Map<AEKey, BigInteger> initial,
-                                                                              List<TrinityVariantFiring> order) {
+                                                                              Object2ObjectMap<AEKey, BigInteger> initial,
+                                                                              ObjectList<TrinityVariantFiring> order) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>(initial);
         for (TrinityVariantFiring firing : order) {
             if (lacksInputs(balances, requiredAtStart(firing))) {
@@ -402,14 +401,14 @@ public final class TrinityDeterministicProofAssembler {
         return balances;
     }
 
-    private static Map<AEKey, BigInteger> cycleStartMaximum(
-                                                            TrinityStronglyConnectedComponent component,
-                                                            Map<TrinityPatternVariant, BigInteger> primitiveFirings,
-                                                            Map<AEKey, BigInteger> available,
-                                                            Set<AEKey> producibleInputs,
-                                                            Map<AEKey, BigInteger> cycleStart,
-                                                            List<TrinityVariantFiring> prefix) {
-        Map<AEKey, BigInteger> prefixNet = TrinityDeterministicFiringMath.netChange(
+    private static Object2ObjectMap<AEKey, BigInteger> cycleStartMaximum(
+                                                                         TrinityStronglyConnectedComponent component,
+                                                                         Object2ObjectMap<TrinityPatternVariant, BigInteger> primitiveFirings,
+                                                                         Object2ObjectMap<AEKey, BigInteger> available,
+                                                                         ObjectSet<AEKey> producibleInputs,
+                                                                         Object2ObjectMap<AEKey, BigInteger> cycleStart,
+                                                                         ObjectList<TrinityVariantFiring> prefix) {
+        Object2ObjectMap<AEKey, BigInteger> prefixNet = TrinityDeterministicFiringMath.netChange(
                 TrinityDeterministicFiringMath.aggregate(prefix));
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> primitiveConsumption = new Object2ObjectLinkedOpenHashMap<>();
         primitiveFirings.forEach((variant, count) -> variant.inputs().forEach(
@@ -433,13 +432,13 @@ public final class TrinityDeterministicProofAssembler {
             }
             maximum.put(key, value);
         }
-        return Collections.unmodifiableMap(maximum);
+        return FastUtilCollections.immutableMap(maximum);
     }
 
     private static void mergeRequiredCycleStart(
-                                                Map<AEKey, BigInteger> initialInputs,
-                                                Map<AEKey, BigInteger> currentCycleStart,
-                                                Map<AEKey, BigInteger> requiredCycleStart) {
+                                                Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                                Object2ObjectMap<AEKey, BigInteger> currentCycleStart,
+                                                Object2ObjectMap<AEKey, BigInteger> requiredCycleStart) {
         requiredCycleStart.forEach((key, required) -> {
             BigInteger deficit = required.subtract(
                     currentCycleStart.getOrDefault(key, TrinityDeterministicFiringMath.ZERO));
@@ -450,13 +449,13 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static void applyRequiredSuffix(
-                                            List<TrinityVariantFiring> suffixOrder,
-                                            List<TrinityVariantFiring> prefixOrder,
-                                            Map<AEKey, BigInteger> primitiveNet,
+                                            ObjectList<TrinityVariantFiring> suffixOrder,
+                                            ObjectList<TrinityVariantFiring> prefixOrder,
+                                            Object2ObjectMap<AEKey, BigInteger> primitiveNet,
                                             BigInteger repetitions,
-                                            Map<AEKey, BigInteger> initialInputs) {
-        Map<AEKey, BigInteger> suffixMinimum = TrinityCycleSeedRequirement.minimumInputs(suffixOrder);
-        Map<AEKey, BigInteger> beforeSuffixNet = TrinityDeterministicFiringMath.addSigned(
+                                            Object2ObjectMap<AEKey, BigInteger> initialInputs) {
+        Object2ObjectMap<AEKey, BigInteger> suffixMinimum = TrinityCycleSeedRequirement.minimumInputs(suffixOrder);
+        Object2ObjectMap<AEKey, BigInteger> beforeSuffixNet = TrinityDeterministicFiringMath.addSigned(
                 TrinityDeterministicFiringMath.netChange(TrinityDeterministicFiringMath.aggregate(prefixOrder)),
                 TrinityDeterministicFiringMath.multiplySigned(primitiveNet, repetitions));
         suffixMinimum.forEach((key, required) -> {
@@ -468,20 +467,20 @@ public final class TrinityDeterministicProofAssembler {
         });
     }
 
-    private static Map<AEKey, BigInteger> internalAmounts(
-                                                          Map<AEKey, BigInteger> amounts,
-                                                          List<AEKey> internalKeys) {
-        Set<AEKey> internal = Set.copyOf(internalKeys);
+    private static Object2ObjectMap<AEKey, BigInteger> internalAmounts(
+                                                                       Object2ObjectMap<AEKey, BigInteger> amounts,
+                                                                       ObjectList<AEKey> internalKeys) {
+        ObjectSet<AEKey> internal = FastUtilCollections.immutableSet(internalKeys);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> selected = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             if (internal.contains(key) && amount.signum() > 0) {
                 selected.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(selected);
+        return FastUtilCollections.immutableMap(selected);
     }
 
-    private static Map<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
+    private static Object2ObjectMap<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         firing.variant().inputs().forEach((key, input) -> {
             BigInteger net = firing.variant().netChange()
@@ -491,10 +490,10 @@ public final class TrinityDeterministicProofAssembler {
                     input;
             required.put(key, amount);
         });
-        return Collections.unmodifiableMap(required);
+        return FastUtilCollections.immutableMap(required);
     }
 
-    private static void apply(TrinityVariantFiring firing, Map<AEKey, BigInteger> balances) {
+    private static void apply(TrinityVariantFiring firing, Object2ObjectMap<AEKey, BigInteger> balances) {
         firing.variant().netChange().forEach((key, amount) -> {
             BigInteger updated = balances.getOrDefault(key, TrinityDeterministicFiringMath.ZERO)
                     .add(amount.multiply(firing.count()));
@@ -510,15 +509,15 @@ public final class TrinityDeterministicProofAssembler {
     }
 
     private static boolean lacksInputs(
-                                       Map<AEKey, BigInteger> balances,
-                                       Map<AEKey, BigInteger> required) {
+                                       Object2ObjectMap<AEKey, BigInteger> balances,
+                                       Object2ObjectMap<AEKey, BigInteger> required) {
         return required.entrySet().stream().anyMatch(entry -> balances
                 .getOrDefault(entry.getKey(), TrinityDeterministicFiringMath.ZERO)
                 .compareTo(entry.getValue()) < 0);
     }
 
     private static void appendBatch(
-                                    List<TrinityVariantFiring> batches,
+                                    ObjectList<TrinityVariantFiring> batches,
                                     TrinityVariantFiring added) {
         if (!batches.isEmpty() && batches.getLast().variant().equals(added.variant())) {
             TrinityVariantFiring previous = batches.getLast();
@@ -530,23 +529,23 @@ public final class TrinityDeterministicProofAssembler {
         batches.add(added);
     }
 
-    private static Map<AEKey, BigInteger> positiveBalances(Map<AEKey, BigInteger> balances) {
+    private static Object2ObjectMap<AEKey, BigInteger> positiveBalances(Object2ObjectMap<AEKey, BigInteger> balances) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
         balances.forEach((key, amount) -> {
             if (amount.signum() > 0) {
                 positive.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(positive);
+        return FastUtilCollections.immutableMap(positive);
     }
 
     private record NormalizedCycle(
-                                   List<TrinityVariantFiring> order,
-                                   Map<AEKey, BigInteger> initialBalances,
+                                   ObjectList<TrinityVariantFiring> order,
+                                   Object2ObjectMap<AEKey, BigInteger> initialBalances,
                                    int statesVisited) {}
 
     private record CycleDecomposition(
                                       BigInteger repetitions,
-                                      List<TrinityVariantFiring> prefixOrder,
-                                      List<TrinityVariantFiring> suffixOrder) {}
+                                      ObjectList<TrinityVariantFiring> prefixOrder,
+                                      ObjectList<TrinityVariantFiring> suffixOrder) {}
 }

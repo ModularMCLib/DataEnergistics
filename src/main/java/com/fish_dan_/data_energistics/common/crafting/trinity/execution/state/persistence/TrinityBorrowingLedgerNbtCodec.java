@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityBorrowingLedger;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -10,10 +11,9 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Strict NBT codec for the ownership-preserving dynamic borrowing ledger.
@@ -36,7 +36,7 @@ public final class TrinityBorrowingLedgerNbtCodec {
      * @param registries server registry lookup used by AE key codecs
      * @return strict ledger NBT
      */
-    public static CompoundTag encode(Map<AEKey, TrinityBorrowingLedger.Balances> entries,
+    public static CompoundTag encode(Object2ObjectMap<AEKey, TrinityBorrowingLedger.Balances> entries,
                                      HolderLookup.Provider registries) {
         CompoundTag root = new CompoundTag();
         ListTag encodedEntries = new ListTag();
@@ -59,9 +59,9 @@ public final class TrinityBorrowingLedgerNbtCodec {
      * @param registries server registry lookup used by AE key codecs
      * @return immutable ordered borrowing balances
      */
-    public static Map<AEKey, TrinityBorrowingLedger.Balances> decode(
-                                                                     CompoundTag tag,
-                                                                     HolderLookup.Provider registries) {
+    public static Object2ObjectMap<AEKey, TrinityBorrowingLedger.Balances> decode(
+                                                                                  CompoundTag tag,
+                                                                                  HolderLookup.Provider registries) {
         ListTag encodedEntries = tag.getList(ENTRIES_TAG, Tag.TAG_COMPOUND);
 
         Object2ObjectLinkedOpenHashMap<AEKey, TrinityBorrowingLedger.Balances> restored = new Object2ObjectLinkedOpenHashMap<>();
@@ -79,7 +79,7 @@ public final class TrinityBorrowingLedgerNbtCodec {
                 throw new IllegalArgumentException("A Trinity borrowing ledger requires unique non-empty entries");
             }
         }
-        return Collections.unmodifiableMap(restored);
+        return FastUtilCollections.immutableMap(restored);
     }
 
     private static void putBigInteger(CompoundTag tag, String field, BigInteger value) {

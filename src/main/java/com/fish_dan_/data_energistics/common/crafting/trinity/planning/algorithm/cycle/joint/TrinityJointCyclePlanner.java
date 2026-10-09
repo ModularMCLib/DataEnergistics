@@ -10,11 +10,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Authoritative planner for a complete cyclic-component demand. It combines exact joint firing selection with an
@@ -51,8 +51,8 @@ public final class TrinityJointCyclePlanner {
     public TrinityAlgorithmResult<TrinityJointCyclePlan> plan(
                                                               TrinityStronglyConnectedComponent component,
                                                               TrinityCycleDemand demand,
-                                                              Map<AEKey, BigInteger> available,
-                                                              Set<AEKey> producibleInputs,
+                                                              Object2ObjectMap<AEKey, BigInteger> available,
+                                                              ObjectSet<AEKey> producibleInputs,
                                                               int maxSearchStates,
                                                               TrinityPlanningMode mode,
                                                               TrinityPlanningControl control) {
@@ -73,8 +73,8 @@ public final class TrinityJointCyclePlanner {
     public TrinityAlgorithmResult<TrinityJointCyclePlan> plan(
                                                               TrinityStronglyConnectedComponent component,
                                                               TrinityCycleDemand demand,
-                                                              Map<AEKey, BigInteger> available,
-                                                              Set<AEKey> producibleInputs,
+                                                              Object2ObjectMap<AEKey, BigInteger> available,
+                                                              ObjectSet<AEKey> producibleInputs,
                                                               int maxSearchStates,
                                                               TrinityPlanningMode mode,
                                                               TrinityPlanningControl control,

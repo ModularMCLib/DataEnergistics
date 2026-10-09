@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -33,7 +34,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
@@ -43,7 +43,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -150,7 +149,7 @@ public final class TrinityPlanExecution {
             if (maximumLogicalFirings < 0L) {
                 throw new IllegalArgumentException("A Trinity cycle wave limit requires a non-negative count and key set");
             }
-            observedKeys = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(observedKeys));
+            observedKeys = FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(observedKeys));
         }
     }
 
@@ -855,7 +854,7 @@ public final class TrinityPlanExecution {
      * @return immutable exact seed reserve captured from the current plan
      */
     public Object2ObjectMap<AEKey, BigInteger> seedReserve() {
-        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(this.seedReserve));
+        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(this.seedReserve));
     }
 
     /**
@@ -933,7 +932,7 @@ public final class TrinityPlanExecution {
         for (RepeatState repeat : this.repeatBlocks.values()) {
             addCyclePendingOutputs(outputs, repeat);
         }
-        return Object2ObjectMaps.unmodifiable(outputs);
+        return FastUtilCollections.immutableMap(outputs);
     }
 
     private void addDagPendingOutputs(Object2ObjectMap<AEKey, BigInteger> outputs, StageState stage) {
@@ -1141,7 +1140,7 @@ public final class TrinityPlanExecution {
             this.actualFinalOutputs.clear();
             markDurableMutation();
         }
-        return Object2ObjectMaps.unmodifiable(released);
+        return FastUtilCollections.immutableMap(released);
     }
 
     /**
@@ -1169,7 +1168,7 @@ public final class TrinityPlanExecution {
                 contents.merge(this.targetKey, exactAmount, BigInteger::add);
             }
         }
-        return Object2ObjectMaps.unmodifiable(contents);
+        return FastUtilCollections.immutableMap(contents);
     }
 
     /**
@@ -1823,7 +1822,7 @@ public final class TrinityPlanExecution {
     private ObjectSet<AEKey> normalizeObservedKeys(ObjectSet<AEKey> keys) {
         ObjectLinkedOpenHashSet<AEKey> normalized = new ObjectLinkedOpenHashSet<>();
         keys.forEach(key -> normalized.add(this.sameItemPolicy.normalizeKey(key)));
-        return ObjectSets.unmodifiable(normalized);
+        return FastUtilCollections.immutableSet(normalized);
     }
 
     private ObjectSet<AEKey> normalizeNonEmptyObservedKeys(ObjectSet<AEKey> keys, String role) {
@@ -1910,7 +1909,7 @@ public final class TrinityPlanExecution {
                 }
             }
         }
-        return Object2ObjectMaps.unmodifiable(seed);
+        return FastUtilCollections.immutableMap(seed);
     }
 
     private record RetryEntry(long retryAt, int stageIndex, long version, WaitKind waitKind) {}
@@ -1929,8 +1928,8 @@ public final class TrinityPlanExecution {
                 }
             });
             return new ExecutionFootprint(
-                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(inputs)),
-                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(positiveNetOutputs)));
+                    FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(inputs)),
+                    FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(positiveNetOutputs)));
         }
 
         private static ExecutionFootprint fromRepeat(
@@ -1955,8 +1954,8 @@ public final class TrinityPlanExecution {
                 }
             });
             return new ExecutionFootprint(
-                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(inputs)),
-                    ObjectSets.unmodifiable(new ObjectOpenHashSet<>(positiveNetOutputs)));
+                    FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(inputs)),
+                    FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(positiveNetOutputs)));
         }
 
         private boolean requiresOrderingBefore(ExecutionFootprint stage) {
@@ -2246,7 +2245,7 @@ public final class TrinityPlanExecution {
                 }
                 copied.put(key, amount);
             });
-            return Object2ObjectMaps.unmodifiable(copied);
+            return FastUtilCollections.immutableMap(copied);
         }
     }
 }

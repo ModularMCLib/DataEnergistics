@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.p
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.ReusableInputRuleNbtCodec;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -13,15 +14,14 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Exact contextual bindings survive save/reload without reinterpreting expanded ordinals against old templates. */
 public final class TrinityBoundInputSnapshotCodec {
 
     private TrinityBoundInputSnapshotCodec() {}
 
-    public static ListTag write(List<TrinityBoundPatternInput> bindings, HolderLookup.Provider registries) {
+    public static ListTag write(ObjectList<TrinityBoundPatternInput> bindings, HolderLookup.Provider registries) {
         ListTag result = new ListTag();
         for (TrinityBoundPatternInput binding : bindings) {
             CompoundTag entry = new CompoundTag();
@@ -46,7 +46,7 @@ public final class TrinityBoundInputSnapshotCodec {
         return result;
     }
 
-    public static List<TrinityBoundPatternInput> read(ListTag encoded, HolderLookup.Provider registries) {
+    public static ObjectList<TrinityBoundPatternInput> read(ListTag encoded, HolderLookup.Provider registries) {
         ObjectArrayList<TrinityBoundPatternInput> result = new ObjectArrayList<>(encoded.size());
         for (Tag value : encoded) {
             CompoundTag entry = (CompoundTag) value;
@@ -84,6 +84,6 @@ public final class TrinityBoundInputSnapshotCodec {
             result.add(new TrinityBoundPatternInput(entry.getInt("slot"), entry.getInt("alternative"), template,
                     entry.getLong("multiplier"), remaining, rule, byproducts, entry.getBoolean("lifetime_budget")));
         }
-        return List.copyOf(result);
+        return FastUtilCollections.immutableList(result);
     }
 }

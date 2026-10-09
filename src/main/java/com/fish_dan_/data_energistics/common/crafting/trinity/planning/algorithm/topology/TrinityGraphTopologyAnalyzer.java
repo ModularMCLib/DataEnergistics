@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -24,15 +25,15 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Partitions the immutable AE key hypergraph with Tarjan and builds its condensation DAG.
@@ -53,7 +54,7 @@ public final class TrinityGraphTopologyAnalyzer {
      */
     public TrinityAlgorithmResult<TrinityCraftingTopology> analyze(
                                                                    TrinityCraftingGraphSnapshot snapshot,
-                                                                   List<TrinityPatternVariant> variants,
+                                                                   ObjectList<TrinityPatternVariant> variants,
                                                                    int maxSccKeys,
                                                                    TrinityPlanningControl control) {
         if (maxSccKeys <= 0) {
@@ -89,7 +90,7 @@ public final class TrinityGraphTopologyAnalyzer {
                 return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                         TrinityPlanningDiagnosticCode.SCC_KEY_LIMIT,
                         Component.translatable("gui.data_energistics.trinity_planning.diagnostic.scc_key_limit"),
-                        Map.of(
+                        FastUtilCollections.mapOf(
                                 "limit", Integer.toString(maxSccKeys),
                                 "required", Integer.toString(component.size()))));
             }
@@ -99,8 +100,8 @@ public final class TrinityGraphTopologyAnalyzer {
 
     private static TrinityCraftingTopology buildTopology(
                                                          Graph graph,
-                                                         List<TrinityPatternVariant> variants,
-                                                         List<IntList> rawComponents) {
+                                                         ObjectList<TrinityPatternVariant> variants,
+                                                         ObjectList<IntList> rawComponents) {
         int[] componentByNode = new int[graph.keys().size()];
         Arrays.fill(componentByNode, -1);
         for (int componentIndex = 0; componentIndex < rawComponents.size(); componentIndex++) {
@@ -131,8 +132,8 @@ public final class TrinityGraphTopologyAnalyzer {
             }
         }
 
-        ObjectArrayList<List<TrinityPatternVariant>> cycleVariants = new ObjectArrayList<>(rawComponents.size());
-        ObjectArrayList<List<TrinityPatternVariant>> outputVariants = new ObjectArrayList<>(rawComponents.size());
+        ObjectArrayList<ObjectList<TrinityPatternVariant>> cycleVariants = new ObjectArrayList<>(rawComponents.size());
+        ObjectArrayList<ObjectList<TrinityPatternVariant>> outputVariants = new ObjectArrayList<>(rawComponents.size());
         for (int index = 0; index < rawComponents.size(); index++) {
             cycleVariants.add(new ObjectArrayList<>());
             outputVariants.add(new ObjectArrayList<>());
@@ -164,7 +165,7 @@ public final class TrinityGraphTopologyAnalyzer {
         for (int componentIndex = 0; componentIndex < rawComponents.size(); componentIndex++) {
             IntArrayList nodes = new IntArrayList(rawComponents.get(componentIndex));
             IntArrays.quickSort(nodes.elements(), 0, nodes.size());
-            List<AEKey> keys = nodes.intStream().mapToObj(graph.keys()::get).toList();
+            ObjectList<AEKey> keys = nodes.intStream().mapToObj(graph.keys()::get).collect(ObjectArrayList.toList());
             for (AEKey key : keys) {
                 mapping.put(key, componentIndex);
             }
@@ -178,11 +179,11 @@ public final class TrinityGraphTopologyAnalyzer {
                     sortedComponentIndexes(predecessors.get(componentIndex)),
                     sortedComponentIndexes(successors.get(componentIndex))));
         }
-        Int2ObjectLinkedOpenHashMap<List<TrinityPatternVariant>> variantsByOutputComponent = new Int2ObjectLinkedOpenHashMap<>();
+        Int2ObjectLinkedOpenHashMap<ObjectList<TrinityPatternVariant>> variantsByOutputComponent = new Int2ObjectLinkedOpenHashMap<>();
         for (int componentIndex = 0; componentIndex < outputVariants.size(); componentIndex++) {
-            variantsByOutputComponent.put(componentIndex, List.copyOf(outputVariants.get(componentIndex)));
+            variantsByOutputComponent.put(componentIndex, FastUtilCollections.immutableList(outputVariants.get(componentIndex)));
         }
-        Object2ObjectLinkedOpenHashMap<AEKey, List<TrinityPatternVariant>> variantsByOutputKey = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectLinkedOpenHashMap<AEKey, ObjectList<TrinityPatternVariant>> variantsByOutputKey = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, ObjectArrayList<TrinityPatternVariant>> producerLists = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             graphOutputs(variant).keySet().forEach(key -> producerLists
@@ -193,7 +194,7 @@ public final class TrinityGraphTopologyAnalyzer {
             ObjectArrayList<TrinityPatternVariant> producers = producerLists.get(key);
             if (producers != null) {
                 producers.sort(Comparator.naturalOrder());
-                variantsByOutputKey.put(key, List.copyOf(producers));
+                variantsByOutputKey.put(key, FastUtilCollections.immutableList(producers));
             }
         }
         Object2IntLinkedOpenHashMap<TrinityPatternVariant> cyclicOwnerByVariant = new Object2IntLinkedOpenHashMap<>();
@@ -226,8 +227,8 @@ public final class TrinityGraphTopologyAnalyzer {
     }
 
     private static IntList topologicalOrder(
-                                            List<? extends IntSet> predecessors,
-                                            List<? extends IntSet> successors) {
+                                            ObjectList<? extends IntSet> predecessors,
+                                            ObjectList<? extends IntSet> successors) {
         int[] indegree = predecessors.stream().mapToInt(IntSet::size).toArray();
         IntPriorityQueue ready = new IntHeapPriorityQueue();
         for (int index = 0; index < indegree.length; index++) {
@@ -264,22 +265,22 @@ public final class TrinityGraphTopologyAnalyzer {
             case CANCELLED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.cancelled"),
-                    Map.of("phase", "topology")));
+                    FastUtilCollections.mapOf("phase", "topology")));
             case DEADLINE_EXCEEDED -> TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.timeout"),
-                    Map.of("phase", "topology")));
+                    FastUtilCollections.mapOf("phase", "topology")));
             case RUNNING -> throw new IllegalArgumentException("A running Trinity topology analysis is not stopped");
         };
     }
 
     private record Graph(
-                         List<AEKey> keys,
+                         ObjectList<AEKey> keys,
                          Object2IntMap<AEKey> indexByKey,
-                         List<IntList> adjacency) {
+                         ObjectList<IntList> adjacency) {
 
         private static Graph create(TrinityCraftingGraphSnapshot snapshot,
-                                    List<TrinityPatternVariant> variants) {
+                                    ObjectList<TrinityPatternVariant> variants) {
             ObjectLinkedOpenHashSet<AEKey> orderedKeys = new ObjectLinkedOpenHashSet<>(snapshot.keys());
             for (TrinityPatternVariant variant : variants) {
                 if (variant == null) {
@@ -288,7 +289,7 @@ public final class TrinityGraphTopologyAnalyzer {
                 orderedKeys.addAll(variant.inputs().keySet());
                 orderedKeys.addAll(variant.outputs().keySet());
             }
-            List<AEKey> keys = List.copyOf(orderedKeys);
+            ObjectList<AEKey> keys = FastUtilCollections.immutableList(orderedKeys);
             Object2IntLinkedOpenHashMap<AEKey> indexByKey = new Object2IntLinkedOpenHashMap<>();
             for (int index = 0; index < keys.size(); index++) {
                 indexByKey.put(keys.get(index), index);
@@ -310,24 +311,24 @@ public final class TrinityGraphTopologyAnalyzer {
             return new Graph(
                     keys,
                     Object2IntMaps.unmodifiable(indexByKey),
-                    List.copyOf(adjacency));
+                    FastUtilCollections.immutableList(adjacency));
         }
     }
 
-    private static Map<AEKey, BigInteger> graphInputs(TrinityPatternVariant variant) {
+    private static Object2ObjectMap<AEKey, BigInteger> graphInputs(TrinityPatternVariant variant) {
         // Retained tools are still required inputs. Keeping them in the dependency graph preserves
         // the producer order for recipes that need an existing tool, while graphOutputs filters the
         // unchanged remainder so the tool does not become a producer of every material recipe.
         return variant.inputs();
     }
 
-    private static Map<AEKey, BigInteger> graphOutputs(TrinityPatternVariant variant) {
+    private static Object2ObjectMap<AEKey, BigInteger> graphOutputs(TrinityPatternVariant variant) {
         return subtractRetained(variant.outputs(), retainedAmounts(variant));
     }
 
-    private static Map<AEKey, BigInteger> subtractRetained(
-                                                           Map<AEKey, BigInteger> amounts,
-                                                           Map<AEKey, BigInteger> retained) {
+    private static Object2ObjectMap<AEKey, BigInteger> subtractRetained(
+                                                                        Object2ObjectMap<AEKey, BigInteger> amounts,
+                                                                        Object2ObjectMap<AEKey, BigInteger> retained) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(amounts);
         retained.forEach((key, amount) -> {
             BigInteger remaining = result.get(key);
@@ -344,7 +345,7 @@ public final class TrinityGraphTopologyAnalyzer {
         return result;
     }
 
-    private static Map<AEKey, BigInteger> retainedAmounts(TrinityPatternVariant variant) {
+    private static Object2ObjectMap<AEKey, BigInteger> retainedAmounts(TrinityPatternVariant variant) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> retained = new Object2ObjectLinkedOpenHashMap<>();
         for (var binding : variant.bindings()) {
             if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
@@ -357,7 +358,7 @@ public final class TrinityGraphTopologyAnalyzer {
 
     private static final class TarjanState {
 
-        private final List<IntList> adjacency;
+        private final ObjectList<IntList> adjacency;
         private final int[] indexes;
         private final int[] lowLinks;
         private final boolean[] onStack;
@@ -365,7 +366,7 @@ public final class TrinityGraphTopologyAnalyzer {
         private final ObjectArrayList<IntList> components = new ObjectArrayList<>();
         private int nextIndex;
 
-        private TarjanState(List<IntList> adjacency) {
+        private TarjanState(ObjectList<IntList> adjacency) {
             this.adjacency = adjacency;
             this.indexes = new int[adjacency.size()];
             this.lowLinks = new int[adjacency.size()];

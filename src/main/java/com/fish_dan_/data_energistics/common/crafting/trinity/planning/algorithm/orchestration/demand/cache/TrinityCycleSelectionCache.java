@@ -4,21 +4,18 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.TrinityCycleDemand;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.proof.TrinityCycleUnitProof;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCycleSelection;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -37,15 +34,15 @@ public final class TrinityCycleSelectionCache {
     /** Reuses a proved selection without charging its historical solver time or search states again. */
     public TrinityAlgorithmResult<TrinityCycleSelection> select(
                                                                 int componentIndex, TrinityCycleDemand demand,
-                                                                Map<AEKey, BigInteger> inventory, Set<AEKey> producibleInputs,
+                                                                Object2ObjectMap<AEKey, BigInteger> inventory, ObjectSet<AEKey> producibleInputs,
                                                                 @Nullable TrinityCycleUnitProof unitProof,
                                                                 Supplier<TrinityAlgorithmResult<TrinityCycleSelection>> calculation) {
         TrinityCycleDemand frozenDemand = new TrinityCycleDemand(
                 copy(demand.settledWithdrawals()), copy(demand.terminalBalanceLowerBounds()),
-                copy(demand.requiredNetChangeLowerBounds()), ObjectSets.unmodifiable(new ObjectOpenHashSet<>(demand.netNewKeys())),
+                copy(demand.requiredNetChangeLowerBounds()), FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(demand.netNewKeys())),
                 copy(demand.finalBalanceLowerBounds()));
         Key key = new Key(componentIndex, frozenDemand, copy(inventory),
-                ObjectSets.unmodifiable(new ObjectOpenHashSet<>(producibleInputs)), unitProof);
+                FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(producibleInputs)), unitProof);
         if (this.entries.containsKey(key)) {
             return TrinityAlgorithmResult.success(this.entries.getAndMoveToLast(key).selection());
         }
@@ -74,8 +71,8 @@ public final class TrinityCycleSelectionCache {
         return result;
     }
 
-    private static Object2ObjectMap<AEKey, BigInteger> copy(Map<AEKey, BigInteger> values) {
-        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(values));
+    private static Object2ObjectMap<AEKey, BigInteger> copy(Object2ObjectMap<AEKey, BigInteger> values) {
+        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(values));
     }
 
     private record Key(int componentIndex, TrinityCycleDemand demand, Object2ObjectMap<AEKey, BigInteger> inventory,

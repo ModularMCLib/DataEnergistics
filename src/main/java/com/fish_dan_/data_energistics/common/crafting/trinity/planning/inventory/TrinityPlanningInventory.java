@@ -1,19 +1,18 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Immutable planning-domain inventory with disjoint finite and non-consuming exact-key sources.
@@ -24,17 +23,17 @@ import java.util.Set;
  * </p>
  */
 public record TrinityPlanningInventory(
-                                       Map<AEKey, BigInteger> finiteAmounts,
-                                       Set<AEKey> unlimitedKeys) {
+                                       Object2ObjectMap<AEKey, BigInteger> finiteAmounts,
+                                       ObjectSet<AEKey> unlimitedKeys) {
 
     /** Empty inventory used when no graph has been published. */
     public static TrinityPlanningInventory empty() {
-        return new TrinityPlanningInventory(Map.of(), Set.of());
+        return new TrinityPlanningInventory(FastUtilCollections.mapOf(), ObjectSet.of());
     }
 
     /** Wraps an already immutable finite-only inventory. */
-    public static TrinityPlanningInventory finite(Map<AEKey, BigInteger> finiteAmounts) {
-        return new TrinityPlanningInventory(finiteAmounts, Set.of());
+    public static TrinityPlanningInventory finite(Object2ObjectMap<AEKey, BigInteger> finiteAmounts) {
+        return new TrinityPlanningInventory(finiteAmounts, ObjectSet.of());
     }
 
     /** Returns a stable request-local projection without materialising any quantity-bound plan. */
@@ -67,7 +66,7 @@ public record TrinityPlanningInventory(
     }
 
     /** Adds exact finite CPU-owned overflow to a request-local network capture. */
-    public TrinityPlanningInventory plus(Map<AEKey, BigInteger> localInventory) {
+    public TrinityPlanningInventory plus(Object2ObjectMap<AEKey, BigInteger> localInventory) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> combined = new Object2ObjectLinkedOpenHashMap<>(
                 this.finiteAmounts);
         localInventory.forEach((key, amount) -> {
@@ -124,7 +123,7 @@ public record TrinityPlanningInventory(
                                            Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> finiteAmounts,
                                            ObjectOpenHashSet<AEKey> unlimitedKeys) {
         return new TrinityPlanningInventory(
-                Object2ObjectMaps.unmodifiable(finiteAmounts),
-                ObjectSets.unmodifiable(unlimitedKeys));
+                FastUtilCollections.immutableMap(finiteAmounts),
+                FastUtilCollections.immutableSet(unlimitedKeys));
     }
 }

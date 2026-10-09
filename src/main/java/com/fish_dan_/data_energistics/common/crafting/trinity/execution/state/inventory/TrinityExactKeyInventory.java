@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
@@ -12,7 +13,6 @@ import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
@@ -37,7 +37,7 @@ public final class TrinityExactKeyInventory {
 
     /** Returns a stable read-only copy whose entries cannot mutate the live ledger. */
     public Object2ObjectMap<AEKey, BigInteger> snapshot() {
-        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(this.amounts));
+        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(this.amounts));
     }
 
     public boolean isEmpty() {

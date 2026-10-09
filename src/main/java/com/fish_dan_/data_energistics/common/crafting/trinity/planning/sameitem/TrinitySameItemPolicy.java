@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPa
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphPattern;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
@@ -23,19 +24,15 @@ import net.minecraft.world.item.Item;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Immutable request-local equivalence policy for explicitly authorised processing input/output item domains.
@@ -48,12 +45,12 @@ import java.util.Set;
  */
 public final class TrinitySameItemPolicy {
 
-    private static final TrinitySameItemPolicy EMPTY = new TrinitySameItemPolicy(Map.of());
+    private static final TrinitySameItemPolicy EMPTY = new TrinitySameItemPolicy(FastUtilCollections.mapOf());
 
-    private final Map<Item, AEItemKey> representativesByItem;
-    private final Set<AEItemKey> representatives;
+    private final Object2ObjectMap<Item, AEItemKey> representativesByItem;
+    private final ObjectSet<AEItemKey> representatives;
 
-    private TrinitySameItemPolicy(Map<Item, AEItemKey> representatives) {
+    private TrinitySameItemPolicy(Object2ObjectMap<Item, AEItemKey> representatives) {
         Object2ObjectLinkedOpenHashMap<Item, AEItemKey> copied = new Object2ObjectLinkedOpenHashMap<>();
         ObjectLinkedOpenHashSet<AEItemKey> keys = new ObjectLinkedOpenHashSet<>();
         for (var entry : representatives.entrySet()) {
@@ -61,8 +58,8 @@ public final class TrinitySameItemPolicy {
             copied.put(entry.getKey(), representative);
             keys.add(representative);
         }
-        this.representativesByItem = Object2ObjectMaps.unmodifiable(copied);
-        this.representatives = ObjectSets.unmodifiable(keys);
+        this.representativesByItem = FastUtilCollections.immutableMap(copied);
+        this.representatives = FastUtilCollections.immutableSet(keys);
     }
 
     /** Returns the exact-only policy used by unmarked graphs and legacy saved jobs. */
@@ -100,7 +97,7 @@ public final class TrinitySameItemPolicy {
                 }
                 for (var output : pattern.outputs()) if (output.what() instanceof AEItemKey key) exact.add(key.getItem());
             }
-            for (List<TrinityBoundPatternInput> assignment : pattern.reusableBindings()) {
+            for (ObjectList<TrinityBoundPatternInput> assignment : pattern.reusableBindings()) {
                 for (TrinityBoundPatternInput binding : assignment) {
                     if (binding.reusableRule() != null) {
                         exact.add(binding.reusableRule().initialKey().getItem());
@@ -149,7 +146,7 @@ public final class TrinitySameItemPolicy {
                     .ifPresent(values -> values.forEach(holder -> members.add(holder.value())));
         }
         if (output) outputRepresentatives.putIfAbsent(key.getItem(), key);
-        domains.add(new Domain(key, ObjectSets.unmodifiable(members)));
+        domains.add(new Domain(key, FastUtilCollections.immutableSet(members)));
     }
 
     private record Domain(AEItemKey representative, ObjectSet<Item> items) {}
@@ -225,15 +222,15 @@ public final class TrinitySameItemPolicy {
     }
 
     /** Merges signed exact-key amounts into their logical domains exactly once and removes zero balances. */
-    public Map<AEKey, BigInteger> normalizeAmounts(Map<AEKey, BigInteger> amounts) {
+    public Object2ObjectMap<AEKey, BigInteger> normalizeAmounts(Object2ObjectMap<AEKey, BigInteger> amounts) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> normalized = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> normalized.merge(normalizeKey(key), amount, BigInteger::add));
         normalized.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        return Object2ObjectMaps.unmodifiable(normalized);
+        return FastUtilCollections.immutableMap(normalized);
     }
 
     /** Merges positive stack amounts by logical accounting key without changing any source stack. */
-    public ObjectList<GenericStack> normalizeStacks(List<GenericStack> stacks) {
+    public ObjectList<GenericStack> normalizeStacks(ObjectList<GenericStack> stacks) {
         if (isEmpty()) {
             return new ObjectImmutableList<>(stacks);
         }
@@ -248,7 +245,7 @@ public final class TrinitySameItemPolicy {
     }
 
     /** Returns one stable representative per authorised registered item. */
-    public Set<AEItemKey> representatives() {
+    public ObjectSet<AEItemKey> representatives() {
         return this.representatives;
     }
 

@@ -235,7 +235,7 @@ public final class PersistentReusableCraftingEndpoint {
     /** Compact acknowledged evidence for transfer to the physical core archive before replacing a route. */
     public ObjectList<ReusableCraftingCustodyCensus.Entry> acknowledgedCustody() {
         return new ObjectImmutableList<>(new ObjectArrayList<>(sessions.values().stream()
-                .filter(entry -> entry.settlementAcknowledged).map(PersistentReusableCraftingEndpoint::custodyEntry).toList()));
+                .filter(entry -> entry.settlementAcknowledged).map(PersistentReusableCraftingEndpoint::custodyEntry).collect(ObjectArrayList.toList())));
     }
 
     private static ReusableCraftingCustodyCensus.Entry custodyEntry(Entry entry) {
@@ -595,7 +595,7 @@ public final class PersistentReusableCraftingEndpoint {
         long sequence = outbox.isEmpty() ? 0 : outbox.getFirst().sequence();
         ObjectList<GenericStack> assets = outbox.isEmpty() ? ObjectList.of() : new ObjectImmutableList<>(outbox.getFirst().assets());
         ObjectList<AppendReceipt> receipts = new ObjectImmutableList<>(new ObjectArrayList<>(entry.session.snapshot().appends().stream().map(append -> new AppendReceipt(
-                append.request().sequence(), append.request().operations(), append.completed(), append.cancelled())).toList()));
+                append.request().sequence(), append.request().operations(), append.completed(), append.cancelled())).collect(ObjectArrayList.toList())));
         Settlement settlement = new Settlement(identity.sessionId(), identity.jobId(), identity.cpuOwner(), identity.target(),
                 sequence, assets, ObjectList.of(), entry.session.exhaustedTools(), receipts, failure(entry));
         if (!receiver.receive(settlement)) {
@@ -615,7 +615,7 @@ public final class PersistentReusableCraftingEndpoint {
 
     ObjectList<EntrySnapshot> snapshot() {
         return new ObjectImmutableList<>(new ObjectArrayList<>(sessions.values().stream().map(entry -> new EntrySnapshot(entry.binding, entry.session, entry.revision,
-                entry.notBefore, entry.settlementAcknowledged, entry.failure, entry.recordedResult)).toList()));
+                entry.notBefore, entry.settlementAcknowledged, entry.failure, entry.recordedResult)).collect(ObjectArrayList.toList())));
     }
 
     static PersistentReusableCraftingEndpoint restore(String targetIdentity, ObjectList<EntrySnapshot> snapshots) {
@@ -718,7 +718,7 @@ public final class PersistentReusableCraftingEndpoint {
             materials.add(new GenericStack(input.stack().what(), Math.multiplyExact(input.stack().amount(), request.requestedCount())));
         }
         ObjectList<ToolDelivery> tools = new ObjectImmutableList<>(new ObjectArrayList<>(request.offeredToolsFast().stream()
-                .map(tool -> new ToolDelivery(tool.slot(), tool.stack())).toList()));
+                .map(tool -> new ToolDelivery(tool.slot(), tool.stack())).collect(ObjectArrayList.toList())));
         Int2ObjectMap<AEItemKey> states = new Int2ObjectLinkedOpenHashMap<>();
         for (Input input : request.inputsFast()) {
             input.tool().flatMap(Tool::operationState).ifPresent(state -> states.put(input.slot(), state));

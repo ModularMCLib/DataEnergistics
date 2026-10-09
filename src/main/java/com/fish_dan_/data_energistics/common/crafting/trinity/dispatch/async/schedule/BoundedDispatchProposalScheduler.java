@@ -7,12 +7,14 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.mod
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.shard.ProviderShardDispatcher;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.DispatchProposalCandidatePlanner;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -39,7 +41,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
      * Every ticket is tracked independently so one worker can keep several stage/pattern proposals in flight. The
      * grid and global limits remain the hard admission boundary.
      */
-    private final Set<ScheduledProposalTicket> outstandingTickets = ConcurrentHashMap.newKeySet();
+    private final ObjectSet<ScheduledProposalTicket> outstandingTickets = ObjectSets.synchronize(new ObjectOpenHashSet<>());
     private final ConcurrentMap<Long, GridAdmission> admissionsByGrid = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, MutableMetrics> metricsByGrid = new ConcurrentHashMap<>();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -142,7 +144,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
         if (!this.closed.compareAndSet(false, true)) {
             return;
         }
-        Set<ScheduledProposalTicket> closing = new ObjectOpenHashSet<>();
+        ObjectSet<ScheduledProposalTicket> closing = new ObjectOpenHashSet<>();
         for (GridAdmission admission : this.admissionsByGrid.values()) {
             closing.addAll(admission.snapshotTickets());
         }
@@ -238,7 +240,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
     private final class GridAdmission {
 
         private final long gridGeneration;
-        private final Set<ScheduledProposalTicket> tickets = new ObjectOpenHashSet<>();
+        private final ObjectSet<ScheduledProposalTicket> tickets = new ObjectOpenHashSet<>();
 
         private GridAdmission(long gridGeneration) {
             this.gridGeneration = gridGeneration;
@@ -306,12 +308,12 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
          */
         private synchronized ClearedGrid clear() {
             return new ClearedGrid(
-                    List.copyOf(this.tickets),
+                    FastUtilCollections.immutableList(this.tickets),
                     metricsByGrid.remove(this.gridGeneration));
         }
 
-        private synchronized List<ScheduledProposalTicket> snapshotTickets() {
-            return List.copyOf(this.tickets);
+        private synchronized ObjectList<ScheduledProposalTicket> snapshotTickets() {
+            return FastUtilCollections.immutableList(this.tickets);
         }
 
         private synchronized DispatchProposalMetrics snapshotAndResetMetrics() {
@@ -346,7 +348,7 @@ final class BoundedDispatchProposalScheduler implements DispatchProposalSchedule
 
     private record AdmissionRejected(RejectionReason reason, MutableMetrics metrics) implements Admission {}
 
-    private record ClearedGrid(List<ScheduledProposalTicket> tickets, @Nullable MutableMetrics metrics) {}
+    private record ClearedGrid(ObjectList<ScheduledProposalTicket> tickets, @Nullable MutableMetrics metrics) {}
 
     /**
      * Per-Grid accumulator that keeps proposal completion paths off the submission admission lock.

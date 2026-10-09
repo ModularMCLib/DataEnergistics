@@ -4,12 +4,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnosticCode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
 
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -100,7 +100,7 @@ public final class ReusableReplanGraphCapture {
         if (snapshot.revision() != revision) {
             return retainRejection(new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.STALE_GRAPH,
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.stale_graph"),
-                    Map.of("expected_revision", Long.toString(revision), "captured_revision", Long.toString(snapshot.revision()))),
+                    FastUtilCollections.mapOf("expected_revision", Long.toString(revision), "captured_revision", Long.toString(snapshot.revision()))),
                     currentTick, maxRetryTicks);
         }
         this.nextRetryDelay = 1;

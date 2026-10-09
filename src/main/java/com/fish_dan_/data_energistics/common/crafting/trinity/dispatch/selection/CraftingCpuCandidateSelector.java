@@ -8,14 +8,14 @@ import appeng.api.networking.crafting.UnsuitableCpus;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Filters and deterministically orders immutable crafting CPU facts before server-thread submission.
@@ -40,9 +40,9 @@ public final class CraftingCpuCandidateSelector {
      * @param request    immutable selection request
      * @return immutable ordered eligible candidates
      */
-    public List<CraftingCpuCandidate> select(
-                                             List<CraftingCpuCandidate> candidates,
-                                             CraftingCpuSelectionRequest request) {
+    public ObjectList<CraftingCpuCandidate> select(
+                                                   ObjectList<CraftingCpuCandidate> candidates,
+                                                   CraftingCpuSelectionRequest request) {
         return evaluate(candidates, request).candidates();
     }
 
@@ -54,9 +54,9 @@ public final class CraftingCpuCandidateSelector {
      * @return immutable ordered candidates and aggregate pre-submission diagnostics
      */
     public CraftingCpuCandidateSelection evaluate(
-                                                  List<CraftingCpuCandidate> candidates,
+                                                  ObjectList<CraftingCpuCandidate> candidates,
                                                   CraftingCpuSelectionRequest request) {
-        Set<String> identities = new ObjectOpenHashSet<>();
+        ObjectSet<String> identities = new ObjectOpenHashSet<>();
         ObjectArrayList<CraftingCpuCandidate> eligible = new ObjectArrayList<>(candidates.size());
         int offline = 0;
         int busy = 0;
@@ -138,17 +138,17 @@ public final class CraftingCpuCandidateSelector {
     }
 
     private Object2IntMap<String> roundRobinRanks(
-                                                  List<CraftingCpuCandidate> candidates,
+                                                  ObjectList<CraftingCpuCandidate> candidates,
                                                   CraftingCpuSelectionRequest request) {
-        Map<CraftingCpuSelectionGroup, List<CraftingCpuCandidate>> groups = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<CraftingCpuSelectionGroup, ObjectList<CraftingCpuCandidate>> groups = new Object2ObjectOpenHashMap<>();
         for (CraftingCpuCandidate candidate : candidates) {
             groups.computeIfAbsent(group(candidate, request.playerRequest()), ignored -> new ObjectArrayList<>())
                     .add(candidate);
         }
 
         Object2IntMap<String> ranks = new Object2IntOpenHashMap<>();
-        for (Map.Entry<CraftingCpuSelectionGroup, List<CraftingCpuCandidate>> entry : groups.entrySet()) {
-            List<CraftingCpuCandidate> groupCandidates = entry.getValue();
+        for (Object2ObjectMap.Entry<CraftingCpuSelectionGroup, ObjectList<CraftingCpuCandidate>> entry : groups.object2ObjectEntrySet()) {
+            ObjectList<CraftingCpuCandidate> groupCandidates = entry.getValue();
             groupCandidates.sort(Comparator.comparing(CraftingCpuCandidate::stableIdentity));
             String startIdentity = request.roundRobinStarts().get(entry.getKey());
             int start = indexOfIdentity(groupCandidates, startIdentity);
@@ -160,7 +160,7 @@ public final class CraftingCpuCandidateSelector {
         return Object2IntMaps.unmodifiable(ranks);
     }
 
-    private static int indexOfIdentity(List<CraftingCpuCandidate> candidates, String identity) {
+    private static int indexOfIdentity(ObjectList<CraftingCpuCandidate> candidates, String identity) {
         if (identity == null) {
             return 0;
         }

@@ -90,6 +90,7 @@ import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOut
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
@@ -139,15 +140,12 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
@@ -2617,7 +2615,7 @@ final class TrinityDataCoreCpuLogic {
         }
         ObjectList<GenericStack> expectedOutputs = scaleAmounts(extractedInputs.expectedOutputs(), count);
         ObjectList<GenericStack> expectedContainerItems = scaleAmounts(extractedInputs.expectedContainerItems(), count);
-        ObjectList<GenericStack> scheduledOutputs = scaleStacks(details.getOutputs(), count);
+        ObjectList<GenericStack> scheduledOutputs = scaleStacks(new ObjectArrayList<>(details.getOutputs()), count);
         if (expectedOutputs == null || expectedContainerItems == null || scheduledOutputs == null) {
             Data_Energistics.LOGGER.error("Trinity Data Core CPU cannot commit overflowing pattern outputs");
             return null;
@@ -2677,7 +2675,7 @@ final class TrinityDataCoreCpuLogic {
                 dynamicOutputs,
                 virtualCompletions,
                 new PreparedScheduledOutputs(details.getDefinition(), scheduledOutputs),
-                ObjectSets.unmodifiable(changedKeys));
+                FastUtilCollections.immutableSet(changedKeys));
     }
 
     private ObjectList<DynamicCraftingOutputLedger.Registration> resolveDynamicOutputs(
@@ -2764,7 +2762,7 @@ final class TrinityDataCoreCpuLogic {
     }
 
     @Nullable
-    private static ObjectList<GenericStack> scaleStacks(List<GenericStack> stacks, long count) {
+    private static ObjectList<GenericStack> scaleStacks(ObjectList<GenericStack> stacks, long count) {
         KeyCounter scaled = new KeyCounter();
         for (GenericStack stack : stacks) {
             long amount = stack.amount();
@@ -3669,7 +3667,7 @@ final class TrinityDataCoreCpuLogic {
      *
      * @param waitingFor output key set
      */
-    void getAllWaitingFor(Set<AEKey> waitingFor) {
+    void getAllWaitingFor(ObjectSet<AEKey> waitingFor) {
         if (this.job == null) {
             return;
         }

@@ -1,18 +1,18 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.pattern.binding;
 
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Enumerates semantically distinct pattern bindings while retaining the first legal Cartesian representative.
@@ -35,13 +35,13 @@ public final class TrinityPatternBindingEnumerator {
     /**
      * @param bindings distinct bindings in first-representative Cartesian order
      */
-    public record Enumerated(List<Binding> bindings) implements Result {
+    public record Enumerated(ObjectList<Binding> bindings) implements Result {
 
         /**
          * Freezes the canonical binding sequence.
          */
         public Enumerated {
-            bindings = List.copyOf(bindings);
+            bindings = FastUtilCollections.immutableList(bindings);
         }
     }
 
@@ -102,7 +102,7 @@ public final class TrinityPatternBindingEnumerator {
      * @param maxBindings maximum distinct effects accepted before returning a limit result
      * @return complete enumeration or an exact failure boundary
      */
-    public Result enumerate(List<TrinityPatternPublicationSignature.Input> inputs, int maxBindings) {
+    public Result enumerate(ObjectList<TrinityPatternPublicationSignature.Input> inputs, int maxBindings) {
         if (inputs == null || maxBindings <= 0) {
             throw new IllegalArgumentException("A Trinity binding enumeration requires inputs and a positive limit");
         }
@@ -111,9 +111,9 @@ public final class TrinityPatternBindingEnumerator {
                 throw new IllegalArgumentException("A Trinity binding enumeration cannot contain an empty input");
             }
         }
-        List<TrinityPatternPublicationSignature.Input> orderedInputs = List.copyOf(inputs);
+        ObjectList<TrinityPatternPublicationSignature.Input> orderedInputs = FastUtilCollections.immutableList(inputs);
         BigInteger[] strides = cartesianStrides(orderedInputs);
-        List<PartialBinding> current = List.of(PartialBinding.empty());
+        ObjectList<PartialBinding> current = ObjectList.of(PartialBinding.empty());
         for (int slot = 0; slot < orderedInputs.size(); slot++) {
             TrinityPatternPublicationSignature.Input input = orderedInputs.get(slot);
             Object2ObjectLinkedOpenHashMap<BindingEffect, PartialBinding> distinct = new Object2ObjectLinkedOpenHashMap<>();
@@ -129,7 +129,7 @@ public final class TrinityPatternBindingEnumerator {
                     }
                 }
             }
-            current = List.copyOf(distinct.values());
+            current = FastUtilCollections.immutableList(distinct.values());
         }
 
         ObjectArrayList<Binding> bindings = new ObjectArrayList<>(current.size());
@@ -143,7 +143,7 @@ public final class TrinityPatternBindingEnumerator {
         return new Enumerated(bindings);
     }
 
-    private static BigInteger[] cartesianStrides(List<TrinityPatternPublicationSignature.Input> inputs) {
+    private static BigInteger[] cartesianStrides(ObjectList<TrinityPatternPublicationSignature.Input> inputs) {
         BigInteger[] strides = new BigInteger[inputs.size()];
         BigInteger stride = BigInteger.ONE;
         for (int slot = inputs.size() - 1; slot >= 0; slot--) {
@@ -195,14 +195,14 @@ public final class TrinityPatternBindingEnumerator {
     /**
      * Exact aggregate effects used as the semantic equivalence key.
      */
-    private record BindingEffect(Map<AEKey, BigInteger> consumed, Map<AEKey, BigInteger> remainders) {
+    private record BindingEffect(Object2ObjectMap<AEKey, BigInteger> consumed, Object2ObjectMap<AEKey, BigInteger> remainders) {
 
         private static BindingEffect empty() {
-            return new BindingEffect(Map.of(), Map.of());
+            return new BindingEffect(FastUtilCollections.mapOf(), FastUtilCollections.mapOf());
         }
     }
 
-    private static Map<AEKey, BigInteger> immutable(Map<AEKey, BigInteger> source) {
-        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(source));
+    private static Object2ObjectMap<AEKey, BigInteger> immutable(Object2ObjectMap<AEKey, BigInteger> source) {
+        return FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(source));
     }
 }

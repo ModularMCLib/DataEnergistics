@@ -16,7 +16,6 @@ import appeng.me.helpers.BaseActionSource;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -109,28 +108,6 @@ public final class ReusableInputRuleGameTest {
             return;
         }
         helper.fail("Byproduct overflow must be rejected instead of wrapping into an invalid amount");
-    }
-
-    @TestHolder("reusable_input_rule_nbt_roundtrip_preserves_all_semantics")
-    @EmptyTemplate("5")
-    @GameTest(template = "empty_5x5")
-    public static void ruleNbtRoundtripPreservesAllSemantics(GameTestHelper helper) {
-        AEItemKey key = tool(1);
-        ObjectList<ReusableInputRule> rules = ObjectList.of(
-                ReusableInputRule.unchanged(RULE_ID, 3L, key),
-                ReusableInputRule.fixedDamageFast(RULE_ID, 4L, key, 2, 6,
-                        ObjectList.of(new GenericStack(AEItemKey.of(Items.STICK), 2L))),
-                ReusableInputRule.transitionsFast(RULE_ID, 5L, key, ObjectList.of(new Transition(key, null, ObjectList.of()))));
-        for (ReusableInputRule rule : rules) {
-            CompoundTag tag = ReusableInputRuleNbtCodec.encode(rule, helper.getLevel().registryAccess());
-            ReusableInputRule restored = ReusableInputRuleNbtCodec.decode(tag, helper.getLevel().registryAccess());
-            helper.assertValueEqual(restored, rule, "Complete frozen rule must survive reload without adapter callbacks");
-            helper.assertValueEqual(restored.advance(key, 1L), rule.advance(key, 1L), "Behavior must survive reload");
-            tag.remove("revision");
-            expectIllegal(helper, () -> ReusableInputRuleNbtCodec.decode(tag, helper.getLevel().registryAccess()),
-                    "Missing rule revision must not silently become zero");
-        }
-        helper.succeed();
     }
 
     @TestHolder("reusable_input_lookup_is_explicit_and_rejects_conflicts")

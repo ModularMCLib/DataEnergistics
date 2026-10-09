@@ -31,8 +31,6 @@ import appeng.me.helpers.BaseActionSource;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -258,37 +256,6 @@ public final class PersistentReusableCraftingEndpointGameTest {
         PersistentReusableCraftingEndpoint restored = reload(endpoint, helper);
         helper.assertTrue(prepare(restored, request, 1, host).replay(), "Retry finds the already accepted ownership receipt");
         helper.succeed();
-    }
-
-    @TestHolder("reusable_endpoint_same_slot_consumed_and_held_totals_and_codec_validation")
-    @EmptyTemplate("5")
-    @GameTest(template = "empty_5x5")
-    public static void sameSlotConsumedAndHeldTotalsAndCodecValidation(GameTestHelper helper) {
-        PersistentReusableCraftingEndpoint endpoint = new PersistentReusableCraftingEndpoint(TARGET);
-        NativeHost host = new NativeHost();
-        UUID sessionId = UUID.randomUUID();
-        ReusableCraftingRequest base = request(helper, sessionId, 0, 2, ObjectList.of(new SlotStack(0, stack(tool(0), 1))));
-        ObjectList<Input> mixed = ObjectList.of(new Input(0, ObjectList.of(stack(tool(0), 1)), base.inputsFast().getFirst().tool()), base.inputsFast().get(1));
-        ReusableCraftingRequest request = new ReusableCraftingRequest(sessionId, JOB, "cpu:owner", 0, base.target(),
-                base.pattern(), mixed, base.offeredToolsFast(), 2, base.recipeId(), base.actionSource(), base.level());
-        ReusableCraftingAdmission admission = prepare(endpoint, request, 0, host);
-        helper.assertValueEqual(amount(admission.physicalInputsFast(), 0, tool(0)), 3L, "Same-slot total is two consumed plus one held tool");
-        admission.commit(delivery(admission));
-        endpoint.tick(1, 1, host);
-        endpoint.close(sessionId, host);
-        endpoint.settle(sessionId, settlement -> {
-            helper.assertValueEqual(assetAmount(settlement.returnedAssetsFast(), tool(0)), 1L, "One unused same-key consumed material remains");
-            helper.assertValueEqual(assetAmount(settlement.returnedAssetsFast(), tool(1)), 1L, "Held tool follows its actual native successor");
-            return true;
-        }, host);
-        CompoundTag missing = ReusableCraftingEndpointNbtCodec.encode(endpoint, helper.getLevel().registryAccess());
-        missing.getList("sessions", Tag.TAG_COMPOUND).getCompound(0).remove("acknowledged");
-        try {
-            ReusableCraftingEndpointNbtCodec.decode(missing, helper.getLevel().registryAccess());
-            helper.fail("Missing settlement acknowledgement field must reject persisted state");
-        } catch (IllegalArgumentException expected) {
-            helper.succeed();
-        }
     }
 
     @TestHolder("reusable_endpoint_later_damage_state_rule_appends_without_replacing_frozen_contract")

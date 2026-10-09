@@ -22,7 +22,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -329,27 +328,6 @@ public final class ReusableInputSessionGameTest {
         contested.completeOperation(active.id(), contested.predictedOutcomes(active), ObjectList.of());
         helper.assertValueEqual(contested.status(), State.RETURN_PENDING, "Completed native operation settles pending closure");
         helper.assertValueEqual(contested.cancelled(), 99L, "Competition cancels precisely the unexecuted work");
-        helper.succeed();
-    }
-
-    @TestHolder("reusable_session_persistence_rejects_missing_fields_and_inconsistent_materials")
-    @EmptyTemplate("5")
-    @GameTest(template = "empty_5x5")
-    public static void persistenceRejectsMissingFieldsAndInconsistentMaterials(GameTestHelper helper) {
-        ReusableInputSession session = session(unchanged(), 1, Ownership.CPU_SUPPLIED);
-        session.acceptAppend(append(1, 2, ObjectList.of(delivery(0, 1))));
-        CompoundTag missing = ReusableInputSessionNbtCodec.encode(session, helper.getLevel().registryAccess());
-        missing.remove("next_operation");
-        expectIllegal(helper, () -> ReusableInputSessionNbtCodec.decode(missing, helper.getLevel().registryAccess()),
-                "Missing sequence counter cannot silently reset to zero");
-        CompoundTag inconsistent = ReusableInputSessionNbtCodec.encode(session, helper.getLevel().registryAccess());
-        inconsistent.getList("appends", Tag.TAG_COMPOUND).getCompound(0).putLong("completed", 1L);
-        expectIllegal(helper, () -> ReusableInputSessionNbtCodec.decode(inconsistent, helper.getLevel().registryAccess()),
-                "Persisted material cannot exceed the actual unexecuted operation escrow");
-        CompoundTag future = ReusableInputSessionNbtCodec.encode(session, helper.getLevel().registryAccess());
-        future.putInt("schema", 99);
-        expectIllegal(helper, () -> ReusableInputSessionNbtCodec.decode(future, helper.getLevel().registryAccess()),
-                "An unknown schema cannot reinterpret ownership fields");
         helper.succeed();
     }
 

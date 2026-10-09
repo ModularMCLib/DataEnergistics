@@ -13,7 +13,7 @@ import appeng.client.gui.Icon;
  * Client-only Advanced AE input-filter control for Adaptive providers.
  */
 @DataEnergisticsEntrypoint(clientOnly = true, requiredMods = "advanced_ae")
-public final class AdaptivePatternProviderAdvancedAeToolbar implements DataEnergisticsClientPlugin {
+public final class AdvancedAeClientPlugin implements DataEnergisticsClientPlugin {
 
     @Override
     public void register(DataEnergisticsClientRegistry registry) {

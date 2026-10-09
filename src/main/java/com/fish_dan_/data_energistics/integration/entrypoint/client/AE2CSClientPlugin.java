@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.client.widget.AecsPullModeButton;
  * Client-only AE2CS target-storage extraction control for Adaptive providers.
  */
 @DataEnergisticsEntrypoint(clientOnly = true, requiredMods = "ae2cs")
-public final class AdaptivePatternProviderAe2CsToolbar implements DataEnergisticsClientPlugin {
+public final class AE2CSClientPlugin implements DataEnergisticsClientPlugin {
 
     @Override
     public void register(DataEnergisticsClientRegistry registry) {

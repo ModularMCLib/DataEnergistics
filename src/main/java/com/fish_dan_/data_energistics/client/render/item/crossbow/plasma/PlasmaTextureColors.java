@@ -27,8 +27,8 @@ public final class PlasmaTextureColors extends SimplePreparableReloadListener<Ma
     }
 
     @Override
-    protected Map<RailAmmunition, PlasmaPalette> prepare(ResourceManager manager, ProfilerFiller profiler) {
-        Map<RailAmmunition, PlasmaPalette> result = new EnumMap<>(RailAmmunition.class);
+    protected EnumMap<RailAmmunition, PlasmaPalette> prepare(ResourceManager manager, ProfilerFiller profiler) {
+        EnumMap<RailAmmunition, PlasmaPalette> result = new EnumMap<>(RailAmmunition.class);
         result.put(RailAmmunition.DATA, read(manager, DATA_TEXTURE));
         // Applied Flux is optional; the FE resource exists whenever that ammunition is available.
         if (manager.getResource(FE_TEXTURE).isPresent()) result.put(RailAmmunition.FE, read(manager, FE_TEXTURE));

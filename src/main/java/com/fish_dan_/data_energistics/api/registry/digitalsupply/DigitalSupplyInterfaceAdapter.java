@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.api.registry.digitalsupply;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
@@ -10,8 +12,9 @@ import org.jspecify.annotations.Nullable;
  * Public, optional-Mod-neutral behavior contract for one digital-supply integration.
  *
  * <p>
- * Implementations must only depend on this API and the target mod's public API. The block entity owns lifecycle,
- * persistence and AE storage; an adapter owns recognition, native links and native-side rules.
+ * Integrations register through the public API; native resource rules belong to the adapter, including any required
+ * optional-Mod internals. Callbacks run on the logical server thread. The block entity owns lifecycle, persistence
+ * and AE storage; an adapter owns recognition, native links and native-side rules.
  * </p>
  */
 public interface DigitalSupplyInterfaceAdapter {
@@ -38,6 +41,27 @@ public interface DigitalSupplyInterfaceAdapter {
 
     /** Performs simulation and commit operations for one server tick. */
     default void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {}
+
+    /**
+     * Converts external item input directly into real network resources. The stack is read-only; return a count
+     * between zero and its count. Simulation must leave the network, world and adapter state unchanged. Execution
+     * returns only the count successfully inserted. This callback is independent of nearby-target discovery and
+     * must reject unsupported inputs with zero. Invalid results or runtime failures disable this adapter for the
+     * current interface, with a diagnostic at the capability boundary.
+     */
+    default int acceptItem(DigitalSupplyInterfaceTarget target, ItemStack stack, boolean simulate) {
+        return 0;
+    }
+
+    /**
+     * Converts external fluid input directly into real network resources. The stack is read-only; return an amount
+     * between zero and its amount, in mB. Simulation has no side effects and execution reports only successful
+     * network insertion. Unsupported inputs return zero, independently of nearby-target discovery. Invalid results
+     * or runtime failures disable this adapter for the current interface, with a capability-boundary diagnostic.
+     */
+    default int acceptFluid(DigitalSupplyInterfaceTarget target, FluidStack stack, boolean simulate) {
+        return 0;
+    }
 
     /** Saves adapter-owned cursors and link state without storing consumable quantities. */
     default void saveState(CompoundTag tag) {}

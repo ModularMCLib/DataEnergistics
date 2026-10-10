@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.blockentity.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyExternalFluidHandler;
+import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyExternalInput;
+import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyExternalItemHandler;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyInterfaceTransferContext;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyNetworkStorage;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.PresenceMarkerStorage;
@@ -36,12 +39,15 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
@@ -72,6 +78,10 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     private final IStorageProvider storageProvider = new MarkerStorageProvider();
     private final ObjectList<DigitalSupplyInterfaceAdapter> adapters;
     private final ObjectSet<ResourceLocation> failedAdapters = new ObjectLinkedOpenHashSet<>();
+    @Getter
+    private final IItemHandler externalItemHandler;
+    @Getter
+    private final IFluidHandler externalFluidHandler;
     private final ObjectSet<ConnectorLink> automaticLinks = new ObjectLinkedOpenHashSet<>();
     private ObjectList<ConnectorLink> links = new ObjectArrayList<>();
     private ConnectorMode mode = ConnectorMode.INPUT;
@@ -85,6 +95,9 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         discovered.sort(Comparator.comparingInt(DigitalSupplyInterfaceAdapter::priority)
                 .thenComparing(adapter -> adapter.id().toString()));
         this.adapters = ObjectLists.unmodifiable(discovered);
+        DigitalSupplyExternalInput externalInput = new DigitalSupplyExternalInput(this, this.adapters, this.failedAdapters);
+        this.externalItemHandler = new DigitalSupplyExternalItemHandler(externalInput);
+        this.externalFluidHandler = new DigitalSupplyExternalFluidHandler(externalInput);
         this.getMainNode()
                 .addService(IStorageProvider.class, this.storageProvider)
                 .setFlags(GridFlags.REQUIRE_CHANNEL)

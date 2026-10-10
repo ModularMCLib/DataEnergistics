@@ -78,6 +78,14 @@ final class CommonCapabilityRegistrar {
                 (blockEntity, context) -> blockEntity);
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
+                DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
+                (blockEntity, context) -> blockEntity.getExternalItemHandler());
+        event.registerBlockEntity(
+                Capabilities.FluidHandler.BLOCK,
+                DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
+                (blockEntity, context) -> blockEntity.getExternalFluidHandler());
+        event.registerBlockEntity(
+                Capabilities.ItemHandler.BLOCK,
                 DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity.getExternalInventory().toItemHandler());
         event.registerBlockEntity(

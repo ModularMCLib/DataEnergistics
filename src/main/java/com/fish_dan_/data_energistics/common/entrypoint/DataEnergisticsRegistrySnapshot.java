@@ -28,6 +28,8 @@ import com.fish_dan_.data_energistics.common.trinity.TrinityPatternRecipeIdResol
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -168,6 +170,16 @@ public final class DataEnergisticsRegistrySnapshot {
         @Override
         public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
             this.delegate.tick(target, transfer);
+        }
+
+        @Override
+        public int acceptItem(DigitalSupplyInterfaceTarget target, ItemStack stack, boolean simulate) {
+            return this.delegate.acceptItem(target, stack, simulate);
+        }
+
+        @Override
+        public int acceptFluid(DigitalSupplyInterfaceTarget target, FluidStack stack, boolean simulate) {
+            return this.delegate.acceptFluid(target, stack, simulate);
         }
 
         @Override

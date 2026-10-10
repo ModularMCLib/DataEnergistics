@@ -31,7 +31,6 @@ public record DigitalSupplyResourceDefinition(ResourceLocation id,
         if (key.getType() == null) {
             throw new IllegalArgumentException("Digital Supply resource key must have a key type");
         }
-        unitConversion = unitConversion == null ? DigitalSupplyUnitConversion.IDENTITY : unitConversion;
         if (directions.isEmpty()) {
             throw new IllegalArgumentException("Digital Supply resource must declare at least one transfer direction");
         }

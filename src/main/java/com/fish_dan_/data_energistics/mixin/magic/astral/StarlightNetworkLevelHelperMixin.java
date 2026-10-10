@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.magic.astral;
 
+import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;

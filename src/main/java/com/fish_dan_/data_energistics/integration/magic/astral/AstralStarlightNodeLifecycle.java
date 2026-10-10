@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.mixin.magic.astral;
+package com.fish_dan_.data_energistics.integration.magic.astral;
 
 import net.minecraft.core.BlockPos;
 

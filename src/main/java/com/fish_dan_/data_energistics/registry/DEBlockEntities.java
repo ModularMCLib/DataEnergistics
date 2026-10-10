@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.blockentity.TuningForkBaseBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.TuningForkBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.beam.BeamFormerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.decor.DollBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataChargerBlockEntity;
@@ -187,6 +188,12 @@ public final class DEBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AdaptivePatternProviderBlockEntity>> ADAPTIVE_PATTERN_PROVIDER_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register(
             "adaptive_pattern_provider",
             () -> BlockEntityType.Builder.of(AdaptivePatternProviderBlockEntity::new, DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DigitalSupplyInterfaceBlockEntity>> DIGITAL_SUPPLY_INTERFACE = BLOCK_ENTITY_TYPES.register(
+            "digital_supply_interface",
+            () -> BlockEntityType.Builder.of(
+                    DigitalSupplyInterfaceBlockEntity::new,
+                    DEBlocks.DIGITAL_SUPPLY_INTERFACE.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DigitalPackagedPatternProviderBlockEntity>> DIGITAL_PACKAGED_PATTERN_PROVIDER = BLOCK_ENTITY_TYPES.register(
             "digital_packaged_pattern_provider",

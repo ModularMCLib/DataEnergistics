@@ -7,11 +7,11 @@ import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -25,7 +25,7 @@ public final class AdjacentBlockCapabilityCache<T> {
     private final ServerLevel level;
     private final BlockPos origin;
     private final BooleanSupplier isValid;
-    private final Map<Direction, BlockCapabilityCache<T, Direction>> caches = new EnumMap<>(Direction.class);
+    private final EnumMap<Direction, BlockCapabilityCache<T, Direction>> caches = new EnumMap<>(Direction.class);
 
     /**
      * Creates a lazily populated cache set whose listeners live only while the owning machine is valid.
@@ -63,32 +63,32 @@ public final class AdjacentBlockCapabilityCache<T> {
      * @param sides enabled target sides
      * @return immutable list of currently exposed capabilities
      */
-    public List<T> getAll(Iterable<Direction> sides) {
-        List<T> resolved = new ObjectArrayList<>();
+    public ObjectList<T> getAll(Iterable<Direction> sides) {
+        ObjectList<T> resolved = new ObjectArrayList<>();
         for (Direction side : sides) {
             T value = get(side);
             if (value != null) {
                 resolved.add(value);
             }
         }
-        return resolved.isEmpty() ? List.of() : List.copyOf(resolved);
+        return resolved.isEmpty() ? ObjectList.of() : ObjectLists.unmodifiable(resolved);
     }
 
     /**
      * Resolves capabilities together with their stable direction keys.
      *
      * @param sides enabled target sides
-     * @return immutable direction-to-capability mapping
+     * @return independent direction-to-capability snapshot in enum order; changes do not affect the caches
      */
-    public Map<Direction, T> getAllBySide(Iterable<Direction> sides) {
-        Map<Direction, T> resolved = new EnumMap<>(Direction.class);
+    public EnumMap<Direction, T> getAllBySide(Iterable<Direction> sides) {
+        EnumMap<Direction, T> resolved = new EnumMap<>(Direction.class);
         for (Direction side : sides) {
             T value = get(side);
             if (value != null) {
                 resolved.put(side, value);
             }
         }
-        return resolved.isEmpty() ? Map.of() : Map.copyOf(resolved);
+        return resolved;
     }
 
     private BlockCapabilityCache<T, Direction> createCache(Direction side) {

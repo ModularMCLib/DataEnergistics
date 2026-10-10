@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBloc
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.lifecycle.TrinityDispatchProposalLifecycle;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.TrinityPlanningGatewayLifecycle;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.orbital.control.OrbitalControlActionDispatcher;
 import com.fish_dan_.data_energistics.orbital.control.OrbitalOwnershipActionDispatcher;
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerPatternModeResolver;

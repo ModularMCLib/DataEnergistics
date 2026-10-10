@@ -31,6 +31,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("avaritia", "technology.avaritia.");
         addModCompatMixin("draconicevolution", "technology.draconicevolution.");
         addModCompatMixin("botania", "magic.botania.");
+        addModCompatMixin("astralsorcery", "magic.astral.");
         addModCompatMixin("malum", "magic.malum.");
         addModCompatMixin("naturesaura", "magic.naturesaura.");
         addModCompatMixin("goety", "magic.goety.");

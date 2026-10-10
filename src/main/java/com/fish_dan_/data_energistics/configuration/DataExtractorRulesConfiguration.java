@@ -1,0 +1,121 @@
+package com.fish_dan_.data_energistics.configuration;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.configuration.rules.DefaultRuleValues;
+import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
+import com.fish_dan_.data_energistics.configuration.rules.RuleFormatException;
+import com.fish_dan_.data_energistics.configuration.rules.codec.DataExtractorRuleEntries;
+import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter;
+import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
+import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticCarrierEntry;
+
+import dev.toma.configuration.Configuration;
+import dev.toma.configuration.config.Config;
+import dev.toma.configuration.config.ConfigHolder;
+import dev.toma.configuration.config.Configurable;
+import dev.toma.configuration.config.format.ConfigFormats;
+import dev.toma.configuration.config.io.ConfigIO;
+
+import java.util.Arrays;
+
+/** Direct Configuration-owned schema for the independently stored Data Extractor rule YAML. */
+@Config(
+        id = DataExtractorRulesConfiguration.CONFIG_ID,
+        filename = DataExtractorRulesConfiguration.FILENAME,
+        group = Data_Energistics.MODID)
+public final class DataExtractorRulesConfiguration {
+
+    public static final String CONFIG_ID = Data_Energistics.MODID + "_data_extractor_rules";
+    public static final String FILENAME = Data_Energistics.MODID + "/data_extractor_rules";
+
+    static {
+        DataProductionRuleConfigurationAdapter.register();
+    }
+
+    public static final ConfigHolder<DataExtractorRulesConfiguration> HOLDER = Configuration.registerConfig(DataExtractorRulesConfiguration.class, ConfigFormats.YAML);
+    public static final DataExtractorRulesConfiguration INSTANCE = HOLDER.getConfigInstance();
+
+    @Configurable(key = Configurable.LocalizationKey.FULL)
+    @Configurable.Comment({
+            "One complete mimetic carrier entry per item; output arrays at the same index form one AE output.",
+            "每个条目是一整条数据拟生载体规则；产出数组中相同索引组成一条 AE 产出。"
+    })
+    public MimeticCarrierEntry[] mimeticCarriers = MimeticCarrierEntry.defaults(defaultRuleValues());
+
+    @Configurable(key = Configurable.LocalizationKey.FULL)
+    @Configurable.Comment({
+            "One complete extractor rule per entry. Weapon and target ids are arrays; empty target ids match every target.",
+            "每个条目是一整条数据提取器规则；武器和目标 ID 都是数组；空目标数组匹配所有目标。"
+    })
+    public ExtractorOutputEntry[] extractorOutputs = {};
+
+    private transient LoadedRules cachedRules;
+    private transient int cachedFingerprint;
+    private transient boolean hasCachedRules;
+
+    public DataExtractorRulesConfiguration() {}
+
+    /** Compiles the current typed record arrays; Configuration's Auto-Sync updates the source arrays directly. */
+    public synchronized LoadedRules rules() {
+        int fingerprint = configurationFingerprint();
+        if (this.hasCachedRules && this.cachedFingerprint == fingerprint) {
+            return this.cachedRules;
+        }
+        try {
+            LoadedRules compiled = DataExtractorRuleEntries.compile(
+                    this.mimeticCarriers,
+                    this.extractorOutputs,
+                    ConfigIO.getConfigFile(HOLDER).toPath());
+            this.cachedRules = compiled;
+            this.cachedFingerprint = fingerprint;
+            this.hasCachedRules = true;
+            return compiled;
+        } catch (RuleFormatException exception) {
+            throw new IllegalStateException("Data Extractor rule configuration is invalid", exception);
+        }
+    }
+
+    private int configurationFingerprint() {
+        int result = 1;
+        for (MimeticCarrierEntry entry : this.mimeticCarriers) {
+            result = 31 * result + hashMimeticCarrierEntry(entry);
+        }
+        for (ExtractorOutputEntry entry : this.extractorOutputs) {
+            result = 31 * result + hashExtractorEntry(entry);
+        }
+        return result;
+    }
+
+    private static int hashMimeticCarrierEntry(MimeticCarrierEntry entry) {
+        int result = entry.slot() == null ? 0 : entry.slot().hashCode();
+        result = 31 * result + (entry.dataType() == null ? 0 : entry.dataType().hashCode());
+        result = 31 * result + entry.inputItem().hashCode();
+        result = 31 * result + entry.recordedId().hashCode();
+        result = 31 * result + Float.hashCode(entry.progressPerItem());
+        result = 31 * result + Float.hashCode(entry.requiredAmount());
+        result = 31 * result + Arrays.hashCode(entry.outputFamilies());
+        result = 31 * result + Arrays.hashCode(entry.keyKinds());
+        result = 31 * result + Arrays.hashCode(entry.keyIds());
+        result = 31 * result + Arrays.hashCode(entry.amountModes());
+        result = 31 * result + Arrays.hashCode(entry.amounts());
+        return result;
+    }
+
+    private static int hashExtractorEntry(ExtractorOutputEntry entry) {
+        int result = Arrays.hashCode(entry.weaponItems());
+        result = 31 * result + Arrays.hashCode(entry.weaponTags());
+        result = 31 * result + Arrays.hashCode(entry.targetEntityIds());
+        result = 31 * result + (entry.outputFamily() == null ? 0 : entry.outputFamily().hashCode());
+        result = 31 * result + (entry.keyKind() == null ? 0 : entry.keyKind().hashCode());
+        result = 31 * result + entry.keyId().hashCode();
+        result = 31 * result + (entry.amountMode() == null ? 0 : entry.amountMode().hashCode());
+        return 31 * result + Long.hashCode(entry.amount());
+    }
+
+    private static DefaultRuleValues defaultRuleValues() {
+        return new DefaultRuleValues(
+                DefaultRuleValues.builtInCropRules(),
+                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.cropRequiredAmount,
+                (float) DataEnergisticsConfiguration.INSTANCE.machines.dataExtractor.oreRequiredAmount);
+    }
+}

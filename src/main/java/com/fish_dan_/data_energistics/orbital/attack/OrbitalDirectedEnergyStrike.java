@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.orbital.attack;
 
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamScan;
 import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamVolume;
 import com.fish_dan_.data_energistics.orbital.attack.entity.OrbitalEntityErasure;

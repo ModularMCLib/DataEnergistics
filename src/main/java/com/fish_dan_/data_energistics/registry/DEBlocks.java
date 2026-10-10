@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.block.TuningForkBaseBlock;
 import com.fish_dan_.data_energistics.block.TuningForkBlock;
 import com.fish_dan_.data_energistics.block.beam.BeamFormerBlock;
 import com.fish_dan_.data_energistics.block.decor.DollBlock;
+import com.fish_dan_.data_energistics.block.digitalsupply.DigitalSupplyInterfaceBlock;
 import com.fish_dan_.data_energistics.block.explosive.DataNukeBlock;
 import com.fish_dan_.data_energistics.block.explosive.TntConfigurableBlock;
 import com.fish_dan_.data_energistics.block.ioport.DataIoPortBlock;
@@ -240,6 +241,12 @@ public final class DEBlocks {
             "adaptive_pattern_provider",
             properties -> new AdaptivePatternProviderBlock(properties),
             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK));
+
+    public static final DeferredBlock<DigitalSupplyInterfaceBlock> DIGITAL_SUPPLY_INTERFACE = BLOCKS.registerBlock(
+            "digital_supply_interface",
+            DigitalSupplyInterfaceBlock::new,
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .requiresCorrectToolForDrops());
 
     public static final DeferredBlock<DigitalPackagedPatternProviderBlock> DIGITAL_PACKAGED_PATTERN_PROVIDER = BLOCKS.register(
             "digital_packaged_pattern_provider", DigitalPackagedPatternProviderBlock::new);

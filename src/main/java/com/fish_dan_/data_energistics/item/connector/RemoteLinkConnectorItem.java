@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.api.registry.connector.EnergyTransferDirection;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
+import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
@@ -121,6 +122,16 @@ public class RemoteLinkConnectorItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
+        if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof DigitalSupplyInterfaceBlockEntity) {
+            if (!level.isClientSide()) {
+                stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(),
+                        getConnectorData(stack).withDigitalSupplyInterface(
+                                level.dimension().location().toString(), clickedPos, -1));
+                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".bound_interface"), true);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof AdaptivePatternProviderBlockEntity) {
             return bindAdaptiveProvider(stack, player, level, clickedPos);
         }
@@ -154,7 +165,7 @@ public class RemoteLinkConnectorItem extends Item {
             return;
         }
 
-        if (data.isInterface()) {
+        if (data.isInterface() || data.isDigitalSupplyInterface()) {
             tooltipComponents.add(Component.translatable(KEY_PREFIX + ".tooltip.bound_interface",
                     data.providerDimensionId(), data.getProviderPos().getX(), data.getProviderPos().getY(), data.getProviderPos().getZ()));
             tooltipComponents.add(Component.translatable(KEY_PREFIX + ".slot_selected", data.selectedSlot() + 1));
@@ -236,7 +247,7 @@ public class RemoteLinkConnectorItem extends Item {
             return InteractionResult.FAIL;
         }
 
-        if (data.isInterface()) {
+        if (data.isInterface() || data.isDigitalSupplyInterface()) {
             return connectInterface(stack, player, level, clickedPos, clickedFace, showFailureMessages);
         }
         if (data.isAdaptiveProvider()) {
@@ -391,13 +402,14 @@ public class RemoteLinkConnectorItem extends Item {
             }
             return InteractionResult.FAIL;
         }
-        if (data.selectedSlot() >= endpoint.slotCount()) {
+        int selectedSlot = endpoint.slotCount() == 0 ? -1 : data.selectedSlot();
+        if (selectedSlot >= endpoint.slotCount()) {
             if (feedback) {
                 player.displayClientMessage(Component.translatable(KEY_PREFIX + ".slot_locked", data.selectedSlot() + 1), true);
             }
             return InteractionResult.FAIL;
         }
-        boolean added = endpoint.toggle(target, side, data.selectedSlot());
+        boolean added = endpoint.toggle(target, side, selectedSlot);
         if (feedback) {
             player.displayClientMessage(Component.translatable(KEY_PREFIX + (added ? ".bound_interface_target" : ".unbound_interface_target"),
                     data.selectedSlot() + 1, target.toShortString(), Component.translatable(KEY_PREFIX + ".face." + side.getName())), true);
@@ -414,7 +426,10 @@ public class RemoteLinkConnectorItem extends Item {
                 !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(data.getProviderPos().getX()), SectionPos.blockToSectionCoord(data.getProviderPos().getZ()))) {
             return null;
         }
-        if (data.isInterface()) {
+        if (data.isInterface() || data.isDigitalSupplyInterface()) {
+            if (data.isDigitalSupplyInterface()) {
+                return level.getBlockEntity(data.getProviderPos()) instanceof DigitalSupplyInterfaceBlockEntity host ? host : null;
+            }
             return level.getBlockEntity(data.getProviderPos()) instanceof DataSanctumInterfaceBlockEntity host ? host.getRemoteLinks() : null;
         }
         var logic = resolveProviderLogic(level, data);

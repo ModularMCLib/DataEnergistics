@@ -1,16 +1,20 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.api.production.DataProductionOutput;
+import com.fish_dan_.data_energistics.api.production.rule.DataProductionContext;
+import com.fish_dan_.data_energistics.api.production.rule.DataProductionRuleSet;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock.Type;
+import com.fish_dan_.data_energistics.blockentity.machine.production.DataProductionPendingLedger;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataExtractorSchema;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataExtractorSchema;
 import com.fish_dan_.data_energistics.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.item.carrier.OreDataCarrierData;
-import com.fish_dan_.data_energistics.mixin.minecraft.accessor.ExperienceOrbAccessor;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
@@ -25,7 +29,9 @@ import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.storage.MEStorage;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
@@ -61,7 +67,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
@@ -78,17 +83,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                                       implements IActionHost, IUpgradeableObject, InternalInventoryHost {
@@ -100,7 +108,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     public static final int ENERGY_CACHE_CAPACITY = 1600;
     public static final int DATA_FLOW_PER_ENERGY_CARD = 200;
     public static final int AE_CACHE_PER_ENERGY_CARD = 100;
-    public static final int DATA_FLOW_PER_EXPERIENCE = 5;
     private static final int DEBUFF_DURATION_TICKS = 60;
     private static final int DEBUFF_REAPPLY_INTERVAL_TICKS = 10;
     private static final int STORAGE_SLOTS = 5;
@@ -124,6 +131,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private static final String WORK_PROGRESS_TAG = "work_progress";
     private static final String PENDING_DATA_FLOW_TAG = "pending_data_flow";
     private static final String PENDING_XP_DATA_FLOW_TAG = "pending_xp_data_flow";
+    private static final String PENDING_OUTPUTS_TAG = "pending_production_outputs";
     private static final TagKey<Item> C_ORES_TAG = ItemTags.create(ResourceLocation.parse("c:ores"));
     private static final TagKey<Item> C_RAW_MATERIALS_TAG = ItemTags.create(ResourceLocation.parse("c:raw_materials"));
 
@@ -194,17 +202,25 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private int workTicks;
     private long pendingDataFlow;
     private long pendingXpDataFlow;
+    private final DataProductionPendingLedger pendingOutput = new DataProductionPendingLedger(this::saveChanges);
+    private boolean productionFailed;
     private int dropCollectionCooldown;
     private int targetScanCooldown;
     private int debuffCooldown;
+    @Nullable
     private AABB cachedCoverageAabb;
-    private List<LivingEntity> cachedTargets = List.of();
+    private ObjectList<LivingEntity> cachedTargets = ObjectList.of();
     private final EnumSet<Direction> outputSides = EnumSet.allOf(Direction.class);
     private int cachedCapacityCardCount = -1;
     private int cachedSpeedCardCount = -1;
     private int cachedEnergyCardCount = -1;
+    @Nullable
     private AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
+    @Nullable
+    private AdjacentBlockCapabilityCache<IFluidHandler> adjacentFluidHandlers;
+    @Nullable
     private Player cachedFakePlayer;
+    private long nextOutputFailureLogTick;
 
     public DataExtractorBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(DEBlockEntities.DATA_EXTRACTOR_BLOCK_ENTITY.get(), blockPos, blockState);
@@ -275,11 +291,13 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         this.workTicks = Math.max(0, data.getInt(WORK_PROGRESS_TAG));
         this.pendingDataFlow = Math.max(0L, data.getLong(PENDING_DATA_FLOW_TAG));
         this.pendingXpDataFlow = Math.max(0L, data.getLong(PENDING_XP_DATA_FLOW_TAG));
+        this.pendingOutput.readFromNbt(registries, data.getList(PENDING_OUTPUTS_TAG, Tag.TAG_COMPOUND));
+        this.productionFailed = false;
         this.dropCollectionCooldown = 0;
         this.targetScanCooldown = 0;
         this.debuffCooldown = 0;
         this.cachedCoverageAabb = null;
-        this.cachedTargets = List.of();
+        this.cachedTargets = ObjectList.of();
         this.cachedCapacityCardCount = -1;
         this.cachedSpeedCardCount = -1;
         this.cachedEnergyCardCount = -1;
@@ -301,6 +319,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         data.putInt(WORK_PROGRESS_TAG, this.workTicks);
         data.putLong(PENDING_DATA_FLOW_TAG, this.pendingDataFlow);
         data.putLong(PENDING_XP_DATA_FLOW_TAG, this.pendingXpDataFlow);
+        data.put(PENDING_OUTPUTS_TAG, this.pendingOutput.writeToNbt(registries));
     }
 
     @Override
@@ -364,6 +383,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
         DataFlowKey.of().addDrops(this.pendingDataFlow, drops, level, pos);
         DataFlowKey.of().addDrops(this.pendingXpDataFlow, drops, level, pos);
+        drops.addAll(this.pendingOutput.toDrops(level, pos));
     }
 
     @Override
@@ -373,6 +393,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         this.upgrades.clear();
         this.pendingDataFlow = 0L;
         this.pendingXpDataFlow = 0L;
+        this.pendingOutput.clear();
     }
 
     @Override
@@ -697,11 +718,22 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void performWork() {
-        if (this.pendingDataFlow > 0) {
+        if (this.productionFailed || this.pendingDataFlow > 0 || !this.pendingOutput.isEmpty()) {
             return;
         }
+        try {
+            performProductionWork();
+        } catch (RuntimeException exception) {
+            this.productionFailed = true;
+            resetWorkProgress();
+            Data_Energistics.LOGGER.error(
+                    "Data-extractor production stopped at {} after a production failure; existing pending output remains available",
+                    this.worldPosition, exception);
+        }
+    }
 
-        List<LivingEntity> targets = getTargets();
+    private void performProductionWork() {
+        ObjectList<LivingEntity> targets = getTargets();
         if (targets.isEmpty()) {
             resetWorkProgress();
             return;
@@ -767,34 +799,34 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return this.pendingDataFlow == 0;
     }
 
-    private List<LivingEntity> getTargets() {
-        List<LivingEntity> targets = getEntitiesInRange();
+    private ObjectList<LivingEntity> getTargets() {
+        ObjectList<LivingEntity> targets = getEntitiesInRange();
         int targetLimit = getTargetLimit();
         if (targets.size() > targetLimit) {
-            return List.copyOf(targets.subList(0, targetLimit));
+            return ObjectLists.unmodifiable(new ObjectArrayList<>(targets.subList(0, targetLimit)));
         }
         return targets;
     }
 
-    private List<LivingEntity> getEntitiesInRange() {
+    private ObjectList<LivingEntity> getEntitiesInRange() {
         if (!(this.level instanceof ServerLevel serverLevel)) {
-            return List.of();
+            return ObjectList.of();
         }
 
         if (this.targetScanCooldown > 0) {
             this.targetScanCooldown--;
         } else {
-            this.cachedTargets = List.copyOf(serverLevel.getEntitiesOfClass(
+            this.cachedTargets = ObjectLists.unmodifiable(new ObjectArrayList<>(serverLevel.getEntitiesOfClass(
                     LivingEntity.class,
                     getCoverageAabb(),
-                    entity -> entity.isAlive() && !(entity instanceof Player)));
+                    entity -> entity.isAlive() && !(entity instanceof Player))));
             this.targetScanCooldown = TARGET_SCAN_INTERVAL_TICKS - 1;
         }
 
         return this.cachedTargets;
     }
 
-    private void applyDebuffs(List<LivingEntity> targets) {
+    private void applyDebuffs(ObjectList<LivingEntity> targets) {
         if (!(this.level instanceof ServerLevel)) {
             return;
         }
@@ -812,7 +844,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private void applyDamageAndCollectBiology(List<LivingEntity> targets) {
+    private void applyDamageAndCollectBiology(ObjectList<LivingEntity> targets) {
         if (!(this.level instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -826,8 +858,20 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         float collectedDamage = 0.0F;
         boolean carrierUpdated = false;
 
+        Player rewardPlayer = this.cachedFakePlayer;
+        if (rewardPlayer == null) {
+            rewardPlayer = Platform.getFakePlayer(serverLevel, null);
+            this.cachedFakePlayer = rewardPlayer;
+        }
+
         for (LivingEntity entity : targets) {
+            if (!entity.isAlive()) {
+                continue;
+            }
             float healthBefore = entity.getHealth();
+            long vanillaExperience = Math.max(0L, entity.getExperienceReward(serverLevel, rewardPlayer));
+            ResourceLocation targetEntityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+            ItemStack weaponForRules = sword.copy();
             boolean damaged;
             if (useSword) {
                 SwordAttackResult attackResult = attackWithSword(serverLevel, sword, entity);
@@ -836,14 +880,23 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             } else {
                 damaged = entity.hurt(serverLevel.damageSources().magic(), extractorSettings().baseDamage);
             }
-            if (!damaged) {
+            if (!damaged && entity.getHealth() >= healthBefore) {
                 continue;
             }
 
-            clearAggro(entity);
-
             float damageDealt = Math.max(0.0F, healthBefore - entity.getHealth());
-            if (!canCollectBiology || damageDealt <= 0.0F) {
+            if (damageDealt <= 0.0F) {
+                continue;
+            }
+            clearAggro(entity);
+            DataProductionRuleSet rules = DataExtractorRuleTable.extractorRuleSet(weaponForRules, targetEntityId);
+            DataProductionContext context = new DataProductionContext(
+                    vanillaExperience, healthBefore, damageDealt, true);
+            DataProductionOutput generated = rules.produce(context, DataProductionOutput::empty, true);
+            if (!generated.isEmpty()) {
+                this.pendingOutput.append(generated);
+            }
+            if (!canCollectBiology) {
                 continue;
             }
 
@@ -1097,9 +1150,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             return oreStack;
         }
 
-        if (oreStack.is(C_RAW_MATERIALS_TAG)) {
-            return oreStack;
-        }
+        oreStack.is(C_RAW_MATERIALS_TAG);
 
         return oreStack;
     }
@@ -1176,13 +1227,23 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     private void tryAutoExport() {
+        try {
+            exportPendingOutputAndItems();
+        } catch (RuntimeException exception) {
+            logOutputFailure("output via " + this.autoExportMode, exception);
+        }
+    }
+
+    private void exportPendingOutputAndItems() {
         if (this.pendingXpDataFlow > 0) {
             flushPendingXpDataFlow(getConnectedItemNetwork());
         }
 
+        flushPendingProductionOutput();
+
         boolean fuzzyCardInstalled = hasFuzzyCard();
         if (fuzzyCardInstalled) {
-            tickDroppedItemCollection(List.of(), null);
+            tickDroppedItemCollection(ObjectList.of(), null);
         }
 
         if (this.autoExportMode == DataExtractorAutoExportMode.OFF) {
@@ -1193,7 +1254,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         if (this.autoExportMode == DataExtractorAutoExportMode.CONTAINER) {
-            List<IItemHandler> adjacentHandlers = getAdjacentItemHandlers();
+            ObjectList<IItemHandler> adjacentHandlers = getAdjacentItemHandlers();
             if (adjacentHandlers.isEmpty()) {
                 if (!fuzzyCardInstalled) {
                     this.dropCollectionCooldown = 0;
@@ -1208,13 +1269,13 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         MEStorage networkStorage = getConnectedItemNetwork();
-        exportCompletedCarrier(List.of(), networkStorage);
+        exportCompletedCarrier(ObjectList.of(), networkStorage);
         if (!fuzzyCardInstalled) {
-            tickDroppedItemCollection(List.of(), networkStorage);
+            tickDroppedItemCollection(ObjectList.of(), networkStorage);
         }
     }
 
-    private void exportCompletedCarrier(List<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
+    private void exportCompletedCarrier(ObjectList<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
         if (this.pendingDataFlow > 0) {
             return;
         }
@@ -1234,7 +1295,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         this.markForClientUpdate();
     }
 
-    private void tickDroppedItemCollection(List<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
+    private void tickDroppedItemCollection(ObjectList<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
         if (this.dropCollectionCooldown > 0) {
             this.dropCollectionCooldown--;
             return;
@@ -1244,19 +1305,19 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         collectAndExportDroppedItems(adjacentHandlers, networkStorage);
     }
 
-    private void collectAndExportDroppedItems(List<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
+    private void collectAndExportDroppedItems(ObjectList<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
         if (!(this.level instanceof ServerLevel serverLevel)) {
             return;
         }
         if (hasFuzzyCard()) {
-            handleFuzzyCardDropsAndExperience(serverLevel);
+            handleFuzzyCardDrops(serverLevel);
             return;
         }
         if (this.autoExportMode != DataExtractorAutoExportMode.AE && adjacentHandlers.isEmpty()) {
             return;
         }
 
-        Set<AEItemKey> viewCellMarkedItems = getViewCellMarkedItems();
+        ObjectSet<AEItemKey> viewCellMarkedItems = getViewCellMarkedItems();
         boolean inverted = hasViewCellInverterCard();
         for (ItemEntity itemEntity : serverLevel.getEntitiesOfClass(
                 ItemEntity.class,
@@ -1281,10 +1342,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
-    private void handleFuzzyCardDropsAndExperience(ServerLevel serverLevel) {
-        MEStorage networkStorage = getConnectedItemNetwork();
-
-        Set<AEItemKey> viewCellMarkedItems = getViewCellMarkedItems();
+    private void handleFuzzyCardDrops(ServerLevel serverLevel) {
+        ObjectSet<AEItemKey> viewCellMarkedItems = getViewCellMarkedItems();
         boolean inverted = hasViewCellInverterCard();
         boolean changed = false;
         for (ItemEntity itemEntity : serverLevel.getEntitiesOfClass(
@@ -1300,17 +1359,13 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             changed = true;
         }
 
-        if (networkStorage != null && this.pendingXpDataFlow == 0) {
-            changed |= convertExperienceOrbs(serverLevel, networkStorage);
-        }
-
         if (changed) {
             this.saveChanges();
             this.markForClientUpdate();
         }
     }
 
-    private boolean shouldCollectDroppedItem(ItemStack stack, @Nullable Set<AEItemKey> viewCellMarkedItems, boolean inverted) {
+    private boolean shouldCollectDroppedItem(ItemStack stack, @Nullable ObjectSet<AEItemKey> viewCellMarkedItems, boolean inverted) {
         if (stack.isEmpty()) {
             return false;
         }
@@ -1327,13 +1382,13 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     }
 
     @Nullable
-    private Set<AEItemKey> getViewCellMarkedItems() {
+    private ObjectSet<AEItemKey> getViewCellMarkedItems() {
         ItemStack viewCell = this.storage.getStackInSlot(DISPLAY_COMPONENT_SLOT);
         if (!(viewCell.getItem() instanceof ViewCellItem viewCellItem)) {
             return null;
         }
 
-        Set<AEItemKey> markedItems = new ObjectOpenHashSet<>();
+        ObjectSet<AEItemKey> markedItems = new ObjectOpenHashSet<>();
         var config = viewCellItem.getConfigInventory(viewCell);
         for (int i = 0; i < config.size(); i++) {
             if (config.getKey(i) instanceof AEItemKey itemKey) {
@@ -1350,92 +1405,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         return viewCellItem.getUpgrades(viewCell).isInstalled(AEItems.INVERTER_CARD);
-    }
-
-    private boolean convertExperienceOrbs(ServerLevel serverLevel, MEStorage networkStorage) {
-        List<ExperienceOrbValue> experienceOrbs = serverLevel.getEntitiesOfClass(
-                ExperienceOrb.class,
-                getDropCollectionAabb(),
-                ExperienceOrb::isAlive)
-                .stream()
-                .sorted(Comparator.comparing(ExperienceOrb::getUUID))
-                .map(orb -> new ExperienceOrbValue(orb, getExperience(orb)))
-                .filter(orb -> orb.experience() > 0)
-                .toList();
-        if (experienceOrbs.isEmpty()) {
-            return false;
-        }
-
-        long maxConvertibleExperience = Long.MAX_VALUE / DATA_FLOW_PER_EXPERIENCE;
-        long totalExperience = 0L;
-        for (ExperienceOrbValue orb : experienceOrbs) {
-            long remainingCapacity = maxConvertibleExperience - totalExperience;
-            if (remainingCapacity == 0) {
-                break;
-            }
-            totalExperience += Math.min(orb.experience(), remainingCapacity);
-        }
-        if (totalExperience == 0) {
-            return false;
-        }
-
-        long simulated = networkStorage.insert(
-                DataFlowKey.of(),
-                totalExperience * DATA_FLOW_PER_EXPERIENCE,
-                Actionable.SIMULATE,
-                IActionSource.ofMachine(this));
-        long unitsToConvert = Math.min(totalExperience, simulated / DATA_FLOW_PER_EXPERIENCE);
-        if (unitsToConvert == 0) {
-            return false;
-        }
-
-        long inserted = networkStorage.insert(
-                DataFlowKey.of(),
-                unitsToConvert * DATA_FLOW_PER_EXPERIENCE,
-                Actionable.MODULATE,
-                IActionSource.ofMachine(this));
-        if (inserted == 0) {
-            return false;
-        }
-
-        long completedUnits = inserted / DATA_FLOW_PER_EXPERIENCE;
-        long partialDataFlow = inserted % DATA_FLOW_PER_EXPERIENCE;
-        if (partialDataFlow > 0) {
-            this.pendingXpDataFlow = DATA_FLOW_PER_EXPERIENCE - partialDataFlow;
-            this.saveChanges();
-        }
-        consumeExperienceOrbs(serverLevel, experienceOrbs, completedUnits + (partialDataFlow > 0 ? 1 : 0));
-        return true;
-    }
-
-    private static long getExperience(ExperienceOrb orb) {
-        return (long) orb.getValue() * ((ExperienceOrbAccessor) orb).dataEnergistics$getCount();
-    }
-
-    private static void consumeExperienceOrbs(ServerLevel serverLevel, List<ExperienceOrbValue> experienceOrbs,
-                                              long units) {
-        long remainingUnits = units;
-        for (ExperienceOrbValue orb : experienceOrbs) {
-            if (remainingUnits == 0) {
-                return;
-            }
-
-            long consumed = Math.min(orb.experience(), remainingUnits);
-            long remainingExperience = orb.experience() - consumed;
-            orb.orb().discard();
-            if (remainingExperience > 0) {
-                awardExperience(serverLevel, orb.orb(), remainingExperience);
-            }
-            remainingUnits -= consumed;
-        }
-    }
-
-    private static void awardExperience(ServerLevel serverLevel, ExperienceOrb source, long experience) {
-        while (experience > 0) {
-            int amount = (int) Math.min(Integer.MAX_VALUE, experience);
-            ExperienceOrb.award(serverLevel, source.position(), amount);
-            experience -= amount;
-        }
     }
 
     private void flushPendingXpDataFlow(@Nullable MEStorage networkStorage) {
@@ -1465,17 +1434,88 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         this.saveChanges();
     }
 
-    private ItemStack routeAutoExportItem(ItemStack stack, List<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
+    private ItemStack routeAutoExportItem(ItemStack stack, ObjectList<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {
         return this.autoExportMode == DataExtractorAutoExportMode.AE ? insertIntoNetwork(stack, networkStorage) : insertIntoAdjacentHandlers(stack, adjacentHandlers);
     }
 
-    private ItemStack insertIntoAdjacentHandlers(ItemStack stack, List<IItemHandler> adjacentHandlers) {
+    private void flushPendingProductionOutput() {
+        if (this.pendingOutput.isEmpty() || this.autoExportMode == DataExtractorAutoExportMode.OFF) {
+            return;
+        }
+        try {
+            flushPendingProductionOutputToRoute();
+        } catch (RuntimeException exception) {
+            logOutputFailure("pending output via " + this.autoExportMode, exception);
+        }
+    }
+
+    private void flushPendingProductionOutputToRoute() {
+        if (this.autoExportMode == DataExtractorAutoExportMode.AE) {
+            MEStorage networkStorage = getConnectedItemNetwork();
+            if (networkStorage == null) {
+                return;
+            }
+            this.pendingOutput.flushAmounts((key, amount) -> {
+                try {
+                    long accepted = networkStorage.insert(key, amount, Actionable.MODULATE, IActionSource.ofMachine(this));
+                    if (accepted < 0 || accepted > amount) {
+                        throw new IllegalStateException("ME storage accepted " + accepted + " from " + amount);
+                    }
+                    return accepted;
+                } catch (RuntimeException exception) {
+                    logOutputFailure(key, amount, exception);
+                    return 0L;
+                }
+            }, 32);
+            return;
+        }
+
+        ObjectList<IItemHandler> itemHandlers = getAdjacentItemHandlers();
+        this.pendingOutput.flush(stack -> {
+            ItemStack remaining = insertIntoAdjacentHandlers(stack, itemHandlers);
+            return stack.getCount() - remaining.getCount();
+        }, 32);
+        ObjectList<IFluidHandler> fluidHandlers = getAdjacentFluidHandlers();
+        this.pendingOutput.flushAmounts((key, amount) -> {
+            if (!(key instanceof AEFluidKey fluidKey) || fluidHandlers.isEmpty()) {
+                return 0L;
+            }
+            FluidStack offered = fluidKey.toStack((int) Math.min(Integer.MAX_VALUE, amount));
+            for (IFluidHandler handler : fluidHandlers) {
+                try {
+                    int accepted = handler.fill(offered.copy(), IFluidHandler.FluidAction.EXECUTE);
+                    if (accepted < 0 || accepted > offered.getAmount()) {
+                        throw new IllegalStateException("Fluid container accepted " + accepted + " from " + offered.getAmount());
+                    }
+                    if (accepted > 0) {
+                        return accepted;
+                    }
+                } catch (RuntimeException exception) {
+                    logOutputFailure(key, amount, exception);
+                }
+            }
+            return 0L;
+        }, 32);
+    }
+
+    private ItemStack insertIntoAdjacentHandlers(ItemStack stack, ObjectList<IItemHandler> adjacentHandlers) {
         ItemStack remaining = stack.copy();
         for (IItemHandler handler : adjacentHandlers) {
             if (remaining.isEmpty()) {
                 break;
             }
-            remaining = ItemHandlerHelper.insertItem(handler, remaining, false);
+            try {
+                int slots = handler.getSlots();
+                for (int slot = 0; slot < slots && !remaining.isEmpty(); slot++) {
+                    ItemStack unaccepted = handler.insertItem(slot, remaining.copy(), false);
+                    if (!unaccepted.isEmpty() && (unaccepted.getCount() > remaining.getCount() || !ItemStack.isSameItemSameComponents(remaining, unaccepted))) {
+                        throw new IllegalStateException("Item container returned an invalid remainder for slot " + slot);
+                    }
+                    remaining = unaccepted;
+                }
+            } catch (RuntimeException exception) {
+                logOutputFailure(AEItemKey.of(remaining), remaining.getCount(), exception);
+            }
         }
         return remaining;
     }
@@ -1486,7 +1526,13 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         AEItemKey key = AEItemKey.of(stack);
-        long inserted = networkStorage.insert(key, stack.getCount(), Actionable.MODULATE, IActionSource.ofMachine(this));
+        long inserted;
+        try {
+            inserted = networkStorage.insert(key, stack.getCount(), Actionable.MODULATE, IActionSource.ofMachine(this));
+        } catch (RuntimeException exception) {
+            logOutputFailure(key, stack.getCount(), exception);
+            return stack;
+        }
         if (inserted <= 0) {
             return stack;
         }
@@ -1496,9 +1542,9 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return remaining;
     }
 
-    private List<IItemHandler> getAdjacentItemHandlers() {
+    private ObjectList<IItemHandler> getAdjacentItemHandlers() {
         if (!(this.level instanceof ServerLevel serverLevel)) {
-            return List.of();
+            return ObjectList.of();
         }
         if (this.adjacentItemHandlers == null) {
             this.adjacentItemHandlers = new AdjacentBlockCapabilityCache<>(
@@ -1508,6 +1554,35 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                     () -> !this.isRemoved());
         }
         return this.adjacentItemHandlers.getAll(this.outputSides);
+    }
+
+    private ObjectList<IFluidHandler> getAdjacentFluidHandlers() {
+        if (!(this.level instanceof ServerLevel serverLevel)) {
+            return ObjectList.of();
+        }
+        if (this.adjacentFluidHandlers == null) {
+            this.adjacentFluidHandlers = new AdjacentBlockCapabilityCache<>(
+                    Capabilities.FluidHandler.BLOCK,
+                    serverLevel,
+                    this.worldPosition,
+                    () -> !this.isRemoved());
+        }
+        return this.adjacentFluidHandlers.getAll(this.outputSides);
+    }
+
+    private void logOutputFailure(@Nullable AEKey key, long amount, RuntimeException exception) {
+        logOutputFailure("resource " + key + " x" + amount, exception);
+    }
+
+    private void logOutputFailure(String output, RuntimeException exception) {
+        long gameTime = this.level instanceof ServerLevel serverLevel ? serverLevel.getGameTime() : 0L;
+        if (gameTime < this.nextOutputFailureLogTick) {
+            return;
+        }
+        this.nextOutputFailureLogTick = gameTime + 100L;
+        Data_Energistics.LOGGER.error(
+                "Failed to insert data-extractor {} at {}; retaining unconfirmed output",
+                output, this.worldPosition, exception);
     }
 
     @Nullable
@@ -1602,38 +1677,38 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         ItemStack originalMainHand = fakePlayer.getItemInHand(InteractionHand.MAIN_HAND);
         ItemStack originalOffHand = fakePlayer.getItemInHand(InteractionHand.OFF_HAND);
 
-        fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, sword);
-        fakePlayer.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-        fakePlayer.moveTo(
-                this.worldPosition.getX() + 0.5,
-                this.worldPosition.getY() + 1.0,
-                this.worldPosition.getZ() + 0.5,
-                fakePlayer.getYRot(),
-                fakePlayer.getXRot());
+        try {
+            fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, sword);
+            fakePlayer.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            fakePlayer.moveTo(
+                    this.worldPosition.getX() + 0.5,
+                    this.worldPosition.getY() + 1.0,
+                    this.worldPosition.getZ() + 0.5,
+                    fakePlayer.getYRot(),
+                    fakePlayer.getXRot());
 
-        DamageSource damageSource = level.damageSources().playerAttack(fakePlayer);
-        float totalDamage = extractorSettings().baseDamage + getSwordInheritedDamage(sword);
-        totalDamage += sword.getItem().getAttackDamageBonus(target, totalDamage, damageSource);
-        totalDamage = EnchantmentHelper.modifyDamage(level, sword, target, damageSource, totalDamage);
+            DamageSource damageSource = level.damageSources().playerAttack(fakePlayer);
+            float totalDamage = extractorSettings().baseDamage + getSwordInheritedDamage(sword);
+            totalDamage += sword.getItem().getAttackDamageBonus(target, totalDamage, damageSource);
+            totalDamage = EnchantmentHelper.modifyDamage(level, sword, target, damageSource, totalDamage);
 
-        float healthBefore = target.getHealth();
-        boolean damaged = totalDamage > 0.0F && target.hurt(damageSource, totalDamage);
+            float healthBefore = target.getHealth();
+            boolean damaged = totalDamage > 0.0F && target.hurt(damageSource, totalDamage);
 
-        boolean hurtEnemy;
-        if (damaged && !sword.isEmpty()) {
-            hurtEnemy = sword.hurtEnemy(target, fakePlayer);
-            EnchantmentHelper.doPostAttackEffects(level, target, damageSource);
-            if (hurtEnemy && !sword.isEmpty()) {
-                sword.postHurtEnemy(target, fakePlayer);
+            if (damaged && !sword.isEmpty()) {
+                boolean hurtEnemy = sword.hurtEnemy(target, fakePlayer);
+                EnchantmentHelper.doPostAttackEffects(level, target, damageSource);
+                if (hurtEnemy && !sword.isEmpty()) {
+                    sword.postHurtEnemy(target, fakePlayer);
+                }
             }
+
+            ItemStack updatedSword = fakePlayer.getItemInHand(InteractionHand.MAIN_HAND).copy();
+            return new SwordAttackResult(damaged && (target.getHealth() < healthBefore || !target.isAlive()), updatedSword);
+        } finally {
+            fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, originalMainHand);
+            fakePlayer.setItemInHand(InteractionHand.OFF_HAND, originalOffHand);
         }
-
-        ItemStack updatedSword = fakePlayer.getItemInHand(InteractionHand.MAIN_HAND).copy();
-
-        fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, originalMainHand);
-        fakePlayer.setItemInHand(InteractionHand.OFF_HAND, originalOffHand);
-
-        return new SwordAttackResult(damaged && (target.getHealth() + 0.0001F < healthBefore || !target.isAlive()), updatedSword);
     }
 
     public static float getSwordInheritedDamage(ItemStack sword) {
@@ -1682,8 +1757,6 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         return 1.0F + 0.5F * (sharpnessLevel - 1);
     }
 
-    private record ExperienceOrbValue(ExperienceOrb orb, long experience) {}
-
     private record SwordAttackResult(boolean damaged, ItemStack updatedSword) {}
 
     private static int computeBaseDataFlowPerCycle(
@@ -1717,7 +1790,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         this.targetScanCooldown = 0;
         this.debuffCooldown = 0;
         this.cachedCoverageAabb = null;
-        this.cachedTargets = List.of();
+        this.cachedTargets = ObjectList.of();
     }
 
     private void updateOnlineState() {

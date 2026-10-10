@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningComputationResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityPlanningInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressReporter;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.TrinityCraftingSchema;
 
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.stacks.GenericStack;

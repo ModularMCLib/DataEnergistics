@@ -88,8 +88,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReus
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputProjection;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.TrinityCraftingSchema;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 

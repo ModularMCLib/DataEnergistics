@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.orbital.attack.work;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;

@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.item.carrier.OreDataCarrierData;

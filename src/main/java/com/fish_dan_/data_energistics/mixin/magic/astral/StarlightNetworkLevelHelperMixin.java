@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level;
 
 import hellfirepvp.astralsorcery.common.data.level.StarlightNetworkData;
 import hellfirepvp.astralsorcery.common.starlight.StarlightNetworkLevelHelper;
+import hellfirepvp.astralsorcery.common.starlight.StarlightNetworkTickHelper;
 import hellfirepvp.astralsorcery.common.starlight.api.ITransmissionTickable;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionLevelHelper;
@@ -34,7 +35,7 @@ public abstract class StarlightNetworkLevelHelperMixin implements AstralStarligh
         }
         this.networkData.addTransmissionNode(node);
         if (node instanceof ITransmissionTickable tickable) {
-            hellfirepvp.astralsorcery.common.starlight.StarlightNetworkTickHelper.getInstance()
+            StarlightNetworkTickHelper.getInstance()
                     .addNodeUpdate(this.level, tickable);
         }
         if (this.level instanceof ServerLevel serverLevel) {

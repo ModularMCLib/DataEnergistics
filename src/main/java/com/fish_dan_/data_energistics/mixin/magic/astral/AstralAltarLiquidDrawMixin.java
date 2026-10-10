@@ -13,10 +13,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import hellfirepvp.astralsorcery.common.lib.FluidsAS;
 import hellfirepvp.astralsorcery.common.tile.TileChalice;
 import hellfirepvp.astralsorcery.common.util.RayTraceUtil;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -58,51 +61,143 @@ public abstract class AstralAltarLiquidDrawMixin {
         }
     }
 
-    @Inject(method = "consumeLiquid", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "consumeLiquid", at = @At("HEAD"), cancellable = true)
     private void dataEnergistics$consumeDigitalSupply(Level level, BlockPos origin, FluidStack search,
                                                       boolean simulate, CallbackInfoReturnable<Boolean> callback) {
-        if (callback.getReturnValue() || !dataEnergistics$isLiquidStarlight(search)) {
+        if (!dataEnergistics$isLiquidStarlight(search)) {
             return;
         }
+        boolean completed = dataEnergistics$consumeCombined(level, origin, search, simulate);
+        callback.setReturnValue(completed);
+        callback.cancel();
+    }
+
+    /**
+     * Executes one atomic draw across Astral's real chalices and all discovered DSI network sources.
+     * DSI sources remain a LiquidDraw capability only; they are never represented as TileChalice instances,
+     * so they cannot participate in Astral's two-chalice interaction recipes.
+     */
+    @Unique
+    private boolean dataEnergistics$consumeCombined(Level level, BlockPos origin, FluidStack search, boolean simulate) {
         AEFluidKey key = AEFluidKey.of(search);
-        if (key == null) {
-            return;
+        if (key == null || search.getAmount() <= 0) {
+            return false;
         }
-        LongIterator positions = this.dataEnergistics$digitalSupplyInterfaces.iterator();
-        while (positions.hasNext()) {
-            BlockPos position = BlockPos.of(positions.nextLong());
-            if (!level.isLoaded(position)) {
+
+        ObjectList<dataEnergistics$ChaliceSource> chaliceSources = new ObjectArrayList<>();
+        int remaining = search.getAmount();
+        for (BlockPos position : TileChalice.findNearbyChalices(level, origin, dataEnergistics$SCAN_RADIUS)) {
+            if (!(level.getBlockEntity(position) instanceof TileChalice chalice)) {
                 continue;
             }
-            if (!(level.getBlockEntity(position) instanceof DigitalSupplyInterfaceBlockEntity target)) {
+            FluidStack available = chalice.getTankView().drain(search, IFluidHandler.FluidAction.SIMULATE);
+            int accepted = Math.min(remaining, available.getAmount());
+            if (accepted <= 0) {
+                continue;
+            }
+            chaliceSources.add(new dataEnergistics$ChaliceSource(chalice, accepted));
+            remaining -= accepted;
+            if (remaining == 0) {
+                break;
+            }
+        }
+
+        ObjectList<dataEnergistics$InterfaceSource> interfaceSources = new ObjectArrayList<>();
+        LongIterator positions = this.dataEnergistics$digitalSupplyInterfaces.iterator();
+        while (positions.hasNext() && remaining > 0) {
+            BlockPos position = BlockPos.of(positions.nextLong());
+            if (!level.isLoaded(position) || !(level.getBlockEntity(position) instanceof DigitalSupplyInterfaceBlockEntity target)) {
                 continue;
             }
             MEStorage storage = target.networkStorage();
             if (storage == null) {
                 continue;
             }
-            long requested = search.getAmount();
-            long available = storage.extract(key, requested, Actionable.SIMULATE, IActionSource.empty());
-            if (available < requested) {
+            long available = storage.extract(key, remaining, Actionable.SIMULATE, IActionSource.empty());
+            if (available <= 0L) {
                 continue;
             }
-            if (simulate) {
-                callback.setReturnValue(true);
-                return;
-            }
-            long extracted = storage.extract(key, requested, Actionable.MODULATE, IActionSource.empty());
-            if (extracted >= requested) {
-                callback.setReturnValue(true);
-                return;
-            }
-            if (extracted > 0L) {
-                long restored = storage.insert(key, extracted, Actionable.MODULATE, IActionSource.empty());
-                if (restored < extracted) {
-                    Data_Energistics.LOGGER.error(
-                            "Liquid Starlight draw rollback lost {} units at {}",
-                            extracted - restored,
-                            position);
+            int accepted = Math.toIntExact(Math.min((long) remaining, available));
+            interfaceSources.add(new dataEnergistics$InterfaceSource(target, accepted));
+            remaining -= accepted;
+        }
+
+        if (remaining > 0) {
+            return false;
+        }
+        if (simulate) {
+            return true;
+        }
+
+        ObjectList<dataEnergistics$ChaliceCommit> committedChalices = new ObjectArrayList<>();
+        ObjectList<dataEnergistics$InterfaceCommit> committedInterfaces = new ObjectArrayList<>();
+        for (dataEnergistics$ChaliceSource source : chaliceSources) {
+            FluidStack drained = source.chalice().getTankView().drain(
+                    search.copyWithAmount(source.amount()), IFluidHandler.FluidAction.EXECUTE);
+            if (drained.getAmount() != source.amount()) {
+                if (!drained.isEmpty()) {
+                    int restored = source.chalice().getTankView().fill(drained, IFluidHandler.FluidAction.EXECUTE);
+                    if (restored < drained.getAmount()) {
+                        Data_Energistics.LOGGER.error(
+                                "Liquid Starlight chalice preflight rollback lost {} units at {}",
+                                drained.getAmount() - restored,
+                                source.chalice().getBlockPos());
+                    }
                 }
+                dataEnergistics$rollback(committedChalices, committedInterfaces, key);
+                return false;
+            }
+            committedChalices.add(new dataEnergistics$ChaliceCommit(source.chalice(), drained.copy()));
+        }
+        for (dataEnergistics$InterfaceSource source : interfaceSources) {
+            MEStorage storage = source.target().networkStorage();
+            long extracted = storage == null ? 0L : storage.extract(key, source.amount(), Actionable.MODULATE, IActionSource.empty());
+            if (extracted != source.amount()) {
+                if (extracted > 0L && storage != null) {
+                    long restored = storage.insert(key, extracted, Actionable.MODULATE, IActionSource.empty());
+                    if (restored < extracted) {
+                        Data_Energistics.LOGGER.error(
+                                "Liquid Starlight draw rollback lost {} units at {}",
+                                extracted - restored,
+                                source.target().position());
+                    }
+                }
+                dataEnergistics$rollback(committedChalices, committedInterfaces, key);
+                return false;
+            }
+            committedInterfaces.add(new dataEnergistics$InterfaceCommit(source.target(), extracted));
+        }
+        return true;
+    }
+
+    @Unique
+    private static void dataEnergistics$rollback(ObjectList<dataEnergistics$ChaliceCommit> chalices,
+                                                 ObjectList<dataEnergistics$InterfaceCommit> interfaces,
+                                                 AEFluidKey key) {
+        for (dataEnergistics$InterfaceCommit committed : interfaces) {
+            MEStorage storage = committed.target().networkStorage();
+            if (storage == null) {
+                Data_Energistics.LOGGER.error(
+                        "Liquid Starlight draw rollback lost {} units because the interface network went offline at {}",
+                        committed.amount(),
+                        committed.target().position());
+                continue;
+            }
+            long restored = storage.insert(key, committed.amount(), Actionable.MODULATE, IActionSource.empty());
+            if (restored < committed.amount()) {
+                Data_Energistics.LOGGER.error(
+                        "Liquid Starlight draw rollback lost {} units at {}",
+                        committed.amount() - restored,
+                        committed.target().position());
+            }
+        }
+        for (dataEnergistics$ChaliceCommit committed : chalices) {
+            int restored = committed.chalice().getTankView().fill(committed.stack(), IFluidHandler.FluidAction.EXECUTE);
+            if (restored < committed.stack().getAmount()) {
+                Data_Energistics.LOGGER.error(
+                        "Liquid Starlight chalice rollback lost {} units at {}",
+                        committed.stack().getAmount() - restored,
+                        committed.chalice().getBlockPos());
             }
         }
     }
@@ -121,7 +216,20 @@ public abstract class AstralAltarLiquidDrawMixin {
         if (storage == null) {
             return false;
         }
-        return storage.extract(AEFluidKey.of(FluidsAS.LIQUID_STARLIGHT.getSource().get()), amount,
-                Actionable.SIMULATE, IActionSource.empty()) >= amount;
+        long available = storage.extract(AEFluidKey.of(FluidsAS.LIQUID_STARLIGHT.getSource().get()), amount,
+                Actionable.SIMULATE, IActionSource.empty());
+        return available > 0L;
     }
+
+    @Unique
+    private record dataEnergistics$ChaliceSource(TileChalice chalice, int amount) {}
+
+    @Unique
+    private record dataEnergistics$InterfaceSource(DigitalSupplyInterfaceBlockEntity target, int amount) {}
+
+    @Unique
+    private record dataEnergistics$ChaliceCommit(TileChalice chalice, FluidStack stack) {}
+
+    @Unique
+    private record dataEnergistics$InterfaceCommit(DigitalSupplyInterfaceBlockEntity target, long amount) {}
 }

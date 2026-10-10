@@ -45,6 +45,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.WeakHashMap;
 
 /** Astral Sorcery integration for lumen, constellation brightness and liquid starlight. */
 @NullMarked
@@ -54,7 +55,8 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     private static final ResourceLocation STARLIGHT_ID = Data_Energistics.id("astral/liquid_starlight");
     private static final long TICK_LIMIT = 1_000L;
     private static final long CONSTELLATION_AE_PER_BRIGHTNESS = 1_000L;
-    private static final ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode> REGISTERED_NODES = new ObjectLinkedOpenHashSet<>();
+    /** Keeps Astral transmission nodes partitioned by their server level; levels are weak keys during unload. */
+    private static final WeakHashMap<ServerLevel, ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode>> REGISTERED_NODES = new WeakHashMap<>();
     private final ObjectList<DigitalSupplyResourceDefinition> resourceCatalog;
 
     public AstralSorceryDigitalSupplyAdapter() {
@@ -170,10 +172,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
 
     /** Sends packets for DSI nodes linked by Astral's own linking tool after Astral's native source pass. */
     public static void transmitRegisteredInterfaces(ServerLevel level) {
-        if (REGISTERED_NODES.isEmpty()) {
+        ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode> registered = REGISTERED_NODES.get(level);
+        if (registered == null || registered.isEmpty()) {
             return;
         }
-        ObjectList<DigitalSupplyTransmissionReceiverNode> snapshot = new ObjectArrayList<>(REGISTERED_NODES);
+        ObjectList<DigitalSupplyTransmissionReceiverNode> snapshot = new ObjectArrayList<>(registered);
         StarlightNetworkLevelHelper helper = StarlightNetworkLevelHelper.get(level);
         for (DigitalSupplyTransmissionReceiverNode node : snapshot) {
             if (!level.isLoaded(node.getNodePos())) {
@@ -298,12 +301,19 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         }
     }
 
-    public static void registerTransmissionNode(DigitalSupplyTransmissionReceiverNode node) {
-        REGISTERED_NODES.add(node);
+    public static void registerTransmissionNode(ServerLevel level, DigitalSupplyTransmissionReceiverNode node) {
+        REGISTERED_NODES.computeIfAbsent(level, ignored -> new ObjectLinkedOpenHashSet<>()).add(node);
     }
 
-    public static void unregisterTransmissionNode(DigitalSupplyTransmissionReceiverNode node) {
-        REGISTERED_NODES.remove(node);
+    public static void unregisterTransmissionNode(ServerLevel level, DigitalSupplyTransmissionReceiverNode node) {
+        ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode> registered = REGISTERED_NODES.get(level);
+        if (registered == null) {
+            return;
+        }
+        registered.remove(node);
+        if (registered.isEmpty()) {
+            REGISTERED_NODES.remove(level);
+        }
     }
 
     private void ensureLumenNode(DigitalSupplyInterfaceTarget target) {

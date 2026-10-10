@@ -53,7 +53,7 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
         BlockPos position = target.position();
         TransmissionNode node = helper.getNode(position).orElse(null);
         if (node instanceof DigitalSupplyTransmissionReceiverNode receiverNode) {
-            AstralSorceryDigitalSupplyAdapter.registerTransmissionNode(receiverNode);
+            AstralSorceryDigitalSupplyAdapter.registerTransmissionNode((ServerLevel) target.getLevel(), receiverNode);
             this.dataEnergistics$astralNodeRegistered = true;
             return;
         }
@@ -68,7 +68,7 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
         DigitalSupplyTransmissionReceiverNode replacement = new DigitalSupplyTransmissionReceiverNode(
                 position, new LinkContainer(), lossMultiplier);
         ((AstralStarlightNodeLifecycle) helper).dataEnergistics$replaceNode(position, replacement);
-        AstralSorceryDigitalSupplyAdapter.registerTransmissionNode(replacement);
+        AstralSorceryDigitalSupplyAdapter.registerTransmissionNode((ServerLevel) target.getLevel(), replacement);
         this.dataEnergistics$astralNodeRegistered = true;
     }
 
@@ -82,7 +82,7 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
             TransmissionNode node = StarlightNetworkLevelHelper.get(target.getLevel())
                     .getNode(target.position()).orElse(null);
             if (node instanceof DigitalSupplyTransmissionReceiverNode receiverNode) {
-                AstralSorceryDigitalSupplyAdapter.unregisterTransmissionNode(receiverNode);
+                AstralSorceryDigitalSupplyAdapter.unregisterTransmissionNode((ServerLevel) target.getLevel(), receiverNode);
             }
             ((AstralStarlightNodeLifecycle) StarlightNetworkLevelHelper.get(target.getLevel()))
                     .dataEnergistics$removeNode(target.position());

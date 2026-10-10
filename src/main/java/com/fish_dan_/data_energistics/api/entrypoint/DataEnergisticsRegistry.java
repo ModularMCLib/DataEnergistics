@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutput
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.matching.RecipeMatchingRegistry;
 import com.fish_dan_.data_energistics.api.registry.packaged.PackagedCraftingRegistry;
+import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdRegistry;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRegistry;
@@ -27,6 +28,9 @@ public interface DataEnergisticsRegistry {
 
     /** Returns the transaction-local AE2 key-type registration facet. */
     AeKeyTypeRegistry aeKeyTypes();
+
+    /** Returns the transaction-local resource-key facet for extractor and mimetic production rules. */
+    DataProductionResourceRegistry dataProductionResources();
 
     /** Returns the transaction-local Digital Supply Interface adapter facet. */
     DigitalSupplyInterfaceRegistry digitalSupplyInterfaces();

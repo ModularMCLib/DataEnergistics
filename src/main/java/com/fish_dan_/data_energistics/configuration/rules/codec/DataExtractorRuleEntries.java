@@ -1,24 +1,35 @@
 package com.fish_dan_.data_energistics.configuration.rules.codec;
 
+import com.fish_dan_.data_energistics.api.production.rule.DataProductionRule;
+import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
+import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
+import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ConfiguredStack;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ExtractorOutputRule;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.ItemRule;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.MimeticOutputRule;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.OutputRule;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.configuration.rules.RuleFormatException;
 import com.fish_dan_.data_energistics.configuration.rules.schema.CarrierRuleSchema;
+import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
+import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticOutputEntry;
 import com.fish_dan_.data_energistics.configuration.rules.schema.OutputRuleSchema;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 
 /** Converts aligned native Configuration arrays into complete immutable rule snapshots. */
 public final class DataExtractorRuleEntries {
@@ -32,7 +43,107 @@ public final class DataExtractorRuleEntries {
         return new LoadedRules(parseCarriers(carriers, source), parseOutputs(outputs, source));
     }
 
-    private static List<ItemRule> parseCarriers(CarrierRuleSchema schema, Path source) throws RuleFormatException {
+    public static LoadedRules compile(
+                                      CarrierRuleSchema carriers,
+                                      OutputRuleSchema legacyOutputs,
+                                      MimeticOutputEntry[] mimeticOutputs,
+                                      ExtractorOutputEntry[] extractorOutputs,
+                                      Path source) throws RuleFormatException {
+        ObjectList<ItemRule> carrierRules = parseCarriers(carriers, source);
+        ObjectList<MimeticOutputRule> mimetic = mimeticOutputs.length > 0 ? parseMimeticOutputs(mimeticOutputs, source) : migrateLegacyOutputs(legacyOutputs, source);
+        return new LoadedRules(carrierRules, parseOutputs(legacyOutputs, source), mimetic,
+                parseExtractorOutputs(extractorOutputs, source));
+    }
+
+    private static ObjectList<MimeticOutputRule> migrateLegacyOutputs(OutputRuleSchema schema, Path source) throws RuleFormatException {
+        ObjectList<OutputRule> legacy = parseOutputs(schema, source);
+        ObjectArrayList<MimeticOutputRule> migrated = new ObjectArrayList<>();
+        for (OutputRule output : legacy) {
+            for (ConfiguredStack stack : output.outputs()) {
+                ResourceLocation itemId = stack.itemId();
+                var key = DataProductionKeyResolver.resolve(OutputKeyKind.ITEM, itemId);
+                if (key != null) {
+                    migrated.add(new MimeticOutputRule(output.dataType(), output.recordedId(),
+                            new DataProductionRule(OutputFamily.LOOT, key, OutputAmountMode.FIXED, stack.count())));
+                }
+            }
+        }
+        return ObjectLists.unmodifiable(migrated);
+    }
+
+    private static ObjectList<MimeticOutputRule> parseMimeticOutputs(MimeticOutputEntry[] entries, Path source) throws RuleFormatException {
+        ObjectArrayList<MimeticOutputRule> rules = new ObjectArrayList<>();
+        for (int index = 0; index < entries.length; index++) {
+            String path = "mimeticOutputs[" + index + "]";
+            MimeticOutputEntry entry = entries[index];
+            DataType dataType = requireEnum(source, path + ".dataType", entry.dataType());
+            OutputFamily family = requireEnum(source, path + ".outputFamily", entry.outputFamily());
+            OutputKeyKind kind = requireEnum(source, path + ".keyKind", entry.keyKind());
+            OutputAmountMode mode = requireEnum(source, path + ".amountMode", entry.amountMode());
+            ResourceLocation recordedId = parseId(source, path + ".recordedId", entry.recordedId());
+            ResourceLocation keyId = parseId(source, path + ".keyId", entry.keyId());
+            long amount = nonNegative(source, path + ".amount", entry.amount());
+            var key = DataProductionKeyResolver.resolve(kind, keyId);
+            if (key != null) {
+                rules.add(new MimeticOutputRule(dataType, recordedId, new DataProductionRule(family, key, mode, amount)));
+            }
+        }
+        return ObjectLists.unmodifiable(rules);
+    }
+
+    private static ObjectList<ExtractorOutputRule> parseExtractorOutputs(ExtractorOutputEntry[] entries, Path source) throws RuleFormatException {
+        ObjectArrayList<ExtractorOutputRule> rules = new ObjectArrayList<>();
+        for (int index = 0; index < entries.length; index++) {
+            String path = "extractorOutputs[" + index + "]";
+            ExtractorOutputEntry entry = entries[index];
+            ObjectArrayList<ResourceLocation> weaponItems = parseOptionalIds(source, path + ".weaponItems", entry.weaponItems());
+            ObjectArrayList<TagKey<net.minecraft.world.item.Item>> weaponTags = parseOptionalTags(source, path + ".weaponTags", entry.weaponTags());
+            ObjectArrayList<ResourceLocation> targets = parseOptionalIds(source, path + ".targetEntityIds", entry.targetEntityIds());
+            if (weaponItems.isEmpty() && weaponTags.isEmpty()) {
+                throw invalid(source, path, "weapon matcher must contain an item or tag", "empty", "fill weaponItems or weaponTags");
+            }
+            OutputFamily family = requireEnum(source, path + ".outputFamily", entry.outputFamily());
+            OutputKeyKind kind = requireEnum(source, path + ".keyKind", entry.keyKind());
+            OutputAmountMode mode = requireEnum(source, path + ".amountMode", entry.amountMode());
+            ResourceLocation keyId = parseId(source, path + ".keyId", entry.keyId());
+            long amount = nonNegative(source, path + ".amount", entry.amount());
+            var key = DataProductionKeyResolver.resolve(kind, keyId);
+            if (key != null) {
+                rules.add(new ExtractorOutputRule(weaponItems, weaponTags, targets,
+                        new DataProductionRule(family, key, mode, amount)));
+            }
+        }
+        return ObjectLists.unmodifiable(rules);
+    }
+
+    private static ObjectArrayList<ResourceLocation> parseOptionalIds(Path source, String path, String[] values) throws RuleFormatException {
+        ObjectArrayList<ResourceLocation> result = new ObjectArrayList<>();
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                result.add(parseId(source, path, value.trim()));
+            }
+        }
+        return result;
+    }
+
+    private static ObjectArrayList<TagKey<net.minecraft.world.item.Item>> parseOptionalTags(Path source, String path, String[] values) throws RuleFormatException {
+        ObjectArrayList<TagKey<net.minecraft.world.item.Item>> result = new ObjectArrayList<>();
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                result.add(TagKey.create(Registries.ITEM, parseId(source, path, value.trim())));
+            }
+        }
+        return result;
+    }
+
+    private static long nonNegative(Path source, String path, long value) throws RuleFormatException {
+        if (value < 0) {
+            throw invalid(source, path, "amount must not be negative", Long.toString(value), "use zero or a positive long");
+        }
+        return value;
+    }
+
+    private static ObjectList<ItemRule> parseCarriers(CarrierRuleSchema schema, Path source) throws RuleFormatException {
         int rowCount = schema.slots.length;
         requireLength(source, "carrierRules.dataTypes", rowCount, schema.dataTypes.length);
         requireLength(source, "carrierRules.inputItems", rowCount, schema.inputItems.length);
@@ -40,7 +151,7 @@ public final class DataExtractorRuleEntries {
         requireLength(source, "carrierRules.progressPerItems", rowCount, schema.progressPerItems.length);
         requireLength(source, "carrierRules.requiredAmounts", rowCount, schema.requiredAmounts.length);
 
-        List<ItemRule> rules = new ObjectArrayList<>(rowCount);
+        ObjectArrayList<ItemRule> rules = new ObjectArrayList<>(rowCount);
         var indexes = new Object2IntLinkedOpenHashMap<CarrierKey>();
         indexes.defaultReturnValue(-1);
         for (int index = 0; index < rowCount; index++) {
@@ -65,16 +176,16 @@ public final class DataExtractorRuleEntries {
             }
             rules.add(new ItemRule(slot, dataType, inputItem, recordedItem, progress, required));
         }
-        return List.copyOf(rules);
+        return ObjectLists.unmodifiable(rules);
     }
 
-    private static List<OutputRule> parseOutputs(OutputRuleSchema schema, Path source) throws RuleFormatException {
+    private static ObjectList<OutputRule> parseOutputs(OutputRuleSchema schema, Path source) throws RuleFormatException {
         int rowCount = schema.dataTypes.length;
         requireLength(source, "outputRules.recordedItems", rowCount, schema.recordedItems.length);
         requireLength(source, "outputRules.items", rowCount, schema.items.length);
         requireLength(source, "outputRules.counts", rowCount, schema.counts.length);
 
-        Map<OutputKey, OutputRows> grouped = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<OutputKey, OutputRows> grouped = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < rowCount; index++) {
             String path = "outputRules[" + index + "]";
             DataType dataType = requireEnum(source, path + ".dataType", schema.dataTypes[index]);
@@ -93,12 +204,12 @@ public final class DataExtractorRuleEntries {
                     .add(source, path, item, count, index);
         }
 
-        List<OutputRule> rules = new ObjectArrayList<>(grouped.size());
-        for (Map.Entry<OutputKey, OutputRows> entry : grouped.entrySet()) {
+        ObjectArrayList<OutputRule> rules = new ObjectArrayList<>(grouped.size());
+        for (Object2ObjectMap.Entry<OutputKey, OutputRows> entry : grouped.object2ObjectEntrySet()) {
             OutputKey key = entry.getKey();
             rules.add(new OutputRule(key.dataType(), key.recordedItem(), entry.getValue().stacks()));
         }
-        return List.copyOf(rules);
+        return ObjectLists.unmodifiable(rules);
     }
 
     private static void requireLength(Path source, String path, int expected, int actual) throws RuleFormatException {
@@ -121,7 +232,7 @@ public final class DataExtractorRuleEntries {
 
     private static ResourceLocation parseId(Path source, String path, String value) throws RuleFormatException {
         if (value == null || value.isBlank()) {
-            throw invalid(source, path, "registry id must not be blank", String.valueOf(value), "use namespace:path");
+            throw invalid(source, path, "registry id must not be blank", value, "use namespace:path");
         }
         ResourceLocation parsed = ResourceLocation.tryParse(value);
         if (parsed == null) {
@@ -157,7 +268,7 @@ public final class DataExtractorRuleEntries {
 
     private static final class OutputRows {
 
-        private final Map<ResourceLocation, IndexedStack> rows = new Object2ObjectLinkedOpenHashMap<>();
+        private final Object2ObjectMap<ResourceLocation, IndexedStack> rows = new Object2ObjectLinkedOpenHashMap<>();
 
         void add(Path source, String path, ResourceLocation item, int count, int index) throws RuleFormatException {
             IndexedStack previous = this.rows.get(item);
@@ -173,8 +284,8 @@ public final class DataExtractorRuleEntries {
             }
         }
 
-        List<ConfiguredStack> stacks() {
-            return this.rows.values().stream().map(IndexedStack::stack).toList();
+        ObjectList<ConfiguredStack> stacks() {
+            return ObjectLists.unmodifiable(new ObjectArrayList<>(this.rows.values().stream().map(IndexedStack::stack).toList()));
         }
     }
 

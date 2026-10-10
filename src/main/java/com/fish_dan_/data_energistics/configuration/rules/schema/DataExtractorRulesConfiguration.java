@@ -24,6 +24,10 @@ public final class DataExtractorRulesConfiguration {
     public static final String CONFIG_ID = Data_Energistics.MODID + "_data_extractor_rules";
     public static final String FILENAME = Data_Energistics.MODID + "/data_extractor_rules";
 
+    static {
+        DataProductionRuleConfigurationAdapter.register();
+    }
+
     public static final ConfigHolder<DataExtractorRulesConfiguration> HOLDER = Configuration.registerConfig(DataExtractorRulesConfiguration.class, ConfigFormats.YAML);
     public static final DataExtractorRulesConfiguration INSTANCE = HOLDER.getConfigInstance();
 
@@ -41,6 +45,20 @@ public final class DataExtractorRulesConfiguration {
     })
     public OutputRuleSchema outputRules = new OutputRuleSchema();
 
+    @Configurable(key = Configurable.LocalizationKey.FULL)
+    @Configurable.Comment({
+            "One complete mimetic rule per entry. Each entry contains data type, recorded id, family, key kind, key id, amount mode and amount.",
+            "每个条目是一整条数据拟生规则；条目包含数据类型、记录 ID、产出类别、键类型、键 ID、数量模式和数量。"
+    })
+    public MimeticOutputEntry[] mimeticOutputs = {};
+
+    @Configurable(key = Configurable.LocalizationKey.FULL)
+    @Configurable.Comment({
+            "One complete extractor rule per entry. Weapon and target ids are arrays; empty target ids match every target.",
+            "每个条目是一整条数据提取器规则；武器和目标 ID 都是数组；空目标数组匹配所有目标。"
+    })
+    public ExtractorOutputEntry[] extractorOutputs = {};
+
     public DataExtractorRulesConfiguration() {}
 
     /** Compiles the current native arrays directly; Configuration's Auto-Sync updates the source arrays directly. */
@@ -49,6 +67,8 @@ public final class DataExtractorRulesConfiguration {
             return DataExtractorRuleEntries.compile(
                     this.carrierRules,
                     this.outputRules,
+                    this.mimeticOutputs,
+                    this.extractorOutputs,
                     ConfigIO.getConfigFile(HOLDER).toPath());
         } catch (RuleFormatException exception) {
             throw new IllegalStateException("Data Extractor rule configuration is invalid", exception);

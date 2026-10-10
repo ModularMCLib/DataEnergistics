@@ -6,15 +6,14 @@ import com.fish_dan_.data_energistics.configuration.rules.DefaultRuleValues;
 import com.fish_dan_.data_energistics.configuration.rules.DefaultRuleValues.CropRule;
 
 import dev.toma.configuration.config.Configurable;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Native arrays whose matching indexes form complete Data Extractor carrier rows. */
 public final class CarrierRuleSchema {
 
     /** Creates the native default rows used when the framework creates a new rule file. */
     public CarrierRuleSchema(DefaultRuleValues defaults) {
-        List<CropRule> cropRules = defaults.cropRules();
+        ObjectList<CropRule> cropRules = defaults.cropRules();
         int rowCount = cropRules.size() + 2;
         slots = new Slot[rowCount];
         dataTypes = new DataType[rowCount];

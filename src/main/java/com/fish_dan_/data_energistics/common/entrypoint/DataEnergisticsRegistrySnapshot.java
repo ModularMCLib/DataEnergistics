@@ -14,6 +14,7 @@ import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyRe
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
 import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMachineCapacityRegistration;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
+import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdLookup;
@@ -57,6 +58,7 @@ public final class DataEnergisticsRegistrySnapshot {
     private final ObjectList<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations;
     private final ObjectList<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations;
     private final ObjectList<AeKeyTypeRegistration> aeKeyTypeRegistrations;
+    private final DataProductionResourceCatalog dataProductionResources;
     private final ObjectList<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaceRegistrations;
     private final TrinityPatternRecipeIdResolvers trinityPatternRecipes;
     private final ObjectList<TrinityPatternSearchTermRegistration> trinityPatternSearchTermRegistrations;
@@ -76,6 +78,7 @@ public final class DataEnergisticsRegistrySnapshot {
                                     ObjectCollection<PatternUploadWorkstationRegistration> patternUploadWorkstationRegistrations,
                                     ObjectCollection<AdaptivePatternProviderRegistration> adaptivePatternProviderRegistrations,
                                     ObjectCollection<AeKeyTypeRegistration> aeKeyTypeRegistrations,
+                                    ObjectCollection<DataProductionResourceRegistration> dataProductionResources,
                                     ObjectCollection<DigitalSupplyInterfaceRegistration> digitalSupplyInterfaceRegistrations,
                                     Object2ObjectMap<ResourceLocation, TrinityPatternRecipeIdResolver> trinityPatternRecipeIdResolvers,
                                     Object2ObjectMap<ResourceLocation, TrinityPatternSearchTermRegistration> trinityPatternSearchTerms,
@@ -95,6 +98,7 @@ public final class DataEnergisticsRegistrySnapshot {
         this.patternUploadWorkstationRegistrations = immutableList(patternUploadWorkstationRegistrations);
         this.adaptivePatternProviderRegistrations = immutableList(adaptivePatternProviderRegistrations);
         this.aeKeyTypeRegistrations = immutableList(aeKeyTypeRegistrations);
+        this.dataProductionResources = new DataProductionResourceCatalog(dataProductionResources);
         this.digitalSupplyInterfaceRegistrations = freezeDigitalSupplyInterfaces(digitalSupplyInterfaceRegistrations);
         this.trinityPatternRecipes = new TrinityPatternRecipeIdResolvers(trinityPatternRecipeIdResolvers);
         this.trinityPatternSearchTermRegistrations = immutableList(trinityPatternSearchTerms.values());
@@ -108,6 +112,11 @@ public final class DataEnergisticsRegistrySnapshot {
     /** Returns only committed energy adapters, frozen after common-setup registration. */
     public ObjectList<TowerEnergyEndpointIntegration> towerEnergyIntegrations() {
         return this.towerEnergyIntegrations;
+    }
+
+    /** Returns the immutable resource directory available to extractor and mimetic rules. */
+    public DataProductionResourceCatalog dataProductionResources() {
+        return this.dataProductionResources;
     }
 
     private static <T> ObjectList<T> immutableList(ObjectCollection<T> values) {

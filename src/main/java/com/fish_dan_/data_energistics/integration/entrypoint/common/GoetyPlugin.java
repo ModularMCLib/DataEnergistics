@@ -5,7 +5,9 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
+import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistration;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyDigitalSupplyAdapter;
+import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetySoulKey;
 import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetySoulKeyType;
 import com.fish_dan_.data_energistics.integration.magic.goety.packaged.DarkAltarAdapter;
 
@@ -20,6 +22,8 @@ public final class GoetyPlugin implements DataEnergisticsPlugin {
                 GoetySoulKeyType.ID,
                 GoetySoulKeyType.INSTANCE,
                 GoetySoulKeyType.ID));
+        registry.dataProductionResources().register(new DataProductionResourceRegistration(
+                GoetySoulKey.ID, GoetySoulKey.INSTANCE));
         GoetyDigitalSupplyAdapter adapter = new GoetyDigitalSupplyAdapter();
         registry.digitalSupplyInterfaces().register(new DigitalSupplyInterfaceRegistration(
                 adapter.id(), adapter.resources(), adapter));

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.entrypoint;
 
+import com.fish_dan_.data_energistics.ae2.key.BloodKey;
+import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAdapter;
@@ -20,6 +22,8 @@ import com.fish_dan_.data_energistics.api.registry.machine.capacity.CraftingMach
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.api.registry.matching.RecipeMatchingRegistry;
 import com.fish_dan_.data_energistics.api.registry.packaged.PackagedCraftingRegistry;
+import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistration;
+import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderRegistration;
 import com.fish_dan_.data_energistics.api.registry.provider.definition.PatternProviderWorkstationSourceRegistration;
@@ -54,6 +58,7 @@ import org.jspecify.annotations.Nullable;
  */
 final class PluginRegistrationAccumulator {
 
+    private final Object2ObjectMap<ResourceLocation, DataProductionResourceRegistration> dataProductionResources = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, AeKeyTypeRegistration> aeKeyTypes = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, DigitalSupplyInterfaceRegistration> digitalSupplyInterfaces = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, DigitalSupplyResourceDefinition> digitalSupplyResources = new Object2ObjectLinkedOpenHashMap<>();
@@ -77,6 +82,11 @@ final class PluginRegistrationAccumulator {
     private final Object2ObjectMap<ResourceLocation, RecipeMatchingRuleAdapter> recipeMatchingAdapters = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<String, TowerEnergyEndpointIntegration> towerEnergyIntegrations = new Object2ObjectLinkedOpenHashMap<>();
 
+    PluginRegistrationAccumulator() {
+        this.dataProductionResources.put(BloodKey.ID, new DataProductionResourceRegistration(BloodKey.ID, BloodKey.INSTANCE));
+        this.dataProductionResources.put(ExperienceKey.ID, new DataProductionResourceRegistration(ExperienceKey.ID, ExperienceKey.INSTANCE));
+    }
+
     /**
      * Creates an isolated registration transaction for exactly one discovered plugin.
      */
@@ -92,6 +102,12 @@ final class PluginRegistrationAccumulator {
         this.requireOpen();
         staging.requireOwnedBy(this);
         staging.requireOpen();
+
+        for (ResourceLocation id : staging.dataProductionResources.keySet()) {
+            if (this.dataProductionResources.containsKey(id)) {
+                throw new IllegalStateException("Duplicate data-production resource '" + id + "' from " + staging.description());
+            }
+        }
 
         for (String terminalName : staging.universalTerminals.keySet()) {
             if (this.universalTerminals.containsKey(terminalName)) {
@@ -233,6 +249,7 @@ final class PluginRegistrationAccumulator {
                 registration.blockEntityTypeId(), registration.registrationId()));
         this.adaptivePatternProviders.putAll(staging.adaptivePatternProviders);
         this.aeKeyTypes.putAll(staging.aeKeyTypes);
+        this.dataProductionResources.putAll(staging.dataProductionResources);
         this.digitalSupplyInterfaces.putAll(staging.digitalSupplyInterfaces);
         this.digitalSupplyResources.putAll(staging.digitalSupplyResources);
         this.trinityPatternRecipeIdResolvers.putAll(staging.trinityPatternRecipeIdResolvers);
@@ -257,6 +274,7 @@ final class PluginRegistrationAccumulator {
                 this.patternUploadWorkstations.values(),
                 this.adaptivePatternProviders.values(),
                 this.aeKeyTypes.values(),
+                this.dataProductionResources.values(),
                 this.digitalSupplyInterfaces.values(),
                 this.trinityPatternRecipeIdResolvers,
                 this.trinityPatternSearchTerms,
@@ -286,6 +304,7 @@ final class PluginRegistrationAccumulator {
         private final PluginRegistrationAccumulator owner;
         private final String owningModId;
         private final String pluginClassName;
+        private final Object2ObjectMap<ResourceLocation, DataProductionResourceRegistration> dataProductionResources = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, AeKeyTypeRegistration> aeKeyTypes = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, DigitalSupplyInterfaceRegistration> digitalSupplyInterfaces = new Object2ObjectLinkedOpenHashMap<>();
         private final Object2ObjectMap<ResourceLocation, DigitalSupplyResourceDefinition> digitalSupplyResources = new Object2ObjectLinkedOpenHashMap<>();
@@ -319,6 +338,13 @@ final class PluginRegistrationAccumulator {
             requireStagedValue(staged.resourceDirectory(), "AEKeyType resource directory");
             if (this.aeKeyTypes.putIfAbsent(id, staged) != null) {
                 throw new IllegalStateException("Duplicate AEKeyType registration ID '" + id + "' in " + description());
+            }
+        };
+        private final DataProductionResourceRegistry dataProductionResourceRegistry = registration -> {
+            requireOpen();
+            var staged = requireStagedValue(registration, "Data-production resource registration");
+            if (this.dataProductionResources.putIfAbsent(staged.id(), staged) != null) {
+                throw new IllegalStateException("Duplicate data-production resource '" + staged.id() + "' in " + description());
             }
         };
         private final DigitalSupplyInterfaceRegistry digitalSupplyInterfaceRegistry = registration -> {
@@ -364,6 +390,11 @@ final class PluginRegistrationAccumulator {
         @Override
         public AeKeyTypeRegistry aeKeyTypes() {
             return this.aeKeyTypeRegistry;
+        }
+
+        @Override
+        public DataProductionResourceRegistry dataProductionResources() {
+            return this.dataProductionResourceRegistry;
         }
 
         @Override

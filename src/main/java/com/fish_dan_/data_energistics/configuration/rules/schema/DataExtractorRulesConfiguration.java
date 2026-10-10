@@ -14,6 +14,8 @@ import dev.toma.configuration.config.Configurable;
 import dev.toma.configuration.config.format.ConfigFormats;
 import dev.toma.configuration.config.io.ConfigIO;
 
+import java.util.Arrays;
+
 /** Direct Configuration-owned schema for the independently stored Data Extractor rule YAML. */
 @Config(
         id = DataExtractorRulesConfiguration.CONFIG_ID,
@@ -59,20 +61,74 @@ public final class DataExtractorRulesConfiguration {
     })
     public ExtractorOutputEntry[] extractorOutputs = {};
 
+    private transient LoadedRules cachedRules;
+    private transient int cachedFingerprint;
+    private transient boolean hasCachedRules;
+
     public DataExtractorRulesConfiguration() {}
 
     /** Compiles the current native arrays directly; Configuration's Auto-Sync updates the source arrays directly. */
-    public LoadedRules rules() {
+    public synchronized LoadedRules rules() {
+        int fingerprint = configurationFingerprint();
+        if (this.hasCachedRules && this.cachedFingerprint == fingerprint) {
+            return this.cachedRules;
+        }
         try {
-            return DataExtractorRuleEntries.compile(
+            LoadedRules compiled = DataExtractorRuleEntries.compile(
                     this.carrierRules,
                     this.outputRules,
                     this.mimeticOutputs,
                     this.extractorOutputs,
                     ConfigIO.getConfigFile(HOLDER).toPath());
+            this.cachedRules = compiled;
+            this.cachedFingerprint = fingerprint;
+            this.hasCachedRules = true;
+            return compiled;
         } catch (RuleFormatException exception) {
             throw new IllegalStateException("Data Extractor rule configuration is invalid", exception);
         }
+    }
+
+    private int configurationFingerprint() {
+        int result = 1;
+        result = 31 * result + Arrays.hashCode(this.carrierRules.slots);
+        result = 31 * result + Arrays.hashCode(this.carrierRules.dataTypes);
+        result = 31 * result + Arrays.hashCode(this.carrierRules.inputItems);
+        result = 31 * result + Arrays.hashCode(this.carrierRules.recordedItems);
+        result = 31 * result + Arrays.hashCode(this.carrierRules.progressPerItems);
+        result = 31 * result + Arrays.hashCode(this.carrierRules.requiredAmounts);
+        result = 31 * result + Arrays.hashCode(this.outputRules.dataTypes);
+        result = 31 * result + Arrays.hashCode(this.outputRules.recordedItems);
+        result = 31 * result + Arrays.hashCode(this.outputRules.items);
+        result = 31 * result + Arrays.hashCode(this.outputRules.counts);
+        for (MimeticOutputEntry entry : this.mimeticOutputs) {
+            result = 31 * result + hashMimeticEntry(entry);
+        }
+        for (ExtractorOutputEntry entry : this.extractorOutputs) {
+            result = 31 * result + hashExtractorEntry(entry);
+        }
+        return result;
+    }
+
+    private static int hashMimeticEntry(MimeticOutputEntry entry) {
+        int result = entry.dataType() == null ? 0 : entry.dataType().hashCode();
+        result = 31 * result + entry.recordedId().hashCode();
+        result = 31 * result + (entry.outputFamily() == null ? 0 : entry.outputFamily().hashCode());
+        result = 31 * result + (entry.keyKind() == null ? 0 : entry.keyKind().hashCode());
+        result = 31 * result + entry.keyId().hashCode();
+        result = 31 * result + (entry.amountMode() == null ? 0 : entry.amountMode().hashCode());
+        return 31 * result + Long.hashCode(entry.amount());
+    }
+
+    private static int hashExtractorEntry(ExtractorOutputEntry entry) {
+        int result = Arrays.hashCode(entry.weaponItems());
+        result = 31 * result + Arrays.hashCode(entry.weaponTags());
+        result = 31 * result + Arrays.hashCode(entry.targetEntityIds());
+        result = 31 * result + (entry.outputFamily() == null ? 0 : entry.outputFamily().hashCode());
+        result = 31 * result + (entry.keyKind() == null ? 0 : entry.keyKind().hashCode());
+        result = 31 * result + entry.keyId().hashCode();
+        result = 31 * result + (entry.amountMode() == null ? 0 : entry.amountMode().hashCode());
+        return 31 * result + Long.hashCode(entry.amount());
     }
 
     private static DefaultRuleValues defaultRuleValues() {

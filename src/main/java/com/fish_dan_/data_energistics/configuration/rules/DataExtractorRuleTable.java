@@ -2,17 +2,12 @@ package com.fish_dan_.data_energistics.configuration.rules;
 
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionRule;
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionRuleSet;
-import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
-import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
-import com.fish_dan_.data_energistics.configuration.rules.schema.DataExtractorRulesConfiguration;
-
-import appeng.api.stacks.AEItemKey;
+import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -47,25 +42,6 @@ public final class DataExtractorRuleTable {
         return null;
     }
 
-    public static ObjectList<ItemStack> getConfiguredOutputs(DataType dataType, ResourceLocation recordedId) {
-        if (!snapshot().mimeticOutputs().isEmpty()) {
-            ObjectArrayList<ItemStack> configured = new ObjectArrayList<>();
-            for (MimeticOutputRule row : findMimeticOutputRules(dataType, recordedId)) {
-                if (row.rule().family() == OutputFamily.LOOT && row.rule().amountMode() == OutputAmountMode.FIXED && row.rule().key() instanceof AEItemKey itemKey) {
-                    long amount = row.rule().amount();
-                    while (amount > 0) {
-                        int count = (int) Math.min(Integer.MAX_VALUE, amount);
-                        configured.add(itemKey.toStack(count));
-                        amount -= count;
-                    }
-                }
-            }
-            return configured;
-        }
-        OutputRule rule = findOutputRule(dataType, recordedId);
-        return rule == null ? ObjectArrayList.of() : rule.createStacks();
-    }
-
     public static boolean containsConfiguredId(String[] configuredIds, ResourceLocation id) {
         for (String configuredId : configuredIds) {
             ResourceLocation parsed = ResourceLocation.tryParse(configuredId);
@@ -74,22 +50,6 @@ public final class DataExtractorRuleTable {
             }
         }
         return false;
-    }
-
-    /**
-     * Finds the first configured output rule for a recorded identity.
-     *
-     * @param dataType   carrier data type
-     * @param recordedId recorded entity or item identity
-     * @return configured rule, or {@code null} when configuration has no match
-     */
-    public static @Nullable OutputRule findOutputRule(DataType dataType, ResourceLocation recordedId) {
-        for (OutputRule rule : snapshot().outputRules()) {
-            if (rule.dataType() == dataType && rule.recordedId().equals(recordedId)) {
-                return rule;
-            }
-        }
-        return null;
     }
 
     /** Returns all valid mimetic rows in their declared order. */
@@ -152,29 +112,6 @@ public final class DataExtractorRuleTable {
                            ResourceLocation recordedItemId,
                            float progressPerItem,
                            float requiredAmount) {}
-
-    public record OutputRule(
-                             DataType dataType,
-                             ResourceLocation recordedId,
-                             ObjectList<ConfiguredStack> outputs) {
-
-        public OutputRule {
-            outputs = ObjectLists.unmodifiable(new ObjectArrayList<>(outputs));
-        }
-
-        public ObjectArrayList<ItemStack> createStacks() {
-            ObjectArrayList<ItemStack> stacks = new ObjectArrayList<>();
-            for (ConfiguredStack output : outputs) {
-                var item = BuiltInRegistries.ITEM.getOptional(output.itemId()).orElse(Items.AIR);
-                if (item != Items.AIR) {
-                    stacks.add(new ItemStack(item, output.count()));
-                }
-            }
-            return stacks;
-        }
-    }
-
-    public record ConfiguredStack(ResourceLocation itemId, int count) {}
 
     public record MimeticOutputRule(DataType dataType, ResourceLocation recordedId, DataProductionRule rule) {
 

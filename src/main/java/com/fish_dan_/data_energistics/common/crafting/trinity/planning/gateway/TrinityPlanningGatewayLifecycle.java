@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.TrinityCraftingSchema;
 
 import org.jspecify.annotations.Nullable;
 

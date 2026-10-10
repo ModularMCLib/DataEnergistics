@@ -20,39 +20,22 @@ import dev.toma.configuration.config.value.ValueData;
 /** Registers complete typed rule-record arrays before the main configuration holder is created. */
 public final class DataProductionRuleConfigurationAdapter {
 
-    private static final ResourceLocation CARRIER_MATCHER = ResourceLocation.fromNamespaceAndPath(
-            "data_energistics", "carrier_rule_entry_array");
-    private static final ResourceLocation OUTPUT_MATCHER = ResourceLocation.fromNamespaceAndPath(
-            "data_energistics", "output_rule_entry_array");
     private static final ResourceLocation MIMETIC_MATCHER = ResourceLocation.fromNamespaceAndPath(
-            "data_energistics", "mimetic_output_entry_array");
+            "data_energistics", "mimetic_carrier_entry_array");
     private static final ResourceLocation EXTRACTOR_MATCHER = ResourceLocation.fromNamespaceAndPath(
             "data_energistics", "extractor_output_entry_array");
     private static final char SEPARATOR = '\u001F';
+    private static final char ARRAY_SEPARATOR = '\u001E';
 
     private DataProductionRuleConfigurationAdapter() {}
 
     public static void register() {
         TypeAdapterManager.registerTypeMapper(
-                CarrierRuleEntry[].class,
-                TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeCarrier,
-                        DataProductionRuleConfigurationAdapter::decodeCarrier));
+                MimeticCarrierEntry[].class,
+                TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeMimeticCarrier,
+                        DataProductionRuleConfigurationAdapter::decodeMimeticCarrier));
         TypeAdapterManager.registerTypeAdapter(
-                new TypeMatcher.NamedMatcherImpl(CARRIER_MATCHER, CarrierRuleEntry[].class::equals),
-                new EntryArrayAdapter<>());
-        TypeAdapterManager.registerTypeMapper(
-                OutputRuleEntry[].class,
-                TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeOutput,
-                        DataProductionRuleConfigurationAdapter::decodeOutput));
-        TypeAdapterManager.registerTypeAdapter(
-                new TypeMatcher.NamedMatcherImpl(OUTPUT_MATCHER, OutputRuleEntry[].class::equals),
-                new EntryArrayAdapter<>());
-        TypeAdapterManager.registerTypeMapper(
-                MimeticOutputEntry[].class,
-                TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeMimetic,
-                        DataProductionRuleConfigurationAdapter::decodeMimetic));
-        TypeAdapterManager.registerTypeAdapter(
-                new TypeMatcher.NamedMatcherImpl(MIMETIC_MATCHER, MimeticOutputEntry[].class::equals),
+                new TypeMatcher.NamedMatcherImpl(MIMETIC_MATCHER, MimeticCarrierEntry[].class::equals),
                 new EntryArrayAdapter<>());
         TypeAdapterManager.registerTypeMapper(
                 ExtractorOutputEntry[].class,
@@ -63,66 +46,34 @@ public final class DataProductionRuleConfigurationAdapter {
                 new EntryArrayAdapter<>());
     }
 
-    private static String[] encodeCarrier(CarrierRuleEntry[] entries) {
+    private static String[] encodeMimeticCarrier(MimeticCarrierEntry[] entries) {
         String[] encoded = new String[entries.length];
         for (int index = 0; index < entries.length; index++) {
-            CarrierRuleEntry entry = entries[index];
+            MimeticCarrierEntry entry = entries[index];
             encoded[index] = String.join(String.valueOf(SEPARATOR), name(entry.slot()), name(entry.dataType()),
-                    entry.inputItem(), entry.recordedItem(), Float.toString(entry.progressPerItem()),
-                    Float.toString(entry.requiredAmount()));
+                    entry.inputItem(), entry.recordedId(), Float.toString(entry.progressPerItem()),
+                    Float.toString(entry.requiredAmount()),
+                    encodeEnums(entry.outputFamilies()),
+                    encodeEnums(entry.keyKinds()),
+                    encodeStrings(entry.keyIds()),
+                    encodeEnums(entry.amountModes()),
+                    encodeLongs(entry.amounts()));
         }
         return encoded;
     }
 
-    private static CarrierRuleEntry[] decodeCarrier(String[] encoded) {
-        CarrierRuleEntry[] entries = new CarrierRuleEntry[encoded.length];
+    private static MimeticCarrierEntry[] decodeMimeticCarrier(String[] encoded) {
+        MimeticCarrierEntry[] entries = new MimeticCarrierEntry[encoded.length];
         for (int index = 0; index < encoded.length; index++) {
             String[] fields = encoded[index].split(String.valueOf(SEPARATOR), -1);
-            entries[index] = new CarrierRuleEntry(enumValue(Slot.class, fields, 0),
+            entries[index] = new MimeticCarrierEntry(enumValue(Slot.class, fields, 0),
                     enumValue(DataType.class, fields, 1), field(fields, 2), field(fields, 3),
-                    decimal(fields, 4), decimal(fields, 5));
-        }
-        return entries;
-    }
-
-    private static String[] encodeOutput(OutputRuleEntry[] entries) {
-        String[] encoded = new String[entries.length];
-        for (int index = 0; index < entries.length; index++) {
-            OutputRuleEntry entry = entries[index];
-            encoded[index] = String.join(String.valueOf(SEPARATOR), name(entry.dataType()), entry.recordedItem(),
-                    entry.item(), Integer.toString(entry.count()));
-        }
-        return encoded;
-    }
-
-    private static OutputRuleEntry[] decodeOutput(String[] encoded) {
-        OutputRuleEntry[] entries = new OutputRuleEntry[encoded.length];
-        for (int index = 0; index < encoded.length; index++) {
-            String[] fields = encoded[index].split(String.valueOf(SEPARATOR), -1);
-            entries[index] = new OutputRuleEntry(enumValue(DataType.class, fields, 0), field(fields, 1),
-                    field(fields, 2), (int) number(fields, 3));
-        }
-        return entries;
-    }
-
-    private static String[] encodeMimetic(MimeticOutputEntry[] entries) {
-        String[] encoded = new String[entries.length];
-        for (int index = 0; index < entries.length; index++) {
-            MimeticOutputEntry entry = entries[index];
-            encoded[index] = String.join(String.valueOf(SEPARATOR), name(entry.dataType()), entry.recordedId(),
-                    name(entry.outputFamily()), name(entry.keyKind()), entry.keyId(), name(entry.amountMode()),
-                    Long.toString(entry.amount()));
-        }
-        return encoded;
-    }
-
-    private static MimeticOutputEntry[] decodeMimetic(String[] encoded) {
-        MimeticOutputEntry[] entries = new MimeticOutputEntry[encoded.length];
-        for (int index = 0; index < encoded.length; index++) {
-            String[] fields = encoded[index].split(String.valueOf(SEPARATOR), -1);
-            entries[index] = new MimeticOutputEntry(enumValue(DataType.class, fields, 0), field(fields, 1),
-                    enumValue(OutputFamily.class, fields, 2), enumValue(OutputKeyKind.class, fields, 3), field(fields, 4),
-                    enumValue(OutputAmountMode.class, fields, 5), number(fields, 6));
+                    decimal(fields, 4), decimal(fields, 5),
+                    decodeOutputFamilies(field(fields, 6)),
+                    decodeKeyKinds(field(fields, 7)),
+                    splitArray(field(fields, 8)),
+                    decodeAmountModes(field(fields, 9)),
+                    longArray(field(fields, 10)));
         }
         return entries;
     }
@@ -143,7 +94,7 @@ public final class DataProductionRuleConfigurationAdapter {
         ExtractorOutputEntry[] entries = new ExtractorOutputEntry[encoded.length];
         for (int index = 0; index < encoded.length; index++) {
             String[] fields = encoded[index].split(String.valueOf(SEPARATOR), -1);
-            entries[index] = new ExtractorOutputEntry(split(field(fields, 0)), split(field(fields, 1)), split(field(fields, 2)),
+            entries[index] = new ExtractorOutputEntry(splitComma(field(fields, 0)), splitComma(field(fields, 1)), splitComma(field(fields, 2)),
                     enumValue(OutputFamily.class, fields, 3), enumValue(OutputKeyKind.class, fields, 4), field(fields, 5),
                     enumValue(OutputAmountMode.class, fields, 6), number(fields, 7));
         }
@@ -155,7 +106,67 @@ public final class DataProductionRuleConfigurationAdapter {
     }
 
     private static String name(Enum<?> value) {
-        return value.name();
+        return value == null ? "" : value.name();
+    }
+
+    private static String encodeStrings(String[] values) {
+        return String.join(String.valueOf(ARRAY_SEPARATOR), values);
+    }
+
+    private static String encodeLongs(long[] values) {
+        String[] encoded = new String[values.length];
+        for (int index = 0; index < values.length; index++) {
+            encoded[index] = Long.toString(values[index]);
+        }
+        return encodeStrings(encoded);
+    }
+
+    private static String encodeEnums(Enum<?>[] values) {
+        String[] encoded = new String[values.length];
+        for (int index = 0; index < values.length; index++) {
+            encoded[index] = name(values[index]);
+        }
+        return encodeStrings(encoded);
+    }
+
+    private static OutputFamily[] decodeOutputFamilies(String value) {
+        String[] values = splitArray(value);
+        OutputFamily[] result = new OutputFamily[values.length];
+        for (int index = 0; index < values.length; index++) {
+            result[index] = enumValue(OutputFamily.class, values, index);
+        }
+        return result;
+    }
+
+    private static OutputKeyKind[] decodeKeyKinds(String value) {
+        String[] values = splitArray(value);
+        OutputKeyKind[] result = new OutputKeyKind[values.length];
+        for (int index = 0; index < values.length; index++) {
+            result[index] = enumValue(OutputKeyKind.class, values, index);
+        }
+        return result;
+    }
+
+    private static OutputAmountMode[] decodeAmountModes(String value) {
+        String[] values = splitArray(value);
+        OutputAmountMode[] result = new OutputAmountMode[values.length];
+        for (int index = 0; index < values.length; index++) {
+            result[index] = enumValue(OutputAmountMode.class, values, index);
+        }
+        return result;
+    }
+
+    private static long[] longArray(String value) {
+        String[] values = splitArray(value);
+        long[] result = new long[values.length];
+        for (int index = 0; index < values.length; index++) {
+            try {
+                result[index] = Long.parseLong(values[index]);
+            } catch (NumberFormatException ignored) {
+                result[index] = 0L;
+            }
+        }
+        return result;
     }
 
     private static <E extends Enum<E>> E enumValue(Class<E> type, String[] fields, int index) {
@@ -170,8 +181,12 @@ public final class DataProductionRuleConfigurationAdapter {
         }
     }
 
-    private static String[] split(String value) {
-        return value.isBlank() ? new String[0] : value.split(",");
+    private static String[] splitArray(String value) {
+        return value.isBlank() ? new String[0] : value.split(String.valueOf(ARRAY_SEPARATOR), -1);
+    }
+
+    private static String[] splitComma(String value) {
+        return value.isBlank() ? new String[0] : value.split(",", -1);
     }
 
     private static long number(String[] fields, int index) {

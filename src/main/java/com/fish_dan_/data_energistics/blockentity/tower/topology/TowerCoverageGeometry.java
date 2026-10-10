@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.blockentity.tower.topology;
 
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;

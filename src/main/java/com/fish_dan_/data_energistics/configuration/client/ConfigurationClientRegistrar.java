@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.configuration.client;
 
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import dev.toma.configuration.client.ConfigurationClient;
 import dev.toma.configuration.config.adapter.TypeMatcher;

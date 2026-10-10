@@ -1,11 +1,13 @@
-package com.fish_dan_.data_energistics.configuration.rules.schema;
+package com.fish_dan_.data_energistics.configuration;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.configuration.rules.DefaultRuleValues;
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.configuration.rules.RuleFormatException;
 import com.fish_dan_.data_energistics.configuration.rules.codec.DataExtractorRuleEntries;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.rules.schema.DataProductionRuleConfigurationAdapter;
+import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
+import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticCarrierEntry;
 
 import dev.toma.configuration.Configuration;
 import dev.toma.configuration.config.Config;
@@ -35,24 +37,10 @@ public final class DataExtractorRulesConfiguration {
 
     @Configurable(key = Configurable.LocalizationKey.FULL)
     @Configurable.Comment({
-            "One complete carrier rule per entry: slot, data type, input item, recorded item, progress and required amount.",
-            "每个条目是一整条载体规则：槽位、数据类型、输入物品、记录物品、进度和需求量。"
+            "One complete mimetic carrier entry per item; output arrays at the same index form one AE output.",
+            "每个条目是一整条数据拟生载体规则；产出数组中相同索引组成一条 AE 产出。"
     })
-    public CarrierRuleEntry[] carrierRules = CarrierRuleEntry.defaults(defaultRuleValues());
-
-    @Configurable(key = Configurable.LocalizationKey.FULL)
-    @Configurable.Comment({
-            "One complete legacy loot rule per entry: data type, recorded item, output item and count.",
-            "每个条目是一整条旧战利品规则：数据类型、记录物品、输出物品和数量。"
-    })
-    public OutputRuleEntry[] outputRules = OutputRuleEntry.defaults();
-
-    @Configurable(key = Configurable.LocalizationKey.FULL)
-    @Configurable.Comment({
-            "One complete mimetic rule per entry. Each entry contains data type, recorded id, family, key kind, key id, amount mode and amount.",
-            "每个条目是一整条数据拟生规则；条目包含数据类型、记录 ID、产出类别、键类型、键 ID、数量模式和数量。"
-    })
-    public MimeticOutputEntry[] mimeticOutputs = {};
+    public MimeticCarrierEntry[] mimeticCarriers = MimeticCarrierEntry.defaults(defaultRuleValues());
 
     @Configurable(key = Configurable.LocalizationKey.FULL)
     @Configurable.Comment({
@@ -75,9 +63,7 @@ public final class DataExtractorRulesConfiguration {
         }
         try {
             LoadedRules compiled = DataExtractorRuleEntries.compile(
-                    this.carrierRules,
-                    this.outputRules,
-                    this.mimeticOutputs,
+                    this.mimeticCarriers,
                     this.extractorOutputs,
                     ConfigIO.getConfigFile(HOLDER).toPath());
             this.cachedRules = compiled;
@@ -91,14 +77,8 @@ public final class DataExtractorRulesConfiguration {
 
     private int configurationFingerprint() {
         int result = 1;
-        for (CarrierRuleEntry entry : this.carrierRules) {
-            result = 31 * result + hashCarrierEntry(entry);
-        }
-        for (OutputRuleEntry entry : this.outputRules) {
-            result = 31 * result + hashOutputEntry(entry);
-        }
-        for (MimeticOutputEntry entry : this.mimeticOutputs) {
-            result = 31 * result + hashMimeticEntry(entry);
+        for (MimeticCarrierEntry entry : this.mimeticCarriers) {
+            result = 31 * result + hashMimeticCarrierEntry(entry);
         }
         for (ExtractorOutputEntry entry : this.extractorOutputs) {
             result = 31 * result + hashExtractorEntry(entry);
@@ -106,30 +86,19 @@ public final class DataExtractorRulesConfiguration {
         return result;
     }
 
-    private static int hashCarrierEntry(CarrierRuleEntry entry) {
+    private static int hashMimeticCarrierEntry(MimeticCarrierEntry entry) {
         int result = entry.slot() == null ? 0 : entry.slot().hashCode();
         result = 31 * result + (entry.dataType() == null ? 0 : entry.dataType().hashCode());
         result = 31 * result + entry.inputItem().hashCode();
-        result = 31 * result + entry.recordedItem().hashCode();
-        result = 31 * result + Float.hashCode(entry.progressPerItem());
-        return 31 * result + Float.hashCode(entry.requiredAmount());
-    }
-
-    private static int hashOutputEntry(OutputRuleEntry entry) {
-        int result = entry.dataType() == null ? 0 : entry.dataType().hashCode();
-        result = 31 * result + entry.recordedItem().hashCode();
-        result = 31 * result + entry.item().hashCode();
-        return 31 * result + Integer.hashCode(entry.count());
-    }
-
-    private static int hashMimeticEntry(MimeticOutputEntry entry) {
-        int result = entry.dataType() == null ? 0 : entry.dataType().hashCode();
         result = 31 * result + entry.recordedId().hashCode();
-        result = 31 * result + (entry.outputFamily() == null ? 0 : entry.outputFamily().hashCode());
-        result = 31 * result + (entry.keyKind() == null ? 0 : entry.keyKind().hashCode());
-        result = 31 * result + entry.keyId().hashCode();
-        result = 31 * result + (entry.amountMode() == null ? 0 : entry.amountMode().hashCode());
-        return 31 * result + Long.hashCode(entry.amount());
+        result = 31 * result + Float.hashCode(entry.progressPerItem());
+        result = 31 * result + Float.hashCode(entry.requiredAmount());
+        result = 31 * result + Arrays.hashCode(entry.outputFamilies());
+        result = 31 * result + Arrays.hashCode(entry.keyKinds());
+        result = 31 * result + Arrays.hashCode(entry.keyIds());
+        result = 31 * result + Arrays.hashCode(entry.amountModes());
+        result = 31 * result + Arrays.hashCode(entry.amounts());
+        return result;
     }
 
     private static int hashExtractorEntry(ExtractorOutputEntry entry) {

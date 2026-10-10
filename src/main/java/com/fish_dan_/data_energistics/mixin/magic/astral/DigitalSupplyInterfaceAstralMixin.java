@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupp
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.DigitalSupplyTransmissionReceiverNode;
 
+import appeng.api.networking.IGrid;
 import appeng.api.storage.MEStorage;
 
 import net.minecraft.core.BlockPos;
@@ -88,6 +89,12 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
                     .dataEnergistics$removeNode(target.position());
         }
         this.dataEnergistics$astralNodeRegistered = false;
+    }
+
+    @Override
+    public @Nullable IGrid data_energistics$grid() {
+        DigitalSupplyInterfaceBlockEntity target = (DigitalSupplyInterfaceBlockEntity) (Object) this;
+        return target.getMainNode().isOnline() ? target.getMainNode().getGrid() : null;
     }
 
     @Override

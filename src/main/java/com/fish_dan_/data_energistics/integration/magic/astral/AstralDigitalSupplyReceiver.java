@@ -12,8 +12,10 @@ import org.jspecify.annotations.Nullable;
 /**
  * Astral's native receiver and liquid-source contract for a Digital Supply Interface.
  *
- * <p>Callbacks run on the logical server thread. Network references are valid only for the current call;
- * consumers use grid identity to avoid counting multiple interfaces on the same network twice.</p>
+ * <p>
+ * Callbacks run on the logical server thread. Network references are valid only for the current call;
+ * consumers use grid identity to avoid counting multiple interfaces on the same network twice.
+ * </p>
  */
 public interface AstralDigitalSupplyReceiver {
 

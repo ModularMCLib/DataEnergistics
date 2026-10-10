@@ -29,9 +29,11 @@ import org.jspecify.annotations.Nullable;
 /**
  * Combines real chalices and AE networks for one native Astral altar liquid request.
  *
- * <p>Only packed source positions survive between calls. Simulations and commit plans use ordinary network
+ * <p>
+ * Only packed source positions survive between calls. Simulations and commit plans use ordinary network
  * quantities; no liquid is persisted here. Instances belong to one native LiquidDrawInstance and run on the
- * logical server thread. This does not register a TileChalice or participate in liquid interaction recipes.</p>
+ * logical server thread. This does not register a TileChalice or participate in liquid interaction recipes.
+ * </p>
  */
 public final class AstralLiquidSupplyTransaction {
 
@@ -100,9 +102,7 @@ public final class AstralLiquidSupplyTransaction {
         LongIterator positions = this.chalices.iterator();
         while (positions.hasNext() && remaining > 0) {
             BlockPos position = BlockPos.of(positions.nextLong());
-            if (!level.isLoaded(position) || level.hasNeighborSignal(position)
-                    || !(level.getBlockEntity(position) instanceof TileChalice chalice)
-                    || !visible(level, origin, position)) {
+            if (!level.isLoaded(position) || level.hasNeighborSignal(position) || !(level.getBlockEntity(position) instanceof TileChalice chalice) || !visible(level, origin, position)) {
                 continue;
             }
             LiquidSource source = new ChaliceSource(chalice);
@@ -116,9 +116,7 @@ public final class AstralLiquidSupplyTransaction {
         positions = this.interfaces.iterator();
         while (positions.hasNext() && remaining > 0) {
             BlockPos position = BlockPos.of(positions.nextLong());
-            if (!level.isLoaded(position)
-                    || !(level.getBlockEntity(position) instanceof AstralDigitalSupplyReceiver receiver)
-                    || !visible(level, origin, position)) {
+            if (!level.isLoaded(position) || !(level.getBlockEntity(position) instanceof AstralDigitalSupplyReceiver receiver) || !visible(level, origin, position)) {
                 continue;
             }
             IGrid grid = receiver.data_energistics$grid();
@@ -182,8 +180,7 @@ public final class AstralLiquidSupplyTransaction {
                 int restored = checkedAmount(draw.source().restore(search.copyWithAmount(draw.amount())),
                         draw.amount(), draw.source());
                 if (restored != draw.amount()) {
-                    throw new IllegalStateException("Astral liquid rollback at " + BlockPos.of(draw.source().position())
-                            + " could only restore " + restored + " of " + draw.amount());
+                    throw new IllegalStateException("Astral liquid rollback at " + BlockPos.of(draw.source().position()) + " could only restore " + restored + " of " + draw.amount());
                 }
             } catch (RuntimeException exception) {
                 if (failure == null) {
@@ -206,8 +203,7 @@ public final class AstralLiquidSupplyTransaction {
 
     private static int checkedAmount(long amount, int offered, LiquidSource source) {
         if (amount < 0L || amount > offered) {
-            throw new IllegalStateException("Astral liquid source at " + BlockPos.of(source.position())
-                    + " returned " + amount + " for " + offered);
+            throw new IllegalStateException("Astral liquid source at " + BlockPos.of(source.position()) + " returned " + amount + " for " + offered);
         }
         return (int) amount;
     }
@@ -252,7 +248,8 @@ public final class AstralLiquidSupplyTransaction {
     }
 
     private record NetworkSource(MEStorage storage, AEFluidKey key, AstralDigitalSupplyReceiver receiver,
-                                 IGrid grid, long position) implements LiquidSource {
+                                 IGrid grid, long position)
+            implements LiquidSource {
 
         @Override
         public long extract(FluidStack fluid, boolean simulate) {

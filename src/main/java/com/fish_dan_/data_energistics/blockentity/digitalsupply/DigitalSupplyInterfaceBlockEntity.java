@@ -85,6 +85,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     private final ObjectSet<ConnectorLink> automaticLinks = new ObjectLinkedOpenHashSet<>();
     private ObjectList<ConnectorLink> links = new ObjectArrayList<>();
     private ConnectorMode mode = ConnectorMode.INPUT;
+    private boolean adaptersDetached;
 
     public DigitalSupplyInterfaceBlockEntity(BlockPos pos, BlockState state) {
         super(DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(), pos, state);
@@ -210,6 +211,10 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
 
     /** Detaches adapters before the block entity is removed. */
     public void detachAdapters() {
+        if (this.adaptersDetached || this.level == null || this.level.isClientSide()) {
+            return;
+        }
+        this.adaptersDetached = true;
         for (DigitalSupplyInterfaceAdapter adapter : this.adapters) {
             try {
                 adapter.detach(this);
@@ -221,6 +226,24 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
                         exception);
             }
         }
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachAdapters();
+        super.onChunkUnloaded();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        this.adaptersDetached = false;
+    }
+
+    @Override
+    public void setRemoved() {
+        detachAdapters();
+        super.setRemoved();
     }
 
     @Override

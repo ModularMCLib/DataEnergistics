@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryRegistration;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotFluidHandlerItem;
 import com.fish_dan_.data_energistics.item.powered.PoweredItemEnergyStorage;
@@ -36,6 +38,9 @@ final class CommonCapabilityRegistrar {
     private CommonCapabilityRegistrar() {}
 
     static void register(RegisterCapabilitiesEvent event) {
+        if (MOD.isAstralSorceryLoaded()) {
+            AstralSorceryRegistration.registerCapabilities(event);
+        }
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_SOLAR_PANEL_BLOCK_ENTITY.get(),

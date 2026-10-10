@@ -53,6 +53,11 @@ public final class MOD {
         return isLoaded("advanced_ae");
     }
 
+    /** Returns whether Astral Sorcery's optional integration classes may be loaded. */
+    public static boolean isAstralSorceryLoaded() {
+        return isLoaded("astralsorcery");
+    }
+
     private static boolean isLoaded(String modId) {
         return Data_Energistics.isModLoaded(modId);
     }

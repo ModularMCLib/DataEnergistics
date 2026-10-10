@@ -24,15 +24,6 @@ public final class ExperienceKey extends DigitalBiologicalResourceKey {
 
     @Override
     protected Component computeDisplayName() {
-        if (Data_Energistics.isModLoaded("forbidden_arcanus")) {
-            return Component.translatable("essence.forbidden_arcanus.experience");
-        }
-        if (Data_Energistics.isModLoaded("neovitae")) {
-            return Component.translatable("fluid.neovitae.liquified_experience");
-        }
-        if (Data_Energistics.isModLoaded("goety")) {
-            return Component.translatable("info.goety.ritual.noXP.fail");
-        }
         return Component.translatable("key.data_energistics.experience");
     }
 

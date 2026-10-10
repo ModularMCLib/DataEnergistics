@@ -154,7 +154,7 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
         for (ForbiddenArcanusEssenceKey key : ForbiddenArcanusEssenceKey.all()) {
             result.add(new DigitalSupplyResourceDefinition(key.getId(), key, key.getDisplayName(),
                     DigitalSupplyUnitConversion.IDENTITY, false,
-                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
+                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET)));
         }
         return result;
     }

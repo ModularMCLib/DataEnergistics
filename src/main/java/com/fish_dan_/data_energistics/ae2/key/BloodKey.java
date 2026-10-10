@@ -24,12 +24,6 @@ public final class BloodKey extends DigitalBiologicalResourceKey {
 
     @Override
     protected Component computeDisplayName() {
-        if (Data_Energistics.isModLoaded("forbidden_arcanus")) {
-            return Component.translatable("essence.forbidden_arcanus.blood");
-        }
-        if (Data_Energistics.isModLoaded("neovitae")) {
-            return Component.translatable("fluid.neovitae.essentia_vitae");
-        }
         return Component.translatable("key.data_energistics.blood");
     }
 

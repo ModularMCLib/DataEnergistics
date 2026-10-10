@@ -33,19 +33,19 @@ public final class DataExtractorRulesConfiguration {
     public static final ConfigHolder<DataExtractorRulesConfiguration> HOLDER = Configuration.registerConfig(DataExtractorRulesConfiguration.class, ConfigFormats.YAML);
     public static final DataExtractorRulesConfiguration INSTANCE = HOLDER.getConfigInstance();
 
-    @Configurable
+    @Configurable(key = Configurable.LocalizationKey.FULL)
     @Configurable.Comment({
-            "Carrier rule columns. Values at the same array index form one row.",
-            "载体规则列；各数组中相同索引的值组成一行。"
+            "One complete carrier rule per entry: slot, data type, input item, recorded item, progress and required amount.",
+            "每个条目是一整条载体规则：槽位、数据类型、输入物品、记录物品、进度和需求量。"
     })
-    public CarrierRuleSchema carrierRules = new CarrierRuleSchema(defaultRuleValues());
+    public CarrierRuleEntry[] carrierRules = CarrierRuleEntry.defaults(defaultRuleValues());
 
-    @Configurable
+    @Configurable(key = Configurable.LocalizationKey.FULL)
     @Configurable.Comment({
-            "Output rule columns. Values at the same array index form one output stack row.",
-            "输出规则列；各数组中相同索引的值组成一行输出。"
+            "One complete legacy loot rule per entry: data type, recorded item, output item and count.",
+            "每个条目是一整条旧战利品规则：数据类型、记录物品、输出物品和数量。"
     })
-    public OutputRuleSchema outputRules = new OutputRuleSchema();
+    public OutputRuleEntry[] outputRules = OutputRuleEntry.defaults();
 
     @Configurable(key = Configurable.LocalizationKey.FULL)
     @Configurable.Comment({
@@ -67,7 +67,7 @@ public final class DataExtractorRulesConfiguration {
 
     public DataExtractorRulesConfiguration() {}
 
-    /** Compiles the current native arrays directly; Configuration's Auto-Sync updates the source arrays directly. */
+    /** Compiles the current typed record arrays; Configuration's Auto-Sync updates the source arrays directly. */
     public synchronized LoadedRules rules() {
         int fingerprint = configurationFingerprint();
         if (this.hasCachedRules && this.cachedFingerprint == fingerprint) {
@@ -91,16 +91,12 @@ public final class DataExtractorRulesConfiguration {
 
     private int configurationFingerprint() {
         int result = 1;
-        result = 31 * result + Arrays.hashCode(this.carrierRules.slots);
-        result = 31 * result + Arrays.hashCode(this.carrierRules.dataTypes);
-        result = 31 * result + Arrays.hashCode(this.carrierRules.inputItems);
-        result = 31 * result + Arrays.hashCode(this.carrierRules.recordedItems);
-        result = 31 * result + Arrays.hashCode(this.carrierRules.progressPerItems);
-        result = 31 * result + Arrays.hashCode(this.carrierRules.requiredAmounts);
-        result = 31 * result + Arrays.hashCode(this.outputRules.dataTypes);
-        result = 31 * result + Arrays.hashCode(this.outputRules.recordedItems);
-        result = 31 * result + Arrays.hashCode(this.outputRules.items);
-        result = 31 * result + Arrays.hashCode(this.outputRules.counts);
+        for (CarrierRuleEntry entry : this.carrierRules) {
+            result = 31 * result + hashCarrierEntry(entry);
+        }
+        for (OutputRuleEntry entry : this.outputRules) {
+            result = 31 * result + hashOutputEntry(entry);
+        }
         for (MimeticOutputEntry entry : this.mimeticOutputs) {
             result = 31 * result + hashMimeticEntry(entry);
         }
@@ -108,6 +104,22 @@ public final class DataExtractorRulesConfiguration {
             result = 31 * result + hashExtractorEntry(entry);
         }
         return result;
+    }
+
+    private static int hashCarrierEntry(CarrierRuleEntry entry) {
+        int result = entry.slot() == null ? 0 : entry.slot().hashCode();
+        result = 31 * result + (entry.dataType() == null ? 0 : entry.dataType().hashCode());
+        result = 31 * result + entry.inputItem().hashCode();
+        result = 31 * result + entry.recordedItem().hashCode();
+        result = 31 * result + Float.hashCode(entry.progressPerItem());
+        return 31 * result + Float.hashCode(entry.requiredAmount());
+    }
+
+    private static int hashOutputEntry(OutputRuleEntry entry) {
+        int result = entry.dataType() == null ? 0 : entry.dataType().hashCode();
+        result = 31 * result + entry.recordedItem().hashCode();
+        result = 31 * result + entry.item().hashCode();
+        return 31 * result + Integer.hashCode(entry.count());
     }
 
     private static int hashMimeticEntry(MimeticOutputEntry entry) {

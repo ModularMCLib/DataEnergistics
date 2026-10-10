@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
 import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
+import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -16,9 +17,13 @@ import dev.toma.configuration.config.value.ConfigValue;
 import dev.toma.configuration.config.value.StringArrayValue;
 import dev.toma.configuration.config.value.ValueData;
 
-/** Registers the two complete-rule array types before the main configuration holder is created. */
+/** Registers complete typed rule-record arrays before the main configuration holder is created. */
 public final class DataProductionRuleConfigurationAdapter {
 
+    private static final ResourceLocation CARRIER_MATCHER = ResourceLocation.fromNamespaceAndPath(
+            "data_energistics", "carrier_rule_entry_array");
+    private static final ResourceLocation OUTPUT_MATCHER = ResourceLocation.fromNamespaceAndPath(
+            "data_energistics", "output_rule_entry_array");
     private static final ResourceLocation MIMETIC_MATCHER = ResourceLocation.fromNamespaceAndPath(
             "data_energistics", "mimetic_output_entry_array");
     private static final ResourceLocation EXTRACTOR_MATCHER = ResourceLocation.fromNamespaceAndPath(
@@ -28,6 +33,20 @@ public final class DataProductionRuleConfigurationAdapter {
     private DataProductionRuleConfigurationAdapter() {}
 
     public static void register() {
+        TypeAdapterManager.registerTypeMapper(
+                CarrierRuleEntry[].class,
+                TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeCarrier,
+                        DataProductionRuleConfigurationAdapter::decodeCarrier));
+        TypeAdapterManager.registerTypeAdapter(
+                new TypeMatcher.NamedMatcherImpl(CARRIER_MATCHER, CarrierRuleEntry[].class::equals),
+                new EntryArrayAdapter<>());
+        TypeAdapterManager.registerTypeMapper(
+                OutputRuleEntry[].class,
+                TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeOutput,
+                        DataProductionRuleConfigurationAdapter::decodeOutput));
+        TypeAdapterManager.registerTypeAdapter(
+                new TypeMatcher.NamedMatcherImpl(OUTPUT_MATCHER, OutputRuleEntry[].class::equals),
+                new EntryArrayAdapter<>());
         TypeAdapterManager.registerTypeMapper(
                 MimeticOutputEntry[].class,
                 TypeMapper.of(DataProductionRuleConfigurationAdapter::encodeMimetic,
@@ -42,6 +61,48 @@ public final class DataProductionRuleConfigurationAdapter {
         TypeAdapterManager.registerTypeAdapter(
                 new TypeMatcher.NamedMatcherImpl(EXTRACTOR_MATCHER, ExtractorOutputEntry[].class::equals),
                 new EntryArrayAdapter<>());
+    }
+
+    private static String[] encodeCarrier(CarrierRuleEntry[] entries) {
+        String[] encoded = new String[entries.length];
+        for (int index = 0; index < entries.length; index++) {
+            CarrierRuleEntry entry = entries[index];
+            encoded[index] = String.join(String.valueOf(SEPARATOR), name(entry.slot()), name(entry.dataType()),
+                    entry.inputItem(), entry.recordedItem(), Float.toString(entry.progressPerItem()),
+                    Float.toString(entry.requiredAmount()));
+        }
+        return encoded;
+    }
+
+    private static CarrierRuleEntry[] decodeCarrier(String[] encoded) {
+        CarrierRuleEntry[] entries = new CarrierRuleEntry[encoded.length];
+        for (int index = 0; index < encoded.length; index++) {
+            String[] fields = encoded[index].split(String.valueOf(SEPARATOR), -1);
+            entries[index] = new CarrierRuleEntry(enumValue(Slot.class, fields, 0),
+                    enumValue(DataType.class, fields, 1), field(fields, 2), field(fields, 3),
+                    decimal(fields, 4), decimal(fields, 5));
+        }
+        return entries;
+    }
+
+    private static String[] encodeOutput(OutputRuleEntry[] entries) {
+        String[] encoded = new String[entries.length];
+        for (int index = 0; index < entries.length; index++) {
+            OutputRuleEntry entry = entries[index];
+            encoded[index] = String.join(String.valueOf(SEPARATOR), name(entry.dataType()), entry.recordedItem(),
+                    entry.item(), Integer.toString(entry.count()));
+        }
+        return encoded;
+    }
+
+    private static OutputRuleEntry[] decodeOutput(String[] encoded) {
+        OutputRuleEntry[] entries = new OutputRuleEntry[encoded.length];
+        for (int index = 0; index < encoded.length; index++) {
+            String[] fields = encoded[index].split(String.valueOf(SEPARATOR), -1);
+            entries[index] = new OutputRuleEntry(enumValue(DataType.class, fields, 0), field(fields, 1),
+                    field(fields, 2), (int) number(fields, 3));
+        }
+        return entries;
     }
 
     private static String[] encodeMimetic(MimeticOutputEntry[] entries) {
@@ -118,6 +179,14 @@ public final class DataProductionRuleConfigurationAdapter {
             return Long.parseLong(field(fields, index));
         } catch (NumberFormatException ignored) {
             return 0L;
+        }
+    }
+
+    private static float decimal(String[] fields, int index) {
+        try {
+            return Float.parseFloat(field(fields, index));
+        } catch (NumberFormatException ignored) {
+            return 0.0F;
         }
     }
 

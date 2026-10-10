@@ -14,8 +14,10 @@ import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable
 import com.fish_dan_.data_energistics.configuration.rules.LoadedRules;
 import com.fish_dan_.data_energistics.configuration.rules.RuleFormatException;
 import com.fish_dan_.data_energistics.configuration.rules.schema.CarrierRuleSchema;
+import com.fish_dan_.data_energistics.configuration.rules.schema.CarrierRuleEntry;
 import com.fish_dan_.data_energistics.configuration.rules.schema.ExtractorOutputEntry;
 import com.fish_dan_.data_energistics.configuration.rules.schema.MimeticOutputEntry;
+import com.fish_dan_.data_energistics.configuration.rules.schema.OutputRuleEntry;
 import com.fish_dan_.data_energistics.configuration.rules.schema.OutputRuleSchema;
 
 import net.minecraft.core.registries.Registries;
@@ -31,16 +33,92 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.nio.file.Path;
 
-/** Converts aligned native Configuration arrays into complete immutable rule snapshots. */
+/** Converts typed configuration records into complete immutable rule snapshots. */
 public final class DataExtractorRuleEntries {
 
     private DataExtractorRuleEntries() {}
+
+    public static LoadedRules compile(
+                                      CarrierRuleEntry[] carriers,
+                                      OutputRuleEntry[] outputs,
+                                      MimeticOutputEntry[] mimeticOutputs,
+                                      ExtractorOutputEntry[] extractorOutputs,
+                                      Path source) throws RuleFormatException {
+        ObjectList<ItemRule> carrierRules = parseCarrierEntries(carriers, source);
+        ObjectList<MimeticOutputRule> mimetic = mimeticOutputs.length > 0
+                ? parseMimeticOutputs(mimeticOutputs, source)
+                : migrateLegacyOutputs(outputs, source);
+        return new LoadedRules(carrierRules, parseOutputEntries(outputs, source), mimetic,
+                parseExtractorOutputs(extractorOutputs, source));
+    }
 
     public static LoadedRules compile(
                                       CarrierRuleSchema carriers,
                                       OutputRuleSchema outputs,
                                       Path source) throws RuleFormatException {
         return new LoadedRules(parseCarriers(carriers, source), parseOutputs(outputs, source));
+    }
+
+    private static ObjectList<ItemRule> parseCarrierEntries(CarrierRuleEntry[] entries, Path source) throws RuleFormatException {
+        ObjectArrayList<ItemRule> rules = new ObjectArrayList<>(entries.length);
+        var indexes = new Object2IntLinkedOpenHashMap<CarrierKey>();
+        indexes.defaultReturnValue(-1);
+        for (int index = 0; index < entries.length; index++) {
+            String path = "carrierRules[" + index + "]";
+            CarrierRuleEntry entry = entries[index];
+            Slot slot = requireEnum(source, path + ".slot", entry.slot());
+            DataType dataType = requireEnum(source, path + ".dataType", entry.dataType());
+            ResourceLocation inputItem = parseId(source, path + ".inputItem", entry.inputItem());
+            ResourceLocation recordedItem = parseId(source, path + ".recordedItem", entry.recordedItem());
+            float progress = positive(source, path + ".progressPerItem", entry.progressPerItem());
+            float required = positive(source, path + ".requiredAmount", entry.requiredAmount());
+            CarrierKey key = new CarrierKey(slot, inputItem);
+            int previous = indexes.putIfAbsent(key, index);
+            if (previous != -1) {
+                throw invalid(source, path, "duplicate carrier row; the same slot and input item first appear at carrierRules[" + previous + "]",
+                        inputItem.toString(), "keep exactly one carrier row for this slot and input item");
+            }
+            rules.add(new ItemRule(slot, dataType, inputItem, recordedItem, progress, required));
+        }
+        return ObjectLists.unmodifiable(rules);
+    }
+
+    private static ObjectList<OutputRule> parseOutputEntries(OutputRuleEntry[] entries, Path source) throws RuleFormatException {
+        Object2ObjectMap<OutputKey, OutputRows> grouped = new Object2ObjectLinkedOpenHashMap<>();
+        for (int index = 0; index < entries.length; index++) {
+            String path = "outputRules[" + index + "]";
+            OutputRuleEntry entry = entries[index];
+            DataType dataType = requireEnum(source, path + ".dataType", entry.dataType());
+            ResourceLocation recordedItem = parseId(source, path + ".recordedItem", entry.recordedItem());
+            ResourceLocation item = parseId(source, path + ".item", entry.item());
+            if (entry.count() <= 0) {
+                throw invalid(source, path + ".count", "output count must be positive", Integer.toString(entry.count()),
+                        "use an integer between 1 and " + Integer.MAX_VALUE);
+            }
+            grouped.computeIfAbsent(new OutputKey(dataType, recordedItem), ignored -> new OutputRows())
+                    .add(source, path, item, entry.count(), index);
+        }
+        ObjectArrayList<OutputRule> rules = new ObjectArrayList<>(grouped.size());
+        for (Object2ObjectMap.Entry<OutputKey, OutputRows> entry : grouped.object2ObjectEntrySet()) {
+            OutputKey key = entry.getKey();
+            rules.add(new OutputRule(key.dataType(), key.recordedItem(), entry.getValue().stacks()));
+        }
+        return ObjectLists.unmodifiable(rules);
+    }
+
+    private static ObjectList<MimeticOutputRule> migrateLegacyOutputs(OutputRuleEntry[] entries, Path source) throws RuleFormatException {
+        ObjectList<OutputRule> legacy = parseOutputEntries(entries, source);
+        ObjectArrayList<MimeticOutputRule> migrated = new ObjectArrayList<>();
+        for (OutputRule output : legacy) {
+            for (ConfiguredStack stack : output.outputs()) {
+                var key = DataProductionKeyResolver.resolve(OutputKeyKind.ITEM, stack.itemId());
+                if (key != null) {
+                    migrated.add(new MimeticOutputRule(output.dataType(), output.recordedId(),
+                            new DataProductionRule(OutputFamily.LOOT, key, OutputAmountMode.FIXED, stack.count())));
+                }
+            }
+        }
+        return ObjectLists.unmodifiable(migrated);
     }
 
     public static LoadedRules compile(

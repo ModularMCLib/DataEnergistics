@@ -18,11 +18,11 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import hellfirepvp.astralsorcery.common.lib.FluidsAS;
 import hellfirepvp.astralsorcery.common.tile.TileChalice;
 import hellfirepvp.astralsorcery.common.util.RayTraceUtil;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,7 +41,7 @@ public abstract class AstralAltarLiquidDrawMixin {
     private final LongSet dataEnergistics$digitalSupplyInterfaces = new LongLinkedOpenHashSet();
 
     @Inject(method = "update", at = @At("TAIL"))
-    private void dataEnergistics$discoverDigitalSupply(Level level, BlockPos origin, FluidStack search, CallbackInfo callback) {
+    private void dataEnergistics$discoverDigitalSupply(Level level, BlockPos pos, FluidStack search, CallbackInfo callback) {
         this.dataEnergistics$digitalSupplyInterfaces.clear();
         if (!dataEnergistics$isLiquidStarlight(search)) {
             return;
@@ -49,8 +49,8 @@ public abstract class AstralAltarLiquidDrawMixin {
         for (int x = -dataEnergistics$SCAN_RADIUS; x <= dataEnergistics$SCAN_RADIUS; x++) {
             for (int y = -dataEnergistics$SCAN_RADIUS; y <= dataEnergistics$SCAN_RADIUS; y++) {
                 for (int z = -dataEnergistics$SCAN_RADIUS; z <= dataEnergistics$SCAN_RADIUS; z++) {
-                    BlockPos position = origin.offset(x, y, z);
-                    if (position.equals(origin) || !level.isLoaded(position) || RayTraceUtil.clip(level, TileChalice.getChaliceCenter(origin), Vec3.atCenterOf(position)).getType() == HitResult.Type.BLOCK) {
+                    BlockPos position = pos.offset(x, y, z);
+                    if (position.equals(pos) || !level.isLoaded(position) || RayTraceUtil.clip(level, TileChalice.getChaliceCenter(pos), Vec3.atCenterOf(position)).getType() == HitResult.Type.BLOCK) {
                         continue;
                     }
                     if (level.getBlockEntity(position) instanceof DigitalSupplyInterfaceBlockEntity target && dataEnergistics$canExtract(target, search.getAmount())) {
@@ -62,12 +62,12 @@ public abstract class AstralAltarLiquidDrawMixin {
     }
 
     @Inject(method = "consumeLiquid", at = @At("HEAD"), cancellable = true)
-    private void dataEnergistics$consumeDigitalSupply(Level level, BlockPos origin, FluidStack search,
+    private void dataEnergistics$consumeDigitalSupply(Level level, BlockPos pos, FluidStack search,
                                                       boolean simulate, CallbackInfoReturnable<Boolean> callback) {
         if (!dataEnergistics$isLiquidStarlight(search)) {
             return;
         }
-        boolean completed = dataEnergistics$consumeCombined(level, origin, search, simulate);
+        boolean completed = dataEnergistics$consumeCombined(level, pos, search, simulate);
         callback.setReturnValue(completed);
         callback.cancel();
     }
@@ -117,7 +117,7 @@ public abstract class AstralAltarLiquidDrawMixin {
             if (available <= 0L) {
                 continue;
             }
-            int accepted = Math.toIntExact(Math.min((long) remaining, available));
+            int accepted = Math.toIntExact(Math.min(remaining, available));
             interfaceSources.add(new dataEnergistics$InterfaceSource(target, accepted));
             remaining -= accepted;
         }

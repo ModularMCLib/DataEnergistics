@@ -27,6 +27,9 @@ public interface AstralDigitalSupplyReceiver {
     @Nullable
     MEStorage data_energistics$networkStorage();
 
+    /** Refreshes AE type markers and client-visible interface state after native insertion. */
+    void data_energistics$refreshState();
+
     /** Returns the links maintained by Astral's native Linking Tool. */
     LinkContainer data_energistics$astralLinkContainer();
 

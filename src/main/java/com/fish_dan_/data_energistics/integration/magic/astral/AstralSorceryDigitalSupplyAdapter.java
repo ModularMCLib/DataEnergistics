@@ -26,14 +26,19 @@ import hellfirepvp.astralsorcery.common.lib.FluidsAS;
 import hellfirepvp.astralsorcery.common.lib.LumenAS;
 import hellfirepvp.astralsorcery.common.lib.RegistriesAS;
 import hellfirepvp.astralsorcery.common.linking.LinkContainer;
+import hellfirepvp.astralsorcery.common.lumen.ILumenHandler;
 import hellfirepvp.astralsorcery.common.lumen.Lumen;
+import hellfirepvp.astralsorcery.common.lumen.LumenStack;
 import hellfirepvp.astralsorcery.common.lumen.transfer.LumenNetworkHelper;
 import hellfirepvp.astralsorcery.common.lumen.transfer.LumenNode;
+import hellfirepvp.astralsorcery.common.lumen.transfer.LumenRequestChain;
+import hellfirepvp.astralsorcery.common.lumen.transfer.LumenRequestHelper;
 import hellfirepvp.astralsorcery.common.starlight.StarlightNetworkLevelHelper;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionNode;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionReceiverNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionPacket;
 import hellfirepvp.astralsorcery.common.tile.TileAltar;
+import hellfirepvp.astralsorcery.common.util.LumenUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -54,6 +59,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     private static final ResourceLocation ID = Data_Energistics.id("astral_sorcery");
     private static final ResourceLocation STARLIGHT_ID = Data_Energistics.id("astral/liquid_starlight");
     private static final long TICK_LIMIT = 1_000L;
+    private static final int LUMEN_TICK_LIMIT = 16;
     private static final long CONSTELLATION_AE_PER_BRIGHTNESS = 1_000L;
     /** Keeps Astral transmission nodes partitioned by their server level; levels are weak keys during unload. */
     private static final WeakHashMap<ServerLevel, ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode>> REGISTERED_NODES = new WeakHashMap<>();
@@ -144,6 +150,9 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             long inserted = storage.insert(key, simulated, Actionable.MODULATE, IActionSource.empty());
             if (inserted < 0L || inserted > simulated) {
                 throw new IllegalStateException("Astral constellation storage returned an invalid insertion amount");
+            }
+            if (inserted > 0L) {
+                receiver.data_energistics$refreshState();
             }
         }
     }
@@ -268,11 +277,6 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     public void discover(DigitalSupplyInterfaceTarget target) {
         MEStorage storage = target.networkStorage();
         for (DigitalSupplyResourceDefinition definition : resources()) {
-            if (definition.key() instanceof AstralSorceryKey key && key.getKind() == AstralSorceryKey.Kind.CONSTELLATION) {
-                // Constellation brightness is the real AE quantity; legacy presence markers are removed.
-                target.setPresence(key, false);
-                continue;
-            }
             boolean present = storage != null && storage.extract(definition.key(), 1L, Actionable.SIMULATE, IActionSource.empty()) > 0L;
             target.setPresence(definition.key(), present);
         }
@@ -287,7 +291,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     @Override
     public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
         this.ensureLumenNode(target);
-        // Lumen uses Astral's native LumenNode and capability; Liquid Starlight uses the altar-specific discovery.
+        this.importLumen(target);
     }
 
     @Override
@@ -345,6 +349,60 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             }
         }
         LumenNetworkHelper.setNodeProvidedLumenTypes(level, node, provided);
+    }
+
+    private void importLumen(DigitalSupplyInterfaceTarget target) {
+        if (!(target.level() instanceof ServerLevel level)) {
+            return;
+        }
+        LumenNode requestor = LumenNetworkHelper.getNode(level, target.position()).orElse(null);
+        ILumenHandler destination = level.getCapability(ILumenHandler.BLOCK, target.position(), null);
+        if (requestor == null || destination == null) {
+            return;
+        }
+        long requestPacked = target.position().asLong();
+        int moved = 0;
+        for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
+            Lumen lumen = entry.getValue();
+            if (lumen == null || lumen == LumenAS.NONE.get() || lumen == LumenAS.PRISMATIC.get()) {
+                continue;
+            }
+            int capacity = destination.getCapacity(lumen);
+            if (capacity <= 0) {
+                continue;
+            }
+            int requestedAmount = Math.min(LUMEN_TICK_LIMIT - moved, capacity);
+            if (requestedAmount <= 0) {
+                return;
+            }
+            while (requestedAmount > 0 && moved < LUMEN_TICK_LIMIT) {
+                LumenStack requested = LumenStack.of(lumen, 1);
+                Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
+                        level, requestor, requested, node -> node.getPos().asLong() != requestPacked);
+                if (chain.isEmpty()) {
+                    chain = LumenRequestHelper.requestRelayed(
+                            level, target.position(), requested, node -> node.getPos().asLong() != requestPacked);
+                }
+                if (chain.isEmpty()) {
+                    break;
+                }
+                LumenStack transferred = LumenUtil.tryChainTransfer(
+                        destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE);
+                if (transferred.isEmpty() || transferred.getAmount() <= 0) {
+                    break;
+                }
+                int accepted = Math.min(transferred.getAmount(), requestedAmount);
+                moved += accepted;
+                requestedAmount -= accepted;
+            }
+            if (moved >= LUMEN_TICK_LIMIT) {
+                break;
+            }
+        }
+        if (moved > 0) {
+            target.refreshState();
+            this.ensureLumenNode(target);
+        }
     }
 
     private static void addRequestedConstellations(Level level, BlockPos position,

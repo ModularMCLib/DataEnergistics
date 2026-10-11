@@ -15,6 +15,6 @@ public final class AstralSorceryRegistration {
         event.registerBlockEntity(
                 ILumenHandler.BLOCK,
                 DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
-                (blockEntity, context) -> new AstralLumenStorage(blockEntity::networkStorage, blockEntity::presenceKeys));
+                (blockEntity, context) -> new AstralLumenStorage(blockEntity::networkStorage));
     }
 }

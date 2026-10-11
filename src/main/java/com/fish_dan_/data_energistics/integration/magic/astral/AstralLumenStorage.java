@@ -15,7 +15,6 @@ import hellfirepvp.astralsorcery.common.lumen.LumenLike;
 import hellfirepvp.astralsorcery.common.lumen.LumenStack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -26,27 +25,31 @@ import java.util.function.Supplier;
  * Astral's lumen capability view for an AE-backed interface.
  *
  * <p>
- * The marker set identifies lumen types only. It is never used as a quantity source; all amounts are
- * simulated and committed against the ordinary AE storage supplied by {@code networkStorage}.
+ * All amounts are simulated and committed against the ordinary AE storage supplied by {@code networkStorage};
+ * presence markers are never a quantity source.
  * </p>
  */
 @NullMarked
 public final class AstralLumenStorage implements ILumenHandler {
 
     private final Supplier<@Nullable MEStorage> storage;
-    private final Supplier<ObjectSet<AEKey>> marks;
 
-    public AstralLumenStorage(Supplier<@Nullable MEStorage> storage, Supplier<ObjectSet<AEKey>> marks) {
+    public AstralLumenStorage(Supplier<@Nullable MEStorage> storage) {
         this.storage = storage;
-        this.marks = marks;
     }
 
     @Override
     public ObjectList<LumenStack> getContainedLumen() {
         ObjectArrayList<LumenStack> result = new ObjectArrayList<>();
-        for (AEKey key : this.marks.get()) {
-            if (key instanceof AstralSorceryKey astralKey && astralKey.getKind() == AstralSorceryKey.Kind.LUMEN) {
-                result.add(LumenStack.of((Lumen) astralKey.getValue(), 1));
+        MEStorage network = this.storage.get();
+        if (network == null) {
+            return result;
+        }
+        for (var entry : network.getAvailableStacks()) {
+            AEKey key = entry.getKey();
+            if (key instanceof AstralSorceryKey astralKey && astralKey.getKind() == AstralSorceryKey.Kind.LUMEN && entry.getLongValue() > 0L) {
+                int amount = (int) Math.min(Integer.MAX_VALUE, entry.getLongValue());
+                result.add(LumenStack.of((Lumen) astralKey.getValue(), amount));
             }
         }
         return result;
@@ -56,7 +59,8 @@ public final class AstralLumenStorage implements ILumenHandler {
     public Optional<LumenStack> getContainedLumen(LumenLike type) {
         Lumen lumen = type.asLumen();
         AstralSorceryKey key = keyFor(lumen);
-        if (key == null || !this.marks.get().contains(key)) {
+        MEStorage network = this.storage.get();
+        if (key == null || network == null || network.extract(key, 1L, Actionable.SIMULATE, IActionSource.empty()) <= 0L) {
             return Optional.empty();
         }
         return Optional.of(LumenStack.of(lumen, 1));
@@ -64,8 +68,13 @@ public final class AstralLumenStorage implements ILumenHandler {
 
     @Override
     public int getCapacity(LumenLike type) {
-        // Astral treats zero as a display hint. This endpoint has no local lumen tank.
-        return 0;
+        AstralSorceryKey key = keyFor(type.asLumen());
+        MEStorage network = this.storage.get();
+        if (key == null || network == null) {
+            return 0;
+        }
+        long capacity = network.insert(key, Integer.MAX_VALUE, Actionable.SIMULATE, IActionSource.empty());
+        return checkedAmount(capacity, Integer.MAX_VALUE, "capacity");
     }
 
     @Override
@@ -94,7 +103,7 @@ public final class AstralLumenStorage implements ILumenHandler {
             return LumenStack.EMPTY;
         }
         AstralSorceryKey key = keyFor(lumen.asLumen());
-        if (key == null || !this.marks.get().contains(key)) {
+        if (key == null) {
             return LumenStack.EMPTY;
         }
         MEStorage network = this.storage.get();

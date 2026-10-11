@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply.GoetyExperienceSupply;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
@@ -153,6 +154,10 @@ public final class DarkAltarAdapter implements PackagedMachineAdapter {
                 }
             }
             for (var entry : required) if (operation.available(entry.getKey()).compareTo(BigInteger.valueOf(entry.getLongValue())) < 0) return false;
+            if (recipe.getRitual() instanceof EnchantItemRitual enchant && !GoetyExperienceSupply.ensureExperience(
+                    operation.level(), operation.position(), enchant, activation, player, altar.experienceTaken)) {
+                return false;
+            }
             for (int index = delivered; index < list.size(); index++) {
                 ItemStack ingredient = ItemStack.parseOptional(operation.level().registryAccess(), list.getCompound(index).getCompound("stack"));
                 PedestalBlockEntity pedestal = (PedestalBlockEntity) operation.level().getBlockEntity(

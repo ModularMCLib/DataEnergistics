@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.blockentity.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.api.production.DataExtractorKillEvent;
 import com.fish_dan_.data_energistics.api.production.DataProductionOutput;
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionContext;
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionRuleSet;
@@ -83,6 +84,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -588,7 +590,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
     public static int computeWorkIntervalSeconds(int speedCardCount) {
         int baseWorkIntervalSeconds = Math.max(MIN_WORK_INTERVAL_SECONDS, extractorSettings().workIntervalSeconds);
-        int effectiveSpeedCards = Math.min(Math.max(0, speedCardCount), baseWorkIntervalSeconds - MIN_WORK_INTERVAL_SECONDS);
+        int effectiveSpeedCards = Math.clamp(speedCardCount, 0, baseWorkIntervalSeconds - MIN_WORK_INTERVAL_SECONDS);
         return baseWorkIntervalSeconds - effectiveSpeedCards;
     }
 
@@ -1700,6 +1702,15 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 EnchantmentHelper.doPostAttackEffects(level, target, damageSource);
                 if (hurtEnemy && !sword.isEmpty()) {
                     sword.postHurtEnemy(target, fakePlayer);
+                }
+            }
+
+            if (damaged && !target.isAlive()) {
+                DataExtractorKillEvent killEvent = new DataExtractorKillEvent(this, level, target, fakePlayer, sword, damageSource);
+                NeoForge.EVENT_BUS.post(killEvent);
+                DataProductionOutput additionalOutput = killEvent.buildAdditionalOutput();
+                if (!additionalOutput.isEmpty()) {
+                    this.pendingOutput.append(additionalOutput);
                 }
             }
 

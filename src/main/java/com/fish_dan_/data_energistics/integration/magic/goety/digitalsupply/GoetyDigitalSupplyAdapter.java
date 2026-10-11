@@ -8,9 +8,11 @@ import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyRe
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferDirection;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUnitConversion;
+import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -18,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import com.Polarice3.Goety.api.items.magic.ITotem;
 import com.Polarice3.Goety.common.blocks.entities.CursedCageBlockEntity;
 import com.Polarice3.Goety.common.blocks.entities.DarkAltarBlockEntity;
+import com.Polarice3.Goety.common.ritual.EnchantItemRitual;
 import com.Polarice3.Goety.config.MainConfig;
 import com.Polarice3.Goety.utils.SEHelper;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -103,7 +106,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
             if (entity instanceof CursedCageBlockEntity cage) {
                 transferSouls(cage, transfer);
             } else if (entity instanceof DarkAltarBlockEntity altar) {
-                transferExperience(target.level(), altar, transfer);
+                supplyExperience(target.level(), altar);
             }
         }
     }
@@ -131,10 +134,10 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
                     BlockPos position = new BlockPos(x, y, z);
                     if (!target.level().isLoaded(position)) continue;
                     BlockEntity entity = target.level().getBlockEntity(position);
-                    if (entity instanceof DarkAltarBlockEntity altar) {
+                    if (entity instanceof DarkAltarBlockEntity) {
                         found.add(position.asLong());
                         BlockPos cagePosition = position.below();
-                        if (cagePosition.getY() >= min.getY() && target.level().isLoaded(cagePosition) && target.level().getBlockEntity(cagePosition) instanceof CursedCageBlockEntity cage) {
+                        if (cagePosition.getY() >= min.getY() && target.level().isLoaded(cagePosition) && target.level().getBlockEntity(cagePosition) instanceof CursedCageBlockEntity) {
                             found.add(cagePosition.asLong());
                         }
                     }
@@ -182,7 +185,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
         if (owner != null && SEHelper.getSEActive(owner)) {
             int current = Math.max(0, SEHelper.getSESouls(owner));
             int maximum = Math.min(MainConfig.MaxSouls.get(), Math.toIntExact(Math.min(Integer.MAX_VALUE, Math.max(required, current))));
-            long accepted = Math.min(bounded, Math.max(0L, (long) maximum - current));
+            long accepted = Math.clamp((long) maximum - current, 0L, bounded);
             if (simulate || accepted == 0L) {
                 return accepted;
             }
@@ -194,7 +197,7 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
         if (cage.getItem().getItem() instanceof ITotem totem) {
             int maximum = Math.max(0, totem.getMaxSouls());
             int current = Math.max(0, cage.getSouls());
-            long accepted = Math.min(bounded, Math.max(0L, Math.min(required, maximum) - current));
+            long accepted = Math.clamp(Math.min(required, maximum) - current, 0L, bounded);
             if (simulate || accepted == 0L) {
                 return accepted;
             }
@@ -205,47 +208,16 @@ public final class GoetyDigitalSupplyAdapter implements DigitalSupplyInterfaceAd
         return 0L;
     }
 
-    private static void transferExperience(Level level, DarkAltarBlockEntity altar,
-                                           DigitalSupplyTransferContext transfer) {
-        if (!experienceEndpoint(level, altar)) {
+    private static void supplyExperience(Level level, DarkAltarBlockEntity altar) {
+        if (!(level instanceof ServerLevel serverLevel) || PackagedMachineClaims.get(serverLevel).owner(altar.getBlockPos()) != null || !experienceEndpoint(level, altar) || !(altar.getCurrentRitualRecipe().getRitual() instanceof EnchantItemRitual ritual) || altar.castingPlayer == null) {
             return;
         }
-        transfer.networkToTarget(ExperienceKey.INSTANCE, TICK_LIMIT,
-                (amount, simulate) -> changeExperience(level, altar, amount, simulate));
-    }
-
-    private static long changeExperience(Level level, DarkAltarBlockEntity altar, long amount,
-                                         boolean simulate) {
-        if (amount <= 0L || !experienceEndpoint(level, altar)) {
-            return 0L;
-        }
-        Player caster = altar.castingPlayer;
-        int remainingLevels = Math.max(0, altar.getCurrentRitualRecipe().getXPLevelCost() - altar.experienceTaken);
-        if (remainingLevels == 0 || caster.experienceLevel > 1) return 0L;
-        long deficit = rawExperienceToLevel(caster, 2);
-        long bounded = Math.min(amount, Integer.MAX_VALUE);
-        long accepted = Math.min(bounded, deficit);
-        if (simulate || accepted == 0L) {
-            return accepted;
-        }
-        caster.giveExperiencePoints((int) accepted);
-        return accepted;
-    }
-
-    private static long rawExperienceToLevel(Player player, int targetLevel) {
-        if (player.experienceLevel >= targetLevel) return 0L;
-        double remaining = Math.max(0.0D, (1.0D - player.experienceProgress) * player.getXpNeededForNextLevel());
-        int level = player.experienceLevel + 1;
-        while (level < targetLevel) {
-            remaining += xpNeededForLevel(level);
-            level++;
-        }
-        return (long) Math.ceil(remaining);
-    }
-
-    private static int xpNeededForLevel(int level) {
-        if (level >= 30) return 112 + (level - 30) * 9;
-        if (level >= 15) return 37 + (level - 15) * 5;
-        return 7 + level * 2;
+        GoetyExperienceSupply.ensureExperience(
+                serverLevel,
+                altar.getBlockPos(),
+                ritual,
+                altar.itemStackHandler.getStackInSlot(0),
+                altar.castingPlayer,
+                altar.experienceTaken);
     }
 }

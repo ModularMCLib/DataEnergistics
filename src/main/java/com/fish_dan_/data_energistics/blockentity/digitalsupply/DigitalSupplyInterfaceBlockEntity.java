@@ -151,6 +151,11 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     }
 
     @Override
+    public DigitalSupplyInterfaceTransferContext transferContext() {
+        return new DigitalSupplyInterfaceTransferContext(this.networkStorage(), new MachineSource(this));
+    }
+
+    @Override
     public ConnectorEndpoint connectorEndpoint() {
         return this;
     }
@@ -186,8 +191,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         }
         refreshAdjacentLinks();
         removeOfflineLinks();
-        DigitalSupplyInterfaceTransferContext transfer = new DigitalSupplyInterfaceTransferContext(
-                networkStorage(), new MachineSource(this));
+        DigitalSupplyInterfaceTransferContext transfer = transferContext();
         for (DigitalSupplyInterfaceAdapter adapter : this.adapters) {
             if (this.failedAdapters.contains(adapter.id())) {
                 continue;

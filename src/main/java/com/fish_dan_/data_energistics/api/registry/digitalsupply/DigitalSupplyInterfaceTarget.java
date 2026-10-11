@@ -32,6 +32,16 @@ public interface DigitalSupplyInterfaceTarget {
     @Nullable
     MEStorage networkStorage();
 
+    /**
+     * Creates a transfer context for the current online AE grid.
+     *
+     * <p>
+     * The context is valid only for the current server-thread operation. Callers that coordinate several
+     * interfaces must still deduplicate their grid identities before committing transfers.
+     * </p>
+     */
+    DigitalSupplyTransferContext transferContext();
+
     ConnectorEndpoint connectorEndpoint();
 
     DigitalSupplyLinkContext links();

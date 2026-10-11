@@ -2,10 +2,12 @@ package com.fish_dan_.data_energistics.integration.overlay.jade.network;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.TuningForkBaseBlock;
+import com.fish_dan_.data_energistics.block.digitalsupply.DigitalSupplyInterfaceBlock;
 import com.fish_dan_.data_energistics.block.sanctum.DataSanctumInterfaceBlock;
 import com.fish_dan_.data_energistics.block.storage.CompartmentBlock;
 import com.fish_dan_.data_energistics.block.storage.DigitalStorageDepotBlock;
 import com.fish_dan_.data_energistics.blockentity.TuningForkBaseBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
@@ -27,6 +29,7 @@ public class NetworkStatusJadeProvider implements IBlockComponentProvider, IServ
     public static final NetworkStatusJadeProvider DATA_SANCTUM_INTERFACE = new NetworkStatusJadeProvider("data_sanctum_interface", DataSanctumInterfaceBlock.class);
     public static final NetworkStatusJadeProvider TRINITY_INFORMATION_EXCHANGE_DEPOT = new NetworkStatusJadeProvider("trinity_information_exchange_depot", CompartmentBlock.class);
     public static final NetworkStatusJadeProvider TUNING_FORK_BASE = new NetworkStatusJadeProvider("tuning_fork_base", TuningForkBaseBlock.class);
+    public static final NetworkStatusJadeProvider DIGITAL_SUPPLY_INTERFACE = new NetworkStatusJadeProvider("digital_supply_interface", DigitalSupplyInterfaceBlock.class);
 
     private static final String TAG_ONLINE = "online";
 
@@ -78,6 +81,9 @@ public class NetworkStatusJadeProvider implements IBlockComponentProvider, IServ
         }
         if (accessor.getBlockEntity() instanceof TuningForkBaseBlockEntity tuningForkBase) {
             return tuningForkBase.isOnline();
+        }
+        if (accessor.getBlockEntity() instanceof DigitalSupplyInterfaceBlockEntity digitalSupplyInterface) {
+            return digitalSupplyInterface.isOnline();
         }
         return null;
     }

@@ -135,9 +135,14 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         return this.getMainNode().getNode();
     }
 
+    /** Returns whether the interface currently has an online AE network node. */
+    public boolean isOnline() {
+        return this.getMainNode().isOnline();
+    }
+
     @Override
     public @Nullable MEStorage networkStorage() {
-        if (!this.getMainNode().isOnline() || this.getMainNode().getGrid() == null) {
+        if (!this.isOnline() || this.getMainNode().getGrid() == null) {
             return null;
         }
         return new DigitalSupplyNetworkStorage(

@@ -12,6 +12,9 @@ import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsRegistryS
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAccessors;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
@@ -50,6 +53,12 @@ public class CommonProxy {
 
     public static void init(IEventBus modEventBus) {
         CommonProxy instance = new CommonProxy();
+
+        TrinityDataCoreSyncAccessors.init();
+        Data_Energistics.LOGGER.debug(
+                "Registered Configuration schemas {} and {}",
+                DataEnergisticsConfiguration.HOLDER.getConfigId(),
+                DataExtractorRulesConfiguration.HOLDER.getConfigId());
 
         // Plugin discovery must complete before AE2 receives its AEKeyType RegisterEvent. The resulting snapshot is
         // shared by the key-type event, common setup installation and every runtime consumer.

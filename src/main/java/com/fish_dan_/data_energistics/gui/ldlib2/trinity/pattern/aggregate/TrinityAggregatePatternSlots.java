@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.pattern.aggregate;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
 import com.fish_dan_.data_energistics.client.screen.trinity.TrinityPatternSearchMode;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternCatalogView;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternSlotAction;
@@ -20,6 +19,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import appeng.crafting.pattern.EncodedPatternItem;
 
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -470,7 +470,7 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
         event.stopPropagation();
         event.hasHandler = false;
         if (!this.level.isClientSide() || this.maintenanceActive || event.button != 0 ||
-                !DataEnergisticsClientBridgeAccess.get().isShiftDown()) {
+                !Screen.hasShiftDown()) {
             return;
         }
         clearQuickMoveSweep();
@@ -483,7 +483,7 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
 
     private void enterQuickMoveSweep(int viewIndex, UIEvent event) {
         if (!this.quickMoveSweepActive || event.dragHandler == null || event.dragHandler.dragSource != this ||
-                this.maintenanceActive || !DataEnergisticsClientBridgeAccess.get().isShiftDown()) {
+                this.maintenanceActive || !Screen.hasShiftDown()) {
             return;
         }
         addQuickMoveSweepSlot(viewIndex);
@@ -529,7 +529,7 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
         public ItemStack getValue() {
             ItemStack pattern = super.getValue();
             if (!TrinityAggregatePatternSlots.this.level.isClientSide() ||
-                    DataEnergisticsClientBridgeAccess.get().isShiftDown()) {
+                    Screen.hasShiftDown()) {
                 return pattern;
             }
             if (pattern.getItem() instanceof EncodedPatternItem encodedPattern) {
@@ -543,7 +543,7 @@ final class TrinityAggregatePatternSlots extends BindableUIElement<TrinityPatter
 
         @Override
         protected void onMouseDown(UIEvent event) {
-            if (event.button == 0 && DataEnergisticsClientBridgeAccess.get().isShiftDown()) {
+            if (event.button == 0 && Screen.hasShiftDown()) {
                 beginQuickMoveSweep(this.viewIndex, event);
             } else {
                 sendSlotAction(this.viewIndex, event);

@@ -9,10 +9,9 @@ import net.minecraft.resources.ResourceLocation;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import mezz.jei.api.ingredients.IIngredientType;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Native JEI ingredient identity for one Data Energistics custom AE resource and amount.
@@ -35,11 +34,13 @@ public record DataResourceJeiIngredient(DataResourceKey key, long amount) {
     /**
      * The normalized resources that JEI displays in its ingredient list.
      */
-    public static final List<DataResourceJeiIngredient> ALL_INGREDIENTS = List.of(
+    public static final ObjectList<DataResourceJeiIngredient> ALL_INGREDIENTS = ObjectList.of(
             new DataResourceJeiIngredient(DataResourceKey.DATA, 1L),
             new DataResourceJeiIngredient(DataResourceKey.DATA_FLOW, 1L),
             new DataResourceJeiIngredient(DataResourceKey.ECHO, 1L),
-            new DataResourceJeiIngredient(DataResourceKey.CELESTIAL_ENERGY, 1L));
+            new DataResourceJeiIngredient(DataResourceKey.CELESTIAL_ENERGY, 1L),
+            new DataResourceJeiIngredient(DataResourceKey.BLOOD, 1L),
+            new DataResourceJeiIngredient(DataResourceKey.EXPERIENCE, 1L));
 
     /**
      * Rejects invalid amounts before JEI can cache or serialize them.

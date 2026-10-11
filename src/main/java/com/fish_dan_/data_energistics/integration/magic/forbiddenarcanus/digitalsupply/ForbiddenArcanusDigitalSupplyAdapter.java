@@ -17,9 +17,6 @@ import appeng.api.storage.MEStorage;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.ai.village.poi.PoiManager;
-import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -27,9 +24,7 @@ import com.stal111.forbidden_arcanus.common.block.HephaestusForgeBlock;
 import com.stal111.forbidden_arcanus.common.block.entity.ArcaneCrystalObeliskBlockEntity;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.HephaestusForgeBlockEntity;
 import com.stal111.forbidden_arcanus.common.block.entity.forge.essence.EssenceType;
-import com.stal111.forbidden_arcanus.core.init.ModBlockEntities;
 import com.stal111.forbidden_arcanus.core.init.ModItems;
-import com.stal111.forbidden_arcanus.core.init.other.ModPOITypes;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -43,7 +38,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.WeakHashMap;
 
-/** Transfers forge essence and mirrors valid obelisk production through public two-phase digital-supply transactions. */
+/**
+ * Transfers forge essence and mirrors valid obelisk production through public two-phase digital-supply transactions.
+ */
 public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
     private static final long RATE_LIMIT = 256L;
@@ -188,17 +185,15 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
     /** Mirrors the native production amount for every valid nearby obelisk without modifying the native obelisk. */
     private static void transferObeliskProduction(DigitalSupplyInterfaceTarget target,
                                                   DigitalSupplyTransferContext transfer, LongList positions) {
-        if (positions == null || positions.isEmpty() || target.level().getGameTime() % 100L != 0L || !(target.level() instanceof ServerLevel level)) {
+        if (positions == null || positions.isEmpty() || target.level().getGameTime() % 100L != 0L) {
             return;
         }
-        pruneClaims(level.getGameTime() - 200L);
+        long gameTime = target.level().getGameTime();
+        pruneClaims(gameTime - 200L);
         for (int index = 0; index < positions.size(); index++) {
             BlockPos position = BlockPos.of(positions.getLong(index));
-            if (!hasObeliskProduction(level, position)) {
-                continue;
-            }
             ObeliskProductionKey production = new ObeliskProductionKey(
-                    level.dimension().location(), position.asLong(), level.getGameTime());
+                    target.level().dimension().location(), position.asLong(), gameTime);
             synchronized (CLAIMED_PRODUCTION) {
                 if (CLAIMED_PRODUCTION.containsKey(production)) {
                     continue;
@@ -220,14 +215,6 @@ public final class ForbiddenArcanusDigitalSupplyAdapter implements DigitalSupply
                 }
             }
         }
-    }
-
-    private static boolean hasObeliskProduction(ServerLevel level, BlockPos position) {
-        return level.getPoiManager()
-                .getInRange(holder -> holder.value() == ModPOITypes.HEPHAESTUS_FORGE.get(),
-                        position, 4, PoiManager.Occupancy.ANY)
-                .map(PoiRecord::getPos)
-                .anyMatch(forgePosition -> level.getBlockEntity(forgePosition, ModBlockEntities.HEPHAESTUS_FORGE.get()).isPresent());
     }
 
     private static void pruneClaims(long oldestGameTime) {

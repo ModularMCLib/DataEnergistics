@@ -35,14 +35,14 @@ public final class DataExtractorRulesConfiguration {
     public static final ConfigHolder<DataExtractorRulesConfiguration> HOLDER = Configuration.registerConfig(DataExtractorRulesConfiguration.class, ConfigFormats.YAML);
     public static final DataExtractorRulesConfiguration INSTANCE = HOLDER.getConfigInstance();
 
-    @Configurable(key = Configurable.LocalizationKey.FULL)
+    @Configurable
     @Configurable.Comment({
             "One complete mimetic carrier entry per item; output arrays at the same index form one AE output.",
             "每个条目是一整条数据拟生载体规则；产出数组中相同索引组成一条 AE 产出。"
     })
     public MimeticCarrierEntry[] mimeticCarriers = MimeticCarrierEntry.defaults(defaultRuleValues());
 
-    @Configurable(key = Configurable.LocalizationKey.FULL)
+    @Configurable
     @Configurable.Comment({
             "One complete extractor rule per entry. Weapon and target ids are arrays; empty target ids match every target.",
             "每个条目是一整条数据提取器规则；武器和目标 ID 都是数组；空目标数组匹配所有目标。"

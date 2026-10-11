@@ -25,7 +25,9 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
 
     /** Nature's Aura's native spread moves ceil(aura * 0.72) / 6 units; use five times that fixed rate. */
     private static final long RATE_LIMIT = (long) Math.ceil(IAuraChunk.DEFAULT_AURA * 0.72D) / 6L * 5L;
-    private static final int RELEASE_THRESHOLD = IAuraChunk.DEFAULT_AURA * 3 / 10;
+    private static final int RECLAIM_THRESHOLD = Math.toIntExact(
+            (IAuraChunk.DEFAULT_AURA * 7L + 9L) / 10L);
+    private static final int RELEASE_THRESHOLD = Math.toIntExact(IAuraChunk.DEFAULT_AURA * 3L / 10L);
     private final ObjectList<DigitalSupplyResourceDefinition> resources = createResources();
 
     @Override
@@ -69,8 +71,8 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
             if (chunk == null) continue;
             NaturesAuraKey key = NaturesAuraKey.of(chunk.getType());
             int aura = IAuraChunk.getAuraInArea(target.level(), link.position(), 0);
-            if (aura > IAuraChunk.DEFAULT_AURA && link.mode().supportsPull()) {
-                long available = Math.min(RATE_LIMIT, (long) aura - IAuraChunk.DEFAULT_AURA);
+            if (aura > RECLAIM_THRESHOLD && link.mode().supportsPull()) {
+                long available = Math.min(RATE_LIMIT, (long) aura - RECLAIM_THRESHOLD);
                 transfer.targetToNetwork(key, available, DigitalSupplyTransferContext.NativeTransfer.reversible(
                         (amount, simulate) -> chunk.drainAura(link.position(), Math.toIntExact(amount), simulate, false),
                         amount -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, false)));

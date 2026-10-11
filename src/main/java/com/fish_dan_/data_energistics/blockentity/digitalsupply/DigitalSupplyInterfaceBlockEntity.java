@@ -74,6 +74,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
     private static final String LINK_SLOT_TAG = "slot";
     private static final String ADAPTER_STATES_TAG = "adapter_states";
 
+    @Getter
     private final PresenceMarkerStorage presenceStorage = new PresenceMarkerStorage(this::onPresenceStorageChanged);
     private final IStorageProvider storageProvider = new MarkerStorageProvider();
     private final ObjectList<DigitalSupplyInterfaceAdapter> adapters;
@@ -147,11 +148,6 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         }
         return new DigitalSupplyNetworkStorage(
                 this.getMainNode().getGrid().getStorageService().getInventory(), this.presenceStorage);
-    }
-
-    /** Returns the marker mount for diagnostics and focused tests. */
-    public MEStorage presenceStorage() {
-        return this.presenceStorage;
     }
 
     @Override

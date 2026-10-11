@@ -183,7 +183,7 @@ public final class TrinityDataCoreHostUi {
 
     private static void bindClose(UIElement root, TrinityDataCoreMenu menu) {
         Button close = TrinityUiXmlLayouts.require(root, CLOSE_ID, Button.class);
-        Component tooltip = Component.translatable("gui.close");
+        Component tooltip = Component.translatable("text.data_energistics.off");
         close.setOnServerClick(event -> menu.getPlayer().closeContainer());
         close.text.style(style -> style.tooltips(tooltip));
         close.style(style -> style.tooltips(tooltip));

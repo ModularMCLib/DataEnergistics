@@ -42,7 +42,6 @@ import hellfirepvp.astralsorcery.common.starlight.api.TransmissionReceiverNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionPacket;
 import hellfirepvp.astralsorcery.common.tile.TileAltar;
 import hellfirepvp.astralsorcery.common.tile.network.SimpleTransmissionNode;
-import hellfirepvp.astralsorcery.common.util.LumenUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -389,22 +388,16 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         long requestPacked = target.position().asLong();
         int typeIndex = (int) Math.floorMod(level.getGameTime() + requestPacked, (long) availableTypes.size());
         Lumen lumen = availableTypes.get(typeIndex);
-        int capacity = destination.getCapacity(lumen);
-        if (capacity <= 0) {
-            return;
-        }
-        int requestedAmount = Math.min(LUMEN_TICK_LIMIT, capacity);
-        LumenStack requested = LumenStack.of(lumen, requestedAmount);
+        LumenStack requested = LumenStack.of(lumen, LUMEN_TICK_LIMIT);
         Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
                 level, requestor, requested, node -> isExternalLumenSource(level, requestPacked, node));
         if (chain.isEmpty()) {
             chain = LumenRequestHelper.requestRelayed(
                     level, target.position(), requested, node -> isExternalLumenSource(level, requestPacked, node));
         }
-        LumenStack transferred = chain.isPresent() ? LumenUtil.tryChainTransfer(
-                destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE) : LumenStack.EMPTY;
+        LumenStack transferred = chain.isPresent() ? this.transferRequestChain(level, chain.get(), requested, destination) : LumenStack.EMPTY;
         if (transferred.isEmpty()) {
-            transferred = this.importDirectSource(level, requestor, requestPacked, lumen, requested, destination);
+            transferred = this.importDirectSource(level, requestor, requestPacked, requested, destination);
         }
         if (!transferred.isEmpty() && transferred.getAmount() > 0) {
             target.refreshState();
@@ -418,12 +411,17 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         ObjectLinkedOpenHashSet<Lumen> available = new ObjectLinkedOpenHashSet<>();
         LumenNetworkData data = DataAS.DOMAIN_AS.getData(level, DataAS.KEY_LUMEN_NETWORK_DATA);
         for (LumenNode node : data.collectNearbyNodes(requestor.getPos(), 16)) {
-            if (!isExternalLumenSource(level, requestPacked, node) || !requestor.canConnect(level, node)) {
+            if (!isExternalLumenSource(level, requestPacked, node)) {
                 continue;
             }
-            for (Lumen lumen : node.getProvidedLumenTypes()) {
-                if (this.lumenTypes.contains(lumen)) {
-                    available.add(lumen);
+            if (node.getConnectionType() == LumenNode.ConnectionType.SOURCE) {
+                ILumenHandler source = level.getCapability(ILumenHandler.BLOCK, node.getPos(), null);
+                if (source != null) {
+                    for (LumenStack availableStack : source.getContainedLumen()) {
+                        if (!availableStack.isEmpty() && this.lumenTypes.contains(availableStack.getLumen())) {
+                            available.add(availableStack.getLumen());
+                        }
+                    }
                 }
             }
             for (Lumen lumen : node.getRelayedLumenTypes().keySet()) {
@@ -438,12 +436,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     private LumenStack importDirectSource(ServerLevel level,
                                           LumenNode requestor,
                                           long requestPacked,
-                                          Lumen lumen,
                                           LumenStack requested,
                                           ILumenHandler destination) {
         LumenNetworkData data = DataAS.DOMAIN_AS.getData(level, DataAS.KEY_LUMEN_NETWORK_DATA);
         for (LumenNode sourceNode : data.collectNearbyNodes(requestor.getPos(), 16)) {
-            if (sourceNode.getConnectionType() != LumenNode.ConnectionType.SOURCE || !sourceNode.getProvidedLumenTypes().contains(lumen) || !isExternalLumenSource(level, requestPacked, sourceNode) || !requestor.canConnect(level, sourceNode)) {
+            if (sourceNode.getConnectionType() != LumenNode.ConnectionType.SOURCE || !isExternalLumenSource(level, requestPacked, sourceNode)) {
                 continue;
             }
             ILumenHandler source = level.getCapability(ILumenHandler.BLOCK, sourceNode.getPos(), null);
@@ -456,6 +453,17 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             }
         }
         return LumenStack.EMPTY;
+    }
+
+    private static LumenStack transferRequestChain(ServerLevel level,
+                                                   LumenRequestChain chain,
+                                                   LumenStack requested,
+                                                   ILumenHandler destination) {
+        if (!chain.reValidateChain(level)) {
+            return LumenStack.EMPTY;
+        }
+        ILumenHandler source = level.getCapability(ILumenHandler.BLOCK, chain.getEndNode().getPos(), null);
+        return source == null ? LumenStack.EMPTY : transferDirectSource(destination, source, requested);
     }
 
     private static LumenStack transferDirectSource(ILumenHandler destination,
@@ -471,7 +479,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         }
         LumenStack toDrain = drainable.copyWithAmount(Math.min(fillable, drainable.getAmount()));
         LumenStack drained = drainSource(source, toDrain, ILumenHandler.Action.EXECUTE);
-        if (drained.isEmpty()) {
+        if (drained.isEmpty() || !drained.isSameLumen(toDrain) || drained.getAmount() > toDrain.getAmount()) {
             return LumenStack.EMPTY;
         }
         int inserted = destination.fill(drained, ILumenHandler.Action.EXECUTE);
@@ -480,7 +488,10 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         }
         if (inserted < drained.getAmount()) {
             LumenStack remainder = drained.copyWithAmount(drained.getAmount() - inserted);
-            fillSource(source, remainder, ILumenHandler.Action.EXECUTE);
+            int returned = fillSource(source, remainder, ILumenHandler.Action.EXECUTE);
+            if (returned != remainder.getAmount()) {
+                throw new IllegalStateException("Astral lumen source rejected an uninserted transfer remainder");
+            }
         }
         return inserted == 0 ? LumenStack.EMPTY : drained.copyWithAmount(inserted);
     }

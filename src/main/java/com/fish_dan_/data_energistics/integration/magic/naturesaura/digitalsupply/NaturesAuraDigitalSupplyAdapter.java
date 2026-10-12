@@ -23,11 +23,9 @@ import java.util.EnumSet;
 /** Transfers Nature's Aura using the public IAuraChunk API with threshold hysteresis. */
 public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
-    /** Nature's Aura's native spread moves ceil(aura * 0.72) / 6 units; use five times that fixed rate. */
-    private static final long RATE_LIMIT = (long) Math.ceil(IAuraChunk.DEFAULT_AURA * 0.72D) / 6L * 5L;
-    private static final int RECLAIM_THRESHOLD = Math.toIntExact(
-            (IAuraChunk.DEFAULT_AURA * 7L + 9L) / 10L);
-    private static final int RELEASE_THRESHOLD = Math.toIntExact(IAuraChunk.DEFAULT_AURA * 45L / 100L);
+    private static final int STANDARD_AURA = IAuraChunk.DEFAULT_AURA;
+    private static final int RECLAIM_THRESHOLD = Math.toIntExact(STANDARD_AURA * 70L / 100L);
+    private static final int RELEASE_THRESHOLD = Math.toIntExact(STANDARD_AURA * 45L / 100L);
     private final ObjectList<DigitalSupplyResourceDefinition> resources = createResources();
 
     @Override
@@ -70,26 +68,25 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
             IAuraChunk chunk = auraAt(target, link.position());
             if (chunk == null) continue;
             NaturesAuraKey key = NaturesAuraKey.of(chunk.getType());
-            int aura = IAuraChunk.getAuraInArea(target.level(), link.position(), 0);
-            if (aura > RECLAIM_THRESHOLD && link.mode().supportsPull()) {
-                long available = Math.min(RATE_LIMIT, (long) aura - RECLAIM_THRESHOLD);
-                transfer.targetToNetwork(key, available, DigitalSupplyTransferContext.NativeTransfer.reversible(
-                        (amount, simulate) -> drainAboveThreshold(target, chunk, link.position(), amount, simulate),
-                        amount -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, false)));
-            } else if (aura < RELEASE_THRESHOLD && link.mode().supportsInput()) {
-                long requested = Math.min(RATE_LIMIT, (long) RECLAIM_THRESHOLD - aura);
-                if (requested > 0L) {
-                    transfer.networkToTarget(key, requested,
-                            (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, simulate));
-                }
+            int currentAura = IAuraChunk.getAuraInArea(target.level(), link.position(), 0);
+            if (currentAura > RECLAIM_THRESHOLD && link.mode().supportsPull()) {
+                long excess = (long) currentAura - RECLAIM_THRESHOLD;
+                transfer.targetToNetwork(key, excess,
+                        DigitalSupplyTransferContext.NativeTransfer.reversible(
+                                (amount, simulate) -> drainAboveThreshold(target, chunk, link.position(), amount, simulate),
+                                amount -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, false)));
+            } else if (currentAura < RELEASE_THRESHOLD && link.mode().supportsInput()) {
+                long deficit = (long) RECLAIM_THRESHOLD - currentAura;
+                transfer.networkToTarget(key, deficit,
+                        (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, simulate));
             }
         }
     }
 
     private static long drainAboveThreshold(DigitalSupplyInterfaceTarget target, IAuraChunk chunk,
                                             BlockPos position, long offered, boolean simulate) {
-        int current = IAuraChunk.getAuraInArea(target.level(), position, 0);
-        long allowed = Math.clamp((long) current - RECLAIM_THRESHOLD, 0L, offered);
+        int currentAura = IAuraChunk.getAuraInArea(target.level(), position, 0);
+        long allowed = Math.clamp((long) currentAura - RECLAIM_THRESHOLD, 0L, offered);
         return allowed <= 0L ? 0L : chunk.drainAura(position, Math.toIntExact(allowed), false, simulate);
     }
 

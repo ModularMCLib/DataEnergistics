@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.blockentity.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.production.DataExtractorKillEvent;
 import com.fish_dan_.data_energistics.api.production.DataProductionOutput;
 import com.fish_dan_.data_energistics.api.production.rule.DataProductionContext;
@@ -16,6 +17,7 @@ import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable
 import com.fish_dan_.data_energistics.item.carrier.BiologyDataCarrierData;
 import com.fish_dan_.data_energistics.item.carrier.CropDataCarrierData;
 import com.fish_dan_.data_energistics.item.carrier.OreDataCarrierData;
+import com.fish_dan_.data_energistics.mixin.minecraft.accessor.ExperienceOrbAccessor;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
@@ -68,6 +70,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
@@ -207,6 +210,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
     private final DataProductionPendingLedger pendingOutput = new DataProductionPendingLedger(this::saveChanges);
     private boolean productionFailed;
     private int dropCollectionCooldown;
+    private int experienceOrbCollectionCooldown;
     private int targetScanCooldown;
     private int debuffCooldown;
     @Nullable
@@ -296,6 +300,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         this.pendingOutput.readFromNbt(registries, data.getList(PENDING_OUTPUTS_TAG, Tag.TAG_COMPOUND));
         this.productionFailed = false;
         this.dropCollectionCooldown = 0;
+        this.experienceOrbCollectionCooldown = 0;
         this.targetScanCooldown = 0;
         this.debuffCooldown = 0;
         this.cachedCoverageAabb = null;
@@ -384,7 +389,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             }
         }
         DataFlowKey.of().addDrops(this.pendingDataFlow, drops, level, pos);
-        DataFlowKey.of().addDrops(this.pendingXpDataFlow, drops, level, pos);
+        ExperienceKey.INSTANCE.addDrops(this.pendingXpDataFlow, drops, level, pos);
         drops.addAll(this.pendingOutput.toDrops(level, pos));
     }
 
@@ -449,6 +454,8 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             updateOnlineState();
             return;
         }
+
+        collectExperienceOrbs();
 
         if (this.pendingDataFlow > 0) {
             if (flushPendingDataFlow()) {
@@ -860,18 +867,11 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         float collectedDamage = 0.0F;
         boolean carrierUpdated = false;
 
-        Player rewardPlayer = this.cachedFakePlayer;
-        if (rewardPlayer == null) {
-            rewardPlayer = Platform.getFakePlayer(serverLevel, null);
-            this.cachedFakePlayer = rewardPlayer;
-        }
-
         for (LivingEntity entity : targets) {
             if (!entity.isAlive()) {
                 continue;
             }
             float healthBefore = entity.getHealth();
-            long vanillaExperience = Math.max(0L, entity.getExperienceReward(serverLevel, rewardPlayer));
             ResourceLocation targetEntityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
             ItemStack weaponForRules = sword.copy();
             boolean damaged;
@@ -893,7 +893,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
             clearAggro(entity);
             DataProductionRuleSet rules = DataExtractorRuleTable.extractorRuleSet(weaponForRules, targetEntityId);
             DataProductionContext context = new DataProductionContext(
-                    vanillaExperience, healthBefore, damageDealt, true);
+                    0L, healthBefore, damageDealt, true);
             DataProductionOutput generated = rules.produce(context, DataProductionOutput::empty, true);
             if (!generated.isEmpty()) {
                 this.pendingOutput.append(generated);
@@ -1415,7 +1415,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         long simulated = networkStorage.insert(
-                DataFlowKey.of(),
+                ExperienceKey.INSTANCE,
                 this.pendingXpDataFlow,
                 Actionable.SIMULATE,
                 IActionSource.ofMachine(this));
@@ -1424,7 +1424,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
         }
 
         long inserted = networkStorage.insert(
-                DataFlowKey.of(),
+                ExperienceKey.INSTANCE,
                 this.pendingXpDataFlow,
                 Actionable.MODULATE,
                 IActionSource.ofMachine(this));
@@ -1434,6 +1434,36 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
 
         this.pendingXpDataFlow -= inserted;
         this.saveChanges();
+    }
+
+    private void collectExperienceOrbs() {
+        if (this.autoExportMode != DataExtractorAutoExportMode.AE ||
+                !(this.level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        if (this.experienceOrbCollectionCooldown > 0) {
+            this.experienceOrbCollectionCooldown--;
+            return;
+        }
+        this.experienceOrbCollectionCooldown = DROP_COLLECTION_INTERVAL_TICKS - 1;
+
+        long collected = 0L;
+        for (ExperienceOrb orb : serverLevel.getEntitiesOfClass(
+                ExperienceOrb.class,
+                getDropCollectionAabb(),
+                entity -> entity.isAlive())) {
+            int value = orb.getValue();
+            int count = ((ExperienceOrbAccessor) orb).dataEnergistics$getCount();
+            if (value <= 0 || count <= 0) {
+                continue;
+            }
+            collected = Math.addExact(collected, Math.multiplyExact((long) value, count));
+            orb.discard();
+        }
+        if (collected > 0L) {
+            this.pendingXpDataFlow = Math.addExact(this.pendingXpDataFlow, collected);
+            this.saveChanges();
+        }
     }
 
     private ItemStack routeAutoExportItem(ItemStack stack, ObjectList<IItemHandler> adjacentHandlers, @Nullable MEStorage networkStorage) {

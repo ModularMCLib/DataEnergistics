@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataRipperSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataRipperSchema;
 import com.fish_dan_.data_energistics.menu.patternencoding.MenuClientRefresh;
 import com.fish_dan_.data_energistics.part.DataRipperPart;
 import com.fish_dan_.data_energistics.registry.DEMenus;

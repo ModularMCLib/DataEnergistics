@@ -1,0 +1,28 @@
+package com.fish_dan_.data_energistics.configuration.rules.schema;
+
+import com.fish_dan_.data_energistics.api.production.rule.OutputAmountMode;
+import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
+import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
+
+/** One complete weapon/target dependent data-extractor output row. */
+public record ExtractorOutputEntry(
+                                   String[] weaponItems,
+                                   String[] weaponTags,
+                                   String[] targetEntityIds,
+                                   OutputFamily outputFamily,
+                                   OutputKeyKind keyKind,
+                                   String keyId,
+                                   OutputAmountMode amountMode,
+                                   long amount) {
+
+    public ExtractorOutputEntry {
+        weaponItems = weaponItems.clone();
+        weaponTags = weaponTags.clone();
+        targetEntityIds = targetEntityIds.clone();
+        keyId = text(keyId);
+    }
+
+    private static String text(String value) {
+        return value == null ? "" : value;
+    }
+}

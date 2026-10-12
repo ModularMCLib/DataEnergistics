@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.entity.explosive;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.DataNukeSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataNukeSchema;
 import com.fish_dan_.data_energistics.entity.explosive.DigitalAnnihilationWork.Settings;
 import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.orbital.attack.entity.OrbitalEntityErasure;

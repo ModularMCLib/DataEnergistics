@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.core;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
 import com.fish_dan_.data_energistics.common.trinity.drive.TrinityInfiniteDriveInventory;
 import com.fish_dan_.data_energistics.gui.ldlib2.host.protocol.HostUiKey;
@@ -28,6 +27,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -183,7 +183,7 @@ public final class TrinityDataCoreHostUi {
 
     private static void bindClose(UIElement root, TrinityDataCoreMenu menu) {
         Button close = TrinityUiXmlLayouts.require(root, CLOSE_ID, Button.class);
-        Component tooltip = Component.translatable("gui.close");
+        Component tooltip = Component.translatable("text.data_energistics.off");
         close.setOnServerClick(event -> menu.getPlayer().closeContainer());
         close.text.style(style -> style.tooltips(tooltip));
         close.style(style -> style.tooltips(tooltip));
@@ -300,11 +300,22 @@ public final class TrinityDataCoreHostUi {
         return cpuList;
     }
 
+    private static int priorityModifierMask() {
+        int mask = 0;
+        if (Screen.hasShiftDown()) {
+            mask |= 1;
+        }
+        if (Screen.hasControlDown()) {
+            mask |= 2;
+        }
+        return mask;
+    }
+
     private static void registerProviders(TrinityDataCoreMenu menu,
                                           HostUiExtension hostUi,
                                           TrinityDataCoreUiSync sync) {
         IntSupplier modifierMask = menu.getPlayer().level().isClientSide() ?
-                () -> DataEnergisticsClientBridgeAccess.get().priorityModifierMask() : () -> 0;
+                TrinityDataCoreHostUi::priorityModifierMask : () -> 0;
         hostUi.register(TrinityDataCoreStructureProviders.autoBuild(
                 menu,
                 menu::sendHostedAutoBuild,

@@ -57,7 +57,7 @@ public final class PriorityControl {
         bindStepButtons();
         bindValueField();
         this.layout.close().setOnClick(event -> close.run());
-        Component closeTooltip = Component.translatable("gui.close");
+        Component closeTooltip = Component.translatable("text.data_energistics.off");
         this.layout.close().text.style(style -> style.tooltips(closeTooltip));
         this.layout.close().style(style -> style.tooltips(closeTooltip));
         this.layout.root().addEventListener(UIEvents.TICK, ignored -> refresh());

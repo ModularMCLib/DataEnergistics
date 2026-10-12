@@ -94,7 +94,7 @@ public final class TrinityAggregatePatternProvider implements HostSubUiProvider 
         controls.maintenanceHost().style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
         controls.maintenanceHost().addChild(maintenanceBar);
 
-        bindButton(controls.close(), Component.translatable("gui.close"), context::requestClose);
+        bindButton(controls.close(), Component.translatable("text.data_energistics.off"), context::requestClose);
         bindButton(
                 controls.priority(),
                 Component.translatable("button.data_energistics.trinity_data_core.pattern.priority"),

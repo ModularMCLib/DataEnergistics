@@ -132,6 +132,7 @@ public final class DEItems {
             "data_sanctum_interface_part",
             () -> new PartItem<>(new Item.Properties(), DataSanctumInterfacePart.class, DataSanctumInterfacePart::new));
     public static final DeferredItem<BlockItem> ADAPTIVE_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.ADAPTIVE_PATTERN_PROVIDER);
+    public static final DeferredItem<BlockItem> DIGITAL_SUPPLY_INTERFACE = ITEMS.registerSimpleBlockItem(DEBlocks.DIGITAL_SUPPLY_INTERFACE);
     public static final DeferredItem<BlockItem> DIGITAL_PACKAGED_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER);
     public static final DeferredItem<PackagedRecoveryItem> PACKAGED_RECOVERY = ITEMS.register(
             "packaged_recovery", () -> new PackagedRecoveryItem(new Item.Properties().stacksTo(1).fireResistant()));

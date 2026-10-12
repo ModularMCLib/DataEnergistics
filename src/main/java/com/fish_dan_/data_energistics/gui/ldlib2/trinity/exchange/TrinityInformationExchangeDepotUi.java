@@ -88,8 +88,8 @@ public final class TrinityInformationExchangeDepotUi {
         layout.title().setAllowHitTest(false);
         layout.title().addClass("trinity-information-exchange-title");
         layout.title().style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
-        layout.close().text.style(style -> style.tooltips(Component.translatable("gui.close")));
-        layout.close().style(style -> style.tooltips(Component.translatable("gui.close")));
+        layout.close().text.style(style -> style.tooltips(Component.translatable("text.data_energistics.off")));
+        layout.close().style(style -> style.tooltips(Component.translatable("text.data_energistics.off")));
     }
 
     private static void bindModes(TrinityInformationExchangeDepotMenu menu, Layout layout) {

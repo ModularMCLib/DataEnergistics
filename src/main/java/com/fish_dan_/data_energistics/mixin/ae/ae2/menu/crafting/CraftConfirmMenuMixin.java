@@ -15,7 +15,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityCraftingRequestContext;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningProgressContext;
 import com.fish_dan_.data_energistics.common.terminal.UniversalTerminalHostAccessor;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.menu.crafting.projection.TrinityCraftingPlanSummaryProjection;

@@ -16,11 +16,7 @@ import org.jspecify.annotations.Nullable;
 /** Registered long-width EU endpoint strategy for Modern Industrialization. */
 public final class ModernIndustrializationEnergyEndpointIntegration implements TowerEnergyEndpointIntegration {
 
-    private final ModernIndustrializationEnergyBridge bridge;
-
-    public ModernIndustrializationEnergyEndpointIntegration(ModernIndustrializationEnergyBridge bridge) {
-        this.bridge = bridge;
-    }
+    public ModernIndustrializationEnergyEndpointIntegration() {}
 
     @Override
     public String id() {
@@ -30,7 +26,7 @@ public final class ModernIndustrializationEnergyEndpointIntegration implements T
     @Override
     @Nullable
     public IEnergyStorage findEnergyStorage(Level level, BlockPos position, @Nullable Direction side) {
-        return this.bridge.findEnergyStorage(level, position, side);
+        return ModernIndustrializationEnergyIntegration.findEnergyStorage(level, position, side);
     }
 
     @Override

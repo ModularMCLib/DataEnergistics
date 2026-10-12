@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.menu.patternencoding;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.client.screen.MenuClientRefreshHandler;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -14,7 +14,7 @@ public final class MenuClientRefresh {
             return;
         }
 
-        DataEnergisticsClientBridgeAccess.get().refreshDataRipperScreen();
+        MenuClientRefreshHandler.refreshDataRipperScreen();
     }
 
     public static void refreshDataDistributionTowerScreen() {
@@ -22,6 +22,6 @@ public final class MenuClientRefresh {
             return;
         }
 
-        DataEnergisticsClientBridgeAccess.get().refreshDataDistributionTowerScreen();
+        MenuClientRefreshHandler.refreshDataDistributionTowerScreen();
     }
 }

@@ -23,6 +23,7 @@ mystical-agriculture = "1.21.1-8.0.28"
 cucumber = "1.21.1-8.0.16"
 extendedcrafting = "1.21.1-7.0.9"
 botania = "457-SNAPSHOT"
+astral-sorcery = "2.0.1.35"
 ars-nouveau = "5.11.6.1353"
 occultism = "1.205.0"
 modonomicon = "1.117.2"
@@ -128,6 +129,7 @@ grandpower          = { module = "dev.technici4n:GrandPower", version.ref = "gra
 
 # Magic and extended crafting: official Maven publications.
 botania             = { module = "vazkii.botania:botania-neoforge-1.21.1", version.ref = "botania" }
+astral-sorcery      = { module = "hellfirepvp.astralsorcery:AstralSorcery", version.ref = "astral-sorcery" }
 ars-nouveau         = { module = "com.hollingsworth.ars_nouveau:ars_nouveau-1.21.1", version.ref = "ars-nouveau" }
 extendedcrafting    = { module = "com.blakebr0.extendedcrafting:ExtendedCrafting", version.ref = "extendedcrafting" }
 occultism           = { module = "com.klikli_dev:occultism-1.21.1-neoforge", version.ref = "occultism" }

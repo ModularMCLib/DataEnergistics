@@ -35,7 +35,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateG
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetDisplayResolverContext;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetSummaryResolver;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.ae2.display.AeCraftingDisplayBridge;
 import com.fish_dan_.data_energistics.integration.ae.appflux.energy.AE2FluxIntegration;

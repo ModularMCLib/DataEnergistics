@@ -60,6 +60,13 @@ repositories {
             includeGroup("team.lodestar.lodestone")
         }
     }
+    exclusiveContent { // Astral Sorcery and ObserverLib
+        forRepository { maven { url = "https://maven.hellfiredev.net/" } }
+        filter {
+            includeGroup("hellfirepvp.astralsorcery")
+            includeGroup("hellfirepvp.observerlib")
+        }
+    }
     exclusiveContent { // Occultism and its companion libraries
         forRepository { maven { url = "https://dl.cloudsmith.io/public/klikli-dev/mods/maven/" } }
         filter { includeGroup("com.klikli_dev") }

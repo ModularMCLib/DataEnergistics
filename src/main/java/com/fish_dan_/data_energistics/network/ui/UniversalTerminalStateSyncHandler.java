@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.network.ui;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.client.screen.terminal.UniversalTerminalStateSyncClientHandler;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -14,6 +14,6 @@ public final class UniversalTerminalStateSyncHandler {
             return;
         }
 
-        DataEnergisticsClientBridgeAccess.get().cacheSyncedTerminalState(payload);
+        UniversalTerminalStateSyncClientHandler.cacheSyncedTerminalState(payload);
     }
 }

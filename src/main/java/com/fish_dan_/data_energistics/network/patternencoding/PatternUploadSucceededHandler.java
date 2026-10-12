@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.network.patternencoding;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 
 /**
- * Routes confirmed upload events through the client bridge while keeping common network registration server-safe.
+ * Routes confirmed upload events to the client handler while keeping common network registration server-safe.
  */
 public final class PatternUploadSucceededHandler {
 
@@ -20,6 +20,6 @@ public final class PatternUploadSucceededHandler {
         if (FMLEnvironment.dist != Dist.CLIENT) {
             return;
         }
-        DataEnergisticsClientBridgeAccess.get().handlePatternUploadSucceeded(payload, player);
+        PatternUploadSucceededClientHandler.handle(payload, player);
     }
 }

@@ -141,7 +141,6 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
                     if (this.isQueuedForRemoval(inventory)) {
                         continue;
                     }
-
                     if (inventory instanceof UnlimitedExtractableStorage unlimited &&
                             unlimited.supportsUnlimitedExtraction(what, source)) {
                         skippedInfiniteSources++;

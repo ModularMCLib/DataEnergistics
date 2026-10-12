@@ -4,5 +4,6 @@ package com.fish_dan_.data_energistics.item.connector;
 public enum ConnectorHostType {
     TOWER,
     ADAPTIVE_PROVIDER,
-    EXTREME_INTERFACE
+    EXTREME_INTERFACE,
+    DIGITAL_SUPPLY_INTERFACE
 }

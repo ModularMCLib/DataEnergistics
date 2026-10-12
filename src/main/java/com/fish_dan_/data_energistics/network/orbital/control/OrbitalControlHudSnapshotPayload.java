@@ -1,12 +1,14 @@
 package com.fish_dan_.data_energistics.network.orbital.control;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
 import com.fish_dan_.data_energistics.orbital.control.protocol.OrbitalHudSnapshot;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /** Server-authoritative status pushed to the LDLib2 orbital HUD while its terminal is held. */
@@ -47,6 +49,9 @@ public record OrbitalControlHudSnapshotPayload(
     }
 
     public static void handle(OrbitalControlHudSnapshotPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> DataEnergisticsClientBridgeAccess.get().cacheOrbitalControlHud(payload));
+        if (FMLEnvironment.dist != Dist.CLIENT) {
+            return;
+        }
+        context.enqueueWork(() -> OrbitalControlHudClientState.receive(payload));
     }
 }

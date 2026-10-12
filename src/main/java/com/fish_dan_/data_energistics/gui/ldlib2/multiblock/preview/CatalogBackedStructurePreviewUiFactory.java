@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.client.gui.ldlib2.multiblock.LdlibStructurePreviewSceneBinder;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSelection;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.MdlibNorthFacingStructurePreviewProjection;
@@ -27,7 +27,11 @@ final class CatalogBackedStructurePreviewUiFactory implements StructurePreviewUi
 
     static StructurePreviewUiFactory createDefault() {
         return new CatalogBackedStructurePreviewUiFactory(
-                () -> DataEnergisticsClientBridgeAccess.get().structurePreviewSceneBinder());
+                CatalogBackedStructurePreviewUiFactory::createClientSceneBinder);
+    }
+
+    private static StructurePreviewSceneBinder createClientSceneBinder() {
+        return new LdlibStructurePreviewSceneBinder();
     }
 
     static StructurePreviewUiFactory create(StructurePreviewSceneBinder sceneBinder) {

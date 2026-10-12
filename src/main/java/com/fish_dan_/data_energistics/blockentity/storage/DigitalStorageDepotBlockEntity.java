@@ -79,6 +79,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 
 public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity implements InternalInventoryHost, IConfigurableObject, IUpgradeableObject, IPriorityHost {
 
@@ -1271,7 +1272,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
             }
 
             GenericStack current = keyStacks[slot];
-            boolean changed = current == null ? clamped != null : !current.equals(clamped);
+            boolean changed = !Objects.equals(current, clamped);
             if (!changed) {
                 return;
             }
@@ -1304,7 +1305,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
 
             GenericStack current = keyStacks[slot];
             long currentAmount = current == null ? 0L : current.amount();
-            long inserted = Math.min(amount, Math.max(0L, getKeyCapacity() - currentAmount));
+            long inserted = Math.clamp(getKeyCapacity() - currentAmount, 0L, amount);
             if (inserted <= 0L) {
                 return 0L;
             }
@@ -1408,7 +1409,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
             int limit = computeItemCapacity(stack.getMaxStackSize(), getInstalledCapacityCardCount());
             setMaxStackSize(slot, limit);
             int currentAmount = inSlot.isEmpty() ? 0 : inSlot.getCount();
-            int inserted = Math.min(stack.getCount(), Math.max(0, limit - currentAmount));
+            int inserted = Math.clamp(limit - currentAmount, 0, stack.getCount());
             if (inserted <= 0) {
                 return stack;
             }

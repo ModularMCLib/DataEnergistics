@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.integration.guide.guideme.client.DataRipperReassemblerGuideRecipeBody;
 import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -17,6 +17,6 @@ final class DataRipperReassemblerGuideRecipeBodyFactory {
             return LytParagraph.of("");
         }
 
-        return DataEnergisticsClientBridgeAccess.get().createDataRipperReassemblerGuideRecipeBody(recipe);
+        return new DataRipperReassemblerGuideRecipeBody(recipe);
     }
 }

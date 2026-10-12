@@ -46,7 +46,7 @@ public final class TrinityPatternCoreUi {
     }
 
     private static void bindClose(TrinityPatternCoreNbtLayout.Controls controls, Player player) {
-        Component tooltip = Component.translatable("gui.close");
+        Component tooltip = Component.translatable("text.data_energistics.off");
         controls.close().setOnServerClick(event -> player.closeContainer());
         controls.close().text.style(style -> style.tooltips(tooltip));
         controls.close().style(style -> style.tooltips(tooltip));

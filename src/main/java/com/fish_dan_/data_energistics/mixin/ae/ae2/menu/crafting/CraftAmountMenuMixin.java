@@ -2,9 +2,8 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.menu.crafting;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState;
-import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState.Confirmation;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
 
 import appeng.api.networking.crafting.CalculationStrategy;

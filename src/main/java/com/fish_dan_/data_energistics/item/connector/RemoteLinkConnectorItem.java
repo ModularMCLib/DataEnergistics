@@ -122,16 +122,6 @@ public class RemoteLinkConnectorItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof DigitalSupplyInterfaceBlockEntity) {
-            if (!level.isClientSide()) {
-                stack.set(DEDataComponents.DATA_DISTRIBUTION_CONNECTOR.get(),
-                        getConnectorData(stack).withDigitalSupplyInterface(
-                                level.dimension().location().toString(), clickedPos, -1));
-                player.displayClientMessage(Component.translatable(KEY_PREFIX + ".bound_interface"), true);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
         if (player.isShiftKeyDown() && level.getBlockEntity(clickedPos) instanceof AdaptivePatternProviderBlockEntity) {
             return bindAdaptiveProvider(stack, player, level, clickedPos);
         }

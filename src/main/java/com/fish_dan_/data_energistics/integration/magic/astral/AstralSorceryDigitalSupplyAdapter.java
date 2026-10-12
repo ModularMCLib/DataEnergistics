@@ -22,6 +22,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import hellfirepvp.astralsorcery.common.constellation.BaseConstellation;
+import hellfirepvp.astralsorcery.common.data.level.LumenNetworkData;
+import hellfirepvp.astralsorcery.common.lib.DataAS;
 import hellfirepvp.astralsorcery.common.lib.FluidsAS;
 import hellfirepvp.astralsorcery.common.lib.LumenAS;
 import hellfirepvp.astralsorcery.common.lib.RegistriesAS;
@@ -29,6 +31,7 @@ import hellfirepvp.astralsorcery.common.linking.LinkContainer;
 import hellfirepvp.astralsorcery.common.lumen.ILumenHandler;
 import hellfirepvp.astralsorcery.common.lumen.Lumen;
 import hellfirepvp.astralsorcery.common.lumen.LumenStack;
+import hellfirepvp.astralsorcery.common.lumen.capability.LumenHandlerView;
 import hellfirepvp.astralsorcery.common.lumen.transfer.LumenNetworkHelper;
 import hellfirepvp.astralsorcery.common.lumen.transfer.LumenNode;
 import hellfirepvp.astralsorcery.common.lumen.transfer.LumenRequestChain;
@@ -398,15 +401,83 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             chain = LumenRequestHelper.requestRelayed(
                     level, target.position(), requested, node -> isExternalLumenSource(level, requestPacked, node));
         }
-        if (chain.isEmpty()) {
-            return;
+        LumenStack transferred = chain.isPresent() ? LumenUtil.tryChainTransfer(
+                destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE) : LumenStack.EMPTY;
+        if (transferred.isEmpty()) {
+            transferred = this.importDirectSource(level, requestor, requestPacked, lumen, requested, destination);
         }
-        LumenStack transferred = LumenUtil.tryChainTransfer(
-                destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE);
         if (!transferred.isEmpty() && transferred.getAmount() > 0) {
             target.refreshState();
             this.ensureLumenNode(target);
         }
+    }
+
+    private LumenStack importDirectSource(ServerLevel level,
+                                          LumenNode requestor,
+                                          long requestPacked,
+                                          Lumen lumen,
+                                          LumenStack requested,
+                                          ILumenHandler destination) {
+        LumenNetworkData data = DataAS.DOMAIN_AS.getData(level, DataAS.KEY_LUMEN_NETWORK_DATA);
+        for (LumenNode sourceNode : data.collectNearbyNodes(requestor.getPos(), 16)) {
+            if (sourceNode.getConnectionType() != LumenNode.ConnectionType.SOURCE || !sourceNode.getProvidedLumenTypes().contains(lumen) || !isExternalLumenSource(level, requestPacked, sourceNode) || !requestor.canConnect(level, sourceNode)) {
+                continue;
+            }
+            ILumenHandler source = level.getCapability(ILumenHandler.BLOCK, sourceNode.getPos(), null);
+            if (source == null) {
+                continue;
+            }
+            LumenStack transferred = transferDirectSource(destination, source, requested);
+            if (!transferred.isEmpty() && transferred.getAmount() > 0) {
+                return transferred;
+            }
+        }
+        return LumenStack.EMPTY;
+    }
+
+    private static LumenStack transferDirectSource(ILumenHandler destination,
+                                                   ILumenHandler source,
+                                                   LumenStack requested) {
+        LumenStack drainable = drainSource(source, requested, ILumenHandler.Action.SIMULATE);
+        if (drainable.isEmpty() || !drainable.isSameLumen(requested)) {
+            return LumenStack.EMPTY;
+        }
+        int fillable = destination.fill(drainable, ILumenHandler.Action.SIMULATE);
+        if (fillable <= 0) {
+            return LumenStack.EMPTY;
+        }
+        LumenStack toDrain = drainable.copyWithAmount(Math.min(fillable, drainable.getAmount()));
+        LumenStack drained = drainSource(source, toDrain, ILumenHandler.Action.EXECUTE);
+        if (drained.isEmpty()) {
+            return LumenStack.EMPTY;
+        }
+        int inserted = destination.fill(drained, ILumenHandler.Action.EXECUTE);
+        if (inserted < 0 || inserted > drained.getAmount()) {
+            throw new IllegalStateException("Astral lumen destination returned an invalid insertion amount");
+        }
+        if (inserted < drained.getAmount()) {
+            LumenStack remainder = drained.copyWithAmount(drained.getAmount() - inserted);
+            fillSource(source, remainder, ILumenHandler.Action.EXECUTE);
+        }
+        return inserted == 0 ? LumenStack.EMPTY : drained.copyWithAmount(inserted);
+    }
+
+    private static LumenStack drainSource(ILumenHandler source, LumenStack requested, ILumenHandler.Action action) {
+        if (!(source instanceof LumenHandlerView view)) {
+            return source.drain(requested, action);
+        }
+        LumenStack[] result = { LumenStack.EMPTY };
+        view.bypassFilters(handler -> result[0] = handler.drain(requested, action));
+        return result[0];
+    }
+
+    private static int fillSource(ILumenHandler source, LumenStack stack, ILumenHandler.Action action) {
+        if (!(source instanceof LumenHandlerView view)) {
+            return source.fill(stack, action);
+        }
+        int[] result = { 0 };
+        view.bypassFilters(handler -> result[0] = handler.fill(stack, action));
+        return result[0];
     }
 
     private static boolean isExternalLumenSource(ServerLevel level, long requestPacked, LumenNode node) {

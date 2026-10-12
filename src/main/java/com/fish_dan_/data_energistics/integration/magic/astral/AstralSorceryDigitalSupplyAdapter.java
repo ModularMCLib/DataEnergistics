@@ -374,10 +374,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             return;
         }
         LumenNode requestor = LumenNetworkHelper.getNode(level, target.position()).orElse(null);
-        ILumenHandler destination = level.getCapability(ILumenHandler.BLOCK, target.position(), null);
-        if (requestor == null || destination == null) {
+        MEStorage network = target.networkStorage();
+        if (requestor == null || network == null) {
             return;
         }
+        ILumenHandler destination = new AstralLumenStorage(() -> network);
         if (this.lumenTypes.isEmpty()) {
             return;
         }

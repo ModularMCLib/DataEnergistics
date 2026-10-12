@@ -77,6 +77,6 @@ public final class InfiniteDataCellInventory implements StorageCell, UnlimitedEx
     public void persist() {}
 
     private static boolean supports(AEKey key) {
-        return DEAE2Keys.isCustomKey(key);
+        return DEAE2Keys.keys().contains(key);
     }
 }

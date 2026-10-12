@@ -80,7 +80,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
                 long requested = Math.min(RATE_LIMIT, (long) RECLAIM_THRESHOLD - aura);
                 if (requested > 0L) {
                     transfer.networkToTarget(key, requested,
-                            (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), simulate, false));
+                            (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, simulate));
                 }
             }
         }
@@ -89,8 +89,8 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
     private static long drainAboveThreshold(DigitalSupplyInterfaceTarget target, IAuraChunk chunk,
                                             BlockPos position, long offered, boolean simulate) {
         int current = IAuraChunk.getAuraInArea(target.level(), position, 0);
-        long allowed = Math.min(offered, Math.max(0L, (long) current - RECLAIM_THRESHOLD));
-        return allowed <= 0L ? 0L : chunk.drainAura(position, Math.toIntExact(allowed), simulate, false);
+        long allowed = Math.clamp((long) current - RECLAIM_THRESHOLD, 0L, offered);
+        return allowed <= 0L ? 0L : chunk.drainAura(position, Math.toIntExact(allowed), false, simulate);
     }
 
     private static IAuraChunk auraAt(DigitalSupplyInterfaceTarget target, BlockPos position) {

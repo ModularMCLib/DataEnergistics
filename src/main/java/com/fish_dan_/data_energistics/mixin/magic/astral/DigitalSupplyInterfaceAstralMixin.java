@@ -46,6 +46,9 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
     @Unique
     private boolean dataEnergistics$astralNodeRegistered;
 
+    @Unique
+    private boolean dataEnergistics$ownsAstralNode;
+
     @Inject(method = "serverTick", at = @At("HEAD"))
     private void dataEnergistics$ensureAstralNode(CallbackInfo callback) {
         DigitalSupplyInterfaceBlockEntity target = (DigitalSupplyInterfaceBlockEntity) (Object) this;
@@ -55,25 +58,29 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
         StarlightNetworkLevelHelper helper = StarlightNetworkLevelHelper.get(target.getLevel());
         BlockPos position = target.position();
         TransmissionNode node = helper.getNode(position).orElse(null);
-        if (node instanceof DigitalSupplyTransmissionReceiverNode receiverNode) {
-            this.dataEnergistics$alignAstralNode(target, helper, receiverNode);
-            AstralSorceryDigitalSupplyAdapter.registerTransmissionNode((ServerLevel) target.getLevel(), receiverNode);
+        if (node instanceof SimpleTransmissionNode simple) {
+            if (simple instanceof DigitalSupplyTransmissionReceiverNode receiverNode) {
+                this.dataEnergistics$alignAstralNode(target, receiverNode);
+                this.dataEnergistics$ownsAstralNode = true;
+            } else {
+                simple.getLinkDataContainer().ifPresent(links -> this.dataEnergistics$astralLinks = links);
+                this.dataEnergistics$ownsAstralNode = false;
+            }
+            AstralSorceryDigitalSupplyAdapter.registerTransmissionNode((ServerLevel) target.getLevel(), simple);
             this.dataEnergistics$astralNodeRegistered = true;
             return;
         }
-        if (node instanceof SimpleTransmissionNode simple) {
-            simple.getLinkDataContainer().ifPresent(links -> {
-                if (this.dataEnergistics$astralLinks.getLinkedToCount() == 0) {
-                    this.dataEnergistics$astralLinks = links;
-                }
-            });
+        if (node != null) {
+            // Preserve native nodes which do not expose Astral's ordinary link-container contract.
+            this.dataEnergistics$astralNodeRegistered = false;
+            return;
         }
-        float lossMultiplier = node instanceof SimpleTransmissionNode simple ? simple.getTransmissionLossMultiplier() : 1.0F;
         DigitalSupplyTransmissionReceiverNode replacement = new DigitalSupplyTransmissionReceiverNode(
-                position, this.dataEnergistics$astralLinks, lossMultiplier);
-        ((AstralStarlightNodeLifecycle) helper).dataEnergistics$replaceNode(position, replacement);
+                position, this.dataEnergistics$astralLinks, 1.0F);
+        ((AstralStarlightNodeLifecycle) helper).dataEnergistics$addNode(replacement);
         AstralSorceryDigitalSupplyAdapter.registerTransmissionNode((ServerLevel) target.getLevel(), replacement);
         this.dataEnergistics$astralNodeRegistered = true;
+        this.dataEnergistics$ownsAstralNode = true;
     }
 
     @Inject(method = "detachAdapters", at = @At("HEAD"))
@@ -88,10 +95,15 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
             if (node instanceof DigitalSupplyTransmissionReceiverNode receiverNode) {
                 AstralSorceryDigitalSupplyAdapter.unregisterTransmissionNode((ServerLevel) target.getLevel(), receiverNode);
             }
-            ((AstralStarlightNodeLifecycle) StarlightNetworkLevelHelper.get(target.getLevel()))
-                    .dataEnergistics$removeNode(target.position());
+            if (this.dataEnergistics$ownsAstralNode && node instanceof DigitalSupplyTransmissionReceiverNode) {
+                ((AstralStarlightNodeLifecycle) StarlightNetworkLevelHelper.get(target.getLevel()))
+                        .dataEnergistics$removeNode(node);
+            } else if (node instanceof SimpleTransmissionNode simple) {
+                AstralSorceryDigitalSupplyAdapter.unregisterTransmissionNode((ServerLevel) target.getLevel(), simple);
+            }
         }
         this.dataEnergistics$astralNodeRegistered = false;
+        this.dataEnergistics$ownsAstralNode = false;
     }
 
     @Override
@@ -158,8 +170,7 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
 
     @Unique
     private void dataEnergistics$alignAstralNode(DigitalSupplyInterfaceBlockEntity target,
-                                                 StarlightNetworkLevelHelper helper,
-                                                 DigitalSupplyTransmissionReceiverNode node) {
+                                                 SimpleTransmissionNode node) {
         Optional<LinkContainer> nodeLinks = node.getLinkDataContainer();
         if (nodeLinks.isEmpty()) {
             return;
@@ -168,22 +179,14 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
         if (existing == this.dataEnergistics$astralLinks) {
             return;
         }
-        if (this.dataEnergistics$astralLinks.getLinkedToCount() == 0 && existing.getLinkedToCount() > 0) {
-            this.dataEnergistics$astralLinks = existing;
-            return;
-        }
-        if (existing.getLinkedToCount() > 0) {
-            for (var connection : existing.getLinkedTo()) {
-                if (!this.dataEnergistics$astralLinks.containsLinkPosition(connection.getTo())) {
-                    this.dataEnergistics$astralLinks.link(
+        if (this.dataEnergistics$astralLinks.getLinkedToCount() > 0) {
+            for (var connection : this.dataEnergistics$astralLinks.getLinkedTo()) {
+                if (!existing.containsLinkPosition(connection.getTo())) {
+                    existing.link(
                             target.getLevel(), target.position(), connection.getTo(), Linkable.LinkAction.EXECUTE);
                 }
             }
         }
-        DigitalSupplyTransmissionReceiverNode replacement = new DigitalSupplyTransmissionReceiverNode(
-                target.position(), this.dataEnergistics$astralLinks, node.getTransmissionLossMultiplier());
-        AstralSorceryDigitalSupplyAdapter.unregisterTransmissionNode((ServerLevel) target.getLevel(), node);
-        ((AstralStarlightNodeLifecycle) helper).dataEnergistics$replaceNode(target.position(), replacement);
-        AstralSorceryDigitalSupplyAdapter.registerTransmissionNode((ServerLevel) target.getLevel(), replacement);
+        this.dataEnergistics$astralLinks = existing;
     }
 }

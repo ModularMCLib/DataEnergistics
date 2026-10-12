@@ -68,6 +68,7 @@
 		"ae.extendedaeplus.EaepPlayerListMixin",
 		"library.neoforge.accessor.NeoForgeEnergyStorageAccessor",
 		"magic.astral.DigitalSupplyInterfaceAstralMixin",
+		"magic.astral.SimpleTransmissionNodeReceiverMixin",
 		"magic.astral.AstralAltarLiquidDrawMixin",
 		"magic.astral.StarlightNetworkLevelHelperMixin",
 		"magic.astral.StarlightTransmissionLevelHandlerMixin",

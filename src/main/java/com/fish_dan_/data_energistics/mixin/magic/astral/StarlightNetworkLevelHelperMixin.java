@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.mixin.magic.astral;
 
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
@@ -26,15 +25,7 @@ public abstract class StarlightNetworkLevelHelperMixin implements AstralStarligh
     private Level level;
 
     @Override
-    public void dataEnergistics$replaceNode(BlockPos position, TransmissionNode node) {
-        TransmissionNode previous = ((StarlightNetworkLevelHelper) (Object) this).getNode(position).orElse(null);
-        if (previous != null) {
-            this.networkData.removeTransmissionNode(position);
-            if (this.level instanceof ServerLevel serverLevel) {
-                StarlightTransmissionLevelHelper.getInstance().getHandler(serverLevel)
-                        .ifPresent(handler -> handler.notifyNodeChange(previous));
-            }
-        }
+    public void dataEnergistics$addNode(TransmissionNode node) {
         this.networkData.addTransmissionNode(node);
         if (node instanceof ITransmissionTickable tickable) {
             StarlightNetworkTickHelper.getInstance()
@@ -47,14 +38,14 @@ public abstract class StarlightNetworkLevelHelperMixin implements AstralStarligh
     }
 
     @Override
-    public void dataEnergistics$removeNode(BlockPos position) {
-        TransmissionNode previous = ((StarlightNetworkLevelHelper) (Object) this).getNode(position).orElse(null);
-        if (previous == null || !this.networkData.removeTransmissionNode(position)) {
+    public void dataEnergistics$removeNode(TransmissionNode node) {
+        if (((StarlightNetworkLevelHelper) (Object) this).getNode(node.getNodePos()).orElse(null) != node ||
+                !this.networkData.removeTransmissionNode(node.getNodePos())) {
             return;
         }
         if (this.level instanceof ServerLevel serverLevel) {
             StarlightTransmissionLevelHelper.getInstance().getHandler(serverLevel)
-                    .ifPresent(handler -> handler.notifyNodeChange(previous));
+                    .ifPresent(handler -> handler.notifyNodeChange(node));
         }
     }
 }

@@ -38,6 +38,7 @@ import hellfirepvp.astralsorcery.common.starlight.api.TransmissionNode;
 import hellfirepvp.astralsorcery.common.starlight.api.TransmissionReceiverNode;
 import hellfirepvp.astralsorcery.common.starlight.transmission.StarlightTransmissionPacket;
 import hellfirepvp.astralsorcery.common.tile.TileAltar;
+import hellfirepvp.astralsorcery.common.tile.network.SimpleTransmissionNode;
 import hellfirepvp.astralsorcery.common.util.LumenUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -62,7 +63,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     private static final int LUMEN_TICK_LIMIT = 16;
     private static final long CONSTELLATION_AE_PER_BRIGHTNESS = 1_000L;
     /** Keeps Astral transmission nodes partitioned by their server level; levels are weak keys during unload. */
-    private static final WeakHashMap<ServerLevel, ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode>> REGISTERED_NODES = new WeakHashMap<>();
+    private static final WeakHashMap<ServerLevel, ObjectLinkedOpenHashSet<SimpleTransmissionNode>> REGISTERED_NODES = new WeakHashMap<>();
     private final ObjectList<DigitalSupplyResourceDefinition> resourceCatalog;
 
     public AstralSorceryDigitalSupplyAdapter() {
@@ -181,20 +182,24 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
 
     /** Sends packets for DSI nodes linked by Astral's own linking tool after Astral's native source pass. */
     public static void transmitRegisteredInterfaces(ServerLevel level) {
-        ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode> registered = REGISTERED_NODES.get(level);
+        ObjectLinkedOpenHashSet<SimpleTransmissionNode> registered = REGISTERED_NODES.get(level);
         if (registered == null || registered.isEmpty()) {
             return;
         }
-        ObjectList<DigitalSupplyTransmissionReceiverNode> snapshot = new ObjectArrayList<>(registered);
+        ObjectList<SimpleTransmissionNode> snapshot = new ObjectArrayList<>(registered);
         StarlightNetworkLevelHelper helper = StarlightNetworkLevelHelper.get(level);
-        for (DigitalSupplyTransmissionReceiverNode node : snapshot) {
+        for (SimpleTransmissionNode node : snapshot) {
             if (!level.isLoaded(node.getNodePos())) {
+                continue;
+            }
+            if (helper.getNode(node.getNodePos()).orElse(null) != node) {
+                unregisterTransmissionNode(level, node);
                 continue;
             }
             if (!(level.getBlockEntity(node.getNodePos()) instanceof AstralDigitalSupplyReceiver receiver)) {
                 continue;
             }
-            LinkContainer links = receiver.data_energistics$astralLinkContainer();
+            LinkContainer links = node.getLinkDataContainer().orElseThrow();
             Optional<StarlightTransmissionPacket> packet = produceTransmission(
                     receiver.data_energistics$networkStorage(), level, links);
             if (packet.isEmpty()) {
@@ -305,12 +310,12 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         }
     }
 
-    public static void registerTransmissionNode(ServerLevel level, DigitalSupplyTransmissionReceiverNode node) {
+    public static void registerTransmissionNode(ServerLevel level, SimpleTransmissionNode node) {
         REGISTERED_NODES.computeIfAbsent(level, ignored -> new ObjectLinkedOpenHashSet<>()).add(node);
     }
 
-    public static void unregisterTransmissionNode(ServerLevel level, DigitalSupplyTransmissionReceiverNode node) {
-        ObjectLinkedOpenHashSet<DigitalSupplyTransmissionReceiverNode> registered = REGISTERED_NODES.get(level);
+    public static void unregisterTransmissionNode(ServerLevel level, SimpleTransmissionNode node) {
+        ObjectLinkedOpenHashSet<SimpleTransmissionNode> registered = REGISTERED_NODES.get(level);
         if (registered == null) {
             return;
         }
@@ -348,7 +353,9 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
                 }
             }
         }
-        LumenNetworkHelper.setNodeProvidedLumenTypes(level, node, provided);
+        if (!node.getProvidedLumenTypes().equals(provided)) {
+            LumenNetworkHelper.setNodeProvidedLumenTypes(level, node, provided);
+        }
     }
 
     private void importLumen(DigitalSupplyInterfaceTarget target) {
@@ -373,27 +380,22 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             }
             int requestedAmount = Math.min(LUMEN_TICK_LIMIT - moved, capacity);
             if (requestedAmount <= 0) {
-                return;
+                continue;
             }
-            while (requestedAmount > 0 && moved < LUMEN_TICK_LIMIT) {
-                LumenStack requested = LumenStack.of(lumen, 1);
-                Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
-                        level, requestor, requested, node -> node.getPos().asLong() != requestPacked);
-                if (chain.isEmpty()) {
-                    chain = LumenRequestHelper.requestRelayed(
-                            level, target.position(), requested, node -> node.getPos().asLong() != requestPacked);
-                }
-                if (chain.isEmpty()) {
-                    break;
-                }
-                LumenStack transferred = LumenUtil.tryChainTransfer(
-                        destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE);
-                if (transferred.isEmpty() || transferred.getAmount() <= 0) {
-                    break;
-                }
-                int accepted = Math.min(transferred.getAmount(), requestedAmount);
-                moved += accepted;
-                requestedAmount -= accepted;
+            LumenStack requested = LumenStack.of(lumen, requestedAmount);
+            Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
+                    level, requestor, requested, node -> node.getPos().asLong() != requestPacked);
+            if (chain.isEmpty()) {
+                chain = LumenRequestHelper.requestRelayed(
+                        level, target.position(), requested, node -> node.getPos().asLong() != requestPacked);
+            }
+            if (chain.isEmpty()) {
+                continue;
+            }
+            LumenStack transferred = LumenUtil.tryChainTransfer(
+                    destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE);
+            if (!transferred.isEmpty() && transferred.getAmount() > 0) {
+                moved += Math.min(transferred.getAmount(), requestedAmount);
             }
             if (moved >= LUMEN_TICK_LIMIT) {
                 break;

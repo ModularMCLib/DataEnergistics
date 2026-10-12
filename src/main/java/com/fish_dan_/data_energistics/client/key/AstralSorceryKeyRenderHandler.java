@@ -19,6 +19,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import hellfirepvp.astralsorcery.client.lib.TexturesAS;
 import hellfirepvp.astralsorcery.client.util.RenderConstellationUtil;
 import hellfirepvp.astralsorcery.common.constellation.BaseConstellation;
+import hellfirepvp.astralsorcery.common.lumen.Lumen;
 import hellfirepvp.astralsorcery.common.util.data.Vector3;
 import org.joml.Matrix4f;
 
@@ -32,7 +33,10 @@ public final class AstralSorceryKeyRenderHandler implements AEKeyRenderHandler<A
         if (key.getKind() == AstralSorceryKey.Kind.LUMEN) {
             TextureAtlasSprite sprite = minecraft.getModelManager().getAtlas(TexturesAS.ATLAS_LUMEN)
                     .getSprite(key.getRegistryId());
+            int color = ((Lumen) key.getValue()).getColor(0L).getColor();
+            guiGraphics.setColor(red(color), green(color), blue(color), alpha(color));
             Blitter.sprite(sprite).dest(x, y, 16, 16).blit(guiGraphics);
+            guiGraphics.setColor(1F, 1F, 1F, 1F);
             return;
         }
         BaseConstellation constellation = (BaseConstellation) key.getValue();
@@ -51,7 +55,8 @@ public final class AstralSorceryKeyRenderHandler implements AEKeyRenderHandler<A
             poseStack.translate(0.0F, 0.0F, 0.01F);
             var transform = poseStack.last().pose();
             var buffer = buffers.getBuffer(RenderType.cutout());
-            drawSpriteQuad(buffer, transform, light, halfSize, sprite);
+            int color = ((Lumen) key.getValue()).getColor(0L).getColor();
+            drawSpriteQuad(buffer, transform, light, halfSize, sprite, color);
             poseStack.popPose();
             return;
         }
@@ -70,18 +75,34 @@ public final class AstralSorceryKeyRenderHandler implements AEKeyRenderHandler<A
     }
 
     private static void drawSpriteQuad(VertexConsumer buffer, Matrix4f transform, int light, float halfSize,
-                                       TextureAtlasSprite sprite) {
-        buffer.addVertex(transform, -halfSize, -halfSize, 0).setColor(0xFFFFFFFF)
+                                       TextureAtlasSprite sprite, int color) {
+        buffer.addVertex(transform, -halfSize, -halfSize, 0).setColor(color)
                 .setUv(sprite.getU0(), sprite.getV1()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(0, 0, 1);
-        buffer.addVertex(transform, halfSize, -halfSize, 0).setColor(0xFFFFFFFF)
+        buffer.addVertex(transform, halfSize, -halfSize, 0).setColor(color)
                 .setUv(sprite.getU1(), sprite.getV1()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(0, 0, 1);
-        buffer.addVertex(transform, halfSize, halfSize, 0).setColor(0xFFFFFFFF)
+        buffer.addVertex(transform, halfSize, halfSize, 0).setColor(color)
                 .setUv(sprite.getU1(), sprite.getV0()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(0, 0, 1);
-        buffer.addVertex(transform, -halfSize, halfSize, 0).setColor(0xFFFFFFFF)
+        buffer.addVertex(transform, -halfSize, halfSize, 0).setColor(color)
                 .setUv(sprite.getU0(), sprite.getV0()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(0, 0, 1);
+    }
+
+    private static float red(int color) {
+        return ((color >>> 16) & 0xFF) / 255F;
+    }
+
+    private static float green(int color) {
+        return ((color >>> 8) & 0xFF) / 255F;
+    }
+
+    private static float blue(int color) {
+        return (color & 0xFF) / 255F;
+    }
+
+    private static float alpha(int color) {
+        return ((color >>> 24) & 0xFF) / 255F;
     }
 }

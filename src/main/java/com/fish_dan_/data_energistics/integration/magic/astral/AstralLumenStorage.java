@@ -60,10 +60,14 @@ public final class AstralLumenStorage implements ILumenHandler {
         Lumen lumen = type.asLumen();
         AstralSorceryKey key = keyFor(lumen);
         MEStorage network = this.storage.get();
-        if (key == null || network == null || network.extract(key, 1L, Actionable.SIMULATE, IActionSource.empty()) <= 0L) {
+        if (key == null || network == null) {
             return Optional.empty();
         }
-        return Optional.of(LumenStack.of(lumen, 1));
+        long amount = network.extract(key, Integer.MAX_VALUE, Actionable.SIMULATE, IActionSource.empty());
+        if (amount <= 0L) {
+            return Optional.empty();
+        }
+        return Optional.of(LumenStack.of(lumen, (int) Math.min(Integer.MAX_VALUE, amount)));
     }
 
     @Override

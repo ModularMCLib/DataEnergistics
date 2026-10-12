@@ -64,9 +64,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
     private static final long CONSTELLATION_AE_PER_BRIGHTNESS = 1_000L;
     /** Keeps Astral transmission nodes partitioned by their server level; levels are weak keys during unload. */
     private static final WeakHashMap<ServerLevel, ObjectLinkedOpenHashSet<SimpleTransmissionNode>> REGISTERED_NODES = new WeakHashMap<>();
+    private final ObjectList<Lumen> lumenTypes;
     private final ObjectList<DigitalSupplyResourceDefinition> resourceCatalog;
 
     public AstralSorceryDigitalSupplyAdapter() {
+        this.lumenTypes = createLumenTypes();
         this.resourceCatalog = createResources();
     }
 
@@ -89,7 +91,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         ObjectArrayList<DigitalSupplyResourceDefinition> result = new ObjectArrayList<>();
         for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
             ResourceLocation registryId = RegistriesAS.REGISTRY_LUMEN.getKey(entry.getValue());
-            if (registryId == null || entry.getValue() == null || entry.getValue() == LumenAS.NONE.get() || entry.getValue() == LumenAS.PRISMATIC.get()) {
+            if (registryId == null || entry.getValue() == null || entry.getValue() == LumenAS.NONE.get()) {
                 continue;
             }
             AstralSorceryKey key = AstralSorceryKey.lumen(registryId, entry.getValue());
@@ -118,6 +120,18 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
                             DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
         }
         return ObjectList.of(result.toArray(DigitalSupplyResourceDefinition[]::new));
+    }
+
+    private static ObjectList<Lumen> createLumenTypes() {
+        ObjectArrayList<Lumen> result = new ObjectArrayList<>();
+        for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
+            Lumen lumen = entry.getValue();
+            if (lumen == null || lumen == LumenAS.NONE.get()) {
+                continue;
+            }
+            result.add(lumen);
+        }
+        return ObjectList.of(result.toArray(Lumen[]::new));
     }
 
     private static boolean isNoneConstellation(ResourceLocation registryId) {
@@ -341,11 +355,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         ObjectLinkedOpenHashSet<Lumen> provided = new ObjectLinkedOpenHashSet<>();
         MEStorage storage = target.networkStorage();
         if (storage != null) {
-            for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
-                Lumen lumen = entry.getValue();
-                if (lumen == null || lumen == LumenAS.NONE.get() || lumen == LumenAS.PRISMATIC.get()) {
-                    continue;
-                }
+            for (Lumen lumen : this.lumenTypes) {
                 ResourceLocation id = RegistriesAS.REGISTRY_LUMEN.getKey(lumen);
                 if (id != null && storage.extract(AstralSorceryKey.lumen(id, lumen), 1L,
                         Actionable.SIMULATE, IActionSource.empty()) > 0L) {
@@ -367,27 +377,32 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
         if (requestor == null || destination == null) {
             return;
         }
+        if (this.lumenTypes.isEmpty()) {
+            return;
+        }
         long requestPacked = target.position().asLong();
         int moved = 0;
-        for (var entry : RegistriesAS.REGISTRY_LUMEN.entrySet()) {
-            Lumen lumen = entry.getValue();
-            if (lumen == null || lumen == LumenAS.NONE.get() || lumen == LumenAS.PRISMATIC.get()) {
-                continue;
-            }
+        int typeCount = this.lumenTypes.size();
+        int cycleLimit = Math.max(LUMEN_TICK_LIMIT, typeCount);
+        int start = (int) Math.floorMod(level.getGameTime() + requestPacked, (long) typeCount);
+        for (int offset = 0; offset < typeCount; offset++) {
+            Lumen lumen = this.lumenTypes.get((start + offset) % typeCount);
             int capacity = destination.getCapacity(lumen);
             if (capacity <= 0) {
                 continue;
             }
-            int requestedAmount = Math.min(LUMEN_TICK_LIMIT - moved, capacity);
+            int remainingTypes = typeCount - offset;
+            int requestedAmount = Math.min(capacity,
+                    Math.max(1, (cycleLimit - moved) / Math.max(1, remainingTypes)));
             if (requestedAmount <= 0) {
                 continue;
             }
             LumenStack requested = LumenStack.of(lumen, requestedAmount);
             Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
-                    level, requestor, requested, node -> node.getPos().asLong() != requestPacked);
+                    level, requestor, requested, node -> isExternalLumenSource(level, requestPacked, node));
             if (chain.isEmpty()) {
                 chain = LumenRequestHelper.requestRelayed(
-                        level, target.position(), requested, node -> node.getPos().asLong() != requestPacked);
+                        level, target.position(), requested, node -> isExternalLumenSource(level, requestPacked, node));
             }
             if (chain.isEmpty()) {
                 continue;
@@ -397,7 +412,7 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             if (!transferred.isEmpty() && transferred.getAmount() > 0) {
                 moved += Math.min(transferred.getAmount(), requestedAmount);
             }
-            if (moved >= LUMEN_TICK_LIMIT) {
+            if (moved >= cycleLimit) {
                 break;
             }
         }
@@ -405,6 +420,10 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             target.refreshState();
             this.ensureLumenNode(target);
         }
+    }
+
+    private static boolean isExternalLumenSource(ServerLevel level, long requestPacked, LumenNode node) {
+        return node.getPos().asLong() != requestPacked && !(level.getBlockEntity(node.getPos()) instanceof AstralDigitalSupplyReceiver);
     }
 
     private static void addRequestedConstellations(Level level, BlockPos position,

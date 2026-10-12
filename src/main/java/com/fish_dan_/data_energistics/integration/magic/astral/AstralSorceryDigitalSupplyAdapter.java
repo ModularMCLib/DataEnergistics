@@ -381,42 +381,27 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             return;
         }
         long requestPacked = target.position().asLong();
-        int moved = 0;
         int typeCount = this.lumenTypes.size();
-        int cycleLimit = Math.max(LUMEN_TICK_LIMIT, typeCount);
-        int start = (int) Math.floorMod(level.getGameTime() + requestPacked, (long) typeCount);
-        for (int offset = 0; offset < typeCount; offset++) {
-            Lumen lumen = this.lumenTypes.get((start + offset) % typeCount);
-            int capacity = destination.getCapacity(lumen);
-            if (capacity <= 0) {
-                continue;
-            }
-            int remainingTypes = typeCount - offset;
-            int requestedAmount = Math.min(capacity,
-                    Math.max(1, (cycleLimit - moved) / Math.max(1, remainingTypes)));
-            if (requestedAmount <= 0) {
-                continue;
-            }
-            LumenStack requested = LumenStack.of(lumen, requestedAmount);
-            Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
-                    level, requestor, requested, node -> isExternalLumenSource(level, requestPacked, node));
-            if (chain.isEmpty()) {
-                chain = LumenRequestHelper.requestRelayed(
-                        level, target.position(), requested, node -> isExternalLumenSource(level, requestPacked, node));
-            }
-            if (chain.isEmpty()) {
-                continue;
-            }
-            LumenStack transferred = LumenUtil.tryChainTransfer(
-                    destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE);
-            if (!transferred.isEmpty() && transferred.getAmount() > 0) {
-                moved += Math.min(transferred.getAmount(), requestedAmount);
-            }
-            if (moved >= cycleLimit) {
-                break;
-            }
+        int typeIndex = (int) Math.floorMod(level.getGameTime() + requestPacked, (long) typeCount);
+        Lumen lumen = this.lumenTypes.get(typeIndex);
+        int capacity = destination.getCapacity(lumen);
+        if (capacity <= 0) {
+            return;
         }
-        if (moved > 0) {
+        int requestedAmount = Math.min(LUMEN_TICK_LIMIT, capacity);
+        LumenStack requested = LumenStack.of(lumen, requestedAmount);
+        Optional<LumenRequestChain> chain = LumenRequestHelper.requestDirect(
+                level, requestor, requested, node -> isExternalLumenSource(level, requestPacked, node));
+        if (chain.isEmpty()) {
+            chain = LumenRequestHelper.requestRelayed(
+                    level, target.position(), requested, node -> isExternalLumenSource(level, requestPacked, node));
+        }
+        if (chain.isEmpty()) {
+            return;
+        }
+        LumenStack transferred = LumenUtil.tryChainTransfer(
+                destination, level, chain.get(), requested, ILumenHandler.Action.EXECUTE);
+        if (!transferred.isEmpty() && transferred.getAmount() > 0) {
             target.refreshState();
             this.ensureLumenNode(target);
         }

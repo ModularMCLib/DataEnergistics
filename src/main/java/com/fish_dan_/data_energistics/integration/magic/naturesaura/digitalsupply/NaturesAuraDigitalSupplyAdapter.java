@@ -11,16 +11,21 @@ import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUn
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 
 import de.ellpeck.naturesaura.api.NaturesAuraAPI;
 import de.ellpeck.naturesaura.api.aura.chunk.IAuraChunk;
 import de.ellpeck.naturesaura.api.aura.type.IAuraType;
+import de.ellpeck.naturesaura.chunk.AuraChunk;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.EnumSet;
 
-/** Transfers Nature's Aura using the public IAuraChunk API with threshold hysteresis. */
+/** Transfers Nature's Aura by per-chunk spot totals with threshold hysteresis. */
 public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
     private static final int STANDARD_AURA = IAuraChunk.DEFAULT_AURA;
@@ -63,31 +68,80 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
 
     @Override
     public void tick(DigitalSupplyInterfaceTarget target, DigitalSupplyTransferContext transfer) {
+        Long2ObjectLinkedOpenHashMap<ChunkAuraTransfer> chunks = new Long2ObjectLinkedOpenHashMap<>();
         for (ConnectorLink link : target.links().bindings()) {
             if (!target.links().isOnline(link)) continue;
-            IAuraChunk chunk = auraAt(target, link.position());
-            if (chunk == null) continue;
-            NaturesAuraKey key = NaturesAuraKey.of(chunk.getType());
-            int currentAura = IAuraChunk.getAuraInArea(target.level(), link.position(), 0);
-            if (currentAura > RECLAIM_THRESHOLD && link.mode().supportsPull()) {
-                long excess = (long) currentAura - RECLAIM_THRESHOLD;
-                transfer.targetToNetwork(key, excess,
+            IAuraChunk auraChunk = auraAt(target, link.position());
+            if (auraChunk == null) continue;
+            if (!(auraChunk instanceof AuraChunk chunk)) {
+                throw new IllegalStateException("Nature's Aura returned an unsupported chunk implementation: " + auraChunk.getClass().getName());
+            }
+
+            ChunkPos chunkPos = new ChunkPos(link.position());
+            long chunkId = chunkPos.toLong();
+            ChunkAuraTransfer chunkTransfer = chunks.get(chunkId);
+            if (chunkTransfer == null) {
+                int centerY = target.level().getMinBuildHeight() + (target.level().getHeight() - 1) / 2;
+                BlockPos center = chunkPos.getMiddleBlockPosition(centerY);
+                chunkTransfer = new ChunkAuraTransfer(chunk, center.asLong(), chunkRadius(target.level()), NaturesAuraKey.of(auraChunk.getType()));
+                chunks.put(chunkId, chunkTransfer);
+            }
+            chunkTransfer.canReclaim |= link.mode().supportsPull();
+            chunkTransfer.canRelease |= link.mode().supportsInput();
+        }
+
+        for (Long2ObjectMap.Entry<ChunkAuraTransfer> entry : chunks.long2ObjectEntrySet()) {
+            ChunkAuraTransfer chunkTransfer = entry.getValue();
+            BlockPos transferPosition = BlockPos.of(chunkTransfer.position);
+            long currentAura = chunkAura(chunkTransfer.chunk, transferPosition, chunkTransfer.radius);
+            if (currentAura > RECLAIM_THRESHOLD && chunkTransfer.canReclaim) {
+                long excess = Math.min(currentAura - RECLAIM_THRESHOLD, Integer.MAX_VALUE);
+                transfer.targetToNetwork(chunkTransfer.key, excess,
                         DigitalSupplyTransferContext.NativeTransfer.reversible(
-                                (amount, simulate) -> drainAboveThreshold(target, chunk, link.position(), amount, simulate),
-                                amount -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, false)));
-            } else if (currentAura < RELEASE_THRESHOLD && link.mode().supportsInput()) {
-                long deficit = (long) RECLAIM_THRESHOLD - currentAura;
-                transfer.networkToTarget(key, deficit,
-                        (amount, simulate) -> chunk.storeAura(link.position(), Math.toIntExact(amount), false, simulate));
+                                (amount, simulate) -> drainAboveThreshold(chunkTransfer, amount, simulate),
+                                amount -> chunkTransfer.chunk.storeAura(transferPosition, Math.toIntExact(amount), false, false)));
+            } else if (currentAura < RELEASE_THRESHOLD && chunkTransfer.canRelease) {
+                long deficit = Math.min(RECLAIM_THRESHOLD - currentAura, Integer.MAX_VALUE);
+                transfer.networkToTarget(chunkTransfer.key, deficit,
+                        (amount, simulate) -> chunkTransfer.chunk.storeAura(transferPosition, Math.toIntExact(amount), false, simulate));
             }
         }
     }
 
-    private static long drainAboveThreshold(DigitalSupplyInterfaceTarget target, IAuraChunk chunk,
-                                            BlockPos position, long offered, boolean simulate) {
-        int currentAura = IAuraChunk.getAuraInArea(target.level(), position, 0);
-        long allowed = Math.clamp((long) currentAura - RECLAIM_THRESHOLD, 0L, offered);
-        return allowed <= 0L ? 0L : chunk.drainAura(position, Math.toIntExact(allowed), false, simulate);
+    private static long drainAboveThreshold(ChunkAuraTransfer chunkTransfer, long offered, boolean simulate) {
+        BlockPos position = BlockPos.of(chunkTransfer.position);
+        long currentAura = chunkAura(chunkTransfer.chunk, position, chunkTransfer.radius);
+        long allowed = Math.clamp(currentAura - RECLAIM_THRESHOLD, 0L, offered);
+        return allowed <= 0L ? 0L : chunkTransfer.chunk.drainAura(position, Math.toIntExact(allowed), false, simulate);
+    }
+
+    private static long chunkAura(AuraChunk chunk, BlockPos center, int radius) {
+        // The public area query adds DEFAULT_AURA per query; aggregate this chunk's spots exactly once instead.
+        long[] aura = {STANDARD_AURA};
+        chunk.getSpots(center, radius, (position, amount) -> aura[0] += amount);
+        return aura[0];
+    }
+
+    private static int chunkRadius(Level level) {
+        double halfHeight = (level.getHeight() - 1) / 2.0D;
+        return (int) Math.ceil(Math.sqrt(halfHeight * halfHeight + 128.0D));
+    }
+
+    private static final class ChunkAuraTransfer {
+
+        private final AuraChunk chunk;
+        private final long position;
+        private final int radius;
+        private final NaturesAuraKey key;
+        private boolean canReclaim;
+        private boolean canRelease;
+
+        private ChunkAuraTransfer(AuraChunk chunk, long position, int radius, NaturesAuraKey key) {
+            this.chunk = chunk;
+            this.position = position;
+            this.radius = radius;
+            this.key = key;
+        }
     }
 
     private static IAuraChunk auraAt(DigitalSupplyInterfaceTarget target, BlockPos position) {

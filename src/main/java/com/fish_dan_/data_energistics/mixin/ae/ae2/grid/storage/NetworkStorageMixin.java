@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.storage;
 
-import com.fish_dan_.data_energistics.ae2.digitalsupply.PresenceMarkerStorage;
 import com.fish_dan_.data_energistics.ae2.grid.ExactExtractableStorage;
 import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.ae2.grid.UnlimitedExtractableStorage;
@@ -83,9 +82,6 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
                     if (this.isQueuedForRemoval(inventory)) {
                         continue;
                     }
-                    if (inventory instanceof PresenceMarkerStorage) {
-                        continue;
-                    }
                     if (inventory instanceof UnlimitedExtractableStorage unlimited &&
                             unlimited.supportsUnlimitedExtraction(what, source)) {
                         return TrinityAvailableAmount.Unlimited.INSTANCE;
@@ -145,10 +141,6 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
                     if (this.isQueuedForRemoval(inventory)) {
                         continue;
                     }
-                    if (inventory instanceof PresenceMarkerStorage) {
-                        continue;
-                    }
-
                     if (inventory instanceof UnlimitedExtractableStorage unlimited &&
                             unlimited.supportsUnlimitedExtraction(what, source)) {
                         skippedInfiniteSources++;
@@ -254,9 +246,6 @@ public abstract class NetworkStorageMixin implements FiniteNetworkStorageAccess 
                        value = "INVOKE",
                        target = "Lappeng/api/storage/MEStorage;getAvailableStacks(Lappeng/api/stacks/KeyCounter;)V"))
     private void dataEnergistics$mergeAvailableStacks(MEStorage storage, KeyCounter total) {
-        if (storage instanceof PresenceMarkerStorage) {
-            return;
-        }
         if ((Object) total instanceof SaturatingKeyCounterBridge bridge) {
             bridge.dataEnergistics$beginSaturatingMerge();
             try {

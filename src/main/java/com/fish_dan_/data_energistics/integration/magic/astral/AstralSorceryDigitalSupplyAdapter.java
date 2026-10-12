@@ -152,10 +152,11 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             return;
         }
         AstralSorceryKey key = AstralSorceryKey.constellation(registryId, packet.constellation());
-        MEStorage storage = receiver.data_energistics$networkStorage();
-        if (storage == null) {
+        if (receiver.data_energistics$grid() == null) {
             return;
         }
+        receiver.data_energistics$registerConstellationKey(key);
+        MEStorage storage = receiver.data_energistics$constellationStorage();
         long aeAmount = (long) Math.floor(scaledAmount);
         long simulated = storage.insert(key, aeAmount, Actionable.SIMULATE, IActionSource.empty());
         if (simulated < 0L || simulated > aeAmount) {

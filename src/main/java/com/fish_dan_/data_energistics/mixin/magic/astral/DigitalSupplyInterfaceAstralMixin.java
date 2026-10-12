@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNo
 import com.fish_dan_.data_energistics.integration.magic.astral.DigitalSupplyTransmissionReceiverNode;
 
 import appeng.api.networking.IGrid;
+import appeng.api.stacks.AEKey;
 import appeng.api.storage.MEStorage;
 
 import net.minecraft.core.BlockPos;
@@ -115,6 +116,16 @@ public abstract class DigitalSupplyInterfaceAstralMixin implements AstralDigital
     @Override
     public @Nullable MEStorage data_energistics$networkStorage() {
         return ((DigitalSupplyInterfaceBlockEntity) (Object) this).networkStorage();
+    }
+
+    @Override
+    public MEStorage data_energistics$constellationStorage() {
+        return ((DigitalSupplyInterfaceBlockEntity) (Object) this).getPresenceStorage();
+    }
+
+    @Override
+    public void data_energistics$registerConstellationKey(AEKey key) {
+        ((DigitalSupplyInterfaceBlockEntity) (Object) this).getPresenceStorage().registerQuantityKey(key);
     }
 
     @Override

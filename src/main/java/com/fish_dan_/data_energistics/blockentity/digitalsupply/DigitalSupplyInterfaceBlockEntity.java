@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyExternalFlu
 import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyExternalInput;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyExternalItemHandler;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyInterfaceTransferContext;
-import com.fish_dan_.data_energistics.ae2.digitalsupply.DigitalSupplyNetworkStorage;
 import com.fish_dan_.data_energistics.ae2.digitalsupply.PresenceMarkerStorage;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
@@ -65,6 +64,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
                                                      implements DigitalSupplyInterfaceTarget, DigitalSupplyLinkContext, ConnectorEndpoint {
 
     private static final String PRESENCE_MARKERS_TAG = "presence_markers";
+    private static final String PRESENCE_QUANTITIES_TAG = "presence_quantities";
     private static final String LINKS_TAG = "native_links";
     private static final String LINK_X_TAG = "x";
     private static final String LINK_Y_TAG = "y";
@@ -146,8 +146,7 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
         if (!this.isOnline() || this.getMainNode().getGrid() == null) {
             return null;
         }
-        return new DigitalSupplyNetworkStorage(
-                this.getMainNode().getGrid().getStorageService().getInventory(), this.presenceStorage);
+        return this.getMainNode().getGrid().getStorageService().getInventory();
     }
 
     @Override
@@ -368,6 +367,24 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
                 }
             }
         }
+        if (data.contains(PRESENCE_QUANTITIES_TAG, Tag.TAG_LIST)) {
+            ListTag quantities = data.getList(PRESENCE_QUANTITIES_TAG, Tag.TAG_COMPOUND);
+            for (int index = 0; index < quantities.size(); index++) {
+                try {
+                    GenericStack quantity = GenericStack.readTag(
+                            registries, quantities.getCompound(index));
+                    if (quantity != null) {
+                        this.presenceStorage.loadQuantity(quantity.what(), quantity.amount());
+                    }
+                } catch (RuntimeException exception) {
+                    Data_Energistics.LOGGER.error(
+                            "Rejected Digital Supply Interface internal quantity {} at {}",
+                            index,
+                            this.worldPosition,
+                            exception);
+                }
+            }
+        }
         readLinks(data);
         this.failedAdapters.clear();
         CompoundTag states = data.getCompound(ADAPTER_STATES_TAG);
@@ -397,6 +414,14 @@ public final class DigitalSupplyInterfaceBlockEntity extends AENetworkedBlockEnt
             markers.add(GenericStack.writeTag(registries, new GenericStack(key, 1L)));
         }
         data.put(PRESENCE_MARKERS_TAG, markers);
+        ListTag quantities = new ListTag();
+        for (AEKey key : this.presenceStorage.storedKeys()) {
+            long amount = this.presenceStorage.storedAmount(key);
+            if (amount > 0L) {
+                quantities.add(GenericStack.writeTag(registries, new GenericStack(key, amount)));
+            }
+        }
+        data.put(PRESENCE_QUANTITIES_TAG, quantities);
         writeLinks(data);
         CompoundTag states = new CompoundTag();
         for (DigitalSupplyInterfaceAdapter adapter : this.adapters) {

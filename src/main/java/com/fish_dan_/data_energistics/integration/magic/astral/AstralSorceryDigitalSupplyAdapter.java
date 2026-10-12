@@ -382,13 +382,13 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             return;
         }
         ILumenHandler destination = new AstralLumenStorage(() -> network);
-        if (this.lumenTypes.isEmpty()) {
+        ObjectList<Lumen> availableTypes = this.discoverExternalLumenTypes(level, requestor, target.position().asLong());
+        if (availableTypes.isEmpty()) {
             return;
         }
         long requestPacked = target.position().asLong();
-        int typeCount = this.lumenTypes.size();
-        int typeIndex = (int) Math.floorMod(level.getGameTime() + requestPacked, (long) typeCount);
-        Lumen lumen = this.lumenTypes.get(typeIndex);
+        int typeIndex = (int) Math.floorMod(level.getGameTime() + requestPacked, (long) availableTypes.size());
+        Lumen lumen = availableTypes.get(typeIndex);
         int capacity = destination.getCapacity(lumen);
         if (capacity <= 0) {
             return;
@@ -410,6 +410,29 @@ public final class AstralSorceryDigitalSupplyAdapter implements DigitalSupplyInt
             target.refreshState();
             this.ensureLumenNode(target);
         }
+    }
+
+    private ObjectList<Lumen> discoverExternalLumenTypes(ServerLevel level,
+                                                         LumenNode requestor,
+                                                         long requestPacked) {
+        ObjectLinkedOpenHashSet<Lumen> available = new ObjectLinkedOpenHashSet<>();
+        LumenNetworkData data = DataAS.DOMAIN_AS.getData(level, DataAS.KEY_LUMEN_NETWORK_DATA);
+        for (LumenNode node : data.collectNearbyNodes(requestor.getPos(), 16)) {
+            if (!isExternalLumenSource(level, requestPacked, node) || !requestor.canConnect(level, node)) {
+                continue;
+            }
+            for (Lumen lumen : node.getProvidedLumenTypes()) {
+                if (this.lumenTypes.contains(lumen)) {
+                    available.add(lumen);
+                }
+            }
+            for (Lumen lumen : node.getRelayedLumenTypes().keySet()) {
+                if (this.lumenTypes.contains(lumen)) {
+                    available.add(lumen);
+                }
+            }
+        }
+        return new ObjectArrayList<>(available);
     }
 
     private LumenStack importDirectSource(ServerLevel level,

@@ -117,7 +117,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
 
     private static long chunkAura(AuraChunk chunk, BlockPos center, int radius) {
         // The public area query adds DEFAULT_AURA per query; aggregate this chunk's spots exactly once instead.
-        long[] aura = {STANDARD_AURA};
+        long[] aura = { STANDARD_AURA };
         chunk.getSpots(center, radius, (position, amount) -> aura[0] += amount);
         return aura[0];
     }

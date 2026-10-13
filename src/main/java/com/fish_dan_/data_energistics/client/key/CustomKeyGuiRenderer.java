@@ -21,8 +21,9 @@ public final class CustomKeyGuiRenderer {
     private static final ResourceLocation DATA_FLOW_SPRITE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "block/key/data_flow");
     private static final ResourceLocation DATA_SPRITE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "block/key/data");
     private static final ResourceLocation ECHO_SPRITE = ResourceLocation.withDefaultNamespace("item/echo_shard");
-    // TODO: Replace this functional placeholder with a dedicated project-owned Stellar Flux sprite.
-    private static final ResourceLocation CELESTIAL_ENERGY_SPRITE = DATA_FLOW_SPRITE;
+    private static final ResourceLocation STELLAR_FLUX_SPRITE = ResourceLocation.fromNamespaceAndPath(
+            Data_Energistics.MODID,
+            "block/key/stellar_flux");
 
     private CustomKeyGuiRenderer() {}
 
@@ -68,7 +69,7 @@ public final class CustomKeyGuiRenderer {
     }
 
     public static TextureAtlasSprite stellarFluxSprite() {
-        return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(CELESTIAL_ENERGY_SPRITE);
+        return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(STELLAR_FLUX_SPRITE);
     }
 
     private static void drawSprite(GuiGraphics guiGraphics, int x, int y, TextureAtlasSprite sprite) {

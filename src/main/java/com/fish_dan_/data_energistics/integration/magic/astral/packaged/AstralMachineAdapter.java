@@ -51,7 +51,7 @@ import java.math.BigInteger;
  */
 public final class AstralMachineAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion {
 
-    private static final int ALTAR_LOADED_RADIUS = 5;
+    private static final int ALTAR_LOADED_RADIUS = 8;
     private static final String DELIVERED = "delivered";
     private static final ResourceLocation ALTAR_ILLUMINATION = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_illumination");
     private static final ResourceLocation ALTAR_RESONANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_resonance");
@@ -203,7 +203,8 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe) || !this.kind.accepts(recipe))
             return null;
         AstralRecipePlanner.AstralAltarPlan plan = AstralRecipePlanner.plan(level, recipe, pattern, inputs);
-        if (plan == null || !emptyRelaySlots(level, position, plan.relay())) return null;
+        if (plan == null || !emptyRelaySlots(level, position, plan.relay()) || !allRelaySlotsEmpty(level, position))
+            return null;
 
         var progress = new CompoundTag();
         saveStacks(progress, "grid", plan.grid(), level);
@@ -221,6 +222,12 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         if (altar == null) return false;
         if (operation.progress().getBoolean(DELIVERED)) {
             if (altar.getTileData().getActiveRecipe().isPresent()) return false;
+            // Astral may leave the delivered grid and relay inputs in place while it waits for native
+            // conditions. Keep those inputs and retry the native start instead of treating them as output.
+            if (!hasOwnedOutputEntities(operation) &&
+                    ((!hasPreparedPhysicalInputs(operation)) || preparedInputsPresent(operation, altar))) {
+                return restartAltar(operation, altar);
+            }
             if (collectAltar(operation, altar)) {
                 clearPatternFluidDeposits(operation);
                 operation.progress().putBoolean(DELIVERED, false);
@@ -228,7 +235,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
                 operation.complete();
                 return true;
             }
-            return restartAltar(operation, altar);
+            return false;
         }
         if (altar.getTileData().getActiveRecipe().isPresent()) return false;
         return deliverAltar(operation, altar);
@@ -240,7 +247,9 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         ObjectList<ItemStack> relay = readStacks(operation, "relay");
         ObjectList<ItemStack> additional = readStacks(operation, "additional");
         RecipeHolder<AltarRecipe> recipe = altarRecipe(operation.level(), operation.recipeId());
-        if (grid.size() != 9 || relay.size() != 25 || !empty(altar.getTileData().getAltarInventory()) || !emptyRelaySlots(operation.level(), operation.position(), relay))
+        if (grid.size() != 9 || relay.size() != 25 || !empty(altar.getTileData().getAltarInventory()) ||
+                !emptyRelaySlots(operation.level(), operation.position(), relay) ||
+                !allRelaySlotsEmpty(operation.level(), operation.position()))
             return false;
         if (recipe == null) return false;
 
@@ -343,8 +352,35 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
     }
 
     private boolean restartAltar(PackagedMachineOperation operation, TileAltar altar) {
-        if (empty(altar.getTileData().getAltarInventory())) return false;
         return startableAltar(operation, altar) && startAltar(operation, altar);
+    }
+
+    private static boolean hasPreparedPhysicalInputs(PackagedMachineOperation operation) {
+        for (ItemStack stack : readStacks(operation, "grid")) if (!stack.isEmpty()) return true;
+        for (ItemStack stack : readStacks(operation, "relay")) if (!stack.isEmpty()) return true;
+        return false;
+    }
+
+    private static boolean preparedInputsPresent(PackagedMachineOperation operation, TileAltar altar) {
+        ObjectList<ItemStack> grid = readStacks(operation, "grid");
+        ObjectList<ItemStack> relay = readStacks(operation, "relay");
+        if (grid.size() != 9 || relay.size() != 25) return false;
+
+        InventoryView altarInventory = altar.getTileData().getAltarInventory();
+        for (int slot = 0; slot < grid.size(); slot++) {
+            if (!ItemStack.matches(grid.get(slot), altarInventory.getStackInSlot(slot))) return false;
+        }
+        for (int slot = 0; slot < relay.size(); slot++) {
+            if (!ItemStack.matches(relay.get(slot), relayStack(operation.level(), operation.position(), slot))) return false;
+        }
+        return true;
+    }
+
+    private static boolean hasOwnedOutputEntities(PackagedMachineOperation operation) {
+        for (ItemEntity entity : ownedEntities(operation)) {
+            if (!isAltarInput(operation, entity)) return true;
+        }
+        return false;
     }
 
     private boolean startableAltar(PackagedMachineOperation operation, TileAltar altar) {
@@ -499,6 +535,24 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
                 return false;
         }
         return true;
+    }
+
+    private static boolean allRelaySlotsEmpty(ServerLevel level, BlockPos position) {
+        for (BlockPos offset : TileAltar.getRelayGridOffsets().values()) {
+            if (level.getBlockEntity(position.offset(offset)) instanceof TileFocusRelay relay &&
+                    !empty(relay.getTileData().getInventory())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static ItemStack relayStack(ServerLevel level, BlockPos position, int slot) {
+        BlockPos offset = TileAltar.getRelayGridOffsets().get(slot);
+        if (offset == null || !(level.getBlockEntity(position.offset(offset)) instanceof TileFocusRelay relay)) {
+            return ItemStack.EMPTY;
+        }
+        return relay.getTileData().getInventory().getStackInSlot(0).copy();
     }
 
     private static @Nullable RecipeHolder<AltarRecipe> altarRecipe(ServerLevel level, ResourceLocation id) {

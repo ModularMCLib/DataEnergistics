@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.astral.packaged;
 
 import appeng.api.ids.AEComponents;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.crafting.pattern.EncodedProcessingPattern;
@@ -8,6 +9,7 @@ import appeng.crafting.pattern.EncodedProcessingPattern;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import hellfirepvp.astralsorcery.common.recipe.altar.AltarRecipe;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
@@ -28,9 +30,11 @@ final class AstralPatternEncoding {
         var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
         if (processing == null) return null;
         ObjectList<GenericStack> originalInputs = new ObjectArrayList<>(processing.sparseInputs());
-        AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, originalInputs);
+        ObjectList<GenericStack> physicalInputs = removeAdditionalFluids(recipe, originalInputs);
+        if (physicalInputs == null) return null;
+        AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, physicalInputs);
         if (selection == null) return null;
-        ObjectList<GenericStack> completedInputs = appendMissing(originalInputs, allInputs(selection), 81);
+        ObjectList<GenericStack> completedInputs = appendMissing(physicalInputs, allInputs(selection), 81);
         ObjectList<GenericStack> completedOutputs = appendMissing(
                 new ObjectArrayList<>(processing.sparseOutputs()), selection.returns(), 27);
         if (completedInputs == null || completedOutputs == null) return null;
@@ -45,9 +49,41 @@ final class AstralPatternEncoding {
                                                              ObjectList<GenericStack> inputs) {
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe)) return null;
-        AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, inputs);
+        ObjectList<GenericStack> physicalInputs = removeAdditionalFluids(recipe, inputs);
+        if (physicalInputs == null) return null;
+        AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, physicalInputs);
         if (selection == null) return null;
-        return appendMissing(inputs, allInputs(selection), 81);
+        return appendMissing(physicalInputs, allInputs(selection), 81);
+    }
+
+    /**
+     * Extra altar fluids are native Astral resources rather than AE item inputs. The native draw transaction then
+     * prefers unpowered chalices and falls back to linked digital supply interfaces. Fluid entries are retained only
+     * as an encoding-time declaration so an unrelated fluid cannot silently disappear from a pattern.
+     */
+    private static @Nullable ObjectList<GenericStack> removeAdditionalFluids(AltarRecipe recipe,
+                                                                             ObjectList<GenericStack> original) {
+        var required = new Object2LongLinkedOpenHashMap<AEFluidKey>();
+        for (FluidStack fluid : new ObjectArrayList<>(recipe.getRequiredFluid())) {
+            if (fluid.isEmpty()) continue;
+            AEFluidKey key = AEFluidKey.of(fluid);
+            if (key == null) return null;
+            required.addTo(key, fluid.getAmount());
+        }
+
+        var declared = new Object2LongLinkedOpenHashMap<AEFluidKey>();
+        var result = new ObjectArrayList<GenericStack>(original);
+        for (int index = 0; index < result.size(); index++) {
+            GenericStack stack = result.get(index);
+            if (stack == null || !(stack.what() instanceof AEFluidKey key)) continue;
+            if (stack.amount() <= 0 || !required.containsKey(key)) return null;
+            declared.addTo(key, stack.amount());
+            result.set(index, null);
+        }
+        for (var entry : declared.object2LongEntrySet()) {
+            if (entry.getLongValue() != required.getLong(entry.getKey())) return null;
+        }
+        return result;
     }
 
     private static ObjectList<ItemStack> allInputs(AstralRecipePlanner.Selection selection) {

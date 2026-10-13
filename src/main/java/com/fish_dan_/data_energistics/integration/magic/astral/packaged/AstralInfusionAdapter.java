@@ -107,7 +107,8 @@ public final class AstralInfusionAdapter implements PackagedMachineAdapter, Pack
                                          IPatternDetails pattern, KeyCounter[] inputs) {
         var holder = recipe(level, recipeId);
         if (holder == null || !level.isLoaded(position) || !(level.getBlockEntity(position) instanceof TileInfuser infuser)) return null;
-        if (!infuser.hasStructure() || !fluidLayoutMatches(level, position, holder.value()) ||
+        // Structure readiness belongs to native ritual start, after the input has been delivered.
+        if (!fluidLayoutMatches(level, position, holder.value()) ||
                 infuser.getTileData().getActiveRecipe().isPresent() ||
                 !infuser.getTileData().getInventory().getStackInSlot(0).isEmpty())
             return null;
@@ -145,7 +146,7 @@ public final class AstralInfusionAdapter implements PackagedMachineAdapter, Pack
         }
         var holder = recipe(level, operation.recipeId());
         if (holder == null || !present.isEmpty() || infuser.getTileData().getActiveRecipe().isPresent() ||
-                !infuser.hasStructure() || !fluidLayoutMatches(level, operation.position(), holder.value()))
+                !fluidLayoutMatches(level, operation.position(), holder.value()))
             return false;
         AEItemKey key = AEItemKey.of(input);
         if (operation.available(key).longValueExact() < input.getCount()) {

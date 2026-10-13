@@ -33,8 +33,8 @@ final class AstralPatternEncoding {
         AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, originalInputs);
         if (selection == null) return null;
         ObjectList<GenericStack> completedInputs = appendMissing(originalInputs, allInputs(selection), 81, true);
-        ObjectList<GenericStack> completedOutputs = appendMissing(
-                new ObjectArrayList<>(processing.sparseOutputs()), selection.returns(), 27, false);
+        ObjectList<GenericStack> completedOutputs = appendReturns(
+                new ObjectArrayList<>(processing.sparseOutputs()), selection.returns(), 27);
         if (completedInputs == null || completedOutputs == null) return null;
 
         ItemStack copy = encodedPattern.copy();
@@ -50,10 +50,16 @@ final class AstralPatternEncoding {
         if (!validFluidInputs(recipe, inputs)) return null;
         AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, inputs);
         if (selection == null) return null;
-        return appendMissing(inputs, allInputs(selection), 81, true);
+        ObjectList<GenericStack> completed = appendMissing(inputs, allInputs(selection), 81, true);
+        if (completed == null) return null;
+        var compact = new ObjectArrayList<GenericStack>();
+        for (GenericStack stack : completed) if (stack != null) compact.add(stack);
+        return compact;
     }
 
-    /** Fluid inputs are optional declarations; native Astral draw supplies them from chalices or digital interfaces. */
+    /**
+     * Fluid inputs are optional declarations; native Astral draw supplies them from chalices or digital interfaces.
+     */
     private static boolean validFluidInputs(AltarRecipe recipe, ObjectList<GenericStack> inputs) {
         var required = AstralRecipePlanner.acceptedFluidKeys(recipe);
         for (GenericStack stack : inputs) {
@@ -71,6 +77,26 @@ final class AstralPatternEncoding {
         return result;
     }
 
+    private static @Nullable ObjectList<GenericStack> appendReturns(ObjectList<GenericStack> original,
+                                                                    ObjectList<ItemStack> returns, int limit) {
+        var returnedAmounts = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        for (ItemStack stack : returns) {
+            if (stack.isEmpty()) return null;
+            returnedAmounts.addTo(AEItemKey.of(stack), stack.getCount());
+        }
+        var result = new ObjectArrayList<>(original);
+        int tail = result.size();
+        while (tail > 0 && result.get(tail - 1) == null) tail--;
+        for (var entry : returnedAmounts.object2LongEntrySet()) {
+            if (tail >= limit) return null;
+            GenericStack returned = new GenericStack(entry.getKey(), entry.getLongValue());
+            if (tail < result.size()) result.set(tail, returned);
+            else result.add(returned);
+            tail++;
+        }
+        return result;
+    }
+
     private static @Nullable ObjectList<GenericStack> appendMissing(ObjectList<GenericStack> original,
                                                                     ObjectList<ItemStack> required, int limit,
                                                                     boolean allowFluidInputs) {
@@ -79,14 +105,27 @@ final class AstralPatternEncoding {
             if (stack.isEmpty()) return null;
             missing.addTo(AEItemKey.of(stack), stack.getCount());
         }
-        for (GenericStack stack : original) {
+        var result = new ObjectArrayList<>(original);
+        for (int index = 0; index < original.size(); index++) {
+            GenericStack stack = original.get(index);
             if (stack == null) continue;
             if (allowFluidInputs && stack.what() instanceof AEFluidKey) continue;
-            if (stack.amount() <= 0 || !(stack.what() instanceof AEItemKey key) || missing.getLong(key) < stack.amount())
+            if (stack.amount() <= 0 || !(stack.what() instanceof AEItemKey key))
                 return null;
+            long available = missing.getLong(key);
+            if (!missing.containsKey(key)) return null;
+            if (available <= 0) {
+                if (!allowFluidInputs) return null;
+                result.set(index, null);
+                continue;
+            }
+            if (stack.amount() > available) {
+                if (!allowFluidInputs) return null;
+                stack = new GenericStack(key, available);
+                result.set(index, stack);
+            }
             missing.addTo(key, -stack.amount());
         }
-        var result = new ObjectArrayList<>(original);
         int tail = result.size();
         while (tail > 0 && result.get(tail - 1) == null) tail--;
         for (var entry : missing.object2LongEntrySet()) {

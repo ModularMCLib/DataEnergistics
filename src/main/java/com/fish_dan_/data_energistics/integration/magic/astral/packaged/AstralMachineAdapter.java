@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedPatternInputCompletion;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.integration.magic.astral.AstralLiquidSupplyTransaction;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
@@ -26,6 +27,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import hellfirepvp.astralsorcery.common.entity.item.ItemEntityAltarInput;
 import hellfirepvp.astralsorcery.common.lib.RecipeTypesAS;
@@ -33,6 +36,7 @@ import hellfirepvp.astralsorcery.common.recipe.altar.AltarRecipe;
 import hellfirepvp.astralsorcery.common.recipe.infusion.InfusionRecipe;
 import hellfirepvp.astralsorcery.common.recipe.infusion.InfusionRecipeInput;
 import hellfirepvp.astralsorcery.common.tile.TileAltar;
+import hellfirepvp.astralsorcery.common.tile.TileChalice;
 import hellfirepvp.astralsorcery.common.tile.TileFocusRelay;
 import hellfirepvp.astralsorcery.common.tile.TileInfuser;
 import hellfirepvp.astralsorcery.common.util.inventory.InventoryView;
@@ -146,6 +150,10 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         for (long packed : occupiedPositions(level, operation.position(), operation.progress())) {
             if (!level.isLoaded(BlockPos.of(packed))) return false;
         }
+        ListTag fluidDeposits = operation.progress().getList("pattern_fluid_deposits", Tag.TAG_COMPOUND);
+        for (int index = 0; index < fluidDeposits.size(); index++) {
+            if (!level.isLoaded(BlockPos.of(fluidDeposits.getCompound(index).getLong("position")))) return false;
+        }
         CompoundTag evidence = PackagedRecoveryJournal.get(level).read(operation.id());
         evidence.putBoolean("observed", true);
         PackagedRecoveryJournal.get(level).write(operation.id(), evidence);
@@ -194,6 +202,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
             if (!stack.isEmpty()) operation.returned(AEItemKey.of(stack), stack.getCount());
             entity.discard();
         }
+        recoverPatternFluidDeposits(operation, fluidDeposits);
         return true;
     }
 
@@ -244,6 +253,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         if (operation.progress().getBoolean(DELIVERED)) {
             if (altar.getTileData().getActiveRecipe().isPresent()) return false;
             if (collectAltar(operation, altar)) {
+                clearPatternFluidDeposits(operation);
                 operation.progress().putBoolean(DELIVERED, false);
                 operation.changed();
                 operation.complete();
@@ -288,7 +298,6 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         for (ItemStack stack : relay) if (!stack.isEmpty()) required.add(AEItemKey.of(stack), stack.getCount());
         for (ItemStack stack : additional) if (!stack.isEmpty()) required.add(AEItemKey.of(stack), stack.getCount());
         requireAvailable(operation, required);
-        returnOptionalFluidInputs(operation, recipe.value());
 
         InventoryView altarInventory = altar.getTileData().getAltarInventory();
         for (int slot = 0; slot < grid.size(); slot++) insert(operation, altarInventory, slot, grid.get(slot));
@@ -302,6 +311,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
             insert(operation, focusRelay.getTileData().getInventory(), 0, stack);
         }
         for (ItemStack stack : additional) spawnAdditional(operation, stack);
+        deliverOptionalFluidInputs(operation, recipe.value());
         progress.putBoolean(DELIVERED, true);
         operation.changed();
         startAltar(operation, altar);
@@ -313,14 +323,72 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
      * amount before the native cycle prevents the same network fluid from being reserved twice; the native draw
      * transaction still consumes nearby chalices first and digital supply interfaces only as its fallback.
      */
-    private static void returnOptionalFluidInputs(PackagedMachineOperation operation, AltarRecipe recipe) {
+    private static void deliverOptionalFluidInputs(PackagedMachineOperation operation, AltarRecipe recipe) {
         for (AEFluidKey key : AstralRecipePlanner.acceptedFluidKeys(recipe)) {
             var available = operation.available(key);
             if (available.signum() <= 0) continue;
-            long amount = available.longValueExact();
-            operation.delivered(key, amount);
-            operation.returned(key, amount);
+            long required = AstralRecipePlanner.requiredFluidAmount(recipe, key);
+            long remaining = Math.min(available.longValueExact(), required);
+            long deposited = 0;
+            while (deposited < remaining) {
+                int offered = (int) Math.min(remaining - deposited, Integer.MAX_VALUE);
+                var transaction = new AstralLiquidSupplyTransaction();
+                ObjectList<AstralLiquidSupplyTransaction.ChaliceDeposit> fills = transaction.depositToChalices(
+                        operation.level(), operation.position(), key.toStack(offered));
+                int inserted = 0;
+                for (var fill : fills) {
+                    operation.delivered(key, fill.amount());
+                    recordPatternFluidDeposit(operation, key, fill.position(), fill.amount());
+                    inserted = Math.addExact(inserted, fill.amount());
+                }
+                deposited = Math.addExact(deposited, inserted);
+                if (inserted < offered) break;
+            }
+            long returned = available.longValueExact() - deposited;
+            if (returned > 0) {
+                operation.delivered(key, returned);
+                operation.returned(key, returned);
+            }
         }
+    }
+
+    private static void recordPatternFluidDeposit(PackagedMachineOperation operation, AEFluidKey key,
+                                                  long position, int amount) {
+        ListTag deposits = operation.progress().getList("pattern_fluid_deposits", Tag.TAG_COMPOUND);
+        var entry = new CompoundTag();
+        entry.putLong("position", position);
+        entry.put("stack", GenericStack.writeTag(operation.level().registryAccess(), new GenericStack(key, amount)));
+        deposits.add(entry);
+        operation.progress().put("pattern_fluid_deposits", deposits);
+        operation.changed();
+    }
+
+    private static void recoverPatternFluidDeposits(PackagedMachineOperation operation, ListTag deposits) {
+        for (int index = 0; index < deposits.size(); index++) {
+            CompoundTag entry = deposits.getCompound(index);
+            GenericStack stack = GenericStack.readTag(operation.level().registryAccess(), entry.getCompound("stack"));
+            if (stack == null || !(stack.what() instanceof AEFluidKey key) || stack.amount() <= 0 ||
+                    stack.amount() > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("Invalid persisted Astral chalice deposit");
+            }
+            BlockPos position = BlockPos.of(entry.getLong("position"));
+            if (!(operation.level().getBlockEntity(position) instanceof TileChalice chalice)) continue;
+            FluidStack requested = key.toStack((int) stack.amount());
+            FluidStack drained = chalice.getTankView().drain(requested, IFluidHandler.FluidAction.EXECUTE);
+            if (!drained.isEmpty() && (!FluidStack.isSameFluidSameComponents(requested, drained) ||
+                    drained.getAmount() > requested.getAmount())) {
+                throw new IllegalStateException("Astral chalice returned an invalid fluid during packaged recovery");
+            }
+            if (!drained.isEmpty()) operation.returned(key, drained.getAmount());
+        }
+        deposits.clear();
+        operation.progress().put("pattern_fluid_deposits", deposits);
+        operation.changed();
+    }
+
+    private static void clearPatternFluidDeposits(PackagedMachineOperation operation) {
+        operation.progress().put("pattern_fluid_deposits", new ListTag());
+        operation.changed();
     }
 
     private boolean deliverInfusion(PackagedMachineOperation operation, TileInfuser infuser) {
@@ -558,10 +626,8 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
 
     private static ObjectList<ItemEntity> ownedEntities(PackagedMachineOperation operation) {
         var result = new ObjectArrayList<ItemEntity>();
-        for (ItemEntity entity : operation.level().getEntitiesOfClass(ItemEntity.class,
-                new AABB(operation.position()).inflate(8), item -> PackagedEntityCapture.ownedBy(item, operation.id()))) {
-            result.add(entity);
-        }
+        result.addAll(operation.level().getEntitiesOfClass(ItemEntity.class,
+                new AABB(operation.position()).inflate(8), item -> PackagedEntityCapture.ownedBy(item, operation.id())));
         return result;
     }
 

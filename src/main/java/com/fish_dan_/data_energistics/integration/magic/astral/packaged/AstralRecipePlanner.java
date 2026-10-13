@@ -107,19 +107,17 @@ final class AstralRecipePlanner {
             AEFluidKey key = AEFluidKey.of(fluid);
             if (key != null) result.add(key);
         }
-        addFluidKeys(recipe.getGrid().getInputs(), result);
-        addFluidKeys(recipe.getGrid().getRelayInputs(), result);
         return result;
     }
 
-    private static void addFluidKeys(Iterable<IngredientBridge> ingredients, ObjectSet<AEFluidKey> result) {
-        for (IngredientBridge ingredient : ingredients) {
-            if (ingredient.getIngredientType() != IngredientBridge.Type.FLUID) continue;
-            for (FluidStack fluid : ingredient.getFluidIngredient().getFluids()) {
-                AEFluidKey key = AEFluidKey.of(fluid);
-                if (key != null) result.add(key);
-            }
+    static long requiredFluidAmount(AltarRecipe recipe, AEFluidKey requiredKey) {
+        long result = 0;
+        for (FluidStack fluid : recipe.getRequiredFluid()) {
+            if (fluid.isEmpty()) continue;
+            AEFluidKey key = AEFluidKey.of(fluid);
+            if (requiredKey.equals(key)) result = Math.addExact(result, fluid.getAmount());
         }
+        return result;
     }
 
     static ObjectList<Group> groups(AltarRecipe recipe) {

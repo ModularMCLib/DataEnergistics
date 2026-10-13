@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.bootstrap.client;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsTextureEditorResources;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudLayer;
-import com.fish_dan_.data_energistics.client.key.ClientAeKeyRenderers;
+import com.fish_dan_.data_energistics.client.key.AeKeyRenderers;
 import com.fish_dan_.data_energistics.client.particle.RadixLossParticle;
 import com.fish_dan_.data_energistics.client.particle.RailSteamParticle;
 import com.fish_dan_.data_energistics.client.registry.DEItemColors;
@@ -71,7 +71,7 @@ public final class DataEnergisticsClient {
 
     @SubscribeEvent
     public static void onLoadComplete(FMLLoadCompleteEvent event) {
-        event.enqueueWork(ClientAeKeyRenderers::register);
+        event.enqueueWork(AeKeyRenderers::register);
     }
 
     @SubscribeEvent

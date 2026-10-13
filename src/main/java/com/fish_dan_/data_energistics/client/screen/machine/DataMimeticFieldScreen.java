@@ -3,12 +3,12 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorDropRoutingMode;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataMimeticFieldOutputRoutingButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.menu.machine.DataMimeticFieldMenu;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
 import appeng.client.gui.implementations.UpgradeableScreen;
@@ -148,7 +148,7 @@ public class DataMimeticFieldScreen extends UpgradeableScreen<DataMimeticFieldMe
     }
 
     private void renderKeySlot(GuiGraphics guiGraphics, Slot slot, GenericStack stack) {
-        CustomKeyGuiRenderer.draw(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, stack.what());
+        AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, stack.what());
         GenericStackDisplayHelper.renderSmallOverlay(
                 guiGraphics,
                 slot.x,

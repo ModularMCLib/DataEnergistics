@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.integration.magic.naturesaura.digitalsupply;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
@@ -13,50 +15,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import de.ellpeck.naturesaura.api.NaturesAuraAPI;
-import de.ellpeck.naturesaura.api.aura.type.IAuraType;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-
 import java.util.List;
-import java.util.Optional;
 
-/** One stable AE identity backed by a Nature's Aura API type. */
+/** One shared AE identity that is converted to the linked Nature's Aura type at the native target. */
 public final class NaturesAuraKey extends AEKey {
 
-    private static final Object2ObjectMap<ResourceLocation, NaturesAuraKey> KEYS = createKeys();
-    private final ResourceLocation id;
+    public static final ResourceLocation ID = Data_Energistics.id("aura");
+    public static final NaturesAuraKey INSTANCE = new NaturesAuraKey();
 
-    private NaturesAuraKey(ResourceLocation id) {
-        this.id = id;
-    }
-
-    public static Optional<NaturesAuraKey> resolve(ResourceLocation id) {
-        NaturesAuraKey existing = KEYS.get(id);
-        if (existing != null) return Optional.of(existing);
-        if (NaturesAuraAPI.AURA_TYPES.containsKey(id)) {
-            NaturesAuraKey discovered = new NaturesAuraKey(id);
-            KEYS.put(id, discovered);
-            return Optional.of(discovered);
-        }
-        return Optional.empty();
-    }
-
-    public static NaturesAuraKey of(IAuraType type) {
-        return resolve(type.getName()).orElseThrow(() -> new IllegalArgumentException("Unregistered Nature's Aura type: " + type.getName()));
-    }
-
-    public static ObjectList<NaturesAuraKey> all() {
-        for (ResourceLocation id : NaturesAuraAPI.AURA_TYPES.keySet()) resolve(id);
-        return ObjectList.of(KEYS.values().toArray(NaturesAuraKey[]::new));
-    }
-
-    public IAuraType auraType() {
-        IAuraType type = NaturesAuraAPI.AURA_TYPES.get(id);
-        if (type == null) throw new IllegalStateException("Nature's Aura type disappeared: " + id);
-        return type;
-    }
+    private NaturesAuraKey() {}
 
     @Override
     public AEKeyType getType() {
@@ -71,33 +38,35 @@ public final class NaturesAuraKey extends AEKey {
     @Override
     public CompoundTag toTag(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
-        tag.putString(NaturesAuraKeyType.RESOURCE_FIELD, id.toString());
+        tag.putString(NaturesAuraKeyType.RESOURCE_FIELD, ID.toString());
         return tag;
     }
 
     @Override
     public Object getPrimaryKey() {
-        return id;
+        return ID;
     }
 
     @Override
     public ResourceLocation getId() {
-        return id;
+        return ID;
     }
 
     @Override
     public void writeToPacket(RegistryFriendlyByteBuf buffer) {
-        buffer.writeResourceLocation(id);
+        buffer.writeResourceLocation(ID);
     }
 
     @Override
     protected Component computeDisplayName() {
-        return Component.translatable("item.naturesaura.aura_bottle." + id);
+        return Component.translatable("key.data_energistics.aura");
     }
 
     @Override
     public void addDrops(long amount, List<ItemStack> drops, Level level, BlockPos pos) {
-        if (amount > 0) drops.add(GenericStack.wrapInItemStack(this, amount));
+        if (amount > 0) {
+            drops.add(GenericStack.wrapInItemStack(this, amount));
+        }
     }
 
     @Override
@@ -112,22 +81,16 @@ public final class NaturesAuraKey extends AEKey {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof NaturesAuraKey key && id.equals(key.id);
+        return other instanceof NaturesAuraKey;
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return ID.hashCode();
     }
 
     @Override
     public String toString() {
-        return "NaturesAuraKey[" + id + "]";
-    }
-
-    private static Object2ObjectMap<ResourceLocation, NaturesAuraKey> createKeys() {
-        var result = new Object2ObjectLinkedOpenHashMap<ResourceLocation, NaturesAuraKey>();
-        for (ResourceLocation id : NaturesAuraAPI.AURA_TYPES.keySet()) result.put(id, new NaturesAuraKey(id));
-        return result;
+        return "NaturesAuraKey{}";
     }
 }

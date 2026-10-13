@@ -6,11 +6,11 @@ import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryKeyT
 import appeng.api.client.AEKeyRendering;
 
 /** Client-side Astral Sorcery key renderer kept behind the optional-mod class boundary. */
-final class AstralSorceryClientKeyRenderers {
+final class AstralSorceryKeyRenderers {
 
-    private static final AstralSorceryKeyRenderHandler HANDLER = new AstralSorceryKeyRenderHandler();
+    private static final AstralSorceryKeyRenderer HANDLER = new AstralSorceryKeyRenderer();
 
-    private AstralSorceryClientKeyRenderers() {}
+    private AstralSorceryKeyRenderers() {}
 
     static void register() {
         if (AEKeyRendering.get(AstralSorceryKeyType.TYPE) == null) {

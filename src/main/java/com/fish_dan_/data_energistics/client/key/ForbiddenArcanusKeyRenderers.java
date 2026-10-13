@@ -5,18 +5,18 @@ import com.fish_dan_.data_energistics.integration.magic.forbiddenarcanus.digital
 
 import appeng.api.client.AEKeyRendering;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.Minecraft;
 
 /** Client renderer registration kept behind Forbidden Arcanus' optional class boundary. */
-final class ForbiddenArcanusClientKeyRenderers {
+final class ForbiddenArcanusKeyRenderers {
 
-    private ForbiddenArcanusClientKeyRenderers() {}
+    private ForbiddenArcanusKeyRenderers() {}
 
     static void register() {
         if (AEKeyRendering.get(ForbiddenArcanusEssenceKeyType.TYPE) == null) {
             AEKeyRendering.register(ForbiddenArcanusEssenceKeyType.TYPE, ForbiddenArcanusEssenceKey.class,
-                    new ExternalModKeyRenderHandler<>(key -> ResourceLocation.fromNamespaceAndPath(
-                            "forbidden_arcanus", "gui/sprites/icon/" + key.getEssenceType().getSerializedName())));
+                    new SpriteKeyRenderer<>(key -> Minecraft.getInstance().getGuiSprites()
+                            .getSprite(key.getEssenceType().getSpriteLocation())));
         }
     }
 }

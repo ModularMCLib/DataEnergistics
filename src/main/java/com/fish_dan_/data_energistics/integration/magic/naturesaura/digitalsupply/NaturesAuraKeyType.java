@@ -11,18 +11,17 @@ import net.minecraft.resources.ResourceLocation;
 
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
+import org.jspecify.annotations.Nullable;
 
-/** AE2 key type for dynamically registered Nature's Aura type identities. */
+/** AE2 key type for the single network-wide Nature's Aura identity. */
 public final class NaturesAuraKeyType extends AEKeyType {
 
     static final String RESOURCE_FIELD = "resource";
     public static final NaturesAuraKeyType TYPE = new NaturesAuraKeyType();
     private static final MapCodec<NaturesAuraKey> CODEC = ResourceLocation.CODEC
             .fieldOf(RESOURCE_FIELD)
-            .flatXmap(id -> NaturesAuraKey.resolve(id)
-                    .map(DataResult::success)
-                    .orElseGet(() -> DataResult.error(() -> "Unknown Nature's Aura type: " + id)),
-                    key -> DataResult.success(key.getId()));
+            .flatXmap(id -> NaturesAuraKey.ID.equals(id) ? DataResult.success(NaturesAuraKey.INSTANCE) : DataResult.error(() -> "Unknown Nature's Aura key: " + id),
+                    key -> DataResult.success(NaturesAuraKey.ID));
 
     private NaturesAuraKeyType() {
         super(Data_Energistics.id("natures_aura"), NaturesAuraKey.class,
@@ -35,8 +34,8 @@ public final class NaturesAuraKeyType extends AEKeyType {
     }
 
     @Override
-    public AEKey readFromPacket(RegistryFriendlyByteBuf buffer) {
-        return NaturesAuraKey.resolve(buffer.readResourceLocation()).orElse(null);
+    public @Nullable AEKey readFromPacket(RegistryFriendlyByteBuf buffer) {
+        return NaturesAuraKey.ID.equals(buffer.readResourceLocation()) ? NaturesAuraKey.INSTANCE : null;
     }
 
     @Override

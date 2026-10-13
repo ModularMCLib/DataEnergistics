@@ -17,7 +17,7 @@ import java.util.EnumMap;
 /** Texture IO occurs once per resource reload, never on the per-frame ammunition render path. */
 public final class PlasmaTextureColors extends SimplePreparableReloadListener<EnumMap<RailAmmunition, PlasmaPalette>> {
 
-    private static final ResourceLocation DATA_TEXTURE = Data_Energistics.id("textures/block/key/data_flow.png");
+    private static final ResourceLocation DATA_TEXTURE = Data_Energistics.id("textures/guis/key/data_flow.png");
     private static final ResourceLocation FE_TEXTURE = ResourceLocation.fromNamespaceAndPath("appflux", "textures/energy/fe.png");
     private static EnumMap<RailAmmunition, PlasmaPalette> colors = new EnumMap<>(RailAmmunition.class);
 

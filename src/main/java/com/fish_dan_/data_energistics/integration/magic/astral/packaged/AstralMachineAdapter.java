@@ -595,7 +595,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
 
     private static void saveStacks(CompoundTag progress, String name, ObjectList<ItemStack> stacks, ServerLevel level) {
         var list = new ListTag();
-        for (ItemStack stack : stacks) list.add(stack.save(level.registryAccess()));
+        for (ItemStack stack : stacks) list.add(stack.saveOptional(level.registryAccess()));
         progress.put(name, list);
     }
 

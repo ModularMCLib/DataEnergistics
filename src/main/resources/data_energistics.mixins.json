@@ -70,6 +70,7 @@
 		"magic.astral.DigitalSupplyInterfaceAstralMixin",
 		"magic.astral.SimpleTransmissionNodeReceiverMixin",
 		"magic.astral.AstralAltarLiquidDrawMixin",
+		"magic.astral.AstralInfusionOutputMixin",
 		"magic.astral.StarlightNetworkLevelHelperMixin",
 		"magic.astral.StarlightTransmissionLevelHandlerMixin",
 		"magic.botania.AlfheimPortalAccessor",

@@ -940,6 +940,7 @@
 	"jei.data_energistics.radix_containment_sphere.line3": "Right-clicking Dispersing Manifest Binary consumes 1K AE and stores 1 Binary inside the sphere.",
 	"key.categories.data_energistics": "Data Energistics",
 	"key.data_energistics.data": "Binary",
+	"key.data_energistics.aura": "Aura",
 	"key.data_energistics.blood": "Blood",
 	"key.data_energistics.data_flow": "Data Flow",
 	"key.data_energistics.echo": "Echo",

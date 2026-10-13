@@ -14,24 +14,24 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-import de.ellpeck.naturesaura.api.NaturesAuraAPI;
 import de.ellpeck.naturesaura.api.aura.chunk.IAuraChunk;
-import de.ellpeck.naturesaura.api.aura.type.IAuraType;
 import de.ellpeck.naturesaura.chunk.AuraChunk;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.EnumSet;
 
-/** Transfers Nature's Aura by per-chunk spot totals with threshold hysteresis. */
+/** Transfers one shared Aura key into each linked chunk's native aura type with threshold hysteresis. */
 public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInterfaceAdapter {
 
     private static final int STANDARD_AURA = IAuraChunk.DEFAULT_AURA;
     private static final int RECLAIM_THRESHOLD = Math.toIntExact(STANDARD_AURA * 70L / 100L);
     private static final int RELEASE_THRESHOLD = Math.toIntExact(STANDARD_AURA * 45L / 100L);
-    private final ObjectList<DigitalSupplyResourceDefinition> resources = createResources();
+    private static final ObjectList<DigitalSupplyResourceDefinition> RESOURCES = ObjectList.of(
+            new DigitalSupplyResourceDefinition(NaturesAuraKey.ID, NaturesAuraKey.INSTANCE, NaturesAuraKey.INSTANCE.getDisplayName(),
+                    DigitalSupplyUnitConversion.IDENTITY, false,
+                    EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
 
     @Override
     public ResourceLocation id() {
@@ -40,29 +40,21 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
 
     @Override
     public ObjectList<DigitalSupplyResourceDefinition> resources() {
-        return resources;
+        return RESOURCES;
     }
 
     @Override
     public boolean supports(DigitalSupplyInterfaceTarget target) {
         for (ConnectorLink link : target.links().bindings()) {
-            if (target.links().isOnline(link) && typeAt(target, link.position()) != null) return true;
+            if (target.links().isOnline(link) && auraAt(target, link.position()) != null) return true;
         }
         return false;
     }
 
     @Override
     public void discover(DigitalSupplyInterfaceTarget target) {
-        for (DigitalSupplyResourceDefinition resource : resources) target.setPresence(resource.key(), false);
-        boolean present = false;
-        for (ConnectorLink link : target.links().bindings()) {
-            if (!target.links().isOnline(link)) continue;
-            IAuraChunk chunk = auraAt(target, link.position());
-            if (chunk != null && NaturesAuraAPI.AURA_TYPES.containsKey(chunk.getType().getName())) {
-                target.setPresence(NaturesAuraKey.of(chunk.getType()), true);
-                present = true;
-            }
-        }
+        boolean present = supports(target);
+        target.setPresence(NaturesAuraKey.INSTANCE, present);
         if (present) target.refreshState();
     }
 
@@ -83,7 +75,7 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
             if (chunkTransfer == null) {
                 int centerY = target.level().getMinBuildHeight() + (target.level().getHeight() - 1) / 2;
                 BlockPos center = chunkPos.getMiddleBlockPosition(centerY);
-                chunkTransfer = new ChunkAuraTransfer(chunk, center.asLong(), chunkRadius(target.level()), NaturesAuraKey.of(auraChunk.getType()));
+                chunkTransfer = new ChunkAuraTransfer(chunk, center.asLong(), chunkRadius(target.level()));
                 chunks.put(chunkId, chunkTransfer);
             }
             chunkTransfer.canReclaim |= link.mode().supportsPull();
@@ -96,13 +88,13 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
             long currentAura = chunkAura(chunkTransfer.chunk, transferPosition, chunkTransfer.radius);
             if (currentAura > RECLAIM_THRESHOLD && chunkTransfer.canReclaim) {
                 long excess = Math.min(currentAura - RECLAIM_THRESHOLD, Integer.MAX_VALUE);
-                transfer.targetToNetwork(chunkTransfer.key, excess,
+                transfer.targetToNetwork(NaturesAuraKey.INSTANCE, excess,
                         DigitalSupplyTransferContext.NativeTransfer.reversible(
                                 (amount, simulate) -> drainAboveThreshold(chunkTransfer, amount, simulate),
                                 amount -> chunkTransfer.chunk.storeAura(transferPosition, Math.toIntExact(amount), false, false)));
             } else if (currentAura < RELEASE_THRESHOLD && chunkTransfer.canRelease) {
                 long deficit = Math.min(RECLAIM_THRESHOLD - currentAura, Integer.MAX_VALUE);
-                transfer.networkToTarget(chunkTransfer.key, deficit,
+                transfer.networkToTarget(NaturesAuraKey.INSTANCE, deficit,
                         (amount, simulate) -> chunkTransfer.chunk.storeAura(transferPosition, Math.toIntExact(amount), false, simulate));
             }
         }
@@ -132,33 +124,17 @@ public final class NaturesAuraDigitalSupplyAdapter implements DigitalSupplyInter
         private final AuraChunk chunk;
         private final long position;
         private final int radius;
-        private final NaturesAuraKey key;
         private boolean canReclaim;
         private boolean canRelease;
 
-        private ChunkAuraTransfer(AuraChunk chunk, long position, int radius, NaturesAuraKey key) {
+        private ChunkAuraTransfer(AuraChunk chunk, long position, int radius) {
             this.chunk = chunk;
             this.position = position;
             this.radius = radius;
-            this.key = key;
         }
     }
 
     private static IAuraChunk auraAt(DigitalSupplyInterfaceTarget target, BlockPos position) {
         return IAuraChunk.getAuraChunk(target.level(), position);
-    }
-
-    private static IAuraType typeAt(DigitalSupplyInterfaceTarget target, BlockPos position) {
-        IAuraChunk chunk = auraAt(target, position);
-        return chunk == null ? null : chunk.getType();
-    }
-
-    private static ObjectList<DigitalSupplyResourceDefinition> createResources() {
-        var result = new ObjectArrayList<DigitalSupplyResourceDefinition>();
-        for (NaturesAuraKey key : NaturesAuraKey.all()) {
-            result.add(new DigitalSupplyResourceDefinition(key.getId(), key, key.getDisplayName(), DigitalSupplyUnitConversion.IDENTITY,
-                    false, EnumSet.of(DigitalSupplyTransferDirection.NETWORK_TO_TARGET, DigitalSupplyTransferDirection.TARGET_TO_NETWORK)));
-        }
-        return result;
     }
 }

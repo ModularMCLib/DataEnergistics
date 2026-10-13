@@ -940,6 +940,7 @@
 	"jei.data_energistics.radix_containment_sphere.line3": "右键即散显性二进制时，每次消耗 1KAE，并向球体内填充 1 个二进制。",
 	"key.categories.data_energistics": "Data Energistics",
 	"key.data_energistics.data": "二进制",
+	"key.data_energistics.aura": "灵气",
 	"key.data_energistics.blood": "血液",
 	"key.data_energistics.data_flow": "数据流",
 	"key.data_energistics.echo": "回响",

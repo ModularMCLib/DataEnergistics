@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOu
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -277,14 +278,17 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         ObjectList<ItemStack> grid = readStacks(operation, "grid");
         ObjectList<ItemStack> relay = readStacks(operation, "relay");
         ObjectList<ItemStack> additional = readStacks(operation, "additional");
+        RecipeHolder<AltarRecipe> recipe = altarRecipe(operation.level(), operation.recipeId());
         if (grid.size() != 9 || relay.size() != 25 || !empty(altar.getTileData().getAltarInventory()) || !emptyRelaySlots(operation.level(), operation.position(), relay))
             return false;
+        if (recipe == null) return false;
 
         var required = new KeyCounter();
         for (ItemStack stack : grid) if (!stack.isEmpty()) required.add(AEItemKey.of(stack), stack.getCount());
         for (ItemStack stack : relay) if (!stack.isEmpty()) required.add(AEItemKey.of(stack), stack.getCount());
         for (ItemStack stack : additional) if (!stack.isEmpty()) required.add(AEItemKey.of(stack), stack.getCount());
         requireAvailable(operation, required);
+        returnOptionalFluidInputs(operation, recipe.value());
 
         InventoryView altarInventory = altar.getTileData().getAltarInventory();
         for (int slot = 0; slot < grid.size(); slot++) insert(operation, altarInventory, slot, grid.get(slot));
@@ -302,6 +306,21 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         operation.changed();
         startAltar(operation, altar);
         return true;
+    }
+
+    /**
+     * A pattern may declare Astral's native liquid or omit it when a chalice is preloaded. Returning a declared
+     * amount before the native cycle prevents the same network fluid from being reserved twice; the native draw
+     * transaction still consumes nearby chalices first and digital supply interfaces only as its fallback.
+     */
+    private static void returnOptionalFluidInputs(PackagedMachineOperation operation, AltarRecipe recipe) {
+        for (AEFluidKey key : AstralRecipePlanner.acceptedFluidKeys(recipe)) {
+            var available = operation.available(key);
+            if (available.signum() <= 0) continue;
+            long amount = available.longValueExact();
+            operation.delivered(key, amount);
+            operation.returned(key, amount);
+        }
     }
 
     private boolean deliverInfusion(PackagedMachineOperation operation, TileInfuser infuser) {

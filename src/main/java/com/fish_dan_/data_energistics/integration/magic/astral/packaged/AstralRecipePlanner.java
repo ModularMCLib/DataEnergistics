@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.magic.astral.packaged;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -11,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.FluidActionResult;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.templates.VoidFluidHandler;
 
@@ -21,6 +23,8 @@ import hellfirepvp.astralsorcery.common.tile.TileAltar;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -38,10 +42,16 @@ final class AstralRecipePlanner {
         if (cycleSize <= 0) return null;
 
         var totals = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        ObjectSet<AEFluidKey> fluidKeys = acceptedFluidKeys(recipe);
         long total = 0;
         for (KeyCounter counter : supplied) {
             for (var entry : counter) {
-                if (!(entry.getKey() instanceof AEItemKey key) || entry.getLongValue() <= 0) return null;
+                if (entry.getLongValue() <= 0) return null;
+                if (entry.getKey() instanceof AEFluidKey fluidKey) {
+                    if (!fluidKeys.contains(fluidKey)) return null;
+                    continue;
+                }
+                if (!(entry.getKey() instanceof AEItemKey key)) return null;
                 total = Math.addExact(total, entry.getLongValue());
                 totals.addTo(key, entry.getLongValue());
             }
@@ -89,6 +99,27 @@ final class AstralRecipePlanner {
             assigned.add(selected.toStack(group.count()));
         }
         return selection(groups, assigned);
+    }
+
+    static ObjectSet<AEFluidKey> acceptedFluidKeys(AltarRecipe recipe) {
+        var result = new ObjectOpenHashSet<AEFluidKey>();
+        for (FluidStack fluid : recipe.getRequiredFluid()) {
+            AEFluidKey key = AEFluidKey.of(fluid);
+            if (key != null) result.add(key);
+        }
+        addFluidKeys(recipe.getGrid().getInputs(), result);
+        addFluidKeys(recipe.getGrid().getRelayInputs(), result);
+        return result;
+    }
+
+    private static void addFluidKeys(Iterable<IngredientBridge> ingredients, ObjectSet<AEFluidKey> result) {
+        for (IngredientBridge ingredient : ingredients) {
+            if (ingredient.getIngredientType() != IngredientBridge.Type.FLUID) continue;
+            for (FluidStack fluid : ingredient.getFluidIngredient().getFluids()) {
+                AEFluidKey key = AEFluidKey.of(fluid);
+                if (key != null) result.add(key);
+            }
+        }
     }
 
     static ObjectList<Group> groups(AltarRecipe recipe) {

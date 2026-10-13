@@ -8,6 +8,8 @@ import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegist
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryKeyType;
+import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralMachineAdapter;
+import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralMachineKind;
 
 @DataEnergisticsEntrypoint(requiredMods = "astralsorcery")
 public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
@@ -20,5 +22,7 @@ public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
         AstralSorceryDigitalSupplyAdapter adapter = new AstralSorceryDigitalSupplyAdapter();
         registry.digitalSupplyInterfaces().register(new DigitalSupplyInterfaceRegistration(
                 adapter.id(), adapter.resources(), adapter));
+        registry.packagedCrafting().register(new AstralMachineAdapter(AstralMachineKind.ALTAR));
+        registry.packagedCrafting().register(new AstralMachineAdapter(AstralMachineKind.INFUSION));
     }
 }

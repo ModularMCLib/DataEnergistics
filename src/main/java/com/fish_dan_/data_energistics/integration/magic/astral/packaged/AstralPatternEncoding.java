@@ -1,0 +1,87 @@
+package com.fish_dan_.data_energistics.integration.magic.astral.packaged;
+
+import appeng.api.ids.AEComponents;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
+import appeng.crafting.pattern.EncodedProcessingPattern;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+
+import hellfirepvp.astralsorcery.common.recipe.altar.AltarRecipe;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Adds Astral's physical altar inputs and returned containers to an encoded processing pattern.
+ */
+final class AstralPatternEncoding {
+
+    private AstralPatternEncoding() {}
+
+    static @Nullable ItemStack complete(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe)) return null;
+        var processing = encodedPattern.get(AEComponents.ENCODED_PROCESSING_PATTERN);
+        if (processing == null) return null;
+        ObjectList<GenericStack> originalInputs = new ObjectArrayList<>(processing.sparseInputs());
+        AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, originalInputs);
+        if (selection == null) return null;
+        ObjectList<GenericStack> completedInputs = appendMissing(originalInputs, allInputs(selection), 81);
+        ObjectList<GenericStack> completedOutputs = appendMissing(
+                new ObjectArrayList<>(processing.sparseOutputs()), selection.returns(), 27);
+        if (completedInputs == null || completedOutputs == null) return null;
+
+        ItemStack copy = encodedPattern.copy();
+        copy.set(AEComponents.ENCODED_PROCESSING_PATTERN,
+                new EncodedProcessingPattern(completedInputs, completedOutputs));
+        return copy;
+    }
+
+    static @Nullable ObjectList<GenericStack> completeInputs(ServerLevel level, ResourceLocation recipeId,
+                                                             ObjectList<GenericStack> inputs) {
+        var holder = level.getRecipeManager().byKey(recipeId);
+        if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe)) return null;
+        AstralRecipePlanner.Selection selection = AstralRecipePlanner.defaults(recipe, inputs);
+        if (selection == null) return null;
+        return appendMissing(inputs, allInputs(selection), 81);
+    }
+
+    private static ObjectList<ItemStack> allInputs(AstralRecipePlanner.Selection selection) {
+        var result = new ObjectArrayList<ItemStack>();
+        for (ItemStack stack : selection.grid()) if (!stack.isEmpty()) result.add(stack);
+        for (ItemStack stack : selection.relay()) if (!stack.isEmpty()) result.add(stack);
+        result.addAll(selection.additional());
+        return result;
+    }
+
+    private static @Nullable ObjectList<GenericStack> appendMissing(ObjectList<GenericStack> original,
+                                                                    ObjectList<ItemStack> required, int limit) {
+        var missing = new Object2LongLinkedOpenHashMap<AEItemKey>();
+        for (ItemStack stack : required) {
+            if (stack.isEmpty()) return null;
+            missing.addTo(AEItemKey.of(stack), stack.getCount());
+        }
+        for (GenericStack stack : original) {
+            if (stack == null) continue;
+            if (stack.amount() <= 0 || !(stack.what() instanceof AEItemKey key) || missing.getLong(key) < stack.amount())
+                return null;
+            missing.addTo(key, -stack.amount());
+        }
+        var result = new ObjectArrayList<>(original);
+        int tail = result.size();
+        while (tail > 0 && result.get(tail - 1) == null) tail--;
+        for (var entry : missing.object2LongEntrySet()) {
+            if (entry.getLongValue() == 0) continue;
+            if (entry.getLongValue() < 0 || tail >= limit) return null;
+            GenericStack stack = new GenericStack(entry.getKey(), entry.getLongValue());
+            if (tail < result.size()) result.set(tail, stack);
+            else result.add(stack);
+            tail++;
+        }
+        return result;
+    }
+}

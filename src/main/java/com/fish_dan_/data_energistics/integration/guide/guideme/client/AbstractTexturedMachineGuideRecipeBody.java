@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme.client;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
@@ -159,7 +159,7 @@ abstract class AbstractTexturedMachineGuideRecipeBody extends LytBlock implement
         GuiGraphics guiGraphics = context.guiGraphics();
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0.0F, 0.0F, 100.0F);
-        CustomKeyGuiRenderer.draw(
+        AEKeyRendering.drawInGui(
                 Minecraft.getInstance(),
                 guiGraphics,
                 this.bounds.x() + relativeX,

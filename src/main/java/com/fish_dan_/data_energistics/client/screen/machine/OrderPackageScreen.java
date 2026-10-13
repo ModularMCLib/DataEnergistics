@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
 import com.fish_dan_.data_energistics.menu.storage.OrderPackageMenu;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -50,7 +50,7 @@ public final class OrderPackageScreen extends AEBaseScreen<OrderPackageMenu> imp
         if (target instanceof AEItemKey itemKey && itemKey.is(DEItems.ORDER_PACKAGE.get())) {
             guiGraphics.renderItem(DEItems.ORDER_PACKAGE.toStack(), slot.x, slot.y);
         } else {
-            CustomKeyGuiRenderer.draw(this.minecraft, guiGraphics, slot.x, slot.y, target);
+            AEKeyRendering.drawInGui(this.minecraft, guiGraphics, slot.x, slot.y, target);
         }
     }
 

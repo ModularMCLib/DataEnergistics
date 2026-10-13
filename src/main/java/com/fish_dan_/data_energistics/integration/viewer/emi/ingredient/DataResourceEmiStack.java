@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.integration.viewer.emi.ingredient;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 import com.fish_dan_.data_energistics.integration.viewer.xei.ingredient.DataResourceKey;
 
 import appeng.api.client.AEKeyRendering;
@@ -72,7 +71,7 @@ public final class DataResourceEmiStack extends EmiStack {
     @Override
     public void render(GuiGraphics guiGraphics, int x, int y, float delta, int flags) {
         if ((flags & RENDER_ICON) != 0) {
-            CustomKeyGuiRenderer.draw(Minecraft.getInstance(), guiGraphics, x, y, key.aeKey());
+            AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, x, y, key.aeKey());
         }
         if ((flags & RENDER_AMOUNT) != 0 && amount != 1L) {
             String formattedAmount = GenericStackDisplayHelper.formatCompactAmount(asGenericStack());

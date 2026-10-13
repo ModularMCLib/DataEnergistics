@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.tooltip;
 
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotTooltipComponent;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.me.common.StackSizeRenderer;
@@ -93,7 +93,7 @@ public class DigitalStorageDepotClientTooltipComponent implements ClientTooltipC
             GenericStack stack = stacks.get(i);
             int iconX = x + i % columns * SLOT_SIZE;
             int rowY = iconY + i / columns * SLOT_SIZE;
-            CustomKeyGuiRenderer.draw(minecraft, guiGraphics, iconX, rowY, stack.what());
+            AEKeyRendering.drawInGui(minecraft, guiGraphics, iconX, rowY, stack.what());
             StackSizeRenderer.renderSizeLabel(
                     guiGraphics,
                     font,

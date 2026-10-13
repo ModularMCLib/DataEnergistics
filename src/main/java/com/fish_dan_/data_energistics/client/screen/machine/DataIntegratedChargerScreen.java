@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 import com.fish_dan_.data_energistics.client.widget.DataIntegratedChargerModeButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.menu.machine.DataIntegratedChargerMenu;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.stacks.AEFluidKey;
@@ -100,7 +100,7 @@ public class DataIntegratedChargerScreen extends UpgradeableScreen<DataIntegrate
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
         GenericStack fluid = getDisplayedFluid(slot);
         if (fluid != null) {
-            CustomKeyGuiRenderer.draw(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, fluid.what());
+            AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, fluid.what());
             GenericStackDisplayHelper.renderSmallOverlay(
                     guiGraphics,
                     slot.x,

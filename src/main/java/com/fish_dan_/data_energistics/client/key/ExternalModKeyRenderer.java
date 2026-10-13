@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.key;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import appeng.api.client.AEKeyRenderHandler;
 import appeng.api.stacks.AEKey;
 
@@ -11,7 +13,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.Level;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -21,11 +22,11 @@ import org.joml.Matrix4f;
 import java.util.function.Function;
 
 /** Renders an optional Mod's native resource texture while keeping the common fallback self-contained. */
-public final class ExternalModKeyRenderHandler<T extends AEKey> implements AEKeyRenderHandler<T> {
+public final class ExternalModKeyRenderer<T extends AEKey> implements AEKeyRenderHandler<T> {
 
     private final Function<T, ResourceLocation> texture;
 
-    public ExternalModKeyRenderHandler(Function<T, ResourceLocation> texture) {
+    public ExternalModKeyRenderer(Function<T, ResourceLocation> texture) {
         this.texture = texture;
     }
 
@@ -37,13 +38,12 @@ public final class ExternalModKeyRenderHandler<T extends AEKey> implements AEKey
     @Override
     public void drawOnBlockFace(PoseStack poseStack, MultiBufferSource buffers, T key, float scale, int light,
                                 Level level) {
-        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
-                .apply(ResourceLocation.fromNamespaceAndPath("data_energistics", "block/key/data"));
+        TextureAtlasSprite sprite = Minecraft.getInstance().getGuiSprites().getSprite(Data_Energistics.id("key/data"));
         float halfSize = (scale - 0.05F) / 2.0F;
         poseStack.pushPose();
         poseStack.translate(0, 0, 0.01F);
         Matrix4f transform = poseStack.last().pose();
-        VertexConsumer buffer = buffers.getBuffer(RenderType.cutout());
+        VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutout(sprite.atlasLocation()));
         buffer.addVertex(transform, -halfSize, -halfSize, 0).setColor(0xFFFFFFFF)
                 .setUv(sprite.getU0(), sprite.getV1()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(0, 0, 1);

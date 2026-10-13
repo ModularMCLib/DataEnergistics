@@ -3,11 +3,11 @@ package com.fish_dan_.data_energistics.client.screen.storage;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 import com.fish_dan_.data_energistics.client.widget.DigitalStorageDepotAutoExportButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
 import com.fish_dan_.data_energistics.menu.storage.DigitalStorageDepotMenu;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -107,7 +107,7 @@ public class DigitalStorageDepotScreen extends UpgradeableScreen<DigitalStorageD
     public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
         GenericStack stack = getDisplayedGenericStack(slot);
         if (stack != null) {
-            CustomKeyGuiRenderer.draw(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, stack.what());
+            AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, slot.x, slot.y, stack.what());
             GenericStackDisplayHelper.renderSmallOverlay(
                     guiGraphics,
                     slot.x,

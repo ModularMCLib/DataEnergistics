@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.ingredient;
 
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 
 import appeng.api.client.AEKeyRendering;
 
@@ -32,7 +31,7 @@ public final class DataResourceJeiIngredientRenderer implements IIngredientRende
 
     @Override
     public void render(GuiGraphics guiGraphics, DataResourceJeiIngredient ingredient) {
-        CustomKeyGuiRenderer.draw(
+        AEKeyRendering.drawInGui(
                 Minecraft.getInstance(),
                 guiGraphics,
                 0,

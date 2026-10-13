@@ -8,14 +8,14 @@ import appeng.api.client.AEKeyRendering;
 import net.minecraft.resources.ResourceLocation;
 
 /** Client renderer registration kept behind Forbidden Arcanus' optional class boundary. */
-final class ForbiddenArcanusClientKeyRenderers {
+final class ForbiddenArcanusKeyRenderers {
 
-    private ForbiddenArcanusClientKeyRenderers() {}
+    private ForbiddenArcanusKeyRenderers() {}
 
     static void register() {
         if (AEKeyRendering.get(ForbiddenArcanusEssenceKeyType.TYPE) == null) {
             AEKeyRendering.register(ForbiddenArcanusEssenceKeyType.TYPE, ForbiddenArcanusEssenceKey.class,
-                    new ExternalModKeyRenderHandler<>(key -> ResourceLocation.fromNamespaceAndPath(
+                    new ExternalModKeyRenderer<>(key -> ResourceLocation.fromNamespaceAndPath(
                             "forbidden_arcanus", "gui/sprites/icon/" + key.getEssenceType().getSerializedName())));
         }
     }

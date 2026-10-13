@@ -8,14 +8,14 @@ import appeng.api.client.AEKeyRendering;
 import net.minecraft.resources.ResourceLocation;
 
 /** Client renderer registration kept behind Goety's optional class boundary. */
-final class GoetyClientKeyRenderers {
+final class GoetyKeyRenderers {
 
-    private GoetyClientKeyRenderers() {}
+    private GoetyKeyRenderers() {}
 
     static void register() {
         if (AEKeyRendering.get(GoetySoulKeyType.INSTANCE) == null) {
             AEKeyRendering.register(GoetySoulKeyType.INSTANCE, GoetySoulKey.class,
-                    new ExternalModKeyRenderHandler<>(key -> ResourceLocation.fromNamespaceAndPath(
+                    new ExternalModKeyRenderer<>(key -> ResourceLocation.fromNamespaceAndPath(
                             "goety", "item/soul_energy")));
         }
     }

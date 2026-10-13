@@ -2,13 +2,13 @@ package com.fish_dan_.data_energistics.integration.viewer.xei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
-import com.fish_dan_.data_energistics.client.key.CustomKeyGuiRenderer;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 
+import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.client.Minecraft;
@@ -45,7 +45,7 @@ public final class DataReassemblerGenericStackSlot extends UIElement {
         int y = Math.round(getPositionY());
         guiContext.graphics.pose().pushPose();
         guiContext.graphics.pose().translate(0.0F, 0.0F, 100.0F);
-        CustomKeyGuiRenderer.draw(Minecraft.getInstance(), guiContext.graphics, x + 1, y + 1, this.stack.what());
+        AEKeyRendering.drawInGui(Minecraft.getInstance(), guiContext.graphics, x + 1, y + 1, this.stack.what());
         GenericStackDisplayHelper.renderSmallOverlay(
                 guiContext.graphics,
                 x,

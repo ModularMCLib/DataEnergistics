@@ -26,7 +26,7 @@ import org.joml.Matrix4f;
 import java.util.List;
 
 /** Uses Astral Sorcery's lumen atlas and constellation star-map renderer for AE key previews. */
-public final class AstralSorceryKeyRenderHandler implements AEKeyRenderHandler<AstralSorceryKey> {
+public final class AstralSorceryKeyRenderer implements AEKeyRenderHandler<AstralSorceryKey> {
 
     @Override
     public void drawInGui(Minecraft minecraft, GuiGraphics guiGraphics, int x, int y, AstralSorceryKey key) {

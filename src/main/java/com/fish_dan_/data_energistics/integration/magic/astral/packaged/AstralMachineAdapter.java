@@ -33,12 +33,9 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import hellfirepvp.astralsorcery.common.entity.item.ItemEntityAltarInput;
 import hellfirepvp.astralsorcery.common.lib.RecipeTypesAS;
 import hellfirepvp.astralsorcery.common.recipe.altar.AltarRecipe;
-import hellfirepvp.astralsorcery.common.recipe.infusion.InfusionRecipe;
-import hellfirepvp.astralsorcery.common.recipe.infusion.InfusionRecipeInput;
 import hellfirepvp.astralsorcery.common.tile.TileAltar;
 import hellfirepvp.astralsorcery.common.tile.TileChalice;
 import hellfirepvp.astralsorcery.common.tile.TileFocusRelay;
-import hellfirepvp.astralsorcery.common.tile.TileInfuser;
 import hellfirepvp.astralsorcery.common.util.inventory.InventoryView;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -50,18 +47,16 @@ import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 
 /**
- * Places one Astral altar or infuser cycle and leaves every native condition and result in Astral's tick path.
+ * Places one Astral altar cycle and leaves every native condition and result in Astral's tick path.
  */
 public final class AstralMachineAdapter implements PackagedMachineAdapter, PackagedPatternInputCompletion {
 
     private static final int ALTAR_LOADED_RADIUS = 5;
-    private static final int INFUSER_LOADED_RADIUS = 2;
     private static final String DELIVERED = "delivered";
     private static final ResourceLocation ALTAR_ILLUMINATION = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_illumination");
     private static final ResourceLocation ALTAR_RESONANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_resonance");
     private static final ResourceLocation ALTAR_LUMINANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_luminance");
     private static final ResourceLocation ALTAR_RADIANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_radiance");
-    private static final ResourceLocation INFUSER = ResourceLocation.fromNamespaceAndPath("astralsorcery", "infuser");
     private static final ObjectSet<ResourceLocation> ALTAR_WORKSTATIONS = ObjectSet.of(
             ALTAR_ILLUMINATION, ALTAR_RESONANCE, ALTAR_LUMINANCE, ALTAR_RADIANCE);
 
@@ -83,25 +78,25 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
 
     @Override
     public ObjectSet<ResourceLocation> workstationItemIds() {
-        return this.kind == AstralMachineKind.INFUSION ? ObjectSet.of(INFUSER) : ALTAR_WORKSTATIONS;
+        return ALTAR_WORKSTATIONS;
     }
 
     @Override
     public @Nullable ItemStack completeEncoding(ServerLevel level, ResourceLocation recipeId, ItemStack encodedPattern) {
-        return this.kind == AstralMachineKind.ALTAR ? AstralPatternEncoding.complete(level, recipeId, encodedPattern) : encodedPattern;
+        return AstralPatternEncoding.complete(level, recipeId, encodedPattern);
     }
 
     @Override
     public @Nullable ObjectList<GenericStack> completePatternInputs(ServerLevel level, ResourceLocation recipeId,
                                                                     ObjectList<GenericStack> inputs) {
-        return this.kind == AstralMachineKind.ALTAR ? AstralPatternEncoding.completeInputs(level, recipeId, inputs) : inputs;
+        return AstralPatternEncoding.completeInputs(level, recipeId, inputs);
     }
 
     @Override
     public boolean recognizes(ServerLevel level, BlockPos position) {
         if (!level.isLoaded(position)) return false;
         BlockEntity blockEntity = level.getBlockEntity(position);
-        return this.kind == AstralMachineKind.ALTAR ? blockEntity instanceof TileAltar : blockEntity instanceof TileInfuser;
+        return blockEntity instanceof TileAltar;
     }
 
     @Override
@@ -121,14 +116,13 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
     @Override
     public @Nullable CompoundTag prepare(ServerLevel level, BlockPos position, Direction face,
                                          ResourceLocation recipeId, IPatternDetails pattern, KeyCounter[] inputs) {
-        return this.kind == AstralMachineKind.ALTAR ? prepareAltar(level, position, recipeId, pattern, inputs) : prepareInfusion(level, position, recipeId, pattern, inputs);
+        return prepareAltar(level, position, recipeId, pattern, inputs);
     }
 
     @Override
     public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
         var positions = new LongArrayList();
         positions.add(position.asLong());
-        if (this.kind != AstralMachineKind.ALTAR) return positions;
         ListTag relay = preparation.getList("relay", Tag.TAG_COMPOUND);
         var offsets = TileAltar.getRelayGridOffsets();
         for (int index = 0; index < relay.size(); index++) {
@@ -141,7 +135,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
 
     @Override
     public boolean advance(PackagedMachineOperation operation) {
-        return this.kind == AstralMachineKind.ALTAR ? advanceAltar(operation) : advanceInfusion(operation);
+        return advanceAltar(operation);
     }
 
     @Override
@@ -159,24 +153,18 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         PackagedRecoveryJournal.get(level).write(operation.id(), evidence);
 
         ObjectList<InventoryView> inventories = new ObjectArrayList<>();
-        if (this.kind == AstralMachineKind.ALTAR) {
-            if (level.getBlockEntity(operation.position()) instanceof TileAltar altar) {
-                altar.abortCrafting();
-                inventories.add(altar.getTileData().getAltarInventory());
-                ListTag relay = operation.progress().getList("relay", Tag.TAG_COMPOUND);
-                var offsets = TileAltar.getRelayGridOffsets();
-                for (int index = 0; index < relay.size(); index++) {
-                    if (ItemStack.parseOptional(level.registryAccess(), relay.getCompound(index)).isEmpty()) continue;
-                    BlockPos offset = offsets.get(index);
-                    if (offset != null && level.getBlockEntity(operation.position().offset(offset)) instanceof TileFocusRelay focusRelay) {
-                        inventories.add(focusRelay.getTileData().getInventory());
-                    }
+        if (level.getBlockEntity(operation.position()) instanceof TileAltar altar) {
+            altar.abortCrafting();
+            inventories.add(altar.getTileData().getAltarInventory());
+            ListTag relay = operation.progress().getList("relay", Tag.TAG_COMPOUND);
+            var offsets = TileAltar.getRelayGridOffsets();
+            for (int index = 0; index < relay.size(); index++) {
+                if (ItemStack.parseOptional(level.registryAccess(), relay.getCompound(index)).isEmpty()) continue;
+                BlockPos offset = offsets.get(index);
+                if (offset != null && level.getBlockEntity(operation.position().offset(offset)) instanceof TileFocusRelay focusRelay) {
+                    inventories.add(focusRelay.getTileData().getInventory());
                 }
             }
-        } else if (level.getBlockEntity(operation.position()) instanceof TileInfuser infuser) {
-            infuser.getTileData().setActiveRecipe(null);
-            infuser.getTileData().markForUpdate();
-            inventories.add(infuser.getTileData().getInventory());
         }
 
         ObjectList<ItemStack> known = knownAssets(operation);
@@ -209,7 +197,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
     private @Nullable CompoundTag prepareAltar(ServerLevel level, BlockPos position, ResourceLocation recipeId,
                                                IPatternDetails pattern, KeyCounter[] inputs) {
         TileAltar altar = altarLayout(level, position);
-        if (altar == null || !altar.getTileData().getActiveRecipe().isEmpty() || !empty(altar.getTileData().getAltarInventory()))
+        if (altar == null || altar.getTileData().getActiveRecipe().isPresent() || !empty(altar.getTileData().getAltarInventory()))
             return null;
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe) || !this.kind.accepts(recipe))
@@ -224,25 +212,6 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         saveStacks(progress, "returns", plan.returns(), level);
         saveStacks(progress, "slot_returns", plan.slotReturns(), level);
         saveStacks(progress, "outputs", plan.outputs(), level);
-        progress.putBoolean(DELIVERED, false);
-        return progress;
-    }
-
-    private @Nullable CompoundTag prepareInfusion(ServerLevel level, BlockPos position, ResourceLocation recipeId,
-                                                  IPatternDetails pattern, KeyCounter[] inputs) {
-        TileInfuser infuser = infuserLayout(level, position);
-        if (infuser == null || !infuser.getTileData().getActiveRecipe().isEmpty() ||
-                !infuser.getTileData().getInventory().getStackInSlot(0).isEmpty())
-            return null;
-        var holder = level.getRecipeManager().byKey(recipeId);
-        if (holder.isEmpty() || !(holder.get().value() instanceof InfusionRecipe recipe) || !this.kind.accepts(recipe))
-            return null;
-        ItemStack input = singleInfusionInput(recipe, inputs);
-        ItemStack output = recipe.getOutput();
-        if (input.isEmpty() || output.isEmpty() || !PackagedOutputMatching.matches(pattern, output, 1)) return null;
-        var progress = new CompoundTag();
-        progress.put("input", input.save(level.registryAccess()));
-        progress.put("outputs", output.save(level.registryAccess()));
         progress.putBoolean(DELIVERED, false);
         return progress;
     }
@@ -263,24 +232,6 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         }
         if (altar.getTileData().getActiveRecipe().isPresent()) return false;
         return deliverAltar(operation, altar);
-    }
-
-    private boolean advanceInfusion(PackagedMachineOperation operation) {
-        TileInfuser infuser = infuserLayout(operation.level(), operation.position());
-        if (infuser == null) return false;
-        if (operation.progress().getBoolean(DELIVERED)) {
-            if (infuser.getTileData().getActiveRecipe().isPresent()) return false;
-            if (collectInfusion(operation)) {
-                operation.progress().putBoolean(DELIVERED, false);
-                operation.changed();
-                operation.complete();
-                return true;
-            }
-            ItemStack existing = infuser.getTileData().getInventory().getStackInSlot(0);
-            if (!existing.isEmpty()) return restartInfusion(operation, infuser, existing);
-            return false;
-        }
-        return deliverInfusion(operation, infuser);
     }
 
     private boolean deliverAltar(PackagedMachineOperation operation, TileAltar altar) {
@@ -391,28 +342,9 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         operation.changed();
     }
 
-    private boolean deliverInfusion(PackagedMachineOperation operation, TileInfuser infuser) {
-        ItemStack input = read(operation, "input");
-        if (!infuser.getTileData().getInventory().getStackInSlot(0).isEmpty()) return false;
-        var holder = infusionRecipe(operation.level(), operation.recipeId());
-        if (holder == null || !fluidInputsMatch(operation.level(), infuser, holder.value(), input)) return false;
-        insert(operation, infuser.getTileData().getInventory(), 0, input);
-        operation.progress().putBoolean(DELIVERED, true);
-        operation.changed();
-        infuser.startCrafting(operation.level(), holder);
-        return true;
-    }
-
     private boolean restartAltar(PackagedMachineOperation operation, TileAltar altar) {
         if (empty(altar.getTileData().getAltarInventory())) return false;
         return startableAltar(operation, altar) && startAltar(operation, altar);
-    }
-
-    private boolean restartInfusion(PackagedMachineOperation operation, TileInfuser infuser, ItemStack existing) {
-        var holder = infusionRecipe(operation.level(), operation.recipeId());
-        if (holder == null || !fluidInputsMatch(operation.level(), infuser, holder.value(), existing)) return false;
-        infuser.startCrafting(operation.level(), holder);
-        return true;
     }
 
     private boolean startableAltar(PackagedMachineOperation operation, TileAltar altar) {
@@ -478,23 +410,6 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         return true;
     }
 
-    private boolean collectInfusion(PackagedMachineOperation operation) {
-        ObjectList<ItemStack> expected = readStacks(operation, "outputs");
-        ObjectList<ItemStack> actual = new ObjectArrayList<>();
-        for (ItemEntity entity : ownedEntities(operation)) actual.add(entity.getItem().copy());
-        if (actual.isEmpty()) return false;
-        if (!PackagedOutputMatching.acceptsPartial(operation, expected, actual)) {
-            throw new IllegalStateException("Unexpected Astral infuser output");
-        }
-        if (!PackagedOutputMatching.matches(operation, expected, actual)) return false;
-        for (ItemEntity entity : ownedEntities(operation)) {
-            ItemStack stack = entity.getItem().copy();
-            entity.discard();
-            operation.returned(AEItemKey.of(stack), stack.getCount());
-        }
-        return true;
-    }
-
     private static void spawnAdditional(PackagedMachineOperation operation, ItemStack stack) {
         var position = operation.position().getCenter().add(0, 1, 0);
         var entity = new ItemEntity(operation.level(), position.x, position.y, position.z, stack.copy(), 0, 0, 0);
@@ -553,36 +468,10 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         }
     }
 
-    private static @Nullable ItemStack singleInfusionInput(InfusionRecipe recipe, KeyCounter[] inputs) {
-        AEItemKey selected = null;
-        long total = 0;
-        for (KeyCounter counter : inputs) {
-            for (var entry : counter) {
-                if (!(entry.getKey() instanceof AEItemKey key) || entry.getLongValue() <= 0) return null;
-                total = Math.addExact(total, entry.getLongValue());
-                if (selected == null) selected = key;
-                else if (!selected.equals(key)) return null;
-            }
-        }
-        if (total != 1 || selected == null || !recipe.getItemInput().test(selected.toStack())) return null;
-        return selected.toStack();
-    }
-
-    private static boolean fluidInputsMatch(ServerLevel level, TileInfuser infuser, InfusionRecipe recipe, ItemStack input) {
-        var current = infuser.createInput(level);
-        return recipe.matches(InfusionRecipeInput.of(input, level, current.getFluidInputs()), level);
-    }
-
     private @Nullable TileAltar altarLayout(ServerLevel level, BlockPos position) {
         if (!this.recognizes(level, position) || !loadedRadius(level, position, ALTAR_LOADED_RADIUS)) return null;
         if (!(level.getBlockEntity(position) instanceof TileAltar altar)) return null;
         return altar.hasStructure() ? altar : null;
-    }
-
-    private @Nullable TileInfuser infuserLayout(ServerLevel level, BlockPos position) {
-        if (!this.recognizes(level, position) || !loadedRadius(level, position, INFUSER_LOADED_RADIUS)) return null;
-        if (!(level.getBlockEntity(position) instanceof TileInfuser infuser)) return null;
-        return infuser.hasStructure() ? infuser : null;
     }
 
     private static boolean loadedRadius(ServerLevel level, BlockPos center, int radius) {
@@ -618,12 +507,6 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
                 recipe.getType() == RecipeTypesAS.ALTAR_CRAFTING_TYPE.get() ? new RecipeHolder<>(holder.get().id(), recipe) : null;
     }
 
-    private static @Nullable RecipeHolder<InfusionRecipe> infusionRecipe(ServerLevel level, ResourceLocation id) {
-        var holder = level.getRecipeManager().byKey(id);
-        return holder.isPresent() && holder.get().value() instanceof InfusionRecipe recipe &&
-                recipe.getType() == RecipeTypesAS.INFUSION_TYPE.get() ? new RecipeHolder<>(holder.get().id(), recipe) : null;
-    }
-
     private static ObjectList<ItemEntity> ownedEntities(PackagedMachineOperation operation) {
         var result = new ObjectArrayList<ItemEntity>();
         result.addAll(operation.level().getEntitiesOfClass(ItemEntity.class,
@@ -645,7 +528,6 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         var result = new ObjectArrayList<ItemStack>();
         for (String name : new String[] { "grid", "relay", "additional", "returns", "slot_returns", "outputs" })
             result.addAll(readStacks(operation, name));
-        if (operation.progress().contains("input", Tag.TAG_COMPOUND)) result.add(read(operation, "input"));
         return result;
     }
 
@@ -670,10 +552,5 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
             result.add(ItemStack.parseOptional(operation.level().registryAccess(), list.getCompound(index)));
         }
         return result;
-    }
-
-    private static ItemStack read(PackagedMachineOperation operation, String name) {
-        return ItemStack.parse(operation.level().registryAccess(), operation.progress().getCompound(name))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Astral persisted item: " + name));
     }
 }

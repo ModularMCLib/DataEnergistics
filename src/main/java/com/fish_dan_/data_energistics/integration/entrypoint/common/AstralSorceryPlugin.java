@@ -23,6 +23,5 @@ public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
         registry.digitalSupplyInterfaces().register(new DigitalSupplyInterfaceRegistration(
                 adapter.id(), adapter.resources(), adapter));
         registry.packagedCrafting().register(new AstralMachineAdapter(AstralMachineKind.ALTAR));
-        registry.packagedCrafting().register(new AstralMachineAdapter(AstralMachineKind.INFUSION));
     }
 }

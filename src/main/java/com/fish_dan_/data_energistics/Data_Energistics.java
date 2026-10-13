@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics;
 
 import com.fish_dan_.data_energistics.bootstrap.common.CommonProxy;
+import com.fish_dan_.data_energistics.util.LogPairs;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -25,16 +26,11 @@ public class Data_Energistics {
 
     public static final String MODNAME = "Data Energistics";
 
-    private static final String[][] STARTUP_SHUTDOWN_LOG_PAIRS = {
-            { "Ciallo～(∠・ω< )⌒☆", "柚子厨真恶心！" },
-            { "原神启动！", "前面的区域以后再探索吧" }
-    };
-
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
 
     public Data_Energistics(IEventBus modEventBus) {
         CommonProxy.init(modEventBus);
-        String[] selectedLogPair = STARTUP_SHUTDOWN_LOG_PAIRS[RandomSource.create().nextInt(STARTUP_SHUTDOWN_LOG_PAIRS.length)];
+        String[] selectedLogPair = LogPairs.STARTUP_SHUTDOWN_LOG_PAIRS[RandomSource.create().nextInt(LogPairs.STARTUP_SHUTDOWN_LOG_PAIRS.length)];
         LOGGER.info(selectedLogPair[0]);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info(selectedLogPair[1]),
                 "data-energistics-shutdown-log"));

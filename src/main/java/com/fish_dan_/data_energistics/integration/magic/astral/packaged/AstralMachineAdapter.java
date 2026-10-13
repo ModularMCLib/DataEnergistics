@@ -53,6 +53,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
 
     private static final int ALTAR_LOADED_RADIUS = 8;
     private static final String DELIVERED = "delivered";
+    private static final ResourceLocation RECIPE_TYPE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_crafting");
     private static final ResourceLocation ALTAR_ILLUMINATION = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_illumination");
     private static final ResourceLocation ALTAR_RESONANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_resonance");
     private static final ResourceLocation ALTAR_LUMINANCE = ResourceLocation.fromNamespaceAndPath("astralsorcery", "altar_luminance");
@@ -60,20 +61,14 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
     private static final ObjectSet<ResourceLocation> ALTAR_WORKSTATIONS = ObjectSet.of(
             ALTAR_ILLUMINATION, ALTAR_RESONANCE, ALTAR_LUMINANCE, ALTAR_RADIANCE);
 
-    private final AstralMachineKind kind;
-
-    public AstralMachineAdapter(AstralMachineKind kind) {
-        this.kind = kind;
-    }
-
     @Override
     public ResourceLocation id() {
-        return Data_Energistics.id("astral_sorcery_" + this.kind.recipeType.getPath());
+        return Data_Energistics.id("astral_sorcery_altar_crafting");
     }
 
     @Override
     public ObjectSet<ResourceLocation> recipeTypes() {
-        return ObjectSet.of(this.kind.recipeType);
+        return ObjectSet.of(RECIPE_TYPE);
     }
 
     @Override
@@ -103,8 +98,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
     public boolean supportsRecipe(ServerLevel level, BlockPos position, ResourceLocation recipeTypeId,
                                   ResourceLocation recipeId) {
         if (!this.recipeTypes().contains(recipeTypeId) || !this.recognizes(level, position)) return false;
-        var holder = level.getRecipeManager().byKey(recipeId);
-        return holder.isPresent() && this.kind.accepts(holder.get().value());
+        return altarRecipe(level, recipeId) != null;
     }
 
     @Override
@@ -199,9 +193,9 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         TileAltar altar = altarLayout(level, position);
         if (altar == null || altar.getTileData().getActiveRecipe().isPresent() || !empty(altar.getTileData().getAltarInventory()))
             return null;
-        var holder = level.getRecipeManager().byKey(recipeId);
-        if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe) || !this.kind.accepts(recipe))
-            return null;
+        var holder = altarRecipe(level, recipeId);
+        if (holder == null) return null;
+        AltarRecipe recipe = holder.value();
         AstralRecipePlanner.AstralAltarPlan plan = AstralRecipePlanner.plan(level, recipe, pattern, inputs);
         if (plan == null || !emptyRelaySlots(level, position, plan.relay()) || !allRelaySlotsEmpty(level, position))
             return null;

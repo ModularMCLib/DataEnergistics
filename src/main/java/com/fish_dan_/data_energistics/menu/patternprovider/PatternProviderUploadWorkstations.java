@@ -64,6 +64,13 @@ final class PatternProviderUploadWorkstations {
                 recipeTypeId,
                 recipeId,
                 requestedPatternCount);
+        var compatibleTargets = PackagedPatternUploadRouting.compatibleTargets(provider, targets, recipeTypeId, recipeId);
+        if (compatibleTargets != null) {
+            if (compatibleTargets.isEmpty()) {
+                return Preparation.rejected(Component.translatable("message.data_energistics.pattern_provider.target_unavailable"));
+            }
+            targets = compatibleTargets;
+        }
         ObjectList<RegisteredWorkstation> workstations = resolveRegisteredWorkstations(targets);
         if (workstations.isEmpty()) {
             return Preparation.accepted(ObjectLists.emptyList());
@@ -119,6 +126,8 @@ final class PatternProviderUploadWorkstations {
                 recipeTypeId,
                 recipeId,
                 patternDetails == null ? 0 : 1);
+        var compatibleTargets = PackagedPatternUploadRouting.compatibleTargets(provider, targets, recipeTypeId, recipeId);
+        if (compatibleTargets != null && !compatibleTargets.isEmpty()) targets = compatibleTargets;
         ObjectList<RegisteredWorkstation> workstations = resolveRegisteredWorkstations(targets);
         if (workstations.isEmpty()) {
             return Inspection.NONE;
@@ -209,6 +218,8 @@ final class PatternProviderUploadWorkstations {
             }
             return ObjectLists.unmodifiable(targets);
         }
+        var packagedTargets = PackagedPatternUploadRouting.targets(provider, recipeTypeId);
+        if (packagedTargets != null) return packagedTargets;
         return resolveStandardTargets(provider);
     }
 

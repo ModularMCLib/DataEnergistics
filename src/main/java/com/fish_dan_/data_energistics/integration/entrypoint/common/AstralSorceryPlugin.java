@@ -6,10 +6,13 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistration;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistration;
+import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryKeyType;
+import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralInfusionAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralMachineAdapter;
-import com.fish_dan_.data_energistics.integration.magic.astral.packaged.AstralMachineKind;
+
+import net.minecraft.resources.ResourceLocation;
 
 @DataEnergisticsEntrypoint(requiredMods = "astralsorcery")
 public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
@@ -22,6 +25,11 @@ public final class AstralSorceryPlugin implements DataEnergisticsPlugin {
         AstralSorceryDigitalSupplyAdapter adapter = new AstralSorceryDigitalSupplyAdapter();
         registry.digitalSupplyInterfaces().register(new DigitalSupplyInterfaceRegistration(
                 adapter.id(), adapter.resources(), adapter));
-        registry.packagedCrafting().register(new AstralMachineAdapter(AstralMachineKind.ALTAR));
+        registry.packagedCrafting().register(new AstralMachineAdapter());
+        var infusion = new AstralInfusionAdapter();
+        registry.packagedCrafting().register(infusion);
+        registry.craftingMachines().registerPatternUploadWorkstation(PatternUploadWorkstationRegistration.blockEntity(
+                Data_Energistics.id("astral_sorcery_infusion_upload"),
+                ResourceLocation.fromNamespaceAndPath("astralsorcery", "infuser"), infusion));
     }
 }

@@ -19,7 +19,6 @@ import net.neoforged.neoforge.fluids.capability.templates.VoidFluidHandler;
 import hellfirepvp.astralsorcery.common.ingredient.IngredientBridge;
 import hellfirepvp.astralsorcery.common.recipe.altar.AltarCraftingInput;
 import hellfirepvp.astralsorcery.common.recipe.altar.AltarRecipe;
-import hellfirepvp.astralsorcery.common.tile.TileAltar;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -34,8 +33,8 @@ final class AstralRecipePlanner {
 
     private AstralRecipePlanner() {}
 
-    static @Nullable AstralAltarPlan plan(ServerLevel level, TileAltar altar, AltarRecipe recipe,
-                                          IPatternDetails pattern, KeyCounter[] supplied) {
+    static @Nullable AstralAltarPlan plan(ServerLevel level, AltarRecipe recipe, IPatternDetails pattern,
+                                          KeyCounter[] supplied) {
         ObjectList<Group> groups = groups(recipe);
         int cycleSize = 0;
         for (Group group : groups) cycleSize = Math.addExact(cycleSize, group.count());
@@ -63,10 +62,10 @@ final class AstralRecipePlanner {
         Selection selection = selection(groups, assigned);
         if (!recipe.getGrid().matches(selection.grid(), selection.relay())) return null;
 
-        if (!tierAndFocusMatch(altar, recipe)) return null;
         AltarCraftingInput displayInput = AltarCraftingInput.createDisplay(
-                altar.getTileData().getFocusedConstellation().orElse(null), selection.grid(), selection.relay());
-        ObjectList<ItemStack> nativeOutputs = new ObjectArrayList<>(recipe.getOutputs(displayInput, level.registryAccess()));
+                recipe.getFocusConstellation().orElse(null), selection.grid(), selection.relay());
+        ObjectList<ItemStack> nativeOutputs = new ObjectArrayList<>(
+                recipe.getOutputsForDisplay(displayInput, level.registryAccess()));
         nativeOutputs.addAll(selection.returns());
         if (nativeOutputs.isEmpty() || nativeOutputs.stream().anyMatch(ItemStack::isEmpty)) return null;
         if (!PackagedOutputMatching.matches(pattern, nativeOutputs)) return null;
@@ -206,12 +205,6 @@ final class AstralRecipePlanner {
         FluidActionResult result = FluidUtil.tryEmptyContainer(stack.copy(), VoidFluidHandler.INSTANCE,
                 ingredient.getFluidIngredient().amount(), null, true);
         return result.isSuccess() ? result.getResult() : ItemStack.EMPTY;
-    }
-
-    private static boolean tierAndFocusMatch(TileAltar altar, AltarRecipe recipe) {
-        if (!altar.getTileData().getAltarType().isThisLaterOrEqual(recipe.getRequiredType())) return false;
-        return recipe.getFocusConstellation().isEmpty() ||
-                altar.getTileData().getFocusedConstellation().equals(recipe.getFocusConstellation());
     }
 
     record Group(int section, int index, int count, IngredientBridge ingredient) {}

@@ -202,7 +202,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         var holder = level.getRecipeManager().byKey(recipeId);
         if (holder.isEmpty() || !(holder.get().value() instanceof AltarRecipe recipe) || !this.kind.accepts(recipe))
             return null;
-        AstralRecipePlanner.AstralAltarPlan plan = AstralRecipePlanner.plan(level, altar, recipe, pattern, inputs);
+        AstralRecipePlanner.AstralAltarPlan plan = AstralRecipePlanner.plan(level, recipe, pattern, inputs);
         if (plan == null || !emptyRelaySlots(level, position, plan.relay())) return null;
 
         var progress = new CompoundTag();
@@ -265,7 +265,7 @@ public final class AstralMachineAdapter implements PackagedMachineAdapter, Packa
         deliverOptionalFluidInputs(operation, recipe.value());
         progress.putBoolean(DELIVERED, true);
         operation.changed();
-        startAltar(operation, altar);
+        if (startableAltar(operation, altar)) startAltar(operation, altar);
         return true;
     }
 

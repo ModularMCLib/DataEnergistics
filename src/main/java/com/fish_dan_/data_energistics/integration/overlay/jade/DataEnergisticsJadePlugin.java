@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.integration.overlay.jade;
 
 import com.fish_dan_.data_energistics.block.TuningForkBaseBlock;
+import com.fish_dan_.data_energistics.block.digitalsupply.DigitalSupplyInterfaceBlock;
 import com.fish_dan_.data_energistics.block.machine.DataChargerBlock;
 import com.fish_dan_.data_energistics.block.machine.DataExtractorBlock;
 import com.fish_dan_.data_energistics.block.machine.DataIntegratedChargerBlock;
@@ -15,6 +16,7 @@ import com.fish_dan_.data_energistics.block.storage.DigitalStorageDepotBlock;
 import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
 import com.fish_dan_.data_energistics.block.trinity.TrinityDataCoreBlock;
 import com.fish_dan_.data_energistics.blockentity.TuningForkBaseBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataChargerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
@@ -83,6 +85,7 @@ public class DataEnergisticsJadePlugin implements IWailaPlugin {
         registration.registerBlockDataProvider(NetworkStatusJadeProvider.DATA_SANCTUM_INTERFACE, DataSanctumInterfaceBlockEntity.class);
         registration.registerBlockDataProvider(NetworkStatusJadeProvider.TRINITY_INFORMATION_EXCHANGE_DEPOT, TrinityInformationExchangeDepotBlockEntity.class);
         registration.registerBlockDataProvider(NetworkStatusJadeProvider.TUNING_FORK_BASE, TuningForkBaseBlockEntity.class);
+        registration.registerBlockDataProvider(NetworkStatusJadeProvider.DIGITAL_SUPPLY_INTERFACE, DigitalSupplyInterfaceBlockEntity.class);
     }
 
     @Override
@@ -103,6 +106,7 @@ public class DataEnergisticsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(NetworkStatusJadeProvider.DATA_SANCTUM_INTERFACE, DataSanctumInterfaceBlock.class);
         registration.registerBlockComponent(NetworkStatusJadeProvider.TRINITY_INFORMATION_EXCHANGE_DEPOT, CompartmentBlock.class);
         registration.registerBlockComponent(NetworkStatusJadeProvider.TUNING_FORK_BASE, TuningForkBaseBlock.class);
+        registration.registerBlockComponent(NetworkStatusJadeProvider.DIGITAL_SUPPLY_INTERFACE, DigitalSupplyInterfaceBlock.class);
         registration.addConfig(DataSanctumJadeProvider.MODE_ID, false);
         registration.addConfig(DataSanctumJadeProvider.PART_ID, false);
         registration.addConfig(MultiBlockJadeProvider.ROLE_ID, false);

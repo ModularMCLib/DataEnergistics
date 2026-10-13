@@ -58,7 +58,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -102,9 +101,9 @@ public final class TrinityReusableCraftingHostGameTest {
         helper.assertTrue(restored.pendingOutputs(route).stream().noneMatch(item -> item.key().getItem() == Items.IRON_AXE),
                 "Resident tools never enter ordinary pending outputs");
         restored.reusableSlot(0).endpoint().close(session, resumed);
-        List<Settlement> received = new ObjectArrayList<>();
+        ObjectList<Settlement> received = new ObjectArrayList<>();
         restored.reusableSlot(0).endpoint().settle(session, settlement -> received.add(settlement), resumed);
-        helper.assertValueEqual(received.getFirst().returnedAssetsFast(), List.of(new GenericStack(tool(1), 1)),
+        helper.assertValueEqual(received.getFirst().returnedAssetsFast(), ObjectList.of(new GenericStack(tool(1), 1)),
                 "Four actual uses return the surviving D1 physical tool");
         helper.succeed();
     }
@@ -130,7 +129,7 @@ public final class TrinityReusableCraftingHostGameTest {
         helper.assertTrue(resident.closeRequested(), "Restoring a mined pattern slot requests safe session closure");
         TrinityReusableCraftingHost movedHost = host(moved, route, helper);
         resident.closeSessions(movedHost);
-        List<Settlement> received = new ObjectArrayList<>();
+        ObjectList<Settlement> received = new ObjectArrayList<>();
         helper.assertTrue(resident.endpoint().settle(session, settlement -> received.add(settlement), movedHost),
                 "Old session settles without requiring the removed pattern to publish again");
         helper.assertValueEqual(assetAmount(received.getFirst().returnedAssetsFast(), MATERIAL), 1L, "Only actual unused material is returned");
@@ -159,13 +158,13 @@ public final class TrinityReusableCraftingHostGameTest {
         AECraftingPattern pattern = new AECraftingPattern(AEItemKey.of(encoded), helper.getLevel());
         ItemStack changed = new ItemStack(Items.OAK_PLANKS);
         changed.set(DataComponents.CUSTOM_NAME, Component.literal("actual successor component"));
-        List<GenericStack> exact = List.of(new GenericStack(AEItemKey.of(changed), 4));
+        ObjectList<GenericStack> exact = ObjectList.of(new GenericStack(AEItemKey.of(changed), 4));
         helper.assertTrue(!pattern.getInputs()[0].isValid(exact.getFirst().what(), helper.getLevel()), "Encoded pattern rejects changed exact components");
         helper.assertTrue(!NativeReusableCrafting.matches(pattern, exact, IntSets.emptySet(), Optional.of(recipeId), helper.getLevel()),
                 "Ordinary forbidden substitutions must remain rejected");
         helper.assertTrue(NativeReusableCrafting.matches(pattern, exact, new IntOpenHashSet(new int[] { 0 }), Optional.of(recipeId), helper.getLevel()),
                 "Explicit tool slot is validated through the real recipe with actual successor components");
-        List<GenericStack> invalid = List.of(new GenericStack(AEItemKey.of(Items.STONE), 4));
+        ObjectList<GenericStack> invalid = ObjectList.of(new GenericStack(AEItemKey.of(Items.STONE), 4));
         helper.assertTrue(!NativeReusableCrafting.matches(pattern, invalid, new IntOpenHashSet(new int[] { 0 }), Optional.of(recipeId), helper.getLevel()),
                 "Declaring a reusable slot cannot bypass the native recipe's real ingredient checks");
         helper.succeed();
@@ -179,17 +178,17 @@ public final class TrinityReusableCraftingHostGameTest {
         var rule = ReusableInputRule.fixedDamageFast(RECIPE, 1, tool(0), 1, 3, ObjectList.of(new GenericStack(SCRAP, 1)));
         var identity = new Identity(UUID.randomUUID(), UUID.randomUUID(), "cpu:native-batch", "native-batch", pattern.getDefinition(), Optional.empty());
         var binding = new Binding(identity, TrinityPatternIdentity.capture(TrinityPatternPublicationSignature.capture(pattern), helper.getLevel().registryAccess()),
-                2, List.of(new SlotInput(1, new GenericStack(MATERIAL, 1))),
-                List.of(new SlotContract(0, 1, Ownership.CPU_SUPPLIED, rule)), Optional.of(RECIPE.toString()));
+                2, ObjectList.of(new SlotInput(1, new GenericStack(MATERIAL, 1))),
+                ObjectList.of(new SlotContract(0, 1, Ownership.CPU_SUPPLIED, rule)), Optional.of(RECIPE.toString()));
         for (long count : new long[] { 2, 3 }) {
-            var operation = new Operation(count, 0, count, List.of(new SlotInput(1, new GenericStack(MATERIAL, count))),
-                    List.of(new ToolDelivery(0, new GenericStack(tool(0), 1))));
+            var operation = new Operation(count, 0, count, ObjectList.of(new SlotInput(1, new GenericStack(MATERIAL, count))),
+                    ObjectList.of(new ToolDelivery(0, new GenericStack(tool(0), 1))));
             var result = NativeReusableCrafting.execute(pattern, binding, operation, helper.getLevel(), RECIPE);
             helper.assertTrue(result.executed(), "Declared fixed-wear batch completes");
-            helper.assertValueEqual(result.outputs(), List.of(new GenericStack(PRODUCT, count)), "Only ordinary outputs scale by the logical count");
-            helper.assertValueEqual(result.tools().getFirst().successors(), count == 2 ? List.of(new GenericStack(tool(2), 1)) : List.of(),
+            helper.assertValueEqual(result.outputs(), ObjectList.of(new GenericStack(PRODUCT, count)), "Only ordinary outputs scale by the logical count");
+            helper.assertValueEqual(result.tools().getFirst().successors(), count == 2 ? ObjectList.of(new GenericStack(tool(2), 1)) : ObjectList.of(),
                     "Actual native remainder is one final-state tool or legal exhaustion");
-            helper.assertValueEqual(result.tools().getFirst().byproducts(), count == 3 ? List.of(new GenericStack(SCRAP, 1)) : List.of(),
+            helper.assertValueEqual(result.tools().getFirst().byproducts(), count == 3 ? ObjectList.of(new GenericStack(SCRAP, 1)) : ObjectList.of(),
                     "Exhaustion byproduct occurs once, not once per use");
         }
         helper.assertValueEqual(pattern.remainderCalls, 2, "Two batches use two actual remainder calls, not five");
@@ -212,9 +211,9 @@ public final class TrinityReusableCraftingHostGameTest {
         ReusableInputRule rule = ReusableInputRule.fixedDamageFast(RECIPE, 1, tool(0), 1, 3, ObjectList.of(new GenericStack(SCRAP, 1)));
         return new ReusableCraftingRequest(session, UUID.randomUUID(), "cpu:core-host-test", 0,
                 new Target(target, CountedCraftingTarget.route(target), Optional.empty()), new RoutedCraftingPatternDetails(route, pattern),
-                List.of(new Input(0, List.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, rule, Optional.empty()))),
-                        new Input(1, List.of(new GenericStack(MATERIAL, 1)), Optional.empty())),
-                List.of(new SlotStack(0, new GenericStack(tool(0), tools))), operations, Optional.of(RECIPE), new BaseActionSource(), helper.getLevel());
+                ObjectList.of(new Input(0, ObjectList.of(), Optional.of(new Tool(1, Ownership.CPU_SUPPLIED, rule, Optional.empty()))),
+                        new Input(1, ObjectList.of(new GenericStack(MATERIAL, 1)), Optional.empty())),
+                ObjectList.of(new SlotStack(0, new GenericStack(tool(0), tools))), operations, Optional.of(RECIPE), new BaseActionSource(), helper.getLevel());
     }
 
     private static void admit(PersistentTrinityPatternCore core, PatternRoute route, ReusableCraftingRequest request, TrinityReusableCraftingHost host) {
@@ -235,7 +234,7 @@ public final class TrinityReusableCraftingHostGameTest {
         return AEItemKey.of(tool);
     }
 
-    private static long assetAmount(List<GenericStack> assets, AEKey key) {
+    private static long assetAmount(ObjectList<GenericStack> assets, AEKey key) {
         return assets.stream().filter(stack -> stack.what().equals(key)).mapToLong(GenericStack::amount).sum();
     }
 
@@ -255,8 +254,8 @@ public final class TrinityReusableCraftingHostGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(PRODUCT, 1));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(PRODUCT, 1));
         }
 
         @Override

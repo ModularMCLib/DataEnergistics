@@ -31,10 +31,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongLists;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
@@ -68,7 +69,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
     private static int cachedCenterChunkX = Integer.MIN_VALUE;
     private static int cachedCenterChunkZ = Integer.MIN_VALUE;
     private static long cachedScanGameTime = Long.MIN_VALUE;
-    private static List<BlockPos> cachedAnchorPositions = List.of();
+    private static LongList cachedAnchorPositions = LongList.of();
     private static BlockPos selectedAnchorPos;
 
     private DataTeleportAnchorKnifeHighlighter() {}
@@ -140,7 +141,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
             return null;
         }
 
-        List<BlockPos> anchors = getCachedAnchorPositions(minecraft);
+        LongList anchors = getCachedAnchorPositions(minecraft);
         if (anchors.isEmpty()) {
             selectedAnchorPos = null;
             return null;
@@ -166,7 +167,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
             return;
         }
 
-        List<BlockPos> anchors = getCachedAnchorPositions(minecraft);
+        LongList anchors = getCachedAnchorPositions(minecraft);
         if (anchors.isEmpty()) {
             selectedAnchorPos = null;
             return;
@@ -180,7 +181,8 @@ public final class DataTeleportAnchorKnifeHighlighter {
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
 
-        for (BlockPos anchorPos : anchors) {
+        for (long packedAnchor : anchors) {
+            BlockPos anchorPos = BlockPos.of(packedAnchor);
             float[] color = resolveHighlightColor(minecraft, anchorPos);
             AABB box = anchorPos.equals(selectedAnchorPos) ? createSelectedBox(anchorPos) : createBaseBox(anchorPos);
             drawHighlight(box, color, poseStack, event.getCamera(), buffer);
@@ -196,14 +198,15 @@ public final class DataTeleportAnchorKnifeHighlighter {
         return minecraft.player.getMainHandItem().is(DEItems.DATA_CRYSTAL_CUTTING_KNIFE.get()) || minecraft.player.getOffhandItem().is(DEItems.DATA_CRYSTAL_CUTTING_KNIFE.get());
     }
 
-    private static Optional<BlockPos> findSelectedAnchor(Minecraft minecraft, List<BlockPos> anchors) {
+    private static Optional<BlockPos> findSelectedAnchor(Minecraft minecraft, LongList anchors) {
         Vec3 start = minecraft.gameRenderer.getMainCamera().getPosition();
         Vec3 look = minecraft.player.getViewVector(1.0F);
         Vec3 end = start.add(look.scale(MAX_SELECT_DISTANCE));
 
         double closestDistance = Double.MAX_VALUE;
         BlockPos closestAnchor = null;
-        for (BlockPos anchorPos : anchors) {
+        for (long packedAnchor : anchors) {
+            BlockPos anchorPos = BlockPos.of(packedAnchor);
             AABB box = createBaseBox(anchorPos);
             Optional<Vec3> hit = box.clip(start, end);
             if (hit.isEmpty()) {
@@ -283,11 +286,11 @@ public final class DataTeleportAnchorKnifeHighlighter {
         };
     }
 
-    private static List<BlockPos> getCachedAnchorPositions(Minecraft minecraft) {
+    private static LongList getCachedAnchorPositions(Minecraft minecraft) {
         var player = minecraft.player;
         var level = minecraft.level;
         if (player == null || level == null) {
-            return List.of();
+            return LongList.of();
         }
 
         int centerChunkX = player.blockPosition().getX() >> 4;
@@ -298,7 +301,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
             return cachedAnchorPositions;
         }
 
-        List<BlockPos> anchors = new ObjectArrayList<>();
+        LongArrayList anchors = new LongArrayList();
         for (int chunkX = centerChunkX - chunkRadius; chunkX <= centerChunkX + chunkRadius; chunkX++) {
             for (int chunkZ = centerChunkZ - chunkRadius; chunkZ <= centerChunkZ + chunkRadius; chunkZ++) {
                 if (!level.hasChunk(chunkX, chunkZ)) {
@@ -308,7 +311,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
                 var chunk = level.getChunk(chunkX, chunkZ);
                 for (BlockPos blockEntityPos : chunk.getBlockEntitiesPos()) {
                     if (chunk.getBlockEntity(blockEntityPos) instanceof DataTeleportAnchorBlockEntity) {
-                        anchors.add(blockEntityPos.immutable());
+                        anchors.add(blockEntityPos.asLong());
                     }
                 }
             }
@@ -317,7 +320,7 @@ public final class DataTeleportAnchorKnifeHighlighter {
         cachedCenterChunkX = centerChunkX;
         cachedCenterChunkZ = centerChunkZ;
         cachedScanGameTime = gameTime;
-        cachedAnchorPositions = List.copyOf(anchors);
+        cachedAnchorPositions = LongLists.unmodifiable(anchors);
         return cachedAnchorPositions;
     }
 

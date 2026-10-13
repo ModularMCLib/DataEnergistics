@@ -9,12 +9,12 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Replays one pattern's original input-emission order while substituting explicitly bound same-item variants.
@@ -39,7 +39,7 @@ public final class BoundPatternInputEmitter {
      * @param sink                     provider-owned destination for actual inputs
      */
     public static void emit(IPatternDetails originalDetails,
-                            List<GenericStack> selectedPlannedTemplates,
+                            ObjectList<GenericStack> selectedPlannedTemplates,
                             KeyCounter[] actualInputs,
                             IPatternDetails.PatternInputSink sink) {
         IPatternDetails.IInput[] plannedInputs = originalDetails.getInputs();
@@ -48,7 +48,7 @@ public final class BoundPatternInputEmitter {
         }
 
         KeyCounter[] syntheticInputs = new KeyCounter[plannedInputs.length];
-        Map<AEKey, ObjectArrayFIFOQueue<ActualSlice>> actualByPlannedKey = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<AEKey, ObjectArrayFIFOQueue<ActualSlice>> actualByPlannedKey = new Object2ObjectLinkedOpenHashMap<>();
         for (int slot = 0; slot < plannedInputs.length; slot++) {
             IPatternDetails.IInput plannedInput = plannedInputs[slot];
             GenericStack plannedTemplate = selectedPlannedTemplates.get(slot);
@@ -104,7 +104,7 @@ public final class BoundPatternInputEmitter {
             }
         });
 
-        for (var entry : actualByPlannedKey.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, ObjectArrayFIFOQueue<ActualSlice>> entry : actualByPlannedKey.object2ObjectEntrySet()) {
             if (!entry.getValue().isEmpty()) {
                 throw new IllegalStateException(
                         "Registered pattern did not emit the complete authorized binding for " + entry.getKey());

@@ -13,12 +13,12 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
 import com.google.common.hash.Hashing;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
 
 /** Exact-state conservation and replay identity at the directed CPU return boundary. */
 public final class ReusableCpuSettlement {
@@ -37,8 +37,8 @@ public final class ReusableCpuSettlement {
         if (!settlement.releasedMachineToolsFast().isEmpty()) {
             throw new IllegalStateException("CPU-supplied session cannot release machine-owned tools");
         }
-        Map<AEKey, BigInteger> expected = new Object2ObjectOpenHashMap<>();
-        Map<ReusableInputRule, FixedToolSettlement> lifetimes = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<AEKey, BigInteger> expected = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<ReusableInputRule, FixedToolSettlement> lifetimes = new Object2ObjectOpenHashMap<>();
         BigInteger exhausted = BigInteger.ZERO;
         for (var receipt : settlement.receiptsFast()) {
             var submission = session.submission(receipt.sequence());
@@ -75,7 +75,7 @@ public final class ReusableCpuSettlement {
                 }
             }
         }
-        Map<AEKey, BigInteger> remaining = amounts(settlement.returnedAssetsFast());
+        Object2ObjectMap<AEKey, BigInteger> remaining = amounts(settlement.returnedAssetsFast());
         for (var entry : expected.entrySet()) {
             if (entry.getValue().signum() < 0 || remaining.getOrDefault(entry.getKey(), BigInteger.ZERO).compareTo(entry.getValue()) < 0) {
                 throw new IllegalStateException("Reusable return omitted expected material or tool units");
@@ -121,19 +121,19 @@ public final class ReusableCpuSettlement {
         return Hashing.sha256().hashString(TrinityCanonicalNbt.encode(root), StandardCharsets.UTF_8).toString();
     }
 
-    private static CompoundTag assets(Map<AEKey, BigInteger> amounts, HolderLookup.Provider registries) {
+    private static CompoundTag assets(Object2ObjectMap<AEKey, BigInteger> amounts, HolderLookup.Provider registries) {
         CompoundTag result = new CompoundTag();
         amounts.forEach((key, amount) -> result.putByteArray(TrinityCanonicalNbt.encode(key.toTagGeneric(registries)), amount.toByteArray()));
         return result;
     }
 
-    private static Map<AEKey, BigInteger> amounts(List<GenericStack> stacks) {
-        Map<AEKey, BigInteger> result = new Object2ObjectOpenHashMap<>();
+    private static Object2ObjectMap<AEKey, BigInteger> amounts(ObjectList<GenericStack> stacks) {
+        Object2ObjectMap<AEKey, BigInteger> result = new Object2ObjectOpenHashMap<>();
         for (var stack : stacks) add(result, stack.what(), BigInteger.valueOf(stack.amount()));
         return result;
     }
 
-    private static void add(Map<AEKey, BigInteger> amounts, AEKey key, BigInteger delta) {
+    private static void add(Object2ObjectMap<AEKey, BigInteger> amounts, AEKey key, BigInteger delta) {
         BigInteger updated = amounts.getOrDefault(key, BigInteger.ZERO).add(delta);
         if (updated.signum() == 0) amounts.remove(key);
         else amounts.put(key, updated);

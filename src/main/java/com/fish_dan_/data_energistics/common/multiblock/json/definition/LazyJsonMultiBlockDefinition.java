@@ -5,11 +5,12 @@ import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
 import com.fish_dan_.data_energistics.common.multiblock.json.autobuild.JsonMultiBlockAutoBuildStaging;
 
 import com.modularmc.mdl.api.multiblock.BlockPattern;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -24,13 +25,13 @@ public final class LazyJsonMultiBlockDefinition implements JsonMultiBlockDefinit
     private JsonMultiBlockDefinition definition;
 
     public LazyJsonMultiBlockDefinition(JsonMultiBlockStructureKey key, BlockPatternFactory patternFactory) {
-        this(key, patternFactory, Optional.empty(), Map.of());
+        this(key, patternFactory, Optional.empty(), Object2ObjectMaps.emptyMap());
     }
 
     public LazyJsonMultiBlockDefinition(JsonMultiBlockStructureKey key,
                                         BlockPatternFactory patternFactory,
                                         String displayNameTranslationKey) {
-        this(key, patternFactory, Optional.of(displayNameTranslationKey), Map.of());
+        this(key, patternFactory, Optional.of(displayNameTranslationKey), Object2ObjectMaps.emptyMap());
     }
 
     private LazyJsonMultiBlockDefinition(JsonMultiBlockStructureKey key,
@@ -47,7 +48,7 @@ public final class LazyJsonMultiBlockDefinition implements JsonMultiBlockDefinit
     private LazyJsonMultiBlockDefinition(JsonMultiBlockStructureKey key,
                                          BlockPatternFactory patternFactory,
                                          Optional<String> displayNameTranslationKey,
-                                         Map<String, CompartmentType> compartmentTypes) {
+                                         Object2ObjectMap<String, CompartmentType> compartmentTypes) {
         this(
                 key,
                 () -> new ResolvedJsonMultiBlockDefinition(
@@ -55,7 +56,7 @@ public final class LazyJsonMultiBlockDefinition implements JsonMultiBlockDefinit
                         patternFactory.get(),
                         displayNameTranslationKey,
                         compartmentTypes,
-                        Map.of()));
+                        Object2ObjectMaps.emptyMap()));
     }
 
     @Override
@@ -74,12 +75,12 @@ public final class LazyJsonMultiBlockDefinition implements JsonMultiBlockDefinit
     }
 
     @Override
-    public Map<String, CompartmentType> compartmentTypes() {
+    public Object2ObjectMap<String, CompartmentType> compartmentTypes() {
         return definition().compartmentTypes();
     }
 
     @Override
-    public Map<String, Set<CompartmentType>> replaceableCompartmentTypes() {
+    public Object2ObjectMap<String, ObjectSet<CompartmentType>> replaceableCompartmentTypes() {
         return definition().replaceableCompartmentTypes();
     }
 

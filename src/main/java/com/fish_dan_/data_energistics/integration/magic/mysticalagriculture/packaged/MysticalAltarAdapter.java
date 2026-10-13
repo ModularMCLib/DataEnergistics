@@ -28,6 +28,8 @@ import com.blakebr0.mysticalagriculture.tileentity.AwakeningPedestalTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceVesselTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.InfusionAltarTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.InfusionPedestalTileEntity;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -88,11 +90,11 @@ public final class MysticalAltarAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         var slots = preparation.getList("slots", Tag.TAG_COMPOUND);
-        for (int index = 0; index < slots.size(); index++) positions.add(BlockPos.of(slots.getCompound(index).getLong("position")));
+        for (int index = 0; index < slots.size(); index++) positions.add(slots.getCompound(index).getLong("position"));
         return positions;
     }
 

@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.blockentity.orbital.astronomy;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.orbital.astronomy.AstronomicalObservatoryBlock;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.orbital.astronomy.AstronomyDimensionRules;
 import com.fish_dan_.data_energistics.orbital.astronomy.StellarFluxGridTransaction;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
@@ -22,7 +22,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Performs the low-tier observatory's server-authoritative AE energy-to-Stellar Flux transaction.
@@ -41,7 +40,7 @@ public final class AstronomicalObservatoryBlockEntity extends AENetworkedBlockEn
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.allOf(Direction.class);
     }
 

@@ -21,13 +21,15 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Immutable auto-build staging permissions derived from one resolved JSON multiblock definition.
@@ -40,14 +42,14 @@ import java.util.Set;
  */
 public final class JsonMultiBlockAutoBuildStaging {
 
-    private static final JsonMultiBlockAutoBuildStaging NONE = new JsonMultiBlockAutoBuildStaging(Object2BooleanMaps.emptyMap(), Map.of());
+    private static final JsonMultiBlockAutoBuildStaging NONE = new JsonMultiBlockAutoBuildStaging(Object2BooleanMaps.emptyMap(), Object2ObjectMaps.emptyMap());
 
     private final Object2BooleanMap<BlockState> blockStaging;
-    private final Map<Item, BlockState> partHosts;
+    private final Object2ObjectMap<Item, BlockState> partHosts;
 
-    private JsonMultiBlockAutoBuildStaging(Object2BooleanMap<BlockState> blockStaging, Map<Item, BlockState> partHosts) {
+    private JsonMultiBlockAutoBuildStaging(Object2BooleanMap<BlockState> blockStaging, Object2ObjectMap<Item, BlockState> partHosts) {
         this.blockStaging = Object2BooleanMaps.unmodifiable(new Object2BooleanLinkedOpenHashMap<>(blockStaging));
-        this.partHosts = Map.copyOf(partHosts);
+        this.partHosts = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(partHosts));
     }
 
     /**
@@ -63,8 +65,8 @@ public final class JsonMultiBlockAutoBuildStaging {
         if (metadata.isEmpty()) {
             return NONE;
         }
-        Set<Character> usedSymbols = usedSymbols(definition);
-        Map<Character, StructurePredicate> predicates = definition.predicates();
+        ObjectSet<Character> usedSymbols = usedSymbols(definition);
+        Object2ObjectMap<Character, StructurePredicate> predicates = new Object2ObjectLinkedOpenHashMap<>(definition.predicates());
         Object2BooleanLinkedOpenHashMap<BlockState> blockStaging = new Object2BooleanLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<Item, BlockState> partHosts = new Object2ObjectLinkedOpenHashMap<>();
 
@@ -95,12 +97,12 @@ public final class JsonMultiBlockAutoBuildStaging {
                 throw new IllegalArgumentException("JSON multiblock part host staging symbol '" + symbol +
                         "' must use data_energistics:placement_items: " + resourceId);
             }
-            List<BlockState> hostStates = placementPredicate.blockStateCandidates().stream().distinct().toList();
+            ObjectList<BlockState> hostStates = distinctStates(placementPredicate.blockStateCandidates());
             if (hostStates.size() != 1) {
                 throw new IllegalArgumentException("JSON multiblock part host staging symbol '" + symbol +
                         "' must resolve exactly one host state: " + resourceId);
             }
-            List<ItemStack> partCandidates = placementPredicate.placementCandidates();
+            ObjectList<ItemStack> partCandidates = new ObjectArrayList<>(placementPredicate.placementCandidates());
             if (partCandidates.isEmpty()) {
                 throw new IllegalArgumentException("JSON multiblock part host staging symbol '" + symbol +
                         "' must declare at least one part item: " + resourceId);
@@ -139,7 +141,7 @@ public final class JsonMultiBlockAutoBuildStaging {
         return this.partHosts.get(partStack.getItem());
     }
 
-    private static Set<Character> usedSymbols(StringArrayDefinition definition) {
+    private static ObjectSet<Character> usedSymbols(StringArrayDefinition definition) {
         ObjectLinkedOpenHashSet<Character> symbols = new ObjectLinkedOpenHashSet<>();
         definition.units().forEach(unit -> unit.slices().forEach(slice -> {
             for (String row : slice) {
@@ -148,13 +150,13 @@ public final class JsonMultiBlockAutoBuildStaging {
                 }
             }
         }));
-        return Set.copyOf(symbols);
+        return ObjectSets.unmodifiable(symbols);
     }
 
     private static StructurePredicate requiredPredicate(ResourceLocation resourceId,
                                                         String symbol,
-                                                        Set<Character> usedSymbols,
-                                                        Map<Character, StructurePredicate> predicates) {
+                                                        ObjectSet<Character> usedSymbols,
+                                                        Object2ObjectMap<Character, StructurePredicate> predicates) {
         char character = symbol.charAt(0);
         if (!usedSymbols.contains(character)) {
             throw new IllegalArgumentException("JSON multiblock auto-build staging symbol '" + symbol +
@@ -168,10 +170,10 @@ public final class JsonMultiBlockAutoBuildStaging {
         return predicate;
     }
 
-    private static List<BlockState> requiredBaseBlockStates(ResourceLocation resourceId,
-                                                            String symbol,
-                                                            StructurePredicate predicate) {
-        List<BlockState> states = blockPlacementStates(basePredicate(predicate));
+    private static ObjectList<BlockState> requiredBaseBlockStates(ResourceLocation resourceId,
+                                                                  String symbol,
+                                                                  StructurePredicate predicate) {
+        ObjectList<BlockState> states = blockPlacementStates(basePredicate(predicate));
         if (states.isEmpty()) {
             throw new IllegalArgumentException("JSON multiblock block staging symbol '" + symbol +
                     "' has no exact BlockItem state candidate: " + resourceId);
@@ -186,7 +188,7 @@ public final class JsonMultiBlockAutoBuildStaging {
         return predicate;
     }
 
-    private static List<BlockState> blockPlacementStates(StructurePredicate predicate) {
+    private static ObjectList<BlockState> blockPlacementStates(StructurePredicate predicate) {
         ObjectLinkedOpenHashSet<BlockState> states = new ObjectLinkedOpenHashSet<>();
         for (PatternCandidate candidate : predicate.patternCandidates()) {
             if (candidate.placementStack().getItem() instanceof BlockItem) {
@@ -196,11 +198,11 @@ public final class JsonMultiBlockAutoBuildStaging {
         for (BlockState state : predicate.blockStateCandidates()) {
             if (state.getBlock() instanceof LiquidBlock && state.getFluidState().isSource()) states.add(state);
         }
-        return List.copyOf(states);
+        return new ObjectImmutableList<>(states);
     }
 
-    private static List<BlockState> replaceableCompartmentStates(
-                                                                 JsonMultiBlockReplaceableCompartmentPredicate replaceablePredicate) {
+    private static ObjectList<BlockState> replaceableCompartmentStates(
+                                                                       JsonMultiBlockReplaceableCompartmentPredicate replaceablePredicate) {
         ObjectArrayList<BlockState> states = new ObjectArrayList<>();
         for (var type : replaceablePredicate.compartmentTypes()) {
             Block block = JsonMultiBlockCompartmentPredicate.blockFor(type);
@@ -209,7 +211,7 @@ public final class JsonMultiBlockAutoBuildStaging {
             }
             states.add(block.defaultBlockState());
         }
-        return states.stream().distinct().toList();
+        return distinctStates(states);
     }
 
     private static void addBlockState(ResourceLocation resourceId,
@@ -227,7 +229,7 @@ public final class JsonMultiBlockAutoBuildStaging {
 
     private static void addPartHost(ResourceLocation resourceId,
                                     String symbol,
-                                    Map<Item, BlockState> partHosts,
+                                    Object2ObjectMap<Item, BlockState> partHosts,
                                     Item partItem,
                                     BlockState hostState) {
         BlockState previous = partHosts.putIfAbsent(partItem, hostState);
@@ -239,10 +241,10 @@ public final class JsonMultiBlockAutoBuildStaging {
 
     private static void rejectAmbiguousUnmarkedCandidates(ResourceLocation resourceId,
                                                           JsonMultiBlockAutoBuildStagingMetadata metadata,
-                                                          Map<Character, StructurePredicate> predicates,
+                                                          Object2ObjectMap<Character, StructurePredicate> predicates,
                                                           Object2BooleanMap<BlockState> blockStaging,
-                                                          Map<Item, BlockState> partHosts) {
-        for (Map.Entry<Character, StructurePredicate> entry : predicates.entrySet()) {
+                                                          Object2ObjectMap<Item, BlockState> partHosts) {
+        for (Object2ObjectMap.Entry<Character, StructurePredicate> entry : predicates.object2ObjectEntrySet()) {
             String symbol = Character.toString(entry.getKey());
             StructurePredicate predicate = entry.getValue();
             if (!metadata.blockSymbols().contains(symbol)) {
@@ -271,5 +273,13 @@ public final class JsonMultiBlockAutoBuildStaging {
                 }
             }
         }
+    }
+
+    private static ObjectList<BlockState> distinctStates(Iterable<BlockState> states) {
+        ObjectLinkedOpenHashSet<BlockState> distinct = new ObjectLinkedOpenHashSet<>();
+        for (BlockState state : states) {
+            distinct.add(state);
+        }
+        return new ObjectImmutableList<>(distinct);
     }
 }

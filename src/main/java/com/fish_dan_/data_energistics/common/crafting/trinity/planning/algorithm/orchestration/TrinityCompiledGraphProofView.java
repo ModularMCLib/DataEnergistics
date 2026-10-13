@@ -4,9 +4,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 
 import appeng.api.stacks.AEKey;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 /** Request-local route hints layered over one already validated immutable target structure. */
 public record TrinityCompiledGraphProofView(
                                             TrinityCompiledGraph structure,
-                                            Map<AEKey, TrinityAcyclicRouteHint> routeHints) {}
+                                            Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> routeHints) {}

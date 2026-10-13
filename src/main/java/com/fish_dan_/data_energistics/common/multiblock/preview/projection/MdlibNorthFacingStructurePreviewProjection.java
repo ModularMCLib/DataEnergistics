@@ -35,13 +35,13 @@ import com.modularmc.mdl.api.multiblock.PatternProjector;
 import com.modularmc.mdl.api.multiblock.PatternRepeatSelection;
 import com.modularmc.mdl.api.multiblock.TraceabilityPredicate;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Canonical north-facing MDLib projector with explicit, component-aware candidate resolution.
@@ -78,12 +78,12 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                 selection.activeSelection().repeatCounts());
         ExpandedPatternSnapshot expanded = PatternProjector.expand(pattern, repeatSelection);
 
-        Map<PreviewPredicateKey, PreviewPredicateSnapshot> predicates = new Object2ObjectLinkedOpenHashMap<>();
-        Set<String> appliedTierDomains = new ObjectOpenHashSet<>();
-        List<PreviewLayerSnapshot> layers = new ObjectArrayList<>(expanded.layers().size());
-        List<PreviewCellSnapshot> cells = new ObjectArrayList<>(expanded.cells().size());
+        Object2ObjectMap<PreviewPredicateKey, PreviewPredicateSnapshot> predicates = new Object2ObjectLinkedOpenHashMap<>();
+        ObjectSet<String> appliedTierDomains = new ObjectOpenHashSet<>();
+        ObjectList<PreviewLayerSnapshot> layers = new ObjectArrayList<>(expanded.layers().size());
+        ObjectList<PreviewCellSnapshot> cells = new ObjectArrayList<>(expanded.cells().size());
         for (PatternLayerSnapshot expandedLayer : expanded.layers()) {
-            List<PreviewCellSnapshot> layerCells = new ObjectArrayList<>(expandedLayer.cells().size());
+            ObjectList<PreviewCellSnapshot> layerCells = new ObjectArrayList<>(expandedLayer.cells().size());
             for (PatternCellSnapshot expandedCell : expandedLayer.cells()) {
                 PatternCellSource source = expandedCell.source();
                 PreviewPredicateKey key = new PreviewPredicateKey(source.sourceLayer(), source.y(), source.x());
@@ -109,7 +109,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
             layers.add(new PreviewLayerSnapshot(expandedLayer.index(), expandedLayer.source(), layerCells));
         }
         requireEveryTierDomainApplied(substructure, appliedTierDomains);
-        List<PreviewMaterial> materials = this.materialAggregator.aggregate(cells);
+        ObjectList<PreviewMaterial> materials = this.materialAggregator.aggregate(cells);
         return new StructurePreviewSnapshot(
                 selection,
                 definition.key(),
@@ -125,7 +125,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                                                              PatternLayout layout,
                                                              PatternCellSnapshot cell,
                                                              PreviewPredicateKey key,
-                                                             Set<String> appliedTierDomains) {
+                                                             ObjectSet<String> appliedTierDomains) {
         int candidateOverride = selection.candidateSelections().getInt(key);
         boolean hasCandidateOverride = selection.candidateSelections().containsKey(key);
         if (isController(layout, cell.source())) {
@@ -138,7 +138,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
             PreviewCandidate controller = PreviewCandidate.concrete(
                     controllerItem.getBlock().defaultBlockState(),
                     spec.ownerOutput());
-            return new PreviewPredicateSnapshot(key, PreviewCellRole.CONTROLLER, List.of(controller), 0);
+            return new PreviewPredicateSnapshot(key, PreviewCellRole.CONTROLLER, ObjectList.of(controller), 0);
         }
 
         TraceabilityPredicate predicate = cell.predicate();
@@ -146,12 +146,12 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
             if (hasCandidateOverride) {
                 throw projectionFailure(substructure, cell, "Wildcard cell does not accept candidate overrides");
             }
-            return new PreviewPredicateSnapshot(key, PreviewCellRole.WILDCARD, List.of(), -1);
+            return new PreviewPredicateSnapshot(key, PreviewCellRole.WILDCARD, ObjectList.of(), -1);
         }
 
-        List<BlockState> candidateStates = predicate.blockStateCandidates();
+        ObjectList<BlockState> candidateStates = new ObjectArrayList<>(predicate.blockStateCandidates());
         boolean allowsAir = predicate.hasAir() || candidateStates.stream().anyMatch(BlockState::isAir);
-        List<PreviewCandidate> concreteCandidates = pairedCandidates(predicate, substructure, cell);
+        ObjectList<PreviewCandidate> concreteCandidates = pairedCandidates(predicate, substructure, cell);
         if (concreteCandidates.isEmpty() && allowsAir) {
             int selectedIndex = hasCandidateOverride ? candidateOverride : 0;
             return createPredicateSnapshot(
@@ -159,7 +159,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                     cell,
                     key,
                     PreviewCellRole.AIR,
-                    List.of(PreviewCandidate.empty()),
+                    ObjectList.of(PreviewCandidate.empty()),
                     selectedIndex);
         }
         if (concreteCandidates.isEmpty()) {
@@ -175,7 +175,7 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                 selection,
                 cell,
                 appliedTierDomains);
-        List<PreviewCandidate> candidates = new ObjectArrayList<>(concreteCandidates.size() + (allowsAir ? 1 : 0));
+        ObjectList<PreviewCandidate> candidates = new ObjectArrayList<>(concreteCandidates.size() + (allowsAir ? 1 : 0));
         if (allowsAir) {
             candidates.add(PreviewCandidate.empty());
         }
@@ -190,16 +190,16 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                 selectedIndex);
     }
 
-    private static List<PreviewCandidate> pairedCandidates(TraceabilityPredicate predicate,
-                                                           SubstructurePreviewSpec substructure,
-                                                           PatternCellSnapshot cell) {
-        List<PatternCandidate> pairs;
+    private static ObjectList<PreviewCandidate> pairedCandidates(TraceabilityPredicate predicate,
+                                                                 SubstructurePreviewSpec substructure,
+                                                                 PatternCellSnapshot cell) {
+        ObjectList<PatternCandidate> pairs;
         try {
-            pairs = predicate.patternCandidates();
+            pairs = new ObjectArrayList<>(predicate.patternCandidates());
         } catch (IllegalArgumentException | IllegalStateException exception) {
             throw projectionFailure(substructure, cell, "Predicate candidate pairing failed", exception);
         }
-        List<PreviewCandidate> result = new ObjectArrayList<>();
+        ObjectArrayList<PreviewCandidate> result = new ObjectArrayList<>();
         for (PatternCandidate pair : pairs) {
             BlockState state = pair.previewState();
             if (state.isAir()) {
@@ -224,18 +224,25 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                 if (!result.contains(candidate)) result.add(candidate);
             }
         }
-        return List.copyOf(result);
+        return ObjectLists.unmodifiable(result);
     }
 
-    private static List<PreviewCandidate> applyTierSelection(List<PreviewCandidate> candidates,
-                                                             SubstructurePreviewSpec substructure,
-                                                             SubstructureSelection selection,
-                                                             PatternCellSnapshot cell,
-                                                             Set<String> appliedTierDomains) {
-        List<PreviewTierDomain> matchingDomains = substructure.tierDomains().stream()
-                .filter(domain -> candidates.stream().anyMatch(candidate -> domain.containsBlock(
-                        blockId(candidate.state().orElseThrow()))))
-                .toList();
+    private static ObjectList<PreviewCandidate> applyTierSelection(ObjectList<PreviewCandidate> candidates,
+                                                                   SubstructurePreviewSpec substructure,
+                                                                   SubstructureSelection selection,
+                                                                   PatternCellSnapshot cell,
+                                                                   ObjectSet<String> appliedTierDomains) {
+        ObjectArrayList<PreviewTierDomain> matchingDomains = new ObjectArrayList<>();
+        for (PreviewTierDomain domain : substructure.tierDomains()) {
+            boolean matches = false;
+            for (PreviewCandidate candidate : candidates) {
+                if (domain.containsBlock(blockId(candidate.state().orElseThrow()))) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (matches) matchingDomains.add(domain);
+        }
         if (matchingDomains.isEmpty()) {
             return candidates;
         }
@@ -254,9 +261,10 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
         }
         int selectedValue = selection.tierSelections().getInt(domain.id());
         ResourceLocation selectedBlock = domain.option(selectedValue).blockId();
-        List<PreviewCandidate> selected = candidates.stream()
-                .filter(candidate -> blockId(candidate.state().orElseThrow()).equals(selectedBlock))
-                .toList();
+        ObjectArrayList<PreviewCandidate> selected = new ObjectArrayList<>();
+        for (PreviewCandidate candidate : candidates) {
+            if (blockId(candidate.state().orElseThrow()).equals(selectedBlock)) selected.add(candidate);
+        }
         if (selected.isEmpty()) {
             throw projectionFailure(
                     substructure,
@@ -264,14 +272,14 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
                     "Selected tier block " + selectedBlock + " is not a predicate candidate");
         }
         appliedTierDomains.add(domain.id());
-        return selected;
+        return ObjectLists.unmodifiable(selected);
     }
 
     private static PreviewPredicateSnapshot createPredicateSnapshot(SubstructurePreviewSpec substructure,
                                                                     PatternCellSnapshot cell,
                                                                     PreviewPredicateKey key,
                                                                     PreviewCellRole role,
-                                                                    List<PreviewCandidate> candidates,
+                                                                    ObjectList<PreviewCandidate> candidates,
                                                                     int selectedIndex) {
         if (selectedIndex < 0 || selectedIndex >= candidates.size()) {
             throw projectionFailure(
@@ -293,10 +301,11 @@ public final class MdlibNorthFacingStructurePreviewProjection implements Structu
     }
 
     private static void requireEveryTierDomainApplied(SubstructurePreviewSpec substructure,
-                                                      Set<String> appliedTierDomains) {
-        List<String> expected = substructure.tierDomains().stream().map(PreviewTierDomain::id).toList();
+                                                      ObjectSet<String> appliedTierDomains) {
+        ObjectArrayList<String> expected = new ObjectArrayList<>(substructure.tierDomains().size());
+        for (PreviewTierDomain domain : substructure.tierDomains()) expected.add(domain.id());
         if (!appliedTierDomains.containsAll(expected)) {
-            Set<String> missing = new ObjectLinkedOpenHashSet<>(expected);
+            ObjectSet<String> missing = new ObjectLinkedOpenHashSet<>(expected);
             missing.removeAll(appliedTierDomains);
             throw new IllegalStateException("Substructure " + substructure.definition().key() +
                     " does not expose candidates for tier domains " + missing);

@@ -2,7 +2,8 @@ package com.fish_dan_.data_energistics.blockentity.tower.network.discovery;
 
 import appeng.api.networking.IGridNode;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Complete six-face capability result for one binding anchor.
@@ -11,12 +12,12 @@ import java.util.List;
  *                     mounted-device fallbacks
  * @param grids        identity-de-duplicated target-grid results
  */
-public record TowerTargetResolution(List<IGridNode> exposedNodes, List<TowerResolvedGrid> grids) {
+public record TowerTargetResolution(ObjectList<IGridNode> exposedNodes, ObjectList<TowerResolvedGrid> grids) {
 
     /** Defensively copies one target resolution. */
     public TowerTargetResolution {
-        exposedNodes = List.copyOf(exposedNodes);
-        grids = List.copyOf(grids);
+        exposedNodes = new ObjectImmutableList<>(exposedNodes);
+        grids = new ObjectImmutableList<>(grids);
     }
 
     /**

@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityPlanExecution.Work;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -21,7 +22,6 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -210,8 +210,8 @@ public final class ReusableCpuSessionLedger {
 
         public Snapshot {
             sessions = new ObjectImmutableList<>(sessions);
-            replanningJobs = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(replanningJobs));
-            uncertainSessions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(uncertainSessions));
+            replanningJobs = FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(replanningJobs));
+            uncertainSessions = FastUtilCollections.immutableSet(new ObjectOpenHashSet<>(uncertainSessions));
             remoteEvidence = new ObjectImmutableList<>(remoteEvidence);
         }
     }

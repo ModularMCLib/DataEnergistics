@@ -4,8 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
-import com.fish_dan_.data_energistics.util.DurationFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.menu.me.crafting.CraftingPlanSummary;
 
@@ -60,23 +59,23 @@ final class TrinityCraftConfirmProgressText {
                     PREFIX + "progress.exact",
                     phase,
                     percent,
-                    AmountFormatter.format(progress.completedUnits()),
-                    AmountFormatter.format(progress.totalUnits()));
+                    FormattingUtils.format(progress.completedUnits()),
+                    FormattingUtils.format(progress.totalUnits()));
         }
         if (progress.measure() == TrinityPlanningProgressMeasure.COUNTER) {
             return Component.translatable(
                     PREFIX + "progress.counter",
                     phase,
-                    AmountFormatter.format(progress.completedUnits()),
-                    AmountFormatter.format(progress.totalUnits()),
-                    AmountFormatter.format(progress.solverPasses()));
+                    FormattingUtils.format(progress.completedUnits()),
+                    FormattingUtils.format(progress.totalUnits()),
+                    FormattingUtils.format(progress.solverPasses()));
         }
         if (progress.routeStates() > 0 || progress.solverPasses() > 0) {
             return Component.translatable(
                     PREFIX + "progress.observed",
                     phase,
-                    AmountFormatter.format(progress.completedUnits()),
-                    AmountFormatter.format(progress.solverPasses()));
+                    FormattingUtils.format(progress.completedUnits()),
+                    FormattingUtils.format(progress.solverPasses()));
         }
         return phase;
     }
@@ -88,11 +87,11 @@ final class TrinityCraftConfirmProgressText {
         }
         return Component.translatable(
                 PREFIX + "progress.tooltip",
-                AmountFormatter.format(progress.routeStates()),
-                AmountFormatter.format(progress.routeStateLimit()),
-                AmountFormatter.format(progress.jointStates()),
-                AmountFormatter.format(progress.solverPasses()),
-                AmountFormatter.format(progress.solverModels()),
-                DurationFormatter.format(progress.solverNanos()));
+                FormattingUtils.format(progress.routeStates()),
+                FormattingUtils.format(progress.routeStateLimit()),
+                FormattingUtils.format(progress.jointStates()),
+                FormattingUtils.format(progress.solverPasses()),
+                FormattingUtils.format(progress.solverModels()),
+                FormattingUtils.formatDuration(progress.solverNanos()));
     }
 }

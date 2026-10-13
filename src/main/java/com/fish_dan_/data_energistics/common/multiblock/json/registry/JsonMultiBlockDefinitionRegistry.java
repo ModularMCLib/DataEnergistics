@@ -3,7 +3,8 @@ package com.fish_dan_.data_energistics.common.multiblock.json.registry;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockDefinition;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 
-import java.util.Collection;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
+
 import java.util.Optional;
 
 /**
@@ -23,7 +24,7 @@ public interface JsonMultiBlockDefinitionRegistry {
     /**
      * Replaces the current datapack layer with the supplied definitions and keeps built-ins as fallback entries.
      */
-    void applyJsonDefinitions(Collection<JsonMultiBlockDefinition> definitions);
+    void applyJsonDefinitions(ObjectCollection<JsonMultiBlockDefinition> definitions);
 
     /**
      * Returns one atomically published view of the active definitions and their revision.
@@ -45,7 +46,7 @@ public interface JsonMultiBlockDefinitionRegistry {
     /**
      * Returns all currently active definitions after built-in and datapack layers are merged.
      */
-    default Collection<JsonMultiBlockDefinition> values() {
+    default ObjectCollection<JsonMultiBlockDefinition> values() {
         return snapshot().definitions().values();
     }
 

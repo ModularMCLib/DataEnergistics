@@ -4,8 +4,6 @@ import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassRequ
 import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassResponsePayload;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 
-import appeng.core.definitions.AEBlocks;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -106,7 +104,7 @@ public final class DataMeteoriteCompassClientCache {
         }
 
         BlockState state = level.getBlockState(pos);
-        return state.is(DEBlocks.DATA_MYSTERIOUS_CUBE.get()) || state.is(AEBlocks.MYSTERIOUS_CUBE.block());
+        return state.is(DEBlocks.DATA_MYSTERIOUS_CUBE.get());
     }
 
     private record CachedResult(@Nullable BlockPos closestMeteoritePos, long received) {}

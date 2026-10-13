@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.network.trinity.crafting.protocol;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus.Phase;
 import com.fish_dan_.data_energistics.network.trinity.crafting.client.TrinityCraftingStatusClientHandler;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -110,11 +110,11 @@ public record TrinityCraftingStatusPayload(int containerId, long sequence, int b
     }
 
     private static void writeAmount(RegistryFriendlyByteBuf buffer, BigInteger amount) {
-        buffer.writeByteArray(TrinityBigIntegerEncoding.encode(amount, "CPU status amount"));
+        buffer.writeByteArray(NbtCodecs.encode(amount, "CPU status amount"));
     }
 
     private static BigInteger readAmount(RegistryFriendlyByteBuf buffer) {
-        return TrinityBigIntegerEncoding.decode(buffer.readByteArray(TrinityBigIntegerEncoding.MAX_BYTES), "CPU status amount");
+        return NbtCodecs.decode(buffer.readByteArray(NbtCodecs.MAX_BYTES), "CPU status amount");
     }
 
     /** Time and AE2's normalized progress scale, not material counts or an ownership ledger. */

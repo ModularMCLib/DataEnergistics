@@ -3,15 +3,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityCompressedSchedule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Closed-form deterministic production cycle and its exact compressed execution proof.
@@ -25,12 +25,12 @@ import java.util.Map;
  * @param schedule         executable compressed batch proof
  */
 public record TrinityCyclePlan(
-                               List<TrinityVariantFiring> oneCycleOrder,
+                               ObjectList<TrinityVariantFiring> oneCycleOrder,
                                BigInteger repetitions,
-                               Map<TrinityPatternVariant, BigInteger> aggregateFirings,
-                               Map<AEKey, BigInteger> minimumSeed,
-                               Map<AEKey, BigInteger> initialInputs,
-                               Map<AEKey, BigInteger> netChange,
+                               Object2ObjectMap<TrinityPatternVariant, BigInteger> aggregateFirings,
+                               Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                               Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                               Object2ObjectMap<AEKey, BigInteger> netChange,
                                TrinityCompressedSchedule schedule) {
 
     /**
@@ -40,7 +40,7 @@ public record TrinityCyclePlan(
         if (oneCycleOrder.isEmpty() || repetitions.signum() <= 0) {
             throw new IllegalArgumentException("A Trinity cycle plan requires complete positive accounting");
         }
-        oneCycleOrder = List.copyOf(oneCycleOrder);
+        oneCycleOrder = FastUtilCollections.immutableList(oneCycleOrder);
         aggregateFirings = copyPositiveFirings(aggregateFirings);
         minimumSeed = copyPositiveAmounts(minimumSeed);
         initialInputs = copyPositiveAmounts(initialInputs);
@@ -59,7 +59,7 @@ public record TrinityCyclePlan(
         if (!calculatedNet.equals(netChange)) {
             throw new IllegalArgumentException("A Trinity cycle net change must equal its exact firing effects");
         }
-        for (Map.Entry<AEKey, BigInteger> seed : minimumSeed.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> seed : minimumSeed.object2ObjectEntrySet()) {
             if (initialInputs.getOrDefault(seed.getKey(), BigInteger.ZERO).compareTo(seed.getValue()) < 0) {
                 throw new IllegalArgumentException("A Trinity cycle initial input must include every minimum seed");
             }
@@ -75,8 +75,8 @@ public record TrinityCyclePlan(
         }
     }
 
-    private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
-                                                                              Map<TrinityPatternVariant, BigInteger> source) {
+    private static Object2ObjectMap<TrinityPatternVariant, BigInteger> copyPositiveFirings(
+                                                                                           Object2ObjectMap<TrinityPatternVariant, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, count) -> {
             if (count.signum() <= 0) {
@@ -84,10 +84,10 @@ public record TrinityCyclePlan(
             }
             copied.put(variant, count);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copyPositiveAmounts(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyPositiveAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
@@ -95,10 +95,10 @@ public record TrinityCyclePlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copySignedNonZero(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copySignedNonZero(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() == 0) {
@@ -106,6 +106,6 @@ public record TrinityCyclePlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 }

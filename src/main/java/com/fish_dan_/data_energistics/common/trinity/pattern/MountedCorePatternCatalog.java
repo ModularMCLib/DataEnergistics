@@ -21,13 +21,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
@@ -146,10 +146,10 @@ public final class MountedCorePatternCatalog implements TrinityPatternCatalog {
         ObjectArrayList<CoreMount> sorted = new ObjectArrayList<>(mounts);
         sorted.sort((left, right) -> left.position().compareTo(right.position()));
 
-        ObjectSet<BlockPos> positions = new ObjectOpenHashSet<>();
+        LongSet positions = new LongOpenHashSet();
         Object2ObjectMap<UUID, CoreMount> mountsByCoreId = new Object2ObjectOpenHashMap<>();
         for (CoreMount mount : sorted) {
-            if (!positions.add(mount.position())) {
+            if (!positions.add(mount.position().asLong())) {
                 return rejectScan(mount.position(), "Duplicate Trinity pattern core position " + mount.position());
             }
             if (mount.blockCapacity() != mount.core().patternCapacity()) {

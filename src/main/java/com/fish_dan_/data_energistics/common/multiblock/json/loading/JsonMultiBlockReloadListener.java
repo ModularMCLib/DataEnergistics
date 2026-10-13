@@ -8,13 +8,13 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 /**
  * Server datapack reload listener that atomically applies JSON multiblock definitions.
  */
 public final class JsonMultiBlockReloadListener
-                                                extends SimplePreparableReloadListener<Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition>> {
+                                                extends SimplePreparableReloadListener<Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition>> {
 
     private final JsonMultiBlockDefinitionRegistry registry;
     private final JsonMultiBlockDefinitionLoader loader;
@@ -29,13 +29,13 @@ public final class JsonMultiBlockReloadListener
     }
 
     @Override
-    protected Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> prepare(ResourceManager resourceManager,
-                                                                                ProfilerFiller profiler) {
+    protected Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> prepare(ResourceManager resourceManager,
+                                                                                             ProfilerFiller profiler) {
         return this.loader.load(resourceManager);
     }
 
     @Override
-    protected void apply(Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions,
+    protected void apply(Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions,
                          ResourceManager resourceManager,
                          ProfilerFiller profiler) {
         this.registry.applyJsonDefinitions(definitions.values());

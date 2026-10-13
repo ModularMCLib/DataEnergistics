@@ -13,10 +13,11 @@ import appeng.api.stacks.AEKey;
 import net.minecraft.core.BlockPos;
 
 import com.modularmc.mdl.api.multiblock.PatternBounds;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Complete immutable common-layer result for one active substructure selection.
@@ -30,10 +31,10 @@ import java.util.Set;
  */
 public record StructurePreviewSnapshot(PreviewSelection selection,
                                        JsonMultiBlockStructureKey definitionKey,
-                                       List<PreviewLayerSnapshot> layers,
-                                       List<PreviewCellSnapshot> cells,
+                                       ObjectList<PreviewLayerSnapshot> layers,
+                                       ObjectList<PreviewCellSnapshot> cells,
                                        PatternBounds bounds,
-                                       List<PreviewMaterial> materials) {
+                                       ObjectList<PreviewMaterial> materials) {
 
     /**
      * Copies collections and verifies the flattened structure, ownership, layer indexes, and exact bounds.
@@ -43,15 +44,15 @@ public record StructurePreviewSnapshot(PreviewSelection selection,
                 materials == null) {
             throw new IllegalArgumentException("Structure preview snapshot arguments cannot be null");
         }
-        layers = List.copyOf(layers);
-        cells = List.copyOf(cells);
-        materials = List.copyOf(materials);
+        layers = ObjectLists.unmodifiable(new ObjectArrayList<>(layers));
+        cells = ObjectLists.unmodifiable(new ObjectArrayList<>(cells));
+        materials = ObjectLists.unmodifiable(new ObjectArrayList<>(materials));
         if (!definitionKey.machineId().equals(selection.controllerId()) ||
                 !definitionKey.structureName().equals(selection.activeSubstructureId())) {
             throw new IllegalArgumentException("Structure preview definition does not match the active selection");
         }
         validateContents(layers, cells, bounds);
-        Set<AEKey> materialKeys = new ObjectOpenHashSet<>();
+        ObjectSet<AEKey> materialKeys = new ObjectOpenHashSet<>();
         for (PreviewMaterial material : materials) {
             if (!materialKeys.add(material.key())) {
                 throw new IllegalArgumentException("Structure preview materials contain a duplicate item key");
@@ -72,7 +73,7 @@ public record StructurePreviewSnapshot(PreviewSelection selection,
      * @param viewState view-only logical layer selection
      * @return all layers or one existing logical layer
      */
-    public List<PreviewLayerSnapshot> visibleLayers(PreviewViewState viewState) {
+    public ObjectList<PreviewLayerSnapshot> visibleLayers(PreviewViewState viewState) {
         if (viewState == null) {
             throw new IllegalArgumentException("Structure preview visible layers require view state");
         }
@@ -85,11 +86,11 @@ public record StructurePreviewSnapshot(PreviewSelection selection,
             throw new IllegalArgumentException("Preview logical layer index " + layerIndex + " is outside 0.." +
                     (this.layers.size() - 1));
         }
-        return List.of(this.layers.get(layerIndex));
+        return ObjectList.of(this.layers.get(layerIndex));
     }
 
-    private static void validateContents(List<PreviewLayerSnapshot> layers,
-                                         List<PreviewCellSnapshot> cells,
+    private static void validateContents(ObjectList<PreviewLayerSnapshot> layers,
+                                         ObjectList<PreviewCellSnapshot> cells,
                                          PatternBounds bounds) {
         if (layers.isEmpty() || cells.isEmpty()) {
             throw new IllegalArgumentException("Structure preview snapshot requires layers and cells");

@@ -28,10 +28,9 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Draws persistent range boxes during world rendering instead of from block entity renderers.
@@ -45,7 +44,7 @@ public final class PersistentWorldBoxRenderer {
 
     private static final int RESCAN_INTERVAL_TICKS = 20;
     private static final double TOWER_RANGE_LINE_INSET = 0.03125D;
-    private static final Map<BlockPos, BlockEntity> LOADED_BLOCK_ENTITIES = new Object2ObjectOpenHashMap<>();
+    private static final Long2ObjectMap<BlockEntity> LOADED_BLOCK_ENTITIES = new Long2ObjectOpenHashMap<>();
 
     @Nullable
     private static ClientLevel trackedLevel;
@@ -70,7 +69,7 @@ public final class PersistentWorldBoxRenderer {
         }
 
         ChunkPos unloadedChunk = event.getChunk().getPos();
-        LOADED_BLOCK_ENTITIES.entrySet().removeIf(entry -> new ChunkPos(entry.getKey()).equals(unloadedChunk));
+        LOADED_BLOCK_ENTITIES.long2ObjectEntrySet().removeIf(entry -> new ChunkPos(BlockPos.of(entry.getLongKey())).equals(unloadedChunk));
     }
 
     @SubscribeEvent
@@ -161,7 +160,7 @@ public final class PersistentWorldBoxRenderer {
 
         for (BlockEntity blockEntity : levelChunk.getBlockEntities().values()) {
             if (isSupported(blockEntity)) {
-                LOADED_BLOCK_ENTITIES.put(blockEntity.getBlockPos().immutable(), blockEntity);
+                LOADED_BLOCK_ENTITIES.put(blockEntity.getBlockPos().asLong(), blockEntity);
             }
         }
     }
@@ -180,7 +179,7 @@ public final class PersistentWorldBoxRenderer {
     }
 
     private static void pruneRemovedBlockEntities(ClientLevel level) {
-        LOADED_BLOCK_ENTITIES.entrySet().removeIf(entry -> {
+        LOADED_BLOCK_ENTITIES.long2ObjectEntrySet().removeIf(entry -> {
             BlockEntity blockEntity = entry.getValue();
             return blockEntity.isRemoved() || blockEntity.getLevel() != level;
         });

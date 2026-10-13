@@ -1,25 +1,26 @@
 package com.fish_dan_.data_energistics.orbital.model;
 
-import java.util.EnumSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 /**
  * Delegated access roles. Ownership remains a separate weapon-record field and is never represented by this enum.
  */
 public enum OrbitalAccessRole {
 
-    OPERATOR(EnumSet.of(
+    OPERATOR(ObjectSet.of(
             StellarErasureDeviceAction.VIEW_STATUS,
             StellarErasureDeviceAction.AIM,
             StellarErasureDeviceAction.FIRE,
             StellarErasureDeviceAction.CANCEL_WARNING_ATTACK,
             StellarErasureDeviceAction.EMERGENCY_ABORT)),
-    OBSERVER(EnumSet.of(StellarErasureDeviceAction.VIEW_STATUS));
+    OBSERVER(ObjectSet.of(StellarErasureDeviceAction.VIEW_STATUS));
 
-    private final Set<StellarErasureDeviceAction> allowedActions;
+    private final ObjectSet<StellarErasureDeviceAction> allowedActions;
 
-    OrbitalAccessRole(Set<StellarErasureDeviceAction> allowedActions) {
-        this.allowedActions = Set.copyOf(allowedActions);
+    OrbitalAccessRole(ObjectSet<StellarErasureDeviceAction> allowedActions) {
+        this.allowedActions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(allowedActions));
     }
 
     /**

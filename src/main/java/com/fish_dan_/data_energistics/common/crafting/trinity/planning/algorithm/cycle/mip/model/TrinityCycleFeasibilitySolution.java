@@ -2,14 +2,14 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Exact decoded result of all sequential feasibility objectives.
@@ -26,15 +26,15 @@ import java.util.Map;
  * @param diagnosticStates actual solver calls charged to the local shortage search
  */
 public record TrinityCycleFeasibilitySolution(
-                                              Map<TrinityPatternVariant, BigInteger> firings,
-                                              Map<AEKey, BigInteger> modelSeed,
-                                              Map<AEKey, BigInteger> externalInputs,
+                                              Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                              Object2ObjectMap<AEKey, BigInteger> modelSeed,
+                                              Object2ObjectMap<AEKey, BigInteger> externalInputs,
                                               int solverPasses,
                                               long solverNanos,
                                               boolean radix,
                                               TrinityPlanQuality quality,
-                                              Map<AEKey, BigInteger> actualInputs,
-                                              Map<AEKey, BigInteger> missingInputs,
+                                              Object2ObjectMap<AEKey, BigInteger> actualInputs,
+                                              Object2ObjectMap<AEKey, BigInteger> missingInputs,
                                               int diagnosticStates) {
 
     /**
@@ -54,10 +54,10 @@ public record TrinityCycleFeasibilitySolution(
     /**
      * @return exact positive reserve required by the diagnostic firing vector
      */
-    public Map<AEKey, BigInteger> requiredInputs() {
+    public Object2ObjectMap<AEKey, BigInteger> requiredInputs() {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>(externalInputs);
         modelSeed.forEach((key, amount) -> required.merge(key, amount, BigInteger::add));
-        return Collections.unmodifiableMap(required);
+        return FastUtilCollections.immutableMap(required);
     }
 
     /**
@@ -81,8 +81,8 @@ public record TrinityCycleFeasibilitySolution(
         return total(firings);
     }
 
-    private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
-                                                                              Map<TrinityPatternVariant, BigInteger> source) {
+    private static Object2ObjectMap<TrinityPatternVariant, BigInteger> copyPositiveFirings(
+                                                                                           Object2ObjectMap<TrinityPatternVariant, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, amount) -> {
             if (amount.signum() <= 0) {
@@ -90,10 +90,10 @@ public record TrinityCycleFeasibilitySolution(
             }
             copied.put(variant, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copyPositiveAmounts(Map<AEKey, BigInteger> source, String role) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyPositiveAmounts(Object2ObjectMap<AEKey, BigInteger> source, String role) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
@@ -101,10 +101,10 @@ public record TrinityCycleFeasibilitySolution(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static BigInteger total(Map<?, BigInteger> amounts) {
+    private static BigInteger total(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 }

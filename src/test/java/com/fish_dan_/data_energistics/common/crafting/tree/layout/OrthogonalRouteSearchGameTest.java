@@ -17,9 +17,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(Data_Energistics.MODID)
@@ -31,11 +31,11 @@ public final class OrthogonalRouteSearchGameTest {
     public static void replacesLongFacingChannelWithShorterVerticalPorts(GameTestHelper helper) {
         PlacedNode source = node(0, 0, 0, 40, 100);
         PlacedNode target = node(1, 100, 200, 40, 100);
-        List<Port> sources = ports(source);
-        List<Port> targets = ports(target);
-        List<Port> all = new ObjectArrayList<>(sources);
+        ObjectList<Port> sources = ports(source);
+        ObjectList<Port> targets = ports(target);
+        ObjectList<Port> all = new ObjectArrayList<>(sources);
         all.addAll(targets);
-        var graph = new OrthogonalRoutingGraph(List.of(source, target), all);
+        var graph = new OrthogonalRoutingGraph(ObjectList.of(source, target), all);
         var reservations = new OrthogonalSegmentReservations(graph.x, graph.y);
         var search = new OrthogonalRouteSearch(graph, reservations);
         var group = new CraftingPlanRouteGroup(new CraftingPlanRouteGroup.Style(true, IntLists.emptyList()), 0);
@@ -52,11 +52,11 @@ public final class OrthogonalRouteSearchGameTest {
         PlacedNode source = node(0, 0, 0, 20, 20);
         PlacedNode target = node(1, 180, 0, 20, 20);
         PlacedNode obstacle = node(2, 80, -20, 20, 80);
-        List<Port> sources = ports(source);
-        List<Port> targets = ports(target);
-        List<Port> all = new ObjectArrayList<>(sources);
+        ObjectList<Port> sources = ports(source);
+        ObjectList<Port> targets = ports(target);
+        ObjectList<Port> all = new ObjectArrayList<>(sources);
         all.addAll(targets);
-        var graph = new OrthogonalRoutingGraph(List.of(source, target, obstacle), all);
+        var graph = new OrthogonalRoutingGraph(ObjectList.of(source, target, obstacle), all);
         var search = new OrthogonalRouteSearch(graph, new OrthogonalSegmentReservations(graph.x, graph.y));
         var group = new CraftingPlanRouteGroup(new CraftingPlanRouteGroup.Style(true, IntLists.emptyList()), 0);
         var shortest = search.route(sources, targets, group, null, false);
@@ -72,8 +72,8 @@ public final class OrthogonalRouteSearchGameTest {
         helper.succeed();
     }
 
-    private static List<Port> ports(PlacedNode node) {
-        List<Port> result = new ObjectArrayList<>();
+    private static ObjectList<Port> ports(PlacedNode node) {
+        ObjectList<Port> result = new ObjectArrayList<>();
         for (Side side : Side.values()) result.add(OrthogonalRoutingGraph.port(node, side, 0.5));
         return result;
     }

@@ -5,9 +5,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Proof-carrying applicability result for one primitive reservoir basis and its acyclic residual topology.
@@ -20,7 +21,7 @@ import java.util.Map;
  */
 public record TrinityDeterministicBasis(
                                         AEKey reservoir,
-                                        List<TrinityVariantFiring> primitiveOrder,
-                                        Map<TrinityPatternVariant, BigInteger> primitiveFirings,
-                                        Map<AEKey, BigInteger> primitiveNet,
+                                        ObjectList<TrinityVariantFiring> primitiveOrder,
+                                        Object2ObjectMap<TrinityPatternVariant, BigInteger> primitiveFirings,
+                                        Object2ObjectMap<AEKey, BigInteger> primitiveNet,
                                         TrinityDeterministicResidualTopology residualTopology) {}

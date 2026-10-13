@@ -25,7 +25,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 
 import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Pattern-authorized output capacity assignment shared by admission and native physical collection.
@@ -50,7 +49,7 @@ public final class PackagedOutputMatching {
         progress.put(RULES, encoded);
     }
 
-    public static boolean matches(IPatternDetails pattern, List<ItemStack> actual) {
+    public static boolean matches(IPatternDetails pattern, ObjectList<ItemStack> actual) {
         return matches(pattern, amounts(actual));
     }
 
@@ -72,7 +71,7 @@ public final class PackagedOutputMatching {
     }
 
     /** Requires the primary product exactly; every declared secondary output must be a real native return. */
-    public static boolean matchesWithAdditionalReturns(IPatternDetails pattern, ItemStack produced, List<ItemStack> returns) {
+    public static boolean matchesWithAdditionalReturns(IPatternDetails pattern, ItemStack produced, ObjectList<ItemStack> returns) {
         var declared = rules(pattern);
         if (declared.isEmpty() || produced.isEmpty()) return false;
         var primary = declared.getFirst();
@@ -100,16 +99,16 @@ public final class PackagedOutputMatching {
         return sameKey(rules(operation), AEItemKey.of(expected), AEItemKey.of(actual));
     }
 
-    public static boolean matches(PackagedMachineOperation operation, List<ItemStack> expected, List<ItemStack> actual) {
+    public static boolean matches(PackagedMachineOperation operation, ObjectList<ItemStack> expected, ObjectList<ItemStack> actual) {
         return assign(rules(operation), stacks(amounts(expected)), stacks(amounts(actual)), true);
     }
 
-    public static boolean acceptsPartial(PackagedMachineOperation operation, List<ItemStack> expected, List<ItemStack> actual) {
+    public static boolean acceptsPartial(PackagedMachineOperation operation, ObjectList<ItemStack> expected, ObjectList<ItemStack> actual) {
         return assign(rules(operation), stacks(amounts(expected)), stacks(amounts(actual)), false);
     }
 
-    public static boolean matchesResources(PackagedMachineOperation operation, List<GenericStack> expected,
-                                           List<GenericStack> actual) {
+    public static boolean matchesResources(PackagedMachineOperation operation, ObjectList<GenericStack> expected,
+                                           ObjectList<GenericStack> actual) {
         if (expected.size() != actual.size()) return false;
         for (int i = 0; i < expected.size(); i++) if (!matches(operation, expected.get(i), actual.get(i))) return false;
         return assign(rules(operation), expected, actual, true);
@@ -119,14 +118,14 @@ public final class PackagedOutputMatching {
         return expected.amount() == actual.amount() && sameKey(rules(operation), expected.what(), actual.what());
     }
 
-    private static boolean sameKey(List<Rule> rules, AEKey expected, AEKey actual) {
+    private static boolean sameKey(ObjectList<Rule> rules, AEKey expected, AEKey actual) {
         var matching = rules.stream().filter(rule -> rule.stack().what().equals(expected)).collect(ObjectArrayList.toList());
         if (matching.isEmpty()) matching = rules.stream().filter(rule -> rule.accepts(expected)).collect(ObjectArrayList.toList());
         if (matching.isEmpty()) return rules.isEmpty() && expected.equals(actual);
         return matching.stream().allMatch(rule -> rule.accepts(actual));
     }
 
-    private static boolean assign(List<Rule> rules, List<GenericStack> expected, List<GenericStack> actual, boolean complete) {
+    private static boolean assign(ObjectList<Rule> rules, ObjectList<GenericStack> expected, ObjectList<GenericStack> actual, boolean complete) {
         if (expected.stream().anyMatch(stack -> stack.amount() <= 0) || actual.stream().anyMatch(stack -> stack.amount() <= 0))
             return false;
         BigInteger expectedTotal = total(expected);
@@ -150,25 +149,25 @@ public final class PackagedOutputMatching {
                 (r, a) -> domains.get(r).accepts(actual.get(a).what()));
     }
 
-    private static BigInteger total(List<GenericStack> stacks) {
+    private static BigInteger total(ObjectList<GenericStack> stacks) {
         BigInteger total = BigInteger.ZERO;
         for (GenericStack stack : stacks) total = total.add(BigInteger.valueOf(stack.amount()));
         return total;
     }
 
-    private static KeyCounter amounts(List<ItemStack> stacks) {
+    private static KeyCounter amounts(ObjectList<ItemStack> stacks) {
         var amounts = new KeyCounter();
         for (ItemStack stack : stacks) if (!stack.isEmpty()) amounts.add(AEItemKey.of(stack), stack.getCount());
         return amounts;
     }
 
-    private static List<GenericStack> stacks(KeyCounter counts) {
+    private static ObjectList<GenericStack> stacks(KeyCounter counts) {
         var result = new ObjectArrayList<GenericStack>();
         for (var entry : counts) result.add(new GenericStack(entry.getKey(), entry.getLongValue()));
         return result;
     }
 
-    private static List<Rule> rules(IPatternDetails pattern) {
+    private static ObjectList<Rule> rules(IPatternDetails pattern) {
         if (pattern instanceof PackagedBatchPattern batch) {
             return rules(batch.original()).stream().map(rule -> new Rule(
                     new GenericStack(rule.stack().what(), Math.multiplyExact(rule.stack().amount(), batch.count())), rule.matching()))
@@ -189,7 +188,7 @@ public final class PackagedOutputMatching {
         return rules;
     }
 
-    private static List<Rule> rules(PackagedMachineOperation operation) {
+    private static ObjectList<Rule> rules(PackagedMachineOperation operation) {
         var result = new ObjectArrayList<Rule>();
         var encoded = operation.progress().getList(RULES, Tag.TAG_COMPOUND);
         for (int i = 0; i < encoded.size(); i++) {

@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.network.patternencoding;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesAckClientHandler;
 
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 
 /**
- * Routes preference acknowledgements through the registered client bridge without loading client classes on a server.
+ * Routes preference acknowledgements to the client handler without running them on a server.
  */
 public final class PatternEncodingPreferencesAckHandler {
 
@@ -20,6 +20,6 @@ public final class PatternEncodingPreferencesAckHandler {
         if (FMLEnvironment.dist != Dist.CLIENT) {
             return;
         }
-        DataEnergisticsClientBridgeAccess.get().handlePatternEncodingPreferencesAck(payload, player);
+        PatternEncodingPreferencesAckClientHandler.handle(payload, player);
     }
 }

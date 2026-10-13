@@ -21,10 +21,10 @@ import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 
 /** Concentric dependency rings with stable branch sectors, upright cards and compact local loop blocks. */
@@ -36,18 +36,18 @@ public final class CraftingPlanRadialLayout {
 
     public static Layout layout(ViewGraph graph, boolean compact) {
         if (graph.nodes().isEmpty()) {
-            return new Layout(List.of(), List.of(), new Bounds(0, 0, 0, 0),
-                    CraftingPlanRouteGeometry.EMPTY, List.of());
+            return new Layout(ObjectList.of(), ObjectList.of(), new Bounds(0, 0, 0, 0),
+                    CraftingPlanRouteGeometry.EMPTY, ObjectList.of());
         }
         Int2ObjectMap<PlacedNode> placed = placeRings(graph, compact);
-        List<RadialRequest> requests = requests(graph, placed);
-        List<RoutedEdge> edges = new ObjectArrayList<>(requests.size());
-        List<RoutedCurve> curves = new ObjectArrayList<>(requests.size());
+        ObjectList<RadialRequest> requests = requests(graph, placed);
+        ObjectList<RoutedEdge> edges = new ObjectArrayList<>(requests.size());
+        ObjectList<RoutedCurve> curves = new ObjectArrayList<>(requests.size());
         for (RadialRequest request : requests) {
             checkInterrupted();
             Curve curve = curve(request, edges.size(), placed.values());
             edges.add(new RoutedEdge(request.source(), request.target(), request.cyclic(),
-                    request.originals(), request.group(), List.of()));
+                    request.originals(), request.group(), ObjectList.of()));
             curves.add(new RoutedCurve(request.source(), request.target(), request.cyclic(),
                     request.originals(), request.group(), curve.from(), curve.firstControl(),
                     curve.secondControl(), curve.to()));
@@ -72,7 +72,7 @@ public final class CraftingPlanRadialLayout {
         double gap = compact ? 12 : 20;
         double minY = Double.POSITIVE_INFINITY;
         double maxY = Double.NEGATIVE_INFINITY;
-        Int2ObjectMap<List<RingBlock>> rings = new Int2ObjectAVLTreeMap<>();
+        Int2ObjectMap<ObjectList<RingBlock>> rings = new Int2ObjectAVLTreeMap<>();
         for (RingBlock block : blocks.values()) {
             checkInterrupted();
             block.nodes.sort(Comparator.comparingInt((PlacedNode node) -> node.id() == graph.rootId() ? 0 : 1)
@@ -93,7 +93,7 @@ public final class CraftingPlanRadialLayout {
         double span = maxY - minY + 2 * gap;
         double previousRadius = 0;
         double previousEnvelope = Math.hypot(root.width - root.cardWidth / 2, root.height - root.cardHeight / 2);
-        for (List<RingBlock> ring : rings.values()) {
+        for (ObjectList<RingBlock> ring : rings.values()) {
             double envelope = 0;
             for (RingBlock block : ring) {
                 block.angle = -Math.PI + 2 * Math.PI * ((block.minY + block.maxY) / 2 - minY + gap) / span;
@@ -142,7 +142,7 @@ public final class CraftingPlanRadialLayout {
     private static final class RingBlock {
 
         private final int rank;
-        private final List<PlacedNode> nodes = new ObjectArrayList<>();
+        private final ObjectList<PlacedNode> nodes = new ObjectArrayList<>();
         private double minY = Double.POSITIVE_INFINITY;
         private double maxY = Double.NEGATIVE_INFINITY;
         private double cardWidth;
@@ -176,10 +176,10 @@ public final class CraftingPlanRadialLayout {
         return result;
     }
 
-    private static List<RadialRequest> requests(ViewGraph graph, Int2ObjectMap<PlacedNode> nodes) {
+    private static ObjectList<RadialRequest> requests(ViewGraph graph, Int2ObjectMap<PlacedNode> nodes) {
         var styles = CraftingPlanRouteGroup.indexStyles(graph.source());
         Object2ObjectMap<PortKey, PortIntent> intents = new Object2ObjectLinkedOpenHashMap<>();
-        List<RadialRequest> result = new ObjectArrayList<>();
+        ObjectList<RadialRequest> result = new ObjectArrayList<>();
         for (ViewEdge edge : graph.edges()) {
             Object2ObjectMap<Style, IntList> split = new Object2ObjectLinkedOpenHashMap<>();
             for (int original : edge.originalEdgeIds()) {
@@ -215,7 +215,7 @@ public final class CraftingPlanRadialLayout {
     }
 
     private static void assignPorts(Iterable<PortIntent> intents) {
-        Object2ObjectMap<NodeSide, List<PortIntent>> sides = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<NodeSide, ObjectList<PortIntent>> sides = new Object2ObjectLinkedOpenHashMap<>();
         for (PortIntent intent : intents) {
             intent.sideOrdinal = intent.forcedSideOrdinal < 0 ? side(intent).ordinal() : intent.forcedSideOrdinal;
             sides.computeIfAbsent(new NodeSide(intent.node.id(), intent.side()), unused -> new ObjectArrayList<>()).add(intent);
@@ -313,8 +313,8 @@ public final class CraftingPlanRadialLayout {
         };
     }
 
-    private static Layout shift(Int2ObjectMap<PlacedNode> placed, List<RoutedEdge> edges,
-                                List<RoutedCurve> curves, int rootId, double padding) {
+    private static Layout shift(Int2ObjectMap<PlacedNode> placed, ObjectList<RoutedEdge> edges,
+                                ObjectList<RoutedCurve> curves, int rootId, double padding) {
         double minX = Double.POSITIVE_INFINITY;
         double minY = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY;
@@ -326,7 +326,7 @@ public final class CraftingPlanRadialLayout {
             maxY = Math.max(maxY, node.y() + node.height());
         }
         for (RoutedCurve curve : curves) {
-            for (Point point : List.of(curve.from(), curve.firstControl(), curve.secondControl(), curve.to())) {
+            for (Point point : ObjectList.of(curve.from(), curve.firstControl(), curve.secondControl(), curve.to())) {
                 minX = Math.min(minX, point.x());
                 minY = Math.min(minY, point.y());
                 maxX = Math.max(maxX, point.x());
@@ -342,12 +342,12 @@ public final class CraftingPlanRadialLayout {
         maxY = root.y() + verticalExtent;
         double dx = padding - minX;
         double dy = padding - minY;
-        List<PlacedNode> nodes = new ObjectArrayList<>(placed.size());
+        ObjectList<PlacedNode> nodes = new ObjectArrayList<>(placed.size());
         for (PlacedNode node : placed.values()) {
             nodes.add(new PlacedNode(node.viewNode(), node.x() + dx, node.y() + dy,
                     node.width(), node.height()));
         }
-        List<RoutedCurve> shifted = new ObjectArrayList<>(curves.size());
+        ObjectList<RoutedCurve> shifted = new ObjectArrayList<>(curves.size());
         for (RoutedCurve curve : curves) {
             shifted.add(new RoutedCurve(curve.source(), curve.target(), curve.cyclic(), curve.originalEdgeIds(),
                     curve.group(), move(curve.from(), dx, dy), move(curve.firstControl(), dx, dy),

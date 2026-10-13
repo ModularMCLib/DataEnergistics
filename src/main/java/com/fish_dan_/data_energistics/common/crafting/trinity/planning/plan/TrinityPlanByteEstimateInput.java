@@ -2,8 +2,9 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Exact AE2-compatible storage-byte inputs accumulated by a compact graph planner.
@@ -13,7 +14,7 @@ import java.util.Map;
  * @param logicalNodeCount    compact crafting-tree node count
  */
 public record TrinityPlanByteEstimateInput(
-                                           Map<AEKey, BigInteger> stackRequestAmounts,
+                                           Object2ObjectMap<AEKey, BigInteger> stackRequestAmounts,
                                            BigInteger patternFirings,
                                            BigInteger logicalNodeCount) {
 

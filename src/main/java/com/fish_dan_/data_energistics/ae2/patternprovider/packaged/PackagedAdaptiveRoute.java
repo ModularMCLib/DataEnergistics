@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider.packaged;
 
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProviderAdapter;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatch;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderDispatchContext;
@@ -12,6 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPr
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.stacks.KeyCounter;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -44,18 +47,36 @@ public final class PackagedAdaptiveRoute implements AdaptivePatternProviderDispa
     @Override
     public @Nullable CountedCraftingProviderAdapter countedAdapter(AdaptivePatternProviderDispatchTarget target) {
         if (!(target.level() instanceof ServerLevel level)) return null;
-        return (pattern, prototype, requested) -> {
-            var adjacent = new ObjectArrayList<ConnectorLink>();
-            for (var side : target.targetSidesFast()) adjacent.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));
-            var catalog = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting();
-            var state = state(target);
-            return state.prepareBatch(level, catalog, pattern, prototype, requested, target.connectorBindingsFast(), adjacent, target.getConnectorPolicy(),
-                    () -> target.isSelected() && target.isActive() && !target.isBusy() && !target.isCraftingLocked() && target.hasPattern(pattern),
-                    () -> {
-                        target.patternSuccess(pattern);
-                        target.saveChanges();
-                        target.alertDevice();
-                    });
+        return new CountedCraftingProviderAdapter() {
+
+            @Override
+            public @Nullable CountedCraftingAdmission prepareBatch(
+                                                                   IPatternDetails pattern, KeyCounter[] prototype,
+                                                                   long requested) {
+                var adjacent = new ObjectArrayList<ConnectorLink>();
+                for (var side : target.targetSidesFast()) {
+                    adjacent.add(new ConnectorLink(target.providerPos().relative(side), side.getOpposite()));
+                }
+                var catalog = DataEnergisticsEntrypointLoader.snapshot().packagedCrafting();
+                var state = state(target);
+                return state.prepareBatch(level, catalog, pattern, prototype, requested, target.connectorBindingsFast(), adjacent,
+                        target.getConnectorPolicy(),
+                        () -> target.isSelected() && target.isActive() && !target.isBusy() && !target.isCraftingLocked() && target.hasPattern(pattern),
+                        () -> {
+                            target.patternSuccess(pattern);
+                            target.saveChanges();
+                            target.alertDevice();
+                        });
+            }
+
+            @Override
+            public @Nullable CountedCraftingAdmission prepareBatchForTarget(
+                                                                            IPatternDetails pattern,
+                                                                            KeyCounter[] prototype,
+                                                                            long requested,
+                                                                            CountedCraftingTarget route) {
+                return route.providerScoped() ? prepareBatch(pattern, prototype, requested) : null;
+            }
         };
     }
 

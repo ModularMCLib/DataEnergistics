@@ -5,8 +5,8 @@ import net.minecraft.resources.ResourceLocation;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 /**
  * Raw auto-build staging declarations read from one JSON multiblock metadata object.
@@ -24,24 +24,24 @@ public final class JsonMultiBlockAutoBuildStagingMetadata {
     private static final String PHYSICAL_BLOCK_SYMBOLS_PROPERTY = "physical_block_symbols";
     private static final String PART_HOST_SYMBOLS_PROPERTY = "part_host_symbols";
     private static final JsonMultiBlockAutoBuildStagingMetadata NONE = new JsonMultiBlockAutoBuildStagingMetadata(
-            Set.of(),
-            Set.of(),
-            Set.of(),
-            Set.of());
+            ObjectSets.emptySet(),
+            ObjectSets.emptySet(),
+            ObjectSets.emptySet(),
+            ObjectSets.emptySet());
 
-    private final Set<String> blockSymbols;
-    private final Set<String> replaceableCompartmentSymbols;
-    private final Set<String> physicalBlockSymbols;
-    private final Set<String> partHostSymbols;
+    private final ObjectSet<String> blockSymbols;
+    private final ObjectSet<String> replaceableCompartmentSymbols;
+    private final ObjectSet<String> physicalBlockSymbols;
+    private final ObjectSet<String> partHostSymbols;
 
-    private JsonMultiBlockAutoBuildStagingMetadata(Set<String> blockSymbols,
-                                                   Set<String> replaceableCompartmentSymbols,
-                                                   Set<String> physicalBlockSymbols,
-                                                   Set<String> partHostSymbols) {
-        this.blockSymbols = Set.copyOf(blockSymbols);
-        this.replaceableCompartmentSymbols = Set.copyOf(replaceableCompartmentSymbols);
-        this.physicalBlockSymbols = Set.copyOf(physicalBlockSymbols);
-        this.partHostSymbols = Set.copyOf(partHostSymbols);
+    private JsonMultiBlockAutoBuildStagingMetadata(ObjectSet<String> blockSymbols,
+                                                   ObjectSet<String> replaceableCompartmentSymbols,
+                                                   ObjectSet<String> physicalBlockSymbols,
+                                                   ObjectSet<String> partHostSymbols) {
+        this.blockSymbols = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(blockSymbols));
+        this.replaceableCompartmentSymbols = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(replaceableCompartmentSymbols));
+        this.physicalBlockSymbols = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(physicalBlockSymbols));
+        this.partHostSymbols = ObjectSets.unmodifiable(new ObjectLinkedOpenHashSet<>(partHostSymbols));
     }
 
     public static JsonMultiBlockAutoBuildStagingMetadata none() {
@@ -57,13 +57,13 @@ public final class JsonMultiBlockAutoBuildStagingMetadata {
             throw new IllegalArgumentException("JSON multiblock auto_build_staging must be an object: " + resourceId);
         }
         JsonObject staging = stagingElement.getAsJsonObject();
-        Set<String> blockSymbols = readSymbols(staging, BLOCK_SYMBOLS_PROPERTY, resourceId);
-        Set<String> replaceableCompartmentSymbols = readSymbols(
+        ObjectSet<String> blockSymbols = readSymbols(staging, BLOCK_SYMBOLS_PROPERTY, resourceId);
+        ObjectSet<String> replaceableCompartmentSymbols = readSymbols(
                 staging,
                 REPLACEABLE_COMPARTMENT_SYMBOLS_PROPERTY,
                 resourceId);
-        Set<String> physicalBlockSymbols = readSymbols(staging, PHYSICAL_BLOCK_SYMBOLS_PROPERTY, resourceId);
-        Set<String> partHostSymbols = readSymbols(staging, PART_HOST_SYMBOLS_PROPERTY, resourceId);
+        ObjectSet<String> physicalBlockSymbols = readSymbols(staging, PHYSICAL_BLOCK_SYMBOLS_PROPERTY, resourceId);
+        ObjectSet<String> partHostSymbols = readSymbols(staging, PART_HOST_SYMBOLS_PROPERTY, resourceId);
         if (!blockSymbols.containsAll(physicalBlockSymbols)) {
             throw new IllegalArgumentException("JSON multiblock physical_block_symbols must be declared in block_symbols: " +
                     resourceId);
@@ -80,25 +80,25 @@ public final class JsonMultiBlockAutoBuildStagingMetadata {
                 this.partHostSymbols.isEmpty();
     }
 
-    public Set<String> blockSymbols() {
+    public ObjectSet<String> blockSymbols() {
         return this.blockSymbols;
     }
 
-    public Set<String> replaceableCompartmentSymbols() {
+    public ObjectSet<String> replaceableCompartmentSymbols() {
         return this.replaceableCompartmentSymbols;
     }
 
-    public Set<String> physicalBlockSymbols() {
+    public ObjectSet<String> physicalBlockSymbols() {
         return this.physicalBlockSymbols;
     }
 
-    public Set<String> partHostSymbols() {
+    public ObjectSet<String> partHostSymbols() {
         return this.partHostSymbols;
     }
 
-    private static Set<String> readSymbols(JsonObject staging, String property, ResourceLocation resourceId) {
+    private static ObjectSet<String> readSymbols(JsonObject staging, String property, ResourceLocation resourceId) {
         if (!staging.has(property)) {
-            return Set.of();
+            return ObjectSets.emptySet();
         }
         JsonElement symbolsElement = staging.get(property);
         if (!symbolsElement.isJsonArray()) {
@@ -121,6 +121,6 @@ public final class JsonMultiBlockAutoBuildStagingMetadata {
                         symbol + "' in " + resourceId);
             }
         }
-        return Set.copyOf(symbols);
+        return ObjectSets.unmodifiable(symbols);
     }
 }

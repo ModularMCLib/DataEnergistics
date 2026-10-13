@@ -1,10 +1,11 @@
 package com.fish_dan_.data_energistics.blockentity.tower.equalization;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Reduces immutable source or sink allocations to a smaller conserved transfer total.
@@ -20,19 +21,19 @@ public final class TowerEnergyAllocationLimiter {
      * @param transferAmount non-negative FE total no greater than the original source total
      * @return ordered positive allocations whose exact total is {@code transferAmount}
      */
-    public static List<TowerEnergySourceAllocation> limitSources(
-                                                                 List<TowerEnergySourceAllocation> sources,
-                                                                 BigInteger transferAmount) {
+    public static ObjectList<TowerEnergySourceAllocation> limitSources(
+                                                                       ObjectList<TowerEnergySourceAllocation> sources,
+                                                                       BigInteger transferAmount) {
         BigInteger requestedTotal = sumSourceAmounts(sources);
         validateTransferAmount(transferAmount, requestedTotal);
         if (transferAmount.equals(requestedTotal)) {
             return sources;
         }
         if (transferAmount.signum() == 0) {
-            return List.of();
+            return ObjectList.of();
         }
 
-        List<TowerEnergySourceAllocation> limited = new ObjectArrayList<>(sources.size());
+        ObjectArrayList<TowerEnergySourceAllocation> limited = new ObjectArrayList<>(sources.size());
         BigInteger remaining = transferAmount;
         for (TowerEnergySourceAllocation source : sources) {
             if (remaining.signum() == 0) {
@@ -42,7 +43,7 @@ public final class TowerEnergyAllocationLimiter {
             limited.add(new TowerEnergySourceAllocation(source.endpoint(), amount));
             remaining = remaining.subtract(BigInteger.valueOf(amount));
         }
-        return List.copyOf(limited);
+        return new ObjectImmutableList<>(limited);
     }
 
     /**
@@ -52,20 +53,20 @@ public final class TowerEnergyAllocationLimiter {
      * @param transferAmount non-negative FE total no greater than the original sink total
      * @return ordered positive allocations whose exact total is {@code transferAmount}
      */
-    public static List<TowerEnergySinkAllocation> limitSinks(
-                                                             List<TowerEnergySinkAllocation> sinks,
-                                                             BigInteger transferAmount) {
+    public static ObjectList<TowerEnergySinkAllocation> limitSinks(
+                                                                   ObjectList<TowerEnergySinkAllocation> sinks,
+                                                                   BigInteger transferAmount) {
         BigInteger requestedTotal = sumSinkAmounts(sinks);
         validateTransferAmount(transferAmount, requestedTotal);
         if (transferAmount.equals(requestedTotal)) {
             return sinks;
         }
         if (transferAmount.signum() == 0) {
-            return List.of();
+            return ObjectList.of();
         }
 
         long[] amounts = new long[sinks.size()];
-        List<FractionalShare> shares = new ObjectArrayList<>(sinks.size());
+        ObjectArrayList<FractionalShare> shares = new ObjectArrayList<>(sinks.size());
         BigInteger floorTotal = BigInteger.ZERO;
         for (int index = 0; index < sinks.size(); index++) {
             TowerEnergySinkAllocation sink = sinks.get(index);
@@ -84,13 +85,13 @@ public final class TowerEnergyAllocationLimiter {
             amounts[sinkIndex] = Math.addExact(amounts[sinkIndex], 1);
         }
 
-        List<TowerEnergySinkAllocation> limited = new ObjectArrayList<>(sinks.size());
+        ObjectArrayList<TowerEnergySinkAllocation> limited = new ObjectArrayList<>(sinks.size());
         for (int index = 0; index < sinks.size(); index++) {
             if (amounts[index] > 0) {
                 limited.add(new TowerEnergySinkAllocation(sinks.get(index).endpoint(), amounts[index]));
             }
         }
-        return List.copyOf(limited);
+        return new ObjectImmutableList<>(limited);
     }
 
     /**
@@ -105,7 +106,7 @@ public final class TowerEnergyAllocationLimiter {
     /**
      * Adds positive source requests without aggregate overflow.
      */
-    private static BigInteger sumSourceAmounts(List<TowerEnergySourceAllocation> sources) {
+    private static BigInteger sumSourceAmounts(ObjectList<TowerEnergySourceAllocation> sources) {
         BigInteger total = BigInteger.ZERO;
         for (TowerEnergySourceAllocation source : sources) {
             total = total.add(BigInteger.valueOf(source.amount()));
@@ -116,7 +117,7 @@ public final class TowerEnergyAllocationLimiter {
     /**
      * Adds positive sink requests without aggregate overflow.
      */
-    private static BigInteger sumSinkAmounts(List<TowerEnergySinkAllocation> sinks) {
+    private static BigInteger sumSinkAmounts(ObjectList<TowerEnergySinkAllocation> sinks) {
         BigInteger total = BigInteger.ZERO;
         for (TowerEnergySinkAllocation sink : sinks) {
             total = total.add(BigInteger.valueOf(sink.amount()));

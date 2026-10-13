@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCycleRepeatBlock;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -12,14 +13,14 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Derives quantity-proven execution dependencies without turning shared keys or repeat blocks into global barriers.
@@ -51,14 +52,14 @@ final class TrinityStageDependencyPlanner {
      * @param repeatBlocks  compressed cycle units referenced by the stages
      * @return immutable stages carrying quantity-proven dependencies
      */
-    static List<TrinityPlanStage> plan(
-                                       Map<AEKey, BigInteger> initialInputs,
-                                       List<TrinityPlanStage> stages,
-                                       IntList stageOrder,
-                                       List<TrinityCycleRepeatBlock> repeatBlocks) {
+    static ObjectList<TrinityPlanStage> plan(
+                                             Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                             ObjectList<TrinityPlanStage> stages,
+                                             IntList stageOrder,
+                                             ObjectList<TrinityCycleRepeatBlock> repeatBlocks) {
         Int2ObjectMap<TrinityPlanStage> stagesByIndex = stagesByIndex(stages);
         Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage = repeatByStage(repeatBlocks, stagesByIndex);
-        List<ExecutionUnit> units = executionUnits(stageOrder, stagesByIndex, repeatByStage);
+        ObjectList<ExecutionUnit> units = executionUnits(stageOrder, stagesByIndex, repeatByStage);
         Int2ObjectMap<IntSet> dependenciesByEntry = allocateDependencies(initialInputs, units);
 
         ObjectArrayList<TrinityPlanStage> planned = new ObjectArrayList<>(stages.size());
@@ -71,10 +72,10 @@ final class TrinityStageDependencyPlanner {
                     stage.requiredAtStart(),
                     stage.netChange()));
         }
-        return List.copyOf(planned);
+        return FastUtilCollections.immutableList(planned);
     }
 
-    private static Int2ObjectMap<TrinityPlanStage> stagesByIndex(List<TrinityPlanStage> stages) {
+    private static Int2ObjectMap<TrinityPlanStage> stagesByIndex(ObjectList<TrinityPlanStage> stages) {
         Int2ObjectLinkedOpenHashMap<TrinityPlanStage> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityPlanStage stage : stages) {
             if (indexed.putIfAbsent(stage.index(), stage) != null) {
@@ -85,7 +86,7 @@ final class TrinityStageDependencyPlanner {
     }
 
     private static Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage(
-                                                                        List<TrinityCycleRepeatBlock> repeatBlocks,
+                                                                        ObjectList<TrinityCycleRepeatBlock> repeatBlocks,
                                                                         Int2ObjectMap<TrinityPlanStage> stages) {
         Int2ObjectLinkedOpenHashMap<TrinityCycleRepeatBlock> indexed = new Int2ObjectLinkedOpenHashMap<>();
         for (TrinityCycleRepeatBlock block : repeatBlocks) {
@@ -104,10 +105,10 @@ final class TrinityStageDependencyPlanner {
         return indexed;
     }
 
-    private static List<ExecutionUnit> executionUnits(
-                                                      IntList stageOrder,
-                                                      Int2ObjectMap<TrinityPlanStage> stages,
-                                                      Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage) {
+    private static ObjectList<ExecutionUnit> executionUnits(
+                                                            IntList stageOrder,
+                                                            Int2ObjectMap<TrinityPlanStage> stages,
+                                                            Int2ObjectMap<TrinityCycleRepeatBlock> repeatByStage) {
         IntSet orderSet = new IntOpenHashSet(stageOrder);
         if (stageOrder.size() != stages.size() || !orderSet.equals(stages.keySet())) {
             throw new IllegalArgumentException("Trinity dependency planning requires one complete stage order");
@@ -135,12 +136,12 @@ final class TrinityStageDependencyPlanner {
             }
             units.add(ExecutionUnit.forRepeat(block));
         }
-        return List.copyOf(units);
+        return FastUtilCollections.immutableList(units);
     }
 
     private static Int2ObjectMap<IntSet> allocateDependencies(
-                                                              Map<AEKey, BigInteger> initialInputs,
-                                                              List<ExecutionUnit> units) {
+                                                              Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                                              ObjectList<ExecutionUnit> units) {
         Object2ObjectLinkedOpenHashMap<AEKey, ArrayDeque<TokenLot>> balances = new Object2ObjectLinkedOpenHashMap<>();
         initialInputs.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
@@ -184,7 +185,7 @@ final class TrinityStageDependencyPlanner {
     }
 
     private static void consumeLots(
-                                    Map<AEKey, ArrayDeque<TokenLot>> balances,
+                                    Object2ObjectMap<AEKey, ArrayDeque<TokenLot>> balances,
                                     AEKey key,
                                     BigInteger required,
                                     IntSet dependencies) {
@@ -219,12 +220,12 @@ final class TrinityStageDependencyPlanner {
     private record ExecutionUnit(
                                  int entryStage,
                                  int completionStage,
-                                 Map<AEKey, BigInteger> requiredAtStart,
-                                 Map<AEKey, BigInteger> netChange) {
+                                 Object2ObjectMap<AEKey, BigInteger> requiredAtStart,
+                                 Object2ObjectMap<AEKey, BigInteger> netChange) {
 
         private ExecutionUnit {
-            requiredAtStart = Map.copyOf(requiredAtStart);
-            netChange = Map.copyOf(netChange);
+            requiredAtStart = FastUtilCollections.immutableMap(requiredAtStart);
+            netChange = FastUtilCollections.immutableMap(netChange);
         }
 
         private static ExecutionUnit forStage(TrinityPlanStage stage) {

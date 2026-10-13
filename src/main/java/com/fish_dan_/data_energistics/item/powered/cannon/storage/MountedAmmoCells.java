@@ -7,18 +7,14 @@ import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.config.Actionable;
-import appeng.api.ids.AEComponents;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.StorageCell;
-import appeng.core.definitions.AEItems;
 
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 
@@ -137,12 +133,6 @@ public final class MountedAmmoCells {
         NonNullList<ItemStack> selected = selections(weapon);
         AEItemKey current = AEItemKey.of(selected.get(mode.id()));
         if (current != null && choices.contains(current)) return current.toStack(1);
-        ResourceLocation legacy = weapon.get(DEDataComponents.MATTER_CONVERGING_CROSSBOW_SELECTED_AMMO.get());
-        if (legacy != null) {
-            for (AEItemKey choice : choices) {
-                if (BuiltInRegistries.ITEM.getKey(choice.getItem()).equals(legacy)) return choice.toStack(1);
-            }
-        }
         return choices.getFirst().toStack(1);
     }
 
@@ -169,7 +159,6 @@ public final class MountedAmmoCells {
         NonNullList<ItemStack> selected = selections(weapon);
         selected.set(mode.id(), key instanceof AEItemKey itemKey ? itemKey.toStack(1) : GenericStack.wrapInItemStack(key, 1));
         weapon.set(DEDataComponents.CANNON_AMMO_SELECTIONS.get(), ItemContainerContents.fromItems(selected));
-        weapon.remove(DEDataComponents.MATTER_CONVERGING_CROSSBOW_SELECTED_AMMO.get());
         RailLauncher.cancel(weapon);
     }
 
@@ -217,37 +206,5 @@ public final class MountedAmmoCells {
         NonNullList<ItemStack> slots = cells(weapon);
         slots.set(mode.id(), cell);
         weapon.set(DEDataComponents.CANNON_CELLS.get(), ItemContainerContents.fromItems(slots));
-    }
-
-    /**
-     * Moves the legacy on-weapon cell contents once into a real 1k item cell (larger than the old 512-byte capacity).
-     * Existing installed cells are never overwritten. If all slots are occupied, legacy data stays intact until one is
-     * freed.
-     * Call only on the server, before opening the menu or using ammunition.
-     */
-    public static void migrateLegacy(ItemStack weapon) {
-        if (!weapon.has(AEComponents.STORAGE_CELL_INV)) return;
-        List<GenericStack> contents = weapon.getOrDefault(AEComponents.STORAGE_CELL_INV, List.of());
-        if (contents.isEmpty()) {
-            weapon.remove(AEComponents.STORAGE_CELL_INV);
-            weapon.remove(AEComponents.STORAGE_CELL_CONFIG_INV);
-            return;
-        }
-        NonNullList<ItemStack> slots = cells(weapon);
-        int preferred = MatterConvergingCrossbowItem.mode(weapon).id();
-        int slot = slots.get(preferred).isEmpty() ? preferred : -1;
-        for (int i = 0; slot < 0 && i < SLOT_COUNT; i++) {
-            if (slots.get(i).isEmpty()) slot = i;
-        }
-        if (slot < 0) return;
-        ItemStack migratedCell = AEItems.ITEM_CELL_1K.stack();
-        migratedCell.set(AEComponents.STORAGE_CELL_INV, List.copyOf(contents));
-        if (weapon.has(AEComponents.STORAGE_CELL_CONFIG_INV)) {
-            migratedCell.set(AEComponents.STORAGE_CELL_CONFIG_INV, weapon.getOrDefault(AEComponents.STORAGE_CELL_CONFIG_INV, List.of()));
-        }
-        slots.set(slot, migratedCell);
-        weapon.set(DEDataComponents.CANNON_CELLS.get(), ItemContainerContents.fromItems(slots));
-        weapon.remove(AEComponents.STORAGE_CELL_INV);
-        weapon.remove(AEComponents.STORAGE_CELL_CONFIG_INV);
     }
 }

@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -107,7 +108,7 @@ final class TrinityAcyclicShortagePropagator {
                     Component.translatable("gui.data_energistics.trinity_planning.diagnostic.inexact_result"),
                     metadata));
         }
-        return TrinityAlgorithmResult.success(Object2ObjectMaps.unmodifiable(firings));
+        return TrinityAlgorithmResult.success(FastUtilCollections.immutableMap(firings));
     }
 
     private static @Nullable TrinityPlanningDiagnostic stopDiagnostic(TrinityPlanningControl control) {

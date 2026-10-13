@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnost
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;

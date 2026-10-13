@@ -131,8 +131,17 @@ public record RemoteLinkConnectorData(
         return this.targetType == ConnectorHostType.EXTREME_INTERFACE;
     }
 
+    public boolean isDigitalSupplyInterface() {
+        return this.targetType == ConnectorHostType.DIGITAL_SUPPLY_INTERFACE;
+    }
+
     public RemoteLinkConnectorData withInterface(String dimensionId, BlockPos position, int side) {
         return new RemoteLinkConnectorData("", 0L, true, ConnectorHostType.EXTREME_INTERFACE,
+                dimensionId, position.asLong(), side, 0, 0, false, EnergyTransferDirection.INPUT);
+    }
+
+    public RemoteLinkConnectorData withDigitalSupplyInterface(String dimensionId, BlockPos position, int side) {
+        return new RemoteLinkConnectorData("", 0L, true, ConnectorHostType.DIGITAL_SUPPLY_INTERFACE,
                 dimensionId, position.asLong(), side, 0, 0, false, EnergyTransferDirection.INPUT);
     }
 

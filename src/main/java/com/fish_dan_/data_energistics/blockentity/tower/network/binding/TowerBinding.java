@@ -7,8 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 /**
  * Persistent request to claim one ordinary transfer target.
@@ -25,20 +25,20 @@ public record TowerBinding(ResourceLocation dimensionId,
                            TowerBindingSource source,
                            long fifoSequence,
                            boolean enabled,
-                           Set<TowerDeviceKey> disabledDeviceKeys,
+                           ObjectSet<TowerDeviceKey> disabledDeviceKeys,
                            EnergyTransferDirection energyDirection,
                            int targetSide) {
 
     public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingSource source,
                         long fifoSequence, boolean enabled,
-                        Set<TowerDeviceKey> disabledDeviceKeys) {
+                        ObjectSet<TowerDeviceKey> disabledDeviceKeys) {
         this(dimensionId, anchor, source, fifoSequence, enabled, disabledDeviceKeys,
                 EnergyTransferDirection.INPUT, -1);
     }
 
     public TowerBinding(ResourceLocation dimensionId, BlockPos anchor, TowerBindingSource source,
                         long fifoSequence, boolean enabled,
-                        Set<TowerDeviceKey> disabledDeviceKeys, EnergyTransferDirection energyDirection) {
+                        ObjectSet<TowerDeviceKey> disabledDeviceKeys, EnergyTransferDirection energyDirection) {
         this(dimensionId, anchor, source, fifoSequence, enabled, disabledDeviceKeys, energyDirection, -1);
     }
 
@@ -50,7 +50,7 @@ public record TowerBinding(ResourceLocation dimensionId,
             throw new IllegalArgumentException("Tower binding FIFO sequence must be non-negative");
         }
         anchor = anchor.immutable();
-        disabledDeviceKeys = Set.copyOf(disabledDeviceKeys);
+        disabledDeviceKeys = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(disabledDeviceKeys));
         energyDirection = energyDirection == null ? EnergyTransferDirection.INPUT : energyDirection;
     }
 

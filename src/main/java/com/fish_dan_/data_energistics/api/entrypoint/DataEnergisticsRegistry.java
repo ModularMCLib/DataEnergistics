@@ -1,10 +1,13 @@
 package com.fish_dan_.data_energistics.api.entrypoint;
 
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.AeKeyTypeRegistry;
+import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceRegistry;
 import com.fish_dan_.data_energistics.api.registry.dynamic.DynamicCraftingOutputRegistry;
 import com.fish_dan_.data_energistics.api.registry.machine.CraftingMachineRegistry;
 import com.fish_dan_.data_energistics.api.registry.matching.RecipeMatchingRegistry;
 import com.fish_dan_.data_energistics.api.registry.packaged.PackagedCraftingRegistry;
+import com.fish_dan_.data_energistics.api.registry.production.DataProductionResourceRegistry;
 import com.fish_dan_.data_energistics.api.registry.provider.PatternProviderRegistry;
 import com.fish_dan_.data_energistics.api.registry.recipe.TrinityPatternRecipeIdRegistry;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRegistry;
@@ -23,24 +26,23 @@ import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegist
  */
 public interface DataEnergisticsRegistry {
 
-    /**
-     * Returns transaction-local global recipe matching rules during common setup, independently of any provider.
-     * Legacy registrars must implement this facet explicitly; otherwise registration throws
-     * UnsupportedOperationException.
-     */
-    default RecipeMatchingRegistry recipeMatching() {
-        throw new UnsupportedOperationException("This legacy registrar does not support recipe matching rules");
-    }
+    /** Returns the transaction-local AE2 key-type registration facet. */
+    AeKeyTypeRegistry aeKeyTypes();
+
+    /** Returns the transaction-local resource-key facet for extractor and mimetic production rules. */
+    DataProductionResourceRegistry dataProductionResources();
+
+    /** Returns the transaction-local Digital Supply Interface adapter facet. */
+    DigitalSupplyInterfaceRegistry digitalSupplyInterfaces();
+
+    /** Returns transaction-local global recipe matching rules during common setup. */
+    RecipeMatchingRegistry recipeMatching();
 
     /** Registers physical packaged machine automation independently of global matching rules. */
-    default PackagedCraftingRegistry packagedCrafting() {
-        throw new UnsupportedOperationException("This legacy registrar does not support packaged crafting");
-    }
+    PackagedCraftingRegistry packagedCrafting();
 
-    /** Returns the transaction-local energy adapter registry; legacy registrars must opt into this facet. */
-    default TowerEnergyIntegrationRegistry towerEnergyIntegrations() {
-        throw new UnsupportedOperationException("This legacy registrar does not support tower energy integrations");
-    }
+    /** Returns the transaction-local energy adapter registry. */
+    TowerEnergyIntegrationRegistry towerEnergyIntegrations();
 
     /**
      * @return universal-terminal declaration facet
@@ -87,13 +89,6 @@ public interface DataEnergisticsRegistry {
      */
     DynamicCraftingOutputRegistry dynamicCraftingOutputs();
 
-    /**
-     * Declares deterministic reusable-input rules during plugin registration. Legacy registrar implementations remain
-     * binary compatible, but must explicitly implement this facet before accepting reusable-input declarations.
-     *
-     * @return transaction-local reusable-input registry
-     */
-    default ReusableInputRegistry reusableInputs() {
-        throw new UnsupportedOperationException("This legacy registrar does not support reusable crafting inputs");
-    }
+    /** Returns the transaction-local reusable-input registry. */
+    ReusableInputRegistry reusableInputs();
 }

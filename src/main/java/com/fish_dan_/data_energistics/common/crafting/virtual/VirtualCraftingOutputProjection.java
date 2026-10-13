@@ -2,19 +2,18 @@ package com.fish_dan_.data_energistics.common.crafting.virtual;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletion;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingCompletionMode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Immutable logical and dispatch-time views of one pattern's declared outputs.
@@ -24,8 +23,8 @@ public final class VirtualCraftingOutputProjection {
     private final ObjectList<GenericStack> logicalOutputs;
     private final ObjectList<VirtualCraftingCompletion> virtualCompletionsPerCraft;
 
-    VirtualCraftingOutputProjection(List<GenericStack> logicalOutputs,
-                                    List<VirtualCraftingCompletion> virtualCompletionsPerCraft) {
+    VirtualCraftingOutputProjection(ObjectList<GenericStack> logicalOutputs,
+                                    ObjectList<VirtualCraftingCompletion> virtualCompletionsPerCraft) {
         this.logicalOutputs = new ObjectImmutableList<>(logicalOutputs);
         this.virtualCompletionsPerCraft = new ObjectImmutableList<>(virtualCompletionsPerCraft);
     }
@@ -78,10 +77,10 @@ public final class VirtualCraftingOutputProjection {
                     new GenericStack(identity.key(), exactAmount),
                     identity.mode()));
         });
-        return ObjectLists.unmodifiable(completions);
+        return FastUtilCollections.immutableList(completions);
     }
 
-    static ObjectList<GenericStack> immutableStacks(Map<AEKey, BigInteger> amounts) {
+    static ObjectList<GenericStack> immutableStacks(Object2ObjectMap<AEKey, BigInteger> amounts) {
         ObjectArrayList<GenericStack> stacks = new ObjectArrayList<>(amounts.size());
         amounts.forEach((key, amount) -> {
             long exactAmount = amount.longValueExact();
@@ -90,7 +89,7 @@ public final class VirtualCraftingOutputProjection {
             }
             stacks.add(new GenericStack(key, exactAmount));
         });
-        return ObjectLists.unmodifiable(stacks);
+        return FastUtilCollections.immutableList(stacks);
     }
 
     private record CompletionIdentity(AEKey key, VirtualCraftingCompletionMode mode) {}

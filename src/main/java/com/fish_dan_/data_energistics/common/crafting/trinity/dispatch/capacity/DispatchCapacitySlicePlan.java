@@ -2,18 +2,19 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model.CraftingDispatchCursor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable provider-first allocations whose successor cursors remain suggestions until a physical call occurs.
  *
  * @param slices fair positive allocations in physical-call order
  */
-public record DispatchCapacitySlicePlan(List<Slice> slices) {
+public record DispatchCapacitySlicePlan(ObjectList<Slice> slices) {
 
     public DispatchCapacitySlicePlan {
-        slices = List.copyOf(slices);
+        slices = FastUtilCollections.immutableList(slices);
     }
 
     /**

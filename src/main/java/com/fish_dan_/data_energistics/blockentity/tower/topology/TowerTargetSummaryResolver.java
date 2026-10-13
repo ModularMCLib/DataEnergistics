@@ -29,15 +29,15 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Resolves compact target summaries for Data Distribution Towers.
@@ -262,30 +262,33 @@ public final class TowerTargetSummaryResolver {
 
         this.context.cleanupInvalidDisplayTargets();
 
-        Object2ObjectLinkedOpenHashMap<BlockPos, TargetKind> positions = new Object2ObjectLinkedOpenHashMap<>();
+        Long2ObjectLinkedOpenHashMap<TargetKind> positions = new Long2ObjectLinkedOpenHashMap<>();
 
-        for (BlockPos pos : this.context.trackedPositions()) {
+        for (long packedPos : this.context.trackedPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (!level.getBlockState(pos).isAir()) {
                 BlockEntity blockEntity = level.getBlockEntity(pos);
                 if (!(blockEntity instanceof DataDistributionTowerBlockEntity)) {
                     TargetKind kind = this.context.preferredDisplayKind(pos);
                     if (kind != null) {
-                        positions.put(pos.immutable(), kind);
+                        positions.put(pos.asLong(), kind);
                     }
                 }
             }
         }
 
-        for (BlockPos pos : this.context.cachedAeDisplayTargets()) {
+        for (long packedPos : this.context.cachedAeDisplayTargets()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (this.context.allowsAeDisplayTargets() && !level.getBlockState(pos).isAir()) {
                 BlockEntity blockEntity = level.getBlockEntity(pos);
                 if (!(blockEntity instanceof DataDistributionTowerBlockEntity)) {
-                    positions.putIfAbsent(pos.immutable(), TargetKind.AE);
+                    positions.putIfAbsent(pos.asLong(), TargetKind.AE);
                 }
             }
         }
 
-        for (BlockPos pos : this.context.cachedEndpointPositions()) {
+        for (long packedPos : this.context.cachedEndpointPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (level.getBlockState(pos).isAir()) {
                 continue;
             }
@@ -294,18 +297,19 @@ public final class TowerTargetSummaryResolver {
                 continue;
             }
             if (this.context.allowsAeDisplayTargets() && this.context.hasExposedAeNode(pos)) {
-                positions.putIfAbsent(pos.immutable(), TargetKind.AE);
+                positions.putIfAbsent(pos.asLong(), TargetKind.AE);
                 continue;
             }
             if (!this.context.targetAllowsFe(pos)) {
                 continue;
             }
             if (this.context.hasReceiveEnergyTarget(pos)) {
-                positions.putIfAbsent(pos.immutable(), TargetKind.FE);
+                positions.putIfAbsent(pos.asLong(), TargetKind.FE);
             }
         }
 
-        for (BlockPos pos : this.context.configuredTargetPositions()) {
+        for (long packedPos : this.context.configuredTargetPositions()) {
+            BlockPos pos = BlockPos.of(packedPos);
             if (!this.context.isWithinTowerCoverage(pos) || level.getBlockState(pos).isAir()) {
                 continue;
             }
@@ -315,79 +319,80 @@ public final class TowerTargetSummaryResolver {
             }
             TargetKind kind = this.context.preferredDisplayKind(pos);
             if (kind != null) {
-                positions.putIfAbsent(pos.immutable(), kind);
+                positions.putIfAbsent(pos.asLong(), kind);
             }
         }
 
         collapseAeCraftingDisplayTargets(positions);
 
         ObjectArrayList<DisplayTarget> results = new ObjectArrayList<>(positions.size());
-        positions.forEach((pos, kind) -> results.add(new DisplayTarget(pos, kind)));
+        positions.forEach((packedPos, kind) -> results.add(new DisplayTarget(BlockPos.of(packedPos), kind)));
         results.sort((left, right) -> compareBlockPos(left.pos(), right.pos()));
         return List.copyOf(results);
     }
 
-    private void collapseAeCraftingDisplayTargets(Object2ObjectLinkedOpenHashMap<BlockPos, TargetKind> positions) {
+    private void collapseAeCraftingDisplayTargets(Long2ObjectLinkedOpenHashMap<TargetKind> positions) {
         Level level = this.context.level();
         if (level == null || positions.isEmpty()) {
             return;
         }
 
-        ObjectArrayList<BlockPos> craftingPositions = new ObjectArrayList<>();
-        for (Map.Entry<BlockPos, TargetKind> entry : positions.entrySet()) {
+        LongArrayList craftingPositions = new LongArrayList();
+        for (var entry : positions.long2ObjectEntrySet()) {
             if (entry.getValue() != TargetKind.AE) {
                 continue;
             }
 
-            BlockPos pos = entry.getKey();
+            BlockPos pos = BlockPos.of(entry.getLongKey());
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (!isAeCraftingClusterComponent(blockEntity)) {
                 continue;
             }
 
-            craftingPositions.add(pos);
+            craftingPositions.add(pos.asLong());
         }
 
         if (craftingPositions.size() <= 1) {
             return;
         }
 
-        Set<BlockPos> visited = new ObjectOpenHashSet<>();
-        for (BlockPos startPos : craftingPositions) {
+        LongSet visited = new LongOpenHashSet();
+        for (long startPos : craftingPositions) {
             if (!visited.add(startPos)) {
                 continue;
             }
 
-            ObjectArrayFIFOQueue<BlockPos> queue = new ObjectArrayFIFOQueue<>();
-            ObjectArrayList<BlockPos> clusterPositions = new ObjectArrayList<>();
+            LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
+            LongArrayList clusterPositions = new LongArrayList();
             queue.enqueue(startPos);
-            BlockPos representative = startPos;
+            long representative = startPos;
             while (!queue.isEmpty()) {
-                BlockPos currentPos = queue.dequeue();
+                long currentPacked = queue.dequeueLong();
+                BlockPos currentPos = BlockPos.of(currentPacked);
                 BlockEntity currentEntity = level.getBlockEntity(currentPos);
-                if (compareAeCraftingDisplayTargets(currentPos, representative) < 0) {
-                    representative = currentPos;
+                if (compareAeCraftingDisplayTargets(currentPos, BlockPos.of(representative)) < 0) {
+                    representative = currentPacked;
                 }
-                if (positions.get(currentPos) == TargetKind.AE && isAeCraftingClusterComponent(currentEntity)) {
-                    clusterPositions.add(currentPos);
+                if (positions.get(currentPacked) == TargetKind.AE && isAeCraftingClusterComponent(currentEntity)) {
+                    clusterPositions.add(currentPacked);
                 }
 
                 for (Direction direction : Direction.values()) {
-                    BlockPos neighborPos = currentPos.relative(direction);
-                    if (!visited.add(neighborPos)) {
+                    long neighborPacked = currentPos.relative(direction).asLong();
+                    if (!visited.add(neighborPacked)) {
                         continue;
                     }
 
-                    BlockEntity neighbor = level.getBlockEntity(neighborPos);
+                    BlockEntity neighbor = level.getBlockEntity(BlockPos.of(neighborPacked));
                     if (!isAeCraftingClusterComponent(neighbor) && !this.aeCraftingDisplayBridge.isClusterBridge(neighbor)) {
                         continue;
                     }
-                    queue.enqueue(neighborPos);
+                    queue.enqueue(neighborPacked);
                 }
             }
 
-            for (BlockPos clusterPos : clusterPositions) {
-                if (!clusterPos.equals(representative)) {
+            for (long clusterPos : clusterPositions) {
+                if (clusterPos != representative) {
                     positions.remove(clusterPos);
                 }
             }

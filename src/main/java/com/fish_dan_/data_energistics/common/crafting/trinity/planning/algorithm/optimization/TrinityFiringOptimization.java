@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Carries a globally optimized firing vector together with its proven conservation-seed lower bound.
@@ -16,7 +16,7 @@ import java.util.Map;
  * @param minimumSeedLowerBound global lower bound for the total internal seed at the preceding objective levels
  */
 public record TrinityFiringOptimization(
-                                        Map<TrinityPatternVariant, BigInteger> firings,
+                                        Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
                                         BigInteger minimumExternalInput,
                                         BigInteger minimumSeedLowerBound) {
 
@@ -33,6 +33,6 @@ public record TrinityFiringOptimization(
             }
             copied.put(variant, count);
         });
-        firings = Collections.unmodifiableMap(copied);
+        firings = FastUtilCollections.immutableMap(copied);
     }
 }

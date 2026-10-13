@@ -5,8 +5,6 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProvi
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
-
 /** Stable target selection helpers shared by registered adaptive-provider routes. */
 public final class ConnectorRouteTargets {
 
@@ -31,7 +29,7 @@ public final class ConnectorRouteTargets {
     public static ObjectList<ConnectorLink> resolve(
                                                     AdaptivePatternProviderDispatchTarget target,
                                                     ConnectorMode mode) {
-        List<ConnectorLink> configured = target.connectorBindingsFast();
+        ObjectList<ConnectorLink> configured = target.connectorBindingsFast();
         if (!configured.isEmpty()) {
             ObjectArrayList<ConnectorLink> result = new ObjectArrayList<>(configured.size());
             for (ConnectorLink binding : configured) {

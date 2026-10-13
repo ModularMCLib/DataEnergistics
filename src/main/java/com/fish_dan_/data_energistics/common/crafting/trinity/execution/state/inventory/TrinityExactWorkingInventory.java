@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
@@ -12,11 +14,10 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
@@ -45,8 +46,8 @@ public final class TrinityExactWorkingInventory {
     }
 
     /** Returns a read-only exact snapshot for planning and status aggregation. */
-    public Map<AEKey, BigInteger> snapshot() {
-        return Object2ObjectMaps.unmodifiable(this.overflow);
+    public Object2ObjectMap<AEKey, BigInteger> snapshot() {
+        return FastUtilCollections.immutableMap(this.overflow);
     }
 
     public boolean isEmpty() {

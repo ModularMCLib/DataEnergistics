@@ -72,13 +72,14 @@ import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity implements InternalInventoryHost, IConfigurableObject, IUpgradeableObject, IPriorityHost {
 
@@ -138,9 +139,9 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
     private int priority;
     @Getter
     private DataExtractorAutoExportMode autoExportMode = DataExtractorAutoExportMode.OFF;
-    private final Set<Direction> itemOutputSides = EnumSet.allOf(Direction.class);
-    private final Set<Direction> fluidOutputSides = EnumSet.allOf(Direction.class);
-    private final Set<Direction> keyOutputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> itemOutputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> fluidOutputSides = EnumSet.allOf(Direction.class);
+    private final EnumSet<Direction> keyOutputSides = EnumSet.allOf(Direction.class);
     private @Nullable AdjacentBlockCapabilityCache<IItemHandler> adjacentItemHandlers;
     private @Nullable AdjacentBlockCapabilityCache<IFluidHandler> adjacentFluidHandlers;
     private @Nullable AdjacentBlockCapabilityCache<GenericInternalInventory> adjacentKeyInventories;
@@ -156,7 +157,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.allOf(Direction.class);
     }
 
@@ -251,8 +252,8 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         return this.autoExportMode;
     }
 
-    public Set<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
-        Set<Direction> sides = getOutputSidesInternal(outputType);
+    public EnumSet<Direction> getOutputSides(DigitalStorageDepotOutputType outputType) {
+        EnumSet<Direction> sides = getOutputSidesInternal(outputType);
         if (sides.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }
@@ -260,7 +261,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
     }
 
     public void setOutputSideEnabled(DigitalStorageDepotOutputType outputType, Direction side, boolean enabled) {
-        Set<Direction> sides = getOutputSidesInternal(outputType);
+        EnumSet<Direction> sides = getOutputSidesInternal(outputType);
         boolean changed = enabled ? sides.add(side) : sides.remove(side);
         if (!changed) {
             return;
@@ -719,21 +720,21 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         }
     }
 
-    private List<IItemHandler> getAdjacentItemHandlers(Set<Direction> outputSides) {
+    private List<IItemHandler> getAdjacentItemHandlers(EnumSet<Direction> outputSides) {
         if (!initializeAdjacentCapabilityCaches()) {
             return List.of();
         }
         return this.adjacentItemHandlers.getAll(outputSides);
     }
 
-    private List<GenericInternalInventory> getAdjacentKeyInventories(Set<Direction> outputSides) {
+    private List<GenericInternalInventory> getAdjacentKeyInventories(EnumSet<Direction> outputSides) {
         if (!initializeAdjacentCapabilityCaches()) {
             return List.of();
         }
         return this.adjacentKeyInventories.getAll(outputSides);
     }
 
-    private List<IFluidHandler> getAdjacentFluidHandlers(Set<Direction> outputSides) {
+    private List<IFluidHandler> getAdjacentFluidHandlers(EnumSet<Direction> outputSides) {
         if (!initializeAdjacentCapabilityCaches()) {
             return List.of();
         }
@@ -796,7 +797,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         this.markForClientUpdate();
     }
 
-    private Set<Direction> getOutputSidesInternal(DigitalStorageDepotOutputType outputType) {
+    private EnumSet<Direction> getOutputSidesInternal(DigitalStorageDepotOutputType outputType) {
         return switch (outputType) {
             case ITEMS -> this.itemOutputSides;
             case FLUIDS -> this.fluidOutputSides;
@@ -821,8 +822,8 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         }
     }
 
-    private boolean replaceOutputSides(DigitalStorageDepotOutputType outputType, Set<Direction> updatedSides) {
-        Set<Direction> sides = getOutputSidesInternal(outputType);
+    private boolean replaceOutputSides(DigitalStorageDepotOutputType outputType, EnumSet<Direction> updatedSides) {
+        EnumSet<Direction> sides = getOutputSidesInternal(outputType);
         if (sides.equals(updatedSides)) {
             return false;
         }
@@ -832,7 +833,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         return true;
     }
 
-    private void copyOutputSidesToAllTypes(Set<Direction> sides) {
+    private void copyOutputSidesToAllTypes(EnumSet<Direction> sides) {
         this.itemOutputSides.clear();
         this.fluidOutputSides.clear();
         this.keyOutputSides.clear();
@@ -841,7 +842,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         this.keyOutputSides.addAll(sides);
     }
 
-    private static void readOutputSides(CompoundTag data, String tagName, Set<Direction> target) {
+    private static void readOutputSides(CompoundTag data, String tagName, EnumSet<Direction> target) {
         target.clear();
         if (!data.contains(tagName)) {
             return;
@@ -855,7 +856,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         }
     }
 
-    private static ListTag createOutputSidesTag(Set<Direction> sides) {
+    private static ListTag createOutputSidesTag(EnumSet<Direction> sides) {
         ListTag tag = new ListTag();
         for (Direction side : sides) {
             tag.add(StringTag.valueOf(side.getName()));
@@ -871,8 +872,8 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
         return mask;
     }
 
-    private static Set<Direction> decodeOutputSides(int mask) {
-        Set<Direction> sides = EnumSet.noneOf(Direction.class);
+    private static EnumSet<Direction> decodeOutputSides(int mask) {
+        EnumSet<Direction> sides = EnumSet.noneOf(Direction.class);
         for (Direction side : Direction.values()) {
             if ((mask & (1 << side.ordinal())) != 0) {
                 sides.add(side);
@@ -882,7 +883,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
     }
 
     private GenericStackInv createFluidMenuInventory(int slotIndex) {
-        var inv = new GenericStackInv(Set.of(AEKeyType.fluids()), () -> syncTankFromMenuFluid(slotIndex), GenericStackInv.Mode.STORAGE, 1) {
+        var inv = new GenericStackInv(ObjectSets.singleton(AEKeyType.fluids()), () -> syncTankFromMenuFluid(slotIndex), GenericStackInv.Mode.STORAGE, 1) {
 
             {
                 this.setFilter((slot, what) -> {
@@ -1271,7 +1272,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
             }
 
             GenericStack current = keyStacks[slot];
-            boolean changed = current == null ? clamped != null : !current.equals(clamped);
+            boolean changed = !Objects.equals(current, clamped);
             if (!changed) {
                 return;
             }
@@ -1304,7 +1305,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
 
             GenericStack current = keyStacks[slot];
             long currentAmount = current == null ? 0L : current.amount();
-            long inserted = Math.min(amount, Math.max(0L, getKeyCapacity() - currentAmount));
+            long inserted = Math.clamp(getKeyCapacity() - currentAmount, 0L, amount);
             if (inserted <= 0L) {
                 return 0L;
             }
@@ -1408,7 +1409,7 @@ public class DigitalStorageDepotBlockEntity extends AENetworkedBlockEntity imple
             int limit = computeItemCapacity(stack.getMaxStackSize(), getInstalledCapacityCardCount());
             setMaxStackSize(slot, limit);
             int currentAmount = inSlot.isEmpty() ? 0 : inSlot.getCount();
-            int inserted = Math.min(stack.getCount(), Math.max(0, limit - currentAmount));
+            int inserted = Math.clamp(limit - currentAmount, 0, stack.getCount());
             if (inserted <= 0) {
                 return stack;
             }

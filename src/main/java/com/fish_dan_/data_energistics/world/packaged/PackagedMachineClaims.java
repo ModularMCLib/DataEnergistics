@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
@@ -38,21 +38,6 @@ public final class PackagedMachineClaims extends SavedData {
         return this.owners.get(position.asLong());
     }
 
-    /** Resolves a nearby claimed machine for native drops spawned outside its block tick callback. */
-    public @Nullable UUID ownerNear(BlockPos position, int radius) {
-        double best = Double.POSITIVE_INFINITY;
-        UUID result = null;
-        for (var entry : this.owners.long2ObjectEntrySet()) {
-            BlockPos claimed = BlockPos.of(entry.getLongKey());
-            double distance = claimed.distSqr(position);
-            if (distance <= (double) radius * radius && distance < best) {
-                best = distance;
-                result = entry.getValue();
-            }
-        }
-        return result;
-    }
-
     public boolean acquire(BlockPos position, UUID operation) {
         if (this.removedStructures.contains(operation)) return false;
         UUID owner = this.owners.putIfAbsent(position.asLong(), operation);
@@ -60,21 +45,24 @@ public final class PackagedMachineClaims extends SavedData {
         return owner == null || owner.equals(operation);
     }
 
-    public boolean acquireAll(ObjectList<BlockPos> positions, UUID operation) {
+    public boolean acquireAll(LongList positions, UUID operation) {
         return acquireAll(positions, operation, new long[0]);
     }
 
     /** Reserves consumable structure cells without interpreting native replacement as dismantling. */
-    public boolean acquireAll(ObjectList<BlockPos> positions, UUID operation, long[] changing) {
+    public boolean acquireAll(LongList positions, UUID operation, long[] changing) {
         if (this.removedStructures.contains(operation)) return false;
-        for (var position : positions) {
-            var owner = owner(position);
+        for (long position : positions) {
+            UUID owner = this.owners.get(position);
             if (owner != null && !owner.equals(operation)) return false;
         }
         for (long position : changing) {
-            if (positions.stream().noneMatch(candidate -> candidate.asLong() == position)) throw new IllegalArgumentException("Unreserved changing position");
+            if (!positions.contains(position)) throw new IllegalArgumentException("Unreserved changing position");
         }
-        for (var position : positions) acquire(position, operation);
+        for (long position : positions) {
+            UUID owner = this.owners.putIfAbsent(position, operation);
+            if (owner == null) setDirty();
+        }
         for (long position : changing) {
             if (this.changingPositions.add(position)) setDirty();
         }
@@ -82,10 +70,10 @@ public final class PackagedMachineClaims extends SavedData {
     }
 
     /** Marks cells whose native lifecycle includes placement, growth, and consumption. */
-    public void markChanging(ObjectList<BlockPos> positions, UUID operation) {
-        for (var position : positions) {
-            if (!operation.equals(this.owners.get(position.asLong()))) throw new IllegalArgumentException("Unreserved changing position");
-            if (this.changingPositions.add(position.asLong())) setDirty();
+    public void markChanging(LongList positions, UUID operation) {
+        for (long position : positions) {
+            if (!operation.equals(this.owners.get(position))) throw new IllegalArgumentException("Unreserved changing position");
+            if (this.changingPositions.add(position)) setDirty();
         }
     }
 
@@ -131,8 +119,14 @@ public final class PackagedMachineClaims extends SavedData {
         }
     }
 
-    public void releaseAll(ObjectList<BlockPos> positions, UUID operation) {
-        for (var position : positions) release(position, operation);
+    public void releaseAll(LongList positions, UUID operation) {
+        for (long position : positions) {
+            if (!this.owners.remove(position, operation)) {
+                throw new IllegalStateException("Packaged operation does not own its machine");
+            }
+            this.changingPositions.remove(position);
+        }
+        if (!positions.isEmpty()) setDirty();
     }
 
     public void release(BlockPos position, UUID operation) {

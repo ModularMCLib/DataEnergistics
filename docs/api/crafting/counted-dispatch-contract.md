@@ -16,7 +16,7 @@ prepare 阶段只读：可以检查 provider 当前状态，但不得消费 inpu
 
 ## Capacity 与 target
 
-覆盖 `captureCapacity` 时：
+覆盖 `captureCapacityFast` 时：
 
 - 返回当前可用 target 的非空 immutable observations；
 - 空 list 表示没有可用 route；

@@ -94,6 +94,6 @@ boolean accepted = ResourceCapacityMatching.accepts(
 
 能做容量分配不等于能确定产物所属任务。动态产物账本会检查接受域是否重叠：同一发配含重叠规则且使用不同结算路由时拒绝；与活动任务的重叠规则也必须满足其路由约束。不能依赖遍历顺序把物品任意记入另一条待完成订单。遇到歧义应收窄标签或统一可证明一致的结算语义。
 
-本次三态规则使用新的样板存储结构，旧布尔“忽略 NBT”样板需要重新编码；升级前先结束旧封包任务并处理其机器内材料。全局 CPU 的既有在途任务仍保留读取兼容：旧 execution schema 及 reusable custody schema 中已明确的 SAME_ITEM 规则，在解码边界恢复为 ID，模板沿用原等待键；不会自动取得 Tag 权限。重新编码后核对各输入／输出槽模式和原生标签来源，真实回收物品不会被改写成样板模板。
+本次三态规则使用当前样板存储结构；样板变更后应重新编码并核对各输入／输出槽模式和原生标签来源。真实回收物品不会被改写成样板模板。
 
 数量发配契约另见 [Counted dispatch](counted-dispatch-contract.md)，虚拟完成语义另见 [Virtual output](virtual-output.md)。

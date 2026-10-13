@@ -8,11 +8,11 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Process;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Role;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphCycle;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphEdge;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphHeader;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphRecord.GraphNode;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.stacks.AEKey;
 
@@ -22,10 +22,10 @@ import net.minecraft.network.chat.ComponentSerialization;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 
 /** Bounded typed graph record codec; collection lengths are checked before allocation or iteration. */
 final class CraftingPlanGraphRecordCodec {
@@ -47,26 +47,26 @@ final class CraftingPlanGraphRecordCodec {
                 ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buffer, header.diagnostic());
             }
             case GraphNode value -> {
-                if (value.node() instanceof Material node) {
+                if (value.node() instanceof Material(int id, AEKey key, BigInteger required, BigInteger stored, BigInteger crafting, BigInteger missing, BigInteger unresolved, int inventoryUsageBasisPoints)) {
                     buffer.writeByte(1);
-                    buffer.writeVarInt(node.id());
-                    AEKey.STREAM_CODEC.encode(buffer, node.key());
-                    amount(buffer, node.required());
-                    amount(buffer, node.stored());
-                    amount(buffer, node.crafting());
-                    amount(buffer, node.missing());
-                    amount(buffer, node.unresolved());
-                    buffer.writeVarInt(node.inventoryUsageBasisPoints());
-                } else if (value.node() instanceof Process node) {
+                    buffer.writeVarInt(id);
+                    AEKey.STREAM_CODEC.encode(buffer, key);
+                    amount(buffer, required);
+                    amount(buffer, stored);
+                    amount(buffer, crafting);
+                    amount(buffer, missing);
+                    amount(buffer, unresolved);
+                    buffer.writeVarInt(inventoryUsageBasisPoints);
+                } else if (value.node() instanceof Process(int id, int stageIndex, String patternIdentity, int variantOrdinal, AEKey primaryOutput, BigInteger executions, boolean estimated, IntList cycleIds)) {
                     buffer.writeByte(2);
-                    buffer.writeVarInt(node.id());
-                    buffer.writeVarInt(node.stageIndex());
-                    buffer.writeUtf(node.patternIdentity());
-                    buffer.writeVarInt(node.variantOrdinal());
-                    AEKey.STREAM_CODEC.encode(buffer, node.primaryOutput());
-                    amount(buffer, node.executions());
-                    buffer.writeBoolean(node.estimated());
-                    ids(buffer, node.cycleIds());
+                    buffer.writeVarInt(id);
+                    buffer.writeVarInt(stageIndex);
+                    buffer.writeUtf(patternIdentity);
+                    buffer.writeVarInt(variantOrdinal);
+                    AEKey.STREAM_CODEC.encode(buffer, primaryOutput);
+                    amount(buffer, executions);
+                    buffer.writeBoolean(estimated);
+                    ids(buffer, cycleIds);
                 }
             }
             case GraphEdge value -> {
@@ -127,11 +127,11 @@ final class CraftingPlanGraphRecordCodec {
     }
 
     private static void amount(RegistryFriendlyByteBuf buffer, BigInteger amount) {
-        buffer.writeByteArray(TrinityBigIntegerEncoding.encode(amount, "plan graph amount"));
+        buffer.writeByteArray(NbtCodecs.encode(amount, "plan graph amount"));
     }
 
     private static BigInteger amount(RegistryFriendlyByteBuf buffer) {
-        return TrinityBigIntegerEncoding.decode(buffer.readByteArray(TrinityBigIntegerEncoding.MAX_BYTES), "plan graph amount");
+        return NbtCodecs.decode(buffer.readByteArray(NbtCodecs.MAX_BYTES), "plan graph amount");
     }
 
     private static int count(RegistryFriendlyByteBuf buffer) {
@@ -154,7 +154,7 @@ final class CraftingPlanGraphRecordCodec {
         return ids;
     }
 
-    private static void amounts(RegistryFriendlyByteBuf buffer, Map<AEKey, BigInteger> amounts) {
+    private static void amounts(RegistryFriendlyByteBuf buffer, Object2ObjectMap<AEKey, BigInteger> amounts) {
         buffer.writeVarInt(amounts.size());
         amounts.forEach((key, value) -> {
             AEKey.STREAM_CODEC.encode(buffer, key);
@@ -162,9 +162,9 @@ final class CraftingPlanGraphRecordCodec {
         });
     }
 
-    private static Map<AEKey, BigInteger> amounts(RegistryFriendlyByteBuf buffer) {
+    private static Object2ObjectMap<AEKey, BigInteger> amounts(RegistryFriendlyByteBuf buffer) {
         int count = count(buffer);
-        Map<AEKey, BigInteger> values = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<AEKey, BigInteger> values = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < count; index++) {
             AEKey key = readKey(buffer);
             if (values.putIfAbsent(key, amount(buffer)) != null) {

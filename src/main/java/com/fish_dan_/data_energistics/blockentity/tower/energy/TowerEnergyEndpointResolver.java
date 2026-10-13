@@ -4,9 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Resolves FE endpoints that a Data Distribution Tower can extract from or receive into.
@@ -44,7 +43,7 @@ public interface TowerEnergyEndpointResolver {
      * @param forReceive true when resolving insertion endpoints, false for extraction
      * @return immutable endpoint list
      */
-    List<TowerEnergyEndpoint> findAccessibleEnergyEndpoints(BlockPos pos, boolean forReceive);
+    ObjectList<TowerEnergyEndpoint> findAccessibleEnergyEndpoints(BlockPos pos, boolean forReceive);
 
     /**
      * Returns cached endpoints with one position excluded when needed.
@@ -53,7 +52,7 @@ public interface TowerEnergyEndpointResolver {
      * @param excludedPos position that should not be returned, or null
      * @return endpoint list for transfer operations
      */
-    List<TowerEnergyEndpoint> collectEnergyEndpoints(boolean forReceive, @Nullable BlockPos excludedPos);
+    ObjectList<TowerEnergyEndpoint> collectEnergyEndpoints(boolean forReceive, @Nullable BlockPos excludedPos);
 
     /**
      * Returns cached resolved endpoints for this tower.
@@ -61,7 +60,7 @@ public interface TowerEnergyEndpointResolver {
      * @param forReceive true for insertion endpoints, false for extraction endpoints
      * @return immutable endpoint list
      */
-    List<TowerEnergyEndpoint> getCachedResolvedEnergyEndpoints(boolean forReceive);
+    ObjectList<TowerEnergyEndpoint> getCachedResolvedEnergyEndpoints(boolean forReceive);
 
     /**
      * Normalizes an excluded extraction target only if it exists in the extraction endpoint cache.

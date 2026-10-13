@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -33,11 +34,10 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -55,17 +55,17 @@ public final class ReusableExactExecutionBindingGameTest {
         ReusableInputRule rule = ReusableInputRule.fixedDamageFast(
                 ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "exact_execution_test"),
                 1L, initial, 1, 8, ObjectList.of());
-        List<TrinityBoundPatternInput> bindings = List.of(new TrinityBoundPatternInput(
-                0, 42, new GenericStack(initial, 1), 1L, next, rule, List.of()));
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(new TrinityBoundPatternInput(
+                0, 42, new GenericStack(initial, 1), 1L, next, rule, ObjectList.of()));
         var identity = new TrinityPatternIdentity("definition", "publication");
         var firing = new TrinityPlanPatternFiring(identity, output, 42, BigInteger.ONE,
-                Map.of(initial, BigInteger.ONE), Map.of(output, BigInteger.ONE), Map.of(next, BigInteger.ONE), bindings);
-        var delta = Map.<AEKey, BigInteger>of(initial, BigInteger.ONE.negate(), next, BigInteger.ONE, output, BigInteger.ONE);
-        var stage = new TrinityPlanStage(0, false, IntSet.of(), List.of(firing), Map.of(initial, BigInteger.ONE), delta);
+                FastUtilCollections.mapOf(initial, BigInteger.ONE), FastUtilCollections.mapOf(output, BigInteger.ONE), FastUtilCollections.mapOf(next, BigInteger.ONE), bindings);
+        Object2ObjectMap<AEKey, BigInteger> delta = FastUtilCollections.mapOf(initial, BigInteger.ONE.negate(), next, BigInteger.ONE, output, BigInteger.ONE);
+        var stage = new TrinityPlanStage(0, false, IntSet.of(), ObjectList.of(firing), FastUtilCollections.mapOf(initial, BigInteger.ONE), delta);
         var plan = TrinityCraftingPlan.builder().finalOutput(new GenericStack(output, 1L))
                 .bytes(BigInteger.ZERO).catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW)
-                .initialExpectedInputs(Map.of(initial, BigInteger.ONE)).patternFirings(Map.of(identity, BigInteger.ONE))
-                .stages(List.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta).build();
+                .initialExpectedInputs(FastUtilCollections.mapOf(initial, BigInteger.ONE)).patternFirings(FastUtilCollections.mapOf(identity, BigInteger.ONE))
+                .stages(ObjectList.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta).build();
         CompoundTag encoded = TrinityPlanExecution.create(plan, 10L).save(helper.getLevel().registryAccess(), 10L);
         var restored = TrinityPlanExecution.restore(encoded, helper.getLevel().registryAccess(), 20L);
         var work = restored.pollDispatchable(20L, IntSet.of(), ignored -> true, true).orElseThrow();
@@ -73,7 +73,7 @@ public final class ReusableExactExecutionBindingGameTest {
         var selected = TrinityPatternSelector.create().selectExact(new ToolPattern(), work.plannedVariantOrdinal(),
                 work.exactBindings(), 100L, key -> key.equals(initial) ? 1L : 0L, ignored -> 0L, helper.getLevel());
         helper.assertTrue(selected instanceof TrinityPatternSelector.Selected, "Expanded ordinal 42 must not index one legacy alternative");
-        helper.assertValueEqual(((TrinityPatternSelector.Selected) selected).inputsPerCraft(), List.of(new GenericStack(initial, 1L)),
+        helper.assertValueEqual(((TrinityPatternSelector.Selected) selected).inputsPerCraft(), ObjectList.of(new GenericStack(initial, 1L)),
                 "Execution retains the actual damaged tool rather than the encoded fresh template");
         ListTag invalid = TrinityBoundInputSnapshotCodec.write(bindings, helper.getLevel().registryAccess());
         invalid.getCompound(0).remove("rule");
@@ -100,8 +100,8 @@ public final class ReusableExactExecutionBindingGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L));
         }
 
         @Override

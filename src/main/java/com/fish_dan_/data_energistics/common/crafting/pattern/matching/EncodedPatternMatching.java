@@ -17,8 +17,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Explicit sparse input/output rules for processing patterns; missing rules use exact matching. */
 public final class EncodedPatternMatching {
@@ -61,22 +61,22 @@ public final class EncodedPatternMatching {
         return rules != null && !rules.isEmpty();
     }
 
-    public static List<ResourceLocation> tags(AEItemKey definition, int slot) {
+    public static ObjectList<ResourceLocation> tags(AEItemKey definition, int slot) {
         return tags(definition, "i", slot);
     }
 
-    public static List<ResourceLocation> outputTags(AEItemKey definition, int slot) {
+    public static ObjectList<ResourceLocation> outputTags(AEItemKey definition, int slot) {
         return tags(definition, "o", slot);
     }
 
-    private static List<ResourceLocation> tags(AEItemKey definition, String side, int slot) {
+    private static ObjectList<ResourceLocation> tags(AEItemKey definition, String side, int slot) {
         var data = definition.get(DEDataComponents.PROCESSING_PATTERN_MATCHING.get());
-        if (data == null) return List.of();
+        if (data == null) return ObjectList.of();
         var result = new ObjectArrayList<ResourceLocation>();
         for (var tag : data.getCompound(side + slot).getList("tags", Tag.TAG_STRING)) {
             result.add(ResourceLocation.parse(tag.getAsString()));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     public static ProcessingMatchMode modeForKey(AEItemKey definition, AEKey key) {
@@ -172,7 +172,7 @@ public final class EncodedPatternMatching {
         return found || expected.equals(actual);
     }
 
-    public static boolean matches(ProcessingMatchMode mode, List<ResourceLocation> tags, AEKey expected, AEKey actual) {
+    public static boolean matches(ProcessingMatchMode mode, ObjectList<ResourceLocation> tags, AEKey expected, AEKey actual) {
         return new ItemMatchingRule(mode, tags).matches(expected, actual);
     }
 }

@@ -1,10 +1,11 @@
 package com.fish_dan_.data_energistics.blockentity.tower.virtual;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Immutable result of deterministic virtual grid owner selection.
@@ -14,15 +15,15 @@ import java.util.Set;
  * @param <G>        grid key type
  * @param <T>        tower key type
  */
-public record VirtualGridOwnershipSnapshot<G, T>(List<VirtualGridOwner<G, T>> owners,
-                                                 List<VirtualGridCandidateStatus<G, T>> candidates) {
+public record VirtualGridOwnershipSnapshot<G, T>(ObjectList<VirtualGridOwner<G, T>> owners,
+                                                 ObjectList<VirtualGridCandidateStatus<G, T>> candidates) {
 
     /**
      * Defensively copies the ownership results.
      */
     public VirtualGridOwnershipSnapshot {
-        owners = List.copyOf(owners);
-        candidates = List.copyOf(candidates);
+        owners = new ObjectImmutableList<>(owners);
+        candidates = new ObjectImmutableList<>(candidates);
     }
 
     /**
@@ -58,7 +59,7 @@ public record VirtualGridOwnershipSnapshot<G, T>(List<VirtualGridOwner<G, T>> ow
      * @throws IllegalStateException if externally constructed snapshot data contains a cycle
      */
     public G primaryGridOf(G grid) {
-        Set<G> visited = new ObjectOpenHashSet<>();
+        ObjectSet<G> visited = new ObjectOpenHashSet<>();
         G current = grid;
         while (visited.add(current)) {
             Optional<VirtualGridOwner<G, T>> owner = ownerOf(current);

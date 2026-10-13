@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryRegistration;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotFluidHandlerItem;
 import com.fish_dan_.data_energistics.item.powered.PoweredItemEnergyStorage;
@@ -36,6 +38,9 @@ final class CommonCapabilityRegistrar {
     private CommonCapabilityRegistrar() {}
 
     static void register(RegisterCapabilitiesEvent event) {
+        if (MOD.isAstralSorceryLoaded()) {
+            AstralSorceryRegistration.registerCapabilities(event);
+        }
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_SOLAR_PANEL_BLOCK_ENTITY.get(),
@@ -72,6 +77,18 @@ final class CommonCapabilityRegistrar {
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_ENERGY_CELL_BLOCK_ENTITY.get(),
                 (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(
+                AECapabilities.IN_WORLD_GRID_NODE_HOST,
+                DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
+                (blockEntity, context) -> blockEntity);
+        event.registerBlockEntity(
+                Capabilities.ItemHandler.BLOCK,
+                DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
+                (blockEntity, context) -> blockEntity.getExternalItemHandler());
+        event.registerBlockEntity(
+                Capabilities.FluidHandler.BLOCK,
+                DEBlockEntities.DIGITAL_SUPPLY_INTERFACE.get(),
+                (blockEntity, context) -> blockEntity.getExternalFluidHandler());
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
                 DEBlockEntities.DATA_INTEGRATED_CHARGER_BLOCK_ENTITY.get(),

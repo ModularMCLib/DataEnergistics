@@ -12,9 +12,9 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 /** Finite directed occupancy with reversible references and geometry-only crossing queries. */
@@ -41,8 +41,8 @@ final class OrthogonalSegmentReservations {
     record Metrics(double length, int crossings, int bends, double sharedLength) {}
 
     @Nullable
-    Metrics measure(List<Point> points, CraftingPlanRouteGroup group) {
-        List<Leg> legs = legs(points);
+    Metrics measure(ObjectList<Point> points, CraftingPlanRouteGroup group) {
+        ObjectList<Leg> legs = legs(points);
         if (selfOverlaps(legs)) return null;
         double length = 0;
         double shared = 0;
@@ -75,7 +75,7 @@ final class OrthogonalSegmentReservations {
         return new Metrics(length, intersectionScratch.size(), bends, shared);
     }
 
-    private static boolean selfOverlaps(List<Leg> legs) {
+    private static boolean selfOverlaps(ObjectList<Leg> legs) {
         for (int first = 0; first < legs.size(); first++) {
             Leg left = legs.get(first);
             for (int second = first + 1; second < legs.size(); second++) {
@@ -91,15 +91,15 @@ final class OrthogonalSegmentReservations {
         return leg.low() == leg.high() || orientation(leg).shared(leg, new Owner(group, leg.direction())) >= 0;
     }
 
-    void reserve(List<Point> points, CraftingPlanRouteGroup group) {
+    void reserve(ObjectList<Point> points, CraftingPlanRouteGroup group) {
         change(legs(points), group, 1);
     }
 
-    void release(List<Point> points, CraftingPlanRouteGroup group) {
+    void release(ObjectList<Point> points, CraftingPlanRouteGroup group) {
         change(legs(points), group, -1);
     }
 
-    private void change(List<Leg> legs, CraftingPlanRouteGroup group, int delta) {
+    private void change(ObjectList<Leg> legs, CraftingPlanRouteGroup group, int delta) {
         // The chosen candidate has already been measured; coverage mutation enforces reference balance once.
         for (Leg leg : legs) orientation(leg).change(leg, new Owner(group, leg.direction()), delta);
         if (legs.isEmpty()) return;
@@ -141,7 +141,7 @@ final class OrthogonalSegmentReservations {
         return counts != null && counts.directions[direction] > 0;
     }
 
-    private boolean sharesTurn(List<Leg> legs, int index, long point, CraftingPlanRouteGroup group) {
+    private boolean sharesTurn(ObjectList<Leg> legs, int index, long point, CraftingPlanRouteGroup group) {
         Leg current = legs.get(index);
         if (index > 0) {
             Leg previous = legs.get(index - 1);
@@ -161,8 +161,8 @@ final class OrthogonalSegmentReservations {
                 new Owner(group, leg.direction())) > 0;
     }
 
-    private List<Leg> legs(List<Point> points) {
-        List<Leg> result = new ObjectArrayList<>(Math.max(0, points.size() - 1));
+    private ObjectList<Leg> legs(ObjectList<Point> points) {
+        ObjectList<Leg> result = new ObjectArrayList<>(Math.max(0, points.size() - 1));
         for (int index = 1; index < points.size(); index++) {
             Leg leg = leg(points.get(index - 1), points.get(index));
             if (leg.low() == leg.high()) continue;

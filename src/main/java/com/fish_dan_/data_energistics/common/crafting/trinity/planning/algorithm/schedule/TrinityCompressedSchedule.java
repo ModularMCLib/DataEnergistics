@@ -1,16 +1,16 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Exact executable ordering found without expanding one state per logical firing.
@@ -23,28 +23,28 @@ import java.util.Map;
  * @param statesVisited    compressed proof states explored
  */
 public record TrinityCompressedSchedule(
-                                        List<TrinityVariantFiring> batches,
+                                        ObjectList<TrinityVariantFiring> batches,
                                         int repeatStartIndex,
                                         int repeatEndIndex,
                                         BigInteger repeatCount,
-                                        Map<AEKey, BigInteger> finalBalances,
+                                        Object2ObjectMap<AEKey, BigInteger> finalBalances,
                                         int statesVisited) {
 
     /** Creates a flat schedule whose outline is also its complete execution order. */
     public TrinityCompressedSchedule(
-                                     List<TrinityVariantFiring> batches,
-                                     Map<AEKey, BigInteger> finalBalances,
+                                     ObjectList<TrinityVariantFiring> batches,
+                                     Object2ObjectMap<AEKey, BigInteger> finalBalances,
                                      int statesVisited) {
         this(batches, 0, 0, BigInteger.ZERO, finalBalances, statesVisited);
     }
 
     /** Creates an exact nested repeat without expanding its BigInteger count. */
     public static TrinityCompressedSchedule repeated(
-                                                     List<TrinityVariantFiring> prefix,
-                                                     List<TrinityVariantFiring> repeatUnit,
+                                                     ObjectList<TrinityVariantFiring> prefix,
+                                                     ObjectList<TrinityVariantFiring> repeatUnit,
                                                      BigInteger repeatCount,
-                                                     List<TrinityVariantFiring> suffix,
-                                                     Map<AEKey, BigInteger> finalBalances,
+                                                     ObjectList<TrinityVariantFiring> suffix,
+                                                     Object2ObjectMap<AEKey, BigInteger> finalBalances,
                                                      int statesVisited) {
         if (repeatUnit.isEmpty() || repeatCount.signum() <= 0) {
             throw new IllegalArgumentException("A Trinity repeat schedule requires a positive unit");
@@ -76,7 +76,7 @@ public record TrinityCompressedSchedule(
                 !repeated && repeatStartIndex != 0) {
             throw new IllegalArgumentException("A Trinity compressed schedule has an invalid repeat range");
         }
-        batches = List.copyOf(batches);
+        batches = FastUtilCollections.immutableList(batches);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copiedBalances = new Object2ObjectLinkedOpenHashMap<>();
         finalBalances.forEach((key, amount) -> {
             if (amount.signum() < 0) {
@@ -86,7 +86,7 @@ public record TrinityCompressedSchedule(
                 copiedBalances.put(key, amount);
             }
         });
-        finalBalances = Object2ObjectMaps.unmodifiable(copiedBalances);
+        finalBalances = FastUtilCollections.immutableMap(copiedBalances);
     }
 
     /** @return whether this proof contains a nested repeat block */
@@ -95,17 +95,17 @@ public record TrinityCompressedSchedule(
     }
 
     /** @return one-time batches before the repeat unit */
-    public List<TrinityVariantFiring> prefixBatches() {
+    public ObjectList<TrinityVariantFiring> prefixBatches() {
         return this.batches.subList(0, this.repeatStartIndex);
     }
 
     /** @return the single executable unit represented by {@link #repeatCount()} repetitions */
-    public List<TrinityVariantFiring> repeatUnit() {
+    public ObjectList<TrinityVariantFiring> repeatUnit() {
         return this.batches.subList(this.repeatStartIndex, this.repeatEndIndex);
     }
 
     /** @return one-time batches after every repeat */
-    public List<TrinityVariantFiring> suffixBatches() {
+    public ObjectList<TrinityVariantFiring> suffixBatches() {
         return this.batches.subList(this.repeatEndIndex, this.batches.size());
     }
 
@@ -121,7 +121,7 @@ public record TrinityCompressedSchedule(
     }
 
     /** @return aggregate firing vector represented by the nested proof */
-    public Map<TrinityPatternVariant, BigInteger> aggregateFirings() {
+    public Object2ObjectMap<TrinityPatternVariant, BigInteger> aggregateFirings() {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> aggregate = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < this.batches.size(); index++) {
             TrinityVariantFiring batch = this.batches.get(index);
@@ -129,6 +129,6 @@ public record TrinityCompressedSchedule(
                     this.repeatCount : BigInteger.ONE;
             aggregate.merge(batch.variant(), batch.count().multiply(multiplier), BigInteger::add);
         }
-        return Object2ObjectMaps.unmodifiable(aggregate);
+        return FastUtilCollections.immutableMap(aggregate);
     }
 }

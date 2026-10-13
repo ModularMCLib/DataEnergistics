@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Networked compartment base used only by ME-backed compartment roles.
@@ -58,7 +57,7 @@ public abstract class AeCompartmentBlockEntity extends CompartmentBlockEntity im
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.allOf(Direction.class);
     }
 

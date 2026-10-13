@@ -7,13 +7,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumMap;
-import java.util.Map;
 import java.util.WeakHashMap;
 
 /** Numeric anchors captured from the rendered model, valid for at most two client ticks. */
 public final class CannonModelAnchors {
 
-    private static final Map<LivingEntity, EnumMap<InteractionHand, Anchors>> SAMPLES = new WeakHashMap<>();
+    private static final WeakHashMap<LivingEntity, EnumMap<InteractionHand, Anchors>> SAMPLES = new WeakHashMap<>();
 
     private CannonModelAnchors() {}
 

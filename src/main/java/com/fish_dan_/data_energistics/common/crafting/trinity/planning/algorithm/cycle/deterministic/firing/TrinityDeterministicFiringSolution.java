@@ -5,8 +5,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Exact firing vector and net-change proof derived from one applicable primitive basis.
@@ -18,6 +19,6 @@ import java.util.Map;
  */
 public record TrinityDeterministicFiringSolution(
                                                  TrinityDeterministicBasis basis,
-                                                 Map<TrinityPatternVariant, BigInteger> firings,
-                                                 Map<AEKey, BigInteger> totalNet,
+                                                 Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                 Object2ObjectMap<AEKey, BigInteger> totalNet,
                                                  int balancePasses) {}

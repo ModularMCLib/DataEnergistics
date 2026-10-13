@@ -11,12 +11,14 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory.TrinityPlanningInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Exposes the structural and dynamic stages used by the server-lifetime planning cache.
@@ -26,10 +28,10 @@ public interface TrinityGraphPlanningPipeline extends TrinityGraphPlanner {
     /**
      * Expands one complete pattern semantic independently of target, amount, inventory, and planning budget.
      */
-    TrinityAlgorithmResult<List<TrinityPatternVariant>> expandPattern(
-                                                                      TrinityCraftingGraphPattern pattern,
-                                                                      int maxBindingVariants,
-                                                                      TrinityPlanningControl control);
+    TrinityAlgorithmResult<ObjectList<TrinityPatternVariant>> expandPattern(
+                                                                            TrinityCraftingGraphPattern pattern,
+                                                                            int maxBindingVariants,
+                                                                            TrinityPlanningControl control);
 
     /**
      * Compacts already expanded variants and analyzes one target closure without repeating binding enumeration.
@@ -37,7 +39,7 @@ public interface TrinityGraphPlanningPipeline extends TrinityGraphPlanner {
     TrinityAlgorithmResult<TrinityCompiledGraph> compileExpanded(
                                                                  TrinityCraftingGraphSnapshot reachableSnapshot,
                                                                  AEKey target,
-                                                                 List<TrinityPatternVariant> expandedVariants,
+                                                                 ObjectList<TrinityPatternVariant> expandedVariants,
                                                                  int maxSccKeys,
                                                                  TrinityPlanningControl control);
 
@@ -82,7 +84,7 @@ public interface TrinityGraphPlanningPipeline extends TrinityGraphPlanner {
                                                               TrinityPlanningControl control) {
         return solve(
                 compiled,
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 catalogRevision,
                 requestedAmount,
                 quantityMode,
@@ -95,7 +97,7 @@ public interface TrinityGraphPlanningPipeline extends TrinityGraphPlanner {
     /** Solves with request-local quantity-free route hints layered over the compiled structure. */
     TrinityAlgorithmResult<TrinityCraftingPlan> solve(
                                                       TrinityCompiledGraph compiled,
-                                                      Map<AEKey, TrinityAcyclicRouteHint> routeHints,
+                                                      Object2ObjectMap<AEKey, TrinityAcyclicRouteHint> routeHints,
                                                       long catalogRevision,
                                                       BigInteger requestedAmount,
                                                       CraftingQuantityMode quantityMode,

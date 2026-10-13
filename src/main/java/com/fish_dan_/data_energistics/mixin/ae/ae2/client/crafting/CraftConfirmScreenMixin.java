@@ -8,8 +8,7 @@ import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraf
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
-import com.fish_dan_.data_energistics.util.DurationFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.AEBaseScreen;
@@ -130,11 +129,11 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
                         "gui.data_energistics.trinity_quantity.final_total");
         TrinityCraftingCycleSummary summary = state.data_energistics$cycleSummary();
         String bytes = summary == null ?
-                AmountFormatter.format(plan.getUsedBytes()) :
+                FormattingUtils.format(plan.getUsedBytes()) :
                 summary.exactBytes()
-                        .map(AmountFormatter::format)
-                        .orElseGet(() -> AmountFormatter.format(plan.getUsedBytes()));
-        String planningTime = DurationFormatter.format(state.data_energistics$planningNanos());
+                        .map(FormattingUtils::format)
+                        .orElseGet(() -> FormattingUtils.format(plan.getUsedBytes()));
+        String planningTime = FormattingUtils.formatDuration(state.data_energistics$planningNanos());
         if (state.data_energistics$isAe2FallbackEstimate()) {
             this.setTextContent(
                     TEXT_ID_DIALOG_TITLE,

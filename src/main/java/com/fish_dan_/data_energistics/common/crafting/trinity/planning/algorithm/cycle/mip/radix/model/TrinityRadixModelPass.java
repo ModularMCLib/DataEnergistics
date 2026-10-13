@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Describes one stage of the sequential lexicographic solve without encoding priorities as a weighted scalar.
@@ -54,12 +54,12 @@ public sealed interface TrinityRadixModelPass {
                     BigInteger fixedExternal,
                     BigInteger fixedSeed,
                     BigInteger fixedFirings,
-                    Map<TrinityPatternVariant, BigInteger> fixedCounts,
+                    Object2ObjectMap<TrinityPatternVariant, BigInteger> fixedCounts,
                     TrinityPatternVariant variant)
             implements TrinityRadixModelPass {
 
         public Identity {
-            fixedCounts = Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
+            fixedCounts = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
         }
     }
 

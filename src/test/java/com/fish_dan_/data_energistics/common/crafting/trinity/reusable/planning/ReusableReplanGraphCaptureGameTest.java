@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Alternative;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature.Input;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -34,7 +35,6 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -126,7 +126,7 @@ public final class ReusableReplanGraphCaptureGameTest {
     public static void retainsDiagnosticsAndRetriesWithCappedBackoff(GameTestHelper helper) {
         ReusableReplanGraphCapture capture = new ReusableReplanGraphCapture();
         TrinityPlanningDiagnostic diagnostic = new TrinityPlanningDiagnostic(TrinityPlanningDiagnosticCode.PLANNER_QUEUE_FULL,
-                Component.literal("capture queue is full"), Map.of("source", "controlled capture"));
+                Component.literal("capture queue is full"), FastUtilCollections.mapOf("source", "controlled capture"));
         int[] requests = { 0 };
         Supplier<CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>>> failing = () -> {
             requests[0]++;

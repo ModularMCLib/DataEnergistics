@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapt
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -27,6 +28,8 @@ import com.blakebr0.extendedcrafting.api.crafting.ICombinationRecipe;
 import com.blakebr0.extendedcrafting.init.ModRecipeTypes;
 import com.blakebr0.extendedcrafting.tileentity.CraftingCoreTileEntity;
 import com.blakebr0.extendedcrafting.tileentity.PedestalTileEntity;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -79,8 +82,8 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
                 assigned.size() - 1 > layout.pedestals().size())
             return null;
 
-        ObjectList<BlockPos> selected = new ObjectArrayList<>(assigned.size() - 1);
-        for (BlockPos pedestal : layout.pedestals()) {
+        LongList selected = new LongArrayList(assigned.size() - 1);
+        for (long pedestal : layout.pedestals()) {
             if (selected.size() == assigned.size() - 1) break;
             selected.add(pedestal);
         }
@@ -104,7 +107,7 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         BaseItemStackHandler coreInventory = layout.core().getInventory();
         if (!coreInventory.insertItem(0, assigned.getFirst(), true).isEmpty()) return null;
         for (int index = 0; index < selected.size(); index++) {
-            var pedestal = (PedestalTileEntity) level.getBlockEntity(selected.get(index));
+            var pedestal = (PedestalTileEntity) level.getBlockEntity(BlockPos.of(selected.getLong(index)));
             if (pedestal == null || !pedestal.getInventory().insertItem(0, assigned.get(index + 1), true).isEmpty()) {
                 return null;
             }
@@ -113,19 +116,19 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         var progress = new CompoundTag();
         progress.put("layout", positions(layout.pedestals()));
         progress.put("selected", positions(selected));
-        progress.put("inputs", saveStacks(assigned, level));
-        progress.put("remaining", saveStacks(remaining, level));
+        progress.put("inputs", NbtCodecs.encodeItemStacks(assigned, level.registryAccess()));
+        progress.put("remaining", NbtCodecs.encodeItemStacks(remaining, level.registryAccess()));
         progress.put("result", result.saveOptional(level.registryAccess()));
         return progress;
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position.immutable());
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         ListTag encoded = preparation.getList("layout", Tag.TAG_LONG);
-        for (int index = 0; index < encoded.size(); index++) {
-            positions.add(BlockPos.of(((LongTag) encoded.get(index)).getAsLong()));
+        for (Tag tag : encoded) {
+            positions.add(((LongTag) tag).getAsLong());
         }
         return positions;
     }
@@ -137,10 +140,12 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
             return false;
         }
         CompoundTag progress = operation.progress();
-        ObjectList<BlockPos> selected = selected(progress.getList("selected", Tag.TAG_LONG), layout.pedestals());
+        LongList selected = selected(progress.getList("selected", Tag.TAG_LONG), layout.pedestals());
         if (selected == null) return false;
-        ObjectList<ItemStack> assigned = readStacks(operation, progress.getList("inputs", Tag.TAG_COMPOUND));
-        ObjectList<ItemStack> remaining = readStacks(operation, progress.getList("remaining", Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> assigned = NbtCodecs.decodeItemStacks(
+                progress.getList("inputs", Tag.TAG_COMPOUND), operation.level().registryAccess());
+        ObjectList<ItemStack> remaining = NbtCodecs.decodeItemStacks(
+                progress.getList("remaining", Tag.TAG_COMPOUND), operation.level().registryAccess());
         ItemStack result = ItemStack.parse(operation.level().registryAccess(), progress.getCompound("result"))
                 .orElseThrow(() -> new IllegalArgumentException("Missing Extended Crafting combination output"));
         if (assigned.size() != selected.size() + 1 || remaining.size() != selected.size()) {
@@ -154,14 +159,14 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
     }
 
     private static boolean deliver(PackagedMachineOperation operation, Layout layout,
-                                   ObjectList<BlockPos> selected, ObjectList<ItemStack> assigned,
+                                   LongList selected, ObjectList<ItemStack> assigned,
                                    ICombinationRecipe recipe, ItemStack result) {
         if (!empty(operation.level(), layout.core(), layout.pedestals())) return false;
         requireAvailable(operation, assigned);
         BaseItemStackHandler coreInventory = layout.core().getInventory();
         if (!coreInventory.insertItem(0, assigned.getFirst(), true).isEmpty()) return false;
         for (int index = 0; index < selected.size(); index++) {
-            var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(selected.get(index));
+            var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(BlockPos.of(selected.getLong(index)));
             if (pedestal == null || !pedestal.getInventory().insertItem(0, assigned.get(index + 1), true).isEmpty()) {
                 return false;
             }
@@ -175,7 +180,7 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         if (!remainder.isEmpty()) throw new IllegalStateException("Extended Crafting core input insertion changed");
         operation.delivered(AEItemKey.of(coreInput), coreInput.getCount());
         for (int index = 0; index < selected.size(); index++) {
-            var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(selected.get(index));
+            var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(BlockPos.of(selected.getLong(index)));
             ItemStack stack = assigned.get(index + 1);
             remainder = pedestal.getInventory().insertItem(0, stack.copy(), false);
             int accepted = stack.getCount() - remainder.getCount();
@@ -188,7 +193,7 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
     }
 
     private static boolean collect(PackagedMachineOperation operation, Layout layout,
-                                   ObjectList<BlockPos> selected, ObjectList<ItemStack> assigned,
+                                   LongList selected, ObjectList<ItemStack> assigned,
                                    ObjectList<ItemStack> remaining, ItemStack result) {
         BaseItemStackHandler coreInventory = layout.core().getInventory();
         ItemStack actual = coreInventory.getStackInSlot(0);
@@ -204,13 +209,13 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         }
         if (!PackagedOutputMatching.matches(operation, result, actual)) throw new IllegalStateException("Unexpected Extended Crafting combination output");
         for (int index = 0; index < selected.size(); index++) {
-            var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(selected.get(index));
+            var pedestal = (PedestalTileEntity) operation.level().getBlockEntity(BlockPos.of(selected.getLong(index)));
             if (pedestal == null || !ItemStack.matches(pedestal.getInventory().getStackInSlot(0), remaining.get(index))) {
                 throw new IllegalStateException("Extended Crafting pedestal remainder changed outside this operation");
             }
         }
-        for (BlockPos position : layout.pedestals()) {
-            if (!selected.contains(position) && !pedestal(operation.level(), position).getInventory().getStackInSlot(0).isEmpty()) {
+        for (long packedPosition : layout.pedestals()) {
+            if (!selected.contains(packedPosition) && !pedestal(operation.level(), BlockPos.of(packedPosition)).getInventory().getStackInSlot(0).isEmpty()) {
                 throw new IllegalStateException("Unselected Extended Crafting pedestal contains a foreign item");
             }
         }
@@ -218,7 +223,7 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         if (extracted.isEmpty()) return false;
         operation.returned(AEItemKey.of(extracted), extracted.getCount());
         for (int index = 0; index < selected.size(); index++) {
-            var pedestal = pedestal(operation.level(), selected.get(index));
+            var pedestal = pedestal(operation.level(), BlockPos.of(selected.getLong(index)));
             ItemStack returned = pedestal.getInventory().extractItem(0, remaining.get(index).getCount(), false);
             if (!returned.isEmpty()) operation.returned(AEItemKey.of(returned), returned.getCount());
         }
@@ -227,22 +232,22 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
     }
 
     private static void verifyRunningInputs(ServerLevel level, Layout layout,
-                                            ObjectList<BlockPos> selected, ObjectList<ItemStack> assigned) {
+                                            LongList selected, ObjectList<ItemStack> assigned) {
         if (!ItemStack.matches(layout.core().getInventory().getStackInSlot(0), assigned.getFirst())) {
             throw new IllegalStateException("Extended Crafting core input changed outside this operation");
         }
         for (int index = 0; index < selected.size(); index++) {
-            PedestalTileEntity pedestal = pedestal(level, selected.get(index));
+            PedestalTileEntity pedestal = pedestal(level, BlockPos.of(selected.getLong(index)));
             if (!ItemStack.matches(pedestal.getInventory().getStackInSlot(0), assigned.get(index + 1))) {
                 throw new IllegalStateException("Extended Crafting pedestal input changed outside this operation");
             }
         }
     }
 
-    private static boolean matchesRunningInputs(ServerLevel level, ObjectList<BlockPos> selected,
+    private static boolean matchesRunningInputs(ServerLevel level, LongList selected,
                                                 ObjectList<ItemStack> assigned) {
         for (int index = 0; index < selected.size(); index++) {
-            if (!(level.getBlockEntity(selected.get(index)) instanceof PedestalTileEntity pedestal) ||
+            if (!(level.getBlockEntity(BlockPos.of(selected.getLong(index))) instanceof PedestalTileEntity pedestal) ||
                     !ItemStack.matches(pedestal.getInventory().getStackInSlot(0), assigned.get(index + 1))) {
                 return false;
             }
@@ -280,18 +285,18 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
 
     private static @Nullable Layout layout(ServerLevel level, BlockPos position) {
         if (!level.isLoaded(position) || !(level.getBlockEntity(position) instanceof CraftingCoreTileEntity core)) return null;
-        var pedestals = new ObjectArrayList<BlockPos>();
+        var pedestals = new LongArrayList();
         // The native core scans only its own Y level, in BlockPos iteration order.
         for (BlockPos candidate : BlockPos.betweenClosed(position.offset(-3, 0, -3), position.offset(3, 0, 3))) {
             if (!level.isLoaded(candidate)) return null;
-            if (level.getBlockEntity(candidate) instanceof PedestalTileEntity) pedestals.add(candidate.immutable());
+            if (level.getBlockEntity(candidate) instanceof PedestalTileEntity) pedestals.add(candidate.asLong());
         }
         return new Layout(core, pedestals);
     }
 
-    private static boolean empty(ServerLevel level, CraftingCoreTileEntity core, ObjectList<BlockPos> pedestals) {
+    private static boolean empty(ServerLevel level, CraftingCoreTileEntity core, LongList pedestals) {
         if (!core.getInventory().getStackInSlot(0).isEmpty()) return false;
-        for (BlockPos position : pedestals) if (!pedestal(level, position).getInventory().getStackInSlot(0).isEmpty()) return false;
+        for (long packedPosition : pedestals) if (!pedestal(level, BlockPos.of(packedPosition)).getInventory().getStackInSlot(0).isEmpty()) return false;
         return true;
     }
 
@@ -300,43 +305,30 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         throw new IllegalStateException("Extended Crafting pedestal disappeared");
     }
 
-    private static ListTag positions(ObjectList<BlockPos> positions) {
+    private static ListTag positions(LongList positions) {
         var encoded = new ListTag();
-        for (BlockPos position : positions) encoded.add(LongTag.valueOf(position.asLong()));
+        for (long position : positions) encoded.add(LongTag.valueOf(position));
         return encoded;
     }
 
-    private static boolean matchesPositions(ListTag encoded, ObjectList<BlockPos> actual) {
+    private static boolean matchesPositions(ListTag encoded, LongList actual) {
         if (encoded.size() != actual.size()) return false;
         var expected = new LongOpenHashSet();
-        for (BlockPos position : actual) expected.add(position.asLong());
-        for (int index = 0; index < encoded.size(); index++) if (!expected.remove(((LongTag) encoded.get(index)).getAsLong())) return false;
+        for (long position : actual) expected.add(position);
+        for (Tag tag : encoded) if (!expected.remove(((LongTag) tag).getAsLong())) return false;
         return expected.isEmpty();
     }
 
-    private static @Nullable ObjectList<BlockPos> selected(ListTag encoded, ObjectList<BlockPos> available) {
+    private static @Nullable LongList selected(ListTag encoded, LongList available) {
         var byPosition = new LongOpenHashSet();
-        for (BlockPos position : available) byPosition.add(position.asLong());
-        var selected = new ObjectArrayList<BlockPos>();
-        for (int index = 0; index < encoded.size(); index++) {
-            BlockPos position = BlockPos.of(((LongTag) encoded.get(index)).getAsLong());
-            if (!byPosition.remove(position.asLong())) return null;
+        for (long position : available) byPosition.add(position);
+        var selected = new LongArrayList();
+        for (Tag tag : encoded) {
+            long position = ((LongTag) tag).getAsLong();
+            if (!byPosition.remove(position)) return null;
             selected.add(position);
         }
         return selected;
-    }
-
-    private static ListTag saveStacks(List<? extends ItemStack> stacks, ServerLevel level) {
-        var encoded = new ListTag();
-        for (ItemStack stack : stacks) encoded.add(stack.saveOptional(level.registryAccess()));
-        return encoded;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        var stacks = new ObjectArrayList<ItemStack>(encoded.size());
-        for (int index = 0; index < encoded.size(); index++) stacks.add(ItemStack.parseOptional(
-                operation.level().registryAccess(), encoded.getCompound(index)));
-        return stacks;
     }
 
     private static void requireAvailable(PackagedMachineOperation operation, ObjectList<ItemStack> stacks) {
@@ -349,5 +341,5 @@ public final class CombinationCraftingAdapter implements PackagedMachineAdapter 
         }
     }
 
-    private record Layout(CraftingCoreTileEntity core, ObjectList<BlockPos> pedestals) {}
+    private record Layout(CraftingCoreTileEntity core, LongList pedestals) {}
 }

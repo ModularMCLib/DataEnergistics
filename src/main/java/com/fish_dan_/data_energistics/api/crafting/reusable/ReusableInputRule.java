@@ -10,15 +10,14 @@ import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Frozen, deterministic transition contract for one physical tool unit. No world, recipe callback,
@@ -36,26 +35,12 @@ import java.util.Map;
  * @param transitions          complete finite state table, empty outside TRANSITIONS
  */
 public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, AEItemKey initialKey,
-                                int damagePerUse, int breakAtDamage, List<GenericStack> exhaustionByproducts,
-                                List<Transition> transitions) {
-
-    /** @deprecated scheduled for removal in plan 340; use {@link #exhaustionByproductsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<GenericStack> exhaustionByproducts() {
-        return exhaustionByproducts;
-    }
+                                int damagePerUse, int breakAtDamage, ObjectList<GenericStack> exhaustionByproducts,
+                                ObjectList<Transition> transitions) {
 
     /** Returns an immutable FastUtil view of exhaustion byproducts. */
     public ObjectList<GenericStack> exhaustionByproductsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(exhaustionByproducts));
-    }
-
-    /** @deprecated scheduled for removal in plan 340; use {@link #transitionsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<Transition> transitions() {
-        return transitions;
     }
 
     /** Returns an immutable FastUtil view of transition rows. */
@@ -68,7 +53,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
             throw new IllegalArgumentException("Reusable rule revision must not be negative");
         }
         exhaustionByproducts = checkedOutputs(exhaustionByproducts);
-        transitions = List.copyOf(transitions);
+        transitions = new ObjectImmutableList<>(transitions);
         if (kind == Kind.FIXED_DAMAGE) {
             int initialDamage = initialKey.toStack().getDamageValue();
             if (damagePerUse <= 0 || initialDamage < 0 || initialDamage >= breakAtDamage ||
@@ -113,14 +98,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
      * @param successor  exact retained state after use, or null when exhausted
      * @param byproducts deterministic positive outputs of this use
      */
-    public record Transition(AEItemKey input, @Nullable AEItemKey successor, List<GenericStack> byproducts) {
-
-        /** @deprecated scheduled for removal in plan 340; use {@link #byproductsFast()} */
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<GenericStack> byproducts() {
-            return byproducts;
-        }
+    public record Transition(AEItemKey input, @Nullable AEItemKey successor, ObjectList<GenericStack> byproducts) {
 
         /** Returns an immutable FastUtil view of transition byproducts. */
         public ObjectList<GenericStack> byproductsFast() {
@@ -139,14 +117,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
      * @param successor  retained tool after every requested use, or null on final legal exhaustion
      * @param byproducts summed transition outputs, excluding the successor
      */
-    public record Result(@Nullable AEItemKey successor, List<GenericStack> byproducts) {
-
-        /** @deprecated scheduled for removal in plan 340; use {@link #byproductsFast()} */
-        @Deprecated(forRemoval = true)
-        @Override
-        public List<GenericStack> byproducts() {
-            return byproducts;
-        }
+    public record Result(@Nullable AEItemKey successor, ObjectList<GenericStack> byproducts) {
 
         /** Returns an immutable FastUtil view of result byproducts. */
         public ObjectList<GenericStack> byproductsFast() {
@@ -160,24 +131,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
 
     /** @return explicit unchanged contract for the supplied exact state */
     public static ReusableInputRule unchanged(ResourceLocation id, long revision, AEItemKey key) {
-        return new ReusableInputRule(id, revision, Kind.UNCHANGED, key, 0, 0, List.of(), List.of());
-    }
-
-    /**
-     * Defines deterministic loss with unchanged item and non-Damage components. Reaching the bound
-     * exhausts the tool on that use; this contract must come from authoritative recipe knowledge. A bound of
-     * maxDamage + 1 is valid for recipes that allow a final use at maxDamage before exhausting the tool.
-     *
-     * @return fixed-loss rule; throws when the state or thresholds cannot describe a damageable item
-     * @deprecated scheduled for removal in plan 340; use
-     *             {@link #fixedDamageFast(ResourceLocation, long, AEItemKey, int, int, ObjectList)}
-     */
-    @Deprecated(forRemoval = true)
-    public static ReusableInputRule fixedDamage(ResourceLocation id, long revision, AEItemKey key,
-                                                int damagePerUse, int breakAtDamage,
-                                                List<GenericStack> exhaustionByproducts) {
-        return new ReusableInputRule(id, revision, Kind.FIXED_DAMAGE, key, damagePerUse, breakAtDamage,
-                exhaustionByproducts, List.of());
+        return new ReusableInputRule(id, revision, Kind.UNCHANGED, key, 0, 0, ObjectList.of(), ObjectList.of());
     }
 
     /** Defines deterministic damage loss through the FastUtil collection API. */
@@ -185,24 +139,13 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
                                                     int damagePerUse, int breakAtDamage,
                                                     ObjectList<GenericStack> exhaustionByproducts) {
         return new ReusableInputRule(id, revision, Kind.FIXED_DAMAGE, key, damagePerUse, breakAtDamage,
-                exhaustionByproducts, List.of());
-    }
-
-    /**
-     * @return complete deterministic graph, rejecting duplicate states and undeclared successors
-     * @deprecated scheduled for removal in plan 340; use
-     *             {@link #transitionsFast(ResourceLocation, long, AEItemKey, ObjectList)}
-     */
-    @Deprecated(forRemoval = true)
-    public static ReusableInputRule transitions(ResourceLocation id, long revision, AEItemKey initialKey,
-                                                List<Transition> transitions) {
-        return new ReusableInputRule(id, revision, Kind.TRANSITIONS, initialKey, 0, 0, List.of(), transitions);
+                exhaustionByproducts, ObjectList.of());
     }
 
     /** Defines a deterministic transition graph through the FastUtil collection API. */
     public static ReusableInputRule transitionsFast(ResourceLocation id, long revision, AEItemKey initialKey,
                                                     ObjectList<Transition> transitions) {
-        return new ReusableInputRule(id, revision, Kind.TRANSITIONS, initialKey, 0, 0, List.of(), transitions);
+        return new ReusableInputRule(id, revision, Kind.TRANSITIONS, initialKey, 0, 0, ObjectList.of(), transitions);
     }
 
     /**
@@ -221,7 +164,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
             int damage = checkedDamage(state);
             return ((long) breakAtDamage - damage + damagePerUse - 1L) / damagePerUse;
         }
-        Map<AEItemKey, Transition> table = transitionTable();
+        Object2ObjectMap<AEItemKey, Transition> table = transitionTable();
         ObjectOpenHashSet<AEItemKey> seen = new ObjectOpenHashSet<>();
         long uses = 0L;
         AEItemKey cursor = state;
@@ -252,7 +195,7 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
             throw new IllegalArgumentException("Use count exceeds the guaranteed tool lifetime");
         }
         if (uses == 0L || kind == Kind.UNCHANGED) {
-            return new Result(state, List.of());
+            return new Result(state, ObjectList.of());
         }
         if (kind == Kind.FIXED_DAMAGE) {
             if (uses == guaranteed) {
@@ -260,14 +203,14 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
             }
             ItemStack successor = state.toStack();
             successor.set(DataComponents.DAMAGE, Math.toIntExact(checkedDamage(state) + uses * damagePerUse));
-            return new Result(AEItemKey.of(successor), List.of());
+            return new Result(AEItemKey.of(successor), ObjectList.of());
         }
         return advanceTable(state, uses);
     }
 
     private Result advanceTable(AEItemKey state, long uses) {
-        Map<AEItemKey, Transition> table = transitionTable();
-        Map<AEItemKey, Visit> visits = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<AEItemKey, Transition> table = transitionTable();
+        Object2ObjectMap<AEItemKey, Visit> visits = new Object2ObjectOpenHashMap<>();
         Object2LongLinkedOpenHashMap<AEKey> outputs = new Object2LongLinkedOpenHashMap<>();
         AEItemKey cursor = state;
         long completed = 0L;
@@ -317,13 +260,13 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         }
     }
 
-    private Map<AEItemKey, Transition> transitionTable() {
-        Map<AEItemKey, Transition> table = new Object2ObjectOpenHashMap<>();
+    private Object2ObjectMap<AEItemKey, Transition> transitionTable() {
+        Object2ObjectMap<AEItemKey, Transition> table = new Object2ObjectOpenHashMap<>();
         transitions.forEach(transition -> table.put(transition.input(), transition));
         return table;
     }
 
-    private static Transition requireTransition(Map<AEItemKey, Transition> table, AEItemKey state) {
+    private static Transition requireTransition(Object2ObjectMap<AEItemKey, Transition> table, AEItemKey state) {
         Transition transition = table.get(state);
         if (transition == null) {
             throw new IllegalArgumentException("Undeclared reusable input state");
@@ -331,8 +274,8 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         return transition;
     }
 
-    private static List<GenericStack> checkedOutputs(List<GenericStack> outputs) {
-        List<GenericStack> snapshot = List.copyOf(outputs);
+    private static ObjectList<GenericStack> checkedOutputs(ObjectList<GenericStack> outputs) {
+        ObjectList<GenericStack> snapshot = new ObjectImmutableList<>(outputs);
         for (GenericStack output : snapshot) {
             if (output.amount() <= 0L) {
                 throw new IllegalArgumentException("Reusable input byproduct amount must be positive");
@@ -341,10 +284,10 @@ public record ReusableInputRule(ResourceLocation id, long revision, Kind kind, A
         return snapshot;
     }
 
-    private static List<GenericStack> outputList(Object2LongMap<AEKey> outputs) {
-        List<GenericStack> result = new ObjectArrayList<>(outputs.size());
+    private static ObjectList<GenericStack> outputList(Object2LongMap<AEKey> outputs) {
+        ObjectArrayList<GenericStack> result = new ObjectArrayList<>(outputs.size());
         outputs.forEach((key, amount) -> result.add(new GenericStack(key, amount)));
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     private record Visit(long completed, Object2LongMap<AEKey> outputs) {}

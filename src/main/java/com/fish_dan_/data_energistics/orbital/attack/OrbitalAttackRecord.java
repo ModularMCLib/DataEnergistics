@@ -5,9 +5,11 @@ import com.fish_dan_.data_energistics.orbital.attack.work.OrbitalAttackWorkState
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -34,11 +36,11 @@ public record OrbitalAttackRecord(
                                   int cooldownDurationTicks,
                                   long celestialEscrow,
                                   long aeEscrow,
-                                  Set<UUID> damageExemptions) {
+                                  ObjectSet<UUID> damageExemptions) {
 
     public OrbitalAttackRecord {
         target = target.immutable();
-        damageExemptions = Set.copyOf(damageExemptions);
+        damageExemptions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(damageExemptions));
         if (payloadArrived && payloadEntityId == null) {
             throw new IllegalArgumentException("A digital payload cannot arrive without an entity identity");
         }
@@ -69,7 +71,7 @@ public record OrbitalAttackRecord(
                                               long configurationRevision,
                                               int warningTicks,
                                               OrbitalAttackCost cost,
-                                              Set<UUID> damageExemptions) {
+                                              ObjectSet<UUID> damageExemptions) {
         return new OrbitalAttackRecord(
                 attackId,
                 weaponId,

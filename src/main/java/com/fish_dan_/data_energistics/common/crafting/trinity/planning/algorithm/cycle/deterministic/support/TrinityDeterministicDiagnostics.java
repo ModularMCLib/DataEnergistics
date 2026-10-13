@@ -5,10 +5,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.opportunity.TrinityPlanningAttempt;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 /**
  * Centralises stable translated diagnostics shared by deterministic applicability, firing, and proof stages.
@@ -36,18 +37,18 @@ public final class TrinityDeterministicDiagnostics {
                 failure(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         CANCELLED_KEY,
-                        Map.of()) :
+                        FastUtilCollections.mapOf()) :
                 failure(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         TIMEOUT_KEY,
-                        Map.of("phase", "deterministic_component"));
+                        FastUtilCollections.mapOf("phase", "deterministic_component"));
     }
 
     public static <T> TrinityAlgorithmResult<T> unsupported() {
         return failure(
                 TrinityPlanningDiagnosticCode.UNSUPPORTED_PATTERN,
                 UNSUPPORTED_PATTERN_KEY,
-                Map.of("phase", "deterministic_component"));
+                FastUtilCollections.mapOf("phase", "deterministic_component"));
     }
 
     public static <T> TrinityPlanningAttempt<T> notApplicable() {
@@ -58,13 +59,13 @@ public final class TrinityDeterministicDiagnostics {
         return failure(
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 SEARCH_LIMIT_KEY,
-                Map.of("limit", Integer.toString(limit), "states", Integer.toString(states)));
+                FastUtilCollections.mapOf("limit", Integer.toString(limit), "states", Integer.toString(states)));
     }
 
     public static <T> TrinityAlgorithmResult<T> failure(
                                                         TrinityPlanningDiagnosticCode code,
                                                         String translationKey,
-                                                        Map<String, String> metadata) {
+                                                        Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

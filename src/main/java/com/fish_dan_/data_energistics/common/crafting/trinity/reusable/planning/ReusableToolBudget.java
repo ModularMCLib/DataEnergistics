@@ -12,14 +12,14 @@ import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 
 /** Request-local arithmetic tool capacity. Quantities remain physical units; durability is never an AE inventory. */
 public final class ReusableToolBudget {
@@ -48,7 +48,7 @@ public final class ReusableToolBudget {
         return rules.isEmpty();
     }
 
-    public TrinityCraftingGraphSnapshot reserve(TrinityCraftingGraphSnapshot graph, Map<AEKey, BigInteger> amounts) {
+    public TrinityCraftingGraphSnapshot reserve(TrinityCraftingGraphSnapshot graph, Object2ObjectMap<AEKey, BigInteger> amounts) {
         var patterns = new ObjectArrayList<TrinityCraftingGraphPattern>();
         for (var pattern : graph.patterns()) {
             var reserved = new Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>();
@@ -75,7 +75,7 @@ public final class ReusableToolBudget {
         return new TrinityPlanningInventory(finite, unlimited);
     }
 
-    public Map<AEKey, BigInteger> requiredTools(TrinityCraftingPlan plan) {
+    public Object2ObjectMap<AEKey, BigInteger> requiredTools(TrinityCraftingPlan plan) {
         var repeats = new Int2ObjectOpenHashMap<BigInteger>();
         for (var block : plan.cycleRepeatBlocks()) {
             for (int stage : block.stageOrder()) repeats.put(stage, block.repetitions());
@@ -107,7 +107,7 @@ public final class ReusableToolBudget {
     }
 
     /** Restores real component-bearing keys for the actual CPU withdrawal, never canonical planning prototypes. */
-    public Map<AEKey, BigInteger> physicalInputs(Map<AEKey, BigInteger> planned) {
+    public Object2ObjectMap<AEKey, BigInteger> physicalInputs(Object2ObjectMap<AEKey, BigInteger> planned) {
         var physical = new Object2ObjectLinkedOpenHashMap<AEKey, BigInteger>();
         for (var entry : planned.entrySet()) {
             var rule = matchingRule(entry.getKey());
@@ -143,7 +143,7 @@ public final class ReusableToolBudget {
         return units.add(ceil(neededUses, freshUses));
     }
 
-    private List<Stock> stock(ReusableInputRule rule, BigInteger usefulUnits) {
+    private ObjectList<Stock> stock(ReusableInputRule rule, BigInteger usefulUnits) {
         var result = new ObjectArrayList<Stock>();
         inventory.finiteAmounts().forEach((key, amount) -> {
             if (amount.signum() > 0 && key instanceof AEItemKey item && FixedToolIdentity.matches(rule, item)) {

@@ -2,15 +2,17 @@ package com.fish_dan_.data_energistics.configuration.rules;
 
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /** Carries the built-in values used to initialize the native rule schema. */
 public record DefaultRuleValues(
-                                List<CropRule> cropRules,
+                                ObjectList<CropRule> cropRules,
                                 float cropRequiredAmount,
                                 float oreRequiredAmount) {
 
-    private static final List<CropRule> BUILT_IN_CROP_RULES = List.of(
+    private static final ObjectList<CropRule> BUILT_IN_CROP_RULES = ObjectList.of(
             crop("minecraft:wheat_seeds", "minecraft:wheat", 0.5F),
             crop("minecraft:beetroot_seeds", "minecraft:beetroot", 0.5F),
             crop("minecraft:melon", "minecraft:melon", 1.0F),
@@ -49,11 +51,11 @@ public record DefaultRuleValues(
             crop("minecraft:closed_eyeblossom", "minecraft:closed_eyeblossom", 1.0F));
 
     public DefaultRuleValues {
-        cropRules = List.copyOf(cropRules);
+        cropRules = ObjectLists.unmodifiable(new ObjectArrayList<>(cropRules));
     }
 
     /** Returns the immutable built-in crop rows used for a fresh rule file. */
-    public static List<CropRule> builtInCropRules() {
+    public static ObjectList<CropRule> builtInCropRules() {
         return BUILT_IN_CROP_RULES;
     }
 

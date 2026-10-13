@@ -37,10 +37,10 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,12 +52,12 @@ import java.util.UUID;
 public final class PersistentReusableCraftingEndpoint {
 
     /** Exact native binding retained across appends and reloads; source/world/recipe instances are excluded. */
-    public record Binding(Identity identity, TrinityPatternIdentity publicationIdentity, int inputSlots, List<SlotInput> consumed,
-                          List<SlotContract> tools, Optional<String> recipeId) {
+    public record Binding(Identity identity, TrinityPatternIdentity publicationIdentity, int inputSlots, ObjectList<SlotInput> consumed,
+                          ObjectList<SlotContract> tools, Optional<String> recipeId) {
 
         public Binding {
-            consumed = List.copyOf(consumed);
-            tools = List.copyOf(tools);
+            consumed = new ObjectImmutableList<>(consumed);
+            tools = new ObjectImmutableList<>(tools);
             if (inputSlots <= 0 || tools.isEmpty()) {
                 throw new IllegalArgumentException("A native reusable binding needs original input slots and tools");
             }
@@ -81,15 +81,15 @@ public final class PersistentReusableCraftingEndpoint {
     }
 
     /** Actual native outcome. Paused has no effects; pending retains escrow until an asynchronous outcome is known. */
-    public record NativeResult(boolean executed, List<ToolOutcome> tools, List<GenericStack> outputs,
+    public record NativeResult(boolean executed, ObjectList<ToolOutcome> tools, ObjectList<GenericStack> outputs,
                                Optional<String> failure, boolean pending) {
 
-        public NativeResult(boolean executed, List<ToolOutcome> tools, List<GenericStack> outputs, Optional<String> failure) {
+        public NativeResult(boolean executed, ObjectList<ToolOutcome> tools, ObjectList<GenericStack> outputs, Optional<String> failure) {
             this(executed, tools, outputs, failure, false);
         }
 
         public NativeResult {
-            tools = List.copyOf(tools);
+            tools = new ObjectImmutableList<>(tools);
             outputs = checkedAssets(outputs);
             if (pending && (executed || !tools.isEmpty() || !outputs.isEmpty() || failure.isPresent())) {
                 throw new IllegalArgumentException("An in-flight native result cannot settle assets");
@@ -103,7 +103,7 @@ public final class PersistentReusableCraftingEndpoint {
         }
 
         public static NativeResult paused() {
-            return new NativeResult(false, List.of(), List.of(), Optional.empty());
+            return new NativeResult(false, ObjectList.of(), ObjectList.of(), Optional.empty());
         }
 
         public static NativeResult inFlight() {
@@ -178,7 +178,7 @@ public final class PersistentReusableCraftingEndpoint {
          * must leave that queue unchanged. Do not flush to an external inventory or persist midway through
          * this callback: the endpoint clears its matching queue before the next persistChanges call.
          */
-        void acceptOutputs(Identity identity, List<GenericStack> outputs);
+        void acceptOutputs(Identity identity, ObjectList<GenericStack> outputs);
 
         /** Mark the owning persistent state dirty; this is not a promise of synchronous disk durability. */
         void persistChanges();
@@ -233,8 +233,9 @@ public final class PersistentReusableCraftingEndpoint {
     }
 
     /** Compact acknowledged evidence for transfer to the physical core archive before replacing a route. */
-    public List<ReusableCraftingCustodyCensus.Entry> acknowledgedCustody() {
-        return sessions.values().stream().filter(entry -> entry.settlementAcknowledged).map(PersistentReusableCraftingEndpoint::custodyEntry).toList();
+    public ObjectList<ReusableCraftingCustodyCensus.Entry> acknowledgedCustody() {
+        return new ObjectImmutableList<>(new ObjectArrayList<>(sessions.values().stream()
+                .filter(entry -> entry.settlementAcknowledged).map(PersistentReusableCraftingEndpoint::custodyEntry).collect(ObjectArrayList.toList())));
     }
 
     private static ReusableCraftingCustodyCensus.Entry custodyEntry(Entry entry) {
@@ -264,7 +265,7 @@ public final class PersistentReusableCraftingEndpoint {
             if (existing.session.appendSnapshot(request.sequence()).isPresent()) {
                 existing.session.validateAppend(append); // Different payload under the same sequence is a protocol
                                                          // error.
-                return new Admission(existing, append, List.of(), generation, existing.revision, currentTick, host, true);
+                return new Admission(existing, append, ObjectList.of(), generation, existing.revision, currentTick, host, true);
             }
             if (!request.sessionId().equals(resident) || !existing.failure.isEmpty()) {
                 return null;
@@ -291,7 +292,7 @@ public final class PersistentReusableCraftingEndpoint {
             return Optional.empty();
         }
         Identity identity = entry.binding.identity();
-        List<SlotStack> held = new ObjectArrayList<>();
+        ObjectArrayList<SlotStack> held = new ObjectArrayList<>();
         entry.session.heldTools().forEach((slot, stacks) -> stacks.forEach(stack -> held.add(new SlotStack(slot, stack))));
         return Optional.of(new ReusableCraftingSessionView(identity.sessionId(), identity.jobId(), identity.cpuOwner(),
                 identity.target(), visibleState(entry), entry.revision, entry.session.accepted(), entry.session.completed(),
@@ -508,8 +509,8 @@ public final class PersistentReusableCraftingEndpoint {
         }
         for (ToolOutcome tool : actual.tools()) {
             ToolOutcome previous = expectedTools.remove(tool.slot());
-            if (previous == null || !counts(previous.successors()).equals(counts(tool.successors())) ||
-                    !counts(previous.byproducts()).equals(counts(tool.byproducts())))
+            if (previous == null || !counts(new ObjectImmutableList<>(previous.successors())).equals(counts(new ObjectImmutableList<>(tool.successors()))) ||
+                    !counts(new ObjectImmutableList<>(previous.byproducts())).equals(counts(new ObjectImmutableList<>(tool.byproducts()))))
                 return false;
         }
         return expectedTools.isEmpty();
@@ -592,11 +593,11 @@ public final class PersistentReusableCraftingEndpoint {
             throw new IllegalStateException("Native endpoint expects a single final session settlement");
         }
         long sequence = outbox.isEmpty() ? 0 : outbox.getFirst().sequence();
-        List<GenericStack> assets = outbox.isEmpty() ? List.of() : outbox.getFirst().assets();
-        List<AppendReceipt> receipts = entry.session.snapshot().appends().stream().map(append -> new AppendReceipt(
-                append.request().sequence(), append.request().operations(), append.completed(), append.cancelled())).toList();
+        ObjectList<GenericStack> assets = outbox.isEmpty() ? ObjectList.of() : new ObjectImmutableList<>(outbox.getFirst().assets());
+        ObjectList<AppendReceipt> receipts = new ObjectImmutableList<>(new ObjectArrayList<>(entry.session.snapshot().appends().stream().map(append -> new AppendReceipt(
+                append.request().sequence(), append.request().operations(), append.completed(), append.cancelled())).collect(ObjectArrayList.toList())));
         Settlement settlement = new Settlement(identity.sessionId(), identity.jobId(), identity.cpuOwner(), identity.target(),
-                sequence, assets, List.of(), entry.session.exhaustedTools(), receipts, failure(entry));
+                sequence, assets, ObjectList.of(), entry.session.exhaustedTools(), receipts, failure(entry));
         if (!receiver.receive(settlement)) {
             return false;
         }
@@ -612,12 +613,12 @@ public final class PersistentReusableCraftingEndpoint {
         return true;
     }
 
-    List<EntrySnapshot> snapshot() {
-        return sessions.values().stream().map(entry -> new EntrySnapshot(entry.binding, entry.session, entry.revision,
-                entry.notBefore, entry.settlementAcknowledged, entry.failure, entry.recordedResult)).toList();
+    ObjectList<EntrySnapshot> snapshot() {
+        return new ObjectImmutableList<>(new ObjectArrayList<>(sessions.values().stream().map(entry -> new EntrySnapshot(entry.binding, entry.session, entry.revision,
+                entry.notBefore, entry.settlementAcknowledged, entry.failure, entry.recordedResult)).collect(ObjectArrayList.toList())));
     }
 
-    static PersistentReusableCraftingEndpoint restore(String targetIdentity, List<EntrySnapshot> snapshots) {
+    static PersistentReusableCraftingEndpoint restore(String targetIdentity, ObjectList<EntrySnapshot> snapshots) {
         PersistentReusableCraftingEndpoint result = new PersistentReusableCraftingEndpoint(targetIdentity);
         for (EntrySnapshot snapshot : snapshots) {
             Identity identity = snapshot.binding().identity();
@@ -656,8 +657,8 @@ public final class PersistentReusableCraftingEndpoint {
     private static Binding binding(ReusableCraftingRequest request) {
         Identity identity = new Identity(request.sessionId(), request.jobId(), request.cpuOwner(), request.target().persistentIdentity(),
                 request.pattern().getDefinition(), request.target().mode().map(Object::toString));
-        List<SlotInput> materials = new ObjectArrayList<>();
-        List<SlotContract> tools = new ObjectArrayList<>();
+        ObjectArrayList<SlotInput> materials = new ObjectArrayList<>();
+        ObjectArrayList<SlotContract> tools = new ObjectArrayList<>();
         for (var input : request.inputsFast()) {
             Object2LongLinkedOpenHashMap<AEKey> quantities = counts(input.consumedPerOperationFast());
             if (quantities.size() > 1) {
@@ -712,11 +713,12 @@ public final class PersistentReusableCraftingEndpoint {
     }
 
     private static Append append(ReusableCraftingRequest request, Binding binding) {
-        List<GenericStack> materials = new ObjectArrayList<>();
+        ObjectArrayList<GenericStack> materials = new ObjectArrayList<>();
         for (SlotInput input : binding.consumed()) {
             materials.add(new GenericStack(input.stack().what(), Math.multiplyExact(input.stack().amount(), request.requestedCount())));
         }
-        List<ToolDelivery> tools = request.offeredToolsFast().stream().map(tool -> new ToolDelivery(tool.slot(), tool.stack())).toList();
+        ObjectList<ToolDelivery> tools = new ObjectImmutableList<>(new ObjectArrayList<>(request.offeredToolsFast().stream()
+                .map(tool -> new ToolDelivery(tool.slot(), tool.stack())).collect(ObjectArrayList.toList())));
         Int2ObjectMap<AEItemKey> states = new Int2ObjectLinkedOpenHashMap<>();
         for (Input input : request.inputsFast()) {
             input.tool().flatMap(Tool::operationState).ifPresent(state -> states.put(input.slot(), state));
@@ -724,14 +726,14 @@ public final class PersistentReusableCraftingEndpoint {
         return new Append(request.sequence(), request.requestedCount(), binding.consumed(), materials, tools, states);
     }
 
-    private static List<SlotStack> physicalInputs(Binding binding, Append append) {
-        List<SlotStack> result = new ObjectArrayList<>();
+    private static ObjectList<SlotStack> physicalInputs(Binding binding, Append append) {
+        ObjectArrayList<SlotStack> result = new ObjectArrayList<>();
         for (SlotInput input : binding.consumed()) {
             result.add(new SlotStack(input.slot(), new GenericStack(input.stack().what(),
                     Math.multiplyExact(input.stack().amount(), append.operations()))));
         }
         append.deliveredTools().forEach(tool -> result.add(new SlotStack(tool.slot(), tool.stack())));
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     private static void complete(Entry entry, Operation operation, NativeResult result) {
@@ -743,7 +745,7 @@ public final class PersistentReusableCraftingEndpoint {
     }
 
     private static boolean publishOutputs(Entry entry, Host host) {
-        List<GenericStack> outputs = entry.session.pendingOutputs();
+        ObjectList<GenericStack> outputs = new ObjectImmutableList<>(new ObjectArrayList<>(entry.session.pendingOutputs()));
         if (outputs.isEmpty()) {
             return false;
         }
@@ -779,8 +781,8 @@ public final class PersistentReusableCraftingEndpoint {
         return entry;
     }
 
-    private static List<GenericStack> checkedAssets(List<GenericStack> assets) {
-        List<GenericStack> result = List.copyOf(assets);
+    private static ObjectList<GenericStack> checkedAssets(ObjectList<GenericStack> assets) {
+        ObjectList<GenericStack> result = new ObjectImmutableList<>(assets);
         for (GenericStack stack : result) {
             if (stack.amount() <= 0) {
                 throw new IllegalArgumentException("Native result asset quantities must be positive");
@@ -789,7 +791,7 @@ public final class PersistentReusableCraftingEndpoint {
         return result;
     }
 
-    private static Object2LongLinkedOpenHashMap<AEKey> counts(List<GenericStack> assets) {
+    private static Object2LongLinkedOpenHashMap<AEKey> counts(ObjectList<GenericStack> assets) {
         Object2LongLinkedOpenHashMap<AEKey> result = new Object2LongLinkedOpenHashMap<>();
         for (GenericStack stack : assets) {
             result.put(stack.what(), Math.addExact(result.getLong(stack.what()), stack.amount()));
@@ -825,7 +827,7 @@ public final class PersistentReusableCraftingEndpoint {
 
         private final Entry entry;
         private final Append append;
-        private final List<SlotStack> physical;
+        private final ObjectList<SlotStack> physical;
         private final long expectedGeneration;
         private final long expectedRevision;
         private final long queuedTick;
@@ -834,7 +836,7 @@ public final class PersistentReusableCraftingEndpoint {
         private boolean used;
         private boolean transferred;
 
-        private Admission(Entry entry, Append append, List<SlotStack> physical, long expectedGeneration,
+        private Admission(Entry entry, Append append, ObjectList<SlotStack> physical, long expectedGeneration,
                           long expectedRevision, long queuedTick, Host host, boolean replay) {
             this.entry = entry;
             this.append = append;
@@ -907,7 +909,7 @@ public final class PersistentReusableCraftingEndpoint {
             if (delivery.length != entry.binding.inputSlots()) {
                 return false;
             }
-            Int2ObjectLinkedOpenHashMap<List<GenericStack>> expected = new Int2ObjectLinkedOpenHashMap<>();
+            Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> expected = new Int2ObjectLinkedOpenHashMap<>();
             for (int slot = 0; slot < delivery.length; slot++) {
                 expected.put(slot, new ObjectArrayList<>());
             }

@@ -5,16 +5,16 @@ import appeng.api.stacks.GenericStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Exact positive asset arithmetic shared by escrow, output and persistence boundaries. */
 final class SessionAssets {
 
     private SessionAssets() {}
 
-    static List<GenericStack> checked(List<GenericStack> assets) {
-        List<GenericStack> result = List.copyOf(assets);
+    static ObjectList<GenericStack> checked(ObjectList<GenericStack> assets) {
+        ObjectList<GenericStack> result = new ObjectImmutableList<>(assets);
         for (GenericStack asset : result) {
             if (asset.amount() <= 0) {
                 throw new IllegalArgumentException("Session asset amount must be positive");
@@ -23,7 +23,7 @@ final class SessionAssets {
         return result;
     }
 
-    static Object2LongLinkedOpenHashMap<AEKey> counts(List<GenericStack> assets) {
+    static Object2LongLinkedOpenHashMap<AEKey> counts(ObjectList<GenericStack> assets) {
         Object2LongLinkedOpenHashMap<AEKey> result = new Object2LongLinkedOpenHashMap<>();
         for (GenericStack asset : assets) {
             result.put(asset.what(), Math.addExact(result.getLong(asset.what()), asset.amount()));
@@ -31,13 +31,13 @@ final class SessionAssets {
         return result;
     }
 
-    static List<GenericStack> merge(List<GenericStack> first, List<GenericStack> second) {
-        List<GenericStack> combined = new ObjectArrayList<>(first);
+    static ObjectList<GenericStack> merge(ObjectList<GenericStack> first, ObjectList<GenericStack> second) {
+        ObjectArrayList<GenericStack> combined = new ObjectArrayList<>(first);
         combined.addAll(second);
         return list(counts(combined));
     }
 
-    static List<GenericStack> subtract(List<GenericStack> assets, List<GenericStack> consumed) {
+    static ObjectList<GenericStack> subtract(ObjectList<GenericStack> assets, ObjectList<GenericStack> consumed) {
         Object2LongLinkedOpenHashMap<AEKey> result = counts(assets);
         counts(consumed).forEach((key, amount) -> {
             long remaining = Math.subtractExact(result.getLong(key), amount);
@@ -53,23 +53,23 @@ final class SessionAssets {
         return list(result);
     }
 
-    static List<GenericStack> multiply(List<GenericStack> assets, long count) {
+    static ObjectList<GenericStack> multiply(ObjectList<GenericStack> assets, long count) {
         if (count < 0) {
             throw new IllegalArgumentException("Negative asset multiplier");
         }
         if (count == 0) {
-            return List.of();
+            return ObjectList.of();
         }
-        List<GenericStack> result = new ObjectArrayList<>();
+        ObjectArrayList<GenericStack> result = new ObjectArrayList<>();
         for (GenericStack asset : assets) {
             result.add(new GenericStack(asset.what(), Math.multiplyExact(asset.amount(), count)));
         }
         return list(counts(result));
     }
 
-    private static List<GenericStack> list(Object2LongLinkedOpenHashMap<AEKey> values) {
-        List<GenericStack> result = new ObjectArrayList<>(values.size());
+    private static ObjectList<GenericStack> list(Object2LongLinkedOpenHashMap<AEKey> values) {
+        ObjectArrayList<GenericStack> result = new ObjectArrayList<>(values.size());
         values.forEach((key, amount) -> result.add(new GenericStack(key, amount)));
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 }

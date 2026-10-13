@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.multiblock.MultiBlockFailureText;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreHostStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreHostStatus.StructureStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.impl.SupplierDataSource;
@@ -354,6 +354,6 @@ final class TrinityDataCoreStatusPanel {
     }
 
     private static String compact(String value) {
-        return AmountFormatter.format(value);
+        return FormattingUtils.format(value);
     }
 }

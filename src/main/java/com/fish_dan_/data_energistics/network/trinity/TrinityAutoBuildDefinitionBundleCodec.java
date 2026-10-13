@@ -6,12 +6,12 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 /**
  * Bounded menu-opening codec for the server-issued Trinity automatic-build definition snapshot.
@@ -33,7 +33,7 @@ public final class TrinityAutoBuildDefinitionBundleCodec {
             throw new IllegalArgumentException("Trinity auto-build definition bundle requires between 1 and " +
                     TrinityAutoBuildDefinitionBundle.MAX_DEFINITION_COUNT + " sources, got " + definitionCount);
         }
-        Map<ResourceLocation, String> sources = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<ResourceLocation, String> sources = new Object2ObjectLinkedOpenHashMap<>();
         int totalBytes = 0;
         for (int index = 0; index < definitionCount; index++) {
             ResourceLocation definitionId = buffer.readResourceLocation();
@@ -57,7 +57,7 @@ public final class TrinityAutoBuildDefinitionBundleCodec {
     public static void write(RegistryFriendlyByteBuf buffer, TrinityAutoBuildDefinitionBundle bundle) {
         buffer.writeVarLong(bundle.definitionRevision());
         buffer.writeVarInt(bundle.definitionSources().size());
-        for (Map.Entry<ResourceLocation, String> entry : bundle.definitionSources().entrySet()) {
+        for (Object2ObjectMap.Entry<ResourceLocation, String> entry : bundle.definitionSources().object2ObjectEntrySet()) {
             buffer.writeResourceLocation(entry.getKey());
             byte[] sourceBytes = entry.getValue().getBytes(StandardCharsets.UTF_8);
             buffer.writeByteArray(sourceBytes);

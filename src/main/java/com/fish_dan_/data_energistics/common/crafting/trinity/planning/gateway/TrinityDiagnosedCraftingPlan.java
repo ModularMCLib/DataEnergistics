@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityPlanningFailureReport;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.projection.TrinityAe2AmountProjection;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -11,8 +12,9 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * UI-only plan that projects a terminal Trinity diagnostic without exposing it as executable work.
@@ -212,8 +214,8 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
     }
 
     @Override
-    public Map<IPatternDetails, Long> patternTimes() {
-        return this.view.patternTimes();
+    public Object2ObjectMap<IPatternDetails, Long> patternTimes() {
+        return FastUtilCollections.immutableMap(this.view.patternTimes());
     }
 
     private record InputShortageSimulation(
@@ -267,8 +269,8 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
         }
 
         @Override
-        public Map<IPatternDetails, Long> patternTimes() {
-            return Map.of();
+        public Object2ObjectMap<IPatternDetails, Long> patternTimes() {
+            return FastUtilCollections.mapOf();
         }
     }
 
@@ -313,25 +315,25 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
         }
 
         @Override
-        public Map<IPatternDetails, Long> patternTimes() {
-            return Map.of();
+        public Object2ObjectMap<IPatternDetails, Long> patternTimes() {
+            return FastUtilCollections.mapOf();
         }
     }
 
     private record PartialSimulation(
                                      GenericStack finalOutput,
-                                     Map<AEKey, BigInteger> used,
-                                     Map<AEKey, BigInteger> emitted,
-                                     Map<AEKey, BigInteger> missing)
+                                     Object2ObjectMap<AEKey, BigInteger> used,
+                                     Object2ObjectMap<AEKey, BigInteger> emitted,
+                                     Object2ObjectMap<AEKey, BigInteger> missing)
             implements ICraftingPlan {
 
         private PartialSimulation {
             if (finalOutput.amount() <= 0L) {
                 throw new IllegalArgumentException("A Trinity partial simulation requires a positive request");
             }
-            used = Map.copyOf(used);
-            emitted = Map.copyOf(emitted);
-            missing = Map.copyOf(missing);
+            used = FastUtilCollections.immutableMap(used);
+            emitted = FastUtilCollections.immutableMap(emitted);
+            missing = FastUtilCollections.immutableMap(missing);
         }
 
         @Override
@@ -365,11 +367,11 @@ public final class TrinityDiagnosedCraftingPlan implements ICraftingPlan {
         }
 
         @Override
-        public Map<IPatternDetails, Long> patternTimes() {
-            return Map.of();
+        public Object2ObjectMap<IPatternDetails, Long> patternTimes() {
+            return FastUtilCollections.mapOf();
         }
 
-        private static KeyCounter toCounter(Map<AEKey, BigInteger> amounts) {
+        private static KeyCounter toCounter(Object2ObjectMap<AEKey, BigInteger> amounts) {
             KeyCounter counter = new KeyCounter();
             amounts.forEach((key, amount) -> counter.add(
                     key,

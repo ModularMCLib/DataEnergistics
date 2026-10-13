@@ -3,11 +3,13 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.server;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CraftingDispatchWindow;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.CraftingDispatchBudget;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreCraftingRuntime;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.networking.energy.IEnergyService;
 import appeng.me.service.CraftingService;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.function.BiConsumer;
 import java.util.function.IntConsumer;
 
@@ -17,7 +19,7 @@ import java.util.function.IntConsumer;
 public final class GridCraftingDispatchParticipant implements CraftingDispatchParticipant {
 
     private final String diagnosticIdentity;
-    private final List<TrinityDataCoreCraftingRuntime> runtimes;
+    private final ObjectList<TrinityDataCoreCraftingRuntime> runtimes;
     private final IEnergyService energyService;
     private final CraftingService craftingService;
     private final CraftingDispatchWindow dispatchWindow;
@@ -42,7 +44,7 @@ public final class GridCraftingDispatchParticipant implements CraftingDispatchPa
      * @param failureRecorder     callback that moves only this Grid into SAFE mode
      */
     public GridCraftingDispatchParticipant(String diagnosticIdentity,
-                                           List<TrinityDataCoreCraftingRuntime> runtimes,
+                                           ObjectList<TrinityDataCoreCraftingRuntime> runtimes,
                                            int runtimeCursor,
                                            IEnergyService energyService,
                                            CraftingService craftingService,
@@ -60,7 +62,7 @@ public final class GridCraftingDispatchParticipant implements CraftingDispatchPa
             throw new IllegalArgumentException("Crafting dispatch participant dependencies are required");
         }
         this.diagnosticIdentity = diagnosticIdentity;
-        this.runtimes = List.copyOf(runtimes);
+        this.runtimes = FastUtilCollections.immutableList(runtimes);
         this.runtimeCursor = this.runtimes.isEmpty() ? 0 : Math.floorMod(runtimeCursor, this.runtimes.size());
         this.energyService = energyService;
         this.craftingService = craftingService;

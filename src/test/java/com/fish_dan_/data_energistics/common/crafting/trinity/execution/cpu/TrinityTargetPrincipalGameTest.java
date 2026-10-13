@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuPartitionProfile;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.stacks.AEItemKey;
@@ -33,10 +34,10 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @GameTestHolder(Data_Energistics.MODID)
@@ -52,34 +53,34 @@ public final class TrinityTargetPrincipalGameTest {
         TrinityDataCoreVirtualCpu cpu = cpu(helper);
         AEItemKey target = AEItemKey.of(Items.DIAMOND);
         TrinityDataCoreExecutingCraftingJob job = job(cpu, CraftingQuantityMode.NET_NEW, BigInteger.ONE);
-        helper.assertValueEqual(job.replanDemand(Map.of(target, BigInteger.valueOf(3L))).requested(), BigInteger.ONE,
+        helper.assertValueEqual(job.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(3L))).requested(), BigInteger.ONE,
                 "Three owned targets include one original seed, leaving one net-new output still to produce");
         job.trinityExecution().borrowingLedger().reserve(target, 2L);
         job.trinityExecution().borrowingLedger().commit(target, 1L);
-        helper.assertValueEqual(job.replanDemand(Map.of(target, BigInteger.valueOf(3L))).requested(), BigInteger.valueOf(3L),
+        helper.assertValueEqual(job.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(3L))).requested(), BigInteger.valueOf(3L),
                 "Reserved and committed borrowed targets are external principal, not produced output");
         job.trinityExecution().borrowingLedger().release(target, 1L);
         job.recordAdditionalTargetPrincipal(BigInteger.valueOf(2L));
-        helper.assertValueEqual(job.replanDemand(Map.of(target, BigInteger.valueOf(6L))).requested(), BigInteger.ONE,
+        helper.assertValueEqual(job.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(6L))).requested(), BigInteger.ONE,
                 "Replacement acquisition increases principal while released borrowing is excluded");
         AEItemKey actual = namedTarget();
         job.trinityExecution().recordActualFinalOutput(actual, BigInteger.ONE);
-        helper.assertTrue(job.replanDemand(Map.of(target, BigInteger.valueOf(6L))).noProduction(),
+        helper.assertTrue(job.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(6L))).noProduction(),
                 "Isolated actual output counts toward existing production without entering working inventory");
         var work = job.trinityExecution().pollDispatchable(1L, IntSet.of(), ignored -> true, true).orElseThrow();
         job.trinityExecution().recordAccepted(work, 3L, 3L);
         job.trinityExecution().sealCompletion(BigInteger.TWO);
-        helper.assertValueEqual(job.replanDemand(Map.of(target, BigInteger.valueOf(3L))).requested(), BigInteger.ONE,
+        helper.assertValueEqual(job.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(3L))).requested(), BigInteger.ONE,
                 "Sealed completion already includes the actual variant and must not count it twice");
         var restored = new TrinityDataCoreExecutingCraftingJob(job.writeToTag(helper.getLevel().registryAccess()),
                 helper.getLevel().registryAccess(), ignored -> {}, cpu.logic());
-        helper.assertValueEqual(restored.replanDemand(Map.of(target, BigInteger.valueOf(3L))),
-                job.replanDemand(Map.of(target, BigInteger.valueOf(3L))), "Known principal and completion accounting survive job reload");
+        helper.assertValueEqual(restored.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(3L))),
+                job.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(3L))), "Known principal and completion accounting survive job reload");
         helper.assertValueEqual(TrinityDataCoreExecutingCraftingJob.ownedTargetAmount(target,
-                TrinitySameItemPolicy.ofRepresentatives(List.of(target)), Map.of(target, BigInteger.valueOf(2L), actual, BigInteger.valueOf(3L))),
+                TrinitySameItemPolicy.ofRepresentatives(ObjectList.of(target)), FastUtilCollections.mapOf(target, BigInteger.valueOf(2L), actual, BigInteger.valueOf(3L))),
                 BigInteger.valueOf(5L), "Authorized target aliases are counted once within their logical domain");
         helper.assertValueEqual(TrinityDataCoreExecutingCraftingJob.ownedTargetAmount(target,
-                TrinitySameItemPolicy.empty(), Map.of(target, BigInteger.valueOf(2L), actual, BigInteger.valueOf(3L))),
+                TrinitySameItemPolicy.empty(), FastUtilCollections.mapOf(target, BigInteger.valueOf(2L), actual, BigInteger.valueOf(3L))),
                 BigInteger.valueOf(2L), "Unmarked target components remain exact");
         helper.succeed();
     }
@@ -91,12 +92,12 @@ public final class TrinityTargetPrincipalGameTest {
         TrinityDataCoreVirtualCpu cpu = cpu(helper);
         AEItemKey target = AEItemKey.of(Items.DIAMOND);
         TrinityDataCoreExecutingCraftingJob total = job(cpu, CraftingQuantityMode.FINAL_TOTAL, BigInteger.valueOf(10L));
-        helper.assertValueEqual(total.replanDemand(Map.of(target, BigInteger.ONE)).requested(), BigInteger.valueOf(3L),
+        helper.assertValueEqual(total.replanDemand(FastUtilCollections.mapOf(target, BigInteger.ONE)).requested(), BigInteger.valueOf(3L),
                 "FINAL_TOTAL requests the final total, leaving existing owned target consumption to the solver");
         total.trinityExecution().recordActualFinalOutput(namedTarget(), BigInteger.ONE);
-        helper.assertValueEqual(total.replanDemand(Map.of(target, BigInteger.ONE)).requested(), BigInteger.valueOf(2L),
+        helper.assertValueEqual(total.replanDemand(FastUtilCollections.mapOf(target, BigInteger.ONE)).requested(), BigInteger.valueOf(2L),
                 "Isolated completion is excluded from the new FINAL_TOTAL request");
-        helper.assertTrue(total.replanDemand(Map.of(target, BigInteger.valueOf(2L))).noProduction(),
+        helper.assertTrue(total.replanDemand(FastUtilCollections.mapOf(target, BigInteger.valueOf(2L))).noProduction(),
                 "Owned stock plus isolated completion can finish without forcing one additional recipe");
         helper.succeed();
     }
@@ -106,13 +107,13 @@ public final class TrinityTargetPrincipalGameTest {
         AEItemKey output = AEItemKey.of(Items.DIAMOND);
         BigInteger count = BigInteger.valueOf(3L);
         var identity = new TrinityPatternIdentity("principal", "recipe");
-        var firing = new TrinityPlanPatternFiring(identity, output, 0, count, Map.of(input, BigInteger.ONE),
-                Map.of(output, BigInteger.ONE), Map.of(), List.of());
-        Map<AEKey, BigInteger> delta = Map.of(input, count.negate(), output, count);
-        var stage = new TrinityPlanStage(0, false, IntSet.of(), List.of(firing), Map.of(input, count), delta);
+        var firing = new TrinityPlanPatternFiring(identity, output, 0, count, FastUtilCollections.mapOf(input, BigInteger.ONE),
+                FastUtilCollections.mapOf(output, BigInteger.ONE), FastUtilCollections.mapOf(), ObjectList.of());
+        Object2ObjectMap<AEKey, BigInteger> delta = FastUtilCollections.mapOf(input, count.negate(), output, count);
+        var stage = new TrinityPlanStage(0, false, IntSet.of(), ObjectList.of(firing), FastUtilCollections.mapOf(input, count), delta);
         var plan = TrinityCraftingPlan.builder().finalOutput(new GenericStack(output, 3L)).bytes(BigInteger.ZERO)
-                .catalogRevision(1L).quantityMode(mode).initialExpectedInputs(Map.of(input, count))
-                .patternFirings(Map.of(identity, count)).stages(List.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta).build();
+                .catalogRevision(1L).quantityMode(mode).initialExpectedInputs(FastUtilCollections.mapOf(input, count))
+                .patternFirings(FastUtilCollections.mapOf(identity, count)).stages(ObjectList.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta).build();
         CraftingLink link = new CraftingLink(CraftingCpuHelper.generateLinkData(UUID.randomUUID(), true, false), cpu);
         return new TrinityDataCoreExecutingCraftingJob(plan, ignored -> {}, link, null, principal);
     }

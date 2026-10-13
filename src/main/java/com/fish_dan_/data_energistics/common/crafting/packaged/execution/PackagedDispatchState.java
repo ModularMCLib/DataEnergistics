@@ -200,7 +200,14 @@ public final class PackagedDispatchState {
                     break;
                 }
                 var occupied = adapter.occupiedPositions(level, link.position(), preparation);
-                if (occupied.stream().anyMatch(position -> !level.isLoaded(position) || !claims.available(position))) {
+                boolean unavailable = false;
+                for (long occupiedPosition : occupied) {
+                    if (!level.isLoaded(BlockPos.of(occupiedPosition)) || !claims.available(BlockPos.of(occupiedPosition))) {
+                        unavailable = true;
+                        break;
+                    }
+                }
+                if (unavailable) {
                     capacities[index] = 0;
                     retry = true;
                     break;
@@ -297,7 +304,14 @@ public final class PackagedDispatchState {
                         return false;
                     }
                     var positions = this.adapter.occupiedPositions(this.level, link.position(), current);
-                    if (positions.stream().anyMatch(position -> !this.level.isLoaded(position) || !this.claims.available(position))) {
+                    boolean unavailable = false;
+                    for (long occupiedPosition : positions) {
+                        if (!this.level.isLoaded(BlockPos.of(occupiedPosition)) || !this.claims.available(BlockPos.of(occupiedPosition))) {
+                            unavailable = true;
+                            break;
+                        }
+                    }
+                    if (unavailable) {
                         releaseClaims(committed);
                         return false;
                     }
@@ -390,7 +404,14 @@ public final class PackagedDispatchState {
             var preparation = adapter.prepare(level, link.position(), link.side(), recipe, pattern, inputs);
             if (preparation == null) continue;
             var occupied = adapter.occupiedPositions(level, link.position(), preparation);
-            if (occupied.stream().anyMatch(position -> !level.isLoaded(position))) continue;
+            boolean unloaded = false;
+            for (long occupiedPosition : occupied) {
+                if (!level.isLoaded(BlockPos.of(occupiedPosition))) {
+                    unloaded = true;
+                    break;
+                }
+            }
+            if (unloaded) continue;
             PackagedOutputMatching.save(pattern, preparation, level.registryAccess());
             var operation = new PackagedOperationState(adapter.id(), recipe, link.position(), link.side(), preparation, inputs, occupied);
             if (!claims.acquireAll(operation.occupiedPositions(), operation.id(), operation.progress().getLongArray("changing_positions"))) continue;
@@ -477,8 +498,8 @@ public final class PackagedDispatchState {
         var tasks = tag.getList("operations", Tag.TAG_COMPOUND);
         for (int index = 0; index < tasks.size(); index++) {
             var operation = PackagedOperationState.load(tasks.getCompound(index), registries);
-            for (var occupied : operation.occupiedPositions()) {
-                if (!positions.add(occupied.asLong())) throw new IllegalArgumentException("Overlapping packaged operation targets");
+            for (long occupied : operation.occupiedPositions()) {
+                if (!positions.add(occupied)) throw new IllegalArgumentException("Overlapping packaged operation targets");
             }
             state.operations.add(operation);
         }

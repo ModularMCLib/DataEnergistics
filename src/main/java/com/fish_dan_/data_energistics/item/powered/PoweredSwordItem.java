@@ -60,6 +60,8 @@ import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ItemAbility;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
@@ -74,19 +76,10 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
     private static final float LIGHT_BLADE_DAMAGE_RATIO = 5.0F / 6.0F;
     private static final long SWORD_RADIX_LOSS_DATA_FLOW_COST = 20L;
     private static final int RADIX_LOSS_DURATION_TICKS = 20;
-    public static final float SANCTIFIER_THROWN_LIGHT_BLADE_SPEED = 2.4F;
     private final boolean throwable;
 
     public PoweredSwordItem(Tier tier, Properties properties) {
         this(tier, properties, createDefaultSwordTool(), true);
-    }
-
-    public PoweredSwordItem(Tier tier, Properties properties, boolean throwable) {
-        this(tier, properties, createDefaultSwordTool(), throwable);
-    }
-
-    public PoweredSwordItem(Tier tier, Properties properties, Tool toolComponent) {
-        this(tier, properties, toolComponent, true);
     }
 
     public PoweredSwordItem(Tier tier, Properties properties, Tool toolComponent, boolean throwable) {
@@ -115,31 +108,11 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
             return cellTooltip;
         }
         var upgrades = this.getUpgrades(stack);
-        List<ItemStack> upgradeItems = collectUpgradeItems(upgrades);
+        ObjectList<ItemStack> upgradeItems = collectUpgradeItems(upgrades);
         if (upgradeItems.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(new StorageCellTooltipComponent(upgradeItems, List.of(), false, false));
-    }
-
-    @Override
-    public boolean isBarVisible(ItemStack stack) {
-        return this.isEnergyBarVisible(stack);
-    }
-
-    @Override
-    public int getBarWidth(ItemStack stack) {
-        return this.getEnergyBarWidth(stack);
-    }
-
-    @Override
-    public int getBarColor(ItemStack stack) {
-        return this.getEnergyBarColor(stack);
-    }
-
-    @Override
-    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
-        return false;
+        return Optional.of(new StorageCellTooltipComponent(upgradeItems, ObjectLists.emptyList(), false, false));
     }
 
     @Override
@@ -173,20 +146,16 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
         if (!this.hasSufficientEnergy(stack)) {
             return false;
         }
-        boolean result = true;
-        if (result && !attacker.level().isClientSide) {
+        if (!attacker.level().isClientSide) {
             this.tryApplyRadixLoss(stack, target, attacker);
             if (this.canFireLightBlade(stack)) {
-                this.fireLightBlade((Level) attacker.level(), attacker, stack);
+                this.fireLightBlade(attacker.level(), attacker, stack);
                 this.consumeActionEnergy(stack);
             }
             this.consumeActionEnergy(stack);
         }
-        return result;
+        return true;
     }
-
-    @Override
-    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {}
 
     @Override
     public boolean onEntitySwing(ItemStack stack, LivingEntity entity, InteractionHand hand) {
@@ -203,7 +172,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
             return false;
         }
 
-        this.fireLightBlade((Level) entity.level(), entity, stack);
+        this.fireLightBlade(entity.level(), entity, stack);
         this.consumeActionEnergy(stack);
         player.resetAttackStrengthTicker();
         return false;
@@ -441,8 +410,8 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Proje
                 (float) getPanelAttackDamage(stack));
     }
 
-    private static List<ItemStack> collectUpgradeItems(IUpgradeInventory upgrades) {
-        List<ItemStack> upgradeItems = new ObjectArrayList<>(upgrades.size());
+    private static ObjectList<ItemStack> collectUpgradeItems(IUpgradeInventory upgrades) {
+        ObjectList<ItemStack> upgradeItems = new ObjectArrayList<>(upgrades.size());
         for (int i = 0; i < upgrades.size(); i++) {
             ItemStack upgrade = upgrades.getStackInSlot(i);
             if (!upgrade.isEmpty()) {

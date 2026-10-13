@@ -8,13 +8,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.Map;
 
 /**
  * Progress tracker for a Trinity Data Core virtual CPU job.
@@ -72,7 +72,7 @@ final class TrinityDataCoreElapsedTimeTracker {
      *
      * @param plannedOutputs complete aggregate pattern outputs
      */
-    void initializePlanBaseline(Map<AEKey, BigInteger> plannedOutputs) {
+    void initializePlanBaseline(Object2ObjectMap<AEKey, BigInteger> plannedOutputs) {
         if (this.planBaseline || !this.startedWorkByType.isEmpty()) {
             throw new IllegalStateException("A Trinity plan progress baseline may only be initialized once");
         }
@@ -86,7 +86,7 @@ final class TrinityDataCoreElapsedTimeTracker {
      * @param previousPending outputs removed with the old remaining plan
      * @param replacement     complete outputs of the replacement remaining plan
      */
-    void replacePendingPlan(Map<AEKey, BigInteger> previousPending, Map<AEKey, BigInteger> replacement) {
+    void replacePendingPlan(Object2ObjectMap<AEKey, BigInteger> previousPending, Object2ObjectMap<AEKey, BigInteger> replacement) {
         if (!this.planBaseline) {
             throw new IllegalStateException("A Trinity replacement requires an established progress baseline");
         }
@@ -109,7 +109,7 @@ final class TrinityDataCoreElapsedTimeTracker {
      * @throws IllegalArgumentException when a cancellation quantity is not positive
      * @throws IllegalStateException    when cancellation would withdraw completed or unscheduled work
      */
-    Runnable prepareUncompletedWithdrawal(Map<AEKey, BigInteger> cancelledOutputs) {
+    Runnable prepareUncompletedWithdrawal(Object2ObjectMap<AEKey, BigInteger> cancelledOutputs) {
         Reference2ObjectMap<AEKeyType, BigInteger> updated = new Reference2ObjectOpenHashMap<>();
         mergeBigIntegerWork(cancelledOutputs, updated);
         for (var entry : updated.reference2ObjectEntrySet()) {
@@ -217,7 +217,7 @@ final class TrinityDataCoreElapsedTimeTracker {
         return Mth.clamp(completedUnits.divide(startedUnits, MathContext.DECIMAL64).floatValue(), 0.0F, 1.0F);
     }
 
-    private void mergeBigIntegerWork(Map<AEKey, BigInteger> work,
+    private void mergeBigIntegerWork(Object2ObjectMap<AEKey, BigInteger> work,
                                      Reference2ObjectMap<AEKeyType, BigInteger> destination) {
         work.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
@@ -228,7 +228,7 @@ final class TrinityDataCoreElapsedTimeTracker {
     }
 
     private static void subtractBigIntegerWork(
-                                               Map<AEKey, BigInteger> work,
+                                               Object2ObjectMap<AEKey, BigInteger> work,
                                                Reference2ObjectMap<AEKeyType, BigInteger> destination) {
         Reference2ObjectMap<AEKeyType, BigInteger> removal = new Reference2ObjectOpenHashMap<>();
         work.forEach((key, amount) -> {

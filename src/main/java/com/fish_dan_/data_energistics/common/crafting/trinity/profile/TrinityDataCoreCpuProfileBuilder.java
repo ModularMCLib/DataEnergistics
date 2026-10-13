@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.profile;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 /**
  * Mutable collector for named Trinity Data Core CPU contributions.
@@ -13,7 +14,7 @@ import java.util.Map;
  */
 public final class TrinityDataCoreCpuProfileBuilder {
 
-    private final Map<String, TrinityDataCoreCpuContribution> contributions = new Object2ObjectAVLTreeMap<>();
+    private final Object2ObjectMap<String, TrinityDataCoreCpuContribution> contributions = new Object2ObjectAVLTreeMap<>();
 
     /**
      * Adds or replaces the contribution for one structure name.
@@ -51,8 +52,8 @@ public final class TrinityDataCoreCpuProfileBuilder {
     /**
      * @return copy of current named contributions for persistence
      */
-    public Map<String, TrinityDataCoreCpuContribution> contributions() {
-        return Map.copyOf(this.contributions);
+    public Object2ObjectMap<String, TrinityDataCoreCpuContribution> contributions() {
+        return FastUtilCollections.immutableMap(this.contributions);
     }
 
     private static String requireStructureName(String structureName) {

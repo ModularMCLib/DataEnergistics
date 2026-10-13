@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.request;
 
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.TrinityCraftingSchema;
 
 /**
  * Immutable per-request limits captured before Trinity planning leaves the server thread.

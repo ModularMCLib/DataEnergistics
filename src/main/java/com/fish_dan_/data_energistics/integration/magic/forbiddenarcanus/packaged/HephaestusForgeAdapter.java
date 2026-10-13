@@ -39,8 +39,8 @@ import com.stal111.forbidden_arcanus.common.block.pedestal.effect.PedestalEffect
 import com.stal111.forbidden_arcanus.common.item.enhancer.EnhancerTarget;
 import com.stal111.forbidden_arcanus.core.init.other.ModPOITypes;
 import com.stal111.forbidden_arcanus.core.registry.FARegistries;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
@@ -109,11 +109,11 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
             }
         }
         if (hasRemaining(remaining) || !ritual.checkIngredients(stacks, main)) return null;
-        ObjectList<BlockPos> pedestals = pedestalPositions(level, position);
+        LongList pedestals = pedestalPositions(level, position);
         if (pedestals.size() < stacks.size()) return null;
         for (int index = 0; index < stacks.size(); index++) {
-            if (!(level.getBlockEntity(pedestals.get(index)) instanceof PedestalBlockEntity pedestal) || pedestal.hasStack()) return null;
-            ingredients.getCompound(index).putLong("position", pedestals.get(index).asLong());
+            if (!(level.getBlockEntity(BlockPos.of(pedestals.getLong(index))) instanceof PedestalBlockEntity pedestal) || pedestal.hasStack()) return null;
+            ingredients.getCompound(index).putLong("position", pedestals.getLong(index));
         }
         ItemStack result = ritual.result().getResultItem(main);
         if (result.isEmpty() || pattern.getOutputs().size() != 1 || !PackagedOutputMatching.matches(pattern, result, result.getCount())) return null;
@@ -125,11 +125,11 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var result = new ObjectArrayList<BlockPos>();
-        result.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var result = new LongArrayList();
+        result.add(position.asLong());
         ListTag list = preparation.getList("ingredients", Tag.TAG_COMPOUND);
-        for (int index = 0; index < list.size(); index++) result.add(BlockPos.of(list.getCompound(index).getLong("position")));
+        for (int index = 0; index < list.size(); index++) result.add(list.getCompound(index).getLong("position"));
         return result;
     }
 
@@ -226,7 +226,8 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
 
     @Override
     public boolean recoverRemoved(PackagedMachineOperation operation) {
-        for (BlockPos position : occupiedPositions(operation.level(), operation.position(), operation.progress())) {
+        for (long packedPosition : occupiedPositions(operation.level(), operation.position(), operation.progress())) {
+            BlockPos position = BlockPos.of(packedPosition);
             if (!operation.level().isLoaded(position)) return false;
         }
         CompoundTag progress = operation.progress();
@@ -259,13 +260,13 @@ public final class HephaestusForgeAdapter implements PackagedMachineAdapter {
         return true;
     }
 
-    private static ObjectList<BlockPos> pedestalPositions(ServerLevel level, BlockPos center) {
-        var positions = new ObjectArrayList<BlockPos>();
+    private static LongList pedestalPositions(ServerLevel level, BlockPos center) {
+        var positions = new LongArrayList();
         for (BlockPos pos : BlockPos.betweenClosed(center.offset(-4, -4, -4), center.offset(4, 4, 4))) {
             if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof PedestalBlockEntity)) continue;
             var nativeForge = level.getPoiManager().getInRange(holder -> holder.value() == ModPOITypes.HEPHAESTUS_FORGE.get(),
                     pos, 4, PoiManager.Occupancy.ANY).map(PoiRecord::getPos).findFirst();
-            if (nativeForge.isPresent() && nativeForge.get().equals(center)) positions.add(pos.immutable());
+            if (nativeForge.isPresent() && nativeForge.get().equals(center)) positions.add(pos.asLong());
         }
         return positions;
     }

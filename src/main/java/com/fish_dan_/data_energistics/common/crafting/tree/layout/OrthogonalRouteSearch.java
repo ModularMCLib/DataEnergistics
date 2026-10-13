@@ -8,10 +8,10 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 
 /** Shortest obstacle-free orthogonal routes: cheap shapes bound an admissible, length-first sparse A* search. */
@@ -30,9 +30,9 @@ final class OrthogonalRouteSearch {
     @Nullable
     Choice fixedChannel(Port source, Port target, double lane, CraftingPlanRouteGroup group) {
         if (!graph.terminalClear(source) || !graph.terminalClear(target)) return null;
-        List<Point> core = source.side() == CraftingPlanGraphLayout.Side.RIGHT || source.side() == CraftingPlanGraphLayout.Side.LEFT ? List.of(source.stub(), new Point(lane, source.stub().y()),
+        ObjectList<Point> core = source.side() == CraftingPlanGraphLayout.Side.RIGHT || source.side() == CraftingPlanGraphLayout.Side.LEFT ? ObjectList.of(source.stub(), new Point(lane, source.stub().y()),
                 new Point(lane, target.stub().y()), target.stub()) :
-                List.of(source.stub(), new Point(source.stub().x(), lane),
+                ObjectList.of(source.stub(), new Point(source.stub().x(), lane),
                         new Point(target.stub().x(), lane), target.stub());
         RawCandidate raw = rawCandidate(source, target, core, group, true, true);
         if (raw == null) return null;
@@ -40,15 +40,15 @@ final class OrthogonalRouteSearch {
         return candidate == null ? null : new Choice(candidate.points(), candidate.metrics(), true);
     }
 
-    Choice route(List<Port> sourcePorts, List<Port> targetPorts, CraftingPlanRouteGroup group,
+    Choice route(ObjectList<Port> sourcePorts, ObjectList<Port> targetPorts, CraftingPlanRouteGroup group,
                  @Nullable Choice previous, boolean improveCrossings) {
-        List<Port> clearSources = terminals(sourcePorts, group, true, false);
-        List<Port> clearTargets = terminals(targetPorts, group, false, false);
+        ObjectList<Port> clearSources = terminals(sourcePorts, group, true, false);
+        ObjectList<Port> clearTargets = terminals(targetPorts, group, false, false);
         if (clearSources.isEmpty() || clearTargets.isEmpty()) throw new IllegalStateException("No safe crafting-tree node port");
-        List<Port> sources = terminals(sourcePorts, group, true, true);
-        List<Port> targets = terminals(targetPorts, group, false, true);
+        ObjectList<Port> sources = terminals(sourcePorts, group, true, true);
+        ObjectList<Port> targets = terminals(targetPorts, group, false, true);
         Candidate shortest = previous == null ? null : new Candidate(previous.points(), previous.metrics());
-        List<RawCandidate> quick = quickCandidates(sources, targets, group, true);
+        ObjectList<RawCandidate> quick = quickCandidates(sources, targets, group, true);
         quick.sort(OrthogonalRouteSearch::compareRaw);
         for (RawCandidate candidate : quick) {
             if (shortest != null && compareRaw(candidate, shortest) >= 0) break;
@@ -65,7 +65,7 @@ final class OrthogonalRouteSearch {
             if (candidate != null) shortest = measure(candidate, group);
         }
         if (shortest == null) {
-            List<RawCandidate> localFallback = quickCandidates(clearSources, clearTargets, group, false);
+            ObjectList<RawCandidate> localFallback = quickCandidates(clearSources, clearTargets, group, false);
             localFallback.sort(OrthogonalRouteSearch::compareRaw);
             RawCandidate fallback = localFallback.isEmpty() ? null : localFallback.getFirst();
             if (fallback == null || fallback.length() > lowerBound(clearSources, clearTargets) + EPSILON) {
@@ -91,9 +91,9 @@ final class OrthogonalRouteSearch {
         return new Choice(best.points(), best.metrics(), true);
     }
 
-    private List<RawCandidate> quickCandidates(List<Port> sources, List<Port> targets,
-                                               CraftingPlanRouteGroup group, boolean respectReservations) {
-        List<RawCandidate> result = new ObjectArrayList<>();
+    private ObjectList<RawCandidate> quickCandidates(ObjectList<Port> sources, ObjectList<Port> targets,
+                                                     CraftingPlanRouteGroup group, boolean respectReservations) {
+        ObjectList<RawCandidate> result = new ObjectArrayList<>();
         for (Port source : sources) {
             for (Port target : targets) {
                 addCandidates(result, source, target, graph.quickPaths(source, target), group, respectReservations);
@@ -103,17 +103,17 @@ final class OrthogonalRouteSearch {
         return result;
     }
 
-    private void addCandidates(List<RawCandidate> result, Port source, Port target, List<List<Point>> paths,
+    private void addCandidates(ObjectList<RawCandidate> result, Port source, Port target, ObjectList<ObjectList<Point>> paths,
                                CraftingPlanRouteGroup group, boolean respectReservations) {
-        for (List<Point> core : paths) {
+        for (ObjectList<Point> core : paths) {
             RawCandidate candidate = rawCandidate(source, target, core, group, true, respectReservations);
             if (candidate != null) result.add(candidate);
         }
     }
 
-    private List<Port> terminals(List<Port> ports, CraftingPlanRouteGroup group, boolean source,
-                                 boolean respectReservations) {
-        List<Port> result = new ObjectArrayList<>(4);
+    private ObjectList<Port> terminals(ObjectList<Port> ports, CraftingPlanRouteGroup group, boolean source,
+                                       boolean respectReservations) {
+        ObjectList<Port> result = new ObjectArrayList<>(4);
         for (Port port : ports) {
             Point from = source ? port.anchor() : port.stub();
             Point to = source ? port.stub() : port.anchor();
@@ -122,15 +122,15 @@ final class OrthogonalRouteSearch {
         return result;
     }
 
-    private static double lowerBound(List<Port> sources, List<Port> targets) {
+    private static double lowerBound(ObjectList<Port> sources, ObjectList<Port> targets) {
         double result = Double.POSITIVE_INFINITY;
         for (Port source : sources) result = Math.min(result, distance(source.anchor(), source.stub()) + heuristic(source.stub(), targets));
         return result;
     }
 
-    private @Nullable RawCandidate searchCandidate(List<Port> sources, List<Port> targets,
+    private @Nullable RawCandidate searchCandidate(ObjectList<Port> sources, ObjectList<Port> targets,
                                                    CraftingPlanRouteGroup group, boolean respectReservations, double upperBound) {
-        List<Long2ObjectMap<Label>> labels = new ObjectArrayList<>(4);
+        ObjectList<Long2ObjectMap<Label>> labels = new ObjectArrayList<>(4);
         for (int heading = 0; heading < 4; heading++) labels.add(new Long2ObjectOpenHashMap<>());
         Comparator<Label> order = Comparator.comparingDouble((Label label) -> label.estimate)
                 .thenComparingInt(label -> label.bends).thenComparingLong(label -> label.point)
@@ -171,7 +171,7 @@ final class OrthogonalRouteSearch {
         return null;
     }
 
-    private static boolean retain(Label candidate, List<Long2ObjectMap<Label>> index) {
+    private static boolean retain(Label candidate, ObjectList<Long2ObjectMap<Label>> index) {
         Long2ObjectMap<Label> labels = index.get(candidate.heading);
         Label existing = labels.get(candidate.point);
         if (existing != null && (existing.length < candidate.length - EPSILON || Math.abs(existing.length - candidate.length) <= EPSILON && existing.bends <= candidate.bends)) return false;
@@ -180,15 +180,15 @@ final class OrthogonalRouteSearch {
         return true;
     }
 
-    private List<Point> reconstruct(Label label) {
-        List<Point> reversed = new ObjectArrayList<>();
+    private ObjectList<Point> reconstruct(Label label) {
+        ObjectList<Point> reversed = new ObjectArrayList<>();
         for (Label step = label; step != null; step = step.previous) reversed.add(graph.point(step.point));
-        List<Point> result = new ObjectArrayList<>(reversed.size());
+        ObjectList<Point> result = new ObjectArrayList<>(reversed.size());
         for (int index = reversed.size() - 1; index >= 0; index--) result.add(reversed.get(index));
         return result;
     }
 
-    private @Nullable RawCandidate rawCandidate(Port source, Port target, List<Point> core,
+    private @Nullable RawCandidate rawCandidate(Port source, Port target, ObjectList<Point> core,
                                                 CraftingPlanRouteGroup group, boolean validateCore,
                                                 boolean respectReservations) {
         if (validateCore) {
@@ -198,7 +198,7 @@ final class OrthogonalRouteSearch {
                 if (!from.equals(to) && !graph.clear(from, to)) return null;
             }
         }
-        List<Point> points = new ObjectArrayList<>(core.size() + 2);
+        ObjectList<Point> points = new ObjectArrayList<>(core.size() + 2);
         points.add(source.anchor());
         for (Point point : core) if (!append(points, point)) return null;
         if (!append(points, target.anchor())) return null;
@@ -219,7 +219,7 @@ final class OrthogonalRouteSearch {
     }
 
     /** Removes a detour between two visits to the same finite corridor using only already verified subsegments. */
-    private static void eraseCollinearLoops(List<Point> points) {
+    private static void eraseCollinearLoops(ObjectList<Point> points) {
         boolean changed;
         do {
             changed = false;
@@ -232,7 +232,7 @@ final class OrthogonalRouteSearch {
                     Point secondEnd = points.get(second + 1);
                     Point splice = splicePoint(firstStart, firstEnd, secondStart, secondEnd);
                     if (splice == null) continue;
-                    List<Point> simplified = new ObjectArrayList<>(points.size() - (second - first));
+                    ObjectList<Point> simplified = new ObjectArrayList<>(points.size() - (second - first));
                     for (int index = 0; index <= first; index++) simplified.add(points.get(index));
                     if (!simplified.getLast().equals(splice)) simplified.add(splice);
                     for (int index = second + 1; index < points.size(); index++) {
@@ -272,7 +272,7 @@ final class OrthogonalRouteSearch {
         return metrics == null ? null : new Candidate(candidate.points(), metrics);
     }
 
-    private static boolean append(List<Point> points, Point point) {
+    private static boolean append(ObjectList<Point> points, Point point) {
         Point last = points.getLast();
         if (last.equals(point)) return true;
         if (points.size() > 1) {
@@ -286,7 +286,7 @@ final class OrthogonalRouteSearch {
         return true;
     }
 
-    private static double heuristic(Point point, List<Port> goals) {
+    private static double heuristic(Point point, ObjectList<Port> goals) {
         double minimum = Double.POSITIVE_INFINITY;
         for (Port goal : goals) minimum = Math.min(minimum, distance(point, goal.stub()) + OrthogonalRoutingGraph.CLEARANCE);
         return minimum;
@@ -318,11 +318,11 @@ final class OrthogonalRouteSearch {
         return length == 0 ? Integer.compare(left.bends(), right.metrics().bends()) : length;
     }
 
-    record Choice(List<Point> points, Metrics metrics, boolean reserved) {}
+    record Choice(ObjectList<Point> points, Metrics metrics, boolean reserved) {}
 
-    private record Candidate(List<Point> points, Metrics metrics) {}
+    private record Candidate(ObjectList<Point> points, Metrics metrics) {}
 
-    private record RawCandidate(List<Point> points, double length, int bends) {}
+    private record RawCandidate(ObjectList<Point> points, double length, int bends) {}
 
     private static final class Label {
 

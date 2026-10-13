@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.tree.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -13,30 +14,29 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /** Immutable dependency graph; edges point from requested outputs towards their production inputs. */
 public final class CraftingPlanGraph {
 
     private final Header header;
     private final int rootId;
-    private final List<Node> nodes;
-    private final List<Edge> edges;
-    private final List<Cycle> cycles;
+    private final ObjectList<Node> nodes;
+    private final ObjectList<Edge> edges;
+    private final ObjectList<Cycle> cycles;
     private final Int2ObjectMap<Node> byId;
 
-    public CraftingPlanGraph(Header header, int rootId, List<Node> nodes, List<Edge> edges, List<Cycle> cycles) {
+    public CraftingPlanGraph(Header header, int rootId, ObjectList<Node> nodes, ObjectList<Edge> edges, ObjectList<Cycle> cycles) {
         this.header = header;
         this.rootId = rootId;
-        this.nodes = List.copyOf(nodes);
-        this.edges = List.copyOf(edges);
-        this.cycles = List.copyOf(cycles);
+        this.nodes = FastUtilCollections.immutableList(nodes);
+        this.edges = FastUtilCollections.immutableList(edges);
+        this.cycles = FastUtilCollections.immutableList(cycles);
         Int2ObjectMap<Node> indexed = new Int2ObjectOpenHashMap<>();
         ObjectSet<AEKey> keys = new ObjectOpenHashSet<>();
         ObjectSet<ProcessIdentity> processes = new ObjectOpenHashSet<>();
@@ -117,15 +117,15 @@ public final class CraftingPlanGraph {
         return this.rootId;
     }
 
-    public List<Node> nodes() {
+    public ObjectList<Node> nodes() {
         return this.nodes;
     }
 
-    public List<Edge> edges() {
+    public ObjectList<Edge> edges() {
         return this.edges;
     }
 
-    public List<Cycle> cycles() {
+    public ObjectList<Cycle> cycles() {
         return this.cycles;
     }
 
@@ -219,7 +219,7 @@ public final class CraftingPlanGraph {
     }
 
     public record Cycle(int id, int ordinal, IntList nodeIds, IntList stageOrder,
-                        BigInteger repetitions, Map<AEKey, BigInteger> minimumSeed, Map<AEKey, BigInteger> netChange) {
+                        BigInteger repetitions, Object2ObjectMap<AEKey, BigInteger> minimumSeed, Object2ObjectMap<AEKey, BigInteger> netChange) {
 
         public Cycle {
             checkId(id);
@@ -228,9 +228,9 @@ public final class CraftingPlanGraph {
             stageOrder = uniqueIds(stageOrder);
             if (nodeIds.isEmpty() || stageOrder.isEmpty()) throw new IllegalArgumentException("Empty cycle");
             positive(repetitions);
-            minimumSeed = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(minimumSeed));
+            minimumSeed = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(minimumSeed));
             minimumSeed.values().forEach(CraftingPlanGraph::positive);
-            netChange = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(netChange));
+            netChange = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(netChange));
             if (netChange.values().stream().anyMatch(amount -> amount.signum() == 0)) {
                 throw new IllegalArgumentException("Zero cycle net change entry");
             }

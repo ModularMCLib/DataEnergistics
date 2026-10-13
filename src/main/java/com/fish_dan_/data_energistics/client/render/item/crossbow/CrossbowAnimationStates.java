@@ -15,13 +15,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumMap;
-import java.util.Map;
 import java.util.WeakHashMap;
 
 /** Client-thread visual state for rendered entity hands; values never retain their entity keys. */
 public final class CrossbowAnimationStates {
 
-    private static final Map<LivingEntity, EnumMap<InteractionHand, HandAnimation>> ANIMATIONS = new WeakHashMap<>();
+    private static final WeakHashMap<LivingEntity, EnumMap<InteractionHand, HandAnimation>> ANIMATIONS = new WeakHashMap<>();
 
     private CrossbowAnimationStates() {}
 

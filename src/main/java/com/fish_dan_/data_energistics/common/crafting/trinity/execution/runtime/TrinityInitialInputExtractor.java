@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory.TrinityExactWorkingInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
@@ -15,12 +16,12 @@ import appeng.api.storage.MEStorage;
 import appeng.crafting.inv.ListCraftingInventory;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Extracts exact Trinity initial inputs without assuming one aggregate-storage call must satisfy the whole request.
@@ -56,7 +57,7 @@ public final class TrinityInitialInputExtractor {
 
     /** Reserves replacement inputs using the replacement plan's authorised logical item domains. */
     public static @Nullable GenericStack reserveReplacement(
-                                                            Map<AEKey, BigInteger> requiredInputs,
+                                                            Object2ObjectMap<AEKey, BigInteger> requiredInputs,
                                                             TrinitySameItemPolicy sameItemPolicy,
                                                             MEStorage network,
                                                             ListCraftingInventory cpuInventory,
@@ -66,7 +67,7 @@ public final class TrinityInitialInputExtractor {
     }
 
     private static @Nullable GenericStack reserve(
-                                                  Map<AEKey, BigInteger> requiredInputs,
+                                                  Object2ObjectMap<AEKey, BigInteger> requiredInputs,
                                                   MEStorage network,
                                                   ListCraftingInventory cpuInventory,
                                                   TrinityExactWorkingInventory exactInventory,
@@ -90,7 +91,7 @@ public final class TrinityInitialInputExtractor {
                         break;
                     }
                     if (network instanceof FiniteNetworkStorageAccess storageAccess &&
-                            storageAccess.exactAvailability(physicalKey, source).unlimited()) {
+                            storageAccess.data_energistics$exactAvailability(physicalKey, source).unlimited()) {
                         exactInventory.deposit(physicalKey, remaining, cpuInventory);
                         unlimitedOwnership.merge(physicalKey, remaining, BigInteger::add);
                         remaining = BigInteger.ZERO;
@@ -152,9 +153,9 @@ public final class TrinityInitialInputExtractor {
         return owned;
     }
 
-    private static List<AEKey> physicalCandidates(AEKey plannedKey,
-                                                  TrinitySameItemPolicy sameItemPolicy,
-                                                  MEStorage network) {
+    private static ObjectList<AEKey> physicalCandidates(AEKey plannedKey,
+                                                        TrinitySameItemPolicy sameItemPolicy,
+                                                        MEStorage network) {
         ObjectLinkedOpenHashSet<AEKey> candidates = new ObjectLinkedOpenHashSet<>();
         candidates.add(plannedKey);
         if (sameItemPolicy.allowsSameItem(plannedKey)) {
@@ -164,7 +165,7 @@ public final class TrinityInitialInputExtractor {
                 }
             }
         }
-        return List.copyOf(candidates);
+        return FastUtilCollections.immutableList(candidates);
     }
 
     private static boolean sameLogicalKey(AEKey plannedKey,

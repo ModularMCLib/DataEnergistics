@@ -13,7 +13,7 @@ import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerTexture
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetEntry;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 import com.fish_dan_.data_energistics.util.TextSearch;
 
 import appeng.client.gui.AEBaseScreen;
@@ -136,7 +136,7 @@ public class DataDistributionTowerScreen extends AEBaseScreen<DataDistributionTo
                 this.menu.unlimitedChannels ? "∞" : Long.toString(this.menu.remainingChannels)));
         setTextContent("available_fe", Component.translatable(
                 "screen.data_energistics.network_fe",
-                AmountFormatter.format(this.menu.availableFe)));
+                FormattingUtils.format(this.menu.availableFe)));
         setTextContent("range", Component.translatable(
                 "screen.data_energistics.range",
                 formatRangeText(this.menu.chunkRadius)));

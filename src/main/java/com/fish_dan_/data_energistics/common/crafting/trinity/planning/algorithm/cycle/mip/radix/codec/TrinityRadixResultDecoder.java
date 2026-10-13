@@ -5,20 +5,20 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityAlgorithmResult;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.mip.radix.model.TrinityRadixModelLimitException;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.TrinityIntegerResultVerifier;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Decodes ojAlgo digit/carry candidates and replays every radix column with BigInteger before publication.
@@ -34,11 +34,11 @@ public final class TrinityRadixResultDecoder {
         this.integerVerifier = integerVerifier;
     }
 
-    public TrinityAlgorithmResult<Map<Variable, BigInteger>> decode(
-                                                                    ExpressionsBasedModel model,
-                                                                    List<Variable> variables,
-                                                                    List<TrinityRadixColumnEquation> equations,
-                                                                    Optimisation.Result result) {
+    public TrinityAlgorithmResult<Object2ObjectMap<Variable, BigInteger>> decode(
+                                                                                 ExpressionsBasedModel model,
+                                                                                 ObjectList<Variable> variables,
+                                                                                 ObjectList<TrinityRadixColumnEquation> equations,
+                                                                                 Optimisation.Result result) {
         ObjectArrayList<BigDecimal> rawValues = new ObjectArrayList<>(variables.size());
         if (model.countVariables() != variables.size()) {
             throw new IllegalArgumentException("A Trinity radix result must preserve the encoded variable order");
@@ -49,7 +49,7 @@ public final class TrinityRadixResultDecoder {
             }
             rawValues.add(result.get(index));
         }
-        TrinityAlgorithmResult<List<BigInteger>> verified = this.integerVerifier.verify(
+        TrinityAlgorithmResult<ObjectList<BigInteger>> verified = this.integerVerifier.verify(
                 rawValues,
                 model.options.integer().getIntegralityTolerance());
         if (!verified.successful()) {
@@ -76,12 +76,12 @@ public final class TrinityRadixResultDecoder {
                 return inexact("radix_carry_column", Integer.toString(index));
             }
         }
-        return TrinityAlgorithmResult.success(Collections.unmodifiableMap(values));
+        return TrinityAlgorithmResult.success(FastUtilCollections.immutableMap(values));
     }
 
     private static BigInteger decimalInteger(BigDecimal value) {
         if (value == null) {
-            throw new TrinityRadixModelLimitException(Map.of("reason", "unbounded_radix_variable"));
+            throw new TrinityRadixModelLimitException(FastUtilCollections.mapOf("reason", "unbounded_radix_variable"));
         }
         return value.toBigIntegerExact();
     }
@@ -90,6 +90,6 @@ public final class TrinityRadixResultDecoder {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 Component.translatable("gui.data_energistics.trinity_planning.diagnostic.inexact_result"),
-                Map.of("constraint", constraint, "value", value)));
+                FastUtilCollections.mapOf("constraint", constraint, "value", value)));
     }
 }

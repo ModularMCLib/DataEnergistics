@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputResolutionException;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
@@ -22,7 +22,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -347,7 +346,7 @@ final class DynamicCraftingOutputLedger {
         for (MutableEntry entry : this.entries) {
             CompoundTag tag = new CompoundTag();
             tag.put(KEY_TAG, entry.plannedKey.toTagGeneric(registries));
-            tag.putByteArray(AMOUNT_TAG, TrinityBigIntegerEncoding.encode(entry.remaining, "dynamic output allowance"));
+            tag.putByteArray(AMOUNT_TAG, NbtCodecs.encode(entry.remaining, "dynamic output allowance"));
             tag.putString(ROUTE_TAG, entry.route.name());
             tag.putString(SOURCE_TAG, entry.source.toString());
             tag.put("rule", entry.rule.save());
@@ -359,7 +358,7 @@ final class DynamicCraftingOutputLedger {
         this.inputAliases.forEach((key, amount) -> {
             CompoundTag tag = new CompoundTag();
             tag.put(ACTUAL_KEY_TAG, key.toTagGeneric(registries));
-            tag.putByteArray(AMOUNT_TAG, TrinityBigIntegerEncoding.encode(amount, "dynamic input alias"));
+            tag.putByteArray(AMOUNT_TAG, NbtCodecs.encode(amount, "dynamic input alias"));
             aliases.add(tag);
         });
         root.put(INPUT_ALIASES_TAG, aliases);
@@ -368,27 +367,10 @@ final class DynamicCraftingOutputLedger {
 
     static DynamicCraftingOutputLedger readFromTag(CompoundTag root,
                                                    HolderLookup.Provider registries) {
-        if (!root.getAllKeys().equals(ObjectSet.of(WAITING_TAG, INPUT_ALIASES_TAG)) ||
-                !root.contains(WAITING_TAG, Tag.TAG_LIST) ||
-                !root.contains(INPUT_ALIASES_TAG, Tag.TAG_LIST)) {
-            throw new IllegalArgumentException("Damaged dynamic crafting output ledger root");
-        }
         DynamicCraftingOutputLedger ledger = new DynamicCraftingOutputLedger();
         ObjectArrayList<Registration> registrations = new ObjectArrayList<>();
-        Tag rawWaiting = root.get(WAITING_TAG);
-        if (!(rawWaiting instanceof ListTag encoded) ||
-                (!encoded.isEmpty() && encoded.getElementType() != Tag.TAG_COMPOUND)) {
-            throw new IllegalArgumentException("Damaged dynamic crafting output waiting list");
-        }
-        for (Tag value : encoded) {
-            boolean legacy = value instanceof CompoundTag entry && entry.getAllKeys().equals(ObjectSet.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG));
-            if (!(value instanceof CompoundTag tag) ||
-                    !legacy && !tag.getAllKeys().equals(ObjectSet.of(KEY_TAG, AMOUNT_TAG, ROUTE_TAG, SOURCE_TAG, "rule", "template")) ||
-                    !tag.contains(KEY_TAG, Tag.TAG_COMPOUND) ||
-                    !tag.contains(ROUTE_TAG, Tag.TAG_STRING) ||
-                    !tag.contains(SOURCE_TAG, Tag.TAG_STRING)) {
-                throw new IllegalArgumentException("Damaged dynamic crafting output ledger entry");
-            }
+        for (Tag value : root.getList(WAITING_TAG, Tag.TAG_COMPOUND)) {
+            CompoundTag tag = (CompoundTag) value;
             AEKey decoded = AEKey.fromTagGeneric(registries, tag.getCompound(KEY_TAG));
             if (!(decoded instanceof AEItemKey itemKey)) {
                 throw new IllegalArgumentException("Dynamic crafting output ledger requires item keys");
@@ -401,9 +383,10 @@ final class DynamicCraftingOutputLedger {
             } catch (RuntimeException exception) {
                 throw new IllegalArgumentException("Damaged dynamic crafting output ledger metadata", exception);
             }
-            var template = legacy ? itemKey : AEKey.fromTagGeneric(registries, tag.getCompound("template"));
+            var template = AEKey.fromTagGeneric(registries, tag.getCompound("template"));
             if (!(template instanceof AEItemKey templateKey)) throw new IllegalArgumentException("Invalid dynamic output template");
-            registrations.add(new Registration(itemKey, readAmount(tag), route, source, legacy ? ItemMatchingRule.ID : ItemMatchingRule.load(tag.getCompound("rule")), templateKey));
+            registrations.add(new Registration(itemKey, readAmount(tag), route, source,
+                    ItemMatchingRule.load(tag.getCompound("rule")), templateKey));
         }
         for (var first : registrations) for (var second : registrations) {
             if (first.rule().overlaps(first.templateKey(), second.rule(), second.templateKey()) &&
@@ -415,17 +398,8 @@ final class DynamicCraftingOutputLedger {
         if (ledger.entries.size() != registrations.size()) {
             throw new IllegalArgumentException("Persisted dynamic crafting output ledger contains duplicate entries");
         }
-        Tag rawAliases = root.get(INPUT_ALIASES_TAG);
-        if (!(rawAliases instanceof ListTag aliases) ||
-                (!aliases.isEmpty() && aliases.getElementType() != Tag.TAG_COMPOUND)) {
-            throw new IllegalArgumentException("Damaged same-item input alias list");
-        }
-        for (Tag value : aliases) {
-            if (!(value instanceof CompoundTag tag) ||
-                    !tag.getAllKeys().equals(ObjectSet.of(ACTUAL_KEY_TAG, AMOUNT_TAG)) ||
-                    !tag.contains(ACTUAL_KEY_TAG, Tag.TAG_COMPOUND)) {
-                throw new IllegalArgumentException("Damaged same-item input alias entry");
-            }
+        for (Tag value : root.getList(INPUT_ALIASES_TAG, Tag.TAG_COMPOUND)) {
+            CompoundTag tag = (CompoundTag) value;
             AEKey decoded = AEKey.fromTagGeneric(registries, tag.getCompound(ACTUAL_KEY_TAG));
             BigInteger amount = readAmount(tag);
             if (!(decoded instanceof AEItemKey itemKey) || amount.signum() <= 0 ||
@@ -441,7 +415,7 @@ final class DynamicCraftingOutputLedger {
     }
 
     private static BigInteger readAmount(CompoundTag tag) {
-        return TrinityBigIntegerEncoding.readTag(tag, AMOUNT_TAG, "dynamic output ledger amount");
+        return NbtCodecs.readTag(tag, AMOUNT_TAG, "dynamic output ledger amount");
     }
 
     private static final class MutableEntry {

@@ -9,9 +9,9 @@ import appeng.api.networking.IGridService;
 
 import net.minecraft.core.BlockPos;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -50,7 +50,7 @@ public interface TowerNetworkDomain extends IGridService {
      *
      * @return immutable local-node snapshot
      */
-    List<IGridNode> localNodes();
+    ObjectList<IGridNode> localNodes();
 
     /**
      * Returns the stable runtime registration order for a local node.

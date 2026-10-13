@@ -2,7 +2,9 @@ package com.fish_dan_.data_energistics.common.multiblock.preview.model;
 
 import com.modularmc.mdl.api.multiblock.PatternLayerSource;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /**
  * One immutable logical layer in an expanded preview.
@@ -13,7 +15,7 @@ import java.util.List;
  */
 public record PreviewLayerSnapshot(int index,
                                    PatternLayerSource source,
-                                   List<PreviewCellSnapshot> cells) {
+                                   ObjectList<PreviewCellSnapshot> cells) {
 
     /**
      * Copies cells and verifies that every cell belongs to this source layer.
@@ -22,7 +24,7 @@ public record PreviewLayerSnapshot(int index,
         if (index < 0 || cells.isEmpty()) {
             throw new IllegalArgumentException("Invalid preview layer snapshot");
         }
-        cells = List.copyOf(cells);
+        cells = ObjectLists.unmodifiable(new ObjectArrayList<>(cells));
         for (PreviewCellSnapshot cell : cells) {
             if (cell.source().unitIndex() != source.unitIndex() ||
                     cell.source().repeatIndex() != source.repeatIndex() ||

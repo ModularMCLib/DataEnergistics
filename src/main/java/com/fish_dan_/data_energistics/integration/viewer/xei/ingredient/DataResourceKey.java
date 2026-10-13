@@ -2,9 +2,11 @@ package com.fish_dan_.data_energistics.integration.viewer.xei.ingredient;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
+import com.fish_dan_.data_energistics.ae2.key.BloodKey;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.ae2.key.DataKey;
 import com.fish_dan_.data_energistics.ae2.key.EchoKey;
+import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
 
 import appeng.api.stacks.AEKey;
@@ -16,7 +18,7 @@ import lombok.experimental.Accessors;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Identifies every Data Energistics custom AE resource shared by recipe viewer adapters.
+ * Identifies Data Energistics-owned AE resources shared by recipe viewer adapters.
  */
 @Getter
 @Accessors(fluent = true)
@@ -25,7 +27,9 @@ public enum DataResourceKey {
     DATA(DataKey.ID, DataKey.of()),
     DATA_FLOW(DataFlowKey.ID, DataFlowKey.of()),
     ECHO(EchoKey.ID, EchoKey.of()),
-    CELESTIAL_ENERGY(StellarFluxKey.ID, StellarFluxKey.of());
+    CELESTIAL_ENERGY(StellarFluxKey.ID, StellarFluxKey.of()),
+    BLOOD(BloodKey.ID, BloodKey.INSTANCE),
+    EXPERIENCE(ExperienceKey.ID, ExperienceKey.INSTANCE);
 
     private final ResourceLocation id;
     private final AEKey aeKey;
@@ -56,7 +60,9 @@ public enum DataResourceKey {
                 return key;
             }
         }
-        throw invalid("Missing shared identity for Data Energistics custom key: " + aeKey);
+        // Optional integration keys use their own native viewer fallback. They are still custom AE keys,
+        // but they are not represented by this fixed DataResourceKey catalog.
+        return null;
     }
 
     private static IllegalArgumentException invalid(String message) {

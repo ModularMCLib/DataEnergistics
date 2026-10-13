@@ -8,18 +8,18 @@ import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /** Checks returned real states against delivered units and completed uses, without synthesizing state-chain items. */
 final class FixedToolSettlement {
 
     private final ReusableInputRule rule;
-    private final Map<AEItemKey, BigInteger> delivered = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<AEItemKey, BigInteger> delivered = new Object2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<BigInteger> operationsBySlot = new Int2ObjectOpenHashMap<>();
     private BigInteger consumedUses = BigInteger.ZERO;
 
@@ -38,7 +38,7 @@ final class FixedToolSettlement {
         consumedUses = consumedUses.add(held.multiply(count));
     }
 
-    BigInteger verify(Map<AEKey, BigInteger> remaining) {
+    BigInteger verify(Object2ObjectMap<AEKey, BigInteger> remaining) {
         var returned = new Object2ObjectOpenHashMap<AEItemKey, BigInteger>();
         var iterator = remaining.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -72,13 +72,13 @@ final class FixedToolSettlement {
         return exhausted;
     }
 
-    private BigInteger capacity(Map<AEItemKey, BigInteger> tools) {
+    private BigInteger capacity(Object2ObjectMap<AEItemKey, BigInteger> tools) {
         BigInteger result = BigInteger.ZERO;
         for (var entry : tools.entrySet()) result = result.add(entry.getValue().multiply(BigInteger.valueOf(rule.guaranteedUses(entry.getKey()))));
         return result;
     }
 
-    private Int2ObjectOpenHashMap<Long2ObjectAVLTreeMap<BigInteger>> groups(Map<AEItemKey, BigInteger> tools) {
+    private Int2ObjectOpenHashMap<Long2ObjectAVLTreeMap<BigInteger>> groups(Object2ObjectMap<AEItemKey, BigInteger> tools) {
         var result = new Int2ObjectOpenHashMap<Long2ObjectAVLTreeMap<BigInteger>>();
         tools.forEach((key, count) -> result.computeIfAbsent(key.getReadOnlyStack().getDamageValue() % rule.damagePerUse(),
                 ignored -> new Long2ObjectAVLTreeMap<>()).merge(rule.guaranteedUses(key), count, BigInteger::add));
@@ -111,7 +111,7 @@ final class FixedToolSettlement {
         }
     }
 
-    private static List<Bucket> buckets(Long2ObjectAVLTreeMap<BigInteger> source) {
+    private static ObjectList<Bucket> buckets(Long2ObjectAVLTreeMap<BigInteger> source) {
         var result = new ObjectArrayList<Bucket>();
         source.long2ObjectEntrySet().forEach(entry -> result.add(new Bucket(entry.getLongKey(), entry.getValue())));
         return result;

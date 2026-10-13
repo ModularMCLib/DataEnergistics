@@ -8,6 +8,7 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.me.service.helpers.NetworkCraftingProviders;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -55,7 +56,7 @@ public abstract class NetworkCraftingProviderStatePublicationMixin {
         CraftingProviderPublicationSink publicationSink = (CraftingProviderPublicationSink) methods;
         this.dataEnergistics$providerId = publicationSink.dataEnergistics$publishProvider(
                 this.provider,
-                this.patterns);
+                new ObjectArrayList<>(this.patterns));
         PatternProviderRuntimeBindings.bind(this.dataEnergistics$providerId, this.provider);
     }
 

@@ -116,6 +116,7 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -186,14 +187,14 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
                 .addService(ICraftingProvider.class, this.craftingProvider)
                 .addService(IStorageWatcherNode.class, this.transferWatcherNode)
                 .setFlags(GridFlags.REQUIRE_CHANNEL)
-                .setExposedOnSides(new ObjectOpenHashSet<>(Direction.values()))
+                .setExposedOnSides(EnumSet.allOf(Direction.class))
                 .setVisualRepresentation(DEBlocks.TRINITY_INFORMATION_EXCHANGE_DEPOT.get())
                 .setIdlePowerUsage(0.0D);
     }
 
     @Override
-    public ObjectSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return new ObjectOpenHashSet<>(Direction.values());
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
+        return EnumSet.allOf(Direction.class);
     }
 
     @Override
@@ -1268,7 +1269,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
 
         MEStorage aggregateStorage = grid.getStorageService().getInventory();
         FiniteNetworkStorageAccess finiteStorage = (FiniteNetworkStorageAccess) aggregateStorage;
-        updateTransferContext(host, grid, finiteStorage.storageStructureRevision());
+        updateTransferContext(host, grid, finiteStorage.data_energistics$storageStructureRevision());
 
         TrinityDataCoreStorageSavedData storageData = TrinityDataCoreStorageSavedData.get(serverLevel.getServer());
         if (this.storageMode.pullsFromNetwork()) {
@@ -1361,7 +1362,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
             AEKey key = this.transferQueue.dequeue();
             boolean retry = false;
             try {
-                FiniteTransferResult result = finiteStorage.transferFinite(
+                FiniteTransferResult result = finiteStorage.data_energistics$transferFinite(
                         key,
                         Long.MAX_VALUE,
                         this.transferActionSource,
@@ -1819,6 +1820,20 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         }
 
         @Override
+        public @Nullable CountedCraftingAdmission prepareBatchForTarget(
+                                                                        IPatternDetails patternDetails,
+                                                                        KeyCounter[] prototype,
+                                                                        long requestedCount,
+                                                                        CountedCraftingTarget target) {
+            TrinityDataCoreBlockEntity host = patternProviderHost();
+            if (host == null || level == null || level.isClientSide()) return null;
+            CountedCraftingTarget expected = CountedCraftingTarget.machine(
+                    CRAFTING_CATALOG_TARGET.stableIdentity(),
+                    MachineTargetId.forBlockEntity(level.dimension(), host.getBlockPos()).stableIdentity());
+            return expected.equals(target) ? prepareBatch(patternDetails, prototype, requestedCount) : null;
+        }
+
+        @Override
         public CountedCraftingPreparation prepareBatch(
                                                        IPatternDetails patternDetails,
                                                        KeyCounter[] prototype,
@@ -1950,6 +1965,11 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
         @Override
         public BigInteger exactCount() {
             return this.token.exactCount();
+        }
+
+        @Override
+        public long count() {
+            return this.token.exactCount().longValueExact();
         }
 
         @Override

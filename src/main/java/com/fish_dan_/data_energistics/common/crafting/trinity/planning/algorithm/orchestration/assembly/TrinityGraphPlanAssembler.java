@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanningStatistics;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -35,14 +36,12 @@ import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Converts solved graph demands into compact execution stages and final immutable Trinity crafting plans.
@@ -91,25 +90,25 @@ public final class TrinityGraphPlanAssembler {
             mergePatternFiring(patternFirings, firing.variant(), firing.count());
             chargeStacks(stackRequests, firing.variant(), firing.count());
         }
-        List<TrinityPlanStage> plannedStages = TrinityStageDependencyPlanner.plan(
+        ObjectList<TrinityPlanStage> plannedStages = TrinityStageDependencyPlanner.plan(
                 acyclicPlan.externalInputs(),
                 stages,
                 stageOrder,
-                List.of());
+                ObjectList.of());
         return new TrinityGraphPlanAssembly(
                 acyclicPlan.externalInputs(),
-                Collections.unmodifiableMap(patternFirings),
+                FastUtilCollections.immutableMap(patternFirings),
                 plannedStages,
                 IntLists.unmodifiable(new IntArrayList(stageOrder)),
-                List.of(),
-                Map.of(),
+                ObjectList.of(),
+                FastUtilCollections.mapOf(),
                 acyclicPlan.netChange(),
-                Collections.unmodifiableMap(stackRequests),
+                FastUtilCollections.immutableMap(stackRequests),
                 acyclicPlan.statesVisited(),
                 0L,
                 acyclicPlan.quality(),
-                Map.of(),
-                Map.of(),
+                FastUtilCollections.mapOf(),
+                FastUtilCollections.mapOf(),
                 0);
     }
 
@@ -174,7 +173,7 @@ public final class TrinityGraphPlanAssembler {
                     patternFirings,
                     stackRequests);
             IntArrayList blockStages = new IntArrayList();
-            Map<AEKey, BigInteger> repeatedNet = repeatedNetChange(cycle.localOrder(), cycle.repetitions());
+            Object2ObjectMap<AEKey, BigInteger> repeatedNet = repeatedNetChange(cycle.localOrder(), cycle.repetitions());
             boolean productiveRepeat = cycle.hasProductiveRepeat(topology.components().get(cycle.componentIndex()).keys());
             // A structural SCC is not proof of amplification. Only an exact positive internal gain with every
             // internal balance preserved may form a compressed repeat block. Finite non-amplifying routes remain
@@ -219,20 +218,20 @@ public final class TrinityGraphPlanAssembler {
             return failure(
                     TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT,
                     INSUFFICIENT_INPUT_KEY,
-                    Map.of("target", target.toString()));
+                    FastUtilCollections.mapOf("target", target.toString()));
         }
-        List<TrinityPlanStage> plannedStages = TrinityStageDependencyPlanner.plan(
+        ObjectList<TrinityPlanStage> plannedStages = TrinityStageDependencyPlanner.plan(
                 demandSolution.initialInputs(),
                 stages,
                 stageOrder,
                 repeatBlocks);
-        Map<AEKey, BigInteger> retainedSeedFinal = terminalSeedBalances(
+        Object2ObjectMap<AEKey, BigInteger> retainedSeedFinal = terminalSeedBalances(
                 demandSolution.initialInputs(),
                 plannedStages,
                 stageOrder,
                 repeatBlocks,
                 retainedSeed);
-        Map.Entry<AEKey, BigInteger> lostSeed = retainedSeed.entrySet().stream()
+        Object2ObjectMap.Entry<AEKey, BigInteger> lostSeed = retainedSeed.object2ObjectEntrySet().stream()
                 .filter(entry -> retainedSeedFinal.getOrDefault(entry.getKey(), BigInteger.ZERO)
                         .compareTo(entry.getValue()) < 0)
                 .findFirst()
@@ -241,36 +240,36 @@ public final class TrinityGraphPlanAssembler {
             return failure(
                     TrinityPlanningDiagnosticCode.INTERNAL_ERROR,
                     "gui.data_energistics.trinity_planning.diagnostic.internal_error",
-                    Map.of(
+                    FastUtilCollections.mapOf(
                             "phase", "terminal_seed_validation",
                             "key", lostSeed.getKey().toString(),
                             "required", lostSeed.getValue().toString()));
         }
         return TrinityAlgorithmResult.success(new TrinityGraphPlanAssembly(
                 demandSolution.initialInputs(),
-                Collections.unmodifiableMap(patternFirings),
+                FastUtilCollections.immutableMap(patternFirings),
                 plannedStages,
                 IntList.of(stageOrder.toIntArray()),
-                List.copyOf(repeatBlocks),
-                Collections.unmodifiableMap(minimumSeed),
-                Collections.unmodifiableMap(netChange),
-                Collections.unmodifiableMap(stackRequests),
+                FastUtilCollections.immutableList(repeatBlocks),
+                FastUtilCollections.immutableMap(minimumSeed),
+                FastUtilCollections.immutableMap(netChange),
+                FastUtilCollections.immutableMap(stackRequests),
                 demandSolution.scheduleStates(),
                 demandSolution.mipNanos(),
                 demandSolution.quality(),
-                Collections.unmodifiableMap(retainedSeed),
+                FastUtilCollections.immutableMap(retainedSeed),
                 retainedSeedFinal,
                 seedRefinementPasses));
     }
 
-    private static Map<AEKey, BigInteger> terminalSeedBalances(
-                                                               Map<AEKey, BigInteger> initialInputs,
-                                                               List<TrinityPlanStage> stages,
-                                                               IntList stageOrder,
-                                                               List<TrinityCycleRepeatBlock> repeatBlocks,
-                                                               Map<AEKey, BigInteger> retainedSeed) {
+    private static Object2ObjectMap<AEKey, BigInteger> terminalSeedBalances(
+                                                                            Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                                                            ObjectList<TrinityPlanStage> stages,
+                                                                            IntList stageOrder,
+                                                                            ObjectList<TrinityCycleRepeatBlock> repeatBlocks,
+                                                                            Object2ObjectMap<AEKey, BigInteger> retainedSeed) {
         if (retainedSeed.isEmpty()) {
-            return Map.of();
+            return FastUtilCollections.mapOf();
         }
         Int2ObjectOpenHashMap<TrinityPlanStage> stagesByIndex = new Int2ObjectOpenHashMap<>();
         stages.forEach(stage -> stagesByIndex.put(stage.index(), stage));
@@ -294,7 +293,7 @@ public final class TrinityGraphPlanAssembler {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> retainedBalances = new Object2ObjectLinkedOpenHashMap<>();
         retainedSeed.keySet().forEach(
                 key -> retainedBalances.put(key, balances.getOrDefault(key, BigInteger.ZERO)));
-        return Object2ObjectMaps.unmodifiable(retainedBalances);
+        return FastUtilCollections.immutableMap(retainedBalances);
     }
 
     /**
@@ -352,18 +351,18 @@ public final class TrinityGraphPlanAssembler {
                 .cycleRepeatBlocks(assembly.repeatBlocks())
                 .minimumSeed(assembly.minimumSeed())
                 .targetNetChange(assembly.netChange())
-                .emittedItems(Map.of())
-                .diagnostics(List.of())
+                .emittedItems(FastUtilCollections.mapOf())
+                .diagnostics(ObjectList.of())
                 .statistics(statistics)
                 .build();
     }
 
     private static void appendOneTimeStages(
-                                            List<TrinityVariantFiring> order,
-                                            List<TrinityPlanStage> stages,
+                                            ObjectList<TrinityVariantFiring> order,
+                                            ObjectList<TrinityPlanStage> stages,
                                             IntList stageOrder,
-                                            Map<TrinityPatternIdentity, BigInteger> patternFirings,
-                                            Map<AEKey, BigInteger> stackRequests) {
+                                            Object2ObjectMap<TrinityPatternIdentity, BigInteger> patternFirings,
+                                            Object2ObjectMap<AEKey, BigInteger> stackRequests) {
         for (TrinityVariantFiring batch : order) {
             int stageIndex = stages.size();
             stages.add(stage(
@@ -377,19 +376,19 @@ public final class TrinityGraphPlanAssembler {
         }
     }
 
-    private static Map<AEKey, BigInteger> repeatedNetChange(
-                                                            List<TrinityVariantFiring> order,
-                                                            BigInteger repetitions) {
+    private static Object2ObjectMap<AEKey, BigInteger> repeatedNetChange(
+                                                                         ObjectList<TrinityVariantFiring> order,
+                                                                         BigInteger repetitions) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> netChange = new Object2ObjectLinkedOpenHashMap<>();
         order.forEach(batch -> mergeScaled(
                 netChange,
                 batch.variant().netChange(),
                 batch.count().multiply(repetitions)));
         removeZeros(netChange);
-        return Collections.unmodifiableMap(netChange);
+        return FastUtilCollections.immutableMap(netChange);
     }
 
-    private static Map<AEKey, BigInteger> minimumBalances(List<TrinityVariantFiring> order) {
+    private static Object2ObjectMap<AEKey, BigInteger> minimumBalances(ObjectList<TrinityVariantFiring> order) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> balances = new Object2ObjectLinkedOpenHashMap<>();
         for (TrinityVariantFiring firing : order) {
@@ -407,7 +406,7 @@ public final class TrinityGraphPlanAssembler {
                 throw new IllegalStateException("A Trinity cycle unit requires an unaccounted entry balance");
             }
         });
-        return Collections.unmodifiableMap(required);
+        return FastUtilCollections.immutableMap(required);
     }
 
     private static TrinityPlanStage stage(
@@ -416,12 +415,12 @@ public final class TrinityGraphPlanAssembler {
                                           TrinityPatternVariant variant,
                                           BigInteger count) {
         // Returned inputs are available to later firings in the same batch, including ordinary tool use.
-        Map<AEKey, BigInteger> required = requiredAtStart(variant, count);
+        Object2ObjectMap<AEKey, BigInteger> required = requiredAtStart(variant, count);
         return new TrinityPlanStage(
                 index,
                 cycle,
                 IntSets.emptySet(),
-                List.of(new TrinityPlanPatternFiring(
+                ObjectList.of(new TrinityPlanPatternFiring(
                         variant.patternIdentity(),
                         variant.primaryOutput(),
                         variant.ordinal(),
@@ -429,14 +428,14 @@ public final class TrinityGraphPlanAssembler {
                         variant.physicalInputs(),
                         variant.declaredOutputs(),
                         variant.physicalRemainingOutputs(),
-                        variant.requiresExactBinding() ? variant.bindings() : List.of())),
+                        variant.requiresExactBinding() ? variant.bindings() : ObjectList.of())),
                 required,
                 multiplySigned(variant.netChange(), count));
     }
 
-    private static Map<AEKey, BigInteger> requiredAtStart(
-                                                          TrinityPatternVariant variant,
-                                                          BigInteger count) {
+    private static Object2ObjectMap<AEKey, BigInteger> requiredAtStart(
+                                                                       TrinityPatternVariant variant,
+                                                                       BigInteger count) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         variant.inputs().forEach((key, input) -> {
             BigInteger net = variant.netChange().getOrDefault(key, BigInteger.ZERO);
@@ -445,12 +444,12 @@ public final class TrinityGraphPlanAssembler {
                     input;
             required.put(key, amount);
         });
-        return Collections.unmodifiableMap(required);
+        return FastUtilCollections.immutableMap(required);
     }
 
-    private static Map<AEKey, BigInteger> multiplySigned(
-                                                         Map<AEKey, BigInteger> amounts,
-                                                         BigInteger multiplier) {
+    private static Object2ObjectMap<AEKey, BigInteger> multiplySigned(
+                                                                      Object2ObjectMap<AEKey, BigInteger> amounts,
+                                                                      BigInteger multiplier) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>();
         amounts.forEach((key, amount) -> {
             BigInteger multiplied = amount.multiply(multiplier);
@@ -458,7 +457,7 @@ public final class TrinityGraphPlanAssembler {
                 result.put(key, multiplied);
             }
         });
-        return Collections.unmodifiableMap(result);
+        return FastUtilCollections.immutableMap(result);
     }
 
     private static Int2IntMap topologicalPositions(TrinityCraftingTopology topology) {
@@ -469,7 +468,7 @@ public final class TrinityGraphPlanAssembler {
         return positions;
     }
 
-    private static boolean hasMultiplePaths(List<TrinityPatternVariant> variants) {
+    private static boolean hasMultiplePaths(ObjectList<TrinityPatternVariant> variants) {
         Object2IntMap<AEKey> producerCounts = new Object2IntOpenHashMap<>();
         for (TrinityPatternVariant variant : variants) {
             for (AEKey output : variant.outputs().keySet()) {
@@ -483,15 +482,15 @@ public final class TrinityGraphPlanAssembler {
     }
 
     private static void mergePatternFiring(
-                                           Map<TrinityPatternIdentity, BigInteger> firings,
+                                           Object2ObjectMap<TrinityPatternIdentity, BigInteger> firings,
                                            TrinityPatternVariant variant,
                                            BigInteger count) {
         firings.merge(variant.patternIdentity(), count, BigInteger::add);
     }
 
     /** Retained tools occupy physical units once; their lifetime budget is not a per-operation stack transfer. */
-    private static void chargeStacks(Map<AEKey, BigInteger> requests, TrinityPatternVariant variant, BigInteger count) {
-        for (var amounts : List.of(variant.inputs(), variant.outputs())) {
+    private static void chargeStacks(Object2ObjectMap<AEKey, BigInteger> requests, TrinityPatternVariant variant, BigInteger count) {
+        for (var amounts : ObjectList.of(variant.inputs(), variant.outputs())) {
             amounts.forEach((key, amount) -> {
                 BigInteger physical = amount.subtract(variant.lifetimeTools().getOrDefault(key, BigInteger.ZERO));
                 if (physical.signum() > 0) requests.merge(key, physical.multiply(count), BigInteger::add);
@@ -500,24 +499,24 @@ public final class TrinityGraphPlanAssembler {
     }
 
     private static void mergeScaled(
-                                    Map<AEKey, BigInteger> target,
-                                    Map<AEKey, BigInteger> source,
+                                    Object2ObjectMap<AEKey, BigInteger> target,
+                                    Object2ObjectMap<AEKey, BigInteger> source,
                                     BigInteger multiplier) {
         source.forEach((key, amount) -> target.merge(key, amount.multiply(multiplier), BigInteger::add));
     }
 
-    private static void removeZeros(Map<AEKey, BigInteger> amounts) {
+    private static void removeZeros(Object2ObjectMap<AEKey, BigInteger> amounts) {
         amounts.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
     }
 
-    private static BigInteger sum(Map<?, BigInteger> amounts) {
+    private static BigInteger sum(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

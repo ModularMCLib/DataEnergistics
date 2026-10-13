@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.state;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityBorrowingLedgerNbtCodec;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -9,7 +10,6 @@ import net.minecraft.nbt.CompoundTag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 
 import java.math.BigInteger;
 
@@ -162,7 +162,7 @@ public final class TrinityBorrowingLedger {
     public Object2ObjectMap<AEKey, Balances> entries() {
         Object2ObjectLinkedOpenHashMap<AEKey, Balances> snapshot = new Object2ObjectLinkedOpenHashMap<>();
         this.entries.forEach((key, balances) -> snapshot.put(key, balances.snapshot()));
-        return Object2ObjectMaps.unmodifiable(snapshot);
+        return FastUtilCollections.immutableMap(snapshot);
     }
 
     /**

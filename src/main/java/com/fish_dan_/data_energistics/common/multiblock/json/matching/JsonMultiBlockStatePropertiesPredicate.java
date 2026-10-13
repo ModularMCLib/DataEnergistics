@@ -18,15 +18,15 @@ import com.modularmc.mdl.api.multiblock.PatternDiagnostic;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Matches a block and only the block state properties explicitly declared by JSON.
  */
-public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePatterns)
+public record JsonMultiBlockStatePropertiesPredicate(ObjectList<StatePattern> statePatterns)
         implements StructurePredicate {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
@@ -38,7 +38,7 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
     private static boolean registered;
 
     public JsonMultiBlockStatePropertiesPredicate {
-        statePatterns = List.copyOf(statePatterns);
+        statePatterns = new ObjectImmutableList<>(statePatterns);
         if (statePatterns.isEmpty()) {
             throw new IllegalArgumentException("Block state properties predicate must contain at least one state");
         }
@@ -55,13 +55,13 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
     public static JsonMultiBlockStatePropertiesPredicate fromJson(JsonObject object) {
         if (object.has(BLOCK_STATES_PROPERTY)) {
             JsonArray states = readRequiredArray(object, BLOCK_STATES_PROPERTY);
-            List<StatePattern> statePatterns = new ObjectArrayList<>();
+            ObjectList<StatePattern> statePatterns = new ObjectArrayList<>();
             for (JsonElement stateElement : states) {
                 statePatterns.add(parseStatePattern(stateElement));
             }
             return new JsonMultiBlockStatePropertiesPredicate(statePatterns);
         }
-        return new JsonMultiBlockStatePropertiesPredicate(List.of(parseStatePattern(object)));
+        return new JsonMultiBlockStatePropertiesPredicate(ObjectList.of(parseStatePattern(object)));
     }
 
     @Override
@@ -84,17 +84,21 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
     }
 
     @Override
-    public List<Block> blockCandidates() {
-        Set<Block> blocks = new ObjectLinkedOpenHashSet<>();
+    public ObjectList<Block> blockCandidates() {
+        ObjectSet<Block> blocks = new ObjectLinkedOpenHashSet<>();
         for (StatePattern pattern : this.statePatterns) {
             blocks.add(pattern.block());
         }
-        return List.copyOf(blocks);
+        return new ObjectImmutableList<>(blocks);
     }
 
     @Override
-    public List<BlockState> blockStateCandidates() {
-        return this.statePatterns.stream().map(StatePattern::preferredState).distinct().toList();
+    public ObjectList<BlockState> blockStateCandidates() {
+        ObjectLinkedOpenHashSet<BlockState> states = new ObjectLinkedOpenHashSet<>();
+        for (StatePattern pattern : this.statePatterns) {
+            states.add(pattern.preferredState());
+        }
+        return new ObjectImmutableList<>(states);
     }
 
     @Override
@@ -102,8 +106,12 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
         return this.statePatterns.stream().anyMatch(pattern -> pattern.block() == Blocks.AIR);
     }
 
-    private List<String> expected() {
-        return this.statePatterns.stream().map(StatePattern::asExpectedString).toList();
+    private ObjectList<String> expected() {
+        ObjectArrayList<String> expected = new ObjectArrayList<>(this.statePatterns.size());
+        for (StatePattern pattern : this.statePatterns) {
+            expected.add(pattern.asExpectedString());
+        }
+        return new ObjectImmutableList<>(expected);
     }
 
     private static StatePattern parseStatePattern(JsonElement element) {
@@ -112,7 +120,7 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
         }
         JsonObject object = element.getAsJsonObject();
         Block block = resolveBlock(parseId(readRequiredString(object, BLOCK_PROPERTY), "block"));
-        List<StatePropertyValue<?>> properties = new ObjectArrayList<>();
+        ObjectList<StatePropertyValue<?>> properties = new ObjectArrayList<>();
         if (object.has(PROPERTIES_PROPERTY)) {
             JsonObject propertyObject = readRequiredObject(object, PROPERTIES_PROPERTY);
             StateDefinition<Block, BlockState> definition = block.getStateDefinition();
@@ -178,10 +186,10 @@ public record JsonMultiBlockStatePropertiesPredicate(List<StatePattern> statePat
         return element.getAsJsonArray();
     }
 
-    public record StatePattern(Block block, List<StatePropertyValue<?>> properties) {
+    public record StatePattern(Block block, ObjectList<StatePropertyValue<?>> properties) {
 
         public StatePattern {
-            properties = List.copyOf(properties);
+            properties = new ObjectImmutableList<>(properties);
         }
 
         boolean matches(BlockState actualState) {

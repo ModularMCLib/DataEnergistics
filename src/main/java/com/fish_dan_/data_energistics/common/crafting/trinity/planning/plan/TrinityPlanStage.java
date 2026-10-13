@@ -1,18 +1,19 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSets;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * One dependency-addressable execution stage produced by DAG propagation or compressed cyclic scheduling.
@@ -28,9 +29,9 @@ public record TrinityPlanStage(
                                int index,
                                boolean cycleStage,
                                IntSet dependencies,
-                               List<TrinityPlanPatternFiring> firings,
-                               Map<AEKey, BigInteger> requiredAtStart,
-                               Map<AEKey, BigInteger> netChange) {
+                               ObjectList<TrinityPlanPatternFiring> firings,
+                               Object2ObjectMap<AEKey, BigInteger> requiredAtStart,
+                               Object2ObjectMap<AEKey, BigInteger> netChange) {
 
     /**
      * Validates the owned execution surface and rejects ambiguous duplicate firing entries.
@@ -47,7 +48,7 @@ public record TrinityPlanStage(
             sortedDependencies.add(dependency);
         }
         dependencies = IntSortedSets.unmodifiable(sortedDependencies);
-        firings = Collections.unmodifiableList(firings);
+        firings = FastUtilCollections.immutableList(firings);
         ObjectSet<String> bindings = new ObjectOpenHashSet<>();
         for (TrinityPlanPatternFiring firing : firings) {
             String binding = firing.patternIdentity().publicationEncoding() + '#' + firing.variantOrdinal();

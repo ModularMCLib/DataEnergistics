@@ -13,10 +13,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
@@ -27,7 +27,8 @@ import java.util.function.BooleanSupplier;
 final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
 
     private final ProviderShard[] shards;
-    private final Map<MachineTargetId, ShardReservation> reservedMachines = new ConcurrentHashMap<>();
+    private final Reference2ReferenceMap<MachineTargetId, ShardReservation> reservedMachines = new Reference2ReferenceOpenHashMap<>();
+    private final ReentrantLock machineReservationLock = new ReentrantLock(true);
 
     StripedProviderShardDispatcher(int shardCount) {
         if (shardCount <= 0) {
@@ -104,9 +105,16 @@ final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
                 target.machineTargetId(),
                 logicalCrafts);
         Optional<MachineTargetId> machineTarget = target.machineTargetId();
-        if (machineTarget.isPresent() &&
-                this.reservedMachines.putIfAbsent(machineTarget.orElseThrow(), reservation) != null) {
-            return null;
+        if (machineTarget.isPresent()) {
+            MachineTargetId machine = machineTarget.orElseThrow();
+            this.machineReservationLock.lock();
+            try {
+                if (this.reservedMachines.putIfAbsent(machine, reservation) != null) {
+                    return null;
+                }
+            } finally {
+                this.machineReservationLock.unlock();
+            }
         }
         shard.reservedByProviderRoute.put(routeKey, Math.addExact(alreadyReserved, logicalCrafts));
         shard.reservedProposalsByProvider.put(target.providerId(), Math.incrementExact(reservedProposals));
@@ -132,8 +140,13 @@ final class StripedProviderShardDispatcher implements ProviderShardDispatcher {
                 shard.reservedProposalsByProvider.put(reservation.providerId, providerProposals);
             }
             reservation.machineTarget.ifPresent(machine -> {
-                if (!this.reservedMachines.remove(machine, reservation)) {
-                    throw new IllegalStateException("Provider shard machine reservation ownership was lost");
+                this.machineReservationLock.lock();
+                try {
+                    if (!this.reservedMachines.remove(machine, reservation)) {
+                        throw new IllegalStateException("Provider shard machine reservation ownership was lost");
+                    }
+                } finally {
+                    this.machineReservationLock.unlock();
                 }
             });
         } finally {

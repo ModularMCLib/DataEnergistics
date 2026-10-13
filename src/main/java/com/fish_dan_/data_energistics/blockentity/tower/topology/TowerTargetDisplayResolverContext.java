@@ -7,10 +7,9 @@ import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlo
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Supplies tower-owned target state required by {@link TowerTargetSummaryResolver}.
@@ -39,35 +38,35 @@ public interface TowerTargetDisplayResolverContext {
      *
      * @return linked positions
      */
-    Collection<BlockPos> linkedPositions();
+    LongCollection linkedPositions();
 
     /**
      * Returns all persisted and pending point-to-point target positions.
      *
      * @return tracked target positions
      */
-    Collection<BlockPos> trackedPositions();
+    LongCollection trackedPositions();
 
     /**
      * Returns target positions with explicit transfer mode settings.
      *
      * @return configured target positions
      */
-    Collection<BlockPos> configuredTargetPositions();
+    LongCollection configuredTargetPositions();
 
     /**
      * Returns cached AE display target positions.
      *
      * @return AE display targets
      */
-    List<BlockPos> cachedAeDisplayTargets();
+    LongList cachedAeDisplayTargets();
 
     /**
      * Returns cached FE endpoint positions.
      *
      * @return FE endpoint targets
      */
-    List<BlockPos> cachedEndpointPositions();
+    LongList cachedEndpointPositions();
 
     /**
      * Checks whether AE targets are visible for the current connection mode.

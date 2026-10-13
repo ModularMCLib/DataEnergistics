@@ -24,24 +24,24 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnosti
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.diagnostic.TrinityCycleDiagnosticOutcome;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Proves the global executable cycle objective with exact firing boxes and compressed schedule checks.
@@ -106,8 +106,8 @@ public final class TrinityJointCycleSearch {
     public TrinityAlgorithmResult<TrinityJointCyclePlan> search(
                                                                 TrinityStronglyConnectedComponent component,
                                                                 TrinityCycleDemand demand,
-                                                                Map<AEKey, BigInteger> available,
-                                                                Set<AEKey> producibleInputs,
+                                                                Object2ObjectMap<AEKey, BigInteger> available,
+                                                                ObjectSet<AEKey> producibleInputs,
                                                                 int maxSearchStates,
                                                                 TrinityPlanningMode mode,
                                                                 TrinityPlanningControl control) {
@@ -133,8 +133,8 @@ public final class TrinityJointCycleSearch {
     public TrinityAlgorithmResult<TrinityJointCyclePlan> search(
                                                                 TrinityStronglyConnectedComponent component,
                                                                 TrinityCycleDemand demand,
-                                                                Map<AEKey, BigInteger> available,
-                                                                Set<AEKey> producibleInputs,
+                                                                Object2ObjectMap<AEKey, BigInteger> available,
+                                                                ObjectSet<AEKey> producibleInputs,
                                                                 int maxSearchStates,
                                                                 TrinityPlanningMode mode,
                                                                 TrinityPlanningControl control,
@@ -155,29 +155,29 @@ public final class TrinityJointCycleSearch {
     private final class SearchSession {
 
         private final int componentIndex;
-        private final List<TrinityPatternVariant> variants;
-        private final Set<AEKey> internalKeys;
+        private final ObjectList<TrinityPatternVariant> variants;
+        private final ObjectSet<AEKey> internalKeys;
         private final TrinityCycleDemand demand;
-        private final Map<AEKey, BigInteger> available;
-        private final Set<AEKey> producibleInputs;
+        private final Object2ObjectMap<AEKey, BigInteger> available;
+        private final ObjectSet<AEKey> producibleInputs;
         private final SearchBudget budget;
         private final TrinityPlanningMode mode;
         private final TrinityPlanningControl control;
         private final TrinityMipCoefficientTemplate coefficientTemplate;
         private final TrinityCycleFeasibilitySession feasibilitySession;
         private final SolverMetrics metrics = new SolverMetrics();
-        private final Set<FeasibilityKey> infeasibleBoxes = new ObjectLinkedOpenHashSet<>();
+        private final ObjectSet<FeasibilityKey> infeasibleBoxes = new ObjectLinkedOpenHashSet<>();
         private @Nullable TrinityJointCyclePlan incumbent;
         private @Nullable TrinityLexicographicObjective incumbentObjective;
         private long sequence;
 
         private SearchSession(
                               int componentIndex,
-                              List<TrinityPatternVariant> variants,
-                              Set<AEKey> internalKeys,
+                              ObjectList<TrinityPatternVariant> variants,
+                              ObjectSet<AEKey> internalKeys,
                               TrinityCycleDemand demand,
-                              Map<AEKey, BigInteger> available,
-                              Set<AEKey> producibleInputs,
+                              Object2ObjectMap<AEKey, BigInteger> available,
+                              ObjectSet<AEKey> producibleInputs,
                               int maxSearchStates,
                               TrinityPlanningMode mode,
                               TrinityPlanningControl control,
@@ -317,7 +317,7 @@ public final class TrinityJointCycleSearch {
                 return failure(
                         TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                         NO_ORDER_KEY,
-                        Map.of("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
             }
             return TrinityAlgorithmResult.success(withFinalMetrics(
                     this.incumbent,
@@ -382,7 +382,7 @@ public final class TrinityJointCycleSearch {
                     return failure(
                             TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                             MIP_TIMEOUT_KEY,
-                            Map.of("states", Integer.toString(this.budget.used)));
+                            FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
                 }
                 return TrinityAlgorithmResult.failure(interrupted.diagnostic());
             }
@@ -443,7 +443,7 @@ public final class TrinityJointCycleSearch {
                 return failed(
                         TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                         CANCELLED_KEY,
-                        Map.of("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
             }
             if (this.control.deadlineExceeded()) {
                 if (this.incumbent != null) {
@@ -452,7 +452,7 @@ public final class TrinityJointCycleSearch {
                 return failed(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         MIP_TIMEOUT_KEY,
-                        Map.of("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
             }
             return null;
         }
@@ -461,7 +461,7 @@ public final class TrinityJointCycleSearch {
             return failed(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     SEARCH_LIMIT_KEY,
-                    Map.of(
+                    FastUtilCollections.mapOf(
                             "limit", Integer.toString(this.budget.limit),
                             "states", Integer.toString(this.budget.used)));
         }
@@ -487,7 +487,7 @@ public final class TrinityJointCycleSearch {
         private <T> TrinityAlgorithmResult<T> failed(
                                                      TrinityPlanningDiagnosticCode code,
                                                      String translationKey,
-                                                     Map<String, String> metadata) {
+                                                     Object2ObjectMap<String, String> metadata) {
             return failed(new TrinityPlanningDiagnostic(
                     code,
                     Component.translatable(translationKey),
@@ -505,7 +505,7 @@ public final class TrinityJointCycleSearch {
                                                                                    TrinityFiringBox rootBox, TrinityPlanningDiagnostic rootFailure) {
             if (this.control.cancellationRequested()) {
                 return failed(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, CANCELLED_KEY,
-                        Map.of("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
             }
             if (this.control.deadlineExceeded()) return failed(withShortageStop(rootFailure, "timeout", 0, null));
             int remainingStates = this.budget.remaining();
@@ -524,7 +524,7 @@ public final class TrinityJointCycleSearch {
             this.metrics.add(solution);
             if (this.control.cancellationRequested()) {
                 return failed(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, CANCELLED_KEY,
-                        Map.of("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
             }
             if (this.control.deadlineExceeded())
                 return failed(withShortageStop(rootFailure, "timeout", diagnosisStates, null));
@@ -539,7 +539,7 @@ public final class TrinityJointCycleSearch {
                     (key, amount) -> inputEnvelope.merge(key, amount.multiply(count), BigInteger::add)));
             inputEnvelope.forEach((key, amount) -> diagnosticAvailable.merge(key, amount, BigInteger::max));
             TrinityAlgorithmResult<TrinityJointCandidateEvaluation> evaluated = candidateEvaluator.evaluate(
-                    this.variants, this.internalKeys, this.demand, Collections.unmodifiableMap(diagnosticAvailable),
+                    this.variants, this.internalKeys, this.demand, FastUtilCollections.immutableMap(diagnosticAvailable),
                     this.producibleInputs, solution, this.budget.remaining(),
                     this.metrics.passes, this.metrics.nanos, this.control);
             int scheduleStates = evaluated.successful() ? evaluated.value().statesVisited() : diagnosisStates(evaluated.diagnostic());
@@ -548,7 +548,7 @@ public final class TrinityJointCycleSearch {
             }
             if (this.control.cancellationRequested()) {
                 return failed(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED, CANCELLED_KEY,
-                        Map.of("states", Integer.toString(this.budget.used)));
+                        FastUtilCollections.mapOf("states", Integer.toString(this.budget.used)));
             }
             if (!evaluated.successful()) {
                 return failed(withShortageStop(rootFailure, shortageStop(evaluated.diagnostic()),
@@ -566,8 +566,8 @@ public final class TrinityJointCycleSearch {
                                                              TrinityPlanningDiagnostic rootFailure,
                                                              TrinityCycleFeasibilitySolution solution, TrinityCycleDiagnosticOutcome outcome) {
             TrinityPlanningDiagnostic.PartialPlan materials = outcome.materials();
-            Map<AEKey, InputRequirement> requirements = materials.inputRequirements();
-            Map.Entry<AEKey, InputRequirement> first = requirements.entrySet().iterator().next();
+            Object2ObjectMap<AEKey, InputRequirement> requirements = materials.inputRequirements();
+            Object2ObjectMap.Entry<AEKey, InputRequirement> first = requirements.object2ObjectEntrySet().iterator().next();
             // A verified order proves its own input requirements, not that every route needs missing inventory.
             boolean provedInfeasible = rootFailure.code() == TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION;
             Object2ObjectLinkedOpenHashMap<String, String> metadata = provedInfeasible ?
@@ -587,7 +587,7 @@ public final class TrinityJointCycleSearch {
             return new TrinityPlanningDiagnostic(
                     provedInfeasible ? TrinityPlanningDiagnosticCode.INSUFFICIENT_INPUT : rootFailure.code(),
                     provedInfeasible ? Component.translatable(INSUFFICIENT_INPUT_KEY) : rootFailure.message(),
-                    metadata, new TrinityPlanningDiagnostic.CompositeEvidence(materials, List.of(outcome.evidence())));
+                    metadata, new TrinityPlanningDiagnostic.CompositeEvidence(materials, ObjectList.of(outcome.evidence())));
         }
 
         private TrinityPlanningDiagnostic withShortageStop(
@@ -651,12 +651,12 @@ public final class TrinityJointCycleSearch {
             });
 
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> emitted = new Object2ObjectLinkedOpenHashMap<>();
-            List<TrinityVariantFiring> selectedFirings = new ObjectArrayList<>(this.incumbent.firings().size());
+            ObjectList<TrinityVariantFiring> selectedFirings = new ObjectArrayList<>(this.incumbent.firings().size());
             this.incumbent.firings().forEach((variant, count) -> variant.outputs().forEach(
                     (key, amount) -> emitted.merge(key, amount.multiply(count), BigInteger::add)));
             this.incumbent.firings().forEach((variant, count) -> selectedFirings.add(new TrinityVariantFiring(variant, count)));
             selectedFirings.sort(Comparator.comparing(TrinityVariantFiring::variant));
-            return new TrinityPlanningDiagnostic.PartialPlan(used, emitted, missing, Map.of(), selectedFirings);
+            return new TrinityPlanningDiagnostic.PartialPlan(used, emitted, missing, FastUtilCollections.mapOf(), selectedFirings);
         }
     }
 
@@ -681,7 +681,7 @@ public final class TrinityJointCycleSearch {
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),

@@ -32,10 +32,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.Fix
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Identity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Operation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.ToolOutcome;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -77,14 +78,13 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -245,7 +245,7 @@ public final class TrinityReusableCpuDispatchGameTest {
                 runtime.setPaused(false);
                 ((TrinityCraftingRuntimeRegistry) crafting).data_energistics$publish(node.getNode(), runtime);
                 ReusableInputContext context = ReusableInputContext.builder().pattern(pattern).actualInput(new GenericStack(tool(), 1L))
-                        .exactInputs(List.of(new GenericStack(tool(), 1L), new GenericStack(material(), 1L))).inputSlot(0)
+                        .exactInputs(ObjectList.of(new GenericStack(tool(), 1L), new GenericStack(material(), 1L))).inputSlot(0)
                         .ownership(ReusableInputContext.Ownership.CPU_SUPPLIED).actionSource(host.accessActionSource())
                         .level(helper.getLevel()).recipeId(Optional.empty()).machineMode(Optional.of(MODE)).target(target.route()).build();
                 helper.assertTrue(DataEnergisticsEntrypointLoader.snapshot().reusableInputs().resolve(context).isPresent(),
@@ -364,7 +364,7 @@ public final class TrinityReusableCpuDispatchGameTest {
         }
 
         private void flushOutputs() {
-            List<GenericStack> outputs = new ObjectArrayList<>();
+            ObjectList<GenericStack> outputs = new ObjectArrayList<>();
             pendingOutputs.forEach(entry -> outputs.add(new GenericStack(entry.getKey(), entry.getLongValue())));
             for (var output : outputs) {
                 long accepted = crafting.insertIntoCpus(output.what(), output.amount(), Actionable.MODULATE);
@@ -383,8 +383,8 @@ public final class TrinityReusableCpuDispatchGameTest {
         }
 
         @Override
-        public List<IPatternDetails> getAvailablePatterns() {
-            return List.of(pattern);
+        public ObjectList<IPatternDetails> getAvailablePatterns() {
+            return ObjectList.of(pattern);
         }
 
         @Override
@@ -399,6 +399,12 @@ public final class TrinityReusableCpuDispatchGameTest {
 
         @Override
         public @Nullable CountedCraftingAdmission prepareBatch(IPatternDetails pattern, KeyCounter[] inputs, long count) {
+            return null;
+        }
+
+        @Override
+        public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] inputs,
+                                                                        long count, CountedCraftingTarget target) {
             return null;
         }
 
@@ -486,8 +492,8 @@ public final class TrinityReusableCpuDispatchGameTest {
                         helper.assertValueEqual(worker.getWaitingFor(product()), BigInteger.ZERO, "CPU settlement removes only cancelled unexecuted waiting output");
                         CompoundTag job = worker.logic().writeToTag(helper.getLevel().registryAccess()).getCompound("job");
                         CompoundTag time = job.getCompound("time_tracker");
-                        BigInteger started = TrinityBigIntegerEncoding.decode(time.getCompound("started_work").getByteArray(product().getType().getId().toString()), "test started work");
-                        BigInteger completed = TrinityBigIntegerEncoding.decode(time.getCompound("completed_work").getByteArray(product().getType().getId().toString()), "test completed work");
+                        BigInteger started = NbtCodecs.decode(time.getCompound("started_work").getByteArray(product().getType().getId().toString()), "test started work");
+                        BigInteger completed = NbtCodecs.decode(time.getCompound("completed_work").getByteArray(product().getType().getId().toString()), "test completed work");
                         helper.assertValueEqual(started, BigInteger.valueOf(requested - cancelled), "Cancelled accepted suffix reduces the original started baseline");
                         helper.assertValueEqual(completed, BigInteger.valueOf(executed), "Cancellation cannot become completed progress");
                         cancellationChecked = true;
@@ -519,12 +525,12 @@ public final class TrinityReusableCpuDispatchGameTest {
             executed += operation.count();
             consumed += operation.consumed().getFirst().stack().amount();
             var successor = pattern.rule().advance((AEItemKey) operation.tools().getFirst().stack().what(), operation.count()).successor();
-            return new NativeResult(true, List.of(new ToolOutcome(0, successor == null ? List.of() : List.of(new GenericStack(successor, 1)), List.of())),
-                    List.of(new GenericStack(product(), operation.count())), Optional.empty());
+            return new NativeResult(true, ObjectList.of(new ToolOutcome(0, successor == null ? ObjectList.of() : ObjectList.of(new GenericStack(successor, 1)), ObjectList.of())),
+                    ObjectList.of(new GenericStack(product(), operation.count())), Optional.empty());
         }
 
         @Override
-        public void acceptOutputs(Identity identity, List<GenericStack> outputs) {
+        public void acceptOutputs(Identity identity, ObjectList<GenericStack> outputs) {
             outputs.forEach(stack -> pendingOutputs.add(stack.what(), stack.amount()));
         }
 
@@ -639,8 +645,8 @@ public final class TrinityReusableCpuDispatchGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return List.of(new GenericStack(product(), 1L));
+        public ObjectList<GenericStack> getOutputs() {
+            return ObjectList.of(new GenericStack(product(), 1L));
         }
     }
 
@@ -670,19 +676,19 @@ public final class TrinityReusableCpuDispatchGameTest {
     private static TrinityCraftingPlan plan(int count, TrinityPatternIdentity identity, FixturePattern pattern) {
         BigInteger total = BigInteger.valueOf(count);
         ReusableInputRule rule = pattern.rule();
-        List<TrinityBoundPatternInput> bindings = List.of(new TrinityBoundPatternInput(0, 0, new GenericStack(tool(), 1L), 1L,
-                rule.advance(tool(), 1).successor(), rule, List.of(), pattern.lifetime()),
+        ObjectList<TrinityBoundPatternInput> bindings = ObjectList.of(new TrinityBoundPatternInput(0, 0, new GenericStack(tool(), 1L), 1L,
+                rule.advance(tool(), 1).successor(), rule, ObjectList.of(), pattern.lifetime()),
                 new TrinityBoundPatternInput(1, 0, new GenericStack(material(), 1L), 1L, null));
         var firing = new TrinityPlanPatternFiring(identity, product(), 0, total,
-                pattern.lifetime() ? Map.of(material(), BigInteger.ONE) : Map.of(tool(), BigInteger.ONE, material(), BigInteger.ONE),
-                Map.of(product(), BigInteger.ONE), pattern.lifetime() ? Map.of() : Map.of(tool(), BigInteger.ONE), bindings);
-        Map<AEKey, BigInteger> initial = Map.of(tool(), pattern.lifetime() ? BigInteger.valueOf(3) : BigInteger.ONE, material(), total);
-        Map<AEKey, BigInteger> delta = Map.of(material(), total.negate(), product(), total);
-        var stage = new TrinityPlanStage(0, pattern.lifetime(), IntSet.of(), List.of(firing), initial, delta);
+                pattern.lifetime() ? FastUtilCollections.mapOf(material(), BigInteger.ONE) : FastUtilCollections.mapOf(tool(), BigInteger.ONE, material(), BigInteger.ONE),
+                FastUtilCollections.mapOf(product(), BigInteger.ONE), pattern.lifetime() ? FastUtilCollections.mapOf() : FastUtilCollections.mapOf(tool(), BigInteger.ONE), bindings);
+        Object2ObjectMap<AEKey, BigInteger> initial = FastUtilCollections.mapOf(tool(), pattern.lifetime() ? BigInteger.valueOf(3) : BigInteger.ONE, material(), total);
+        Object2ObjectMap<AEKey, BigInteger> delta = FastUtilCollections.mapOf(material(), total.negate(), product(), total);
+        var stage = new TrinityPlanStage(0, pattern.lifetime(), IntSet.of(), ObjectList.of(firing), initial, delta);
         var builder = TrinityCraftingPlan.builder().finalOutput(new GenericStack(product(), count)).bytes(BigInteger.valueOf(1024L))
                 .catalogRevision(1L).quantityMode(CraftingQuantityMode.NET_NEW).initialExpectedInputs(initial)
-                .patternFirings(Map.of(identity, total)).stages(List.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta);
-        if (pattern.lifetime()) builder.minimumSeed(initial).cycleRepeatBlocks(List.of(new TrinityCycleRepeatBlock(0, IntList.of(0), BigInteger.ONE, initial, delta)));
+                .patternFirings(FastUtilCollections.mapOf(identity, total)).stages(ObjectList.of(stage)).stageOrder(IntList.of(0)).targetNetChange(delta);
+        if (pattern.lifetime()) builder.minimumSeed(initial).cycleRepeatBlocks(ObjectList.of(new TrinityCycleRepeatBlock(0, IntList.of(0), BigInteger.ONE, initial, delta)));
         return builder.build();
     }
 

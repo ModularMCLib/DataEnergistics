@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.api.registry.provider.definition;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
 
 /**
  * Immutable semantic metadata used to match a declared provider integration.
@@ -26,26 +26,12 @@ import java.util.List;
  */
 public record PatternProviderMetadata(ResourceLocation registrationId,
                                       ProviderIdentityDescriptor providerIdentity,
-                                      List<ResourceLocation> recipeCategoryIds,
-                                      List<ResourceLocation> workstationItemIds) {
-
-    /** @deprecated scheduled for removal in plan 340; use {@link #recipeCategoryIdsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<ResourceLocation> recipeCategoryIds() {
-        return recipeCategoryIds;
-    }
+                                      ObjectList<ResourceLocation> recipeCategoryIds,
+                                      ObjectList<ResourceLocation> workstationItemIds) {
 
     /** Returns an immutable FastUtil view of recipe category IDs. */
     public ObjectList<ResourceLocation> recipeCategoryIdsFast() {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(recipeCategoryIds));
-    }
-
-    /** @deprecated scheduled for removal in plan 340; use {@link #workstationItemIdsFast()} */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<ResourceLocation> workstationItemIds() {
-        return workstationItemIds;
     }
 
     /** Returns an immutable FastUtil view of workstation item IDs. */
@@ -61,43 +47,10 @@ public record PatternProviderMetadata(ResourceLocation registrationId,
         workstationItemIds = canonicalIds(workstationItemIds);
     }
 
-    /**
-     * Alias for integrations that use the shorter category terminology.
-     *
-     * @return canonical recipe-category IDs
-     * @deprecated scheduled for removal in plan 340; use {@link #categoryIdsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    public List<ResourceLocation> categoryIds() {
-        return this.recipeCategoryIds;
-    }
-
-    /** Alias for {@link #recipeCategoryIdsFast()}. */
-    public ObjectList<ResourceLocation> categoryIdsFast() {
-        return recipeCategoryIdsFast();
-    }
-
-    /**
-     * Alias for integrations that use the shorter workstation terminology.
-     *
-     * @return canonical workstation item IDs
-     * @deprecated scheduled for removal in plan 340; use {@link #workstationIdsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    public List<ResourceLocation> workstationIds() {
-        return this.workstationItemIds;
-    }
-
-    /** Alias for {@link #workstationItemIdsFast()}. */
-    public ObjectList<ResourceLocation> workstationIdsFast() {
-        return workstationItemIdsFast();
-    }
-
-    private static List<ResourceLocation> canonicalIds(
-                                                       List<ResourceLocation> ids) {
-        LinkedHashSet<ResourceLocation> unique = new LinkedHashSet<>(ids);
-        ArrayList<ResourceLocation> canonical = new ArrayList<>(unique);
+    private static ObjectList<ResourceLocation> canonicalIds(ObjectList<ResourceLocation> ids) {
+        ObjectSet<ResourceLocation> unique = new ObjectLinkedOpenHashSet<>(ids);
+        ObjectArrayList<ResourceLocation> canonical = new ObjectArrayList<>(unique);
         canonical.sort(Comparator.comparing(ResourceLocation::toString));
-        return List.copyOf(canonical);
+        return new ObjectImmutableList<>(canonical);
     }
 }

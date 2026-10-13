@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -26,12 +27,11 @@ import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(Data_Energistics.MODID)
@@ -47,15 +47,15 @@ public final class TrinityCyclePrecisionGameTest {
         AEKey second = AEItemKey.of(Items.GOLD_INGOT);
         TrinityPatternVariant forward = conversion("forward", first, 4, second, 5);
         TrinityPatternVariant reverse = conversion("reverse", second, 6, first, 5);
-        List<TrinityPatternVariant> variants = List.of(forward, reverse);
+        ObjectList<TrinityPatternVariant> variants = ObjectList.of(forward, reverse);
         BigInteger requested = BigInteger.valueOf(1_000_000_000L);
         TrinityCycleDemand demand = new TrinityCycleDemand(
-                Map.of(), Map.of(), Map.of(first, requested), Set.of(first));
+                FastUtilCollections.mapOf(), FastUtilCollections.mapOf(), FastUtilCollections.mapOf(first, requested), ObjectSet.of(first));
         TrinityCycleFeasibilityRequest request = new TrinityCycleFeasibilityRequest(
-                variants, Set.of(first, second), demand, Map.of(first, BigInteger.TEN), Set.of(),
-                Map.of(forward, TrinityFiringBounds.full(), reverse, TrinityFiringBounds.full()),
+                variants, ObjectSet.of(first, second), demand, FastUtilCollections.mapOf(first, BigInteger.TEN), ObjectSet.of(),
+                FastUtilCollections.mapOf(forward, TrinityFiringBounds.full(), reverse, TrinityFiringBounds.full()),
                 Optional.empty(), BigInteger.ZERO, BigInteger.ZERO, false, 0,
-                TrinityMipCoefficientTemplate.create(variants, List.of(first, second)));
+                TrinityMipCoefficientTemplate.create(variants, ObjectList.of(first, second)));
 
         // Settling B requires six forward and five reverse firings per net A. The first two compact
         // domains cannot hold that vector; doubling reaches it without squaring past ordinary precision.
@@ -83,8 +83,8 @@ public final class TrinityCyclePrecisionGameTest {
 
     private static TrinityPatternVariant conversion(String name, AEKey input, long consumed, AEKey output, long produced) {
         return TrinityPatternVariant.create(new TrinityPatternIdentity(name, name), output, 0, IntList.of(0),
-                List.of(new TrinityBoundPatternInput(0, 0, new GenericStack(input, consumed), 1, null)),
-                List.of(new GenericStack(output, produced)));
+                ObjectList.of(new TrinityBoundPatternInput(0, 0, new GenericStack(input, consumed), 1, null)),
+                ObjectList.of(new GenericStack(output, produced)));
     }
 
     @TestHolder("trinity_cycle_precision_preserves_integer_branch_seed_boundaries")
@@ -93,14 +93,14 @@ public final class TrinityCyclePrecisionGameTest {
     public static void preservesIntegerBranchSeedBoundaries(GameTestHelper helper) {
         AEKey key = AEItemKey.of(Items.IRON_INGOT);
         TrinityPatternVariant variant = conversion("seed_boundary", key, 1, key, 2);
-        List<TrinityPatternVariant> variants = List.of(variant);
+        ObjectList<TrinityPatternVariant> variants = ObjectList.of(variant);
         for (long amount = Integer.MAX_VALUE - 1L; amount <= Integer.MAX_VALUE + 1L; amount++) {
             BigInteger seed = BigInteger.valueOf(amount);
             TrinityCycleFeasibilityRequest request = new TrinityCycleFeasibilityRequest(
-                    variants, Set.of(key), new TrinityCycleDemand(Map.of(), Map.of(), Map.of(key, BigInteger.ONE), Set.of(key)),
-                    Map.of(key, seed), Set.of(), Map.of(variant, TrinityFiringBounds.fixed(BigInteger.ONE)),
+                    variants, ObjectSet.of(key), new TrinityCycleDemand(FastUtilCollections.mapOf(), FastUtilCollections.mapOf(), FastUtilCollections.mapOf(key, BigInteger.ONE), ObjectSet.of(key)),
+                    FastUtilCollections.mapOf(key, seed), ObjectSet.of(), FastUtilCollections.mapOf(variant, TrinityFiringBounds.fixed(BigInteger.ONE)),
                     Optional.empty(), seed, BigInteger.ZERO, false, 0,
-                    TrinityMipCoefficientTemplate.create(variants, List.of(key)));
+                    TrinityMipCoefficientTemplate.create(variants, ObjectList.of(key)));
             var solved = TrinityCycleFeasibilityModel.create().solve(
                     request, TrinityPlanningMode.OPTIMAL, TrinityPlanningControl.unbounded());
             if (!solved.successful()) {
@@ -123,19 +123,19 @@ public final class TrinityCyclePrecisionGameTest {
         AEKey second = AEItemKey.of(Items.GOLD_INGOT);
         TrinityPatternVariant forward = conversion("fractional_forward", first, 3, second, 5);
         TrinityPatternVariant reverse = conversion("fractional_reverse", second, 6, first, 4);
-        List<TrinityPatternVariant> variants = List.of(forward, reverse);
+        ObjectList<TrinityPatternVariant> variants = ObjectList.of(forward, reverse);
         BigInteger requested = BigInteger.valueOf(1_000_000_003L);
         TrinityCycleFeasibilityRequest request = new TrinityCycleFeasibilityRequest(
-                variants, Set.of(first, second),
-                new TrinityCycleDemand(Map.of(), Map.of(), Map.of(first, requested), Set.of(first)),
+                variants, ObjectSet.of(first, second),
+                new TrinityCycleDemand(FastUtilCollections.mapOf(), FastUtilCollections.mapOf(), FastUtilCollections.mapOf(first, requested), ObjectSet.of(first)),
                 // Fixed forward=3N requires reverse>=ceil(5N/2) for net A and reverse<=floor(5N/2)
                 // for non-negative B. Odd N and zero B stock make these integer bounds contradictory;
                 // projecting reserves and GCD-tightening rows proves infeasibility before candidate repair.
-                Map.of(first, BigInteger.TEN, second, BigInteger.ZERO), Set.of(),
-                Map.of(forward, TrinityFiringBounds.fixed(requested.multiply(BigInteger.valueOf(3))),
+                FastUtilCollections.mapOf(first, BigInteger.TEN, second, BigInteger.ZERO), ObjectSet.of(),
+                FastUtilCollections.mapOf(forward, TrinityFiringBounds.fixed(requested.multiply(BigInteger.valueOf(3))),
                         reverse, new TrinityFiringBounds(BigInteger.ZERO, requested.shiftLeft(3))),
                 Optional.empty(), BigInteger.ZERO, BigInteger.ZERO, false, 0,
-                TrinityMipCoefficientTemplate.create(variants, List.of(first, second)));
+                TrinityMipCoefficientTemplate.create(variants, ObjectList.of(first, second)));
         TrinityCycleFeasibilityModel ordinary = new TrinityOrdinaryCycleFeasibilityModel(
                 TrinityIntegerResultVerifier.create(), TrinityExactConservationVerifier.create());
         var solved = ordinary.solve(request, TrinityPlanningMode.FIRST_FEASIBLE, TrinityPlanningControl.unbounded());

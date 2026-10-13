@@ -1,25 +1,26 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Complete exact firing identity over one stable, sorted variant domain.
  */
 public final class TrinityFiringVector implements Comparable<TrinityFiringVector> {
 
-    private final List<TrinityPatternVariant> variants;
-    private final List<BigInteger> counts;
+    private final ObjectList<TrinityPatternVariant> variants;
+    private final ObjectList<BigInteger> counts;
 
-    private TrinityFiringVector(List<TrinityPatternVariant> variants, List<BigInteger> counts) {
+    private TrinityFiringVector(ObjectList<TrinityPatternVariant> variants, ObjectList<BigInteger> counts) {
         this.variants = variants;
         this.counts = counts;
     }
@@ -32,21 +33,21 @@ public final class TrinityFiringVector implements Comparable<TrinityFiringVector
      * @return immutable complete numeric vector
      */
     public static TrinityFiringVector from(
-                                           List<TrinityPatternVariant> domain,
-                                           Map<TrinityPatternVariant, BigInteger> firings) {
+                                           ObjectList<TrinityPatternVariant> domain,
+                                           Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         if (domain == null || domain.isEmpty() || firings == null) {
             throw new IllegalArgumentException("A Trinity firing vector requires a non-empty domain and firing map");
         }
-        List<TrinityPatternVariant> orderedVariants = new ObjectArrayList<>(domain);
+        ObjectList<TrinityPatternVariant> orderedVariants = new ObjectArrayList<>(domain);
         if (orderedVariants.stream().anyMatch(variant -> variant == null)) {
             throw new IllegalArgumentException("A Trinity firing vector domain cannot contain null variants");
         }
         Collections.sort(orderedVariants);
-        Set<TrinityPatternVariant> uniqueVariants = new ObjectOpenHashSet<>(orderedVariants);
+        ObjectSet<TrinityPatternVariant> uniqueVariants = new ObjectOpenHashSet<>(orderedVariants);
         if (uniqueVariants.size() != orderedVariants.size() || !uniqueVariants.containsAll(firings.keySet())) {
             throw new IllegalArgumentException("A Trinity firing vector requires a unique complete variant domain");
         }
-        List<BigInteger> orderedCounts = new ObjectArrayList<>(orderedVariants.size());
+        ObjectList<BigInteger> orderedCounts = new ObjectArrayList<>(orderedVariants.size());
         for (TrinityPatternVariant variant : orderedVariants) {
             BigInteger count = firings.getOrDefault(variant, BigInteger.ZERO);
             if (count == null || count.signum() < 0) {
@@ -54,20 +55,20 @@ public final class TrinityFiringVector implements Comparable<TrinityFiringVector
             }
             orderedCounts.add(count);
         }
-        return new TrinityFiringVector(List.copyOf(orderedVariants), List.copyOf(orderedCounts));
+        return new TrinityFiringVector(FastUtilCollections.immutableList(orderedVariants), FastUtilCollections.immutableList(orderedCounts));
     }
 
     /**
      * @return complete stable variant order
      */
-    public List<TrinityPatternVariant> variants() {
+    public ObjectList<TrinityPatternVariant> variants() {
         return this.variants;
     }
 
     /**
      * @return exact counts aligned with {@link #variants()}
      */
-    public List<BigInteger> counts() {
+    public ObjectList<BigInteger> counts() {
         return this.counts;
     }
 

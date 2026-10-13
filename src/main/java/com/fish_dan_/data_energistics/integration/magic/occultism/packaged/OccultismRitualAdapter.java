@@ -37,6 +37,8 @@ import com.klikli_dev.occultism.crafting.recipe.RitualRecipe;
 import com.klikli_dev.occultism.crafting.recipe.conditionextension.RitualRecipeConditionContext;
 import com.klikli_dev.occultism.registry.OccultismBlocks;
 import com.klikli_dev.occultism.registry.OccultismRecipes;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -173,19 +175,19 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         var slots = preparation.getList("bowls", Tag.TAG_COMPOUND);
-        for (int index = 0; index < slots.size(); index++) positions.add(BlockPos.of(slots.getCompound(index).getLong("position")));
+        for (int index = 0; index < slots.size(); index++) positions.add(slots.getCompound(index).getLong("position"));
         return positions;
     }
 
     @Override
     public boolean recoverRemoved(PackagedMachineOperation operation) {
         var level = operation.level();
-        for (var position : occupiedPositions(level, operation.position(), operation.progress())) {
-            if (!level.isLoaded(position)) return false;
+        for (long packedPosition : occupiedPositions(level, operation.position(), operation.progress())) {
+            if (!level.isLoaded(BlockPos.of(packedPosition))) return false;
         }
 
         var progress = operation.progress();
@@ -263,8 +265,8 @@ public final class OccultismRitualAdapter implements PackagedMachineAdapter {
             return retireInterrupted(operation);
         }
         if (progress.getBoolean("delivered")) {
-            for (var position : occupiedPositions(operation.level(), operation.position(), progress)) {
-                if (!operation.level().isLoaded(position)) return false;
+            for (long packedPosition : occupiedPositions(operation.level(), operation.position(), progress)) {
+                if (!operation.level().isLoaded(BlockPos.of(packedPosition))) return false;
             }
             var layout = persistedLayout(operation, holder.value(), false);
             if (layout == null) return retireInterrupted(operation);

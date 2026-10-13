@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.client.crafting;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.client.Point;
 import appeng.client.gui.style.Blitter;
@@ -144,7 +144,7 @@ public abstract class CPUSelectionListMixin {
             return storageAmount;
         }
         return cpu.storage() == Long.MAX_VALUE ?
-                dataEnergistics$unlimited().getString() : AmountFormatter.format(cpu.storage());
+                dataEnergistics$unlimited().getString() : FormattingUtils.format(cpu.storage());
     }
 
     @WrapOperation(

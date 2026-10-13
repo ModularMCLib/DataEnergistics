@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.util.ItemStackUtils;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -14,18 +16,18 @@ import appeng.api.stacks.KeyCounter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.phys.AABB;
 
 import com.breakinblocks.neovitae.common.blockentity.TabulaVitaeBlockEntity;
 import com.breakinblocks.neovitae.common.recipe.NVRecipes;
 import com.breakinblocks.neovitae.common.recipe.tabulavitae.TabulaVitaeRecipe;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -68,27 +70,27 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         TabulaVitaeRecipe recipe = recipe(level, recipeId);
         if (recipe == null || recipe.getInput().size() > TabulaVitaeBlockEntity.ORB_SLOT) return null;
         ObjectList<ItemStack> assigned = PackagedIngredientAssignment.match(
-                new ObjectArrayList<Ingredient>(recipe.getInput()), inputs);
+                new ObjectArrayList<>(recipe.getInput()), inputs);
         if (assigned == null) return null;
         if (pattern.getOutputs().size() != 1 ||
                 !PackagedOutputMatching.matches(pattern, recipe.getOutput(), recipe.getOutput().getCount()))
             return null;
         var result = new CompoundTag();
-        result.put(INPUTS, saveStacks(assigned, level));
+        result.put(INPUTS, NbtCodecs.encodeItemStacks(assigned, level.registryAccess()));
         result.put(OUTPUT, recipe.getOutput().save(level.registryAccess()));
         return result;
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
-        positions.add(position);
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
+        positions.add(position.asLong());
         if (level.getBlockEntity(position) instanceof TabulaVitaeBlockEntity table) {
             BlockPos partnerPosition = table.getConnectedPos();
             if (level.isLoaded(partnerPosition) &&
                     level.getBlockEntity(partnerPosition) instanceof TabulaVitaeBlockEntity partner && partner.isSlave() &&
                     partner.getMaster() == table)
-                positions.add(partnerPosition);
+                positions.add(partnerPosition.asLong());
         }
         return positions;
     }
@@ -114,7 +116,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
                 ItemStack actual = table.inv.getStackInSlot(slot);
                 if (actual.isEmpty()) continue;
                 ItemStack recovered = table.inv.extractItem(slot, actual.getCount(), false);
-                if (!sameStack(actual, recovered)) throw new IllegalStateException("Tabula Vitae recovery extraction was incomplete");
+                if (!ItemStackUtils.sameItemAndCount(actual, recovered)) throw new IllegalStateException("Tabula Vitae recovery extraction was incomplete");
                 operation.returned(AEItemKey.of(recovered), recovered.getCount());
             }
             table.getPersistentData().remove(OWNER);
@@ -133,7 +135,8 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         if (!emptyInputsAndOutput(table) || !safePartner(operation.level(), table)) return false;
         TabulaVitaeRecipe recipe = recipe(operation.level(), operation.recipeId());
         if (recipe == null) return false;
-        ObjectList<ItemStack> inputs = readStacks(operation, operation.progress().getList(INPUTS, Tag.TAG_COMPOUND));
+        ObjectList<ItemStack> inputs = NbtCodecs.decodeItemStacks(
+                operation.progress().getList(INPUTS, Tag.TAG_COMPOUND), operation.level().registryAccess());
         if (inputs.size() > TabulaVitaeBlockEntity.ORB_SLOT) return false;
 
         for (int slot = 0; slot < inputs.size(); slot++) {
@@ -148,7 +151,7 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         for (int slot = 0; slot < inputs.size(); slot++) {
             ItemStack stack = inputs.get(slot);
             ItemStack remainder = table.inv.insertItem(slot, stack.copy(), false);
-            if (!remainder.isEmpty() || !sameStack(stack, table.inv.getStackInSlot(slot)))
+            if (!remainder.isEmpty() || !ItemStackUtils.sameItemAndCount(stack, table.inv.getStackInSlot(slot)))
                 throw new IllegalStateException("Tabula Vitae rejected a preflighted ingredient");
             operation.delivered(AEItemKey.of(stack), 1);
             operation.progress().putInt(INSERTED, operation.progress().getInt(INSERTED) | 1 << slot);
@@ -164,13 +167,13 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
         if (!PackagedOutputMatching.matches(operation, expected, output))
             return false;
         ItemStack extractedOutput = table.inv.extractItem(TabulaVitaeBlockEntity.OUTPUT_SLOT, output.getCount(), false);
-        if (!sameStack(output, extractedOutput)) throw new IllegalStateException("Tabula Vitae output extraction was incomplete");
+        if (!ItemStackUtils.sameItemAndCount(output, extractedOutput)) throw new IllegalStateException("Tabula Vitae output extraction was incomplete");
         operation.returned(AEItemKey.of(extractedOutput), extractedOutput.getCount());
         for (int slot = 0; slot < TabulaVitaeBlockEntity.ORB_SLOT; slot++) {
             ItemStack remainder = table.inv.getStackInSlot(slot);
             if (remainder.isEmpty()) continue;
             ItemStack extracted = table.inv.extractItem(slot, remainder.getCount(), false);
-            if (!sameStack(remainder, extracted))
+            if (!ItemStackUtils.sameItemAndCount(remainder, extracted))
                 throw new IllegalStateException("Tabula Vitae remainder extraction was incomplete");
             operation.returned(AEItemKey.of(extracted), extracted.getCount());
         }
@@ -203,24 +206,6 @@ public final class TabulaVitaeAdapter implements PackagedMachineAdapter {
             if (!table.inv.getStackInSlot(slot).isEmpty()) return false;
         }
         return table.inv.getStackInSlot(TabulaVitaeBlockEntity.OUTPUT_SLOT).isEmpty();
-    }
-
-    private static boolean sameStack(ItemStack expected, ItemStack actual) {
-        return expected.getCount() == actual.getCount() && ItemStack.isSameItemSameComponents(expected, actual);
-    }
-
-    private static ListTag saveStacks(ObjectList<ItemStack> stacks, ServerLevel level) {
-        var result = new ListTag();
-        for (ItemStack stack : stacks) result.add(stack.saveOptional(level.registryAccess()));
-        return result;
-    }
-
-    private static ObjectList<ItemStack> readStacks(PackagedMachineOperation operation, ListTag encoded) {
-        var result = new ObjectArrayList<ItemStack>();
-        for (int index = 0; index < encoded.size(); index++) {
-            result.add(ItemStack.parseOptional(operation.level().registryAccess(), encoded.getCompound(index)));
-        }
-        return result;
     }
 
     private static ItemStack readStack(PackagedMachineOperation operation, String key) {

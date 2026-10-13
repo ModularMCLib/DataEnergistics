@@ -9,10 +9,11 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Request-private feasibility boundary that may reuse immutable model structure across related firing boxes.
@@ -88,11 +89,11 @@ public final class TrinityCycleFeasibilitySession {
     }
 
     private record RequestStructure(
-                                    List<TrinityPatternVariant> variants,
-                                    Set<AEKey> internalKeys,
+                                    ObjectList<TrinityPatternVariant> variants,
+                                    ObjectSet<AEKey> internalKeys,
                                     TrinityCycleDemand demand,
-                                    Map<AEKey, BigInteger> available,
-                                    Set<AEKey> producibleInputs,
+                                    Object2ObjectMap<AEKey, BigInteger> available,
+                                    ObjectSet<AEKey> producibleInputs,
                                     boolean shortageDiagnostic,
                                     TrinityMipCoefficientTemplate coefficientTemplate) {
 

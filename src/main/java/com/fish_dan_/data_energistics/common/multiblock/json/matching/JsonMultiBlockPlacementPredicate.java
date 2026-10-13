@@ -16,13 +16,13 @@ import com.modularmc.mdl.api.multiblock.MultiblockState;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicate;
 import com.modularmc.mdl.api.multiblock.structurepredicate.StructurePredicateTypes;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Wraps a structure predicate with explicit item candidates for automatic placement.
  */
-public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List<ItemStack> placementCandidates)
+public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, ObjectList<ItemStack> placementCandidates)
         implements StructurePredicate {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(
@@ -34,7 +34,11 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List
     private static boolean registered;
 
     public JsonMultiBlockPlacementPredicate {
-        placementCandidates = placementCandidates.stream().map(ItemStack::copy).toList();
+        ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(placementCandidates.size());
+        for (ItemStack stack : placementCandidates) {
+            copies.add(stack.copy());
+        }
+        placementCandidates = new ObjectImmutableList<>(copies);
         if (placementCandidates.isEmpty()) {
             throw new IllegalArgumentException("Placement item predicate requires at least one item candidate");
         }
@@ -50,7 +54,7 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List
 
     public static JsonMultiBlockPlacementPredicate fromJson(JsonObject object) {
         StructurePredicate delegate = StructurePredicateTypes.decode(readRequiredObject(object, PREDICATE_PROPERTY));
-        List<ItemStack> items = new ObjectArrayList<>();
+        ObjectList<ItemStack> items = new ObjectArrayList<>();
         for (String itemId : readItemIds(object)) {
             items.add(resolveItem(parseId(itemId, "item")).getDefaultInstance());
         }
@@ -78,18 +82,22 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List
     }
 
     @Override
-    public List<Block> blockCandidates() {
-        return this.delegate.blockCandidates();
+    public ObjectList<Block> blockCandidates() {
+        return new ObjectImmutableList<>(this.delegate.blockCandidates());
     }
 
     @Override
-    public List<BlockState> blockStateCandidates() {
-        return this.delegate.blockStateCandidates();
+    public ObjectList<BlockState> blockStateCandidates() {
+        return new ObjectImmutableList<>(this.delegate.blockStateCandidates());
     }
 
     @Override
-    public List<ItemStack> placementCandidates() {
-        return this.placementCandidates.stream().map(ItemStack::copy).toList();
+    public ObjectList<ItemStack> placementCandidates() {
+        ObjectArrayList<ItemStack> copies = new ObjectArrayList<>(this.placementCandidates.size());
+        for (ItemStack stack : this.placementCandidates) {
+            copies.add(stack.copy());
+        }
+        return new ObjectImmutableList<>(copies);
     }
 
     @Override
@@ -97,19 +105,19 @@ public record JsonMultiBlockPlacementPredicate(StructurePredicate delegate, List
         return this.delegate.hasAir();
     }
 
-    private static List<String> readItemIds(JsonObject object) {
+    private static ObjectList<String> readItemIds(JsonObject object) {
         if (object.has(ITEMS_PROPERTY)) {
             JsonArray array = readRequiredArray(object, ITEMS_PROPERTY);
-            List<String> ids = new ObjectArrayList<>();
+            ObjectArrayList<String> ids = new ObjectArrayList<>();
             for (JsonElement element : array) {
                 if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
                     throw new IllegalArgumentException("Placement item entries must be strings");
                 }
                 ids.add(element.getAsString());
             }
-            return List.copyOf(ids);
+            return new ObjectImmutableList<>(ids);
         }
-        return List.of(readRequiredString(object, ITEM_PROPERTY));
+        return ObjectList.of(readRequiredString(object, ITEM_PROPERTY));
     }
 
     private static Item resolveItem(ResourceLocation id) {

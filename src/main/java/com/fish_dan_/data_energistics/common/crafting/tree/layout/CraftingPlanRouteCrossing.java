@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGr
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.RoutedEdge;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRouteGeometry.Run;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanRouteGeometry.Segment;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.doubles.Double2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -24,14 +25,13 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Bridges use local axes: x is across the bridge and y runs along it. For a horizontal bridge these
  * coordinates are transposed relative to the graph. The less crowded bundle crosses the denser one.
  */
 public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
-                                        double bend, double radius, List<Underpass> underpasses) {
+                                        double bend, double radius, ObjectList<Underpass> underpasses) {
 
     public static final double MAX_RADIUS = 4;
     private static final double[] SPANS = { MAX_RADIUS, 3, 2 };
@@ -40,7 +40,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
     private static final double DENSE_BRIDGE_BEND = 2 * MAX_RADIUS;
 
     public CraftingPlanRouteCrossing {
-        underpasses = List.copyOf(underpasses);
+        underpasses = FastUtilCollections.immutableList(underpasses);
     }
 
     /** Converts a bridge-local offset to graph coordinates using the owning segment's orientation. */
@@ -72,14 +72,14 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         return result;
     }
 
-    static List<CraftingPlanRouteCrossing> find(List<PlacedNode> nodes, List<RoutedEdge> routes,
-                                                List<Segment> segments, List<Run> runs) {
-        List<CraftingPlanRouteCrossing> candidates = new ObjectArrayList<>(findVertical(nodes, routes, segments, runs, false));
-        List<PlacedNode> transposedNodes = new ObjectArrayList<>(nodes.size());
+    static ObjectList<CraftingPlanRouteCrossing> find(ObjectList<PlacedNode> nodes, ObjectList<RoutedEdge> routes,
+                                                      ObjectList<Segment> segments, ObjectList<Run> runs) {
+        ObjectList<CraftingPlanRouteCrossing> candidates = new ObjectArrayList<>(findVertical(nodes, routes, segments, runs, false));
+        ObjectList<PlacedNode> transposedNodes = new ObjectArrayList<>(nodes.size());
         for (PlacedNode node : nodes) transposedNodes.add(new PlacedNode(node.viewNode(), node.y(), node.x(), node.height(), node.width()));
-        List<Segment> transposedSegments = new ObjectArrayList<>(segments.size());
+        ObjectList<Segment> transposedSegments = new ObjectArrayList<>(segments.size());
         for (Segment segment : segments) transposedSegments.add(new Segment(swap(segment.from()), swap(segment.to()), segment.group(), segment.routeIds()));
-        List<Run> transposedRuns = new ObjectArrayList<>(runs.size());
+        ObjectList<Run> transposedRuns = new ObjectArrayList<>(runs.size());
         for (Run run : runs) transposedRuns.add(new Run(swap(run.from()), swap(run.to()), run.group(), run.segmentIds()));
         candidates.addAll(findVertical(transposedNodes, routes, transposedSegments, transposedRuns, true));
         candidates.sort(Comparator.comparingInt(CraftingPlanRouteCrossing::bridgeSegmentId).thenComparingDouble(CraftingPlanRouteCrossing::y));
@@ -87,7 +87,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         for (int index = 0; index < runs.size(); index++) for (int segment : runs.get(index).segmentIds()) runBySegment[segment] = index;
         CrossingIndex accepted = new CrossingIndex(segments);
         int arches = 0;
-        List<CraftingPlanRouteCrossing> result = new ObjectArrayList<>(candidates.size());
+        ObjectList<CraftingPlanRouteCrossing> result = new ObjectArrayList<>(candidates.size());
         for (CraftingPlanRouteCrossing crossing : candidates) {
             if (crossing.radius() > 0 || arches > 0) {
                 Bounds bounds = accepted.bounds(crossing);
@@ -113,12 +113,12 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
             accepted.add(crossing);
             if (crossing.radius() > 0) arches++;
         }
-        return List.copyOf(result);
+        return FastUtilCollections.immutableList(result);
     }
 
-    private static CraftingPlanRouteCrossing flat(CraftingPlanRouteCrossing crossing, List<Segment> segments,
-                                                  List<Run> runs, int[] runBySegment) {
-        List<Underpass> gaps = new ObjectArrayList<>();
+    private static CraftingPlanRouteCrossing flat(CraftingPlanRouteCrossing crossing, ObjectList<Segment> segments,
+                                                  ObjectList<Run> runs, int[] runBySegment) {
+        ObjectList<Underpass> gaps = new ObjectArrayList<>();
         for (Underpass underpass : crossing.underpasses()) {
             Run run = runs.get(runBySegment[underpass.segmentId()]);
             boolean horizontal = horizontal(run);
@@ -138,12 +138,12 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         return new Point(point.y(), point.x());
     }
 
-    private static List<CraftingPlanRouteCrossing> findVertical(List<PlacedNode> nodes, List<RoutedEdge> routes,
-                                                                List<Segment> segments, List<Run> runs, boolean transposed) {
+    private static ObjectList<CraftingPlanRouteCrossing> findVertical(ObjectList<PlacedNode> nodes, ObjectList<RoutedEdge> routes,
+                                                                      ObjectList<Segment> segments, ObjectList<Run> runs, boolean transposed) {
         int[] runBySegment = new int[segments.size()];
         var verticalByX = new Double2ObjectAVLTreeMap<RunIntervals>();
         var horizontalByY = new Double2ObjectAVLTreeMap<RunIntervals>();
-        List<Event> events = new ObjectArrayList<>();
+        ObjectList<Event> events = new ObjectArrayList<>();
         for (int runId = 0; runId < runs.size(); runId++) {
             Run run = runs.get(runId);
             for (int segmentId : run.segmentIds()) runBySegment[segmentId] = runId;
@@ -165,7 +165,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         CrossingIndex accepted = new CrossingIndex(segments);
         events.sort(Comparator.comparingDouble(Event::x).thenComparingInt(Event::kind));
         var active = new Double2ObjectAVLTreeMap<IntArrayList>();
-        List<CraftingPlanRouteCrossing> result = new ObjectArrayList<>();
+        ObjectList<CraftingPlanRouteCrossing> result = new ObjectArrayList<>();
         for (Event event : events) {
             Run run = runs.get(event.runId());
             if (event.kind() == 0) {
@@ -198,7 +198,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
                 verticalByX, horizontalByY, junctions, accepted);
         result.sort(Comparator.comparingInt(CraftingPlanRouteCrossing::bridgeSegmentId)
                 .thenComparingDouble(CraftingPlanRouteCrossing::y));
-        return List.copyOf(result);
+        return FastUtilCollections.immutableList(result);
     }
 
     private static int parallelCount(Double2ObjectAVLTreeMap<RunIntervals> runs, double across, double along) {
@@ -210,13 +210,13 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         return count;
     }
 
-    private static List<CraftingPlanRouteCrossing> mergeDenseCrossings(
-                                                                       List<CraftingPlanRouteCrossing> crossings, List<Segment> segments, List<Run> runs, int[] runBySegment,
-                                                                       NodeIndex nodes, Double2ObjectAVLTreeMap<RunIntervals> verticalByX,
-                                                                       Double2ObjectAVLTreeMap<RunIntervals> horizontalByY, JunctionIndex junctions,
-                                                                       CrossingIndex accepted) {
+    private static ObjectList<CraftingPlanRouteCrossing> mergeDenseCrossings(
+                                                                             ObjectList<CraftingPlanRouteCrossing> crossings, ObjectList<Segment> segments, ObjectList<Run> runs, int[] runBySegment,
+                                                                             NodeIndex nodes, Double2ObjectAVLTreeMap<RunIntervals> verticalByX,
+                                                                             Double2ObjectAVLTreeMap<RunIntervals> horizontalByY, JunctionIndex junctions,
+                                                                             CrossingIndex accepted) {
         var fallbackByBridge = new Int2ObjectOpenHashMap<ObjectArrayList<CraftingPlanRouteCrossing>>();
-        List<CraftingPlanRouteCrossing> result = new ObjectArrayList<>();
+        ObjectList<CraftingPlanRouteCrossing> result = new ObjectArrayList<>();
         for (CraftingPlanRouteCrossing crossing : crossings) {
             if (crossing.radius() > 0) result.add(crossing);
             else fallbackByBridge.computeIfAbsent(crossing.bridgeSegmentId(), unused -> new ObjectArrayList<>()).add(crossing);
@@ -241,7 +241,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
     }
 
     private static @Nullable CraftingPlanRouteCrossing denseBridge(
-                                                                   List<CraftingPlanRouteCrossing> cluster, int bridgeSegmentId, List<Segment> segments, List<Run> runs,
+                                                                   ObjectList<CraftingPlanRouteCrossing> cluster, int bridgeSegmentId, ObjectList<Segment> segments, ObjectList<Run> runs,
                                                                    int[] runBySegment, NodeIndex nodes, Double2ObjectAVLTreeMap<RunIntervals> verticalByX,
                                                                    Double2ObjectAVLTreeMap<RunIntervals> horizontalByY, JunctionIndex junctions,
                                                                    CrossingIndex accepted) {
@@ -255,7 +255,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         if (junctions.near(verticalRun, centerY, radius + GAP_HALF_WIDTH)) return null;
         for (int side = 1; side >= -1; side -= 2) {
             double bend = side * DENSE_BRIDGE_BEND;
-            List<Underpass> underpasses = new ObjectArrayList<>(cluster.size());
+            ObjectList<Underpass> underpasses = new ObjectArrayList<>(cluster.size());
             IntSet allowedHorizontalRuns = new IntOpenHashSet();
             boolean fits = true;
             for (CraftingPlanRouteCrossing crossing : cluster) {
@@ -300,7 +300,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         return false;
     }
 
-    private static JunctionIndex junctions(List<RoutedEdge> routes, List<Segment> segments, int[] runBySegment) {
+    private static JunctionIndex junctions(ObjectList<RoutedEdge> routes, ObjectList<Segment> segments, int[] runBySegment) {
         LongSet pairs = new LongOpenHashSet();
         var verticalYs = new Int2ObjectOpenHashMap<DoubleList>();
         for (RoutedEdge route : routes) {
@@ -323,10 +323,10 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
     }
 
     @Nullable
-    private static CraftingPlanRouteCrossing bridge(NodeIndex nodes, List<Run> runs,
+    private static CraftingPlanRouteCrossing bridge(NodeIndex nodes, ObjectList<Run> runs,
                                                     Double2ObjectAVLTreeMap<RunIntervals> verticalByX,
                                                     Double2ObjectAVLTreeMap<RunIntervals> horizontalByY, JunctionIndex junctions,
-                                                    List<Segment> segments, CrossingIndex accepted,
+                                                    ObjectList<Segment> segments, CrossingIndex accepted,
                                                     int verticalRun, int horizontalRun, double x, double y, boolean bundle) {
         Run vertical = runs.get(verticalRun);
         Run horizontal = runs.get(horizontalRun);
@@ -344,7 +344,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
                 if (underSegment < 0 || !gapFits(segments.get(underSegment), center)) continue;
                 if (blocked(nodes, verticalByX, horizontalByY, junctions, accepted, horizontalRun, verticalRun, x, y, bend, span)) continue;
                 return new CraftingPlanRouteCrossing(bridgeSegment, x, y, bend, span,
-                        List.of(new Underpass(underSegment, center, GAP_HALF_WIDTH)));
+                        ObjectList.of(new Underpass(underSegment, center, GAP_HALF_WIDTH)));
             }
         }
         // Dense channels may not have enough clearance for an arch. A zero-radius bridge still gives
@@ -353,7 +353,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         int underSegment = segmentAt(horizontal, segments, x, true);
         if (bridgeSegment >= 0 && underSegment >= 0 && gapFits(segments.get(underSegment), x) && !junctions.near(verticalRun, y, GAP_HALF_WIDTH)) {
             return new CraftingPlanRouteCrossing(bridgeSegment, x, y, 0, 0,
-                    List.of(new Underpass(underSegment, x, GAP_HALF_WIDTH)));
+                    ObjectList.of(new Underpass(underSegment, x, GAP_HALF_WIDTH)));
         }
         return null;
     }
@@ -380,7 +380,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         return false;
     }
 
-    private static int segmentAt(Run run, List<Segment> segments, double coordinate, boolean horizontal) {
+    private static int segmentAt(Run run, ObjectList<Segment> segments, double coordinate, boolean horizontal) {
         double origin = horizontal ? run.from().x() : run.from().y();
         double distance = Math.abs(coordinate - origin);
         int first = 0;
@@ -430,7 +430,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
     /** Interval tree within one coordinate bucket; disjoint collinear runs are pruned instead of all scanned. */
     private static final class RunIntervals {
 
-        private final List<Span> spans = new ObjectArrayList<>();
+        private final ObjectList<Span> spans = new ObjectArrayList<>();
         private double[] maximumEnds = new double[0];
 
         private void add(int run, double start, double end) {
@@ -506,9 +506,9 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
 
         private static final int CELL = 16;
         private final Long2ObjectOpenHashMap<ObjectArrayList<Bounds>> cells = new Long2ObjectOpenHashMap<>();
-        private final List<Segment> segments;
+        private final ObjectList<Segment> segments;
 
-        private CrossingIndex(List<Segment> segments) {
+        private CrossingIndex(ObjectList<Segment> segments) {
             this.segments = segments;
         }
 
@@ -550,7 +550,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         private boolean intersects(double minX, double minY, double maxX, double maxY) {
             for (int x = (int) Math.floor(minX / CELL); x <= (int) Math.floor(maxX / CELL); x++) {
                 for (int y = (int) Math.floor(minY / CELL); y <= (int) Math.floor(maxY / CELL); y++) {
-                    List<Bounds> crossings = cells.get(NodeIndex.cell(x, y));
+                    ObjectList<Bounds> crossings = cells.get(NodeIndex.cell(x, y));
                     if (crossings == null) continue;
                     for (Bounds crossing : crossings) {
                         if (crossing.x() < maxX && crossing.x() + crossing.width() > minX &&
@@ -568,7 +568,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
         private static final int CELL = 16;
         private final Long2ObjectOpenHashMap<ObjectArrayList<PlacedNode>> cells = new Long2ObjectOpenHashMap<>();
 
-        private NodeIndex(List<PlacedNode> nodes) {
+        private NodeIndex(ObjectList<PlacedNode> nodes) {
             for (PlacedNode node : nodes) {
                 int firstX = (int) Math.floor(node.x() / CELL);
                 int lastX = (int) Math.floor((node.x() + node.width()) / CELL);
@@ -586,7 +586,7 @@ public record CraftingPlanRouteCrossing(int bridgeSegmentId, double x, double y,
             int firstY = (int) Math.floor(minY / CELL);
             int lastY = (int) Math.floor(maxY / CELL);
             for (int cellX = firstX; cellX <= lastX; cellX++) for (int cellY = firstY; cellY <= lastY; cellY++) {
-                List<PlacedNode> nodes = cells.get(cell(cellX, cellY));
+                ObjectList<PlacedNode> nodes = cells.get(cell(cellX, cellY));
                 if (nodes == null) continue;
                 for (PlacedNode node : nodes) {
                     if (node.x() < maxX && node.x() + node.width() > minX && node.y() < maxY && node.y() + node.height() > minY) return true;

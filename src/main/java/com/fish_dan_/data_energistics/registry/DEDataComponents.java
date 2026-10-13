@@ -188,14 +188,6 @@ public final class DEDataComponents {
                     .cacheEncoding()
                     .build());
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> MATTER_CONVERGING_CROSSBOW_SELECTED_AMMO = DATA_COMPONENT_TYPES.register(
-            "star_shard_selected_ammo",
-            () -> DataComponentType.<ResourceLocation>builder()
-                    .persistent(ResourceLocation.CODEC)
-                    .networkSynchronized(ResourceLocation.STREAM_CODEC)
-                    .cacheEncoding()
-                    .build());
-
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CannonCharge>> CANNON_CHARGE = DATA_COMPONENT_TYPES.register(
             "star_shard_cannon_charge", () -> DataComponentType.<CannonCharge>builder().networkSynchronized(CannonCharge.STREAM_CODEC).build());
 
@@ -277,9 +269,6 @@ public final class DEDataComponents {
     private DEDataComponents() {}
 
     public static void register(IEventBus eventBus) {
-        DATA_COMPONENT_TYPES.addAlias(Data_Energistics.id("dark_string_data_settlement_tool_stored_data"), Data_Energistics.id("star_shard_stored_data"));
-        DATA_COMPONENT_TYPES.addAlias(Data_Energistics.id("dark_string_data_settlement_tool_mode"), Data_Energistics.id("star_shard_mode"));
-        DATA_COMPONENT_TYPES.addAlias(Data_Energistics.id("dark_string_data_settlement_tool_selected_ammo"), Data_Energistics.id("star_shard_selected_ammo"));
         DATA_COMPONENT_TYPES.register(eventBus);
     }
 }

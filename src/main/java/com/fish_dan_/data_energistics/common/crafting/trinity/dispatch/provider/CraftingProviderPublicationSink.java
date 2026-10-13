@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Cra
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Server-thread lifecycle bridge used by AE2 publication Mixins to update the provider index.
@@ -27,7 +27,7 @@ public interface CraftingProviderPublicationSink {
      */
     CraftingProviderId dataEnergistics$publishProvider(
                                                        ICraftingProvider provider,
-                                                       List<IPatternDetails> patterns);
+                                                       ObjectList<IPatternDetails> patterns);
 
     /**
      * Invalidates one exact provider registration after AE2 unmounted it successfully.

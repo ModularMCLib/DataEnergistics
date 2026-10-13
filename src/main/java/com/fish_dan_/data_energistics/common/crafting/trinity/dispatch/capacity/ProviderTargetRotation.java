@@ -3,29 +3,29 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model.CraftingDispatchCursor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingProviderId;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Pure hierarchical rotation that interleaves one target from each provider before visiting later targets.
  */
 final class ProviderTargetRotation {
 
-    private final List<Target> targets;
+    private final ObjectList<Target> targets;
 
-    private ProviderTargetRotation(List<Target> targets) {
-        this.targets = List.copyOf(targets);
+    private ProviderTargetRotation(ObjectList<Target> targets) {
+        this.targets = FastUtilCollections.immutableList(targets);
     }
 
     /**
      * Builds a complete provider-first, target-second order without dropping duplicate snapshot values.
      */
-    static ProviderTargetRotation create(List<ProviderCapacitySnapshot> snapshots, CraftingDispatchCursor cursor) {
-        List<ProviderCapacitySnapshot> stableSnapshots = List.copyOf(snapshots);
+    static ProviderTargetRotation create(ObjectList<ProviderCapacitySnapshot> snapshots, CraftingDispatchCursor cursor) {
+        ObjectList<ProviderCapacitySnapshot> stableSnapshots = FastUtilCollections.immutableList(snapshots);
         if (cursor == null) {
             throw new IllegalArgumentException("Provider target rotation requires a fairness cursor");
         }
@@ -34,10 +34,10 @@ final class ProviderTargetRotation {
             grouped.computeIfAbsent(snapshot.providerId(), ignored -> new ObjectArrayList<>()).add(snapshot);
         }
         if (grouped.isEmpty()) {
-            return new ProviderTargetRotation(List.of());
+            return new ProviderTargetRotation(ObjectList.of());
         }
 
-        List<Map.Entry<CraftingProviderId, ObjectArrayList<ProviderCapacitySnapshot>>> providers = List.copyOf(grouped.entrySet());
+        ObjectList<Object2ObjectMap.Entry<CraftingProviderId, ObjectArrayList<ProviderCapacitySnapshot>>> providers = FastUtilCollections.immutableList(grouped.object2ObjectEntrySet());
         int providerCount = providers.size();
         int providerStart = Math.floorMod(cursor.provider(), providerCount);
         int maximumTargets = providers.stream().mapToInt(entry -> entry.getValue().size()).max().orElseThrow();
@@ -48,7 +48,7 @@ final class ProviderTargetRotation {
         ObjectArrayList<Target> rotated = new ObjectArrayList<>(stableSnapshots.size());
         for (int providerOffset = 0; providerOffset < providerCount; providerOffset++) {
             int providerIndex = Math.floorMod(providerStart + providerOffset, providerCount);
-            List<ProviderCapacitySnapshot> providerTargets = providers.get(providerIndex).getValue();
+            ObjectList<ProviderCapacitySnapshot> providerTargets = providers.get(providerIndex).getValue();
             long firstTargetRound = providerIndex < providerStart ?
                     Math.incrementExact(cursor.target()) :
                     cursor.target();
@@ -70,7 +70,7 @@ final class ProviderTargetRotation {
     }
 
     /** @return immutable complete rotated targets */
-    List<Target> targets() {
+    ObjectList<Target> targets() {
         return this.targets;
     }
 

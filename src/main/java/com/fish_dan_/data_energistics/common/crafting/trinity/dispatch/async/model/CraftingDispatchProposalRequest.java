@@ -1,9 +1,11 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.ProviderCapacityCapture;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Set;
 
 /**
  * Immutable pure-planning input captured by the server thread for one worker dispatch opportunity.
@@ -19,7 +21,7 @@ public record CraftingDispatchProposalRequest(
                                               ProviderCapacityCapture capacity,
                                               BigInteger remainingCrafts,
                                               CraftingDispatchCursor cursor,
-                                              Set<CraftingDispatchExclusion> exclusions) {
+                                              ObjectSet<CraftingDispatchExclusion> exclusions) {
 
     /**
      * Creates an initial proposal request without replacement history.
@@ -29,7 +31,7 @@ public record CraftingDispatchProposalRequest(
                                            ProviderCapacityCapture capacity,
                                            BigInteger remainingCrafts,
                                            CraftingDispatchCursor cursor) {
-        this(lease, capacity, remainingCrafts, cursor, Set.of());
+        this(lease, capacity, remainingCrafts, cursor, ObjectSet.of());
     }
 
     public CraftingDispatchProposalRequest {
@@ -39,7 +41,7 @@ public record CraftingDispatchProposalRequest(
         if (remainingCrafts.signum() <= 0) {
             throw new IllegalArgumentException("Crafting dispatch proposal work must be positive");
         }
-        exclusions = Set.copyOf(exclusions);
+        exclusions = FastUtilCollections.immutableSet(exclusions);
         long publicationScope = capacity.key().gridScope();
         if (publicationScope != lease.gridGeneration()) {
             throw new IllegalArgumentException("Crafting dispatch proposal grid generation disagrees with its candidates");

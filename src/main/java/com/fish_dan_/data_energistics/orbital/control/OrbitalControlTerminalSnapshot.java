@@ -18,15 +18,17 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,7 +43,7 @@ import java.util.UUID;
  */
 public record OrbitalControlTerminalSnapshot(
                                              @Nullable UUID selectedWeaponId,
-                                             List<WeaponEntry> weapons,
+                                             ObjectList<WeaponEntry> weapons,
                                              boolean truncated) {
 
     /** Maximum number of accessible weapons carried by one menu snapshot. */
@@ -57,12 +59,14 @@ public record OrbitalControlTerminalSnapshot(
 
     public static final OrbitalControlTerminalSnapshot EMPTY = new OrbitalControlTerminalSnapshot(
             null,
-            List.of(),
+            ObjectList.of(),
             false);
+    private static final Codec<ObjectList<WeaponEntry>> WEAPONS_CODEC = WeaponEntry.CODEC.listOf()
+            .xmap(ObjectArrayList::new, ObjectArrayList::new);
     public static final Codec<OrbitalControlTerminalSnapshot> CODEC = RecordCodecBuilder.create(instance -> instance
             .group(
                     UUIDUtil.CODEC.optionalFieldOf("selected_weapon_id").forGetter(snapshot -> Optional.ofNullable(snapshot.selectedWeaponId)),
-                    WeaponEntry.CODEC.listOf().fieldOf("weapons").forGetter(OrbitalControlTerminalSnapshot::weapons),
+                    WEAPONS_CODEC.fieldOf("weapons").forGetter(OrbitalControlTerminalSnapshot::weapons),
                     Codec.BOOL.fieldOf("truncated").forGetter(OrbitalControlTerminalSnapshot::truncated))
             .apply(instance, (selectedWeaponId, weapons, truncated) -> new OrbitalControlTerminalSnapshot(
                     selectedWeaponId.orElse(null),
@@ -73,7 +77,7 @@ public record OrbitalControlTerminalSnapshot(
             OrbitalControlTerminalSnapshot::decode);
 
     public OrbitalControlTerminalSnapshot {
-        weapons = List.copyOf(weapons);
+        weapons = new ObjectImmutableList<>(weapons);
         if (weapons.size() > MAX_WEAPONS) {
             throw new IllegalArgumentException("Orbital terminal snapshot exceeds its bounded weapon limit");
         }
@@ -88,20 +92,20 @@ public record OrbitalControlTerminalSnapshot(
         StellarErasureDeviceSavedData weaponData = StellarErasureDeviceSavedData.get(server);
         StellarErasureDeviceSavedData.AccessibleWeaponSelection selection = weaponData.accessibleSelection(playerId);
         boolean truncated = selection.weapons().size() > MAX_WEAPONS;
-        List<StellarErasureDeviceRecord> accessibleWeapons = selection.weapons()
+        ObjectArrayList<StellarErasureDeviceRecord> accessibleWeapons = selection.weapons()
                 .stream()
                 .limit(MAX_WEAPONS)
-                .toList();
+                .collect(ObjectArrayList.toList());
         ObjectSet<UUID> weaponIds = new ObjectOpenHashSet<>(accessibleWeapons.size());
         accessibleWeapons.forEach(weapon -> weaponIds.add(weapon.weaponId()));
-        Map<UUID, List<OrbitalAttackRecord>> attacksByWeapon = attacks.forWeapons(weaponIds);
-        List<WeaponEntry> entries = accessibleWeapons.stream()
+        Object2ObjectMap<UUID, ObjectList<OrbitalAttackRecord>> attacksByWeapon = attacks.forWeapons(weaponIds);
+        ObjectArrayList<WeaponEntry> entries = accessibleWeapons.stream()
                 .map(weapon -> WeaponEntry.from(
                         weapon,
                         playerId,
                         ownerName(server, weapon.ownerId()),
-                        attacksByWeapon.getOrDefault(weapon.weaponId(), List.of())))
-                .toList();
+                        attacksByWeapon.getOrDefault(weapon.weaponId(), ObjectList.of())))
+                .collect(ObjectArrayList.toList());
         UUID preferred = selection.selectedWeaponId();
         UUID selected = null;
         if (preferred != null && weaponIds.contains(preferred)) {
@@ -121,7 +125,7 @@ public record OrbitalControlTerminalSnapshot(
         if (player != null) {
             return player.getGameProfile().getName();
         }
-        return profiles == null ? "" : profiles.get(ownerId).map(profile -> profile.getName()).orElse("");
+        return profiles == null ? "" : profiles.get(ownerId).map(GameProfile::getName).orElse("");
     }
 
     /** Returns the selected weapon view without exposing a nullable UI lookup. */
@@ -190,26 +194,29 @@ public record OrbitalControlTerminalSnapshot(
                               int graceTicksRemaining,
                               long stellarFlux,
                               long aeEnergy,
-                              List<AttackEntry> attacks,
+                              ObjectList<AttackEntry> attacks,
                               String customName,
                               String ownerName) {
 
         /** Bounded wire representation shared by the terminal and selected-weapon HUD. */
         public static final StreamCodec<RegistryFriendlyByteBuf, WeaponEntry> STREAM_CODEC = StreamCodec.of(
                 WeaponEntry::encode, WeaponEntry::decode);
+        private static final Codec<ObjectList<AttackEntry>> ATTACKS_CODEC = AttackEntry.CODEC.listOf()
+                .xmap(ObjectArrayList::new, ObjectArrayList::new);
 
         public static final Codec<WeaponEntry> CODEC = RecordCodecBuilder.create(instance -> instance
                 .group(
                         UUIDUtil.CODEC.fieldOf("weapon_id").forGetter(WeaponEntry::weaponId),
                         UUIDUtil.CODEC.fieldOf("owner_id").forGetter(WeaponEntry::ownerId),
                         Codec.BOOL.fieldOf("owner").forGetter(WeaponEntry::owner),
-                        ACCESS_ROLE_CODEC.optionalFieldOf("delegated_role").forGetter(entry -> Optional.ofNullable(entry.delegatedRole)),
+                        ACCESS_ROLE_CODEC.optionalFieldOf("delegated_role")
+                                .forGetter((WeaponEntry entry) -> Optional.ofNullable(entry.delegatedRole)),
                         Codec.INT.fieldOf("endpoint_count").forGetter(WeaponEntry::endpointCount),
                         LIFECYCLE_CODEC.fieldOf("lifecycle_state").forGetter(WeaponEntry::lifecycleState),
                         Codec.INT.fieldOf("grace_ticks_remaining").forGetter(WeaponEntry::graceTicksRemaining),
                         Codec.LONG.fieldOf("stellar_flux").forGetter(WeaponEntry::stellarFlux),
                         Codec.LONG.fieldOf("ae_energy").forGetter(WeaponEntry::aeEnergy),
-                        AttackEntry.CODEC.listOf().fieldOf("attacks").forGetter(WeaponEntry::attacks),
+                        ATTACKS_CODEC.fieldOf("attacks").forGetter(WeaponEntry::attacks),
                         Codec.string(0, StellarErasureDeviceRecord.MAX_NAME_LENGTH).fieldOf("custom_name").forGetter(WeaponEntry::customName),
                         Codec.string(0, 64).fieldOf("owner_name").forGetter(WeaponEntry::ownerName))
                 .apply(instance, (weaponId, ownerId, owner, delegatedRole, endpointCount, lifecycleState,
@@ -230,7 +237,7 @@ public record OrbitalControlTerminalSnapshot(
             if (ownerName.length() > 64) {
                 throw new IllegalArgumentException("Owner profile name exceeds its wire bound");
             }
-            attacks = List.copyOf(attacks);
+            attacks = new ObjectImmutableList<>(attacks);
             if (attacks.size() > MAX_ATTACKS_PER_WEAPON) {
                 throw new IllegalArgumentException("Orbital terminal weapon exceeds its bounded attack limit");
             }
@@ -259,7 +266,7 @@ public record OrbitalControlTerminalSnapshot(
                                         StellarErasureDeviceRecord weapon,
                                         UUID playerId,
                                         String ownerName,
-                                        List<OrbitalAttackRecord> attacks) {
+                                        ObjectList<OrbitalAttackRecord> attacks) {
             boolean owner = weapon.ownerId().equals(playerId);
             return new WeaponEntry(
                     weapon.weaponId(),
@@ -271,7 +278,7 @@ public record OrbitalControlTerminalSnapshot(
                     weapon.lifecycle().graceTicksRemaining(),
                     weapon.reserve().stellarFlux(),
                     weapon.reserve().aeEnergy(),
-                    attacks.stream().limit(MAX_ATTACKS_PER_WEAPON).map(AttackEntry::from).toList(),
+                    attacks.stream().limit(MAX_ATTACKS_PER_WEAPON).map(AttackEntry::from).collect(ObjectArrayList.toList()),
                     weapon.customName(), ownerName);
         }
 

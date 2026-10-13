@@ -159,7 +159,8 @@ public class PoweredAxeItem extends AbstractPoweredTieredItem implements Conditi
             return;
         }
 
-        for (BlockPos targetPos : PoweredToolSaberEnergyHelper.collectTree(level, origin, 256)) {
+        for (long targetPosition : PoweredToolSaberEnergyHelper.collectTree(level, origin, 256)) {
+            BlockPos targetPos = BlockPos.of(targetPosition);
             if (targetPos.equals(origin)) {
                 continue;
             }

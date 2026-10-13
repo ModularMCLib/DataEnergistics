@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.model;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+
 import java.util.Optional;
 
 /**
@@ -13,14 +16,14 @@ import java.util.Optional;
  */
 public record PreviewPredicateSnapshot(PreviewPredicateKey key,
                                        PreviewCellRole role,
-                                       List<PreviewCandidate> candidates,
+                                       ObjectList<PreviewCandidate> candidates,
                                        int selectedCandidateIndex) {
 
     /**
      * Copies candidates and rejects role/index combinations that could produce ambiguous materials.
      */
     public PreviewPredicateSnapshot {
-        candidates = List.copyOf(candidates);
+        candidates = ObjectLists.unmodifiable(new ObjectArrayList<>(candidates));
         if (role == PreviewCellRole.WILDCARD) {
             if (!candidates.isEmpty() || selectedCandidateIndex != -1) {
                 throw new IllegalArgumentException("Wildcard preview predicates cannot expose a candidate selection");
@@ -42,7 +45,7 @@ public record PreviewPredicateSnapshot(PreviewPredicateKey key,
         return Optional.of(this.candidates.get(this.selectedCandidateIndex));
     }
 
-    private static void validateRoleCandidates(PreviewCellRole role, List<PreviewCandidate> candidates) {
+    private static void validateRoleCandidates(PreviewCellRole role, ObjectList<PreviewCandidate> candidates) {
         long concreteCount = candidates.stream().filter(PreviewCandidate::concrete).count();
         long emptyCount = candidates.size() - concreteCount;
         switch (role) {

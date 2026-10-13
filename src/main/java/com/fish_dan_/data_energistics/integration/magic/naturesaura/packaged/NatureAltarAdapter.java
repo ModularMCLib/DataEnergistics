@@ -25,8 +25,8 @@ import de.ellpeck.naturesaura.blocks.multi.Multiblocks;
 import de.ellpeck.naturesaura.blocks.tiles.BlockEntityNatureAltar;
 import de.ellpeck.naturesaura.recipes.AltarRecipe;
 import de.ellpeck.naturesaura.recipes.ModRecipes;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
@@ -71,21 +71,21 @@ public final class NatureAltarAdapter implements PackagedMachineAdapter {
         var progress = new CompoundTag();
         progress.put("input", input.save(level.registryAccess()));
         progress.put("output", recipe.output.save(level.registryAccess()));
-        var catalysts = new ObjectArrayList<BlockPos>();
-        for (int x = -2; x <= 2; x += 4) for (int z = -2; z <= 2; z += 4) catalysts.add(position.offset(x, 1, z));
-        if (catalysts.stream().anyMatch(part -> !level.isLoaded(part))) return null;
-        progress.putLongArray("changing_positions", catalysts.stream().mapToLong(BlockPos::asLong).toArray());
+        var catalysts = new LongArrayList();
+        for (int x = -2; x <= 2; x += 4) for (int z = -2; z <= 2; z += 4) catalysts.add(position.offset(x, 1, z).asLong());
+        for (long catalyst : catalysts) if (!level.isLoaded(BlockPos.of(catalyst))) return null;
+        progress.putLongArray("changing_positions", catalysts.toLongArray());
         return progress;
     }
 
     @Override
-    public ObjectList<BlockPos> occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
-        var positions = new ObjectArrayList<BlockPos>();
+    public LongList occupiedPositions(ServerLevel level, BlockPos position, CompoundTag preparation) {
+        var positions = new LongArrayList();
         Multiblocks.ALTAR.forEach(position, '\0', (part, matcher) -> {
-            positions.add(part.immutable());
+            positions.add(part.asLong());
             return true;
         });
-        for (long catalyst : preparation.getLongArray("changing_positions")) positions.add(BlockPos.of(catalyst));
+        for (long catalyst : preparation.getLongArray("changing_positions")) positions.add(catalyst);
         return positions;
     }
 

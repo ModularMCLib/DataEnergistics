@@ -10,14 +10,19 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
@@ -25,13 +30,8 @@ import org.ojalgo.optimisation.Variable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Minimizes a structurally verified firing incumbent through exact non-negative integer reductions.
@@ -79,29 +79,29 @@ public final class TrinityShiftedFiringOptimizer {
     public TrinityPlanningAttempt<TrinityFiringOptimization> optimize(
                                                                       TrinityStronglyConnectedComponent component,
                                                                       TrinityCycleDemand demand,
-                                                                      Map<AEKey, BigInteger> available,
-                                                                      Set<AEKey> producibleInputs,
-                                                                      Map<TrinityPatternVariant, BigInteger> firingUpperBound,
+                                                                      Object2ObjectMap<AEKey, BigInteger> available,
+                                                                      ObjectSet<AEKey> producibleInputs,
+                                                                      Object2ObjectMap<TrinityPatternVariant, BigInteger> firingUpperBound,
                                                                       TrinityPlanningControl control) {
         if (component == null || demand == null || available == null || producibleInputs == null ||
                 firingUpperBound == null || firingUpperBound.isEmpty() || control == null) {
             throw new IllegalArgumentException("A shifted Trinity firing request is incomplete");
         }
-        Set<AEKey> internalKeys = Set.copyOf(component.keys());
-        List<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().toList();
-        if (!Set.copyOf(variants).containsAll(firingUpperBound.keySet()) || firingUpperBound.values().stream()
+        ObjectSet<AEKey> internalKeys = FastUtilCollections.immutableSet(component.keys());
+        ObjectList<TrinityPatternVariant> variants = component.cycleVariants().stream().sorted().collect(ObjectArrayList.toList());
+        if (!FastUtilCollections.immutableSet(variants).containsAll(firingUpperBound.keySet()) || firingUpperBound.values().stream()
                 .anyMatch(amount -> amount == null || amount.signum() < 0)) {
             return notApplicable(UNSUPPORTED_PATTERN_KEY);
         }
-        Map<TrinityPatternVariant, BigInteger> completeFiringUpperBound = completeFiringVector(
+        Object2ObjectMap<TrinityPatternVariant, BigInteger> completeFiringUpperBound = completeFiringVector(
                 variants,
                 firingUpperBound);
-        Set<AEKey> externalCostKeys = externalReserveKeys(variants, internalKeys, demand);
+        ObjectSet<AEKey> externalCostKeys = externalReserveKeys(variants, internalKeys, demand);
         ObjectLinkedOpenHashSet<AEKey> finiteExternal = new ObjectLinkedOpenHashSet<>();
         externalCostKeys.stream()
                 .filter(key -> !producibleInputs.contains(key))
                 .forEach(finiteExternal::add);
-        Set<AEKey> finiteExternalKeys = Collections.unmodifiableSet(finiteExternal);
+        ObjectSet<AEKey> finiteExternalKeys = FastUtilCollections.immutableSet(finiteExternal);
         for (TrinityPatternVariant variant : variants) {
             for (AEKey key : externalCostKeys) {
                 if (variant.netChange().getOrDefault(key, ZERO).signum() > 0) {
@@ -115,7 +115,7 @@ public final class TrinityShiftedFiringOptimizer {
                 internalKeys,
                 externalCostKeys,
                 finiteExternalKeys,
-                Set.copyOf(producibleInputs),
+                FastUtilCollections.immutableSet(producibleInputs),
                 demand,
                 available,
                 completeFiringUpperBound,
@@ -141,10 +141,11 @@ public final class TrinityShiftedFiringOptimizer {
         }
         BigInteger optimalSeed = seed.value().seedTotal();
 
-        Set<TrinityPatternVariant> externallyFixed = variants.stream()
+        ObjectSet<TrinityPatternVariant> externallyFixed = new ObjectOpenHashSet<>();
+        variants.stream()
                 .filter(variant -> externalCost(variant, externalCostKeys).signum() > 0)
-                .collect(Collectors.toUnmodifiableSet());
-        Optional<Map<TrinityPatternVariant, BigInteger>> complemented = this.complementOptimizer.minimize(
+                .forEach(externallyFixed::add);
+        Optional<Object2ObjectMap<TrinityPatternVariant, BigInteger>> complemented = this.complementOptimizer.minimize(
                 component,
                 demand,
                 available,
@@ -153,8 +154,8 @@ public final class TrinityShiftedFiringOptimizer {
                 seed.value().reductions(),
                 externallyFixed);
         if (complemented.isPresent()) {
-            Map<TrinityPatternVariant, BigInteger> firings = complemented.orElseThrow();
-            Map<AEKey, BigInteger> net = netChange(firings);
+            Object2ObjectMap<TrinityPatternVariant, BigInteger> firings = complemented.orElseThrow();
+            Object2ObjectMap<AEKey, BigInteger> net = netChange(firings);
             if (!satisfiesDemand(net, demand) ||
                     !fitsAvailable(net, demand, available, internalKeys, finiteExternalKeys)) {
                 return notApplicable(inexact("exact_conservation", "complement_vector").diagnostic());
@@ -183,7 +184,7 @@ public final class TrinityShiftedFiringOptimizer {
                             optimalExternalSaving,
                             optimalSeed,
                             optimalReduction,
-                            Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(fixedReductions)),
+                            FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedReductions)),
                             variant),
                     control,
                     ++passes);
@@ -205,13 +206,13 @@ public final class TrinityShiftedFiringOptimizer {
                 firings.put(variant, firingCount);
             }
         }
-        Map<AEKey, BigInteger> net = netChange(firings);
+        Object2ObjectMap<AEKey, BigInteger> net = netChange(firings);
         if (!satisfiesDemand(net, demand) ||
                 !fitsAvailable(net, demand, available, internalKeys, finiteExternalKeys)) {
             return notApplicable(inexact("exact_conservation", "shifted_vector").diagnostic());
         }
         return TrinityPlanningAttempt.provedOptimal(new TrinityFiringOptimization(
-                Collections.unmodifiableMap(firings),
+                FastUtilCollections.immutableMap(firings),
                 externalReserveTotal(net, demand, externalCostKeys),
                 optimalSeed));
     }
@@ -225,13 +226,13 @@ public final class TrinityShiftedFiringOptimizer {
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     CANCELLED_KEY,
-                    Map.of("passes", Integer.toString(passNumber - 1)));
+                    FastUtilCollections.mapOf("passes", Integer.toString(passNumber - 1)));
         }
         if (control.deadlineExceeded()) {
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     TIMEOUT_KEY,
-                    Map.of("passes", Integer.toString(passNumber - 1)));
+                    FastUtilCollections.mapOf("passes", Integer.toString(passNumber - 1)));
         }
         ModelData data = createModel(context, pass);
         configureDeadline(data.model(), control);
@@ -242,19 +243,19 @@ public final class TrinityShiftedFiringOptimizer {
                 return failure(
                         TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                         TIMEOUT_KEY,
-                        Map.of("passes", Integer.toString(passNumber), "state", result.getState().name()));
+                        FastUtilCollections.mapOf("passes", Integer.toString(passNumber), "state", result.getState().name()));
             }
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     NO_INTEGER_SOLUTION_KEY,
-                    Map.of("passes", Integer.toString(passNumber), "state", result.getState().name()));
+                    FastUtilCollections.mapOf("passes", Integer.toString(passNumber), "state", result.getState().name()));
         }
 
         ObjectArrayList<BigDecimal> rawValues = new ObjectArrayList<>(data.variables().size());
         for (Variable variable : data.variables()) {
             rawValues.add(result.get(data.model().indexOf(variable)));
         }
-        TrinityAlgorithmResult<List<BigInteger>> verified = this.integerVerifier.verify(
+        TrinityAlgorithmResult<ObjectList<BigInteger>> verified = this.integerVerifier.verify(
                 rawValues,
                 data.model().options.integer().getIntegralityTolerance());
         if (!verified.successful()) {
@@ -323,7 +324,7 @@ public final class TrinityShiftedFiringOptimizer {
                     .subtract(context.available().getOrDefault(key, ZERO))
                     .subtract(context.baselineNet().getOrDefault(key, ZERO)));
         }
-        for (Map.Entry<AEKey, BigInteger> bound : context.demand().requiredNetChangeLowerBounds().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : context.demand().requiredNetChangeLowerBounds().object2ObjectEntrySet()) {
             Expression requiredNet = model.addExpression("required_net_" + constraintIndex++);
             setShiftedNet(requiredNet, reductions, bound.getKey());
             requiredNet.lower(bound.getValue().subtract(
@@ -365,14 +366,14 @@ public final class TrinityShiftedFiringOptimizer {
         }
         return new ModelData(
                 model,
-                List.copyOf(variables),
-                Collections.unmodifiableMap(reductions),
-                Collections.unmodifiableMap(seeds));
+                FastUtilCollections.immutableList(variables),
+                FastUtilCollections.immutableMap(reductions),
+                FastUtilCollections.immutableMap(seeds));
     }
 
     private static void setShiftedNet(
                                       Expression expression,
-                                      Map<TrinityPatternVariant, Variable> reductions,
+                                      Object2ObjectMap<TrinityPatternVariant, Variable> reductions,
                                       AEKey key) {
         reductions.forEach((variant, variable) -> {
             BigInteger coefficient = variant.netChange().getOrDefault(key, ZERO).negate();
@@ -429,10 +430,10 @@ public final class TrinityShiftedFiringOptimizer {
         return true;
     }
 
-    private static Set<AEKey> externalReserveKeys(
-                                                  List<TrinityPatternVariant> variants,
-                                                  Set<AEKey> internalKeys,
-                                                  TrinityCycleDemand demand) {
+    private static ObjectSet<AEKey> externalReserveKeys(
+                                                        ObjectList<TrinityPatternVariant> variants,
+                                                        ObjectSet<AEKey> internalKeys,
+                                                        TrinityCycleDemand demand) {
         ObjectLinkedOpenHashSet<AEKey> external = new ObjectLinkedOpenHashSet<>();
         variants.forEach(variant -> variant.inputs().keySet().stream()
                 .filter(key -> !internalKeys.contains(key))
@@ -440,19 +441,19 @@ public final class TrinityShiftedFiringOptimizer {
         demand.finalBalanceLowerBounds().keySet().stream()
                 .filter(key -> !internalKeys.contains(key))
                 .forEach(external::add);
-        return Collections.unmodifiableSet(external);
+        return FastUtilCollections.immutableSet(external);
     }
 
-    private static BigInteger externalCost(TrinityPatternVariant variant, Set<AEKey> externalReserveKeys) {
+    private static BigInteger externalCost(TrinityPatternVariant variant, ObjectSet<AEKey> externalReserveKeys) {
         return externalReserveKeys.stream()
                 .map(key -> variant.netChange().getOrDefault(key, ZERO).negate())
                 .reduce(ZERO, BigInteger::add);
     }
 
     private static BigInteger externalReserveTotal(
-                                                   Map<AEKey, BigInteger> net,
+                                                   Object2ObjectMap<AEKey, BigInteger> net,
                                                    TrinityCycleDemand demand,
-                                                   Set<AEKey> externalReserveKeys) {
+                                                   ObjectSet<AEKey> externalReserveKeys) {
         return externalReserveKeys.stream()
                 .map(key -> demand.finalBalanceLowerBounds()
                         .getOrDefault(key, ZERO)
@@ -462,12 +463,12 @@ public final class TrinityShiftedFiringOptimizer {
     }
 
     private static BigInteger minimumFirstInternalInput(
-                                                        List<TrinityPatternVariant> variants,
-                                                        Set<AEKey> internalKeys) {
+                                                        ObjectList<TrinityPatternVariant> variants,
+                                                        ObjectSet<AEKey> internalKeys) {
         return variants.stream()
-                .map(variant -> variant.inputs().entrySet().stream()
+                .map(variant -> variant.inputs().object2ObjectEntrySet().stream()
                         .filter(entry -> internalKeys.contains(entry.getKey()))
-                        .map(Map.Entry::getValue)
+                        .map(entry -> entry.getValue())
                         .reduce(ZERO, BigInteger::add))
                 .filter(amount -> amount.signum() > 0)
                 .min(BigInteger::compareTo)
@@ -475,34 +476,34 @@ public final class TrinityShiftedFiringOptimizer {
                         "A shifted Trinity component must consume an internal key"));
     }
 
-    private static Map<AEKey, BigInteger> netChange(Map<TrinityPatternVariant, BigInteger> firings) {
+    private static Object2ObjectMap<AEKey, BigInteger> netChange(Object2ObjectMap<TrinityPatternVariant, BigInteger> firings) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
                 (key, amount) -> net.merge(key, amount.multiply(count), BigInteger::add)));
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        return Collections.unmodifiableMap(net);
+        return FastUtilCollections.immutableMap(net);
     }
 
-    private static Map<TrinityPatternVariant, BigInteger> completeFiringVector(
-                                                                               List<TrinityPatternVariant> variants,
-                                                                               Map<TrinityPatternVariant, BigInteger> sparse) {
+    private static Object2ObjectMap<TrinityPatternVariant, BigInteger> completeFiringVector(
+                                                                                            ObjectList<TrinityPatternVariant> variants,
+                                                                                            Object2ObjectMap<TrinityPatternVariant, BigInteger> sparse) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> complete = new Object2ObjectLinkedOpenHashMap<>();
         variants.forEach(variant -> complete.put(variant, sparse.getOrDefault(variant, ZERO)));
-        return Collections.unmodifiableMap(complete);
+        return FastUtilCollections.immutableMap(complete);
     }
 
-    private static boolean satisfiesDemand(Map<AEKey, BigInteger> net, TrinityCycleDemand demand) {
+    private static boolean satisfiesDemand(Object2ObjectMap<AEKey, BigInteger> net, TrinityCycleDemand demand) {
         return demand.requiredNetChangeLowerBounds().entrySet().stream().allMatch(entry -> net
                 .getOrDefault(entry.getKey(), ZERO)
                 .compareTo(entry.getValue()) >= 0);
     }
 
     private static boolean fitsAvailable(
-                                         Map<AEKey, BigInteger> net,
+                                         Object2ObjectMap<AEKey, BigInteger> net,
                                          TrinityCycleDemand demand,
-                                         Map<AEKey, BigInteger> available,
-                                         Set<AEKey> internalKeys,
-                                         Set<AEKey> externalReserveKeys) {
+                                         Object2ObjectMap<AEKey, BigInteger> available,
+                                         ObjectSet<AEKey> internalKeys,
+                                         ObjectSet<AEKey> externalReserveKeys) {
         ObjectLinkedOpenHashSet<AEKey> bounded = new ObjectLinkedOpenHashSet<>(internalKeys);
         bounded.addAll(externalReserveKeys);
         return bounded.stream().allMatch(key -> available.getOrDefault(key, ZERO)
@@ -514,13 +515,13 @@ public final class TrinityShiftedFiringOptimizer {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 INEXACT_RESULT_KEY,
-                Map.of("constraint", constraint, "value", value));
+                FastUtilCollections.mapOf("constraint", constraint, "value", value));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
@@ -561,28 +562,28 @@ public final class TrinityShiftedFiringOptimizer {
                                 BigInteger externalSaving,
                                 BigInteger seedTotal,
                                 BigInteger reductionTotal,
-                                Map<TrinityPatternVariant, BigInteger> fixedReductions,
+                                Object2ObjectMap<TrinityPatternVariant, BigInteger> fixedReductions,
                                 TrinityPatternVariant variant)
             implements ShiftedPass {}
 
     private record ShiftedContext(
-                                  List<TrinityPatternVariant> variants,
-                                  Set<AEKey> internalKeys,
-                                  Set<AEKey> externalCostKeys,
-                                  Set<AEKey> finiteExternalKeys,
-                                  Set<AEKey> producibleInputs,
+                                  ObjectList<TrinityPatternVariant> variants,
+                                  ObjectSet<AEKey> internalKeys,
+                                  ObjectSet<AEKey> externalCostKeys,
+                                  ObjectSet<AEKey> finiteExternalKeys,
+                                  ObjectSet<AEKey> producibleInputs,
                                   TrinityCycleDemand demand,
-                                  Map<AEKey, BigInteger> available,
-                                  Map<TrinityPatternVariant, BigInteger> firingUpperBound,
-                                  Map<AEKey, BigInteger> baselineNet) {}
+                                  Object2ObjectMap<AEKey, BigInteger> available,
+                                  Object2ObjectMap<TrinityPatternVariant, BigInteger> firingUpperBound,
+                                  Object2ObjectMap<AEKey, BigInteger> baselineNet) {}
 
     private record ModelData(
                              ExpressionsBasedModel model,
-                             List<Variable> variables,
-                             Map<TrinityPatternVariant, Variable> reductions,
-                             Map<AEKey, Variable> seeds) {
+                             ObjectList<Variable> variables,
+                             Object2ObjectMap<TrinityPatternVariant, Variable> reductions,
+                             Object2ObjectMap<AEKey, Variable> seeds) {
 
-        private SolvedShift decode(List<BigInteger> values, ShiftedContext context) {
+        private SolvedShift decode(ObjectList<BigInteger> values, ShiftedContext context) {
             Object2ObjectLinkedOpenHashMap<Variable, BigInteger> byVariable = new Object2ObjectLinkedOpenHashMap<>();
             for (int index = 0; index < this.variables.size(); index++) {
                 byVariable.put(this.variables.get(index), values.get(index));
@@ -608,8 +609,8 @@ public final class TrinityShiftedFiringOptimizer {
             BigInteger reductionTotal = decodedReductions.values().stream().reduce(ZERO, BigInteger::add);
             BigInteger seedTotal = decodedSeeds.values().stream().reduce(ZERO, BigInteger::add);
             return new SolvedShift(
-                    Collections.unmodifiableMap(decodedReductions),
-                    Collections.unmodifiableMap(decodedSeeds),
+                    FastUtilCollections.immutableMap(decodedReductions),
+                    FastUtilCollections.immutableMap(decodedSeeds),
                     externalSaving,
                     seedTotal,
                     reductionTotal);
@@ -617,8 +618,8 @@ public final class TrinityShiftedFiringOptimizer {
     }
 
     private record SolvedShift(
-                               Map<TrinityPatternVariant, BigInteger> reductions,
-                               Map<AEKey, BigInteger> seeds,
+                               Object2ObjectMap<TrinityPatternVariant, BigInteger> reductions,
+                               Object2ObjectMap<AEKey, BigInteger> seeds,
                                BigInteger externalSaving,
                                BigInteger seedTotal,
                                BigInteger reductionTotal) {}

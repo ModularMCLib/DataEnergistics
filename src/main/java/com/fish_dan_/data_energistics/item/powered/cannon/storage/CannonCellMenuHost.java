@@ -24,7 +24,6 @@ public final class CannonCellMenuHost extends ItemMenuHost<MatterConvergingCross
     public CannonCellMenuHost(MatterConvergingCrossbowItem item, Player player, ItemMenuHostLocator locator) {
         super(item, player, locator);
         if (!isClientSide()) RailLauncher.cancel(getItemStack());
-        if (!isClientSide()) MountedAmmoCells.migrateLegacy(getItemStack());
         cells.fromItemContainerContents(getItemStack().getOrDefault(DEDataComponents.CANNON_CELLS.get(), ItemContainerContents.EMPTY));
     }
 
@@ -35,7 +34,6 @@ public final class CannonCellMenuHost extends ItemMenuHost<MatterConvergingCross
     @Override
     public void tick() {
         if (!isClientSide() && isValid()) {
-            MountedAmmoCells.migrateLegacy(getItemStack());
             cells.fromItemContainerContents(getItemStack().getOrDefault(DEDataComponents.CANNON_CELLS.get(), ItemContainerContents.EMPTY));
         }
     }

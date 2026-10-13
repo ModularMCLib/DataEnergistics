@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
 import com.fish_dan_.data_energistics.client.widget.DataRipperSettingToggleButton;
-import com.fish_dan_.data_energistics.common.dataripper.DataRipperPowerUtils;
 import com.fish_dan_.data_energistics.menu.machine.DataRipperMenu;
+import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 
 import appeng.api.config.YesNo;
 import appeng.api.upgrades.Upgrades;
@@ -141,26 +141,26 @@ public class DataRipperScreen extends AEBaseScreen<DataRipperMenu> {
         private void updateBlacklisted() {
             this.set("enable", this.translatable("enable"));
             this.set("speed", this.translatable("speed", 0));
-            this.set("energy", this.translatable("energy", DataRipperPowerUtils.formatDataFlowCost(0)));
-            this.set("power_ratio", this.translatable("power_ratio", DataRipperPowerUtils.formatPercentage(0.0D)));
+            this.set("energy", this.translatable("energy", PowerCalculationUtils.formatDataFlowCost(0)));
+            this.set("power_ratio", this.translatable("power_ratio", PowerCalculationUtils.formatPercentage(0.0D)));
             this.set("multiplier", this.translatable("multiplier", "0.00x"));
         }
 
         private void updateNormal() {
             int energyCardCount = DataRipperScreen.this.menu.energyCardCount;
-            double multiplier = DataRipperPowerUtils.getAdjustedExtraMultiplier(
+            double multiplier = PowerCalculationUtils.adjustedExtraPowerMultiplier(
                     DataRipperScreen.this.menu.multiplier,
                     DataRipperScreen.this.menu.inverterCardCount);
             int effectiveSpeed = DataRipperScreen.this.menu.effectiveSpeed;
-            double finalPower = DataRipperPowerUtils.computeFinalPowerForProduct(effectiveSpeed, energyCardCount) * multiplier;
-            double powerRatio = DataRipperPowerUtils.getRemainingRatio(energyCardCount);
+            double finalPower = PowerCalculationUtils.computeDataRipperPower(effectiveSpeed, energyCardCount) * multiplier;
+            double powerRatio = PowerCalculationUtils.remainingDataRipperPowerRatio(energyCardCount);
 
             this.set(
                     "enable",
                     DataRipperScreen.this.menu.networkEnergySufficient == YesNo.YES ? null : this.translatable("warning_network_energy_insufficient"));
             this.set("speed", this.translatable("speed", effectiveSpeed));
-            this.set("energy", this.translatable("energy", DataRipperPowerUtils.formatDataFlowCost(finalPower)));
-            this.set("power_ratio", this.translatable("power_ratio", DataRipperPowerUtils.formatPercentage(powerRatio)));
+            this.set("energy", this.translatable("energy", PowerCalculationUtils.formatDataFlowCost(finalPower)));
+            this.set("power_ratio", this.translatable("power_ratio", PowerCalculationUtils.formatPercentage(powerRatio)));
             this.set("multiplier", this.translatable("multiplier", String.format("%.2fx", multiplier)));
         }
 

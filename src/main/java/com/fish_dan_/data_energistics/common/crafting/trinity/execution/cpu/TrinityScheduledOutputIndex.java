@@ -1,14 +1,16 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Aggregates outputs that have not yet been dispatched by one Trinity CPU job.
@@ -23,11 +25,11 @@ final class TrinityScheduledOutputIndex {
     /**
      * Exact derived totals retained so a later decrement remains correct after public saturation.
      */
-    private final Map<AEKey, BigInteger> amounts = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<AEKey, BigInteger> amounts = new Object2ObjectOpenHashMap<>();
     /**
      * Immutable key view replaced only when membership changes.
      */
-    private Set<AEKey> keys = Set.of();
+    private ObjectSet<AEKey> keys = ObjectSet.of();
 
     /**
      * Adds every output produced by a positive number of logical pattern executions.
@@ -36,9 +38,9 @@ final class TrinityScheduledOutputIndex {
      * @param craftCount positive logical execution count
      */
     public void add(IPatternDetails pattern, long craftCount) {
-        Map<AEKey, BigInteger> additions = contributions(pattern, craftCount);
+        Object2ObjectMap<AEKey, BigInteger> additions = contributions(pattern, craftCount);
         boolean keySetChanged = false;
-        for (Map.Entry<AEKey, BigInteger> addition : additions.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> addition : additions.object2ObjectEntrySet()) {
             keySetChanged |= !this.amounts.containsKey(addition.getKey());
             this.amounts.merge(addition.getKey(), addition.getValue(), BigInteger::add);
         }
@@ -54,8 +56,8 @@ final class TrinityScheduledOutputIndex {
      * @param craftCount positive logical execution count
      */
     public void remove(IPatternDetails pattern, long craftCount) {
-        Map<AEKey, BigInteger> removals = contributions(pattern, craftCount);
-        for (Map.Entry<AEKey, BigInteger> removal : removals.entrySet()) {
+        Object2ObjectMap<AEKey, BigInteger> removals = contributions(pattern, craftCount);
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> removal : removals.object2ObjectEntrySet()) {
             BigInteger current = this.amounts.get(removal.getKey());
             if (current == null || current.compareTo(removal.getValue()) < 0) {
                 throw new IllegalStateException(
@@ -65,7 +67,7 @@ final class TrinityScheduledOutputIndex {
         }
 
         boolean keySetChanged = false;
-        for (Map.Entry<AEKey, BigInteger> removal : removals.entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> removal : removals.object2ObjectEntrySet()) {
             BigInteger remaining = this.amounts.get(removal.getKey()).subtract(removal.getValue());
             if (remaining.signum() == 0) {
                 this.amounts.remove(removal.getKey());
@@ -94,7 +96,7 @@ final class TrinityScheduledOutputIndex {
      *
      * @return immutable scheduled key set
      */
-    public Set<AEKey> keys() {
+    public ObjectSet<AEKey> keys() {
         return this.keys;
     }
 
@@ -106,18 +108,18 @@ final class TrinityScheduledOutputIndex {
             return;
         }
         this.amounts.clear();
-        this.keys = Set.of();
+        this.keys = ObjectSet.of();
     }
 
     /**
      * Builds one atomic exact delta before mutating the authoritative index.
      */
-    private static Map<AEKey, BigInteger> contributions(IPatternDetails pattern, long craftCount) {
+    private static Object2ObjectMap<AEKey, BigInteger> contributions(IPatternDetails pattern, long craftCount) {
         if (craftCount <= 0L) {
             throw new IllegalArgumentException("Scheduled Trinity craft count must be positive: " + craftCount);
         }
         BigInteger count = BigInteger.valueOf(craftCount);
-        Map<AEKey, BigInteger> contributions = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<AEKey, BigInteger> contributions = new Object2ObjectOpenHashMap<>();
         for (GenericStack output : pattern.getOutputs()) {
             if (output.amount() <= 0L) {
                 throw new IllegalArgumentException(
@@ -133,6 +135,6 @@ final class TrinityScheduledOutputIndex {
      * Replaces the immutable key snapshot after a key enters or leaves the aggregate.
      */
     private void rebuildKeys() {
-        this.keys = this.amounts.isEmpty() ? Set.of() : Set.copyOf(this.amounts.keySet());
+        this.keys = this.amounts.isEmpty() ? ObjectSet.of() : FastUtilCollections.immutableSet(this.amounts.keySet());
     }
 }

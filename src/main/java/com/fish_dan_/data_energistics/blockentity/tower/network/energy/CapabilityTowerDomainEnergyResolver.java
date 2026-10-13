@@ -11,11 +11,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Resolves loaded FE capabilities for domain-level topology snapshots without forcing chunks.
@@ -38,12 +38,12 @@ public final class CapabilityTowerDomainEnergyResolver {
      * @param location candidate location
      * @return immutable endpoint list, or empty when the chunk is unloaded
      */
-    public List<TowerDomainEnergyEndpoint> resolve(TowerEnergyLocation location) {
+    public ObjectList<TowerDomainEnergyEndpoint> resolve(TowerEnergyLocation location) {
         Level level = location.level();
         if (!level.isLoaded(location.position())) {
-            return List.of();
+            return ObjectList.of();
         }
-        Set<IEnergyStorage> seenStorageRoutes = new ReferenceOpenHashSet<>();
+        ReferenceSet<IEnergyStorage> seenStorageRoutes = new ReferenceOpenHashSet<>();
         ObjectArrayList<TowerDomainEnergyEndpoint> endpoints = new ObjectArrayList<>();
         int storageIdentity = 0;
         for (Direction side : Direction.values()) {
@@ -52,14 +52,14 @@ public final class CapabilityTowerDomainEnergyResolver {
         if (endpoints.isEmpty()) {
             addEndpoint(location, null, storageIdentity, seenStorageRoutes, endpoints);
         }
-        return List.copyOf(endpoints);
+        return new ObjectImmutableList<>(endpoints);
     }
 
     private int addEndpoint(TowerEnergyLocation location,
                             @Nullable Direction side,
                             int storageIdentity,
-                            Set<IEnergyStorage> seenStorageRoutes,
-                            List<TowerDomainEnergyEndpoint> endpoints) {
+                            ReferenceSet<IEnergyStorage> seenStorageRoutes,
+                            ObjectList<TowerDomainEnergyEndpoint> endpoints) {
         IEnergyStorage storage = findStorage(location, side);
         if (storage == null || !seenStorageRoutes.add(storage)) {
             return storageIdentity;

@@ -4,10 +4,9 @@ import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingProvi
 
 import appeng.api.networking.crafting.ICraftingProvider;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Internal identity registry used by the synchronous Trinity dispatcher.
@@ -21,7 +20,7 @@ import java.util.Map;
  */
 final class CountedCraftingProviderAdapterRegistry {
 
-    private final Map<ICraftingProvider, CountedCraftingProviderAdapter> registrations = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceMap<ICraftingProvider, CountedCraftingProviderAdapter> registrations = new Reference2ReferenceOpenHashMap<>();
     private long mutationRevision;
 
     /**

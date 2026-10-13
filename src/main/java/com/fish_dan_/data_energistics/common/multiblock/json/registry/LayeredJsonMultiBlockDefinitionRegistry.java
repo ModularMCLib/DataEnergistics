@@ -5,11 +5,10 @@ import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMult
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import org.apache.logging.log4j.Logger;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Layered in-memory registry for built-in and datapack JSON multiblock definitions.
@@ -18,9 +17,9 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
 
     private static final Logger LOGGER = Data_Energistics.LOGGER;
 
-    private Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> builtins = Map.of();
-    private Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> jsonDefinitions = Map.of();
-    private volatile JsonMultiBlockDefinitionRegistrySnapshot activeSnapshot = new JsonMultiBlockDefinitionRegistrySnapshot(0L, Map.of());
+    private Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> builtins = Object2ObjectMaps.emptyMap();
+    private Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> jsonDefinitions = Object2ObjectMaps.emptyMap();
+    private volatile JsonMultiBlockDefinitionRegistrySnapshot activeSnapshot = new JsonMultiBlockDefinitionRegistrySnapshot(0L, Object2ObjectMaps.emptyMap());
 
     @Override
     public synchronized void registerBuiltin(JsonMultiBlockDefinition definition) {
@@ -36,7 +35,7 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
         long nextRevision = nextRevision("register built-in " + definition.key());
         Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> nextBuiltins = new Object2ObjectLinkedOpenHashMap<>(this.builtins);
         nextBuiltins.put(definition.key(), definition);
-        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableBuiltins = immutableCopy(nextBuiltins);
+        Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableBuiltins = immutableCopy(nextBuiltins);
         JsonMultiBlockDefinitionRegistrySnapshot nextSnapshot = new JsonMultiBlockDefinitionRegistrySnapshot(
                 nextRevision,
                 merge(immutableBuiltins, this.jsonDefinitions));
@@ -47,7 +46,7 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
     }
 
     @Override
-    public synchronized void applyJsonDefinitions(Collection<JsonMultiBlockDefinition> definitions) {
+    public synchronized void applyJsonDefinitions(ObjectCollection<JsonMultiBlockDefinition> definitions) {
         if (definitions == null) {
             throw new IllegalArgumentException("JSON multiblock reload definitions cannot be null");
         }
@@ -64,7 +63,7 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
         }
 
         long nextRevision = nextRevision("apply JSON definitions");
-        Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableJsonDefinitions = immutableCopy(nextJsonDefinitions);
+        Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableJsonDefinitions = immutableCopy(nextJsonDefinitions);
         JsonMultiBlockDefinitionRegistrySnapshot nextSnapshot = new JsonMultiBlockDefinitionRegistrySnapshot(
                 nextRevision,
                 merge(this.builtins, immutableJsonDefinitions));
@@ -92,16 +91,16 @@ public final class LayeredJsonMultiBlockDefinitionRegistry implements JsonMultiB
         }
     }
 
-    private static Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> merge(
-                                                                                   Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> builtins,
-                                                                                   Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> jsonDefinitions) {
+    private static Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> merge(
+                                                                                                Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> builtins,
+                                                                                                Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> jsonDefinitions) {
         Object2ObjectLinkedOpenHashMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> merged = new Object2ObjectLinkedOpenHashMap<>(builtins);
         merged.putAll(jsonDefinitions);
         return immutableCopy(merged);
     }
 
-    private static Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableCopy(
-                                                                                           Map<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions) {
-        return Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(definitions));
+    private static Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> immutableCopy(
+                                                                                                        Object2ObjectMap<JsonMultiBlockStructureKey, JsonMultiBlockDefinition> definitions) {
+        return Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(definitions));
     }
 }

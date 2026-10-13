@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.registry;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.block.TuningForkBlock;
 import com.fish_dan_.data_energistics.item.TuningForkBlockItem;
 import com.fish_dan_.data_energistics.item.beam.BeamBindingToolItem;
@@ -36,7 +35,6 @@ import com.fish_dan_.data_energistics.part.MeSolarPanelPart;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
 import com.fish_dan_.data_energistics.part.beam.BeamFormerPart;
 
-import appeng.api.stacks.GenericStack;
 import appeng.api.upgrades.Upgrades;
 import appeng.block.networking.EnergyCellBlockItem;
 import appeng.items.parts.PartItem;
@@ -46,7 +44,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -135,6 +132,7 @@ public final class DEItems {
             "data_sanctum_interface_part",
             () -> new PartItem<>(new Item.Properties(), DataSanctumInterfacePart.class, DataSanctumInterfacePart::new));
     public static final DeferredItem<BlockItem> ADAPTIVE_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.ADAPTIVE_PATTERN_PROVIDER);
+    public static final DeferredItem<BlockItem> DIGITAL_SUPPLY_INTERFACE = ITEMS.registerSimpleBlockItem(DEBlocks.DIGITAL_SUPPLY_INTERFACE);
     public static final DeferredItem<BlockItem> DIGITAL_PACKAGED_PATTERN_PROVIDER = ITEMS.registerSimpleBlockItem(DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER);
     public static final DeferredItem<PackagedRecoveryItem> PACKAGED_RECOVERY = ITEMS.register(
             "packaged_recovery", () -> new PackagedRecoveryItem(new Item.Properties().stacksTo(1).fireResistant()));
@@ -364,27 +362,7 @@ public final class DEItems {
     private DEItems() {}
 
     public static void register(IEventBus modEventBus) {
-        registerDigitalStorageCellAliases();
-        TrinityCoreRegistryAliases.register(ITEMS);
         ITEMS.register(modEventBus);
-    }
-
-    /** Preserves the item ID written by 3.2.2 while the current registry uses the grenade mode ID. */
-    private static void registerDigitalStorageCellAliases() {
-        ITEMS.addAlias(Data_Energistics.id("dark_string_data_settlement_tool"), Data_Energistics.id("star_shard"));
-        String[] tiers = { "1k", "4k", "16k", "64k", "256k", "1m", "4m", "16m", "64m", "256m" };
-        for (String tier : tiers) {
-            ITEMS.addAlias(
-                    Data_Energistics.id("data_flow_cell_" + tier),
-                    Data_Energistics.id("digital_storage_cell_" + tier));
-            ITEMS.addAlias(
-                    Data_Energistics.id("portable_data_flow_cell_" + tier),
-                    Data_Energistics.id("portable_digital_storage_cell_" + tier));
-        }
-    }
-
-    public static ItemStack wrappedDataFlow() {
-        return GenericStack.wrapInItemStack(DataFlowKey.of(), 1);
     }
 
     private static DeferredItem<DigitalStorageCellItem> registerDigitalStorageCell(String id, double idleDrain, int bytes) {

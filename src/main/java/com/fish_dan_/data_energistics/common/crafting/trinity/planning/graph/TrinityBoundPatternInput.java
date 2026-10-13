@@ -1,14 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph;
 
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,7 +30,7 @@ public record TrinityBoundPatternInput(
                                        long multiplier,
                                        @Nullable AEKey remainingKey,
                                        @Nullable ReusableInputRule reusableRule,
-                                       List<GenericStack> byproducts,
+                                       ObjectList<GenericStack> byproducts,
                                        boolean lifetimeBudget) {
 
     /**
@@ -40,7 +41,7 @@ public record TrinityBoundPatternInput(
                 template.amount() <= 0L || multiplier <= 0L) {
             throw new IllegalArgumentException("A Trinity bound input requires a legal slot, template and multiplier");
         }
-        byproducts = List.copyOf(byproducts);
+        byproducts = FastUtilCollections.immutableList(byproducts);
         if (lifetimeBudget && (reusableRule == null || reusableRule.kind() != ReusableInputRule.Kind.FIXED_DAMAGE ||
                 !reusableRule.exhaustionByproductsFast().isEmpty())) {
             throw new IllegalArgumentException("A continuous fixed-wear binding needs a proved lifetime without side products");
@@ -62,7 +63,7 @@ public record TrinityBoundPatternInput(
     /** A discrete transition binding, used when the recipe's matching contract is state-dependent. */
     public TrinityBoundPatternInput(int slotIndex, int alternativeIndex, GenericStack template, long multiplier,
                                     @Nullable AEKey remainingKey, @Nullable ReusableInputRule reusableRule,
-                                    List<GenericStack> byproducts) {
+                                    ObjectList<GenericStack> byproducts) {
         this(slotIndex, alternativeIndex, template, multiplier, remainingKey, reusableRule, byproducts, false);
     }
 
@@ -74,7 +75,7 @@ public record TrinityBoundPatternInput(
     /** Captures the unchanged legacy per-template remainder contract. */
     public TrinityBoundPatternInput(int slotIndex, int alternativeIndex, GenericStack template,
                                     long multiplier, @Nullable AEKey remainingKey) {
-        this(slotIndex, alternativeIndex, template, multiplier, remainingKey, null, List.of());
+        this(slotIndex, alternativeIndex, template, multiplier, remainingKey, null, ObjectList.of());
     }
 
     /**

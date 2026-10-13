@@ -5,14 +5,15 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Pro
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityCachedComputation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationCache;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.cache.TrinityComputationNamespace;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
@@ -80,15 +81,15 @@ public final class DispatchCapacityPlanner {
 
     private DispatchCapacitySlicePlan calculate(SliceKey key) {
         ProviderTargetRotation rotation = ProviderTargetRotation.create(key.snapshots(), key.cursor());
-        List<ProviderCapacitySnapshot> orderedSnapshots = rotation.targets().stream()
+        ObjectList<ProviderCapacitySnapshot> orderedSnapshots = rotation.targets().stream()
                 .map(ProviderTargetRotation.Target::snapshot)
-                .toList();
+                .collect(ObjectArrayList.toList());
         CapacitySlicePlan rawPlan = this.delegate.plan(
                 orderedSnapshots,
                 key.remainingCrafts(),
                 key.physicalCallLimit(),
                 0);
-        Map<ProviderCapacitySnapshot, ObjectArrayFIFOQueue<ProviderTargetRotation.Target>> targetsByIdentity = new Reference2ReferenceOpenHashMap<>();
+        Reference2ReferenceMap<ProviderCapacitySnapshot, ObjectArrayFIFOQueue<ProviderTargetRotation.Target>> targetsByIdentity = new Reference2ReferenceOpenHashMap<>();
         for (ProviderTargetRotation.Target target : rotation.targets()) {
             targetsByIdentity.computeIfAbsent(target.snapshot(), ignored -> new ObjectArrayFIFOQueue<>()).enqueue(target);
         }
@@ -122,7 +123,7 @@ public final class DispatchCapacityPlanner {
      */
     private record SliceKey(
                             ProviderCapacityCaptureKey captureKey,
-                            List<ProviderCapacitySnapshot> snapshots,
+                            ObjectList<ProviderCapacitySnapshot> snapshots,
                             BigInteger remainingCrafts,
                             int physicalCallLimit,
                             CraftingDispatchCursor cursor) {
@@ -131,7 +132,7 @@ public final class DispatchCapacityPlanner {
             if (captureKey == null || remainingCrafts == null || cursor == null) {
                 throw new IllegalArgumentException("Dispatch capacity slice cache key must be complete");
             }
-            snapshots = List.copyOf(snapshots);
+            snapshots = FastUtilCollections.immutableList(snapshots);
             if (remainingCrafts.signum() < 0 || physicalCallLimit < 0) {
                 throw new IllegalArgumentException("Dispatch capacity slice cache bounds must not be negative");
             }

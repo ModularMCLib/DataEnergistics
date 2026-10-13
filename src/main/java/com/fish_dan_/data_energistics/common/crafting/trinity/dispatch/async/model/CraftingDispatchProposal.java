@@ -1,8 +1,9 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.model;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Immutable background result naming one physical provider call without carrying mutable server state.
@@ -18,7 +19,7 @@ public record CraftingDispatchProposal(
                                        ProviderCapacitySnapshot target,
                                        long logicalCrafts,
                                        CraftingDispatchCursor nextCursor,
-                                       Set<CraftingDispatchExclusion> exclusions) {
+                                       ObjectSet<CraftingDispatchExclusion> exclusions) {
 
     /**
      * Creates an initial proposal without replacement history.
@@ -28,7 +29,7 @@ public record CraftingDispatchProposal(
                                     ProviderCapacitySnapshot target,
                                     long logicalCrafts,
                                     CraftingDispatchCursor nextCursor) {
-        this(lease, target, logicalCrafts, nextCursor, Set.of());
+        this(lease, target, logicalCrafts, nextCursor, ObjectSet.of());
     }
 
     public CraftingDispatchProposal {
@@ -38,7 +39,7 @@ public record CraftingDispatchProposal(
         if (logicalCrafts <= 0L) {
             throw new IllegalArgumentException("Crafting dispatch proposal count must be positive");
         }
-        exclusions = Set.copyOf(exclusions);
+        exclusions = FastUtilCollections.immutableSet(exclusions);
         if (exclusions.stream().anyMatch(exclusion -> exclusion.excludes(target))) {
             throw new IllegalArgumentException("Crafting dispatch proposal selected an excluded target");
         }

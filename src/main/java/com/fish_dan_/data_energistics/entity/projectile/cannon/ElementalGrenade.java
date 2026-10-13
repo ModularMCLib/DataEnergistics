@@ -42,7 +42,7 @@ public final class ElementalGrenade {
             var flame = AmmunitionRules.flame(cards);
             for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area(center, flame.width()), LivingEntity::isAlive)) {
                 WeaponDamage.hurt(target, WeaponDamage.source(target, owner), flame.damage());
-                WeaponBurn.apply(target, owner, flame.burnTicks(), flame.burnDamage());
+                WeaponBurn.applyWithVanillaRecovery(target, owner, flame.burnTicks(), flame.burnDamage());
             }
             BlockPos origin = BlockPos.containing(center);
             int radius = flame.width() / 2;

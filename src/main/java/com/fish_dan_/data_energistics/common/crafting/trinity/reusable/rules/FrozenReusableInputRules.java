@@ -4,27 +4,28 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.api.registry.reusable.ReusableInputRules;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Frozen callback lookup owned by the server lifecycle; plugin registration freezes elsewhere. */
 public final class FrozenReusableInputRules implements ReusableInputRules {
 
-    private final List<ReusableInputRuleAdapter> adapters;
+    private final ObjectList<ReusableInputRuleAdapter> adapters;
 
     /**
      * Builds one frozen lookup from an already frozen plugin snapshot, rejecting duplicate identities.
      * The list is copied; callbacks are not invoked until a server-thread query is made.
      */
-    public FrozenReusableInputRules(List<ReusableInputRuleAdapter> adapters) {
-        this.adapters = List.copyOf(adapters);
+    public FrozenReusableInputRules(ObjectList<ReusableInputRuleAdapter> adapters) {
+        this.adapters = FastUtilCollections.immutableList(adapters);
         ObjectOpenHashSet<ResourceLocation> ids = new ObjectOpenHashSet<>();
         for (ReusableInputRuleAdapter adapter : this.adapters) {
             if (!ids.add(adapter.id())) {

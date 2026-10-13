@@ -16,7 +16,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import de.ellpeck.naturesaura.blocks.multi.Multiblocks;
 import de.ellpeck.naturesaura.blocks.tiles.BlockEntityWoodStand;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,11 +49,11 @@ abstract class WoodStandRitualPersistenceMixin {
             claims.blockReplaced(stand.getBlockPos());
             return;
         }
-        var before = new Object2ObjectLinkedOpenHashMap<BlockPos, ItemStack>();
+        var before = new Long2ObjectLinkedOpenHashMap<ItemStack>();
         int timer = state.dataEnergistics$timer();
         if (level.getGameTime() % 5 == 0 && timer < recipe.value().time / 2 && timer + 5 >= recipe.value().time / 2 && timer + 5 < recipe.value().time) {
             Multiblocks.TREE_RITUAL.forEach(center, 'W', (pos, matcher) -> {
-                if (level.getBlockEntity(pos) instanceof BlockEntityWoodStand material) before.put(pos.immutable(), material.items.getStackInSlot(0).copy());
+                if (level.getBlockEntity(pos) instanceof BlockEntityWoodStand material) before.put(pos.asLong(), material.items.getStackInSlot(0).copy());
                 return true;
             });
         }
@@ -61,8 +62,8 @@ abstract class WoodStandRitualPersistenceMixin {
             var ledger = PackagedRecoveryJournal.get(level);
             var data = ledger.read(owner);
             var consumed = data.getList("consumed_materials", 10);
-            for (var entry : before.entrySet()) {
-                if (!entry.getValue().isEmpty() && level.getBlockEntity(entry.getKey()) instanceof BlockEntityWoodStand material && material.items.getStackInSlot(0).isEmpty()) consumed.add(entry.getValue().save(level.registryAccess()));
+            for (Long2ObjectMap.Entry<ItemStack> entry : before.long2ObjectEntrySet()) {
+                if (!entry.getValue().isEmpty() && level.getBlockEntity(BlockPos.of(entry.getLongKey())) instanceof BlockEntityWoodStand material && material.items.getStackInSlot(0).isEmpty()) consumed.add(entry.getValue().save(level.registryAccess()));
             }
             data.put("consumed_materials", consumed);
             ledger.write(owner, data);

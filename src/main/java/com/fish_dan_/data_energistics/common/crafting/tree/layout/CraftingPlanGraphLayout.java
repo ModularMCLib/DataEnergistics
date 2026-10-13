@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView.ViewEdge;
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView.ViewGraph;
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView.ViewNode;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -23,11 +24,11 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 
 /** Rooted dependency branches run left to right; shared materials and cyclic components retain one placement. */
@@ -37,8 +38,8 @@ public final class CraftingPlanGraphLayout {
 
     public static Layout layout(ViewGraph graph, boolean compact) {
         if (graph.nodes().isEmpty()) {
-            return new Layout(List.of(), List.of(), new Bounds(0, 0, 0, 0),
-                    CraftingPlanRouteGeometry.EMPTY, List.of());
+            return new Layout(ObjectList.of(), ObjectList.of(), new Bounds(0, 0, 0, 0),
+                    CraftingPlanRouteGeometry.EMPTY, ObjectList.of());
         }
         Placement placement = place(graph, compact);
         return CraftingPlanEdgeRouter.route(graph, placement.nodes(), placement.spacing(), placement.ranks());
@@ -98,11 +99,11 @@ public final class CraftingPlanGraphLayout {
                 }
             }
         }
-        Int2ObjectMap<List<Group>> layers = new Int2ObjectAVLTreeMap<>();
+        Int2ObjectMap<ObjectList<Group>> layers = new Int2ObjectAVLTreeMap<>();
         for (Group group : groups.values()) {
             layers.computeIfAbsent(group.rank, unused -> new ObjectArrayList<>()).add(group);
         }
-        List<Block> blocks = new ObjectArrayList<>(groups.size());
+        ObjectList<Block> blocks = new ObjectArrayList<>(groups.size());
         for (Group group : groups.values()) {
             blocks.add(new Block(group.id, group.rank, group.width, new IntArrayList(group.children)));
         }
@@ -126,7 +127,7 @@ public final class CraftingPlanGraphLayout {
     private static void orderCycle(Group group, Int2ObjectMap<ViewNode> nodes, Int2ObjectMap<IntList> outgoing) {
         IntArrayList pending = new IntArrayList();
         IntSet visited = new IntOpenHashSet();
-        List<ViewNode> ordered = new ObjectArrayList<>();
+        ObjectList<ViewNode> ordered = new ObjectArrayList<>();
         // Removing boundary supplies from the ring can disconnect its local drawing; retain every stage instance.
         for (ViewNode start : group.nodes) {
             pending.push(start.id());
@@ -256,7 +257,7 @@ public final class CraftingPlanGraphLayout {
     }
 
     private static Int2IntMap channelTracks(ViewGraph graph, Int2ObjectMap<PlacedNode> nodes, Int2IntMap ranks) {
-        Int2ObjectMap<List<ChannelEvent>> events = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<ObjectList<ChannelEvent>> events = new Int2ObjectOpenHashMap<>();
         var styles = CraftingPlanRouteGroup.indexStyles(graph.source());
         for (ViewEdge edge : graph.edges()) {
             int sourceRank = ranks.get(edge.source());
@@ -266,7 +267,7 @@ public final class CraftingPlanGraphLayout {
             for (int original : edge.originalEdgeIds()) distinct.add(styles.get(original));
             double sourceY = nodes.get(edge.source()).y() + nodes.get(edge.source()).height() / 2;
             double targetY = nodes.get(edge.target()).y() + nodes.get(edge.target()).height() / 2;
-            List<ChannelEvent> boundary = events.computeIfAbsent(Math.min(sourceRank, targetRank),
+            ObjectList<ChannelEvent> boundary = events.computeIfAbsent(Math.min(sourceRank, targetRank),
                     unused -> new ObjectArrayList<>());
             for (int index = 0; index < distinct.size(); index++) {
                 boundary.add(new ChannelEvent(Math.min(sourceY, targetY), 1));
@@ -288,7 +289,7 @@ public final class CraftingPlanGraphLayout {
         return result;
     }
 
-    private static void positionDepth(Int2ObjectMap<List<Group>> layers, Spacing spacing, Int2IntMap channelTracks) {
+    private static void positionDepth(Int2ObjectMap<ObjectList<Group>> layers, Spacing spacing, Int2IntMap channelTracks) {
         double depth = spacing.routingPadding();
         for (var entry : layers.int2ObjectEntrySet()) {
             double height = 0;
@@ -303,7 +304,7 @@ public final class CraftingPlanGraphLayout {
 
     public record Point(double x, double y) {}
 
-    record Placement(List<PlacedNode> nodes, Spacing spacing, Int2IntMap ranks) {}
+    record Placement(ObjectList<PlacedNode> nodes, Spacing spacing, Int2IntMap ranks) {}
 
     public record Bounds(double x, double y, double width, double height) {}
 
@@ -323,19 +324,19 @@ public final class CraftingPlanGraphLayout {
     }
 
     public record RoutedEdge(int source, int target, boolean cyclic, IntList originalEdgeIds,
-                             CraftingPlanRouteGroup group, List<SegmentRange> segmentRanges) {}
+                             CraftingPlanRouteGroup group, ObjectList<SegmentRange> segmentRanges) {}
 
     public record RoutedCurve(int source, int target, boolean cyclic, IntList originalEdgeIds,
                               CraftingPlanRouteGroup group, Point from, Point firstControl,
                               Point secondControl, Point to) {}
 
-    public record Layout(List<PlacedNode> nodes, List<RoutedEdge> edges, Bounds bounds,
-                         CraftingPlanRouteGeometry geometry, List<RoutedCurve> curves) {
+    public record Layout(ObjectList<PlacedNode> nodes, ObjectList<RoutedEdge> edges, Bounds bounds,
+                         CraftingPlanRouteGeometry geometry, ObjectList<RoutedCurve> curves) {
 
         public Layout {
-            nodes = List.copyOf(nodes);
-            edges = List.copyOf(edges);
-            curves = List.copyOf(curves);
+            nodes = FastUtilCollections.immutableList(nodes);
+            edges = FastUtilCollections.immutableList(edges);
+            curves = FastUtilCollections.immutableList(curves);
             if (!curves.isEmpty()) {
                 if (edges.size() != curves.size()) throw new IllegalArgumentException("Radial route index is incomplete");
                 for (int routeId = 0; routeId < edges.size(); routeId++) {
@@ -373,8 +374,8 @@ public final class CraftingPlanGraphLayout {
     private static final class Group {
 
         private final int id;
-        private final List<ViewNode> nodes = new ObjectArrayList<>();
-        private final List<Slot> slots = new ObjectArrayList<>();
+        private final ObjectList<ViewNode> nodes = new ObjectArrayList<>();
+        private final ObjectList<Slot> slots = new ObjectArrayList<>();
         private final IntSet parents = new IntAVLTreeSet();
         private final IntSet children = new IntAVLTreeSet();
         private int remainingParents;

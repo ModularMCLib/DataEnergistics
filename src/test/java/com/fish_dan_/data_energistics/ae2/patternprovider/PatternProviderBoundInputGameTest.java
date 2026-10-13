@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.BoundPatternInputEmitter;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
@@ -25,7 +26,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 @GameTestHolder(Data_Energistics.MODID)
 @PrefixGameTestTemplate(false)
@@ -45,7 +47,7 @@ public final class PatternProviderBoundInputGameTest {
         IPatternDetails authorized = processingPattern(plannedPaper, book, true);
         IPatternDetails emissionDetails = new BoundEmissionDetails(
                 authorized,
-                List.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L), new GenericStack(plannedPaper, 1L)));
+                ObjectList.of(new GenericStack(plannedPaper, 1L), new GenericStack(book, 1L), new GenericStack(plannedPaper, 1L)));
         boolean strictRejected = false;
         try {
             PatternProviderBatching.expandPatternInputs(
@@ -59,7 +61,7 @@ public final class PatternProviderBoundInputGameTest {
                 strictRejected,
                 "Unbound AE2 processing input must retain exact component matching");
 
-        List<GenericStack> expanded = PatternProviderBatching.expandPatternInputs(
+        ObjectList<GenericStack> expanded = PatternProviderBatching.expandPatternInputs(
                 emissionDetails,
                 authorizedInputs(firstActualPaper, secondActualPaper, book),
                 3L);
@@ -97,11 +99,11 @@ public final class PatternProviderBoundInputGameTest {
 
     private static IPatternDetails processingPattern(AEItemKey paper, AEItemKey book, boolean authorizePaper) {
         ItemStack encoded = PatternDetailsHelper.encodeProcessingPattern(
-                List.of(
+                ObjectList.of(
                         new GenericStack(paper, 1L),
                         new GenericStack(book, 1L),
                         new GenericStack(paper, 1L)),
-                List.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L)));
+                ObjectList.of(new GenericStack(AEItemKey.of(Items.DIAMOND), 1L)));
         if (authorizePaper) {
             var matching = new CompoundTag();
             var idRule = new CompoundTag();
@@ -148,11 +150,11 @@ public final class PatternProviderBoundInputGameTest {
     }
 
     private record BoundEmissionDetails(IPatternDetails registered,
-                                        List<GenericStack> selectedPlannedTemplates)
+                                        ObjectList<GenericStack> selectedPlannedTemplates)
             implements IPatternDetails {
 
         private BoundEmissionDetails {
-            selectedPlannedTemplates = List.copyOf(selectedPlannedTemplates);
+            selectedPlannedTemplates = FastUtilCollections.immutableList(selectedPlannedTemplates);
         }
 
         @Override
@@ -166,8 +168,8 @@ public final class PatternProviderBoundInputGameTest {
         }
 
         @Override
-        public List<GenericStack> getOutputs() {
-            return this.registered.getOutputs();
+        public ObjectList<GenericStack> getOutputs() {
+            return new ObjectArrayList<>(this.registered.getOutputs());
         }
 
         @Override

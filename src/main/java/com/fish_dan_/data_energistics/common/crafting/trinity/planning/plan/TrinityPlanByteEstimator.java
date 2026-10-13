@@ -2,8 +2,9 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan;
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Conservatively maps compact graph accounting to AE2 crafting CPU byte capacity.
@@ -31,7 +32,7 @@ public final class TrinityPlanByteEstimator {
     public BigInteger estimate(TrinityPlanByteEstimateInput input) {
         BigInteger bytes = input.patternFirings()
                 .add(input.logicalNodeCount().multiply(CRAFTING_STORAGE_MULTIPLIER));
-        for (Map.Entry<AEKey, BigInteger> entry : input.stackRequestAmounts().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> entry : input.stackRequestAmounts().object2ObjectEntrySet()) {
             int amountPerByte = entry.getKey().getAmountPerByte();
             if (amountPerByte <= 0) {
                 throw new IllegalArgumentException("An AE key type must store a positive amount per byte");

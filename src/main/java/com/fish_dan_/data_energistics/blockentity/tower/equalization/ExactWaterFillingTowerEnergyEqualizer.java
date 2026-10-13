@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.blockentity.tower.energy.TowerEnergyDirect
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -57,15 +58,15 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
      * @throws ArithmeticException when an intermediate aggregate or product cannot be represented exactly
      */
     private static TowerEnergyEqualizationPlan planLong(TowerEnergyEqualizationSnapshot snapshot) {
-        List<TowerEnergyEndpointSnapshot> endpoints = snapshot.endpoints();
-        List<ReceiverState> receivers = collectReceivers(endpoints);
+        ObjectList<TowerEnergyEndpointSnapshot> endpoints = snapshot.endpoints();
+        ObjectArrayList<ReceiverState> receivers = collectReceivers(endpoints);
         long receiverCapacity = sumReceiverCapacityLong(receivers);
         long receiverStored = sumReceiverStoredLong(receivers);
         long targetSupply = sumTargetSupplyLong(endpoints);
         long desiredReceiverStored = Math.min(Math.addExact(receiverStored, targetSupply), receiverCapacity);
         Object2LongMap<TowerEnergyEndpointId> targets = apportionReceiverTargetsLong(receivers, desiredReceiverStored);
 
-        List<TowerEnergySinkAllocation> sinks = collectSinkAllocationsLong(endpoints, targets);
+        ObjectArrayList<TowerEnergySinkAllocation> sinks = collectSinkAllocationsLong(endpoints, targets);
         long amountNeeded = sumSinkAmountsLong(sinks);
         long balancedSourceAvailable = sumBalancedSourceAvailabilityLong(endpoints, targets);
         long bufferInput = Math.clamp(
@@ -78,7 +79,7 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
             return TowerEnergyEqualizationPlan.empty();
         }
 
-        List<TowerEnergySourceAllocation> sources = new ObjectArrayList<>();
+        ObjectArrayList<TowerEnergySourceAllocation> sources = new ObjectArrayList<>();
         long unavailable = collectSourceOnlyAllocationsLong(endpoints, amountNeeded, sources);
         unavailable = collectBidirectionalAllocationsLong(endpoints, targets, unavailable, sources);
         unavailable = collectBufferAllocationsLong(endpoints, unavailable, sources);
@@ -94,15 +95,15 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
      * @return immutable source and sink allocations
      */
     private static TowerEnergyEqualizationPlan planExact(TowerEnergyEqualizationSnapshot snapshot) {
-        List<TowerEnergyEndpointSnapshot> endpoints = snapshot.endpoints();
-        List<ReceiverState> receivers = collectReceivers(endpoints);
+        ObjectList<TowerEnergyEndpointSnapshot> endpoints = snapshot.endpoints();
+        ObjectList<ReceiverState> receivers = collectReceivers(endpoints);
         BigInteger receiverCapacity = sumReceiverCapacity(receivers);
         BigInteger receiverStored = sumReceiverStored(receivers);
         BigInteger targetSupply = sumTargetSupply(endpoints);
         BigInteger desiredReceiverStored = receiverStored.add(targetSupply).min(receiverCapacity);
         Object2LongMap<TowerEnergyEndpointId> targets = apportionReceiverTargets(receivers, desiredReceiverStored);
 
-        List<TowerEnergySinkAllocation> sinks = collectSinkAllocations(endpoints, targets);
+        ObjectArrayList<TowerEnergySinkAllocation> sinks = collectSinkAllocations(endpoints, targets);
         BigInteger amountNeeded = sumSinkAmounts(sinks);
         BigInteger balancedSourceAvailable = sumBalancedSourceAvailability(endpoints, targets);
         BigInteger bufferInput = balancedSourceAvailable.subtract(amountNeeded).max(ZERO)
@@ -113,7 +114,7 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
             return TowerEnergyEqualizationPlan.empty();
         }
 
-        List<TowerEnergySourceAllocation> sources = new ObjectArrayList<>();
+        ObjectArrayList<TowerEnergySourceAllocation> sources = new ObjectArrayList<>();
         BigInteger unavailable = collectSourceOnlyAllocations(endpoints, amountNeeded, sources);
         unavailable = collectBidirectionalAllocations(endpoints, targets, unavailable, sources);
         unavailable = collectBufferAllocations(endpoints, unavailable, sources);
@@ -242,7 +243,7 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
                                                    long remainingEnergy,
                                                    long activeCapacity,
                                                    Object2LongMap<TowerEnergyEndpointId> targets) {
-        List<LongFractionalShare> shares = new ObjectArrayList<>();
+        ObjectArrayList<LongFractionalShare> shares = new ObjectArrayList<>();
         long floorTotal = 0;
         for (ReceiverState receiver : active) {
             long numerator = Math.multiplyExact(remainingEnergy, receiver.endpoint().capacity());
@@ -263,7 +264,10 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
         for (int index = 0; index < leftoverCount; index++) {
             ReceiverState receiver = shares.get(index).receiver();
             TowerEnergyEndpointId endpoint = receiver.endpoint().endpoint();
-            targets.compute(endpoint, (ignored, target) -> incrementTarget(target));
+            if (!targets.containsKey(endpoint)) {
+                throw new IllegalStateException("Missing active receiver target during largest-remainder apportionment");
+            }
+            targets.put(endpoint, Math.addExact(targets.getLong(endpoint), 1));
         }
     }
 
@@ -274,9 +278,9 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
      * @param targets   calculated receiver target contents
      * @return stable-order sink allocations
      */
-    private static List<TowerEnergySinkAllocation> collectSinkAllocationsLong(
-                                                                              List<TowerEnergyEndpointSnapshot> endpoints, Object2LongMap<TowerEnergyEndpointId> targets) {
-        List<TowerEnergySinkAllocation> sinks = new ObjectArrayList<>();
+    private static ObjectArrayList<TowerEnergySinkAllocation> collectSinkAllocationsLong(
+                                                                                         List<TowerEnergyEndpointSnapshot> endpoints, Object2LongMap<TowerEnergyEndpointId> targets) {
+        ObjectArrayList<TowerEnergySinkAllocation> sinks = new ObjectArrayList<>();
         for (TowerEnergyEndpointSnapshot endpoint : endpoints) {
             long target = targets.getLong(endpoint.endpoint());
             if (targets.containsKey(endpoint.endpoint()) && target > endpoint.stored()) {
@@ -472,8 +476,8 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
      * @param endpoints complete ordered snapshot
      * @return ordered receiver calculation states
      */
-    private static List<ReceiverState> collectReceivers(List<TowerEnergyEndpointSnapshot> endpoints) {
-        List<ReceiverState> receivers = new ObjectArrayList<>();
+    private static ObjectArrayList<ReceiverState> collectReceivers(ObjectList<TowerEnergyEndpointSnapshot> endpoints) {
+        ObjectArrayList<ReceiverState> receivers = new ObjectArrayList<>();
         for (int index = 0; index < endpoints.size(); index++) {
             TowerEnergyEndpointSnapshot endpoint = endpoints.get(index);
             if (endpoint.role() == TowerEnergyEndpointRole.BALANCED && endpoint.direction().allowsReceive()) {
@@ -619,21 +623,11 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
         for (int index = 0; index < leftover; index++) {
             ReceiverState receiver = shares.get(index).receiver();
             TowerEnergyEndpointId endpoint = receiver.endpoint().endpoint();
-            targets.compute(endpoint, (ignored, target) -> incrementTarget(target));
+            if (!targets.containsKey(endpoint)) {
+                throw new IllegalStateException("Missing active receiver target during largest-remainder apportionment");
+            }
+            targets.put(endpoint, Math.addExact(targets.getLong(endpoint), 1));
         }
-    }
-
-    /**
-     * Increments a target that was already installed for an active receiver.
-     *
-     * @param target current target value, never null for a valid water-filling map
-     * @return incremented target value
-     */
-    private static long incrementTarget(Long target) {
-        if (target == null) {
-            throw new IllegalStateException("Missing active receiver target during largest-remainder apportionment");
-        }
-        return Math.addExact(target, 1);
     }
 
     /**
@@ -643,9 +637,9 @@ public final class ExactWaterFillingTowerEnergyEqualizer implements TowerEnergyE
      * @param targets   calculated receiver target contents
      * @return stable-order sink allocations
      */
-    private static List<TowerEnergySinkAllocation> collectSinkAllocations(
-                                                                          List<TowerEnergyEndpointSnapshot> endpoints, Object2LongMap<TowerEnergyEndpointId> targets) {
-        List<TowerEnergySinkAllocation> sinks = new ObjectArrayList<>();
+    private static ObjectArrayList<TowerEnergySinkAllocation> collectSinkAllocations(
+                                                                                     List<TowerEnergyEndpointSnapshot> endpoints, Object2LongMap<TowerEnergyEndpointId> targets) {
+        ObjectArrayList<TowerEnergySinkAllocation> sinks = new ObjectArrayList<>();
         for (TowerEnergyEndpointSnapshot endpoint : endpoints) {
             long target = targets.getLong(endpoint.endpoint());
             if (targets.containsKey(endpoint.endpoint()) && target > endpoint.stored()) {

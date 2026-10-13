@@ -19,6 +19,9 @@ public final class WeaponDamage {
     public static boolean hurt(LivingEntity target, DamageSource source, float amount) {
         if (amount <= 0 || !target.isAlive()) return false;
         target.invulnerableTime = 0;
+        target.hurtTime = 0;
+        target.hurtDuration = 0;
+        target.lastHurt = 0.0F;
         return target.hurt(source, amount);
     }
 }

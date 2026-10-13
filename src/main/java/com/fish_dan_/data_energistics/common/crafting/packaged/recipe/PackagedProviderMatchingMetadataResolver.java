@@ -14,6 +14,8 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
+import java.util.EnumSet;
+
 /** Resolves the upload declarations exposed by packaged machines adjacent to one live provider. */
 public final class PackagedProviderMatchingMetadataResolver {
 
@@ -34,7 +36,7 @@ public final class PackagedProviderMatchingMetadataResolver {
                                                           BlockPos providerPosition,
                                                           ObjectList<Direction> targetSides,
                                                           @Nullable ResourceLocation recipeCategoryId) {
-        ObjectSet<Direction> visitedSides = new ObjectLinkedOpenHashSet<>();
+        EnumSet<Direction> visitedSides = EnumSet.noneOf(Direction.class);
         ObjectSet<ResourceLocation> recipeCategoryIds = new ObjectLinkedOpenHashSet<>();
         ObjectSet<ResourceLocation> workstationItemIds = new ObjectLinkedOpenHashSet<>();
         for (Direction side : targetSides) {

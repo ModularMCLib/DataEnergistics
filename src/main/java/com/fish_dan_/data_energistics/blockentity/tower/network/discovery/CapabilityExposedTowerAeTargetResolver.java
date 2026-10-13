@@ -23,14 +23,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Capability-gated AE target resolver. Multipart fallback nodes come from a typed Mixin bridge on the capability host;
@@ -71,13 +72,13 @@ public final class CapabilityExposedTowerAeTargetResolver {
                                                  BlockPos anchor,
                                                  IGrid primaryGrid,
                                                  TowerTargetDiscoveryMode mode,
-                                                 Map<IGrid, List<RawDevice>> rawDevicesByGrid) {
+                                                 Reference2ReferenceMap<IGrid, ObjectList<RawDevice>> rawDevicesByGrid) {
         if (!level.isLoaded(anchor)) {
-            return new TowerTargetResolution(List.of(), List.of());
+            return new TowerTargetResolution(ObjectList.of(), ObjectList.of());
         }
 
-        List<IGridNode> exposedNodes = DataDistributionTowerBlockEntity.getConnectableNodes(level, anchor);
-        Set<IGrid> seenGrids = new ReferenceOpenHashSet<>();
+        ObjectList<IGridNode> exposedNodes = DataDistributionTowerBlockEntity.getConnectableNodes(level, anchor);
+        ReferenceSet<IGrid> seenGrids = new ReferenceOpenHashSet<>();
         Object2IntMap<RawDeviceIdentity> occurrences = new Object2IntOpenHashMap<>();
         ObjectArrayList<TowerResolvedGrid> resolvedGrids = new ObjectArrayList<>();
         for (IGridNode exposedNode : exposedNodes) {
@@ -88,7 +89,7 @@ public final class CapabilityExposedTowerAeTargetResolver {
             if (!seenGrids.add(targetGrid)) {
                 continue;
             }
-            List<TowerResolvedDevice> devices = resolveDevices(targetGrid, occurrences, rawDevicesByGrid);
+            ObjectList<TowerResolvedDevice> devices = resolveDevices(targetGrid, occurrences, rawDevicesByGrid);
             resolvedGrids.add(new TowerResolvedGrid(
                     targetGrid,
                     devices,
@@ -97,11 +98,11 @@ public final class CapabilityExposedTowerAeTargetResolver {
         return new TowerTargetResolution(exposedNodes, resolvedGrids);
     }
 
-    private static List<TowerResolvedDevice> resolveDevices(
-                                                            IGrid grid,
-                                                            Object2IntMap<RawDeviceIdentity> occurrences,
-                                                            Map<IGrid, List<RawDevice>> rawDevicesByGrid) {
-        List<RawDevice> rawDevices = rawDevicesByGrid.computeIfAbsent(
+    private static ObjectList<TowerResolvedDevice> resolveDevices(
+                                                                  IGrid grid,
+                                                                  Object2IntMap<RawDeviceIdentity> occurrences,
+                                                                  Reference2ReferenceMap<IGrid, ObjectList<RawDevice>> rawDevicesByGrid) {
+        ObjectList<RawDevice> rawDevices = rawDevicesByGrid.computeIfAbsent(
                 grid,
                 CapabilityExposedTowerAeTargetResolver::snapshotRawDevices);
         ObjectArrayList<TowerResolvedDevice> devices = new ObjectArrayList<>(rawDevices.size());
@@ -121,10 +122,10 @@ public final class CapabilityExposedTowerAeTargetResolver {
                     rawDevice.registrationOrder(),
                     rawDevice.node().hasFlag(GridFlags.REQUIRE_CHANNEL)));
         }
-        return List.copyOf(devices);
+        return new ObjectImmutableList<>(devices);
     }
 
-    private static List<RawDevice> snapshotRawDevices(IGrid grid) {
+    private static ObjectList<RawDevice> snapshotRawDevices(IGrid grid) {
         TowerNetworkDomain domain = grid.getService(TowerNetworkDomain.class);
         ObjectArrayList<RawDevice> rawDevices = new ObjectArrayList<>();
         for (IGridNode node : domain.localNodes()) {
@@ -136,13 +137,13 @@ public final class CapabilityExposedTowerAeTargetResolver {
                 .thenComparingInt(RawDevice::side)
                 .thenComparing(RawDevice::nodeType)
                 .thenComparingLong(RawDevice::registrationOrder));
-        return List.copyOf(rawDevices);
+        return new ObjectImmutableList<>(rawDevices);
     }
 
     private static TowerTargetGridFailure validateGrid(IGrid targetGrid,
                                                        IGrid primaryGrid,
                                                        TowerTargetDiscoveryMode mode,
-                                                       List<TowerResolvedDevice> devices) {
+                                                       ObjectList<TowerResolvedDevice> devices) {
         if (targetGrid == primaryGrid) {
             return TowerTargetGridFailure.PRIMARY_GRID;
         }
@@ -213,7 +214,7 @@ public final class CapabilityExposedTowerAeTargetResolver {
 
     private static final class ResolutionRoundImpl implements ResolutionRound {
 
-        private final Map<IGrid, List<RawDevice>> rawDevicesByGrid = new Reference2ReferenceOpenHashMap<>();
+        private final Reference2ReferenceMap<IGrid, ObjectList<RawDevice>> rawDevicesByGrid = new Reference2ReferenceOpenHashMap<>();
 
         @Override
         public TowerTargetResolution resolve(Level level,

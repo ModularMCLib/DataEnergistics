@@ -4,7 +4,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.networking.pathing.ControllerState;
 
-import net.minecraft.core.BlockPos;
+import it.unimi.dsi.fastutil.longs.LongCollection;
 
 /**
  * Calculates the total channel budget available to one tower network domain.
@@ -33,5 +33,5 @@ public interface TowerChannelCapacity {
      * @param controllerPositions controller block positions belonging to the same grid
      * @return total channel capacity
      */
-    int calculate(ControllerState controllerState, ChannelMode channelMode, Iterable<BlockPos> controllerPositions);
+    int calculate(ControllerState controllerState, ChannelMode channelMode, LongCollection controllerPositions);
 }

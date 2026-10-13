@@ -8,8 +8,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.UUID;
 
 /** Asset-free CLOSED evidence that survives physical-core route replacement. No timeout discards this history. */
@@ -18,7 +18,7 @@ public final class ReusableCustodyArchive {
     private final Object2ObjectLinkedOpenHashMap<UUID, Entry> entries = new Object2ObjectLinkedOpenHashMap<>();
     private final ReusableCustodyIndex index = new ReusableCustodyIndex();
 
-    public void retain(List<Entry> acknowledged) {
+    public void retain(ObjectList<Entry> acknowledged) {
         for (Entry entry : acknowledged) {
             if (!entry.settlementAcknowledged()) {
                 throw new IllegalArgumentException("A custody archive cannot replace live session assets");

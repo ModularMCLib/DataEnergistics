@@ -43,11 +43,11 @@ public final class ExampleProviderIdentitySource implements PatternProviderIdent
 
 ## Counted adapter
 
-最小 adapter 只需实现 `prepareBatch`。默认 `captureCapacity` 会发布一个 aggregate provider target，数字容量未知；默认 `prepareBatchForTarget` 只接受这个 aggregate target。
+最小 adapter 需要实现 `prepareBatch` 和 `prepareBatchForTarget`。`captureCapacityFast` 是可选的容量观察；未提供独立路线时返回空集合，dispatcher 使用 provider 自身的普通单次提交路径。
 
 需要公开多个真实路线或机器容量时，覆盖：
 
-- `captureCapacity(pattern, prototype, requestedCount)`：只读捕获当前可用 target；
+- `captureCapacityFast(pattern, prototype, requestedCount)`：只读捕获当前可用 target；
 - `prepareBatchForTarget(..., target)`：为先前发布的准确 target 创建 admission。
 
 `CountedCraftingCapacity` 使用 `OptionalLong.empty()` 表示“无法证明安全上限”。已知 `0` 表示容量耗尽，不能当成 unknown。已知数值必须非负。

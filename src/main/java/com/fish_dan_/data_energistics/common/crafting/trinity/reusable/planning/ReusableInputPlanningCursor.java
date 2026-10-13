@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.ReusableInputPlanningExpansion.Reason;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.ReusableInputPlanningExpansion.Result;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.planning.ReusableInputPlanningExpansion.Stopped;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -22,10 +23,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.LongSupplier;
 
 /**
@@ -50,8 +51,8 @@ public final class ReusableInputPlanningCursor {
     }
 
     private final ReusableInputContext context;
-    private final List<AEItemKey> inventory;
-    private final List<List<TrinityBoundPatternInput>> recipeBindings;
+    private final ObjectList<AEItemKey> inventory;
+    private final ObjectList<ObjectList<TrinityBoundPatternInput>> recipeBindings;
     private final ReusableInputRules rules;
     private final int limit;
     private final TrinityPlanningControl control;
@@ -59,43 +60,43 @@ public final class ReusableInputPlanningCursor {
     private final IPatternDetails.IInput[] inputs;
     private final boolean nativeValidation;
     private final Object2ObjectAVLTreeMap<String, AEItemKey> sortedInventory = new Object2ObjectAVLTreeMap<>();
-    private final List<AEItemKey> orderedInventory = new ObjectArrayList<>();
-    private final List<ObjectLinkedOpenHashSet<GenericStack>> original = new ObjectArrayList<>();
-    private final List<Object2IntLinkedOpenHashMap<GenericStack>> ordinals = new ObjectArrayList<>();
-    private final List<List<GenericStack>> options = new ObjectArrayList<>();
-    private final ObjectArrayFIFOQueue<List<GenericStack>> pending = new ObjectArrayFIFOQueue<>();
-    private final ObjectLinkedOpenHashSet<List<GenericStack>> seen = new ObjectLinkedOpenHashSet<>();
-    private final List<List<TrinityBoundPatternInput>> bindings = new ObjectArrayList<>();
+    private final ObjectList<AEItemKey> orderedInventory = new ObjectArrayList<>();
+    private final ObjectList<ObjectLinkedOpenHashSet<GenericStack>> original = new ObjectArrayList<>();
+    private final ObjectList<Object2IntLinkedOpenHashMap<GenericStack>> ordinals = new ObjectArrayList<>();
+    private final ObjectList<ObjectList<GenericStack>> options = new ObjectArrayList<>();
+    private final ObjectArrayFIFOQueue<ObjectList<GenericStack>> pending = new ObjectArrayFIFOQueue<>();
+    private final ObjectLinkedOpenHashSet<ObjectList<GenericStack>> seen = new ObjectLinkedOpenHashSet<>();
+    private final ObjectList<ObjectList<TrinityBoundPatternInput>> bindings = new ObjectArrayList<>();
     private Phase phase = Phase.SORT_INVENTORY;
     private int inventoryIndex;
-    private Iterator<AEItemKey> sortedIterator = List.<AEItemKey>of().iterator();
+    private Iterator<AEItemKey> sortedIterator = ObjectList.<AEItemKey>of().iterator();
     private int slot;
     private int templateIndex;
     private int recipeBindingIndex;
     private GenericStack[] templates = new GenericStack[0];
-    private List<GenericStack> encodedOptions = List.of();
+    private ObjectList<GenericStack> encodedOptions = ObjectList.of();
     private int[] selected = new int[0];
-    private List<GenericStack> assignment = List.of();
-    private List<GenericStack> actual = List.of();
-    private List<TrinityBoundPatternInput> captured = new ObjectArrayList<>();
+    private ObjectList<GenericStack> assignment = ObjectList.of();
+    private ObjectList<GenericStack> actual = ObjectList.of();
+    private ObjectList<TrinityBoundPatternInput> captured = new ObjectArrayList<>();
     private boolean reusable;
     private boolean anyReusable;
     private @Nullable Result result;
 
-    public ReusableInputPlanningCursor(ReusableInputContext context, List<AEItemKey> inventory,
+    public ReusableInputPlanningCursor(ReusableInputContext context, ObjectList<AEItemKey> inventory,
                                        ReusableInputRules rules, int limit, TrinityPlanningControl control) {
-        this(context, inventory, rules, limit, control, List.of());
+        this(context, inventory, rules, limit, control, ObjectList.of());
     }
 
     /** Retains server-validated ordinary component variants while capturing reusable tool transitions. */
-    ReusableInputPlanningCursor(ReusableInputContext context, List<AEItemKey> inventory,
+    ReusableInputPlanningCursor(ReusableInputContext context, ObjectList<AEItemKey> inventory,
                                 ReusableInputRules rules, int limit, TrinityPlanningControl control,
-                                List<List<TrinityBoundPatternInput>> recipeBindings) {
+                                ObjectList<ObjectList<TrinityBoundPatternInput>> recipeBindings) {
         if (limit <= 0) {
             throw new IllegalArgumentException("Reusable input capture requires a positive binding limit");
         }
         this.context = context;
-        this.inventory = List.copyOf(inventory);
+        this.inventory = FastUtilCollections.immutableList(inventory);
         this.recipeBindings = recipeBindings;
         this.rules = rules;
         this.limit = limit;
@@ -179,8 +180,8 @@ public final class ReusableInputPlanningCursor {
 
     private void beginSlot() {
         if (slot == inputs.length) {
-            if (options.stream().anyMatch(List::isEmpty)) {
-                result = new Captured(List.of(), false);
+            if (options.stream().anyMatch(ObjectList::isEmpty)) {
+                result = new Captured(ObjectList.of(), false);
             } else {
                 selected = new int[options.size()];
                 phase = Phase.SEED_CARTESIAN;
@@ -212,7 +213,7 @@ public final class ReusableInputPlanningCursor {
 
     private void captureRecipeOption() {
         if (recipeBindingIndex == recipeBindings.size()) {
-            encodedOptions = List.copyOf(original.get(slot));
+            encodedOptions = FastUtilCollections.immutableList(original.get(slot));
             templateIndex = 0;
             inventoryIndex = 0;
             phase = Phase.INVENTORY_OPTIONS;
@@ -227,7 +228,7 @@ public final class ReusableInputPlanningCursor {
 
     private void captureInventoryOption() {
         if (templateIndex == encodedOptions.size()) {
-            options.add(List.copyOf(ordinals.get(slot).keySet()));
+            options.add(FastUtilCollections.immutableList(ordinals.get(slot).keySet()));
             slot++;
             phase = Phase.BEGIN_SLOT;
             return;
@@ -256,7 +257,7 @@ public final class ReusableInputPlanningCursor {
     }
 
     private void seedCartesian() {
-        List<GenericStack> seed = new ObjectArrayList<>(options.size());
+        ObjectList<GenericStack> seed = new ObjectArrayList<>(options.size());
         for (int index = 0; index < selected.length; index++) {
             seed.add(options.get(index).get(selected[index]));
         }
@@ -300,7 +301,7 @@ public final class ReusableInputPlanningCursor {
                 return;
             }
             anyReusable |= reusable;
-            bindings.add(List.copyOf(captured));
+            bindings.add(FastUtilCollections.immutableList(captured));
             slot = 0;
             templateIndex = 0;
             phase = Phase.MATERIAL_NEIGHBORS;
@@ -344,7 +345,7 @@ public final class ReusableInputPlanningCursor {
             slot++;
             templateIndex = 0;
         } else {
-            List<GenericStack> next = new ObjectArrayList<>(assignment);
+            ObjectList<GenericStack> next = new ObjectArrayList<>(assignment);
             next.set(slot, options.get(slot).get(templateIndex++));
             enqueue(next);
         }
@@ -359,14 +360,14 @@ public final class ReusableInputPlanningCursor {
         if (!binding.lifetimeBudget() && binding.reusableRule() != null && binding.remainingKey() != null &&
                 !binding.remainingKey().equals(binding.template().what()) &&
                 (nativeValidation || inputs[binding.slotIndex()].isValid(binding.remainingKey(), context.level()))) {
-            List<GenericStack> next = new ObjectArrayList<>(assignment);
+            ObjectList<GenericStack> next = new ObjectArrayList<>(assignment);
             next.set(binding.slotIndex(), new GenericStack(binding.remainingKey(), binding.template().amount()));
             enqueue(next);
         }
     }
 
-    private void enqueue(List<GenericStack> templates) {
-        List<GenericStack> immutable = List.copyOf(templates);
+    private void enqueue(ObjectList<GenericStack> templates) {
+        ObjectList<GenericStack> immutable = FastUtilCollections.immutableList(templates);
         if (!seen.contains(immutable)) {
             if (seen.size() >= limit) {
                 stop(Reason.BINDING_LIMIT);

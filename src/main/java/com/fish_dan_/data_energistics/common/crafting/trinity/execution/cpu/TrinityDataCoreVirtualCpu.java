@@ -29,10 +29,10 @@ import appeng.me.service.CraftingService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -187,7 +187,7 @@ public final class TrinityDataCoreVirtualCpu implements ICraftingCPU {
      *
      * @param waitingFor output set
      */
-    public void getAllWaitingFor(Set<AEKey> waitingFor) {
+    public void getAllWaitingFor(ObjectSet<AEKey> waitingFor) {
         this.logic.getAllWaitingFor(waitingFor);
     }
 
@@ -230,7 +230,7 @@ public final class TrinityDataCoreVirtualCpu implements ICraftingCPU {
      *
      * @return independent key snapshot, captured on the server thread
      */
-    public Set<AEKey> getStatusKeys() {
+    public ObjectSet<AEKey> getStatusKeys() {
         return this.logic.getStatusKeys();
     }
 

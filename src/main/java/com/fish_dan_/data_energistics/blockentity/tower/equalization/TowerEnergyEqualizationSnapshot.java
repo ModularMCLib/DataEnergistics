@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.blockentity.tower.equalization;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Ordered, immutable collection of endpoint states captured before an equalization pass.
@@ -15,7 +15,7 @@ import java.util.Set;
  *
  * @param endpoints endpoint states in stable caller-defined order
  */
-public record TowerEnergyEqualizationSnapshot(List<TowerEnergyEndpointSnapshot> endpoints) {
+public record TowerEnergyEqualizationSnapshot(ObjectList<TowerEnergyEndpointSnapshot> endpoints) {
 
     /**
      * Defensively copies the endpoint order and rejects ambiguous duplicate identities.
@@ -23,8 +23,8 @@ public record TowerEnergyEqualizationSnapshot(List<TowerEnergyEndpointSnapshot> 
      * @param endpoints endpoint states in stable caller-defined order
      */
     public TowerEnergyEqualizationSnapshot {
-        endpoints = List.copyOf(endpoints);
-        Set<TowerEnergyEndpointId> identities = new ObjectOpenHashSet<>();
+        endpoints = new ObjectImmutableList<>(endpoints);
+        ObjectSet<TowerEnergyEndpointId> identities = new ObjectOpenHashSet<>();
         for (TowerEnergyEndpointSnapshot endpoint : endpoints) {
             if (!identities.add(endpoint.endpoint())) {
                 throw new IllegalArgumentException("Endpoint snapshot contains a duplicate identity: " + endpoint.endpoint());

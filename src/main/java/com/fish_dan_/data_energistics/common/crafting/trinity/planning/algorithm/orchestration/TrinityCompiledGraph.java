@@ -11,9 +11,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-
-import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable revision-independent structure reused while quantities and relevant inventory change.
@@ -33,15 +32,15 @@ import java.util.Map;
  */
 public record TrinityCompiledGraph(
                                    AEKey target,
-                                   List<TrinityPatternIdentity> patternIdentities,
+                                   ObjectList<TrinityPatternIdentity> patternIdentities,
                                    int expandedVariantCount,
-                                   List<TrinityPatternVariant> variants,
+                                   ObjectList<TrinityPatternVariant> variants,
                                    TrinityCraftingTopology topology,
                                    int targetComponent,
                                    boolean reachableCycle,
-                                   List<AEKey> relevantInventoryKeys,
+                                   ObjectList<AEKey> relevantInventoryKeys,
                                    TrinitySameItemPolicy sameItemPolicy,
-                                   Map<AEKey, TrinityAcyclicRouteFamily> routeFamilies,
+                                   Object2ObjectMap<AEKey, TrinityAcyclicRouteFamily> routeFamilies,
                                    TrinityCycleUnitProofIndex cycleUnitProofs,
                                    Int2ObjectMap<TrinityMipCoefficientTemplate> cycleMipTemplates) {
 
@@ -49,7 +48,7 @@ public record TrinityCompiledGraph(
      * Attaches semantic proofs assembled through the shared per-Grid cache without changing graph topology.
      */
     public TrinityCompiledGraph withStructuralProofs(
-                                                     Map<AEKey, TrinityAcyclicRouteFamily> newRouteFamilies,
+                                                     Object2ObjectMap<AEKey, TrinityAcyclicRouteFamily> newRouteFamilies,
                                                      TrinityCycleUnitProofIndex newCycleUnitProofs,
                                                      Int2ObjectMap<TrinityMipCoefficientTemplate> newCycleMipTemplates) {
         return new TrinityCompiledGraph(

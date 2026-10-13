@@ -18,8 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Dispatch extension for one adaptive pattern-provider registration.
  *
@@ -57,15 +55,6 @@ public interface AdaptivePatternProviderDispatch {
     /** Returns this provider registration's connector routes in stable priority order. */
     default ObjectList<AdaptiveProviderConnectorRoute> connectorRoutes() {
         return ObjectList.of();
-    }
-
-    /**
-     * Identifies this route's legacy root-tag payload, or {@code null} when it has none.
-     * Registrations sharing an old payload must return the same key. Migration gives
-     * the selected registration precedence and restores each legacy payload once.
-     */
-    default @Nullable String legacyStateKey() {
-        return null;
     }
 
     /**
@@ -155,25 +144,14 @@ public interface AdaptivePatternProviderDispatch {
                             CompoundTag tag,
                             HolderLookup.Provider registries) {}
 
-    /** Restores owned state. Validate serialized inputs here; legacy migration passes the old root tag. */
+    /** Restores owned state from this registration's isolated current-format tag. */
     default void readState(
                            AdaptivePatternProviderDispatchTarget target,
                            CompoundTag tag,
                            HolderLookup.Provider registries) {}
 
-    /**
-     * Adds registration-owned buffered values to a provider's drops.
-     *
-     * @deprecated scheduled for removal in plan 340; use
-     *             {@link #addDropsFast(AdaptivePatternProviderDispatchTarget, ObjectList)}
-     */
-    @Deprecated(forRemoval = true)
-    default void addDrops(AdaptivePatternProviderDispatchTarget target, List<ItemStack> drops) {}
-
     /** Adds registration-owned buffered values through the FastUtil collection API. */
-    default void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {
-        addDrops(target, drops);
-    }
+    default void addDropsFast(AdaptivePatternProviderDispatchTarget target, ObjectList<ItemStack> drops) {}
 
     /** Clears registration-owned runtime state when the provider is emptied. */
     default void clearState(AdaptivePatternProviderDispatchTarget target) {}
@@ -213,20 +191,7 @@ public interface AdaptivePatternProviderDispatch {
         return 0.0D;
     }
 
-    /**
-     * Receives outputs produced by the reusable native-pattern route.
-     *
-     * @deprecated scheduled for removal in plan 340; use
-     *             {@link #acceptReusableOutputsFast(AdaptivePatternProviderDispatchTarget, ObjectList)}
-     */
-    @Deprecated(forRemoval = true)
-    default void acceptReusableOutputs(
-                                       AdaptivePatternProviderDispatchTarget target,
-                                       List<GenericStack> outputs) {}
-
     /** Receives outputs through the FastUtil collection API. */
     default void acceptReusableOutputsFast(
-                                           AdaptivePatternProviderDispatchTarget target, ObjectList<GenericStack> outputs) {
-        acceptReusableOutputs(target, (List<GenericStack>) outputs);
-    }
+                                           AdaptivePatternProviderDispatchTarget target, ObjectList<GenericStack> outputs) {}
 }

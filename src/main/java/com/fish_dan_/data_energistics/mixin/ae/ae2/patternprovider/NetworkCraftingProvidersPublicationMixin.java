@@ -9,11 +9,10 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.me.service.helpers.NetworkCraftingProviders;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-
-import java.util.List;
 
 /**
  * Exposes an identity-preserving Trinity publication index alongside AE2's crafting-provider registry.
@@ -45,12 +44,12 @@ public abstract class NetworkCraftingProvidersPublicationMixin
     }
 
     @Override
-    public List<CraftingProviderId> providerIdsFor(IPatternDetails patternIdentity) {
+    public ObjectList<CraftingProviderId> providerIdsFor(IPatternDetails patternIdentity) {
         return this.dataEnergistics$publicationIndex.providerIdsFor(patternIdentity);
     }
 
     @Override
-    public List<CraftingProviderId> providerIds() {
+    public ObjectList<CraftingProviderId> providerIds() {
         return this.dataEnergistics$publicationIndex.providerIds();
     }
 
@@ -63,7 +62,7 @@ public abstract class NetworkCraftingProvidersPublicationMixin
     @Override
     public CraftingProviderId dataEnergistics$publishProvider(
                                                               ICraftingProvider provider,
-                                                              List<IPatternDetails> patterns) {
+                                                              ObjectList<IPatternDetails> patterns) {
         return this.dataEnergistics$publicationIndex.publish(provider, patterns);
     }
 

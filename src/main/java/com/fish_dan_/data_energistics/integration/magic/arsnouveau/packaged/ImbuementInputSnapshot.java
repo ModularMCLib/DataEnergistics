@@ -4,8 +4,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 
 import com.hollingsworth.arsnouveau.common.block.tile.ImbuementTile;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /**
  * Ars binds RecipeInput to its tile class. This detached view is never registered or ticked in a world;
@@ -13,16 +16,20 @@ import java.util.List;
  */
 final class ImbuementInputSnapshot extends ImbuementTile {
 
-    private final List<ItemStack> pedestalInputs;
-    private final List<BlockPos> pedestalPositions;
+    private final ObjectList<ItemStack> pedestalInputs;
+    private final LongList pedestalPositions;
     private final int storedSource;
     private final int sourceCapacity;
 
-    ImbuementInputSnapshot(ImbuementTile original, ItemStack input, List<ItemStack> pedestalInputs) {
+    ImbuementInputSnapshot(ImbuementTile original, ItemStack input, ObjectList<ItemStack> pedestalInputs) {
         super(original.getBlockPos(), original.getBlockState());
         this.stack = input.copy();
-        this.pedestalInputs = pedestalInputs.stream().map(ItemStack::copy).toList();
-        this.pedestalPositions = List.copyOf(original.getNearbyPedestals());
+        ObjectArrayList<ItemStack> copiedInputs = new ObjectArrayList<>(pedestalInputs.size());
+        for (ItemStack pedestalInput : pedestalInputs) copiedInputs.add(pedestalInput.copy());
+        this.pedestalInputs = ObjectLists.unmodifiable(copiedInputs);
+        LongArrayList pedestalPositions = new LongArrayList(original.getNearbyPedestals().size());
+        for (BlockPos position : original.getNearbyPedestals()) pedestalPositions.add(position.asLong());
+        this.pedestalPositions = pedestalPositions;
         this.storedSource = original.getSource();
         this.sourceCapacity = original.getMaxSource();
         setLevel(original.getLevel());
@@ -39,13 +46,17 @@ final class ImbuementInputSnapshot extends ImbuementTile {
     }
 
     @Override
-    public List<ItemStack> getPedestalItems() {
-        return this.pedestalInputs.stream().map(ItemStack::copy).toList();
+    public ObjectList<ItemStack> getPedestalItems() {
+        ObjectArrayList<ItemStack> copiedInputs = new ObjectArrayList<>(this.pedestalInputs.size());
+        for (ItemStack pedestalInput : this.pedestalInputs) copiedInputs.add(pedestalInput.copy());
+        return copiedInputs;
     }
 
     @Override
-    public List<BlockPos> getNearbyPedestals() {
-        return this.pedestalPositions;
+    public ObjectList<BlockPos> getNearbyPedestals() {
+        ObjectArrayList<BlockPos> positions = new ObjectArrayList<>(this.pedestalPositions.size());
+        for (long packedPosition : this.pedestalPositions) positions.add(BlockPos.of(packedPosition));
+        return ObjectLists.unmodifiable(positions);
     }
 
     @Override

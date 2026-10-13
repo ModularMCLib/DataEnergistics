@@ -17,7 +17,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Set;
 
 /**
  * Indexes the output amounts awaited by Trinity CPU workers so network return paths do not scan every worker.
@@ -45,7 +44,7 @@ final class TrinityCpuWaitingIndex {
     /**
      * Reverse membership makes worker removal proportional to that worker's requested key count.
      */
-    private final Int2ObjectOpenHashMap<Set<AEKey>> keysByWorker = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectOpenHashMap<ObjectSet<AEKey>> keysByWorker = new Int2ObjectOpenHashMap<>();
 
     /**
      * Replaces one worker's requested amount for a key.
@@ -93,7 +92,7 @@ final class TrinityCpuWaitingIndex {
      * @param workerNumber stable positive worker number
      */
     public void removeWorker(int workerNumber) {
-        Set<AEKey> workerKeys = this.keysByWorker.remove(workerNumber);
+        ObjectSet<AEKey> workerKeys = this.keysByWorker.remove(workerNumber);
         if (workerKeys == null) {
             return;
         }
@@ -137,7 +136,7 @@ final class TrinityCpuWaitingIndex {
      *
      * @param destination mutable destination set
      */
-    public void addWaitingKeys(Set<AEKey> destination) {
+    public void addWaitingKeys(ObjectSet<AEKey> destination) {
         destination.addAll(this.entries.keySet());
     }
 
@@ -189,7 +188,7 @@ final class TrinityCpuWaitingIndex {
             return;
         }
         entry.exactTotal = entry.exactTotal.subtract(removedAmount);
-        Set<AEKey> workerKeys = this.keysByWorker.get(workerNumber);
+        ObjectSet<AEKey> workerKeys = this.keysByWorker.get(workerNumber);
         workerKeys.remove(what);
         if (workerKeys.isEmpty()) {
             this.keysByWorker.remove(workerNumber);

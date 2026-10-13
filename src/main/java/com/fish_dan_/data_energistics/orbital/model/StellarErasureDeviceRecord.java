@@ -5,12 +5,13 @@ import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLocation;
 import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointRecord;
 import com.fish_dan_.data_energistics.orbital.reserve.OrbitalEnergyReserve;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -24,8 +25,8 @@ import java.util.UUID;
 public record StellarErasureDeviceRecord(
                                          UUID weaponId,
                                          UUID ownerId,
-                                         Map<UUID, OrbitalAccessRole> delegatedRoles,
-                                         Map<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints,
+                                         Object2ObjectMap<UUID, OrbitalAccessRole> delegatedRoles,
+                                         Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> endpoints,
                                          OrbitalEnergyReserve reserve,
                                          StellarErasureDeviceLifecycle lifecycle,
                                          @Nullable OrbitalEndpointLocation primaryAnchor,
@@ -50,12 +51,12 @@ public record StellarErasureDeviceRecord(
 
     public StellarErasureDeviceRecord {
         customName = normalizeName(customName);
-        delegatedRoles = Map.copyOf(delegatedRoles);
-        endpoints = Map.copyOf(endpoints);
+        delegatedRoles = Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(delegatedRoles));
+        endpoints = Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(endpoints));
         if (delegatedRoles.containsKey(ownerId)) {
             throw new IllegalArgumentException("The owner must not also have a delegated role");
         }
-        for (Map.Entry<OrbitalEndpointLocation, OrbitalEndpointRecord> entry : endpoints.entrySet()) {
+        for (Object2ObjectMap.Entry<OrbitalEndpointLocation, OrbitalEndpointRecord> entry : endpoints.object2ObjectEntrySet()) {
             if (!entry.getKey().equals(entry.getValue().location())) {
                 throw new IllegalArgumentException("Endpoint map key must match its record location");
             }
@@ -75,8 +76,8 @@ public record StellarErasureDeviceRecord(
         return new StellarErasureDeviceRecord(
                 weaponId,
                 ownerId,
-                Map.of(),
-                Map.of(),
+                new Object2ObjectOpenHashMap<>(),
+                new Object2ObjectOpenHashMap<>(),
                 OrbitalEnergyReserve.empty(),
                 StellarErasureDeviceLifecycle.dormant(),
                 null,
@@ -93,7 +94,7 @@ public record StellarErasureDeviceRecord(
     /**
      * Freezes the players protected from damage by an attack confirmed from this record.
      */
-    public Set<UUID> damageExemptionSnapshot() {
+    public ObjectSet<UUID> damageExemptionSnapshot() {
         return OrbitalAccessPolicy.damageExemptionSnapshot(this.ownerId, this.delegatedRoles);
     }
 
@@ -108,7 +109,7 @@ public record StellarErasureDeviceRecord(
             return this;
         }
 
-        Map<UUID, OrbitalAccessRole> updatedRoles = new Object2ObjectOpenHashMap<>(this.delegatedRoles);
+        Object2ObjectMap<UUID, OrbitalAccessRole> updatedRoles = new Object2ObjectOpenHashMap<>(this.delegatedRoles);
         updatedRoles.put(playerId, role);
         return new StellarErasureDeviceRecord(
                 this.weaponId,
@@ -132,7 +133,7 @@ public record StellarErasureDeviceRecord(
             return this;
         }
 
-        Map<UUID, OrbitalAccessRole> updatedRoles = new Object2ObjectOpenHashMap<>(this.delegatedRoles);
+        Object2ObjectMap<UUID, OrbitalAccessRole> updatedRoles = new Object2ObjectOpenHashMap<>(this.delegatedRoles);
         updatedRoles.remove(playerId);
         return new StellarErasureDeviceRecord(
                 this.weaponId,
@@ -168,7 +169,7 @@ public record StellarErasureDeviceRecord(
             return this;
         }
 
-        Map<OrbitalEndpointLocation, OrbitalEndpointRecord> updatedEndpoints = new Object2ObjectOpenHashMap<>(this.endpoints);
+        Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> updatedEndpoints = new Object2ObjectOpenHashMap<>(this.endpoints);
         updatedEndpoints.put(endpoint.location(), endpoint);
         return new StellarErasureDeviceRecord(
                 this.weaponId,
@@ -189,7 +190,7 @@ public record StellarErasureDeviceRecord(
             return this;
         }
 
-        Map<OrbitalEndpointLocation, OrbitalEndpointRecord> updatedEndpoints = new Object2ObjectOpenHashMap<>(this.endpoints);
+        Object2ObjectMap<OrbitalEndpointLocation, OrbitalEndpointRecord> updatedEndpoints = new Object2ObjectOpenHashMap<>(this.endpoints);
         updatedEndpoints.remove(location);
         OrbitalEndpointLocation updatedAnchor = location.equals(this.primaryAnchor) ? null : this.primaryAnchor;
         return new StellarErasureDeviceRecord(

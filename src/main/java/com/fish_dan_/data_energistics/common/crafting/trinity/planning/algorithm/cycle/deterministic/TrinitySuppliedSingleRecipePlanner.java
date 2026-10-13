@@ -3,22 +3,22 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.TrinityPlanningControl;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.TrinityCycleDemand;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.support.TrinityDeterministicDiagnostics;
-import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.deterministic.support.TrinityDeterministicFiringMath;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.seed.TrinityCycleSeedRequirement;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.opportunity.TrinityPlanningAttempt;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityDeterministicRepeatScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
+import com.fish_dan_.data_energistics.util.AmountMath;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Exact affine execution for one recipe whose feedback ingredients have proven external supply. A partial return
@@ -34,8 +34,8 @@ final class TrinitySuppliedSingleRecipePlanner {
     static TrinityPlanningAttempt<TrinityDeterministicComponentPlan> plan(
                                                                           TrinityStronglyConnectedComponent component,
                                                                           TrinityCycleDemand demand,
-                                                                          Map<AEKey, BigInteger> available,
-                                                                          Set<AEKey> producibleInputs,
+                                                                          Object2ObjectMap<AEKey, BigInteger> available,
+                                                                          ObjectSet<AEKey> producibleInputs,
                                                                           int maxStates,
                                                                           TrinityPlanningControl control) {
         if (component.cycleVariants().size() != 1 || !producibleInputs.containsAll(component.keys())) {
@@ -48,7 +48,7 @@ final class TrinitySuppliedSingleRecipePlanner {
             if (gain.signum() <= 0) {
                 return TrinityDeterministicDiagnostics.notApplicable();
             }
-            count = count.max(TrinityDeterministicFiringMath.ceilDivide(bound.getValue(), gain));
+            count = count.max(AmountMath.ceilDivideNonNegative(bound.getValue(), gain));
         }
         for (var bound : demand.finalBalanceLowerBounds().entrySet()) {
             AEKey key = bound.getKey();
@@ -61,13 +61,13 @@ final class TrinitySuppliedSingleRecipePlanner {
                 if (gain.signum() <= 0) {
                     return TrinityDeterministicDiagnostics.notApplicable();
                 }
-                count = count.max(TrinityDeterministicFiringMath.ceilDivide(missing, gain));
+                count = count.max(AmountMath.ceilDivideNonNegative(missing, gain));
             }
         }
 
         BigInteger repetitions = count;
-        List<TrinityVariantFiring> unit = List.of(new TrinityVariantFiring(variant, BigInteger.ONE));
-        Map<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.repeatedMinimumInputs(unit, repetitions);
+        ObjectList<TrinityVariantFiring> unit = ObjectList.of(new TrinityVariantFiring(variant, BigInteger.ONE));
+        Object2ObjectMap<AEKey, BigInteger> minimumInputs = TrinityCycleSeedRequirement.repeatedMinimumInputs(unit, repetitions);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         variant.netChange().forEach((key, amount) -> net.put(key, amount.multiply(repetitions)));
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initial = new Object2ObjectLinkedOpenHashMap<>(minimumInputs);

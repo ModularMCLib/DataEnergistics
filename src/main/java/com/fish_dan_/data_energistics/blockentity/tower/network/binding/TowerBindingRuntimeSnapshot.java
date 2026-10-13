@@ -3,7 +3,8 @@ package com.fish_dan_.data_energistics.blockentity.tower.network.binding;
 import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerVirtualDeviceSnapshot;
 import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerVirtualDeviceState;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * Immutable aggregate status for one persisted binding.
@@ -24,7 +25,7 @@ public record TowerBindingRuntimeSnapshot(TowerBinding binding,
                                           String failure,
                                           long requestedChannels,
                                           long grantedChannels,
-                                          List<TowerVirtualDeviceSnapshot> devices,
+                                          ObjectList<TowerVirtualDeviceSnapshot> devices,
                                           long storedFe,
                                           long capacityFe,
                                           boolean canExtractFe,
@@ -38,7 +39,7 @@ public record TowerBindingRuntimeSnapshot(TowerBinding binding,
                                        String failure,
                                        long requestedChannels,
                                        long grantedChannels,
-                                       List<TowerVirtualDeviceSnapshot> devices) {
+                                       ObjectList<TowerVirtualDeviceSnapshot> devices) {
         this(binding, state, failure, requestedChannels, grantedChannels, devices, 0, 0, false, false);
     }
 
@@ -50,6 +51,6 @@ public record TowerBindingRuntimeSnapshot(TowerBinding binding,
         if (storedFe < 0 || capacityFe < storedFe) {
             throw new IllegalArgumentException("Tower binding runtime FE snapshot is invalid");
         }
-        devices = List.copyOf(devices);
+        devices = new ObjectImmutableList<>(devices);
     }
 }

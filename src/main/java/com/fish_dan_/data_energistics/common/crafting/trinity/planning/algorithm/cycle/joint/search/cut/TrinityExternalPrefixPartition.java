@@ -1,8 +1,10 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.joint.search.cut;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.joint.search.TrinityFiringBox;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.Optional;
 
 /**
@@ -13,7 +15,7 @@ import java.util.Optional;
  */
 public record TrinityExternalPrefixPartition(
                                              Optional<TrinityFiringBox> withinCap,
-                                             List<TrinityFiringBox> aboveCap) {
+                                             ObjectList<TrinityFiringBox> aboveCap) {
 
     /**
      * Freezes one effective partition.
@@ -22,7 +24,7 @@ public record TrinityExternalPrefixPartition(
         if (withinCap == null || aboveCap == null || aboveCap.stream().anyMatch(box -> box == null)) {
             throw new IllegalArgumentException("A Trinity external-prefix partition must be complete");
         }
-        aboveCap = List.copyOf(aboveCap);
+        aboveCap = FastUtilCollections.immutableList(aboveCap);
         if (withinCap.isEmpty() && aboveCap.isEmpty()) {
             throw new IllegalArgumentException("A Trinity external-prefix partition cannot be empty");
         }

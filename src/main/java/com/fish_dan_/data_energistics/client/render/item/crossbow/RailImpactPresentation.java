@@ -17,16 +17,15 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /** Brief impact-only FE arcs. */
 @EventBusSubscriber(modid = Data_Energistics.MODID, value = Dist.CLIENT)
 public final class RailImpactPresentation {
 
-    private static final List<Chain> CHAINS = new ObjectArrayList<>();
+    private static final ObjectList<Chain> CHAINS = new ObjectArrayList<>();
     private static @Nullable ClientLevel trackedLevel;
 
     private RailImpactPresentation() {}
@@ -65,12 +64,12 @@ public final class RailImpactPresentation {
         pose.translate(-camera.x, -camera.y, -camera.z);
         VertexConsumer vertices = minecraft.renderBuffers().bufferSource().getBuffer(RenderType.lines());
         for (Chain chain : CHAINS) {
-            Vec3 center = chain.points.getFirst();
             for (int i = 1; i < chain.points.size(); i++) {
-                Vec3 delta = chain.points.get(i).subtract(center), previous = center;
+                Vec3 start = chain.points.get(i - 1);
+                Vec3 delta = chain.points.get(i).subtract(start), previous = start;
                 for (int piece = 1; piece <= 6; piece++) {
                     double wave = piece == 6 ? 0 : Math.sin(piece * 4.3 + level.getGameTime()) * 0.14;
-                    Vec3 next = center.add(delta.scale(piece / 6.0)).add(wave, -wave * 0.7, wave);
+                    Vec3 next = start.add(delta.scale(piece / 6.0)).add(wave, -wave * 0.7, wave);
                     segment(vertices, pose.last(), previous, next);
                     previous = next;
                 }
@@ -88,5 +87,5 @@ public final class RailImpactPresentation {
         vertices.addVertex(pose, (float) to.x, (float) to.y, (float) to.z).setColor(138, 189, 255, 255).setNormal(pose, direction.x, direction.y, direction.z);
     }
 
-    private record Chain(List<Vec3> points, long until) {}
+    private record Chain(ObjectList<Vec3> points, long until) {}
 }

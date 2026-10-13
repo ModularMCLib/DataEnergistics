@@ -1,15 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityPlanExecution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory.TrinityExactKeyInventory;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.persistence.TrinityExecutionNbtCodec;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem.TrinitySameItemPolicy;
-import com.fish_dan_.data_energistics.common.crafting.trinity.serialization.TrinityBigIntegerEncoding;
 import com.fish_dan_.data_energistics.common.trinity.pattern.PatternRoute;
 import com.fish_dan_.data_energistics.common.trinity.pattern.RoutedCraftingPatternDetails;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+import com.fish_dan_.data_energistics.util.NbtCodecs;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -29,16 +29,16 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.AbstractObject2ObjectMap;
+import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -50,8 +50,6 @@ import java.util.function.Function;
  */
 final class TrinityDataCoreExecutingCraftingJob {
 
-    private static final String SCHEMA_VERSION_TAG = "schema_version";
-    private static final int SCHEMA_VERSION = 5;
     private static final String TARGET_PRINCIPAL_KNOWN_TAG = "target_principal_known";
     private static final String TARGET_PRINCIPAL_TAG = "target_principal";
     private static final String LINK_TAG = "link";
@@ -74,7 +72,7 @@ final class TrinityDataCoreExecutingCraftingJob {
     final CraftingLink link;
     final TrinityExactKeyInventory waitingFor;
     private final ScheduledTasks scheduledTasks = new ScheduledTasks();
-    final Map<IPatternDetails, TaskProgress> tasks = this.scheduledTasks.tasks();
+    final Object2ObjectMap<IPatternDetails, TaskProgress> tasks = this.scheduledTasks.tasks();
     final TrinityDataCoreElapsedTimeTracker timeTracker;
     final DynamicCraftingOutputLedger dynamicOutputs;
     @Nullable
@@ -140,13 +138,10 @@ final class TrinityDataCoreExecutingCraftingJob {
                                         HolderLookup.Provider registries,
                                         CraftingDifferenceListener differenceListener,
                                         TrinityDataCoreCpuLogic logic) {
-        if (!hasSupportedSchema(data)) {
-            throw new IllegalArgumentException("Unsupported persisted Trinity Data Core CPU job schema");
-        }
         this.targetPrincipal = readTargetPrincipal(data);
         this.link = new CraftingLink(data.getCompound(LINK_TAG), logic.cpu());
         GenericStack finalOutput = GenericStack.readTag(registries, data.getCompound(FINAL_OUTPUT_TAG));
-        this.remainingAmount = TrinityBigIntegerEncoding.readTag(data, REMAINING_AMOUNT_TAG, "job delivery remainder");
+        this.remainingAmount = NbtCodecs.readTag(data, REMAINING_AMOUNT_TAG, "job delivery remainder");
         if (this.remainingAmount.signum() < 0 || finalOutput == null) {
             throw new IllegalArgumentException("Persisted crafting job has an invalid delivery remainder");
         }
@@ -203,10 +198,9 @@ final class TrinityDataCoreExecutingCraftingJob {
      */
     CompoundTag writeToTag(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
-        data.putInt(SCHEMA_VERSION_TAG, SCHEMA_VERSION);
         data.putBoolean(TARGET_PRINCIPAL_KNOWN_TAG, this.targetPrincipal != null);
         if (this.targetPrincipal != null) {
-            data.putByteArray(TARGET_PRINCIPAL_TAG, TrinityBigIntegerEncoding.encode(this.targetPrincipal, "target principal"));
+            data.putByteArray(TARGET_PRINCIPAL_TAG, NbtCodecs.encode(this.targetPrincipal, "target principal"));
         }
 
         CompoundTag linkData = new CompoundTag();
@@ -220,7 +214,7 @@ final class TrinityDataCoreExecutingCraftingJob {
 
         if (this.planExecution == null) {
             ListTag taskList = new ListTag();
-            for (Map.Entry<IPatternDetails, TaskProgress> entry : this.tasks.entrySet()) {
+            for (Object2ObjectMap.Entry<IPatternDetails, TaskProgress> entry : this.tasks.object2ObjectEntrySet()) {
                 CompoundTag item = writeTaskDetails(entry.getKey(), registries);
                 item.putLong(CRAFTING_PROGRESS_TAG, entry.getValue().value);
                 taskList.add(item);
@@ -232,7 +226,7 @@ final class TrinityDataCoreExecutingCraftingJob {
                     this.planExecution.save(registries, TickHandler.instance().getCurrentTick()));
         }
 
-        data.putByteArray(REMAINING_AMOUNT_TAG, TrinityBigIntegerEncoding.encode(this.remainingAmount, "job delivery remainder"));
+        data.putByteArray(REMAINING_AMOUNT_TAG, NbtCodecs.encode(this.remainingAmount, "job delivery remainder"));
         data.putBoolean(SUSPENDED_TAG, this.suspended);
         if (this.playerId != null) {
             data.putInt(PLAYER_ID_TAG, this.playerId);
@@ -285,7 +279,7 @@ final class TrinityDataCoreExecutingCraftingJob {
     /**
      * Returns the keys of all indexed undispatched outputs, without projecting their quantities.
      */
-    Set<AEKey> scheduledOutputKeys() {
+    ObjectSet<AEKey> scheduledOutputKeys() {
         return this.planExecution == null ? this.scheduledTasks.outputs.keys() : this.planExecution.pendingOutputs().keySet();
     }
 
@@ -356,22 +350,6 @@ final class TrinityDataCoreExecutingCraftingJob {
         return details == null ? null : new RoutedCraftingPatternDetails(route, details);
     }
 
-    static boolean hasSupportedSchema(CompoundTag data) {
-        if (!data.contains(SCHEMA_VERSION_TAG, Tag.TAG_INT)) {
-            Data_Energistics.LOGGER.warn("Ignoring persisted Trinity Data Core CPU job without a schema version");
-            return false;
-        }
-        int schemaVersion = data.getInt(SCHEMA_VERSION_TAG);
-        if (schemaVersion != SCHEMA_VERSION) {
-            Data_Energistics.LOGGER.warn(
-                    "Ignoring persisted Trinity Data Core CPU job schema version {}; expected {}",
-                    schemaVersion,
-                    SCHEMA_VERSION);
-            return false;
-        }
-        return true;
-    }
-
     /** A zero production request is represented only by the explicit no-production branch. */
     record ReplanDemand(boolean noProduction, BigInteger requested) {
 
@@ -386,7 +364,7 @@ final class TrinityDataCoreExecutingCraftingJob {
      * Counts real CPU-owned target-domain assets. The map must include physical and overflow windows
      * exactly once and must not include network availability or isolated completion contents.
      */
-    static BigInteger ownedTargetAmount(AEKey target, TrinitySameItemPolicy policy, Map<AEKey, BigInteger> cpuOwned) {
+    static BigInteger ownedTargetAmount(AEKey target, TrinitySameItemPolicy policy, Object2ObjectMap<AEKey, BigInteger> cpuOwned) {
         AEKey logicalTarget = policy.normalizeKey(target);
         BigInteger amount = BigInteger.ZERO;
         for (var entry : cpuOwned.entrySet()) {
@@ -402,7 +380,7 @@ final class TrinityDataCoreExecutingCraftingJob {
      * NET_NEW preserves external target principal; FINAL_TOTAL may consume already owned target stock.
      * A legacy unknown principal deliberately retains the old full-delivery request without stock credit.
      */
-    ReplanDemand replanDemand(Map<AEKey, BigInteger> cpuOwned) {
+    ReplanDemand replanDemand(Object2ObjectMap<AEKey, BigInteger> cpuOwned) {
         TrinityPlanExecution execution = trinityExecution();
         BigInteger delivery = execution.deliveryRemaining();
         TrinitySameItemPolicy policy = execution.sameItemPolicy();
@@ -452,7 +430,7 @@ final class TrinityDataCoreExecutingCraftingJob {
         if (!data.contains(TARGET_PRINCIPAL_TAG, Tag.TAG_BYTE_ARRAY)) {
             throw new IllegalArgumentException("Known target principal requires an exact amount");
         }
-        BigInteger principal = TrinityBigIntegerEncoding.decode(data.getByteArray(TARGET_PRINCIPAL_TAG), "target principal");
+        BigInteger principal = NbtCodecs.decode(data.getByteArray(TARGET_PRINCIPAL_TAG), "target principal");
         if (principal.signum() < 0) {
             throw new IllegalArgumentException("Persisted target principal must not be negative");
         }
@@ -467,10 +445,10 @@ final class TrinityDataCoreExecutingCraftingJob {
         return DynamicCraftingOutputLedger.readFromTag(data.getCompound(DYNAMIC_OUTPUTS_TAG), registries);
     }
 
-    static Map<AEKey, BigInteger> recoverCompletionContents(CompoundTag data,
-                                                            HolderLookup.Provider registries) {
+    static Object2ObjectMap<AEKey, BigInteger> recoverCompletionContents(CompoundTag data,
+                                                                         HolderLookup.Provider registries) {
         if (!data.contains(PLAN_EXECUTION_TAG, Tag.TAG_COMPOUND)) {
-            return Map.of();
+            return FastUtilCollections.mapOf();
         }
         return TrinityExecutionNbtCodec.recoverCompletionContents(
                 data.getCompound(PLAN_EXECUTION_TAG),
@@ -490,7 +468,7 @@ final class TrinityDataCoreExecutingCraftingJob {
         private final TaskQueue tasks = new TaskQueue();
         private final TrinityScheduledOutputIndex outputs = new TrinityScheduledOutputIndex();
 
-        Map<IPatternDetails, TaskProgress> tasks() {
+        Object2ObjectMap<IPatternDetails, TaskProgress> tasks() {
             return this.tasks;
         }
 
@@ -515,13 +493,13 @@ final class TrinityDataCoreExecutingCraftingJob {
     /**
      * Insertion-ordered task map whose bounded iterators rotate visited work to the tail.
      */
-    static final class TaskQueue extends AbstractMap<IPatternDetails, TaskProgress> {
+    static final class TaskQueue extends AbstractObject2ObjectMap<IPatternDetails, TaskProgress> {
 
-        private final Map<IPatternDetails, TaskNode> index = new Object2ObjectOpenHashMap<>();
-        private final Set<Entry<IPatternDetails, TaskProgress>> entries = new AbstractSet<>() {
+        private final Object2ObjectMap<IPatternDetails, TaskNode> index = new Object2ObjectOpenHashMap<>();
+        private final ObjectSet<Object2ObjectMap.Entry<IPatternDetails, TaskProgress>> entries = new AbstractObjectSet<>() {
 
             @Override
-            public Iterator<Entry<IPatternDetails, TaskProgress>> iterator() {
+            public ObjectIterator<Object2ObjectMap.Entry<IPatternDetails, TaskProgress>> iterator() {
                 return new TaskIterator();
             }
 
@@ -541,8 +519,14 @@ final class TrinityDataCoreExecutingCraftingJob {
         private TaskNode tail;
 
         @Override
-        public Set<Entry<IPatternDetails, TaskProgress>> entrySet() {
+        public ObjectSet<Object2ObjectMap.Entry<IPatternDetails, TaskProgress>> object2ObjectEntrySet() {
             return this.entries;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public ObjectSet<java.util.Map.Entry<IPatternDetails, TaskProgress>> entrySet() {
+            return (ObjectSet<java.util.Map.Entry<IPatternDetails, TaskProgress>>) (ObjectSet<?>) this.entries;
         }
 
         @Override
@@ -630,7 +614,7 @@ final class TrinityDataCoreExecutingCraftingJob {
             node.next = null;
         }
 
-        private final class TaskIterator implements Iterator<Entry<IPatternDetails, TaskProgress>> {
+        private final class TaskIterator implements ObjectIterator<Object2ObjectMap.Entry<IPatternDetails, TaskProgress>> {
 
             private int remaining = TaskQueue.this.size();
             @Nullable
@@ -645,7 +629,7 @@ final class TrinityDataCoreExecutingCraftingJob {
             }
 
             @Override
-            public Entry<IPatternDetails, TaskProgress> next() {
+            public Object2ObjectMap.Entry<IPatternDetails, TaskProgress> next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
@@ -667,7 +651,7 @@ final class TrinityDataCoreExecutingCraftingJob {
             }
         }
 
-        private final class TaskNode implements Entry<IPatternDetails, TaskProgress> {
+        private final class TaskNode implements Object2ObjectMap.Entry<IPatternDetails, TaskProgress> {
 
             private final IPatternDetails key;
             private TaskProgress value;

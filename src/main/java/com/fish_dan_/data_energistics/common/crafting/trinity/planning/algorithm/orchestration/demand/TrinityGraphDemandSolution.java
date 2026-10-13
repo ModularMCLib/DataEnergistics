@@ -3,15 +3,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.cycle.selection.TrinityCycleSelection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Immutable output of reverse graph-demand aggregation before execution stages are assembled.
@@ -23,16 +23,16 @@ import java.util.Map;
  * @param mipNanos       MIP time contributed by selected cycle plans
  */
 public record TrinityGraphDemandSolution(
-                                         Map<AEKey, BigInteger> initialInputs,
-                                         Map<TrinityPatternVariant, TrinityRankedPatternFiring> acyclicFirings,
-                                         List<TrinityCycleSelection> cycleSolutions,
+                                         Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                         Object2ObjectMap<TrinityPatternVariant, TrinityRankedPatternFiring> acyclicFirings,
+                                         ObjectList<TrinityCycleSelection> cycleSolutions,
                                          int scheduleStates,
                                          long mipNanos) {
 
     public TrinityGraphDemandSolution {
-        initialInputs = Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(initialInputs));
-        acyclicFirings = Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(acyclicFirings));
-        cycleSolutions = List.copyOf(cycleSolutions);
+        initialInputs = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(initialInputs));
+        acyclicFirings = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(acyclicFirings));
+        cycleSolutions = FastUtilCollections.immutableList(cycleSolutions);
     }
 
     /**

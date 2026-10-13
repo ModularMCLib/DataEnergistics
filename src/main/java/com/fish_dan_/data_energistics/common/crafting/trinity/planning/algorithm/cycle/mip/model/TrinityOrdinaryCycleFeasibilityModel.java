@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.optimization.diagnostics.TrinitySolverFailureCapture;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -22,8 +23,11 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
@@ -32,10 +36,6 @@ import org.ojalgo.optimisation.Variable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Ordinary exact-window ojAlgo model retaining the established sequential objective semantics.
@@ -267,7 +267,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    Map.of("passes", Integer.toString(metrics.passes)));
+                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes)));
         }
         if (control.deadlineExceeded()) {
             return timeout(metrics, "before_model");
@@ -283,7 +283,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
-                    Map.of(
+                    FastUtilCollections.mapOf(
                             "limit", Integer.toString(stateBudget.limit()),
                             "states", Integer.toString(stateBudget.used())));
         }
@@ -298,7 +298,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(
                     TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
                     "gui.data_energistics.trinity_planning.diagnostic.cancelled",
-                    Map.of("passes", Integer.toString(metrics.passes)));
+                    FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes)));
         }
         boolean objectiveProved = !relaxed && result.getState().isOptimal();
         if (!objectiveProved && !result.getState().isFeasible()) {
@@ -313,9 +313,9 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return failure(
                     TrinityPlanningDiagnosticCode.MIP_NO_INTEGER_SOLUTION,
                     "gui.data_energistics.trinity_planning.diagnostic.no_integer_solution",
-                    Map.of("state", result.getState().name()));
+                    FastUtilCollections.mapOf("state", result.getState().name()));
         }
-        TrinityAlgorithmResult<List<BigInteger>> verified = integerCandidate(data, result, relaxed);
+        TrinityAlgorithmResult<ObjectList<BigInteger>> verified = integerCandidate(data, result, relaxed);
         if (!verified.successful()) {
             if (relaxed && pass == FeasibilityPass.INSTANCE) {
                 return correctCandidate(request, pass, modelTemplate, result, control, metrics, stateBudget);
@@ -326,7 +326,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             return inexact("variable_lower", "negative");
         }
         SolvedModel solved = data.decode(verified.value(), request);
-        TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
+        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         if (!exact.successful()) {
             if (relaxed && pass == FeasibilityPass.INSTANCE) {
                 return correctCandidate(request, pass, modelTemplate, result, control, metrics, stateBudget);
@@ -344,7 +344,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                                                                 TrinityCycleSolveBudget stateBudget) {
         if (control.cancellationRequested()) {
             return failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
-                    "gui.data_energistics.trinity_planning.diagnostic.cancelled", Map.of());
+                    "gui.data_energistics.trinity_planning.diagnostic.cancelled", FastUtilCollections.mapOf());
         }
         if (control.deadlineExceeded()) return timeout(metrics, "before_correction");
         // Reuse the untouched template: the linear solver may have presolved its own model in place.
@@ -354,7 +354,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         if (!stateBudget.tryConsume()) {
             return failure(TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     "gui.data_energistics.trinity_planning.mip.schedule_search_limit",
-                    Map.of("limit", Integer.toString(stateBudget.limit()), "states", Integer.toString(stateBudget.used())));
+                    FastUtilCollections.mapOf("limit", Integer.toString(stateBudget.limit()), "states", Integer.toString(stateBudget.used())));
         }
         TrinityOjAlgoSolvePolicy.configure(data.model(), control);
         data.model().options.time_abort = Math.min(data.model().options.time_abort, CORRECTION_CALL_MILLIS);
@@ -366,21 +366,21 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         control.recordSolverPass(elapsed);
         if (control.cancellationRequested()) {
             return failure(TrinityPlanningDiagnosticCode.CALCULATION_CANCELLED,
-                    "gui.data_energistics.trinity_planning.diagnostic.cancelled", Map.of());
+                    "gui.data_energistics.trinity_planning.diagnostic.cancelled", FastUtilCollections.mapOf());
         }
         if (control.deadlineExceeded()) return timeout(metrics, "correction");
         if (!result.getState().isFeasible()) return integerDomainLimit("correction_" + result.getState().name());
-        TrinityAlgorithmResult<List<BigInteger>> delta = integerCandidate(data, result, false);
+        TrinityAlgorithmResult<ObjectList<BigInteger>> delta = integerCandidate(data, result, false);
         if (!delta.successful()) return integerDomainLimit("correction_integer");
-        List<BigInteger> restored = correction.restore(delta.value());
+        ObjectList<BigInteger> restored = correction.restore(delta.value());
         if (restored == null) return integerDomainLimit("correction_domain");
         SolvedModel solved = data.decode(restored, request);
-        TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
+        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = verifyExact(request, pass, solved);
         return exact.successful() ? TrinityAlgorithmResult.success(new SolvedPass(solved, false)) :
                 integerDomainLimit("correction_verification");
     }
 
-    private TrinityAlgorithmResult<List<BigInteger>> integerCandidate(ModelData data, Optimisation.Result result, boolean relaxed) {
+    private TrinityAlgorithmResult<ObjectList<BigInteger>> integerCandidate(ModelData data, Optimisation.Result result, boolean relaxed) {
         int count = data.template().variableCount();
         if (relaxed) {
             ObjectArrayList<BigInteger> candidate = new ObjectArrayList<>(count);
@@ -405,14 +405,14 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
     private static <T> TrinityAlgorithmResult<T> integerDomainLimit(String reason) {
         return failure(TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 "gui.data_energistics.trinity_planning.mip.radix_model_limit",
-                Map.of("phase", "ordinary_integer_domain", "reason", reason));
+                FastUtilCollections.mapOf("phase", "ordinary_integer_domain", "reason", reason));
     }
 
     private static TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> solution(
                                                                                     SolvedModel solved, SolverMetrics metrics, TrinityPlanQuality quality) {
         return TrinityAlgorithmResult.success(new TrinityCycleFeasibilitySolution(
                 solved.firings(), solved.modelSeed(), solved.externalInputs(),
-                metrics.passes, metrics.nanos, false, quality, Map.of(), Map.of(), 0));
+                metrics.passes, metrics.nanos, false, quality, FastUtilCollections.mapOf(), FastUtilCollections.mapOf(), 0));
     }
 
     private static TrinityAlgorithmResult<TrinityCycleFeasibilitySolution> recoverIncumbent(
@@ -426,17 +426,17 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                         TrinityAlgorithmResult.failure(diagnostic);
     }
 
-    private TrinityAlgorithmResult<Map<AEKey, BigInteger>> verifyExact(
-                                                                       TrinityCycleFeasibilityRequest request,
-                                                                       ModelPass pass,
-                                                                       SolvedModel solved) {
+    private TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> verifyExact(
+                                                                                    TrinityCycleFeasibilityRequest request,
+                                                                                    ModelPass pass,
+                                                                                    SolvedModel solved) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>(solved.externalInputs());
         solved.modelSeed().forEach((key, amount) -> initialInputs.merge(key, amount, BigInteger::add));
-        TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = this.conservationVerifier.verify(
+        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = this.conservationVerifier.verify(
                 request.variants(),
                 solved.firings(),
                 initialInputs,
-                request.shortageDiagnostic() ? Map.of() : this.objectiveBounds.finiteInputUpperBounds(request),
+                request.shortageDiagnostic() ? FastUtilCollections.mapOf() : this.objectiveBounds.finiteInputUpperBounds(request),
                 request.demand().finalBalanceLowerBounds(),
                 request.demand().requiredNetChangeLowerBounds());
         if (!exact.successful()) {
@@ -518,8 +518,8 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, Variable> reserveVariables(
                                                                                     ExpressionsBasedModel model,
-                                                                                    List<Variable> allVariables,
-                                                                                    Set<AEKey> keys,
+                                                                                    ObjectList<Variable> allVariables,
+                                                                                    ObjectSet<AEKey> keys,
                                                                                     String prefix) {
         Object2ObjectLinkedOpenHashMap<AEKey, Variable> variables = new Object2ObjectLinkedOpenHashMap<>();
         int index = 0;
@@ -534,9 +534,9 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
     private static void addConservation(
                                         ExpressionsBasedModel model,
                                         TrinityCycleFeasibilityRequest request,
-                                        Map<TrinityPatternVariant, Variable> firingVariables,
-                                        Map<AEKey, Variable> seedVariables,
-                                        Map<AEKey, Variable> externalVariables) {
+                                        Object2ObjectMap<TrinityPatternVariant, Variable> firingVariables,
+                                        Object2ObjectMap<AEKey, Variable> seedVariables,
+                                        Object2ObjectMap<AEKey, Variable> externalVariables) {
         ObjectArrayList<AEKey> touchedKeys = new ObjectArrayList<>(request.coefficientTemplate().touchedKeys());
         ObjectOpenHashSet<AEKey> seenKeys = new ObjectOpenHashSet<>(touchedKeys);
         request.demand().finalBalanceLowerBounds().keySet().forEach(key -> addStableKey(key, seenKeys, touchedKeys));
@@ -554,7 +554,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
             conservation.lower(request.demand().finalBalanceLowerBounds().getOrDefault(key, BigInteger.ZERO));
         }
         int netIndex = 0;
-        for (Map.Entry<AEKey, BigInteger> bound : request.demand().requiredNetChangeLowerBounds().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : request.demand().requiredNetChangeLowerBounds().object2ObjectEntrySet()) {
             Expression net = model.addExpression("required_net_" + netIndex++);
             setNetCoefficients(net, request, firingVariables, bound.getKey());
             net.lower(bound.getValue());
@@ -566,7 +566,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
     private static void setNetCoefficients(
                                            Expression expression,
                                            TrinityCycleFeasibilityRequest request,
-                                           Map<TrinityPatternVariant, Variable> firingVariables,
+                                           Object2ObjectMap<TrinityPatternVariant, Variable> firingVariables,
                                            AEKey key) {
         for (Coefficient coefficient : request.coefficientTemplate().coefficients(key)) {
             expression.set(
@@ -575,7 +575,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
     }
 
-    private static void addStableKey(AEKey key, Set<AEKey> seen, List<AEKey> destination) {
+    private static void addStableKey(AEKey key, ObjectSet<AEKey> seen, ObjectList<AEKey> destination) {
         if (seen.add(key)) {
             destination.add(key);
         }
@@ -591,7 +591,7 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         }
     }
 
-    private static BigInteger total(Map<?, BigInteger> amounts) {
+    private static BigInteger total(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 
@@ -599,20 +599,20 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                 "gui.data_energistics.trinity_planning.mip.timeout",
-                Map.of("passes", Integer.toString(metrics.passes), "state", state));
+                FastUtilCollections.mapOf("passes", Integer.toString(metrics.passes), "state", state));
     }
 
     private static <T> TrinityAlgorithmResult<T> inexact(String constraint, String value) {
         return failure(
                 TrinityPlanningDiagnosticCode.MIP_INEXACT_RESULT,
                 "gui.data_energistics.trinity_planning.diagnostic.inexact_result",
-                Map.of("constraint", constraint, "value", value));
+                FastUtilCollections.mapOf("constraint", constraint, "value", value));
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String detail,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(code, Component.translatable(detail), metadata));
     }
 
@@ -638,12 +638,12 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
                                 BigInteger fixedExternal,
                                 BigInteger fixedSeed,
                                 BigInteger fixedFirings,
-                                Map<TrinityPatternVariant, BigInteger> fixedCounts,
+                                Object2ObjectMap<TrinityPatternVariant, BigInteger> fixedCounts,
                                 TrinityPatternVariant variant)
             implements ModelPass {
 
         private IdentityPass {
-            fixedCounts = Collections.unmodifiableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
+            fixedCounts = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(fixedCounts));
         }
     }
 
@@ -736,35 +736,35 @@ final class TrinityOrdinaryCycleFeasibilityModel implements TrinityCycleFeasibil
 
     private record ModelData(ExpressionsBasedModel model, OrdinaryModelTemplate template, boolean projectedReserves) {
 
-        private SolvedModel decode(List<BigInteger> values, TrinityCycleFeasibilityRequest request) {
+        private SolvedModel decode(ObjectList<BigInteger> values, TrinityCycleFeasibilityRequest request) {
             Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> firings = new Object2ObjectLinkedOpenHashMap<>();
             Object2IntMaps.fastForEach(this.template.firingIndexes(), entry -> putPositive(firings, entry.getKey(), values.get(entry.getIntValue())));
-            Map<AEKey, BigInteger> seed = positiveAmounts(this.template.seedIndexes(), values);
-            Map<AEKey, BigInteger> external = positiveAmounts(this.template.externalIndexes(), values);
+            Object2ObjectMap<AEKey, BigInteger> seed = positiveAmounts(this.template.seedIndexes(), values);
+            Object2ObjectMap<AEKey, BigInteger> external = positiveAmounts(this.template.externalIndexes(), values);
             if (this.projectedReserves) {
                 seed = TrinityFeasibilityReserveProjection.reduce(request, firings, seed,
                         this.template.objectiveBounds.minimumFirstInternalInput(request).max(request.seedLowerBound()));
                 external = TrinityFeasibilityReserveProjection.reduce(request, firings, external,
                         this.template.objectiveBounds.minimumFirstExternalInput(request));
             }
-            return new SolvedModel(Collections.unmodifiableMap(firings), seed, external);
+            return new SolvedModel(FastUtilCollections.immutableMap(firings), seed, external);
         }
 
-        private static Map<AEKey, BigInteger> positiveAmounts(Object2IntMap<AEKey> indexes, List<BigInteger> values) {
+        private static Object2ObjectMap<AEKey, BigInteger> positiveAmounts(Object2IntMap<AEKey> indexes, ObjectList<BigInteger> values) {
             Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> positive = new Object2ObjectLinkedOpenHashMap<>();
             Object2IntMaps.fastForEach(indexes, entry -> putPositive(positive, entry.getKey(), values.get(entry.getIntValue())));
-            return Collections.unmodifiableMap(positive);
+            return FastUtilCollections.immutableMap(positive);
         }
 
-        private static <K> void putPositive(Map<K, BigInteger> target, K key, BigInteger value) {
+        private static <K> void putPositive(Object2ObjectMap<K, BigInteger> target, K key, BigInteger value) {
             if (value.signum() > 0) target.put(key, value);
         }
     }
 
     private record SolvedModel(
-                               Map<TrinityPatternVariant, BigInteger> firings,
-                               Map<AEKey, BigInteger> modelSeed,
-                               Map<AEKey, BigInteger> externalInputs) {}
+                               Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                               Object2ObjectMap<AEKey, BigInteger> modelSeed,
+                               Object2ObjectMap<AEKey, BigInteger> externalInputs) {}
 
     private record SolvedPass(SolvedModel model, boolean objectiveProved) {}
 

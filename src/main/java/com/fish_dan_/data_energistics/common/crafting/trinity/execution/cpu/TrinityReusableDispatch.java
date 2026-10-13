@@ -30,6 +30,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReus
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus.Phase;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.RoutedCraftingPatternDetails;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
@@ -406,7 +407,7 @@ final class TrinityReusableDispatch {
         if (!residentAmounts.equals(amounts)) {
             ObjectSet<AEKey> changed = new ObjectOpenHashSet<>(residentAmounts.keySet());
             changed.addAll(amounts.keySet());
-            residentAmounts = Object2ObjectMaps.unmodifiable(amounts);
+            residentAmounts = FastUtilCollections.immutableMap(amounts);
             owner.residentObservationChanged(changed);
         }
     }

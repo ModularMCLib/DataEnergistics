@@ -2,14 +2,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Retains one stable representative for variants with exactly identical executable transition effects.
@@ -29,7 +30,7 @@ public final class TrinityTransitionEffectCompactor {
     /**
      * Returns stable representatives in the natural variant order used by the final identity objective.
      */
-    public List<TrinityPatternVariant> compact(List<TrinityPatternVariant> variants) {
+    public ObjectList<TrinityPatternVariant> compact(ObjectList<TrinityPatternVariant> variants) {
         if (variants == null) {
             throw new IllegalArgumentException("Trinity transition compaction requires variants");
         }
@@ -37,17 +38,17 @@ public final class TrinityTransitionEffectCompactor {
         variants.stream().sorted().forEach(variant -> representatives.putIfAbsent(
                 TransitionEffect.from(variant),
                 variant));
-        return List.copyOf(representatives.values());
+        return FastUtilCollections.immutableList(representatives.values());
     }
 
     private record TransitionEffect(
                                     AEKey primaryOutput,
-                                    Map<AEKey, BigInteger> inputs,
-                                    Map<AEKey, BigInteger> declaredOutputs,
-                                    Map<AEKey, BigInteger> outputs,
-                                    Map<AEKey, BigInteger> physicalInputs,
-                                    Map<AEKey, BigInteger> physicalOutputs,
-                                    List<TrinityBoundPatternInput> exactBindings) {
+                                    Object2ObjectMap<AEKey, BigInteger> inputs,
+                                    Object2ObjectMap<AEKey, BigInteger> declaredOutputs,
+                                    Object2ObjectMap<AEKey, BigInteger> outputs,
+                                    Object2ObjectMap<AEKey, BigInteger> physicalInputs,
+                                    Object2ObjectMap<AEKey, BigInteger> physicalOutputs,
+                                    ObjectList<TrinityBoundPatternInput> exactBindings) {
 
         private static TransitionEffect from(TrinityPatternVariant variant) {
             if (variant == null) {
@@ -60,7 +61,7 @@ public final class TrinityTransitionEffectCompactor {
                     variant.outputs(),
                     variant.physicalInputs(),
                     variant.physicalOutputs(),
-                    variant.requiresExactBinding() ? variant.bindings() : List.of());
+                    variant.requiresExactBinding() ? variant.bindings() : ObjectList.of());
         }
     }
 }

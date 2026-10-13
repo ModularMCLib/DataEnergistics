@@ -10,7 +10,8 @@ import appeng.api.stacks.AEKey;
 
 import net.minecraft.server.level.ServerLevel;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.util.concurrent.CompletableFuture;
 
 /** Server-thread request boundary shared by initial planning and CPU remaining-work capture. */
@@ -23,6 +24,6 @@ public interface ReusableInputGraphCaptureAccess {
      * callbacks run on the server thread; cancelling the future stops pending capture.
      */
     CompletableFuture<TrinityAlgorithmResult<TrinityCraftingGraphSnapshot>> data_energistics$captureReusableGraph(
-                                                                                                                  ServerLevel level, IActionSource source, AEKey target, List<AEItemKey> additionalInventoryStates,
+                                                                                                                  ServerLevel level, IActionSource source, AEKey target, ObjectList<AEItemKey> additionalInventoryStates,
                                                                                                                   TrinityPlanningLimits limits);
 }

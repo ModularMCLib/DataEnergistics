@@ -9,13 +9,13 @@ import appeng.api.stacks.AEKey;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Derives sound box cuts from optimistic external-key reachability without expanding logical firing counts.
@@ -41,12 +41,12 @@ public final class TrinityExternalPrefixCut {
      */
     public Optional<TrinityExternalPrefixPartition> partition(
                                                               TrinityFiringBox box,
-                                                              Set<AEKey> internalKeys,
+                                                              ObjectSet<AEKey> internalKeys,
                                                               BigInteger cap) {
         if (box == null || internalKeys == null || internalKeys.isEmpty() || cap == null || cap.signum() < 0) {
             throw new IllegalArgumentException("A Trinity external-prefix cut request is incomplete");
         }
-        Map<AEKey, BigInteger> thresholds = externalInputThresholds(box, internalKeys);
+        Object2ObjectMap<AEKey, BigInteger> thresholds = externalInputThresholds(box, internalKeys);
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> optimisticAmounts = new Object2ObjectLinkedOpenHashMap<>();
         thresholds.keySet().forEach(key -> optimisticAmounts.put(key, cap));
         ObjectLinkedOpenHashSet<TrinityPatternVariant> reachable = new ObjectLinkedOpenHashSet<>();
@@ -105,9 +105,9 @@ public final class TrinityExternalPrefixCut {
         return new TrinityExternalPrefixPartition(withinCap, aboveCap);
     }
 
-    private static Map<AEKey, BigInteger> externalInputThresholds(
-                                                                  TrinityFiringBox box,
-                                                                  Set<AEKey> internalKeys) {
+    private static Object2ObjectMap<AEKey, BigInteger> externalInputThresholds(
+                                                                               TrinityFiringBox box,
+                                                                               ObjectSet<AEKey> internalKeys) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> thresholds = new Object2ObjectLinkedOpenHashMap<>();
         for (int index = 0; index < box.variants().size(); index++) {
             if (!box.bounds().get(index).permitsPositive()) {
@@ -124,8 +124,8 @@ public final class TrinityExternalPrefixCut {
 
     private static boolean canTrigger(
                                       TrinityPatternVariant variant,
-                                      Set<AEKey> internalKeys,
-                                      Map<AEKey, BigInteger> optimisticAmounts) {
+                                      ObjectSet<AEKey> internalKeys,
+                                      Object2ObjectMap<AEKey, BigInteger> optimisticAmounts) {
         return variant.inputs().entrySet().stream()
                 .filter(entry -> !internalKeys.contains(entry.getKey()))
                 .allMatch(entry -> optimisticAmounts

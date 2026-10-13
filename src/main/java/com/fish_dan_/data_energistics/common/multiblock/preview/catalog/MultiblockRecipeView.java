@@ -14,10 +14,11 @@ import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
-import java.util.List;
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * Ordinary dynamic XEI recipe view containing structure and controller inputs plus one encoded result output.
@@ -35,7 +36,7 @@ public record MultiblockRecipeView(ResourceLocation registeredRecipeId,
                                    String substructureId,
                                    long definitionRevision,
                                    ProjectionFingerprint projectionFingerprint,
-                                   List<PreviewMaterial> inputs,
+                                   ObjectList<PreviewMaterial> inputs,
                                    PreviewMaterial output) {
 
     /**
@@ -59,11 +60,11 @@ public record MultiblockRecipeView(ResourceLocation registeredRecipeId,
                 !projectionFingerprint.structureKey().structureName().equals(substructureId)) {
             throw new IllegalArgumentException("Multiblock recipe projection fingerprint does not match its view");
         }
-        inputs = List.copyOf(inputs);
+        inputs = ObjectLists.unmodifiable(new ObjectArrayList<>(inputs));
         if (inputs.isEmpty()) {
             throw new IllegalArgumentException("Multiblock recipe view requires at least one material input");
         }
-        Set<AEKey> inputKeys = new ObjectOpenHashSet<>();
+        ObjectSet<AEKey> inputKeys = new ObjectOpenHashSet<>();
         for (PreviewMaterial input : inputs) {
             if (!inputKeys.add(input.key())) {
                 throw new IllegalArgumentException("Multiblock recipe view contains a duplicate material input key");
@@ -106,16 +107,18 @@ public record MultiblockRecipeView(ResourceLocation registeredRecipeId,
                 markedOrderPackage(spec.ownerOutput()));
     }
 
-    private static List<PreviewMaterial> mergeControllerInput(List<PreviewMaterial> materials,
-                                                              AEItemKey controller) {
+    private static ObjectList<PreviewMaterial> mergeControllerInput(ObjectList<PreviewMaterial> materials,
+                                                                    AEItemKey controller) {
         Object2LongMap<AEKey> amounts = new Object2LongLinkedOpenHashMap<>();
         for (PreviewMaterial material : materials) {
             amounts.mergeLong(material.key(), material.amount(), Math::addExact);
         }
         amounts.mergeLong(controller, 1L, Math::addExact);
-        return amounts.object2LongEntrySet().stream()
-                .map(entry -> new PreviewMaterial(entry.getKey(), entry.getLongValue()))
-                .toList();
+        ObjectArrayList<PreviewMaterial> result = new ObjectArrayList<>(amounts.size());
+        for (Object2LongMap.Entry<AEKey> entry : amounts.object2LongEntrySet()) {
+            result.add(new PreviewMaterial(entry.getKey(), entry.getLongValue()));
+        }
+        return ObjectLists.unmodifiable(result);
     }
 
     private static PreviewMaterial markedOrderPackage(AEItemKey controller) {

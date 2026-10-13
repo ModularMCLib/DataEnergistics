@@ -29,6 +29,8 @@ import de.ellpeck.actuallyadditions.mod.crafting.ColorChangeRecipe;
 import de.ellpeck.actuallyadditions.mod.crafting.LaserRecipe;
 import de.ellpeck.actuallyadditions.mod.items.lens.LensColor;
 import de.ellpeck.actuallyadditions.mod.tile.TileEntityAtomicReconstructor;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -179,7 +181,7 @@ public final class AtomicReconstructorAdapter implements PackagedMachineAdapter 
         }
         if (drops.isEmpty()) throw new IllegalStateException("Atomic Reconstructor lens did not produce a captured item result");
         if (!PackagedOutputMatching.matches(operation, ObjectList.of(expected.copyWithCount(batch)),
-                drops.stream().map(ItemEntity::getItem).toList()))
+                drops.stream().map(ItemEntity::getItem).collect(ObjectArrayList.toList())))
             throw new IllegalStateException("Atomic Reconstructor produced an unexpected item result");
         if (machine.getEnergy() >= beforeEnergy) throw new IllegalStateException("Atomic Reconstructor did not consume its energy");
         for (ItemEntity drop : drops) {
@@ -212,7 +214,8 @@ public final class AtomicReconstructorAdapter implements PackagedMachineAdapter 
     private static boolean safeBeam(ServerLevel level, BlockPos origin, Direction direction, Lens lens) {
         BlockPos inputPosition = origin.relative(direction);
         if (!level.isLoaded(inputPosition) || !level.getBlockState(inputPosition).isAir()) return false;
-        for (var target : affectedBlocks(level, origin, direction, lens)) {
+        for (long packedTarget : affectedBlocks(level, origin, direction, lens)) {
+            BlockPos target = BlockPos.of(packedTarget);
             if (!level.isLoaded(target)) return false;
             var state = level.getBlockState(target);
             if (state.isAir()) continue;
@@ -229,15 +232,15 @@ public final class AtomicReconstructorAdapter implements PackagedMachineAdapter 
         return level.getEntitiesOfClass(ItemEntity.class, area).isEmpty();
     }
 
-    private static ObjectList<BlockPos> affectedBlocks(ServerLevel level, BlockPos origin, Direction direction, Lens lens) {
-        var positions = new ObjectArrayList<BlockPos>();
+    private static LongList affectedBlocks(ServerLevel level, BlockPos origin, Direction direction, Lens lens) {
+        var positions = new LongArrayList();
         int radius = lens instanceof LensConversion ? 1 : 0;
         int x = direction.getAxis() == Direction.Axis.X ? 0 : radius;
         int y = direction.getAxis() == Direction.Axis.Y ? 0 : radius;
         int z = direction.getAxis() == Direction.Axis.Z ? 0 : radius;
         for (int distance = 1; distance <= lens.getDistance(); distance++) {
             var center = origin.relative(direction, distance);
-            for (var target : BlockPos.betweenClosed(center.offset(-x, -y, -z), center.offset(x, y, z))) positions.add(target.immutable());
+            for (var target : BlockPos.betweenClosed(center.offset(-x, -y, -z), center.offset(x, y, z))) positions.add(target.asLong());
             if (lens instanceof LensConversion && level.isLoaded(center) && !level.getBlockState(center).isAir()) break;
         }
         return positions;

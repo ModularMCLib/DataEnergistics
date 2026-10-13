@@ -3,10 +3,10 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Immutable counted-provider preparation containing either one admission or explicit rejection facts.
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public record CountedCraftingPreparation(@Nullable CountedCraftingAdmission admission,
                                          @Nullable CraftingDispatchTarget target,
-                                         List<CraftingDispatchRejection> rejections) {
+                                         ObjectList<CraftingDispatchRejection> rejections) {
 
     public CountedCraftingPreparation {
         if (rejections == null) {
@@ -34,7 +34,7 @@ public record CountedCraftingPreparation(@Nullable CountedCraftingAdmission admi
         if (admission == null && rejections.isEmpty()) {
             throw new IllegalArgumentException("Rejected counted crafting preparation must explain its rejection");
         }
-        rejections = List.copyOf(rejections);
+        rejections = FastUtilCollections.immutableList(rejections);
     }
 
     /**
@@ -47,7 +47,7 @@ public record CountedCraftingPreparation(@Nullable CountedCraftingAdmission admi
     public static CountedCraftingPreparation accepted(
                                                       CountedCraftingAdmission admission,
                                                       CraftingDispatchTarget target) {
-        return accepted(admission, target, List.of());
+        return accepted(admission, target, ObjectList.of());
     }
 
     /**
@@ -61,7 +61,7 @@ public record CountedCraftingPreparation(@Nullable CountedCraftingAdmission admi
     public static CountedCraftingPreparation accepted(
                                                       CountedCraftingAdmission admission,
                                                       CraftingDispatchTarget target,
-                                                      List<CraftingDispatchRejection> rejections) {
+                                                      ObjectList<CraftingDispatchRejection> rejections) {
         if (admission == null || target == null) {
             throw new IllegalArgumentException("Accepted counted crafting preparation requires an admission and target");
         }
@@ -75,7 +75,7 @@ public record CountedCraftingPreparation(@Nullable CountedCraftingAdmission admi
      * @return rejected preparation
      */
     public static CountedCraftingPreparation rejected(CraftingDispatchRejection rejection) {
-        return rejected(List.of(rejection));
+        return rejected(ObjectList.of(rejection));
     }
 
     /**
@@ -84,7 +84,7 @@ public record CountedCraftingPreparation(@Nullable CountedCraftingAdmission admi
      * @param rejections non-empty rejection facts
      * @return rejected preparation
      */
-    public static CountedCraftingPreparation rejected(List<CraftingDispatchRejection> rejections) {
+    public static CountedCraftingPreparation rejected(ObjectList<CraftingDispatchRejection> rejections) {
         return new CountedCraftingPreparation(null, null, rejections);
     }
 

@@ -2,8 +2,9 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
 
 /**
  * Pure planner that divides logical work into a bounded number of fair physical target calls.
@@ -40,7 +41,7 @@ public interface CapacitySlicePlanner {
      * @return immutable slices and the next cursor
      */
     CapacitySlicePlan plan(
-                           List<ProviderCapacitySnapshot> snapshots,
+                           ObjectList<ProviderCapacitySnapshot> snapshots,
                            BigInteger remainingCrafts,
                            int physicalCallLimit,
                            int cursor);

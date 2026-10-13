@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.trinity.storage;
 
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.BindableUIElement;
@@ -112,19 +112,19 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
         List<Component> lines = new ObjectArrayList<>();
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.amount_exact",
-                AmountFormatter.format(status.totalAmount()),
+                FormattingUtils.format(status.totalAmount()),
                 status.unlimited() ?
                         Component.translatable("gui.data_energistics.trinity.unlimited") :
-                        Component.literal(AmountFormatter.format(status.amountCapacity()))));
+                        Component.literal(FormattingUtils.format(status.amountCapacity()))));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.item_amount",
-                AmountFormatter.format(status.itemAmount())).withStyle(ChatFormatting.LIGHT_PURPLE));
+                FormattingUtils.format(status.itemAmount())).withStyle(ChatFormatting.LIGHT_PURPLE));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.fluid_amount",
-                AmountFormatter.format(status.fluidAmount())).withStyle(ChatFormatting.AQUA));
+                FormattingUtils.format(status.fluidAmount())).withStyle(ChatFormatting.AQUA));
         lines.add(Component.translatable(
                 "screen.data_energistics.trinity_data_core.storage.other_amount",
-                AmountFormatter.format(status.otherKeyAmount())).withStyle(ChatFormatting.GREEN));
+                FormattingUtils.format(status.otherKeyAmount())).withStyle(ChatFormatting.GREEN));
         return lines;
     }
 

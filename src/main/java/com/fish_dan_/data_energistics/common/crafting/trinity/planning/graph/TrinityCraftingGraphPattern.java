@@ -1,18 +1,19 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph;
 
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Immutable planner-facing transition captured from one AE crafting pattern.
@@ -24,14 +25,14 @@ import java.util.Map;
  */
 public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
                                           TrinityPatternPublicationSignature publication,
-                                          List<List<TrinityBoundPatternInput>> reusableBindings,
-                                          Map<AEKey, BigInteger> lifetimeTools) {
+                                          ObjectList<ObjectList<TrinityBoundPatternInput>> reusableBindings,
+                                          Object2ObjectMap<AEKey, BigInteger> lifetimeTools) {
 
     public TrinityCraftingGraphPattern {
-        reusableBindings = reusableBindings.stream().map(List::copyOf).toList();
-        lifetimeTools = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(lifetimeTools));
-        ObjectOpenHashSet<List<TrinityBoundPatternInput>> unique = new ObjectOpenHashSet<>();
-        for (List<TrinityBoundPatternInput> assignment : reusableBindings) {
+        reusableBindings = reusableBindings.stream().map(FastUtilCollections::immutableList).collect(ObjectArrayList.toList());
+        lifetimeTools = FastUtilCollections.immutableMap(new Object2ObjectLinkedOpenHashMap<>(lifetimeTools));
+        ObjectOpenHashSet<ObjectList<TrinityBoundPatternInput>> unique = new ObjectOpenHashSet<>();
+        for (ObjectList<TrinityBoundPatternInput> assignment : reusableBindings) {
             if (assignment.size() != publication.inputs().size() || !unique.add(assignment)) {
                 throw new IllegalArgumentException("Reusable graph bindings must be complete and unique");
             }
@@ -45,13 +46,13 @@ public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
     }
 
     public TrinityCraftingGraphPattern(TrinityPatternIdentity identity, TrinityPatternPublicationSignature publication,
-                                       List<List<TrinityBoundPatternInput>> reusableBindings) {
-        this(identity, publication, reusableBindings, Map.of());
+                                       ObjectList<ObjectList<TrinityBoundPatternInput>> reusableBindings) {
+        this(identity, publication, reusableBindings, FastUtilCollections.mapOf());
     }
 
     /** Retains the original provider-only graph representation when no request-local rule was captured. */
     public TrinityCraftingGraphPattern(TrinityPatternIdentity identity, TrinityPatternPublicationSignature publication) {
-        this(identity, publication, List.of());
+        this(identity, publication, ObjectList.of());
     }
 
     /**
@@ -64,14 +65,14 @@ public record TrinityCraftingGraphPattern(TrinityPatternIdentity identity,
     /**
      * @return immutable ordered input slots and their legal alternatives
      */
-    public List<TrinityPatternPublicationSignature.Input> inputs() {
+    public ObjectList<TrinityPatternPublicationSignature.Input> inputs() {
         return this.publication.inputs();
     }
 
     /**
      * @return immutable ordered outputs, with the primary output first
      */
-    public List<GenericStack> outputs() {
+    public ObjectList<GenericStack> outputs() {
         return this.publication.outputs();
     }
 

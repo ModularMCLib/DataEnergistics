@@ -8,10 +8,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.Trin
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Complete plan payload after graph demand has been converted into deterministic execution structures.
@@ -32,17 +32,17 @@ import java.util.Map;
  * @param seedRefinementPasses additional cycle solves used to prove terminal restart safety
  */
 public record TrinityGraphPlanAssembly(
-                                       Map<AEKey, BigInteger> initialInputs,
-                                       Map<TrinityPatternIdentity, BigInteger> patternFirings,
-                                       List<TrinityPlanStage> stages,
+                                       Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                       Object2ObjectMap<TrinityPatternIdentity, BigInteger> patternFirings,
+                                       ObjectList<TrinityPlanStage> stages,
                                        IntList stageOrder,
-                                       List<TrinityCycleRepeatBlock> repeatBlocks,
-                                       Map<AEKey, BigInteger> minimumSeed,
-                                       Map<AEKey, BigInteger> netChange,
-                                       Map<AEKey, BigInteger> stackRequests,
+                                       ObjectList<TrinityCycleRepeatBlock> repeatBlocks,
+                                       Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                       Object2ObjectMap<AEKey, BigInteger> netChange,
+                                       Object2ObjectMap<AEKey, BigInteger> stackRequests,
                                        int scheduleStates,
                                        long mipNanos,
                                        TrinityPlanQuality quality,
-                                       Map<AEKey, BigInteger> retainedSeed,
-                                       Map<AEKey, BigInteger> retainedSeedFinal,
+                                       Object2ObjectMap<AEKey, BigInteger> retainedSeed,
+                                       Object2ObjectMap<AEKey, BigInteger> retainedSeedFinal,
                                        int seedRefinementPasses) {}

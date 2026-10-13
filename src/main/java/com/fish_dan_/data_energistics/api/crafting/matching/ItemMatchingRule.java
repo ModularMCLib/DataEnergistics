@@ -17,7 +17,6 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -32,14 +31,10 @@ public record ItemMatchingRule(ProcessingMatchMode mode, ObjectList<ResourceLoca
     public static final ItemMatchingRule EXACT = new ItemMatchingRule(ProcessingMatchMode.EXACT, ObjectList.of());
     public static final ItemMatchingRule ID = new ItemMatchingRule(ProcessingMatchMode.ID, ObjectList.of());
 
-    public ItemMatchingRule(ProcessingMatchMode mode, List<ResourceLocation> tags) {
-        this(mode, new ObjectImmutableList<>(tags));
-    }
-
     public ItemMatchingRule {
         Objects.requireNonNull(mode);
         tags = new ObjectImmutableList<>(tags);
-        if (mode == ProcessingMatchMode.TAG ? tags.isEmpty() : !tags.isEmpty()) throw new IllegalArgumentException("Only TAG rules require nonempty recipe tags");
+        if ((mode == ProcessingMatchMode.TAG) == tags.isEmpty()) throw new IllegalArgumentException("Only TAG rules require nonempty recipe tags");
     }
 
     /** Compares non-null complete keys under this rule; quantities must be checked separately by the caller. */

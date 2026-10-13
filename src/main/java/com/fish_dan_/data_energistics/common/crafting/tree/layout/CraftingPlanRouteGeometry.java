@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGr
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.PlacedNode;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.Point;
 import com.fish_dan_.data_energistics.common.crafting.tree.layout.CraftingPlanGraphLayout.RoutedEdge;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import it.unimi.dsi.fastutil.doubles.Double2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.AbstractIntList;
@@ -21,23 +22,23 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
 /** Shared directed geometry built once by the layout worker, not by render frames or export tiles. */
-public record CraftingPlanRouteGeometry(List<Segment> segments, List<Run> runs, IntSet terminalSegments,
-                                        List<CraftingPlanRouteCrossing> crossings) {
+public record CraftingPlanRouteGeometry(ObjectList<Segment> segments, ObjectList<Run> runs, IntSet terminalSegments,
+                                        ObjectList<CraftingPlanRouteCrossing> crossings) {
 
-    public static final CraftingPlanRouteGeometry EMPTY = new CraftingPlanRouteGeometry(List.of(), List.of(), IntSets.emptySet(), List.of());
+    public static final CraftingPlanRouteGeometry EMPTY = new CraftingPlanRouteGeometry(ObjectList.of(), ObjectList.of(), IntSets.emptySet(), ObjectList.of());
 
     public CraftingPlanRouteGeometry {
-        segments = List.copyOf(segments);
-        runs = List.copyOf(runs);
+        segments = FastUtilCollections.immutableList(segments);
+        runs = FastUtilCollections.immutableList(runs);
         terminalSegments = IntSets.unmodifiable(terminalSegments);
-        crossings = List.copyOf(crossings);
+        crossings = FastUtilCollections.immutableList(crossings);
     }
 
     /** Endpoints follow demand-route traversal; material arrows run from {@code to} toward {@code from}. */
@@ -80,15 +81,15 @@ public record CraftingPlanRouteGeometry(List<Segment> segments, List<Run> runs, 
     }
 
     /** Temporary route owned by the worker; its point list is discarded after shared geometry is published. */
-    record Path(int source, int target, List<Point> points, boolean cyclic, IntList originalEdgeIds,
+    record Path(int source, int target, ObjectList<Point> points, boolean cyclic, IntList originalEdgeIds,
                 CraftingPlanRouteGroup group) {}
 
-    static Layout assemble(List<PlacedNode> nodes, List<Path> paths, Bounds bounds) {
+    static Layout assemble(ObjectList<PlacedNode> nodes, ObjectList<Path> paths, Bounds bounds) {
         var lines = new Object2ObjectLinkedOpenHashMap<LineKey, Sweep>();
-        List<List<Use>> routeUses = new ObjectArrayList<>(paths.size());
+        ObjectList<ObjectList<Use>> routeUses = new ObjectArrayList<>(paths.size());
         for (int routeId = 0; routeId < paths.size(); routeId++) {
             Path path = paths.get(routeId);
-            List<Use> uses = new ObjectArrayList<>();
+            ObjectList<Use> uses = new ObjectArrayList<>();
             routeUses.add(uses);
             for (int point = 1; point < path.points().size(); point++) {
                 Point from = path.points().get(point - 1);
@@ -105,23 +106,23 @@ public record CraftingPlanRouteGeometry(List<Segment> segments, List<Run> runs, 
                 sweep.add(use, Math.min(start, end), Math.max(start, end));
             }
         }
-        List<Segment> segments = new ObjectArrayList<>();
-        List<Run> runs = new ObjectArrayList<>();
+        ObjectList<Segment> segments = new ObjectArrayList<>();
+        ObjectList<Run> runs = new ObjectArrayList<>();
         for (Sweep sweep : lines.values()) sweep.finish(segments, runs);
-        List<RoutedEdge> routes = new ObjectArrayList<>(paths.size());
+        ObjectList<RoutedEdge> routes = new ObjectArrayList<>(paths.size());
         IntSet terminals = new IntAVLTreeSet();
         for (int routeId = 0; routeId < paths.size(); routeId++) {
             Path path = paths.get(routeId);
-            List<SegmentRange> ranges = new ObjectArrayList<>(routeUses.get(routeId).size());
+            ObjectList<SegmentRange> ranges = new ObjectArrayList<>(routeUses.get(routeId).size());
             for (Use use : routeUses.get(routeId)) {
                 ranges.add(new SegmentRange(use.firstSegment, use.endSegment, use.forward));
             }
             if (path.group().materialFlow() && !ranges.isEmpty()) terminals.add(ranges.getFirst().getInt(0));
             routes.add(new RoutedEdge(path.source(), path.target(), path.cyclic(), path.originalEdgeIds(),
-                    path.group(), List.copyOf(ranges)));
+                    path.group(), FastUtilCollections.immutableList(ranges)));
         }
         return new Layout(nodes, routes, bounds, new CraftingPlanRouteGeometry(segments, runs, terminals,
-                CraftingPlanRouteCrossing.find(nodes, routes, segments, runs)), List.of());
+                CraftingPlanRouteCrossing.find(nodes, routes, segments, runs)), ObjectList.of());
     }
 
     private static double normalize(double coordinate) {
@@ -158,7 +159,7 @@ public record CraftingPlanRouteGeometry(List<Segment> segments, List<Run> runs, 
     private static final class Sweep {
 
         private final LineKey key;
-        private final List<Use> uses = new ObjectArrayList<>();
+        private final ObjectList<Use> uses = new ObjectArrayList<>();
         private final Double2ObjectAVLTreeMap<Event> events = new Double2ObjectAVLTreeMap<>();
 
         private Sweep(LineKey key) {
@@ -172,7 +173,7 @@ public record CraftingPlanRouteGeometry(List<Segment> segments, List<Run> runs, 
             events.computeIfAbsent(end, unused -> new Event()).removed.add(id);
         }
 
-        private void finish(List<Segment> segments, List<Run> runs) {
+        private void finish(ObjectList<Segment> segments, ObjectList<Run> runs) {
             int active = 0;
             int runStart = segments.size();
             RangeMembership memberships = new RangeMembership(runStart, events.size() - 1);
@@ -212,7 +213,7 @@ public record CraftingPlanRouteGeometry(List<Segment> segments, List<Run> runs, 
             memberships.add(start, end, route);
         }
 
-        private void finishRun(List<Segment> segments, List<Run> runs, int start) {
+        private void finishRun(ObjectList<Segment> segments, ObjectList<Run> runs, int start) {
             IntList ids = new SegmentRange(start, segments.size(), key.forward());
             runs.add(new Run(segments.get(ids.getInt(0)).from(), segments.get(ids.getInt(ids.size() - 1)).to(),
                     key.group(), ids));

@@ -5,9 +5,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Builds an exact logarithmic schedule for repeated executions of one known productive cycle.
@@ -30,9 +31,9 @@ public interface TrinityDeterministicRepeatScheduler {
      * @return aggregate executable schedule without per-firing expansion
      */
     TrinityAlgorithmResult<TrinityCompressedSchedule> schedule(
-                                                               List<TrinityVariantFiring> oneCycleOrder,
+                                                               ObjectList<TrinityVariantFiring> oneCycleOrder,
                                                                BigInteger repetitions,
-                                                               Map<AEKey, BigInteger> initialBalances,
+                                                               Object2ObjectMap<AEKey, BigInteger> initialBalances,
                                                                int maxStates,
                                                                TrinityPlanningControl control);
 }

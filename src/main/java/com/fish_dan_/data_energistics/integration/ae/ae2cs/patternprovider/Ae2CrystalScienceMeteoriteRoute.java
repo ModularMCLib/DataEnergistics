@@ -52,11 +52,6 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
     private static final String NBT_CRAFTED_CONTENTS = "adaptive_crafted_contents";
 
     @Override
-    public String legacyStateKey() {
-        return NBT_CRAFTED_CONTENTS;
-    }
-
-    @Override
     public boolean usesSpecialBatchRoute(IPatternDetails patternDetails) {
         return true;
     }
@@ -187,7 +182,7 @@ public final class Ae2CrystalScienceMeteoriteRoute implements AdaptivePatternPro
         state.craftedContents.putAll(next);
     }
 
-    /** Writes the route's buffered output state using the legacy compatible keys. */
+    /** Writes the route's buffered output state using the current keys. */
     @Override
     public void writeState(
                            AdaptivePatternProviderDispatchTarget target,

@@ -14,10 +14,11 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,17 +80,17 @@ public final class ReusableInputSession {
     }
 
     /** Immutable idempotency payload. Materials must equal exact per-operation consumption times operations. */
-    public record Append(long sequence, long operations, List<SlotInput> consumedPerOperation,
-                         List<GenericStack> deliveredMaterials, List<ToolDelivery> deliveredTools,
+    public record Append(long sequence, long operations, ObjectList<SlotInput> consumedPerOperation,
+                         ObjectList<GenericStack> deliveredMaterials, ObjectList<ToolDelivery> deliveredTools,
                          Int2ObjectMap<AEItemKey> operationStates) {
 
         public Append {
             if (sequence < 0 || operations <= 0) {
                 throw new IllegalArgumentException("Invalid append sequence or operation count");
             }
-            consumedPerOperation = List.copyOf(consumedPerOperation);
+            consumedPerOperation = new ObjectImmutableList<>(consumedPerOperation);
             deliveredMaterials = SessionAssets.checked(deliveredMaterials);
-            deliveredTools = List.copyOf(deliveredTools);
+            deliveredTools = new ObjectImmutableList<>(deliveredTools);
             operationStates = Int2ObjectMaps.unmodifiable(new Int2ObjectLinkedOpenHashMap<>(operationStates));
             for (int slot : operationStates.keySet()) {
                 if (slot < 0) {
@@ -110,19 +111,19 @@ public final class ReusableInputSession {
     }
 
     /** Native batch escrow. Consumed amounts cover count uses; tools are the one actual simultaneously held set. */
-    public record Operation(long id, long appendSequence, long count, List<SlotInput> consumed, List<ToolDelivery> tools) {
+    public record Operation(long id, long appendSequence, long count, ObjectList<SlotInput> consumed, ObjectList<ToolDelivery> tools) {
 
         public Operation {
             if (id < 0 || appendSequence < 0 || count <= 0) {
                 throw new IllegalArgumentException("Invalid operation identity");
             }
-            consumed = List.copyOf(consumed);
-            tools = List.copyOf(tools);
+            consumed = new ObjectImmutableList<>(consumed);
+            tools = new ObjectImmutableList<>(tools);
         }
     }
 
     /** Actual retained tool assets and transition outputs from one native slot, including unexpected states. */
-    public record ToolOutcome(int slot, List<GenericStack> successors, List<GenericStack> byproducts) {
+    public record ToolOutcome(int slot, ObjectList<GenericStack> successors, ObjectList<GenericStack> byproducts) {
 
         public ToolOutcome {
             if (slot < 0) {
@@ -139,7 +140,7 @@ public final class ReusableInputSession {
     }
 
     /** One durable, CPU-directed refund with an exact idempotent acknowledgment payload. */
-    public record ReturnBatch(long sequence, List<GenericStack> assets) {
+    public record ReturnBatch(long sequence, ObjectList<GenericStack> assets) {
 
         public ReturnBatch {
             if (sequence < 0) {
@@ -153,7 +154,7 @@ public final class ReusableInputSession {
     }
 
     /** Per-append progress and actual unconsumed material escrow, retained after completion for replay checks. */
-    public record AppendSnapshot(Append request, long completed, long cancelled, List<GenericStack> remainingMaterials) {
+    public record AppendSnapshot(Append request, long completed, long cancelled, ObjectList<GenericStack> remainingMaterials) {
 
         public AppendSnapshot {
             remainingMaterials = SessionAssets.checked(remainingMaterials);
@@ -164,20 +165,20 @@ public final class ReusableInputSession {
     }
 
     /** Complete serializable state; snapshots contain immutable asset lists and frozen contracts. */
-    public record Snapshot(Identity identity, List<SlotContract> contracts, State state,
-                           List<AppendSnapshot> appends, List<ToolDelivery> tools, @Nullable Operation active,
-                           List<GenericStack> outputs, List<ReturnBatch> returns, List<ReturnBatch> acknowledged,
-                           List<ToolDelivery> machineOwnedReleased, long nextOperation, long nextReturn,
+    public record Snapshot(Identity identity, ObjectList<SlotContract> contracts, State state,
+                           ObjectList<AppendSnapshot> appends, ObjectList<ToolDelivery> tools, @Nullable Operation active,
+                           ObjectList<GenericStack> outputs, ObjectList<ReturnBatch> returns, ObjectList<ReturnBatch> acknowledged,
+                           ObjectList<ToolDelivery> machineOwnedReleased, long nextOperation, long nextReturn,
                            long idleSince, long yieldRequestedAt, long exhaustedTools, String fault) {
 
         public Snapshot {
-            contracts = List.copyOf(contracts);
-            appends = List.copyOf(appends);
-            tools = List.copyOf(tools);
+            contracts = new ObjectImmutableList<>(contracts);
+            appends = new ObjectImmutableList<>(appends);
+            tools = new ObjectImmutableList<>(tools);
             outputs = SessionAssets.checked(outputs);
-            returns = List.copyOf(returns);
-            acknowledged = List.copyOf(acknowledged);
-            machineOwnedReleased = List.copyOf(machineOwnedReleased);
+            returns = new ObjectImmutableList<>(returns);
+            acknowledged = new ObjectImmutableList<>(acknowledged);
+            machineOwnedReleased = new ObjectImmutableList<>(machineOwnedReleased);
             if (nextOperation < 0 || nextReturn < 0 || idleSince < -1 || yieldRequestedAt < -1 || exhaustedTools < 0) {
                 throw new IllegalArgumentException("Invalid session counters");
             }
@@ -188,12 +189,12 @@ public final class ReusableInputSession {
     private final Int2ObjectLinkedOpenHashMap<SlotContract> contracts = new Int2ObjectLinkedOpenHashMap<>();
     private final Long2ObjectLinkedOpenHashMap<AppendSnapshot> appends = new Long2ObjectLinkedOpenHashMap<>();
     private final LongArrayFIFOQueue pendingAppends = new LongArrayFIFOQueue();
-    private final Int2ObjectLinkedOpenHashMap<List<GenericStack>> tools = new Int2ObjectLinkedOpenHashMap<>();
+    private final Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> tools = new Int2ObjectLinkedOpenHashMap<>();
     private final Int2ObjectLinkedOpenHashMap<Object2LongLinkedOpenHashMap<AEItemKey>> stateReservations = new Int2ObjectLinkedOpenHashMap<>();
     private final Long2ObjectLinkedOpenHashMap<ReturnBatch> returns = new Long2ObjectLinkedOpenHashMap<>();
     private final Long2ObjectLinkedOpenHashMap<ReturnBatch> acknowledged = new Long2ObjectLinkedOpenHashMap<>();
-    private List<GenericStack> outputs = List.of();
-    private List<ToolDelivery> machineOwnedReleased = List.of();
+    private ObjectList<GenericStack> outputs = ObjectList.of();
+    private ObjectList<ToolDelivery> machineOwnedReleased = ObjectList.of();
     private @Nullable Operation active;
     private State state = State.OPEN;
     private long nextOperation;
@@ -207,7 +208,7 @@ public final class ReusableInputSession {
     private long cancelledCount;
     private String fault = "";
 
-    public ReusableInputSession(Identity identity, List<SlotContract> slotContracts) {
+    public ReusableInputSession(Identity identity, ObjectList<SlotContract> slotContracts) {
         this.identity = identity;
         if (slotContracts.isEmpty()) {
             throw new IllegalArgumentException("A reusable session needs at least one reusable slot");
@@ -216,7 +217,7 @@ public final class ReusableInputSession {
             if (contracts.putIfAbsent(contract.slot(), contract) != null) {
                 throw new IllegalArgumentException("Duplicate reusable slot contract");
             }
-            tools.put(contract.slot(), List.of());
+            tools.put(contract.slot(), ObjectList.of());
             stateReservations.put(contract.slot(), new Object2LongLinkedOpenHashMap<>());
         }
     }
@@ -241,11 +242,11 @@ public final class ReusableInputSession {
         return active;
     }
 
-    public List<SlotContract> slotContracts() {
-        return List.copyOf(contracts.values());
+    public ObjectList<SlotContract> slotContracts() {
+        return new ObjectImmutableList<>(new ObjectArrayList<>(contracts.values()));
     }
 
-    public Int2ObjectMap<List<GenericStack>> heldTools() {
+    public Int2ObjectMap<ObjectList<GenericStack>> heldTools() {
         return Int2ObjectMaps.unmodifiable(new Int2ObjectLinkedOpenHashMap<>(tools));
     }
 
@@ -259,11 +260,11 @@ public final class ReusableInputSession {
         return reservations == null ? 0L : reservations.getLong(state);
     }
 
-    public List<ReturnBatch> returnOutbox() {
-        return List.copyOf(returns.values());
+    public ObjectList<ReturnBatch> returnOutbox() {
+        return new ObjectImmutableList<>(new ObjectArrayList<>(returns.values()));
     }
 
-    public List<GenericStack> pendingOutputs() {
+    public ObjectList<GenericStack> pendingOutputs() {
         return outputs;
     }
 
@@ -288,7 +289,7 @@ public final class ReusableInputSession {
         prepareAppendTools(request);
     }
 
-    private @Nullable Int2ObjectLinkedOpenHashMap<List<GenericStack>> prepareAppendTools(Append request) {
+    private @Nullable Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> prepareAppendTools(Append request) {
         if (isReplay(request)) {
             return null;
         }
@@ -301,11 +302,11 @@ public final class ReusableInputSession {
         validateOperationStates(request);
         long totalAccepted = Math.addExact(accepted(), request.operations());
         long reserved = totalAccepted - completed() - cancelled();
-        Int2ObjectLinkedOpenHashMap<List<GenericStack>> candidate = new Int2ObjectLinkedOpenHashMap<>(tools);
+        Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> candidate = new Int2ObjectLinkedOpenHashMap<>(tools);
         for (ToolDelivery delivery : request.deliveredTools()) {
             SlotContract contract = requireContract(delivery.slot());
             contract.rule().guaranteedUses((AEItemKey) delivery.stack().what());
-            candidate.put(delivery.slot(), SessionAssets.merge(candidate.get(delivery.slot()), List.of(delivery.stack())));
+            candidate.put(delivery.slot(), SessionAssets.merge(candidate.get(delivery.slot()), ObjectList.of(delivery.stack())));
         }
         for (SlotContract contract : contracts.values()) {
             AEItemKey exact = request.operationStates().get(contract.slot());
@@ -347,10 +348,10 @@ public final class ReusableInputSession {
         }
         AppendSnapshot append = appends.get(pendingAppends.firstLong());
         long count = Math.min(maximum, append.request().operations() - append.completed() - append.cancelled());
-        List<ToolDelivery> selected = new ObjectArrayList<>();
-        Int2ObjectLinkedOpenHashMap<List<GenericStack>> retained = new Int2ObjectLinkedOpenHashMap<>(tools);
+        ObjectArrayList<ToolDelivery> selected = new ObjectArrayList<>();
+        Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> retained = new Int2ObjectLinkedOpenHashMap<>(tools);
         for (SlotContract contract : contracts.values()) {
-            List<GenericStack> available = new ObjectArrayList<>(tools.get(contract.slot()));
+            ObjectArrayList<GenericStack> available = new ObjectArrayList<>(tools.get(contract.slot()));
             AEItemKey exact = append.request().operationStates().get(contract.slot());
             if (exact != null) {
                 available.removeIf(stack -> !exact.equals(stack.what()));
@@ -359,7 +360,7 @@ public final class ReusableInputSession {
                 available.sort(Comparator.comparingLong((GenericStack stack) -> contract.rule().guaranteedUses((AEItemKey) stack.what())).reversed());
             }
             long needed = contract.heldAmount();
-            List<GenericStack> taken = new ObjectArrayList<>();
+            ObjectArrayList<GenericStack> taken = new ObjectArrayList<>();
             for (GenericStack stack : available) {
                 long amount = Math.min(needed, stack.amount());
                 if (amount > 0) {
@@ -379,8 +380,8 @@ public final class ReusableInputSession {
             retained.put(contract.slot(), SessionAssets.subtract(tools.get(contract.slot()), taken));
         }
         long followingId = Math.incrementExact(nextOperation);
-        List<SlotInput> consumed = scaledInputs(append.request().consumedPerOperation(), count);
-        List<GenericStack> remaining = SessionAssets.subtract(append.remainingMaterials(), materials(consumed));
+        ObjectList<SlotInput> consumed = scaledInputs(append.request().consumedPerOperation(), count);
+        ObjectList<GenericStack> remaining = SessionAssets.subtract(append.remainingMaterials(), materials(consumed));
         Operation operation = new Operation(nextOperation, append.request().sequence(), count, consumed, selected);
         // Verify deterministic byproduct arithmetic before any native execution is allowed to occur.
         predictedOutcomes(operation);
@@ -392,27 +393,27 @@ public final class ReusableInputSession {
     }
 
     /** Pure prediction for adapters/tests. Native executors must compare this with actual captured remainder assets. */
-    public List<ToolOutcome> predictedOutcomes(Operation operation) {
-        Int2ObjectLinkedOpenHashMap<List<GenericStack>> successors = new Int2ObjectLinkedOpenHashMap<>();
-        Int2ObjectLinkedOpenHashMap<List<GenericStack>> byproducts = new Int2ObjectLinkedOpenHashMap<>();
+    public ObjectList<ToolOutcome> predictedOutcomes(Operation operation) {
+        Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> successors = new Int2ObjectLinkedOpenHashMap<>();
+        Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> byproducts = new Int2ObjectLinkedOpenHashMap<>();
         for (SlotContract contract : contracts.values()) {
-            successors.put(contract.slot(), List.of());
-            byproducts.put(contract.slot(), List.of());
+            successors.put(contract.slot(), ObjectList.of());
+            byproducts.put(contract.slot(), ObjectList.of());
         }
         for (ToolDelivery delivery : operation.tools()) {
             ReusableInputRule.Result result = requireContract(delivery.slot()).rule().advance((AEItemKey) delivery.stack().what(), operation.count());
             if (result.successor() != null) {
                 successors.put(delivery.slot(), SessionAssets.merge(successors.get(delivery.slot()),
-                        List.of(new GenericStack(result.successor(), delivery.stack().amount()))));
+                        ObjectList.of(new GenericStack(result.successor(), delivery.stack().amount()))));
             }
             byproducts.put(delivery.slot(), SessionAssets.merge(byproducts.get(delivery.slot()),
                     SessionAssets.multiply(result.byproductsFast(), delivery.stack().amount())));
         }
-        List<ToolOutcome> result = new ObjectArrayList<>();
+        ObjectArrayList<ToolOutcome> result = new ObjectArrayList<>();
         for (int slot : contracts.keySet()) {
             result.add(new ToolOutcome(slot, successors.get(slot), byproducts.get(slot)));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     /**
@@ -420,19 +421,19 @@ public final class ReusableInputSession {
      * faults; pre-execution tools are never reconstructed. Invalid report structure leaves execution escrow
      * unresolved so the caller can supply a complete corrected report without losing physical assets.
      */
-    public boolean completeOperation(long operationId, List<ToolOutcome> actual, List<GenericStack> ordinaryOutputs) {
+    public boolean completeOperation(long operationId, ObjectList<ToolOutcome> actual, ObjectList<GenericStack> ordinaryOutputs) {
         return finishOperation(operationId, actual, ordinaryOutputs, "");
     }
 
     /** Reports captured physical assets after a native exception and closes further admission. */
-    public void faultOperation(long operationId, List<ToolOutcome> actual, List<GenericStack> ordinaryOutputs, String reason) {
+    public void faultOperation(long operationId, ObjectList<ToolOutcome> actual, ObjectList<GenericStack> ordinaryOutputs, String reason) {
         if (reason.isBlank()) {
             throw new IllegalArgumentException("Native failure needs diagnostic context");
         }
         finishOperation(operationId, actual, ordinaryOutputs, reason);
     }
 
-    private boolean finishOperation(long operationId, List<ToolOutcome> actual, List<GenericStack> ordinaryOutputs, String reason) {
+    private boolean finishOperation(long operationId, ObjectList<ToolOutcome> actual, ObjectList<GenericStack> ordinaryOutputs, String reason) {
         ordinaryOutputs = SessionAssets.checked(ordinaryOutputs);
         Operation operation = requireActive(operationId);
         Int2ObjectLinkedOpenHashMap<ToolOutcome> outcomes = new Int2ObjectLinkedOpenHashMap<>();
@@ -444,11 +445,11 @@ public final class ReusableInputSession {
         if (!outcomes.keySet().equals(contracts.keySet())) {
             throw new IllegalArgumentException("Native result must account for every reusable slot");
         }
-        List<ToolOutcome> predicted = predictedOutcomes(operation);
+        ObjectList<ToolOutcome> predicted = predictedOutcomes(operation);
         boolean matches = true;
         long exhausted = 0;
-        List<GenericStack> newOutputs = SessionAssets.merge(outputs, ordinaryOutputs);
-        Int2ObjectLinkedOpenHashMap<List<GenericStack>> newTools = new Int2ObjectLinkedOpenHashMap<>(tools);
+        ObjectList<GenericStack> newOutputs = SessionAssets.merge(outputs, ordinaryOutputs);
+        Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> newTools = new Int2ObjectLinkedOpenHashMap<>(tools);
         for (ToolOutcome expected : predicted) {
             ToolOutcome outcome = outcomes.get(expected.slot());
             matches &= SessionAssets.counts(expected.successors()).equals(SessionAssets.counts(outcome.successors())) &&
@@ -485,10 +486,10 @@ public final class ReusableInputSession {
     public void abortOperation(long operationId) {
         Operation operation = requireActive(operationId);
         AppendSnapshot append = appends.get(operation.appendSequence());
-        List<GenericStack> restoredMaterials = SessionAssets.merge(append.remainingMaterials(), materials(operation.consumed()));
-        Int2ObjectLinkedOpenHashMap<List<GenericStack>> restoredTools = new Int2ObjectLinkedOpenHashMap<>(tools);
+        ObjectList<GenericStack> restoredMaterials = SessionAssets.merge(append.remainingMaterials(), materials(operation.consumed()));
+        Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> restoredTools = new Int2ObjectLinkedOpenHashMap<>(tools);
         for (ToolDelivery delivery : operation.tools()) {
-            restoredTools.put(delivery.slot(), SessionAssets.merge(restoredTools.get(delivery.slot()), List.of(delivery.stack())));
+            restoredTools.put(delivery.slot(), SessionAssets.merge(restoredTools.get(delivery.slot()), ObjectList.of(delivery.stack())));
         }
         tools.putAll(restoredTools);
         appends.put(operation.appendSequence(), new AppendSnapshot(append.request(), append.completed(), append.cancelled(), restoredMaterials));
@@ -514,14 +515,14 @@ public final class ReusableInputSession {
     }
 
     private void settleClose() {
-        List<GenericStack> refund = List.of();
+        ObjectList<GenericStack> refund = ObjectList.of();
         Long2ObjectLinkedOpenHashMap<AppendSnapshot> cancelledAppends = new Long2ObjectLinkedOpenHashMap<>();
         for (AppendSnapshot append : appends.values()) {
             refund = SessionAssets.merge(refund, append.remainingMaterials());
             cancelledAppends.put(append.request().sequence(), new AppendSnapshot(append.request(), append.completed(),
-                    append.request().operations() - append.completed(), List.of()));
+                    append.request().operations() - append.completed(), ObjectList.of()));
         }
-        List<ToolDelivery> released = new ObjectArrayList<>(machineOwnedReleased);
+        ObjectArrayList<ToolDelivery> released = new ObjectArrayList<>(machineOwnedReleased);
         for (SlotContract contract : contracts.values()) {
             if (contract.ownership() == Ownership.CPU_SUPPLIED) {
                 refund = SessionAssets.merge(refund, tools.get(contract.slot()));
@@ -540,13 +541,13 @@ public final class ReusableInputSession {
         cancelledCount = acceptedCount - completedCount;
         pendingAppends.clear();
         stateReservations.values().forEach(Object2LongLinkedOpenHashMap::clear);
-        tools.replaceAll((slot, ignored) -> List.of());
-        machineOwnedReleased = List.copyOf(released);
+        tools.replaceAll((slot, ignored) -> ObjectList.of());
+        machineOwnedReleased = new ObjectImmutableList<>(released);
         state = returns.isEmpty() ? State.CLOSED : State.RETURN_PENDING;
     }
 
     /** Exact full-batch acknowledgment; duplicate matching acknowledgments are harmless, unknown IDs fail. */
-    public boolean acknowledgeReturn(long sequence, List<GenericStack> exactAssets) {
+    public boolean acknowledgeReturn(long sequence, ObjectList<GenericStack> exactAssets) {
         exactAssets = SessionAssets.checked(exactAssets);
         ReturnBatch batch = returns.get(sequence);
         if (batch == null) {
@@ -567,16 +568,16 @@ public final class ReusableInputSession {
     }
 
     /** Atomically transfers ordinary outputs and transition byproducts to the caller's output queue. */
-    public List<GenericStack> drainOutputs() {
-        List<GenericStack> result = outputs;
-        outputs = List.of();
+    public ObjectList<GenericStack> drainOutputs() {
+        ObjectList<GenericStack> result = outputs;
+        outputs = ObjectList.of();
         return result;
     }
 
     /** Transfers machine-owned survivors to the machine inventory, never to the CPU refund stream. */
-    public List<ToolDelivery> drainMachineOwnedReleased() {
-        List<ToolDelivery> result = machineOwnedReleased;
-        machineOwnedReleased = List.of();
+    public ObjectList<ToolDelivery> drainMachineOwnedReleased() {
+        ObjectList<ToolDelivery> result = machineOwnedReleased;
+        machineOwnedReleased = ObjectList.of();
         return result;
     }
 
@@ -615,8 +616,8 @@ public final class ReusableInputSession {
     }
 
     public Snapshot snapshot() {
-        return new Snapshot(identity, slotContracts(), state, List.copyOf(appends.values()), deliveries(tools), active,
-                outputs, returnOutbox(), List.copyOf(acknowledged.values()), machineOwnedReleased,
+        return new Snapshot(identity, slotContracts(), state, new ObjectImmutableList<>(new ObjectArrayList<>(appends.values())), deliveries(tools), active,
+                outputs, returnOutbox(), new ObjectImmutableList<>(new ObjectArrayList<>(acknowledged.values())), machineOwnedReleased,
                 nextOperation, nextReturn, idleSince, yieldRequestedAt, exhaustedTools, fault);
     }
 
@@ -656,7 +657,7 @@ public final class ReusableInputSession {
         }
         for (ToolDelivery tool : snapshot.tools()) {
             result.requireContract(tool.slot());
-            result.tools.put(tool.slot(), SessionAssets.merge(result.tools.get(tool.slot()), List.of(tool.stack())));
+            result.tools.put(tool.slot(), SessionAssets.merge(result.tools.get(tool.slot()), ObjectList.of(tool.stack())));
         }
         for (ReturnBatch batch : snapshot.returns()) {
             if (batch.sequence() >= snapshot.nextReturn() || result.returns.containsKey(batch.sequence())) {
@@ -733,9 +734,9 @@ public final class ReusableInputSession {
             if (active.id() >= nextOperation || !active.consumed().equals(scaledInputs(append.request().consumedPerOperation(), active.count()))) {
                 throw new IllegalArgumentException("Persisted execution escrow has no matching append");
             }
-            Int2ObjectLinkedOpenHashMap<List<GenericStack>> activeTools = new Int2ObjectLinkedOpenHashMap<>();
+            Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> activeTools = new Int2ObjectLinkedOpenHashMap<>();
             for (SlotContract contract : contracts.values()) {
-                activeTools.put(contract.slot(), List.of());
+                activeTools.put(contract.slot(), ObjectList.of());
             }
             for (ToolDelivery tool : active.tools()) {
                 if (requireContract(tool.slot()).rule().guaranteedUses((AEItemKey) tool.stack().what()) < active.count()) {
@@ -746,7 +747,7 @@ public final class ReusableInputSession {
                         requireContract(tool.slot()).rule().kind() != ReusableInputRule.Kind.UNCHANGED)) {
                     throw new IllegalArgumentException("Persisted execution tool does not match its exact append state");
                 }
-                activeTools.put(tool.slot(), SessionAssets.merge(activeTools.get(tool.slot()), List.of(tool.stack())));
+                activeTools.put(tool.slot(), SessionAssets.merge(activeTools.get(tool.slot()), ObjectList.of(tool.stack())));
             }
             for (SlotContract contract : contracts.values()) {
                 if (activeTools.get(contract.slot()).stream().mapToLong(GenericStack::amount).reduce(0, Math::addExact) != contract.heldAmount()) {
@@ -788,7 +789,7 @@ public final class ReusableInputSession {
         }
     }
 
-    private boolean canRunExact(SlotContract contract, List<GenericStack> available, @Nullable AEItemKey extraState, long extraUses) {
+    private boolean canRunExact(SlotContract contract, ObjectList<GenericStack> available, @Nullable AEItemKey extraState, long extraUses) {
         var requested = new Object2LongLinkedOpenHashMap<>(stateReservations.get(contract.slot()));
         if (extraState != null) {
             requested.put(extraState, Math.addExact(requested.getLong(extraState), extraUses));
@@ -804,7 +805,7 @@ public final class ReusableInputSession {
         return true;
     }
 
-    private static boolean canRun(SlotContract contract, List<GenericStack> available, long operations) {
+    private static boolean canRun(SlotContract contract, ObjectList<GenericStack> available, long operations) {
         if (operations == 0) {
             return true;
         }
@@ -847,24 +848,24 @@ public final class ReusableInputSession {
         return active;
     }
 
-    private static List<SlotInput> scaledInputs(List<SlotInput> inputs, long count) {
-        return inputs.stream().map(input -> new SlotInput(input.slot(), new GenericStack(input.stack().what(),
-                Math.multiplyExact(input.stack().amount(), count)))).toList();
+    private static ObjectList<SlotInput> scaledInputs(ObjectList<SlotInput> inputs, long count) {
+        return new ObjectImmutableList<>(new ObjectArrayList<>(inputs.stream().map(input -> new SlotInput(input.slot(), new GenericStack(input.stack().what(),
+                Math.multiplyExact(input.stack().amount(), count)))).collect(ObjectArrayList.toList())));
     }
 
-    private static void requireAcknowledgment(ReturnBatch batch, List<GenericStack> exactAssets) {
+    private static void requireAcknowledgment(ReturnBatch batch, ObjectList<GenericStack> exactAssets) {
         if (!SessionAssets.counts(batch.assets()).equals(SessionAssets.counts(exactAssets))) {
             throw new IllegalArgumentException("Return acknowledgment does not match the actual asset batch");
         }
     }
 
-    private static List<GenericStack> materials(List<SlotInput> slots) {
-        return slots.stream().map(SlotInput::stack).toList();
+    private static ObjectList<GenericStack> materials(ObjectList<SlotInput> slots) {
+        return new ObjectImmutableList<>(new ObjectArrayList<>(slots.stream().map(SlotInput::stack).collect(ObjectArrayList.toList())));
     }
 
-    private static List<ToolDelivery> deliveries(Int2ObjectLinkedOpenHashMap<List<GenericStack>> assets) {
-        List<ToolDelivery> result = new ObjectArrayList<>();
+    private static ObjectList<ToolDelivery> deliveries(Int2ObjectLinkedOpenHashMap<ObjectList<GenericStack>> assets) {
+        ObjectArrayList<ToolDelivery> result = new ObjectArrayList<>();
         assets.forEach((slot, stacks) -> stacks.forEach(stack -> result.add(new ToolDelivery(slot, stack))));
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 }

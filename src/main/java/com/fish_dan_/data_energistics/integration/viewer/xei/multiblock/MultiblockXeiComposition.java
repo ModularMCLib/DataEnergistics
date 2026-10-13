@@ -14,7 +14,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.autobuild.AutoBuildC
 import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUiFactory;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayouts;
-import com.fish_dan_.data_energistics.util.AmountFormatter;
+import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -84,7 +84,7 @@ public final class MultiblockXeiComposition implements MultiblockRecipeViewSourc
         this.ownerOutputMaterial = this.previewUi.session().recipeView().output();
         this.composition = AutoBuildComposition.builder(this.previewUi, layout.elements())
                 .geometry(layout.geometry())
-                .recipeInputs(idPrefix + MATERIAL_GRID_SUFFIX, AmountFormatter::format)
+                .recipeInputs(idPrefix + MATERIAL_GRID_SUFFIX, FormattingUtils::format)
                 .build();
         this.composition.bindStructureActions(new AutoBuildComposition.StructureActions(
                 () -> selectRelativeStructure(-1),

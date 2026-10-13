@@ -2,14 +2,14 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityCompressedSchedule;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Exact component-wide result for a unique-producer SCC whose residual dependencies are acyclic.
@@ -21,10 +21,10 @@ import java.util.Map;
  * @param schedule      executable compressed proof of the complete component plan
  */
 public record TrinityDeterministicComponentPlan(
-                                                Map<TrinityPatternVariant, BigInteger> firings,
-                                                Map<AEKey, BigInteger> minimumSeed,
-                                                Map<AEKey, BigInteger> initialInputs,
-                                                Map<AEKey, BigInteger> netChange,
+                                                Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                                Object2ObjectMap<AEKey, BigInteger> initialInputs,
+                                                Object2ObjectMap<AEKey, BigInteger> netChange,
                                                 TrinityCompressedSchedule schedule) {
 
     /**
@@ -38,7 +38,7 @@ public record TrinityDeterministicComponentPlan(
         minimumSeed = copyPositiveAmounts(minimumSeed);
         initialInputs = copyPositiveAmounts(initialInputs);
         netChange = copySignedAmounts(netChange);
-        Map<AEKey, BigInteger> copiedInitialInputs = initialInputs;
+        Object2ObjectMap<AEKey, BigInteger> copiedInitialInputs = initialInputs;
         if (!schedule.aggregateFirings().equals(firings)) {
             throw new IllegalArgumentException("A deterministic Trinity component schedule must match its firing vector");
         }
@@ -67,8 +67,8 @@ public record TrinityDeterministicComponentPlan(
         }
     }
 
-    private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
-                                                                              Map<TrinityPatternVariant, BigInteger> source) {
+    private static Object2ObjectMap<TrinityPatternVariant, BigInteger> copyPositiveFirings(
+                                                                                           Object2ObjectMap<TrinityPatternVariant, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, count) -> {
             if (count.signum() <= 0) {
@@ -76,10 +76,10 @@ public record TrinityDeterministicComponentPlan(
             }
             copied.put(variant, count);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copyPositiveAmounts(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyPositiveAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() <= 0) {
@@ -87,10 +87,10 @@ public record TrinityDeterministicComponentPlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copySignedAmounts(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectMap<AEKey, BigInteger> copySignedAmounts(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() == 0) {
@@ -98,6 +98,6 @@ public record TrinityDeterministicComponentPlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 }

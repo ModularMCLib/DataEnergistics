@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics;
 
-import com.fish_dan_.data_energistics.bootstrap.common.CommonBootstrap;
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
+import com.fish_dan_.data_energistics.bootstrap.common.CommonProxy;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RandomSource;
@@ -33,7 +33,7 @@ public class Data_Energistics {
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
 
     public Data_Energistics(IEventBus modEventBus) {
-        CommonBootstrap.init(modEventBus);
+        CommonProxy.init(modEventBus);
         String[] selectedLogPair = STARTUP_SHUTDOWN_LOG_PAIRS[RandomSource.create().nextInt(STARTUP_SHUTDOWN_LOG_PAIRS.length)];
         LOGGER.info(selectedLogPair[0]);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info(selectedLogPair[1]),
@@ -65,7 +65,7 @@ public class Data_Energistics {
         if (!isClientSide()) {
             return false;
         }
-        return DataEnergisticsClientBridgeAccess.get().isClientThread();
+        return Minecraft.getInstance().isSameThread();
     }
 
     public static boolean isClientSide() {

@@ -4,16 +4,16 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPl
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.InputShortage;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.TrinityPlanningDiagnostic.PartialPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Merges material evidence retained along one selected diagnostic route without promoting unresolved demand to an
@@ -56,10 +56,10 @@ public final class TrinityDiagnosticMaterialAccumulator {
                 shortage.missing()));
         return new PartialPlan(
                 used,
-                Map.of(),
+                FastUtilCollections.mapOf(),
                 missing,
                 requirements,
-                List.of());
+                ObjectList.of());
     }
 
     /**
@@ -107,20 +107,20 @@ public final class TrinityDiagnosticMaterialAccumulator {
                 mergeFirings(accumulated.selectedFirings(), nested.selectedFirings()));
     }
 
-    private static List<TrinityVariantFiring> mergeFirings(
-                                                           List<TrinityVariantFiring> accumulated,
-                                                           List<TrinityVariantFiring> nested) {
+    private static ObjectList<TrinityVariantFiring> mergeFirings(
+                                                                 ObjectList<TrinityVariantFiring> accumulated,
+                                                                 ObjectList<TrinityVariantFiring> nested) {
         if (accumulated.isEmpty()) return nested;
         if (nested.isEmpty()) return accumulated;
-        List<TrinityVariantFiring> merged = new ObjectArrayList<>(accumulated.size() + nested.size());
+        ObjectList<TrinityVariantFiring> merged = new ObjectArrayList<>(accumulated.size() + nested.size());
         merged.addAll(accumulated);
         merged.addAll(nested);
         return merged;
     }
 
     private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> sum(
-                                                                         Map<AEKey, BigInteger> left,
-                                                                         Map<AEKey, BigInteger> right) {
+                                                                         Object2ObjectMap<AEKey, BigInteger> left,
+                                                                         Object2ObjectMap<AEKey, BigInteger> right) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(left);
         right.forEach((key, amount) -> result.merge(key, amount, BigInteger::add));
         return result;

@@ -12,9 +12,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -25,7 +25,7 @@ final class CraftingPlanBranchPlacement {
 
     private CraftingPlanBranchPlacement() {}
 
-    static Int2DoubleMap centers(List<Block> blocks, int rootId, double gap) {
+    static Int2DoubleMap centers(ObjectList<Block> blocks, int rootId, double gap) {
         Int2ObjectMap<Block> byId = new Int2ObjectOpenHashMap<>();
         Int2ObjectMap<IntList> owned = new Int2ObjectOpenHashMap<>();
         for (Block block : blocks) {
@@ -35,7 +35,7 @@ final class CraftingPlanBranchPlacement {
         Int2IntMap order = new Int2IntOpenHashMap();
         Int2IntMap trees = new Int2IntOpenHashMap();
         visit(rootId, byId, order, trees);
-        List<Block> topological = new ObjectArrayList<>(blocks);
+        ObjectList<Block> topological = new ObjectArrayList<>(blocks);
         topological.sort(Comparator.comparingInt(Block::rank).thenComparingInt(Block::id));
         for (Block block : topological) {
             if (!order.containsKey(block.id())) visit(block.id(), byId, order, trees);
@@ -64,7 +64,7 @@ final class CraftingPlanBranchPlacement {
         for (IntList children : owned.values()) children.sort((left, right) -> Integer.compare(order.get(left), order.get(right)));
 
         Int2ObjectMap<IntList> parents = new Int2ObjectOpenHashMap<>();
-        Int2ObjectMap<List<Block>> layers = new Int2ObjectAVLTreeMap<>();
+        Int2ObjectMap<ObjectList<Block>> layers = new Int2ObjectAVLTreeMap<>();
         for (Block block : topological) {
             parents.put(block.id(), new IntArrayList());
             layers.computeIfAbsent(block.rank(), unused -> new ObjectArrayList<>()).add(block);
@@ -85,10 +85,10 @@ final class CraftingPlanBranchPlacement {
                 for (int index = children.size() - 1; index >= 0; index--) pending.push(children.getInt(index));
             }
         }
-        List<List<Block>> columns = new ObjectArrayList<>(layers.values());
-        for (List<Block> column : columns) column.sort(Comparator.comparingInt(block -> order.get(block.id())));
+        ObjectList<ObjectList<Block>> columns = new ObjectArrayList<>(layers.values());
+        for (ObjectList<Block> column : columns) column.sort(Comparator.comparingInt(block -> order.get(block.id())));
         Int2DoubleMap centers = new Int2DoubleOpenHashMap();
-        for (List<Block> column : columns) pack(column, parents, centers, gap);
+        for (ObjectList<Block> column : columns) pack(column, parents, centers, gap);
         // Anchor leaves once, then center their ancestors. Re-pulling siblings toward their common parent
         // after this pass would undo single-chain alignment and make the entire tree drift on every sweep.
         for (int index = columns.size() - 1; index >= 0; index--) pack(columns.get(index), owned, centers, gap);
@@ -96,7 +96,7 @@ final class CraftingPlanBranchPlacement {
     }
 
     /** Linear isotonic packing: the closest median positions that preserve order and non-overlap. */
-    private static void pack(List<Block> column, Int2ObjectMap<IntList> neighbours, Int2DoubleMap centers, double gap) {
+    private static void pack(ObjectList<Block> column, Int2ObjectMap<IntList> neighbours, Int2DoubleMap centers, double gap) {
         checkInterrupted();
         int count = column.size();
         double[] offsets = new double[count];

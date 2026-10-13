@@ -5,10 +5,9 @@ import appeng.helpers.patternprovider.PatternContainer;
 import net.minecraft.server.level.ServerPlayer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-
-import java.util.List;
 
 /**
  * Immutable group snapshot supplied to a menu-open adapter.
@@ -17,16 +16,7 @@ import java.util.List;
  * @param providers complete provider group selected by the terminal
  */
 public record PatternProviderMenuOpenContext(ServerPlayer player,
-                                             List<PatternContainer> providers) {
-
-    /**
-     * @deprecated scheduled for removal in plan 340; use {@link #providersFast()}
-     */
-    @Deprecated(forRemoval = true)
-    @Override
-    public List<PatternContainer> providers() {
-        return providers;
-    }
+                                             ObjectList<PatternContainer> providers) {
 
     /** Returns an immutable FastUtil view of the selected provider group. */
     public ObjectList<PatternContainer> providersFast() {
@@ -37,6 +27,6 @@ public record PatternProviderMenuOpenContext(ServerPlayer player,
      * Copies the group so an adapter cannot mutate the dispatcher-owned list.
      */
     public PatternProviderMenuOpenContext {
-        providers = List.copyOf(providers);
+        providers = new ObjectImmutableList<>(providers);
     }
 }

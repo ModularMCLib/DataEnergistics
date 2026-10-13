@@ -23,10 +23,9 @@ import net.minecraft.world.level.gameevent.BlockPositionSource;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Emits a periodic resonance wave toward one uniformly selected tuning fork in the loaded local area.
@@ -66,12 +65,12 @@ public class ResonanceCrystalBlock extends Block {
     }
 
     private static void emitWave(ServerLevel level, BlockPos sourcePos, RandomSource random) {
-        List<BlockPos> candidates = collectLoadedTuningForks(level, sourcePos);
+        LongList candidates = collectLoadedTuningForks(level, sourcePos);
         if (candidates.isEmpty()) {
             return;
         }
 
-        BlockPos targetPos = candidates.get(random.nextInt(candidates.size()));
+        BlockPos targetPos = BlockPos.of(candidates.getLong(random.nextInt(candidates.size())));
         if (!isPathClear(level, sourcePos, targetPos)) {
             return;
         }
@@ -97,8 +96,8 @@ public class ResonanceCrystalBlock extends Block {
         }
     }
 
-    private static List<BlockPos> collectLoadedTuningForks(ServerLevel level, BlockPos sourcePos) {
-        List<BlockPos> candidates = new ObjectArrayList<>();
+    private static LongList collectLoadedTuningForks(ServerLevel level, BlockPos sourcePos) {
+        LongArrayList candidates = new LongArrayList();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int x = -SEARCH_RADIUS; x <= SEARCH_RADIUS; x++) {
             for (int y = -SEARCH_RADIUS; y <= SEARCH_RADIUS; y++) {
@@ -106,7 +105,7 @@ public class ResonanceCrystalBlock extends Block {
                     cursor.setWithOffset(sourcePos, x, y, z);
                     LevelChunk chunk = getLoadedChunk(level, cursor);
                     if (chunk != null && chunk.getBlockState(cursor).getBlock() instanceof TuningForkBlock) {
-                        candidates.add(cursor.immutable());
+                        candidates.add(cursor.asLong());
                     }
                 }
             }

@@ -5,9 +5,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 
 import appeng.api.stacks.AEKey;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Exact acyclic residual needed alongside repeated firings of one primitive productive basis.
@@ -17,6 +18,6 @@ import java.util.Map;
  * @param executionOrder topological residual order
  */
 public record TrinityDeterministicResidualResult(
-                                                 Map<TrinityPatternVariant, BigInteger> firings,
-                                                 Map<AEKey, BigInteger> netChange,
-                                                 List<TrinityVariantFiring> executionOrder) {}
+                                                 Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                 Object2ObjectMap<AEKey, BigInteger> netChange,
+                                                 ObjectList<TrinityVariantFiring> executionOrder) {}

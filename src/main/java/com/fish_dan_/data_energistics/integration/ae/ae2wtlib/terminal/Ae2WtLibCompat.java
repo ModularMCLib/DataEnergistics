@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.ae.ae2wtlib.terminal;
 
-import com.fish_dan_.data_energistics.bridge.DataEnergisticsClientBridgeAccess;
 import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.ae.ae2wtlib.terminal.client.Ae2WtLibClientCompat;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -16,7 +16,6 @@ public final class Ae2WtLibCompat {
             return null;
         }
 
-        return (T) DataEnergisticsClientBridgeAccess.get()
-                .maybeReplaceWirelessPatternEncodingScreen(currentScreen, applyImmediately);
+        return (T) Ae2WtLibClientCompat.maybeReplaceWirelessPatternEncodingScreen(currentScreen, applyImmediately);
     }
 }

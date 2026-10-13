@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.orbital.reserve;
 
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 /**
  * Persistent orbital reserves for Stellar Flux and AE energy, which remain independent resources.

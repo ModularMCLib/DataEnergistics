@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider.packaged;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
+import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingCustodyCensus;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingProviderAdapter;
@@ -86,6 +87,12 @@ public final class DigitalPackagedPatternProviderLogic extends PatternProviderLo
                     access.dataEnergistics$invokeOnPushPatternSuccess(pattern);
                     onReturnInventoryChanged();
                 });
+    }
+
+    @Override
+    public @Nullable CountedCraftingAdmission prepareBatchForTarget(IPatternDetails pattern, KeyCounter[] prototype,
+                                                                    long count, CountedCraftingTarget target) {
+        return target.providerScoped() ? prepareBatch(pattern, prototype, count) : null;
     }
 
     @Override

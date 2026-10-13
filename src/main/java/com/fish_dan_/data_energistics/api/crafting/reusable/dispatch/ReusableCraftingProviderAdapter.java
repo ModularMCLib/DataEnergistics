@@ -10,36 +10,21 @@ import appeng.api.networking.security.IActionSource;
 
 import net.minecraft.server.level.ServerLevel;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Optional extension for providers that can persist, resume and close reusable-input sessions. A factory may return
- * this alongside its existing counted behavior. Legacy methods retain their original multiplication semantics.
+ * this alongside its existing counted behavior.
  * All calls occur on the logical server thread. Adapters must persist assets outside transient adapter instances.
  */
 public interface ReusableCraftingProviderAdapter extends CountedCraftingProviderAdapter {
 
-    /**
-     * @return immutable concrete targets; discovery is read-only and must not retain the live query references
-     * @deprecated scheduled for removal in plan 340; use
-     *             {@link #reusableTargetsFast(IPatternDetails, IActionSource, ServerLevel)}
-     */
-    @Deprecated(forRemoval = true)
-    default List<Target> reusableTargets(IPatternDetails pattern, IActionSource source, ServerLevel level) {
-        return List.of();
-    }
-
-    /** Returns concrete targets as an immutable FastUtil snapshot. */
-    default ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level) {
-        return ObjectLists.unmodifiable(new ObjectArrayList<>(reusableTargets(pattern, source, level)));
-    }
+    /** Returns immutable concrete targets; discovery must not retain live query references. */
+    ObjectList<Target> reusableTargetsFast(IPatternDetails pattern, IActionSource source, ServerLevel level);
 
     /** @return one read-only prepared open/append admission, or null when the exact contract cannot be accepted */
     @Nullable

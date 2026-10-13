@@ -3,15 +3,15 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Compact result of reverse demand propagation through an acyclic condensation region.
@@ -24,10 +24,10 @@ import java.util.Map;
  * @param quality        exact proof strength retained by this plan
  */
 public record TrinityAcyclicPlan(
-                                 List<TrinityVariantFiring> executionOrder,
-                                 Map<TrinityPatternVariant, BigInteger> firings,
-                                 Map<AEKey, BigInteger> externalInputs,
-                                 Map<AEKey, BigInteger> netChange,
+                                 ObjectList<TrinityVariantFiring> executionOrder,
+                                 Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                 Object2ObjectMap<AEKey, BigInteger> externalInputs,
+                                 Object2ObjectMap<AEKey, BigInteger> netChange,
                                  int statesVisited,
                                  TrinityPlanQuality quality) {
 
@@ -38,7 +38,7 @@ public record TrinityAcyclicPlan(
         if (statesVisited < 0) {
             throw new IllegalArgumentException("A Trinity acyclic plan requires complete non-negative accounting");
         }
-        executionOrder = List.copyOf(executionOrder);
+        executionOrder = FastUtilCollections.immutableList(executionOrder);
         firings = copyPositiveFirings(firings);
         externalInputs = copyAmounts(externalInputs, false);
         netChange = copyAmounts(netChange, true);
@@ -66,8 +66,8 @@ public record TrinityAcyclicPlan(
                 value);
     }
 
-    private static Map<TrinityPatternVariant, BigInteger> copyPositiveFirings(
-                                                                              Map<TrinityPatternVariant, BigInteger> source) {
+    private static Object2ObjectMap<TrinityPatternVariant, BigInteger> copyPositiveFirings(
+                                                                                           Object2ObjectMap<TrinityPatternVariant, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<TrinityPatternVariant, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((variant, count) -> {
             if (count.signum() <= 0) {
@@ -75,10 +75,10 @@ public record TrinityAcyclicPlan(
             }
             copied.put(variant, count);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 
-    private static Map<AEKey, BigInteger> copyAmounts(Map<AEKey, BigInteger> source, boolean signed) {
+    private static Object2ObjectMap<AEKey, BigInteger> copyAmounts(Object2ObjectMap<AEKey, BigInteger> source, boolean signed) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (amount.signum() == 0 || (!signed && amount.signum() < 0)) {
@@ -86,6 +86,6 @@ public record TrinityAcyclicPlan(
             }
             copied.put(key, amount);
         });
-        return Collections.unmodifiableMap(copied);
+        return FastUtilCollections.immutableMap(copied);
     }
 }

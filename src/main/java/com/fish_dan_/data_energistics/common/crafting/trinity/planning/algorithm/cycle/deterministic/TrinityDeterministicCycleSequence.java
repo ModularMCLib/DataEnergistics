@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorith
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityVariantFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.topology.TrinityStronglyConnectedComponent;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
@@ -12,17 +13,16 @@ import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Resolves the minimal exact firing ratio of a cycle that has one unambiguous producer for every internal key.
@@ -45,37 +45,37 @@ public final class TrinityDeterministicCycleSequence {
      * @param producibleInputs resources supplied by predecessor stages, not required in the internal startup stock
      * @return minimal positive integer cycle sequence, or empty when route choice remains ambiguous
      */
-    public Optional<List<TrinityVariantFiring>> resolve(
-                                                        TrinityStronglyConnectedComponent component,
-                                                        AEKey target,
-                                                        Map<AEKey, BigInteger> available,
-                                                        Set<AEKey> producibleInputs) {
+    public Optional<ObjectList<TrinityVariantFiring>> resolve(
+                                                              TrinityStronglyConnectedComponent component,
+                                                              AEKey target,
+                                                              Object2ObjectMap<AEKey, BigInteger> available,
+                                                              ObjectSet<AEKey> producibleInputs) {
         if (component == null || !component.cyclic() || target == null || available == null) {
             throw new IllegalArgumentException("A deterministic Trinity cycle sequence requires complete inputs");
         }
-        Optional<List<TrinityPatternVariant>> deterministic = deterministicVariants(component, target);
+        Optional<ObjectList<TrinityPatternVariant>> deterministic = deterministicVariants(component, target);
         if (deterministic.isEmpty()) {
             return Optional.empty();
         }
-        List<TrinityPatternVariant> variants = deterministic.orElseThrow();
-        Optional<List<BigInteger>> ratio = solveMinimalPositiveRatio(component.keys(), variants, target);
+        ObjectList<TrinityPatternVariant> variants = deterministic.orElseThrow();
+        Optional<ObjectList<BigInteger>> ratio = solveMinimalPositiveRatio(component.keys(), variants, target);
         if (ratio.isEmpty()) {
             return Optional.empty();
         }
-        Set<AEKey> startupKeys = new ObjectOpenHashSet<>(component.keys());
+        ObjectSet<AEKey> startupKeys = new ObjectOpenHashSet<>(component.keys());
         startupKeys.removeAll(producibleInputs);
         return Optional.of(orderBlocks(variants, ratio.orElseThrow(), available, startupKeys));
     }
 
-    private static Optional<List<TrinityPatternVariant>> deterministicVariants(
-                                                                               TrinityStronglyConnectedComponent component, AEKey target) {
+    private static Optional<ObjectList<TrinityPatternVariant>> deterministicVariants(
+                                                                                     TrinityStronglyConnectedComponent component, AEKey target) {
         ObjectLinkedOpenHashSet<TrinityPatternVariant> selected = new ObjectLinkedOpenHashSet<>();
-        Set<AEKey> requiredKeys = new ObjectOpenHashSet<>(component.keys());
+        ObjectSet<AEKey> requiredKeys = new ObjectOpenHashSet<>(component.keys());
         requiredKeys.add(target);
         for (AEKey key : requiredKeys) {
-            List<TrinityPatternVariant> producers = component.cycleVariants().stream()
+            ObjectList<TrinityPatternVariant> producers = component.cycleVariants().stream()
                     .filter(variant -> variant.netChange().getOrDefault(key, BigInteger.ZERO).signum() > 0)
-                    .toList();
+                    .collect(ObjectArrayList.toList());
             // A retained tool with zero effect everywhere is a startup requirement, not a producer choice.
             if (producers.isEmpty() && component.cycleVariants().stream().noneMatch(variant -> variant.netChange().containsKey(key))) {
                 continue;
@@ -88,14 +88,14 @@ public final class TrinityDeterministicCycleSequence {
         if (selected.size() != component.cycleVariants().size()) {
             return Optional.empty();
         }
-        return Optional.of(selected.stream().sorted().toList());
+        return Optional.of(selected.stream().sorted().collect(ObjectArrayList.toList()));
     }
 
-    private static Optional<List<BigInteger>> solveMinimalPositiveRatio(
-                                                                        List<AEKey> internalKeys,
-                                                                        List<TrinityPatternVariant> variants,
-                                                                        AEKey target) {
-        List<AEKey> balancedKeys = internalKeys.stream().filter(key -> !key.equals(target)).toList();
+    private static Optional<ObjectList<BigInteger>> solveMinimalPositiveRatio(
+                                                                              ObjectList<AEKey> internalKeys,
+                                                                              ObjectList<TrinityPatternVariant> variants,
+                                                                              AEKey target) {
+        ObjectList<AEKey> balancedKeys = internalKeys.stream().filter(key -> !key.equals(target)).collect(ObjectArrayList.toList());
         Rational[][] matrix = new Rational[balancedKeys.size()][variants.size()];
         for (int row = 0; row < balancedKeys.size(); row++) {
             AEKey key = balancedKeys.get(row);
@@ -142,7 +142,7 @@ public final class TrinityDeterministicCycleSequence {
         if (!isProductiveExactCycle(internalKeys, variants, integers, target)) {
             return Optional.empty();
         }
-        return Optional.of(List.copyOf(integers));
+        return Optional.of(FastUtilCollections.immutableList(integers));
     }
 
     private static RowReduction reduce(Rational[][] source, int columns) {
@@ -195,9 +195,9 @@ public final class TrinityDeterministicCycleSequence {
     }
 
     private static boolean isProductiveExactCycle(
-                                                  List<AEKey> internalKeys,
-                                                  List<TrinityPatternVariant> variants,
-                                                  List<BigInteger> ratio,
+                                                  ObjectList<AEKey> internalKeys,
+                                                  ObjectList<TrinityPatternVariant> variants,
+                                                  ObjectList<BigInteger> ratio,
                                                   AEKey target) {
         BigInteger targetGain = BigInteger.ZERO;
         for (int index = 0; index < variants.size(); index++) {
@@ -220,11 +220,11 @@ public final class TrinityDeterministicCycleSequence {
         return true;
     }
 
-    private static List<TrinityVariantFiring> orderBlocks(
-                                                          List<TrinityPatternVariant> variants,
-                                                          List<BigInteger> ratio,
-                                                          Map<AEKey, BigInteger> available,
-                                                          Set<AEKey> internalKeys) {
+    private static ObjectList<TrinityVariantFiring> orderBlocks(
+                                                                ObjectList<TrinityPatternVariant> variants,
+                                                                ObjectList<BigInteger> ratio,
+                                                                Object2ObjectMap<AEKey, BigInteger> available,
+                                                                ObjectSet<AEKey> internalKeys) {
         ObjectArrayList<TrinityVariantFiring> remaining = new ObjectArrayList<>(variants.size());
         for (int index = 0; index < variants.size(); index++) {
             remaining.add(new TrinityVariantFiring(variants.get(index), ratio.get(index)));
@@ -243,10 +243,10 @@ public final class TrinityDeterministicCycleSequence {
                     amount.multiply(selected.count()),
                     BigInteger::add));
         }
-        return List.copyOf(ordered);
+        return FastUtilCollections.immutableList(ordered);
     }
 
-    private static Map<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
+    private static Object2ObjectMap<AEKey, BigInteger> requiredAtStart(TrinityVariantFiring firing) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> required = new Object2ObjectLinkedOpenHashMap<>();
         firing.variant().inputs().forEach((key, input) -> {
             BigInteger net = firing.variant().netChange().getOrDefault(key, BigInteger.ZERO);
@@ -255,17 +255,17 @@ public final class TrinityDeterministicCycleSequence {
                     input;
             required.put(key, amount);
         });
-        return Collections.unmodifiableMap(required);
+        return FastUtilCollections.immutableMap(required);
     }
 
-    private static boolean hasInputs(Map<AEKey, BigInteger> balances, Map<AEKey, BigInteger> required, Set<AEKey> internalKeys) {
+    private static boolean hasInputs(Object2ObjectMap<AEKey, BigInteger> balances, Object2ObjectMap<AEKey, BigInteger> required, ObjectSet<AEKey> internalKeys) {
         // Boundary materials are supplied by predecessor stages; only internal resources constrain cycle order.
         return required.entrySet().stream().allMatch(entry -> !internalKeys.contains(entry.getKey()) || balances
                 .getOrDefault(entry.getKey(), BigInteger.ZERO)
                 .compareTo(entry.getValue()) >= 0);
     }
 
-    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyAvailable(Map<AEKey, BigInteger> source) {
+    private static Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copyAvailable(Object2ObjectMap<AEKey, BigInteger> source) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> copied = new Object2ObjectLinkedOpenHashMap<>();
         source.forEach((key, amount) -> {
             if (key == null || amount == null || amount.signum() < 0) {

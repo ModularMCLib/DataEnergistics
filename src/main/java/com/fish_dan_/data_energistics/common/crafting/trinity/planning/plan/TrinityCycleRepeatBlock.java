@@ -6,9 +6,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 /**
  * Compact, prefix-validated repetition of an ordered cyclic stage sequence.
@@ -23,8 +23,8 @@ public record TrinityCycleRepeatBlock(
                                       int index,
                                       IntList stageOrder,
                                       BigInteger repetitions,
-                                      Map<AEKey, BigInteger> minimumSeed,
-                                      Map<AEKey, BigInteger> netChange) {
+                                      Object2ObjectMap<AEKey, BigInteger> minimumSeed,
+                                      Object2ObjectMap<AEKey, BigInteger> netChange) {
 
     /**
      * Ensures one compact block cannot contain an invalid or repeated stage reference.

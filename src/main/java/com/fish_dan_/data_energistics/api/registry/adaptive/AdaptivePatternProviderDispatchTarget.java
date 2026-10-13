@@ -20,16 +20,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -74,22 +68,8 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Position of the host block or cable bus. */
     BlockPos providerPos();
 
-    /**
-     * Returns adjacent sides after filtering same-grid provider connections.
-     *
-     * @deprecated scheduled for removal in plan 340; use {@link #targetSidesFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default List<Direction> targetSides() {
-        return List.of();
-    }
-
-    /** Returns adjacent target sides through the FastUtil collection API. */
-    @SuppressWarnings("unchecked")
-    default ObjectList<Direction> targetSidesFast() {
-        List<Direction> legacy = targetSides();
-        return legacy instanceof ObjectList<?> fast ? (ObjectList<Direction>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
-    }
+    /** Returns adjacent sides after filtering same-grid provider connections. */
+    ObjectList<Direction> targetSidesFast();
 
     /** Notifies AE2 of a successful custom dispatch; call once after accepting its inputs. */
     void patternSuccess(IPatternDetails patternDetails);
@@ -111,22 +91,8 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Returns whether AE2 Blocking Mode currently rejects a target. */
     boolean isBlocking();
 
-    /**
-     * Returns normalized pattern input keys used by Blocking Mode.
-     *
-     * @deprecated scheduled for removal in plan 340; use {@link #patternInputsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default Set<AEKey> patternInputs() {
-        return Set.of();
-    }
-
-    /** Returns normalized pattern inputs through the FastUtil collection API. */
-    @SuppressWarnings("unchecked")
-    default ObjectSet<AEKey> patternInputsFast() {
-        Set<AEKey> legacy = patternInputs();
-        return legacy instanceof ObjectSet<?> fast ? (ObjectSet<AEKey>) fast : ObjectSets.unmodifiable(new ObjectOpenHashSet<>(legacy));
-    }
+    /** Returns normalized pattern input keys used by Blocking Mode. */
+    ObjectSet<AEKey> patternInputsFast();
 
     /** Resolves a target at an adjacent block while excluding nested providers. */
     @Nullable
@@ -157,39 +123,11 @@ public interface AdaptivePatternProviderDispatchTarget {
     /** Returns whether the optional returned-item filter is enabled. */
     boolean isFilteredImportEnabled();
 
-    /**
-     * Returns keys currently tracked by the adaptive crafting watcher.
-     *
-     * @deprecated scheduled for removal in plan 340; use {@link #trackedCraftsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default Set<AEKey> trackedCrafts() {
-        return Set.of();
-    }
+    /** Returns keys currently tracked by the adaptive crafting watcher. */
+    ObjectSet<AEKey> trackedCraftsFast();
 
-    /** Returns tracked craft keys through the FastUtil collection API. */
-    @SuppressWarnings("unchecked")
-    default ObjectSet<AEKey> trackedCraftsFast() {
-        Set<AEKey> legacy = trackedCrafts();
-        return legacy instanceof ObjectSet<?> fast ? (ObjectSet<AEKey>) fast : ObjectSets.unmodifiable(new ObjectOpenHashSet<>(legacy));
-    }
-
-    /**
-     * Returns decoded pattern outputs used by optional returned-item filters.
-     *
-     * @deprecated scheduled for removal in plan 340; use {@link #outputCacheFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default Set<AEKey> outputCache() {
-        return Set.of();
-    }
-
-    /** Returns decoded output keys through the FastUtil collection API. */
-    @SuppressWarnings("unchecked")
-    default ObjectSet<AEKey> outputCacheFast() {
-        Set<AEKey> legacy = outputCache();
-        return legacy instanceof ObjectSet<?> fast ? (ObjectSet<AEKey>) fast : ObjectSets.unmodifiable(new ObjectOpenHashSet<>(legacy));
-    }
+    /** Returns decoded pattern outputs used by optional returned-item filters. */
+    ObjectSet<AEKey> outputCacheFast();
 
     /** Returns whether one native pattern has an unoccupied reusable slot. */
     boolean hasAvailableNativeSlot(IPatternDetails patternDetails);
@@ -217,34 +155,13 @@ public interface AdaptivePatternProviderDispatchTarget {
      * zero; the result excludes physical cards that are currently disabled by the selected provider.
      * </p>
      */
-    default int installedUpgradeCount(ItemLike upgradeCard) {
-        return 0;
-    }
+    int installedUpgradeCount(ItemLike upgradeCard);
 
-    /**
-     * Returns the provider-owned connector links in stable configured order.
-     *
-     * @deprecated scheduled for removal in plan 340; use {@link #connectorBindingsFast()}
-     */
-    @Deprecated(forRemoval = true)
-    default List<ConnectorLink> connectorBindings() {
-        return List.of();
-    }
+    /** Returns the provider-owned connector links in stable configured order. */
+    ObjectList<ConnectorLink> connectorBindingsFast();
 
-    /** Returns configured connector links through the FastUtil collection API. */
-    @SuppressWarnings("unchecked")
-    default ObjectList<ConnectorLink> connectorBindingsFast() {
-        List<ConnectorLink> legacy = connectorBindings();
-        return legacy instanceof ObjectList<?> fast ? (ObjectList<ConnectorLink>) fast : ObjectLists.unmodifiable(new ObjectArrayList<>(legacy));
-    }
-
-    /**
-     * Current host connector ordering on the server thread, without side effects.
-     * Legacy registrations retain round-robin behavior until they expose a host policy.
-     */
-    default ConnectorPolicy getConnectorPolicy() {
-        return ConnectorPolicy.ROUND_ROBIN;
-    }
+    /** Current host connector ordering on the server thread, without side effects. */
+    ConnectorPolicy getConnectorPolicy();
 
     /**
      * Returns or creates state owned by the current registration.

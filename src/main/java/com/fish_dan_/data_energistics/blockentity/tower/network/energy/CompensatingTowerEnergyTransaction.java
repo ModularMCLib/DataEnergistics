@@ -16,14 +16,15 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Executes one atomic-as-possible, two-phase FE equalization transaction for a primary-grid domain.
@@ -73,9 +74,9 @@ public final class CompensatingTowerEnergyTransaction {
      * @param endpoints stable ordered endpoint topology
      * @return immutable execution result
      */
-    public TowerEnergyTransactionResult execute(List<TowerEnergyTransferEndpoint> endpoints) {
-        List<TowerEnergyTransferEndpoint> orderedEndpoints = List.copyOf(endpoints);
-        Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById = indexEndpoints(orderedEndpoints);
+    public TowerEnergyTransactionResult execute(ObjectList<TowerEnergyTransferEndpoint> endpoints) {
+        ObjectList<TowerEnergyTransferEndpoint> orderedEndpoints = new ObjectImmutableList<>(endpoints);
+        Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById = indexEndpoints(orderedEndpoints);
         ObjectArrayList<TowerEnergyEndpointSnapshot> snapshots = new ObjectArrayList<>(orderedEndpoints.size());
         ObjectArrayList<String> isolationDetails = new ObjectArrayList<>(MAX_ISOLATION_DETAILS);
         int isolatedEndpointCount = 0;
@@ -114,7 +115,7 @@ public final class CompensatingTowerEnergyTransaction {
             return new TowerEnergyTransactionResult(snapshots, 0, 0, 0, false, isolationFailure);
         }
 
-        Set<TowerEnergyTransferEndpoint> mutatedEndpoints = new ReferenceOpenHashSet<>();
+        ReferenceSet<TowerEnergyTransferEndpoint> mutatedEndpoints = new ReferenceOpenHashSet<>();
         ObjectArrayList<Extraction> extractions = new ObjectArrayList<>(plan.sources().size());
         BigInteger extractedTotal = BigInteger.ZERO;
         for (TowerEnergySourceAllocation source : plan.sources()) {
@@ -147,7 +148,7 @@ public final class CompensatingTowerEnergyTransaction {
                     combineFailures("SOURCE_NO_PROGRESS", isolationFailure));
         }
 
-        List<TowerEnergySinkAllocation> executableSinks = TowerEnergyAllocationLimiter.limitSinks(
+        ObjectList<TowerEnergySinkAllocation> executableSinks = TowerEnergyAllocationLimiter.limitSinks(
                 plan.sinks(), extractedTotal);
         long executableFe = saturatingLong(extractedTotal);
         BigInteger insertedTotal = BigInteger.ZERO;
@@ -201,8 +202,8 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Indexes stable identities and fails before any query when the topology contains a duplicate.
      */
-    private static Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> indexEndpoints(
-                                                                                          List<TowerEnergyTransferEndpoint> endpoints) {
+    private static Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> indexEndpoints(
+                                                                                                       ObjectList<TowerEnergyTransferEndpoint> endpoints) {
         Object2ObjectLinkedOpenHashMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> result = new Object2ObjectLinkedOpenHashMap<>();
         for (TowerEnergyTransferEndpoint endpoint : endpoints) {
             TowerEnergyTransferEndpoint previous = result.putIfAbsent(endpoint.endpoint(), endpoint);
@@ -218,10 +219,10 @@ public final class CompensatingTowerEnergyTransaction {
      */
     private static PreflightResult preflight(
                                              TowerEnergyEqualizationPlan plan,
-                                             Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+                                             Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         try {
-            List<TowerEnergySourceAllocation> sources = normalizeSources(plan.sources(), endpointsById);
-            List<TowerEnergySinkAllocation> sinks = normalizeSinks(plan.sinks(), endpointsById);
+            ObjectList<TowerEnergySourceAllocation> sources = normalizeSources(plan.sources(), endpointsById);
+            ObjectList<TowerEnergySinkAllocation> sinks = normalizeSinks(plan.sinks(), endpointsById);
             BigInteger sourceAmount = sumSources(sources);
             BigInteger sinkAmount = sumSinks(sinks);
             if (sourceAmount.equals(sinkAmount)) {
@@ -240,11 +241,11 @@ public final class CompensatingTowerEnergyTransaction {
      * Retains the bounded legacy reconciliation for capability implementations that expose no transfer-unit contract.
      */
     private static PreflightResult reconcileUnknownQuantums(
-                                                            List<TowerEnergySourceAllocation> initialSources,
-                                                            List<TowerEnergySinkAllocation> initialSinks,
-                                                            Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
-        List<TowerEnergySourceAllocation> sources = initialSources;
-        List<TowerEnergySinkAllocation> sinks = initialSinks;
+                                                            ObjectList<TowerEnergySourceAllocation> initialSources,
+                                                            ObjectList<TowerEnergySinkAllocation> initialSinks,
+                                                            Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+        ObjectList<TowerEnergySourceAllocation> sources = initialSources;
+        ObjectList<TowerEnergySinkAllocation> sinks = initialSinks;
         for (int pass = 0; pass < MAX_PREFLIGHT_PASSES; pass++) {
             BigInteger sourceAmount = sumSources(sources);
             BigInteger sinkAmount = sumSinks(sinks);
@@ -279,11 +280,11 @@ public final class CompensatingTowerEnergyTransaction {
      * </p>
      */
     private static PreflightResult alignKnownQuantums(
-                                                      List<TowerEnergySourceAllocation> sources,
-                                                      List<TowerEnergySinkAllocation> sinks,
-                                                      Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
-        List<SourceQuantumGroup> sourceGroups = sourceQuantumGroups(sources, endpointsById);
-        List<SinkQuantumGroup> sinkGroups = sinkQuantumGroups(sinks, endpointsById);
+                                                      ObjectList<TowerEnergySourceAllocation> sources,
+                                                      ObjectList<TowerEnergySinkAllocation> sinks,
+                                                      Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+        ObjectList<SourceQuantumGroup> sourceGroups = sourceQuantumGroups(sources, endpointsById);
+        ObjectList<SinkQuantumGroup> sinkGroups = sinkQuantumGroups(sinks, endpointsById);
         QuantumGroupTargets targets = quantumGroupTargets(sourceGroups, sinkGroups);
         BigInteger transferAmount = sumGroupTargets(targets.sourceTargets());
         BigInteger sinkAmount = sumGroupTargets(targets.sinkTargets());
@@ -294,9 +295,9 @@ public final class CompensatingTowerEnergyTransaction {
             return PreflightResult.success(TowerEnergyEqualizationPlan.empty());
         }
 
-        List<TowerEnergySourceAllocation> alignedSources = allocateSourceGroups(
+        ObjectList<TowerEnergySourceAllocation> alignedSources = allocateSourceGroups(
                 sources, sourceGroups, targets.sourceTargets());
-        List<TowerEnergySinkAllocation> alignedSinks = allocateSinkGroups(
+        ObjectList<TowerEnergySinkAllocation> alignedSinks = allocateSinkGroups(
                 sinks, sinkGroups, targets.sinkTargets());
         verifyExecutable(alignedSources, alignedSinks, endpointsById);
         return PreflightResult.success(new TowerEnergyEqualizationPlan(alignedSources, alignedSinks));
@@ -305,9 +306,9 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Normalizes every withdrawal to a request that its selected route can execute exactly.
      */
-    private static List<TowerEnergySourceAllocation> normalizeSources(
-                                                                      List<TowerEnergySourceAllocation> sources,
-                                                                      Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+    private static ObjectList<TowerEnergySourceAllocation> normalizeSources(
+                                                                            ObjectList<TowerEnergySourceAllocation> sources,
+                                                                            Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         ObjectArrayList<TowerEnergySourceAllocation> normalized = new ObjectArrayList<>(sources.size());
         for (TowerEnergySourceAllocation source : sources) {
             TowerEnergyTransferEndpoint endpoint = endpointsById.get(source.endpoint());
@@ -316,15 +317,15 @@ public final class CompensatingTowerEnergyTransaction {
                 normalized.add(new TowerEnergySourceAllocation(source.endpoint(), amount));
             }
         }
-        return List.copyOf(normalized);
+        return new ObjectImmutableList<>(normalized);
     }
 
     /**
      * Normalizes every deposit to a request that its selected route can execute exactly.
      */
-    private static List<TowerEnergySinkAllocation> normalizeSinks(
-                                                                  List<TowerEnergySinkAllocation> sinks,
-                                                                  Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+    private static ObjectList<TowerEnergySinkAllocation> normalizeSinks(
+                                                                        ObjectList<TowerEnergySinkAllocation> sinks,
+                                                                        Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         ObjectArrayList<TowerEnergySinkAllocation> normalized = new ObjectArrayList<>(sinks.size());
         for (TowerEnergySinkAllocation sink : sinks) {
             TowerEnergyTransferEndpoint endpoint = endpointsById.get(sink.endpoint());
@@ -333,16 +334,16 @@ public final class CompensatingTowerEnergyTransaction {
                 normalized.add(new TowerEnergySinkAllocation(sink.endpoint(), amount));
             }
         }
-        return List.copyOf(normalized);
+        return new ObjectImmutableList<>(normalized);
     }
 
     /**
      * Validates every operation-specific quantum and reports whether the plan contains an explicit coarse route.
      */
     private static boolean hasExplicitQuantum(
-                                              List<TowerEnergySourceAllocation> sources,
-                                              List<TowerEnergySinkAllocation> sinks,
-                                              Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+                                              ObjectList<TowerEnergySourceAllocation> sources,
+                                              ObjectList<TowerEnergySinkAllocation> sinks,
+                                              Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         boolean explicit = false;
         for (TowerEnergySourceAllocation source : sources) {
             TowerEnergyTransferEndpoint endpoint = endpointsById.get(source.endpoint());
@@ -360,9 +361,9 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Groups source allocations by their proven quantum before aggregate common-unit alignment.
      */
-    private static List<SourceQuantumGroup> sourceQuantumGroups(
-                                                                List<TowerEnergySourceAllocation> sources,
-                                                                Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+    private static ObjectList<SourceQuantumGroup> sourceQuantumGroups(
+                                                                      ObjectList<TowerEnergySourceAllocation> sources,
+                                                                      Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         Long2ObjectLinkedOpenHashMap<ObjectArrayList<TowerEnergySourceAllocation>> allocationsByQuantum = new Long2ObjectLinkedOpenHashMap<>();
         for (TowerEnergySourceAllocation source : sources) {
             TowerEnergyTransferEndpoint endpoint = endpointsById.get(source.endpoint());
@@ -374,17 +375,17 @@ public final class CompensatingTowerEnergyTransaction {
         ObjectArrayList<SourceQuantumGroup> groups = new ObjectArrayList<>(allocationsByQuantum.size());
         for (Long2ObjectMap.Entry<ObjectArrayList<TowerEnergySourceAllocation>> entry : allocationsByQuantum.long2ObjectEntrySet()) {
             groups.add(new SourceQuantumGroup(
-                    entry.getLongKey(), List.copyOf(entry.getValue()), sumSources(entry.getValue())));
+                    entry.getLongKey(), new ObjectImmutableList<>(entry.getValue()), sumSources(entry.getValue())));
         }
-        return List.copyOf(groups);
+        return new ObjectImmutableList<>(groups);
     }
 
     /**
      * Groups sink allocations by their proven quantum before aggregate common-unit alignment.
      */
-    private static List<SinkQuantumGroup> sinkQuantumGroups(
-                                                            List<TowerEnergySinkAllocation> sinks,
-                                                            Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+    private static ObjectList<SinkQuantumGroup> sinkQuantumGroups(
+                                                                  ObjectList<TowerEnergySinkAllocation> sinks,
+                                                                  Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         Long2ObjectLinkedOpenHashMap<ObjectArrayList<TowerEnergySinkAllocation>> allocationsByQuantum = new Long2ObjectLinkedOpenHashMap<>();
         for (TowerEnergySinkAllocation sink : sinks) {
             TowerEnergyTransferEndpoint endpoint = endpointsById.get(sink.endpoint());
@@ -396,18 +397,18 @@ public final class CompensatingTowerEnergyTransaction {
         ObjectArrayList<SinkQuantumGroup> groups = new ObjectArrayList<>(allocationsByQuantum.size());
         for (Long2ObjectMap.Entry<ObjectArrayList<TowerEnergySinkAllocation>> entry : allocationsByQuantum.long2ObjectEntrySet()) {
             groups.add(new SinkQuantumGroup(
-                    entry.getLongKey(), List.copyOf(entry.getValue()), sumSinks(entry.getValue())));
+                    entry.getLongKey(), new ObjectImmutableList<>(entry.getValue()), sumSinks(entry.getValue())));
         }
-        return List.copyOf(groups);
+        return new ObjectImmutableList<>(groups);
     }
 
     /**
      * Allocates the conserved source total across aligned quantum groups and restores original endpoint order.
      */
-    private static List<TowerEnergySourceAllocation> allocateSourceGroups(
-                                                                          List<TowerEnergySourceAllocation> original,
-                                                                          List<SourceQuantumGroup> groups,
-                                                                          Long2ObjectMap<BigInteger> targetsByQuantum) {
+    private static ObjectList<TowerEnergySourceAllocation> allocateSourceGroups(
+                                                                                ObjectList<TowerEnergySourceAllocation> original,
+                                                                                ObjectList<SourceQuantumGroup> groups,
+                                                                                Long2ObjectMap<BigInteger> targetsByQuantum) {
         Object2LongLinkedOpenHashMap<TowerEnergyEndpointId> amountsByEndpoint = new Object2LongLinkedOpenHashMap<>();
         for (SourceQuantumGroup group : groups) {
             BigInteger groupAmount = targetsByQuantum.getOrDefault(group.quantum(), BigInteger.ZERO);
@@ -423,16 +424,16 @@ public final class CompensatingTowerEnergyTransaction {
                 aligned.add(new TowerEnergySourceAllocation(allocation.endpoint(), amount));
             }
         }
-        return List.copyOf(aligned);
+        return new ObjectImmutableList<>(aligned);
     }
 
     /**
      * Allocates the conserved sink total proportionally across aligned quantum groups and restores endpoint order.
      */
-    private static List<TowerEnergySinkAllocation> allocateSinkGroups(
-                                                                      List<TowerEnergySinkAllocation> original,
-                                                                      List<SinkQuantumGroup> groups,
-                                                                      Long2ObjectMap<BigInteger> targetsByQuantum) {
+    private static ObjectList<TowerEnergySinkAllocation> allocateSinkGroups(
+                                                                            ObjectList<TowerEnergySinkAllocation> original,
+                                                                            ObjectList<SinkQuantumGroup> groups,
+                                                                            Long2ObjectMap<BigInteger> targetsByQuantum) {
         Object2LongLinkedOpenHashMap<TowerEnergyEndpointId> amountsByEndpoint = new Object2LongLinkedOpenHashMap<>();
         for (SinkQuantumGroup group : groups) {
             BigInteger groupAmount = targetsByQuantum.getOrDefault(group.quantum(), BigInteger.ZERO);
@@ -448,15 +449,15 @@ public final class CompensatingTowerEnergyTransaction {
                 aligned.add(new TowerEnergySinkAllocation(allocation.endpoint(), amount));
             }
         }
-        return List.copyOf(aligned);
+        return new ObjectImmutableList<>(aligned);
     }
 
     /**
      * Limits one source group in native quantum units so no endpoint receives a partial native unit.
      */
-    private static List<TowerEnergySourceAllocation> limitSourceGroup(
-                                                                      SourceQuantumGroup group,
-                                                                      BigInteger groupAmount) {
+    private static ObjectList<TowerEnergySourceAllocation> limitSourceGroup(
+                                                                            SourceQuantumGroup group,
+                                                                            BigInteger groupAmount) {
         BigInteger quantum = BigInteger.valueOf(group.quantum());
         validateGroupAmount(groupAmount, group.amount(), quantum, "source");
         ObjectArrayList<TowerEnergySourceAllocation> units = new ObjectArrayList<>(group.allocations().size());
@@ -464,22 +465,22 @@ public final class CompensatingTowerEnergyTransaction {
             units.add(new TowerEnergySourceAllocation(
                     allocation.endpoint(), allocation.amount() / group.quantum()));
         }
-        List<TowerEnergySourceAllocation> limited = TowerEnergyAllocationLimiter.limitSources(
+        ObjectList<TowerEnergySourceAllocation> limited = TowerEnergyAllocationLimiter.limitSources(
                 units, groupAmount.divide(quantum));
         ObjectArrayList<TowerEnergySourceAllocation> result = new ObjectArrayList<>(limited.size());
         for (TowerEnergySourceAllocation allocation : limited) {
             result.add(new TowerEnergySourceAllocation(
                     allocation.endpoint(), Math.multiplyExact(allocation.amount(), group.quantum())));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     /**
      * Limits one sink group in native quantum units while retaining largest-remainder fairness inside the group.
      */
-    private static List<TowerEnergySinkAllocation> limitSinkGroup(
-                                                                  SinkQuantumGroup group,
-                                                                  BigInteger groupAmount) {
+    private static ObjectList<TowerEnergySinkAllocation> limitSinkGroup(
+                                                                        SinkQuantumGroup group,
+                                                                        BigInteger groupAmount) {
         BigInteger quantum = BigInteger.valueOf(group.quantum());
         validateGroupAmount(groupAmount, group.amount(), quantum, "sink");
         ObjectArrayList<TowerEnergySinkAllocation> units = new ObjectArrayList<>(group.allocations().size());
@@ -487,14 +488,14 @@ public final class CompensatingTowerEnergyTransaction {
             units.add(new TowerEnergySinkAllocation(
                     allocation.endpoint(), allocation.amount() / group.quantum()));
         }
-        List<TowerEnergySinkAllocation> limited = TowerEnergyAllocationLimiter.limitSinks(
+        ObjectList<TowerEnergySinkAllocation> limited = TowerEnergyAllocationLimiter.limitSinks(
                 units, groupAmount.divide(quantum));
         ObjectArrayList<TowerEnergySinkAllocation> result = new ObjectArrayList<>(limited.size());
         for (TowerEnergySinkAllocation allocation : limited) {
             result.add(new TowerEnergySinkAllocation(
                     allocation.endpoint(), Math.multiplyExact(allocation.amount(), group.quantum())));
         }
-        return List.copyOf(result);
+        return new ObjectImmutableList<>(result);
     }
 
     /**
@@ -514,8 +515,8 @@ public final class CompensatingTowerEnergyTransaction {
      * Matches equal-quantum groups first, then aligns only unmatched residual groups to a common cross-group unit.
      */
     private static QuantumGroupTargets quantumGroupTargets(
-                                                           List<SourceQuantumGroup> sourceGroups,
-                                                           List<SinkQuantumGroup> sinkGroups) {
+                                                           ObjectList<SourceQuantumGroup> sourceGroups,
+                                                           ObjectList<SinkQuantumGroup> sinkGroups) {
         Long2ObjectLinkedOpenHashMap<SinkQuantumGroup> sinksByQuantum = new Long2ObjectLinkedOpenHashMap<>();
         Long2ObjectLinkedOpenHashMap<BigInteger> sourceTargets = zeroSourceTargets(sourceGroups);
         Long2ObjectLinkedOpenHashMap<BigInteger> sinkTargets = zeroSinkTargets(sinkGroups);
@@ -567,7 +568,7 @@ public final class CompensatingTowerEnergyTransaction {
      * Allocates common cross-group chunks to source groups in their stable priority order.
      */
     private static void allocateSourceCross(
-                                            List<SourceQuantumGroup> groups,
+                                            ObjectList<SourceQuantumGroup> groups,
                                             Long2ObjectMap<BigInteger> capacities,
                                             BigInteger crossAmount,
                                             Long2ObjectMap<BigInteger> targets) {
@@ -589,7 +590,7 @@ public final class CompensatingTowerEnergyTransaction {
      * Applies largest-remainder apportionment to sink residual groups in common cross-quantum units.
      */
     private static Long2ObjectMap<BigInteger> apportionSinkCross(
-                                                                 List<SinkQuantumGroup> groups,
+                                                                 ObjectList<SinkQuantumGroup> groups,
                                                                  Long2ObjectMap<BigInteger> capacities,
                                                                  BigInteger crossAmount,
                                                                  BigInteger crossQuantum) {
@@ -662,7 +663,7 @@ public final class CompensatingTowerEnergyTransaction {
         return common;
     }
 
-    private static Long2ObjectLinkedOpenHashMap<BigInteger> zeroSourceTargets(List<SourceQuantumGroup> groups) {
+    private static Long2ObjectLinkedOpenHashMap<BigInteger> zeroSourceTargets(ObjectList<SourceQuantumGroup> groups) {
         Long2ObjectLinkedOpenHashMap<BigInteger> targets = new Long2ObjectLinkedOpenHashMap<>();
         for (SourceQuantumGroup group : groups) {
             targets.put(group.quantum(), BigInteger.ZERO);
@@ -670,7 +671,7 @@ public final class CompensatingTowerEnergyTransaction {
         return targets;
     }
 
-    private static Long2ObjectLinkedOpenHashMap<BigInteger> zeroSinkTargets(List<SinkQuantumGroup> groups) {
+    private static Long2ObjectLinkedOpenHashMap<BigInteger> zeroSinkTargets(ObjectList<SinkQuantumGroup> groups) {
         Long2ObjectLinkedOpenHashMap<BigInteger> targets = new Long2ObjectLinkedOpenHashMap<>();
         for (SinkQuantumGroup group : groups) {
             targets.put(group.quantum(), BigInteger.ZERO);
@@ -688,9 +689,9 @@ public final class CompensatingTowerEnergyTransaction {
      * Re-simulates the final aligned plan once and rejects a violated quantum contract before mutation.
      */
     private static void verifyExecutable(
-                                         List<TowerEnergySourceAllocation> sources,
-                                         List<TowerEnergySinkAllocation> sinks,
-                                         Map<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
+                                         ObjectList<TowerEnergySourceAllocation> sources,
+                                         ObjectList<TowerEnergySinkAllocation> sinks,
+                                         Object2ObjectMap<TowerEnergyEndpointId, TowerEnergyTransferEndpoint> endpointsById) {
         for (TowerEnergySourceAllocation source : sources) {
             TowerEnergyTransferEndpoint endpoint = endpointsById.get(source.endpoint());
             if (endpoint.simulateExtraction(source.amount()) != source.amount()) {
@@ -786,7 +787,7 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Adds normalized source requests without aggregate overflow.
      */
-    private static BigInteger sumSources(List<TowerEnergySourceAllocation> sources) {
+    private static BigInteger sumSources(ObjectList<TowerEnergySourceAllocation> sources) {
         BigInteger amount = BigInteger.ZERO;
         for (TowerEnergySourceAllocation source : sources) {
             amount = amount.add(BigInteger.valueOf(source.amount()));
@@ -797,7 +798,7 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Adds normalized sink requests without aggregate overflow.
      */
-    private static BigInteger sumSinks(List<TowerEnergySinkAllocation> sinks) {
+    private static BigInteger sumSinks(ObjectList<TowerEnergySinkAllocation> sinks) {
         BigInteger amount = BigInteger.ZERO;
         for (TowerEnergySinkAllocation sink : sinks) {
             amount = amount.add(BigInteger.valueOf(sink.amount()));
@@ -809,9 +810,9 @@ public final class CompensatingTowerEnergyTransaction {
      * Restores the undelivered transfer buffer to original sources in reverse extraction order.
      */
     private static CompensationResult compensate(
-                                                 List<Extraction> extractions,
+                                                 ObjectList<Extraction> extractions,
                                                  BigInteger amount,
-                                                 Set<TowerEnergyTransferEndpoint> mutatedEndpoints) {
+                                                 ReferenceSet<TowerEnergyTransferEndpoint> mutatedEndpoints) {
         BigInteger remaining = amount.max(BigInteger.ZERO);
         BigInteger quarantined = BigInteger.ZERO;
         for (int index = extractions.size() - 1; index >= 0 && remaining.signum() > 0; index--) {
@@ -836,7 +837,7 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Publishes storage callbacks after all mutations and compensation attempts finish.
      */
-    private static void publishMutations(Set<TowerEnergyTransferEndpoint> endpoints) {
+    private static void publishMutations(ReferenceSet<TowerEnergyTransferEndpoint> endpoints) {
         for (TowerEnergyTransferEndpoint endpoint : endpoints) {
             try {
                 endpoint.publishMutation();
@@ -850,7 +851,7 @@ public final class CompensatingTowerEnergyTransaction {
      * Creates a failure result without repeating validation boilerplate.
      */
     private static TowerEnergyTransactionResult failed(
-                                                       List<TowerEnergyEndpointSnapshot> snapshots,
+                                                       ObjectList<TowerEnergyEndpointSnapshot> snapshots,
                                                        long plannedFe,
                                                        long insertedFe,
                                                        long quarantinedFe,
@@ -863,7 +864,7 @@ public final class CompensatingTowerEnergyTransaction {
     /**
      * Builds a bounded diagnostic for endpoints excluded before planning.
      */
-    private static String isolationFailure(int isolatedEndpointCount, List<String> details) {
+    private static String isolationFailure(int isolatedEndpointCount, ObjectList<String> details) {
         if (isolatedEndpointCount == 0) {
             return "";
         }
@@ -899,7 +900,7 @@ public final class CompensatingTowerEnergyTransaction {
      */
     private record SourceQuantumGroup(
                                       long quantum,
-                                      List<TowerEnergySourceAllocation> allocations,
+                                      ObjectList<TowerEnergySourceAllocation> allocations,
                                       BigInteger amount) {}
 
     /**
@@ -907,7 +908,7 @@ public final class CompensatingTowerEnergyTransaction {
      */
     private record SinkQuantumGroup(
                                     long quantum,
-                                    List<TowerEnergySinkAllocation> allocations,
+                                    ObjectList<TowerEnergySinkAllocation> allocations,
                                     BigInteger amount) {}
 
     /**

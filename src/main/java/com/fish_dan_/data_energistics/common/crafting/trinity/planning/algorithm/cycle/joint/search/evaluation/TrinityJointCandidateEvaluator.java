@@ -17,20 +17,21 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.algorithm.schedule.TrinityMinimumSeedScheduler;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternVariant;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanQuality;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Converts one conservation-feasible firing vector into an executable candidate with the true lexicographic cost.
@@ -71,11 +72,11 @@ public final class TrinityJointCandidateEvaluator {
      * cancellation and timeout remain terminal for the bounded parent search.
      */
     public TrinityAlgorithmResult<TrinityJointCandidateEvaluation> evaluate(
-                                                                            List<TrinityPatternVariant> variants,
-                                                                            Set<AEKey> internalKeys,
+                                                                            ObjectList<TrinityPatternVariant> variants,
+                                                                            ObjectSet<AEKey> internalKeys,
                                                                             TrinityCycleDemand demand,
-                                                                            Map<AEKey, BigInteger> available,
-                                                                            Set<AEKey> producibleInputs,
+                                                                            Object2ObjectMap<AEKey, BigInteger> available,
+                                                                            ObjectSet<AEKey> producibleInputs,
                                                                             TrinityCycleFeasibilitySolution solution,
                                                                             int maxScheduleStates,
                                                                             int solverPasses,
@@ -84,8 +85,8 @@ public final class TrinityJointCandidateEvaluator {
         if (variants.isEmpty() || internalKeys.isEmpty() || maxScheduleStates <= 0 || solverPasses <= 0 || solverNanos < 0L) {
             throw new IllegalArgumentException("A Trinity joint candidate evaluation request is incomplete");
         }
-        List<TrinityPatternVariant> orderedVariants = variants.stream().sorted().toList();
-        Set<AEKey> externalKeys = externalReserveKeys(orderedVariants, internalKeys, demand);
+        ObjectList<TrinityPatternVariant> orderedVariants = variants.stream().sorted().collect(ObjectArrayList.toList());
+        ObjectSet<AEKey> externalKeys = externalReserveKeys(orderedVariants, internalKeys, demand);
         CandidateAccounting accounting = accountCandidate(solution.firings(), internalKeys, demand)
                 .orElseThrow(() -> new IllegalStateException(
                         "An exact Trinity MIP solution failed its demand accounting"));
@@ -94,7 +95,7 @@ public final class TrinityJointCandidateEvaluator {
             throw new IllegalStateException("An exact Trinity MIP candidate exceeded its input domain");
         }
 
-        Map<AEKey, BigInteger> maximumInputs = candidateInputBounds(
+        Object2ObjectMap<AEKey, BigInteger> maximumInputs = candidateInputBounds(
                 solution.firings(),
                 externalKeys,
                 internalKeys,
@@ -124,7 +125,7 @@ public final class TrinityJointCandidateEvaluator {
 
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> initialInputs = new Object2ObjectLinkedOpenHashMap<>(scheduled.externalInputs());
         scheduled.minimumSeed().forEach((key, amount) -> initialInputs.merge(key, amount, BigInteger::add));
-        TrinityAlgorithmResult<Map<AEKey, BigInteger>> exact = this.conservationVerifier.verify(
+        TrinityAlgorithmResult<Object2ObjectMap<AEKey, BigInteger>> exact = this.conservationVerifier.verify(
                 orderedVariants,
                 solution.firings(),
                 initialInputs,
@@ -142,7 +143,7 @@ public final class TrinityJointCandidateEvaluator {
                     diagnostic.detail()));
         }
 
-        Map<AEKey, BigInteger> finalBalances = addSigned(initialInputs, accounting.netChange());
+        Object2ObjectMap<AEKey, BigInteger> finalBalances = addSigned(initialInputs, accounting.netChange());
         TrinityCompressedSchedule adjustedSchedule = new TrinityCompressedSchedule(
                 scheduled.schedule().batches(),
                 finalBalances,
@@ -170,8 +171,8 @@ public final class TrinityJointCandidateEvaluator {
     }
 
     private TrinityAlgorithmResult<TrinityMinimumSeedSchedule> findFirstExecutableInputs(
-                                                                                         Map<TrinityPatternVariant, BigInteger> firings, Set<AEKey> externalKeys, Set<AEKey> internalKeys,
-                                                                                         Map<AEKey, BigInteger> minimumInputs, Map<AEKey, BigInteger> maximumInputs,
+                                                                                         Object2ObjectMap<TrinityPatternVariant, BigInteger> firings, ObjectSet<AEKey> externalKeys, ObjectSet<AEKey> internalKeys,
+                                                                                         Object2ObjectMap<AEKey, BigInteger> minimumInputs, Object2ObjectMap<AEKey, BigInteger> maximumInputs,
                                                                                          int maxStates, TrinityPlanningControl control) {
         TrinityAlgorithmResult<TrinityCompressedSchedule> direct = this.compressedScheduler.schedule(
                 firings, minimumInputs, maxStates, control);
@@ -206,11 +207,11 @@ public final class TrinityJointCandidateEvaluator {
     }
 
     private TrinityAlgorithmResult<TrinityMinimumSeedSchedule> findExecutableInputs(
-                                                                                    Map<TrinityPatternVariant, BigInteger> firings,
-                                                                                    Set<AEKey> externalKeys,
-                                                                                    Set<AEKey> internalKeys,
-                                                                                    Map<AEKey, BigInteger> minimumInputs,
-                                                                                    Map<AEKey, BigInteger> maximumInputs,
+                                                                                    Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                                    ObjectSet<AEKey> externalKeys,
+                                                                                    ObjectSet<AEKey> internalKeys,
+                                                                                    Object2ObjectMap<AEKey, BigInteger> minimumInputs,
+                                                                                    Object2ObjectMap<AEKey, BigInteger> maximumInputs,
                                                                                     BigInteger seedLowerBound,
                                                                                     int maxStates,
                                                                                     TrinityPlanningControl control) {
@@ -262,7 +263,7 @@ public final class TrinityJointCandidateEvaluator {
             return failure(
                     TrinityPlanningDiagnosticCode.NO_EXECUTABLE_ORDER,
                     NO_ORDER_KEY,
-                    Map.of("states", Integer.toString(totalStates)));
+                    FastUtilCollections.mapOf("states", Integer.toString(totalStates)));
         }
         return TrinityAlgorithmResult.failure(normalizeFailure(searched.diagnostic(), totalStates, maxStates));
     }
@@ -276,13 +277,13 @@ public final class TrinityJointCandidateEvaluator {
             return new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.MIP_TIMEOUT,
                     Component.translatable(MIP_TIMEOUT_KEY),
-                    Map.of("states", Integer.toString(states)));
+                    FastUtilCollections.mapOf("states", Integer.toString(states)));
         }
         if (diagnostic.code() == TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT) {
             return new TrinityPlanningDiagnostic(
                     TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                     Component.translatable(SEARCH_LIMIT_KEY),
-                    Map.of("limit", Integer.toString(limit), "states", Integer.toString(states)));
+                    FastUtilCollections.mapOf("limit", Integer.toString(limit), "states", Integer.toString(states)));
         }
         Object2ObjectLinkedOpenHashMap<String, String> metadata = new Object2ObjectLinkedOpenHashMap<>(diagnostic.metadata());
         metadata.put("states", Integer.toString(states));
@@ -293,12 +294,12 @@ public final class TrinityJointCandidateEvaluator {
         return failure(
                 TrinityPlanningDiagnosticCode.ORDER_SEARCH_LIMIT,
                 SEARCH_LIMIT_KEY,
-                Map.of("limit", Integer.toString(limit), "states", Integer.toString(states)));
+                FastUtilCollections.mapOf("limit", Integer.toString(limit), "states", Integer.toString(states)));
     }
 
     private static Optional<CandidateAccounting> accountCandidate(
-                                                                  Map<TrinityPatternVariant, BigInteger> firings,
-                                                                  Set<AEKey> internalKeys,
+                                                                  Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                  ObjectSet<AEKey> internalKeys,
                                                                   TrinityCycleDemand demand) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> net = new Object2ObjectLinkedOpenHashMap<>();
         firings.forEach((variant, count) -> variant.netChange().forEach(
@@ -306,7 +307,7 @@ public final class TrinityJointCandidateEvaluator {
         net.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
         // Negative internal net change is paid for by modelSeed below, then checked against stock and
         // replayed by the scheduler. Only an explicit net-new demand constrains the sign independently.
-        for (Map.Entry<AEKey, BigInteger> bound : demand.requiredNetChangeLowerBounds().entrySet()) {
+        for (Object2ObjectMap.Entry<AEKey, BigInteger> bound : demand.requiredNetChangeLowerBounds().object2ObjectEntrySet()) {
             if (net.getOrDefault(bound.getKey(), BigInteger.ZERO).compareTo(bound.getValue()) < 0) {
                 return Optional.empty();
             }
@@ -328,18 +329,18 @@ public final class TrinityJointCandidateEvaluator {
             }
         }
         return Optional.of(new CandidateAccounting(
-                Collections.unmodifiableMap(external),
-                Collections.unmodifiableMap(modelSeed),
-                Collections.unmodifiableMap(net)));
+                FastUtilCollections.immutableMap(external),
+                FastUtilCollections.immutableMap(modelSeed),
+                FastUtilCollections.immutableMap(net)));
     }
 
-    private static Map<AEKey, BigInteger> candidateInputBounds(
-                                                               Map<TrinityPatternVariant, BigInteger> firings,
-                                                               Set<AEKey> externalKeys,
-                                                               Set<AEKey> internalKeys,
-                                                               CandidateAccounting accounting,
-                                                               Map<AEKey, BigInteger> available,
-                                                               Set<AEKey> producibleInputs) {
+    private static Object2ObjectMap<AEKey, BigInteger> candidateInputBounds(
+                                                                            Object2ObjectMap<TrinityPatternVariant, BigInteger> firings,
+                                                                            ObjectSet<AEKey> externalKeys,
+                                                                            ObjectSet<AEKey> internalKeys,
+                                                                            CandidateAccounting accounting,
+                                                                            Object2ObjectMap<AEKey, BigInteger> available,
+                                                                            ObjectSet<AEKey> producibleInputs) {
         ObjectLinkedOpenHashSet<AEKey> injectableKeys = new ObjectLinkedOpenHashSet<>(externalKeys);
         firings.keySet().forEach(variant -> variant.inputs().keySet().stream()
                 .filter(internalKeys::contains)
@@ -359,15 +360,15 @@ public final class TrinityJointCandidateEvaluator {
             }
             bounds.put(key, bound);
         }
-        return Collections.unmodifiableMap(bounds);
+        return FastUtilCollections.immutableMap(bounds);
     }
 
-    private static Map<AEKey, BigInteger> finiteInputUpperBounds(
-                                                                 List<TrinityPatternVariant> variants,
-                                                                 Set<AEKey> internalKeys,
-                                                                 TrinityCycleDemand demand,
-                                                                 Map<AEKey, BigInteger> available,
-                                                                 Set<AEKey> producibleInputs) {
+    private static Object2ObjectMap<AEKey, BigInteger> finiteInputUpperBounds(
+                                                                              ObjectList<TrinityPatternVariant> variants,
+                                                                              ObjectSet<AEKey> internalKeys,
+                                                                              TrinityCycleDemand demand,
+                                                                              Object2ObjectMap<AEKey, BigInteger> available,
+                                                                              ObjectSet<AEKey> producibleInputs) {
         ObjectLinkedOpenHashSet<AEKey> inputKeys = new ObjectLinkedOpenHashSet<>(internalKeys);
         variants.forEach(variant -> inputKeys.addAll(variant.inputs().keySet()));
         inputKeys.addAll(demand.finalBalanceLowerBounds().keySet());
@@ -375,13 +376,13 @@ public final class TrinityJointCandidateEvaluator {
         inputKeys.stream()
                 .filter(key -> !producibleInputs.contains(key))
                 .forEach(key -> bounds.put(key, available.getOrDefault(key, BigInteger.ZERO)));
-        return Collections.unmodifiableMap(bounds);
+        return FastUtilCollections.immutableMap(bounds);
     }
 
-    private static Set<AEKey> externalReserveKeys(
-                                                  List<TrinityPatternVariant> variants,
-                                                  Set<AEKey> internalKeys,
-                                                  TrinityCycleDemand demand) {
+    private static ObjectSet<AEKey> externalReserveKeys(
+                                                        ObjectList<TrinityPatternVariant> variants,
+                                                        ObjectSet<AEKey> internalKeys,
+                                                        TrinityCycleDemand demand) {
         ObjectLinkedOpenHashSet<AEKey> externalKeys = new ObjectLinkedOpenHashSet<>();
         variants.forEach(variant -> variant.inputs().keySet().stream()
                 .filter(key -> !internalKeys.contains(key))
@@ -389,12 +390,12 @@ public final class TrinityJointCandidateEvaluator {
         demand.finalBalanceLowerBounds().keySet().stream()
                 .filter(key -> !internalKeys.contains(key))
                 .forEach(externalKeys::add);
-        return Collections.unmodifiableSet(externalKeys);
+        return FastUtilCollections.immutableSet(externalKeys);
     }
 
-    private static Map<AEKey, BigInteger> amountsFor(
-                                                     Map<AEKey, BigInteger> amounts,
-                                                     Set<AEKey> keys) {
+    private static Object2ObjectMap<AEKey, BigInteger> amountsFor(
+                                                                  Object2ObjectMap<AEKey, BigInteger> amounts,
+                                                                  ObjectSet<AEKey> keys) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> selected = new Object2ObjectLinkedOpenHashMap<>();
         keys.forEach(key -> {
             BigInteger amount = amounts.getOrDefault(key, BigInteger.ZERO);
@@ -402,35 +403,35 @@ public final class TrinityJointCandidateEvaluator {
                 selected.put(key, amount);
             }
         });
-        return Collections.unmodifiableMap(selected);
+        return FastUtilCollections.immutableMap(selected);
     }
 
     private static void requireExternalInputs(
-                                              Map<AEKey, BigInteger> actual,
-                                              Map<AEKey, BigInteger> required) {
+                                              Object2ObjectMap<AEKey, BigInteger> actual,
+                                              Object2ObjectMap<AEKey, BigInteger> required) {
         if (required.entrySet().stream().anyMatch(entry -> actual.getOrDefault(entry.getKey(), BigInteger.ZERO).compareTo(entry.getValue()) < 0)) {
             throw new IllegalStateException("An exact Trinity schedule lost required external input");
         }
     }
 
     private static boolean exceedsAvailable(
-                                            Map<AEKey, BigInteger> required,
-                                            Map<AEKey, BigInteger> available,
-                                            Set<AEKey> producibleInputs) {
+                                            Object2ObjectMap<AEKey, BigInteger> required,
+                                            Object2ObjectMap<AEKey, BigInteger> available,
+                                            ObjectSet<AEKey> producibleInputs) {
         return required.entrySet().stream().anyMatch(entry -> !producibleInputs.contains(entry.getKey()) &&
                 available.getOrDefault(entry.getKey(), BigInteger.ZERO).compareTo(entry.getValue()) < 0);
     }
 
-    private static Map<AEKey, BigInteger> addSigned(
-                                                    Map<AEKey, BigInteger> initial,
-                                                    Map<AEKey, BigInteger> change) {
+    private static Object2ObjectMap<AEKey, BigInteger> addSigned(
+                                                                 Object2ObjectMap<AEKey, BigInteger> initial,
+                                                                 Object2ObjectMap<AEKey, BigInteger> change) {
         Object2ObjectLinkedOpenHashMap<AEKey, BigInteger> result = new Object2ObjectLinkedOpenHashMap<>(initial);
         change.forEach((key, amount) -> result.merge(key, amount, BigInteger::add));
         if (result.values().stream().anyMatch(amount -> amount.signum() < 0)) {
             throw new IllegalStateException("An exact Trinity joint cycle candidate has a negative final balance");
         }
         result.entrySet().removeIf(entry -> entry.getValue().signum() == 0);
-        return Collections.unmodifiableMap(result);
+        return FastUtilCollections.immutableMap(result);
     }
 
     private static int diagnosticStates(TrinityPlanningDiagnostic diagnostic) {
@@ -449,14 +450,14 @@ public final class TrinityJointCandidateEvaluator {
         }
     }
 
-    private static BigInteger sum(Map<?, BigInteger> amounts) {
+    private static BigInteger sum(Object2ObjectMap<?, BigInteger> amounts) {
         return amounts.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
     }
 
     private static <T> TrinityAlgorithmResult<T> failure(
                                                          TrinityPlanningDiagnosticCode code,
                                                          String translationKey,
-                                                         Map<String, String> metadata) {
+                                                         Object2ObjectMap<String, String> metadata) {
         return TrinityAlgorithmResult.failure(new TrinityPlanningDiagnostic(
                 code,
                 Component.translatable(translationKey),
@@ -464,7 +465,7 @@ public final class TrinityJointCandidateEvaluator {
     }
 
     private record CandidateAccounting(
-                                       Map<AEKey, BigInteger> externalInputs,
-                                       Map<AEKey, BigInteger> requiredModelSeed,
-                                       Map<AEKey, BigInteger> netChange) {}
+                                       Object2ObjectMap<AEKey, BigInteger> externalInputs,
+                                       Object2ObjectMap<AEKey, BigInteger> requiredModelSeed,
+                                       Object2ObjectMap<AEKey, BigInteger> netChange) {}
 }

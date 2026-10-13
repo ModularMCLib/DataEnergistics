@@ -5,7 +5,6 @@ import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBa
 import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
 import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
 import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningAutoRequestHelper;
 import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
@@ -19,6 +18,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Dis
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
+import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.config.LockCraftingMode;
 import appeng.api.crafting.IPatternDetails;
@@ -30,6 +30,7 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost;
 
 import net.minecraft.server.level.ServerLevel;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -185,18 +186,18 @@ public abstract class PatternProviderLogicMixin
     }
 
     @Override
-    public List<ProviderCapacitySnapshot> snapshotCapacity(
-                                                           CraftingProviderId providerId,
-                                                           IPatternDetails patternDetails,
-                                                           KeyCounter[] prototype,
-                                                           long requestedCrafts,
-                                                           String patternIdentity,
-                                                           long publicationRevision,
-                                                           long capacityRevision,
-                                                           long captureTick) {
+    public ObjectList<ProviderCapacitySnapshot> snapshotCapacity(
+                                                                 CraftingProviderId providerId,
+                                                                 IPatternDetails patternDetails,
+                                                                 KeyCounter[] prototype,
+                                                                 long requestedCrafts,
+                                                                 String patternIdentity,
+                                                                 long publicationRevision,
+                                                                 long capacityRevision,
+                                                                 long captureTick) {
         PatternProviderLogic logic = (PatternProviderLogic) (Object) this;
         if (logic.getClass() != PatternProviderLogic.class) {
-            return List.of(new ProviderCapacitySnapshot(
+            return ObjectList.of(new ProviderCapacitySnapshot(
                     providerId,
                     CraftingDispatchTarget.provider(),
                     Optional.empty(),
@@ -308,7 +309,7 @@ public abstract class PatternProviderLogicMixin
     @Override
     public boolean dataEnergistics$forcePulseUnlock() {
         if (this.host instanceof RedstoneTuningAwareHost accessor && accessor.dataEnergistics$getRedstoneTuningMode() == RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE && this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
-            RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+            RedstoneTuningUtils.requestPrimaryOutputs(
                     serverLevel,
                     this.host.getGrid(),
                     this.actionSource,
@@ -337,7 +338,7 @@ public abstract class PatternProviderLogicMixin
         if (!accessor.dataEnergistics$hasRedstoneTuningCard() || accessor.dataEnergistics$getRedstoneTuningMode() != RedstoneTuningMode.PULSE_TO_UNLOCK_ONCE || !accessor.dataEnergistics$consumeRedstoneInputPulse() || !(this.host.getBlockEntity().getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
-        RedstoneTuningAutoRequestHelper.requestPrimaryOutputs(
+        RedstoneTuningUtils.requestPrimaryOutputs(
                 serverLevel,
                 this.host.getGrid(),
                 this.actionSource,

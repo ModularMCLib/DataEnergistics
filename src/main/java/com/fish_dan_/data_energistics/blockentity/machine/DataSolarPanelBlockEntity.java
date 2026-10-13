@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.block.machine.DataSolarPanelBlock;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarEnergyPool;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarPanelArray;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarPanelArrayPort;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration.SolarPanelSchema;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.SolarPanelSchema;
 import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenuHost;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
@@ -36,7 +36,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity implements IUpgradeableObject, DataSolarPanelMenuHost {
 
@@ -69,7 +68,7 @@ public class DataSolarPanelBlockEntity extends AENetworkedPoweredBlockEntity imp
     }
 
     @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
+    public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         return EnumSet.of(Direction.DOWN);
     }
 

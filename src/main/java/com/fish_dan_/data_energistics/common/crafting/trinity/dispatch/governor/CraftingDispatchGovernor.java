@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.async.schedule.DispatchProposalLimits;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.budget.CraftingDispatchLimits;
-import com.fish_dan_.data_energistics.configuration.schema.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;

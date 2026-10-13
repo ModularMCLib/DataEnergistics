@@ -66,6 +66,59 @@ public final class AstralLiquidSupplyTransaction {
         }
     }
 
+    /** Fills visible native-range chalices before any remainder is returned to the network. */
+    public ObjectList<ChaliceDeposit> depositToChalices(Level level, BlockPos origin, FluidStack offered) {
+        ObjectList<ChaliceDeposit> deposits = new ObjectArrayList<>();
+        if (offered.isEmpty()) {
+            return deposits;
+        }
+        discover(level, origin, offered);
+        LongIterator positions = this.chalices.iterator();
+        long alreadyAvailable = 0;
+        while (positions.hasNext() && alreadyAvailable < offered.getAmount()) {
+            BlockPos position = BlockPos.of(positions.nextLong());
+            if (!level.isLoaded(position) || level.hasNeighborSignal(position) ||
+                    !(level.getBlockEntity(position) instanceof TileChalice chalice) || !visible(level, origin, position)) {
+                continue;
+            }
+            IFluidHandler tank = chalice.getTankView();
+            for (int tankIndex = 0; tankIndex < tank.getTanks(); tankIndex++) {
+                FluidStack present = tank.getFluidInTank(tankIndex);
+                if (!present.isEmpty() && FluidStack.isSameFluidSameComponents(offered, present)) {
+                    alreadyAvailable = Math.min(offered.getAmount(), alreadyAvailable + present.getAmount());
+                }
+            }
+        }
+        int remaining = offered.getAmount() - (int) alreadyAvailable;
+        positions = this.chalices.iterator();
+        while (positions.hasNext() && remaining > 0) {
+            long packed = positions.nextLong();
+            BlockPos position = BlockPos.of(packed);
+            if (!level.isLoaded(position) || level.hasNeighborSignal(position) ||
+                    !(level.getBlockEntity(position) instanceof TileChalice chalice) || !visible(level, origin, position)) {
+                continue;
+            }
+            IFluidHandler tank = chalice.getTankView();
+            FluidStack requested = offered.copyWithAmount(remaining);
+            int simulated = tank.fill(requested, IFluidHandler.FluidAction.SIMULATE);
+            if (simulated < 0 || simulated > remaining) {
+                throw new IllegalStateException("Astral chalice returned an invalid simulated fill at " + position);
+            }
+            if (simulated == 0) {
+                continue;
+            }
+            int filled = tank.fill(requested.copyWithAmount(simulated), IFluidHandler.FluidAction.EXECUTE);
+            if (filled < 0 || filled > simulated) {
+                throw new IllegalStateException("Astral chalice returned an invalid committed fill at " + position);
+            }
+            if (filled > 0) {
+                deposits.add(new ChaliceDeposit(packed, filled));
+                remaining -= filled;
+            }
+        }
+        return deposits;
+    }
+
     /** Returns whether this request has an interface source and should use the combined transaction. */
     public boolean hasInterfaces() {
         return !this.failed && !this.interfaces.isEmpty();
@@ -267,4 +320,6 @@ public final class AstralLiquidSupplyTransaction {
     }
 
     private record Draw(LiquidSource source, int amount) {}
+
+    public record ChaliceDeposit(long position, int amount) {}
 }

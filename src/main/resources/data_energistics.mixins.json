@@ -158,7 +158,6 @@
 		"technology.avaritia.emi.ExtremeSmithingEmiInputsMixin",
 		"viewer.emi.ae2.AbstractRecipeHandlerMixin",
 		"viewer.emi.ae2.EmiEncodePatternHandlerMixin",
-		"viewer.jei.BookmarkOverlayAccessor",
 		"viewer.jei.RecipeTransferServiceMixin"
 	],
 	"injectors": {

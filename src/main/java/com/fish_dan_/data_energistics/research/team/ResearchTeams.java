@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.integration.library.ftbteams.research.FtbResearchTeamMembership;
 
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -13,12 +12,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -142,32 +138,8 @@ public final class ResearchTeams {
         return id == null ? server.getPlayerList().getPlayerByName(argument) : server.getPlayerList().getPlayer(id);
     }
 
-    /** Registers player commands. Console invocation is rejected by the normal Minecraft player requirement. */
-    public static void registerCommands(RegisterCommandsEvent event) {
-        LiteralArgumentBuilder<CommandSourceStack> teams = Commands.literal("team");
-        teams.then(Commands.literal("create")
-                .then(Commands.argument("name", StringArgumentType.greedyString())
-                        .executes(context -> command(context, "create", StringArgumentType.getString(context, "name")))));
-        for (String action : new String[] { "invite", "accept", "reject", "kick", "transfer" }) {
-            teams.then(Commands.literal(action)
-                    .then(Commands.argument("target", StringArgumentType.word())
-                            .suggests((context, builder) -> {
-                                ServerPlayer player = context.getSource().getPlayer();
-                                if (player != null) {
-                                    suggestTargets(player, action, builder);
-                                }
-                                return builder.buildFuture();
-                            })
-                            .executes(context -> command(context, action, StringArgumentType.getString(context, "target")))));
-        }
-        for (String action : new String[] { "leave", "disband" }) {
-            teams.then(Commands.literal(action).executes(context -> command(context, action, "")));
-        }
-        event.getDispatcher().register(Commands.literal("dataenergistics")
-                .then(Commands.literal("research").then(teams)));
-    }
-
-    private static void suggestTargets(ServerPlayer player, String action, SuggestionsBuilder builder) {
+    /** Supplies current team targets to the unified command registrar, on the server thread. */
+    public static void suggestTargets(ServerPlayer player, String action, SuggestionsBuilder builder) {
         CompoundTag snapshot = snapshot(player);
         String listKey = action.equals("invite") ? "online_players" : action.equals("accept") || action.equals("reject") ? "invitations" : "members";
         ListTag targets = listKey.equals("members") ? snapshot.getCompound("custom_team").getList(listKey, Tag.TAG_COMPOUND) : snapshot.getList(listKey, Tag.TAG_COMPOUND);
@@ -180,7 +152,8 @@ public final class ResearchTeams {
         }
     }
 
-    private static int command(CommandContext<CommandSourceStack> context, String action, String argument)
+    /** Executes a unified player command, reporting translated success or failure to its source. */
+    public static int executeCommand(CommandContext<CommandSourceStack> context, String action, String argument)
                                                                                                            throws CommandSyntaxException {
         ResearchTeamSavedData.Result result = perform(context.getSource().getPlayerOrException(), action, argument);
         if (result.success()) {

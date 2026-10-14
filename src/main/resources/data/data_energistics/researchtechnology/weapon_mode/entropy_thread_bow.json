@@ -1,0 +1,24 @@
+{
+	"id": "data_energistics:weapon_mode/entropy_thread_bow",
+	"description": "research.data_energistics.weapon_mode.entropy_thread_bow.description",
+	"target": {
+		"items": ["data_energistics:star_shard"],
+		"tags": []
+	},
+	"inputs": {
+		"items": {
+			"ae2:fluix_covered_cable": 6,
+			"ae2:level_emitter": 1,
+			"ae2:matter_cannon": 1,
+			"data_energistics:data_processor": 27,
+			"data_energistics:digisidian_memorize_ingot": 6,
+			"data_energistics:fluix_aggregate_crystal_processor": 16,
+			"minecraft:string": 17
+		},
+		"resources": {
+			"data_energistics:manifest_binary": 34
+		}
+	},
+	"research_ticks": 200,
+	"ae_per_tick": 2000
+}

@@ -96,6 +96,6 @@ public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStatio
 
     @Override
     protected BlockState updateBlockStateFromBlockEntity(BlockState state, ResearchStationBlockEntity host) {
-        return state.setValue(ACTIVE, host.working());
+        return state.setValue(ACTIVE, host.getMainNode().isOnline());
     }
 }

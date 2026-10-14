@@ -13,6 +13,7 @@ import appeng.api.inventories.BaseInternalInventory;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.IGridNodeListener;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.util.AECableType;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
@@ -83,6 +84,12 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
     @Override
     public AECableType getCableConnectionType(Direction side) {
         return AECableType.SMART;
+    }
+
+    @Override
+    public void onMainNodeStateChanged(IGridNodeListener.State reason) {
+        if (!getMainNode().isOnline()) working = false;
+        markForUpdate();
     }
 
     public void serverTick() {

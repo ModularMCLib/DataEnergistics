@@ -496,7 +496,8 @@ public final class ResearchStationUi {
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials")));
         if (node.inputs().isEmpty()) costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
         for (ResearchInput input : node.inputs()) {
-            costs.addChild(ResearchUiParts.label(ResearchUiParts.text("material", input.key().getDisplayName(), input.amount())));
+            costs.addChild(ResearchUiParts.material(input.key(),
+                    ResearchUiParts.text("material", input.key().getDisplayName(), input.amount())));
         }
         if (presentation == Presentation.COSTS) return;
         if (!projectData.containsKey(node.id()) && !unlocked.contains(node.id())) {

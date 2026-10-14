@@ -14,10 +14,17 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 
-import net.minecraft.network.chat.Component;
+import appeng.api.client.AEKeyRendering;
+import appeng.api.stacks.AEKey;
 
+import net.minecraft.network.chat.Component;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+
+import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import dev.vfyjxf.taffy.style.TaffyDisplay;
 import dev.vfyjxf.taffy.style.TaffyPosition;
@@ -27,6 +34,7 @@ final class ResearchUiParts {
 
     static final int SURFACE = 0xFFADB0C4;
     static final int TEXT = 0xFF141D30;
+    static final int MATERIAL_ICON_SPACE = 19;
     static final IGuiTexture PANEL = framed(0xFFEFF1F8, 0xFF53617D);
     private static final IGuiTexture BUTTON = framed(0xFFF7F9FF, 0xFF4B5979);
     private static final IGuiTexture BUTTON_HOVER = framed(0xFFD9FFF0, 0xFF1C7653);
@@ -60,6 +68,29 @@ final class ResearchUiParts {
         label.layout(layout -> layout.widthPercent(100).minHeight(12).flexShrink(0));
         label.setAllowHitTest(false);
         return label;
+    }
+
+    static UIElement material(AEKey key, Component text) {
+        MaterialRow row = new MaterialRow();
+        row.addChildren(materialIcon(key), materialLabel(text));
+        return row;
+    }
+
+    private static Label materialLabel(Component text) {
+        Label label = new Label();
+        label.setText(text);
+        label.textStyle(style -> style.fontSize(10).textColor(TEXT).textShadow(false)
+                .textWrap(TextWrap.WRAP).adaptiveWidth(false).adaptiveHeight(true));
+        label.layout(layout -> layout.flex(1).minHeight(18).flexShrink(1));
+        label.setAllowHitTest(false);
+        return label;
+    }
+
+    private static UIElement materialIcon(AEKey key) {
+        MaterialIcon icon = new MaterialIcon(key);
+        icon.layout(layout -> layout.width(16).height(16).flexShrink(0));
+        icon.setAllowHitTest(false);
+        return icon;
     }
 
     static Button button(Component text, Runnable action) {
@@ -113,6 +144,34 @@ final class ResearchUiParts {
 
     private static IGuiTexture framed(int background, int border) {
         return GuiTextureGroup.of(new ColorRectTexture(background), new ColorBorderTexture(-1, border));
+    }
+
+    static final class MaterialRow extends UIElement {
+
+        private MaterialRow() {
+            layout(layout -> layout.widthPercent(100).heightAuto().minHeight(18)
+                    .flexDirection(FlexDirection.ROW).alignItems(AlignItems.CENTER).gapAll(3).flexShrink(0));
+            setAllowHitTest(false);
+        }
+    }
+
+    private static final class MaterialIcon extends UIElement {
+
+        private final AEKey key;
+
+        private MaterialIcon(AEKey key) {
+            this.key = key;
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public void drawBackgroundAdditional(GUIContext guiContext) {
+            guiContext.graphics.flush();
+            guiContext.pose.pushPose();
+            guiContext.pose.translate(getContentX(), getContentY(), 0);
+            AEKeyRendering.drawInGui(guiContext.mc, guiContext.graphics, 0, 0, key);
+            guiContext.pose.popPose();
+        }
     }
 
     static void show(UIElement element, boolean visible) {

@@ -216,16 +216,7 @@ final class ResearchGraphNode extends NodeModel {
         private void resizeCosts() {
             int width = 0;
             if (research.presentation != Presentation.COLLAPSED) {
-                float preferred = 0;
-                for (UIElement child : costs.getChildren()) {
-                    if (child instanceof Label label) {
-                        var textStyle = label.getTextStyle();
-                        for (var line : TextUtilities.computeFormattedLines(label.getFont(),
-                                TextUtilities.withFont(label.getText(), textStyle.font()), textStyle.fontSize(), Float.MAX_VALUE)) {
-                            preferred = Math.max(preferred, line.getB());
-                        }
-                    }
-                }
+                float preferred = preferredCostWidth(costs);
                 width = Math.clamp((int) Math.ceil(preferred), 48, 240) + 12;
             }
             if (renderedCostWidth == width) return;
@@ -233,6 +224,29 @@ final class ResearchGraphNode extends NodeModel {
             int nodeWidth = SUMMARY_WIDTH + width;
             layout(layout -> layout.width(nodeWidth));
             costs.layout(layout -> layout.width(renderedCostWidth));
+        }
+
+        private static float preferredCostWidth(UIElement element) {
+            if (element instanceof ResearchUiParts.MaterialRow) {
+                float labelWidth = 0;
+                for (UIElement child : element.getChildren()) {
+                    if (child instanceof Label label) labelWidth = Math.max(labelWidth, preferredLabelWidth(label));
+                }
+                return labelWidth + ResearchUiParts.MATERIAL_ICON_SPACE;
+            }
+            float width = 0;
+            for (UIElement child : element.getChildren()) width = Math.max(width, preferredCostWidth(child));
+            return element instanceof Label label ? Math.max(width, preferredLabelWidth(label)) : width;
+        }
+
+        private static float preferredLabelWidth(Label label) {
+            var textStyle = label.getTextStyle();
+            float width = 0;
+            for (var line : TextUtilities.computeFormattedLines(label.getFont(),
+                    TextUtilities.withFont(label.getText(), textStyle.font()), textStyle.fontSize(), Float.MAX_VALUE)) {
+                width = Math.max(width, line.getB());
+            }
+            return width;
         }
 
         @Override

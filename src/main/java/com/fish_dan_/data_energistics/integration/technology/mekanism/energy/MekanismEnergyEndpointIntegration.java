@@ -5,7 +5,14 @@ import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedE
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+
+import org.jspecify.annotations.Nullable;
 
 /** Registered long-width energy endpoint strategy for Mekanism. */
 public final class MekanismEnergyEndpointIntegration implements TowerEnergyEndpointIntegration {
@@ -13,6 +20,13 @@ public final class MekanismEnergyEndpointIntegration implements TowerEnergyEndpo
     @Override
     public String id() {
         return "mekanism-energy";
+    }
+
+    @Override
+    @Nullable
+    public IEnergyStorage findEnergyStorage(Level level, BlockPos position, @Nullable Direction side) {
+        IEnergyStorage storage = level.getCapability(Capabilities.EnergyStorage.BLOCK, position, side);
+        return storage != null && MekanismEnergyAccess.supports(level, position, side, storage) ? storage : null;
     }
 
     @Override
@@ -78,5 +92,11 @@ public final class MekanismEnergyEndpointIntegration implements TowerEnergyEndpo
         if (blockEntity != null) {
             blockEntity.setChanged();
         }
+    }
+
+    @Override
+    public int lookupOrder() {
+        // Preserve the native wrapper before generic EU/FE compatibility bridges can replace it.
+        return 10;
     }
 }

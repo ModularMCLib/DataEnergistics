@@ -14,9 +14,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * Type-safe external-energy access to Modern Industrialization's sided EU storage.
  */
-public final class ModernIndustrializationEnergyIntegration {
+public final class MIEnergyAccess {
 
-    private ModernIndustrializationEnergyIntegration() {}
+    private MIEnergyAccess() {}
 
     /**
      * Resolves one MI storage and wraps it with the currently configured external-energy-per-EU conversion.
@@ -40,18 +40,17 @@ public final class ModernIndustrializationEnergyIntegration {
         if (miStorage == null) {
             return null;
         }
-        return new ModernIndustrializationEnergyStorageImpl(miStorage);
+        return new EuConvertedEnergyStorage(miStorage);
     }
 
     /**
      * Implements the project-facing contract without leaking optional MI symbols into shared tower code.
      */
-    private static final class ModernIndustrializationEnergyStorageImpl
-                                                                        implements ModernIndustrializationEnergyStorage {
+    private static final class EuConvertedEnergyStorage implements ModernIndustrializationEnergyStorage {
 
         private final MIEnergyStorage miStorage;
 
-        private ModernIndustrializationEnergyStorageImpl(MIEnergyStorage miStorage) {
+        private EuConvertedEnergyStorage(MIEnergyStorage miStorage) {
             this.miStorage = miStorage;
         }
 

@@ -14,9 +14,9 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jspecify.annotations.Nullable;
 
 /** Registered long-width EU endpoint strategy for Modern Industrialization. */
-public final class ModernIndustrializationEnergyEndpointIntegration implements TowerEnergyEndpointIntegration {
+public final class MIEUIntegration implements TowerEnergyEndpointIntegration {
 
-    public ModernIndustrializationEnergyEndpointIntegration() {}
+    public MIEUIntegration() {}
 
     @Override
     public String id() {
@@ -26,12 +26,17 @@ public final class ModernIndustrializationEnergyEndpointIntegration implements T
     @Override
     @Nullable
     public IEnergyStorage findEnergyStorage(Level level, BlockPos position, @Nullable Direction side) {
-        return ModernIndustrializationEnergyIntegration.findEnergyStorage(level, position, side);
+        return MIEnergyAccess.findEnergyStorage(level, position, side);
     }
 
     @Override
     public boolean supports(TowerEnergyEndpointContext context) {
         return context.storage() instanceof ModernIndustrializationEnergyStorage;
+    }
+
+    @Override
+    public Object backingIdentity(TowerEnergyEndpointContext context) {
+        return storage(context).backingIdentity();
     }
 
     @Override

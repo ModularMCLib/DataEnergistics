@@ -40,6 +40,8 @@ final class CommonCapabilityRegistrar {
     static void register(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.RESEARCH_STATION.get(),
                 (blockEntity, side) -> blockEntity);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.RESEARCH_STATION_PART.get(),
+                (blockEntity, side) -> blockEntity);
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_SOLAR_PANEL_BLOCK_ENTITY.get(),

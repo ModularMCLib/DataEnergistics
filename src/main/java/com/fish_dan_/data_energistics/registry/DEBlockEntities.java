@@ -23,6 +23,7 @@ import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.Interference
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.research.ResearchStationPartBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumReturnPortalBlockEntity;
@@ -55,6 +56,13 @@ public final class DEBlockEntities {
                 var type = BlockEntityType.Builder.of(ResearchStationBlockEntity::new, DEBlocks.RESEARCH_STATION.get()).build(null);
                 DEBlocks.RESEARCH_STATION.get().setBlockEntity(ResearchStationBlockEntity.class, type, null,
                         (level, pos, state, host) -> host.serverTick());
+                return type;
+            });
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ResearchStationPartBlockEntity>> RESEARCH_STATION_PART = BLOCK_ENTITY_TYPES.register(
+            "digital_transformation_research_station_part", () -> {
+                var type = BlockEntityType.Builder.of(ResearchStationPartBlockEntity::new, DEBlocks.RESEARCH_STATION_PART.get()).build(null);
+                DEBlocks.RESEARCH_STATION_PART.get().setBlockEntity(ResearchStationPartBlockEntity.class, type, null, null);
                 return type;
             });
 

@@ -58,8 +58,13 @@ public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStatio
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (!level.isClientSide()) level.setBlock(partner(pos, state), DEBlocks.RESEARCH_STATION_PART.get().defaultBlockState()
-                .setValue(FACING, state.getValue(FACING)), Block.UPDATE_ALL);
+        if (!level.isClientSide()) {
+            BlockPos other = partner(pos, state);
+            BlockState part = DEBlocks.RESEARCH_STATION_PART.get().defaultBlockState().setValue(FACING, state.getValue(FACING));
+            if (level.setBlock(other, part, Block.UPDATE_ALL)) {
+                DEBlocks.RESEARCH_STATION_PART.get().setPlacedBy(level, other, part, placer, stack);
+            }
+        }
     }
 
     @Override

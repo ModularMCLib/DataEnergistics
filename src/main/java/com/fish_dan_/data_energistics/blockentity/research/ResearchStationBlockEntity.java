@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.blockentity.research;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.research.ResearchStationBlock;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.research.persistence.ResearchSavedData;
 import com.fish_dan_.data_energistics.research.progression.ResearchExecution;
@@ -11,6 +12,7 @@ import com.fish_dan_.data_energistics.research.progression.ResearchStationState;
 import appeng.api.inventories.BaseInternalInventory;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.GridFlags;
+import appeng.api.networking.IGridNode;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.util.AECableType;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
@@ -26,6 +28,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import org.jspecify.annotations.Nullable;
 
@@ -40,6 +43,7 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
     private final InternalInventory inventory = new TargetInventory();
     private boolean working;
     private boolean faulted;
+    private boolean partnerEntityChecked;
 
     public ResearchStationBlockEntity(BlockPos pos, BlockState state) {
         super(DEBlockEntities.RESEARCH_STATION.get(), pos, state);
@@ -72,7 +76,8 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
 
     @Override
     public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        return EnumSet.of(Direction.DOWN, getBlockState().getValue(ResearchStationBlock.FACING).getOpposite());
+        Direction facing = getBlockState().getValue(ResearchStationBlock.FACING);
+        return EnumSet.of(Direction.DOWN, facing.getOpposite(), facing.getCounterClockWise());
     }
 
     @Override
@@ -83,6 +88,7 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
     public void serverTick() {
         if (faulted) return;
         try {
+            ensurePartnerBlockEntity();
             ResearchExecution.tick(this);
             ResearchStationState state = state();
             boolean next = getMainNode().isOnline() && state.lastTick == serverLevel().getServer().getTickCount() &&
@@ -97,6 +103,22 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
             markForUpdate();
             Data_Energistics.LOGGER.error("Research station {} stopped at {} in {}", stationId, worldPosition, serverLevel().dimension().location(), error);
         }
+    }
+
+    /** Old saves have no part BE tag; create it in a loaded chunk and inherit the main node's AE ownership. */
+    private void ensurePartnerBlockEntity() {
+        if (partnerEntityChecked) return;
+        IGridNode mainNode = getMainNode().getNode();
+        if (mainNode == null) return;
+        BlockPos other = ResearchStationBlock.partner(worldPosition, getBlockState());
+        LevelChunk chunk = serverLevel().getChunkSource().getChunkNow(other.getX() >> 4, other.getZ() >> 4);
+        if (chunk == null || !chunk.getBlockState(other).is(DEBlocks.RESEARCH_STATION_PART.get())) return;
+        if (!(chunk.getBlockEntity(other, LevelChunk.EntityCreationType.IMMEDIATE) instanceof ResearchStationPartBlockEntity part)) {
+            throw new IllegalStateException("Research station part has no network block entity at " + other);
+        }
+        part.getMainNode().setOwningPlayerId(mainNode.getOwningPlayerId());
+        part.saveChanges();
+        partnerEntityChecked = true;
     }
 
     @Override

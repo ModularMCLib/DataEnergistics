@@ -35,6 +35,11 @@ public final class ModernIndustrializationEnergyEndpointIntegration implements T
     }
 
     @Override
+    public Object backingIdentity(TowerEnergyEndpointContext context) {
+        return storage(context).backingIdentity();
+    }
+
+    @Override
     public TowerEnergyDirection direction(TowerEnergyEndpointContext context) {
         ModernIndustrializationEnergyStorage storage = storage(context);
         TowerEnergyDirection direction = TowerEnergyDirection.fromPermissions(storage.canExtract(), storage.canReceive());

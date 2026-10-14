@@ -5,12 +5,27 @@ import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedE
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
 import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+
+import org.jspecify.annotations.Nullable;
+
 /** Registered virtual-buffer strategy for Applied Flux network energy. */
 public final class AppliedFluxEnergyEndpointIntegration implements TowerEnergyEndpointIntegration {
 
     @Override
     public String id() {
         return "appflux-network";
+    }
+
+    @Override
+    @Nullable
+    public IEnergyStorage findEnergyStorage(Level level, BlockPos position, @Nullable Direction side) {
+        IEnergyStorage storage = level.getCapability(Capabilities.EnergyStorage.BLOCK, position, side);
+        return storage != null && AE2FluxIntegration.isNetworkEnergyStorage(storage) ? storage : null;
     }
 
     @Override
@@ -59,6 +74,12 @@ public final class AppliedFluxEnergyEndpointIntegration implements TowerEnergyEn
     @Override
     public boolean isBuffer() {
         return true;
+    }
+
+    @Override
+    public int lookupOrder() {
+        // Preserve the network buffer before generic EU/FE compatibility bridges can replace it.
+        return 10;
     }
 
     private static long saturatingAdd(long left, long right) {

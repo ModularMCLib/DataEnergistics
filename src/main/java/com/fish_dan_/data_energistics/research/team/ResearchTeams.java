@@ -154,7 +154,7 @@ public final class ResearchTeams {
 
     /** Executes a unified player command, reporting translated success or failure to its source. */
     public static int executeCommand(CommandContext<CommandSourceStack> context, String action, String argument)
-                                                                                                           throws CommandSyntaxException {
+                                                                                                                 throws CommandSyntaxException {
         ResearchTeamSavedData.Result result = perform(context.getSource().getPlayerOrException(), action, argument);
         if (result.success()) {
             context.getSource().sendSuccess(result::message, false);

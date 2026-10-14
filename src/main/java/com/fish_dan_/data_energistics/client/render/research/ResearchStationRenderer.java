@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.client.RenderTypeHelper;
@@ -25,6 +26,17 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
 
     public static final ModelResourceLocation HEAD_OFF = ModelResourceLocation.standalone(Data_Energistics.id("block/research/laser_head_off"));
     public static final ModelResourceLocation HEAD_ON = ModelResourceLocation.standalone(Data_Energistics.id("block/research/laser_head_on"));
+    private static final float HEAD_X = -15F / 16;
+    private static final float HEAD_Y = 22F / 16;
+    private static final float PIVOT_X = 7.09567F / 16;
+    private static final float PIVOT_Y = 8.89403F / 16;
+    private static final float EMITTER_X = 8F / 16;
+    private static final float EMITTER_Y = 6F / 16;
+    private static final float EMITTER_Z = 8F / 16;
+    private static final float WORKBENCH_Y = 18.01F / 16;
+    private static final float SWING_RADIANS = (float) Math.toRadians(10);
+    private static final int SWING_PERIOD_TICKS = 80;
+    private static final int BEAM_COLOR = 0x80A8FFE0;
     private final BlockRenderDispatcher renderer;
 
     public ResearchStationRenderer(BlockEntityRendererProvider.Context context) {
@@ -41,46 +53,65 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
         var level = host.getLevel();
         if (level == null) return;
         boolean working = host.working();
-        float phase = (level.getGameTime() + partialTick) * 0.09f;
-        float offset = working ? (float) Math.sin(phase) * 0.08f : 0;
+        float phase = (level.getGameTime() % SWING_PERIOD_TICKS + partialTick) * Mth.TWO_PI / SWING_PERIOD_TICKS;
+        float swing = working ? Mth.sin(phase) * SWING_RADIANS : 0;
         pose.pushPose();
-        pose.translate(0.5, 0, 0.5);
-        float angle = switch (host.getBlockState().getValue(ResearchStationBlock.FACING)) {
-            case SOUTH -> 0;
-            case WEST -> -90;
-            case NORTH -> 180;
-            case EAST -> 90;
-            default -> throw new IllegalStateException("Research facing must be horizontal");
-        };
-        pose.mulPose(Axis.YP.rotationDegrees(angle));
-        pose.translate(-0.5, 0, -0.5);
-        pose.pushPose();
-        pose.translate(-15.0 / 16 + offset, 22.0 / 16, 0);
-        var model = Minecraft.getInstance().getModelManager().getModel(working ? HEAD_ON : HEAD_OFF);
-        var state = host.getBlockState();
-        for (RenderType layer : model.getRenderTypes(state, RandomSource.create(42), ModelData.EMPTY)) {
-            renderer.getModelRenderer().renderModel(pose.last(), buffers.getBuffer(RenderTypeHelper.getEntityRenderType(layer, false)),
-                    state, model, 1, 1, 1, light, overlay, ModelData.EMPTY, layer);
+        try {
+            pose.translate(0.5, 0, 0.5);
+            float angle = switch (host.getBlockState().getValue(ResearchStationBlock.FACING)) {
+                case SOUTH -> 0;
+                case WEST -> -90;
+                case NORTH -> 180;
+                case EAST -> 90;
+                default -> throw new IllegalStateException("Research facing must be horizontal");
+            };
+            pose.mulPose(Axis.YP.rotationDegrees(angle));
+            pose.translate(-0.5, 0, -0.5);
+            pose.pushPose();
+            try {
+                pose.translate(HEAD_X, HEAD_Y, 0);
+                // Rotate around the supplied laser head's attachment pivot, keeping its nozzle and ray together.
+                pose.translate(PIVOT_X, PIVOT_Y, EMITTER_Z);
+                pose.mulPose(Axis.ZP.rotation(swing));
+                pose.translate(-PIVOT_X, -PIVOT_Y, -EMITTER_Z);
+                var model = Minecraft.getInstance().getModelManager().getModel(working ? HEAD_ON : HEAD_OFF);
+                var state = host.getBlockState();
+                for (RenderType layer : model.getRenderTypes(state, RandomSource.create(42), ModelData.EMPTY)) {
+                    renderer.getModelRenderer().renderModel(pose.last(), buffers.getBuffer(RenderTypeHelper.getEntityRenderType(layer, false)),
+                            state, model, 1, 1, 1, light, overlay, ModelData.EMPTY, layer);
+                }
+                if (working) {
+                    float sine = Mth.sin(swing);
+                    float cosine = Mth.cos(swing);
+                    float nozzleY = HEAD_Y + PIVOT_Y + (EMITTER_X - PIVOT_X) * sine + (EMITTER_Y - PIVOT_Y) * cosine;
+                    float length = (nozzleY - WORKBENCH_Y) / cosine;
+                    beam(pose, buffers.getBuffer(RenderType.lightning()), length, sine / cosine);
+                }
+            } finally {
+                pose.popPose();
+            }
+        } finally {
+            pose.popPose();
         }
-        pose.popPose();
-        if (working) beam(pose, buffers.getBuffer(RenderType.lightning()), -7.0f / 16 + offset);
-        pose.popPose();
     }
 
-    private static void beam(PoseStack pose, VertexConsumer vertices, float x) {
+    private static void beam(PoseStack pose, VertexConsumer vertices, float length, float slope) {
         var matrix = pose.last().pose();
         float width = 0.014f;
         for (int side = 0; side < 4; side++) {
             double first = side * Math.PI / 2;
             double second = (side + 1) * Math.PI / 2;
-            float x1 = x + (float) Math.cos(first) * width;
-            float z1 = 0.5f + (float) Math.sin(first) * width;
-            float x2 = x + (float) Math.cos(second) * width;
-            float z2 = 0.5f + (float) Math.sin(second) * width;
-            vertices.addVertex(matrix, x1, 1.75f, z1).setColor(110, 220, 255, 180);
-            vertices.addVertex(matrix, x1, 0.55f, z1).setColor(110, 220, 255, 180);
-            vertices.addVertex(matrix, x2, 0.55f, z2).setColor(110, 220, 255, 180);
-            vertices.addVertex(matrix, x2, 1.75f, z2).setColor(110, 220, 255, 180);
+            float x1 = EMITTER_X + (float) Math.cos(first) * width;
+            float z1 = EMITTER_Z + (float) Math.sin(first) * width;
+            float x2 = EMITTER_X + (float) Math.cos(second) * width;
+            float z2 = EMITTER_Z + (float) Math.sin(second) * width;
+            // Each end vertex intersects the horizontal workbench even while the nozzle is tilted.
+            float endY1 = EMITTER_Y - length - (x1 - EMITTER_X) * slope;
+            float endY2 = EMITTER_Y - length - (x2 - EMITTER_X) * slope;
+            vertices.addVertex(matrix, x1, EMITTER_Y, z1).setColor(BEAM_COLOR);
+            vertices.addVertex(matrix, x2, EMITTER_Y, z2).setColor(BEAM_COLOR);
+            vertices.addVertex(matrix, x2, endY2, z2).setColor(BEAM_COLOR);
+            vertices.addVertex(matrix, x1, endY1, z1).setColor(BEAM_COLOR);
         }
     }
 }

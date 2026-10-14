@@ -10,8 +10,11 @@ import com.fish_dan_.data_energistics.research.definition.ResearchDefinitions;
 import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
 import com.fish_dan_.data_energistics.research.synchronization.ResearchSnapshots;
 
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
@@ -31,6 +34,7 @@ public final class ResearchStationMenu extends AbstractContainerMenu {
     private final Inventory playerInventory;
     private final Slot targetSlot;
     private final ResearchStationBlockEntity host;
+    private final ModularUI ui;
     private CompoundTag snapshot = new CompoundTag();
     private final Object2ObjectMap<ResourceLocation, ResearchNode> clientNodes = new Object2ObjectLinkedOpenHashMap<>();
     private long viewRevision;
@@ -58,10 +62,14 @@ public final class ResearchStationMenu extends AbstractContainerMenu {
                 return 1;
             }
         };
-        ResearchStationUi.mount(this);
+        this.ui = ResearchStationUi.mount(this);
     }
 
     public static void open(ServerPlayer player, ResearchStationBlockEntity host) {
+        if (host.faulted()) {
+            player.sendSystemMessage(Component.translatable("research.data_energistics.faulted"));
+            return;
+        }
         player.openMenu(new SimpleMenuProvider((id, inventory, viewer) -> new ResearchStationMenu(id, inventory, host),
                 host.getBlockState().getBlock().getName()), buffer -> buffer.writeBlockPos(host.getBlockPos()));
     }
@@ -80,7 +88,7 @@ public final class ResearchStationMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return host.getLevel() == player.level() && !host.isRemoved() &&
+        return host.getLevel() == player.level() && !host.isRemoved() && !host.faulted() &&
                 player.level().getBlockEntity(host.getBlockPos()) == host &&
                 player.distanceToSqr(host.getBlockPos().getCenter()) <= 64;
     }
@@ -108,6 +116,13 @@ public final class ResearchStationMenu extends AbstractContainerMenu {
 
     public ResearchStationBlockEntity host() {
         return host;
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        // LDLib2's screen mixin disposes the client UI; the native menu owns its server lifecycle.
+        if (isServerSide()) ui.onRemoved();
     }
 
     public CompoundTag snapshot() {

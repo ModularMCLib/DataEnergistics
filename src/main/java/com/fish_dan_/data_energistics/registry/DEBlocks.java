@@ -58,6 +58,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -68,10 +69,10 @@ public final class DEBlocks {
 
     public static final DeferredBlock<ResearchStationBlock> RESEARCH_STATION = BLOCKS.registerBlock(
             "digital_transformation_research_station", ResearchStationBlock::new,
-            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion());
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<ResearchStationPartBlock> RESEARCH_STATION_PART = BLOCKS.registerBlock(
             "digital_transformation_research_station_part", ResearchStationPartBlock::new,
-            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().noLootTable());
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().noLootTable().pushReaction(PushReaction.BLOCK));
 
     public static final DeferredBlock<BeamFormerBlock> ME_BEAM_FORMER = BLOCKS.registerBlock(
             "me_beam_former", properties -> new BeamFormerBlock(properties, BeamDeviceKind.DIRECTIONAL),

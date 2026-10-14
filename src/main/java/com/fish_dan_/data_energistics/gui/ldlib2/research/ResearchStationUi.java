@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.research;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
+import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Presentation;
 import com.fish_dan_.data_energistics.gui.ldlib2.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
@@ -48,6 +49,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.Objects;
 
 /** Both-side slot tree; all research and team requests remain server-authoritative menu actions. */
 public final class ResearchStationUi {
@@ -61,7 +63,6 @@ public final class ResearchStationUi {
     private final ResearchGraphView graph = new ResearchGraphView();
     private final ScrollerView projects = ResearchUiParts.scroll(0, 0, 1, 1);
     private final Label title = ResearchUiParts.label(ResearchUiParts.text("title"));
-    private final Label navigation = ResearchUiParts.label(ResearchUiParts.text("navigation"));
     private final UIElement backpack = new UIElement();
     private final Label backpackHeader = ResearchUiParts.label(ResearchUiParts.text("backpack"));
     private final InventorySlots backpackInventory = new InventorySlots();
@@ -138,8 +139,7 @@ public final class ResearchStationUi {
         zoomOut = ResearchUiParts.button(Component.literal("−"), () -> graph.graphView.setScale(graph.graphView.getScale() - 0.15F));
         zoomIn = ResearchUiParts.button(Component.literal("+"), () -> graph.graphView.setScale(graph.graphView.getScale() + 0.15F));
         reset = ResearchUiParts.button(ResearchUiParts.text("reset"), graph::fitGraphChildren);
-        navigation.textStyle(style -> style.adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL));
-        graphPane.addChildren(graph, empty, zoomOut, zoomIn, reset, navigation);
+        graphPane.addChildren(graph, empty, zoomOut, zoomIn, reset);
         projectPane.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
         projectPane.addChildren(projectTitle, projects);
         research.addChildren(graphPane, projectPane);
@@ -226,7 +226,6 @@ public final class ResearchStationUi {
         ResearchUiParts.at(zoomOut, 0, graphHeight + 5, 22, 22);
         ResearchUiParts.at(zoomIn, 26, graphHeight + 5, 22, 22);
         ResearchUiParts.at(reset, 52, graphHeight + 5, 72, 22);
-        ResearchUiParts.at(navigation, 132, graphHeight + 5, Math.max(1, layout.graphWidth() - 132), 22);
         int projectHeight = layout.bodyHeight();
         ResearchUiParts.at(projectPane, layout.sidebarLeft(), layout.bodyTop(), layout.sidebarWidth(), projectHeight);
         ResearchUiParts.at(projectTitle, 5, 4, Math.max(1, layout.sidebarWidth() - 10), 16);
@@ -265,7 +264,6 @@ public final class ResearchStationUi {
         ResearchUiParts.at(graphPane, layout.margin(), layout.bodyTop(), graphWidth, layout.bodyHeight());
         ResearchUiParts.at(graph, 0, 0, graphWidth, Math.max(1, layout.bodyHeight() - 28));
         ResearchUiParts.at(empty, 7, Math.max(0, layout.bodyHeight() - 60), Math.max(1, graphWidth - 14), 30);
-        ResearchUiParts.at(navigation, 132, Math.max(1, layout.bodyHeight() - 28) + 5, Math.max(1, graphWidth - 132), 22);
         for (Page entry : Page.values()) {
             Button button = pageButtons.get(entry.ordinal());
             ResearchUiParts.show(button, true);
@@ -381,14 +379,15 @@ public final class ResearchStationUi {
         }
         graphRanks = depth;
         if (scope == ResearchScope.ITEM_UPGRADE && !target().isEmpty()) {
-            ResearchGraphNode item = new ResearchGraphNode(ITEM_ROOT, target().getHoverName(), target().copy(), this::select, this::hover);
+            ResearchGraphNode item = new ResearchGraphNode(ITEM_ROOT, target().getHoverName(), target().copy(),
+                    this::select, this::hover, this::positionNodes);
             item.state(ResearchUiParts.text("initial_item"), 0xFF505F87);
             model.models().add(item);
             graphNodes.put(ITEM_ROOT, item);
         }
         for (ResearchNode node : nodes) {
             ResearchGraphNode view = new ResearchGraphNode(node.id(), Component.translatable(node.name()),
-                    new ItemStack(BuiltInRegistries.ITEM.get(node.icon())), this::select, this::hover);
+                    new ItemStack(BuiltInRegistries.ITEM.get(node.icon())), this::select, this::hover, this::positionNodes);
             model.models().add(view);
             graphNodes.put(node.id(), view);
         }
@@ -414,44 +413,46 @@ public final class ResearchStationUi {
     }
 
     private void select(ResourceLocation id) {
-        if (id.equals(selected)) {
-            page = Page.GRAPH;
-            updatePages();
-            return;
-        }
-        selected = id;
+        selected = id.equals(selected) ? null : id;
         graph.clearAllSelected();
-        if (graphNodes.containsKey(id)) graph.addSelected(graphNodes.get(id));
+        if (selected != null && graphNodes.containsKey(selected)) graph.addSelected(graphNodes.get(selected));
         graph.focus(selected, hovered);
         refreshExpandedNodes();
         page = Page.GRAPH;
         updatePages();
     }
 
-    private void hover(@Nullable ResourceLocation id) {
-        hovered = id;
+    private void hover(ResourceLocation id, boolean inside) {
+        if (!inside && !id.equals(hovered)) return;
+        ResourceLocation next = inside ? id : null;
+        if (Objects.equals(hovered, next)) return;
+        hovered = next;
+        selected = null;
+        graph.clearAllSelected();
         graph.focus(selected, hovered);
+        refreshExpandedNodes();
     }
 
     private void refreshExpandedNodes() {
         boolean changed = false;
         for (ResearchGraphNode node : graphNodes.values()) {
-            boolean expanded = node.researchId().equals(selected);
-            changed |= node.expanded() != expanded;
-            node.expand(expanded);
-            if (expanded) node.content(content -> populateNode(content, node.researchId()));
+            Presentation presentation = node.researchId().equals(hovered) ?
+                    node.researchId().equals(selected) ? Presentation.DETAILS : Presentation.COSTS : Presentation.COLLAPSED;
+            changed |= node.presentation() != presentation;
+            node.present(presentation);
+            if (presentation != Presentation.COLLAPSED) node.content((costs, details) -> populateNode(costs, details, node.researchId(), presentation));
         }
         if (changed) positionNodes();
     }
 
-    /** Expand column/row spacing around the selected native node without reloading the graph or resetting its view. */
+    /** Expand column/row spacing around the hovered native node without reloading the graph or resetting its view. */
     private void positionNodes() {
         Int2IntOpenHashMap widths = new Int2IntOpenHashMap();
         Int2IntOpenHashMap rows = new Int2IntOpenHashMap();
         int maxRank = 0;
         for (ResearchGraphNode node : graphNodes.values()) {
             int rank = graphRanks.getInt(node.researchId());
-            widths.put(rank, Math.max(widths.get(rank), node.expanded() ? 316 : 112));
+            widths.put(rank, Math.max(widths.get(rank), node.layoutWidth()));
             maxRank = Math.max(maxRank, rank);
         }
         Int2IntOpenHashMap columns = new Int2IntOpenHashMap();
@@ -464,60 +465,67 @@ public final class ResearchStationUi {
             int rank = graphRanks.getInt(node.researchId());
             int top = rows.get(rank);
             node.setPosition(new Vector2f(columns.get(rank), top));
-            rows.put(rank, top + (node.expanded() ? 420 : 110));
+            rows.put(rank, top + node.layoutHeight() + 26);
         }
     }
 
-    private void populateNode(ScrollerView content, ResourceLocation nodeId) {
-        content.clearAllScrollViewChildren();
+    private void populateNode(UIElement costs, UIElement details, ResourceLocation nodeId, Presentation presentation) {
         if (ITEM_ROOT.equals(nodeId)) {
-            content.addScrollViewChild(ResearchUiParts.label(target().getHoverName()));
-            content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("initial_description")));
+            costs.addChild(ResearchUiParts.label(target().getHoverName()));
+            costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
+            if (presentation == Presentation.DETAILS) {
+                details.addChild(ResearchUiParts.label(target().getHoverName()));
+                details.addChild(ResearchUiParts.label(ResearchUiParts.text("initial_description")));
+            }
             return;
         }
         ResearchNode node = lookup(projectNodes, nodeId);
         if (node == null) node = lookup(menu.nodes(), nodeId);
         if (node == null) {
-            content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("select_node")));
+            costs.addChild(ResearchUiParts.label(ResearchUiParts.text("select_node")));
             return;
         }
         ResearchNode displayed = node;
-        content.addScrollViewChild(ResearchUiParts.label(Component.translatable(node.name())));
-        content.addScrollViewChild(ResearchUiParts.label(Component.translatable(node.description())));
-        content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("time", node.researchTicks(), format(node.researchTicks() / 20.0))));
-        content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("energy", format(node.aePerTick()), format(node.aePerTick() * node.researchTicks()))));
-        content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("materials")));
-        if (node.inputs().isEmpty()) content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
-        for (ResearchInput input : node.inputs()) {
-            content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("material", input.key().getDisplayName(), input.amount())));
+        if (presentation == Presentation.DETAILS) {
+            details.addChild(ResearchUiParts.label(Component.translatable(node.name())));
+            details.addChild(ResearchUiParts.label(Component.translatable(node.description())));
         }
+        costs.addChild(ResearchUiParts.label(Component.translatable(node.name())));
+        costs.addChild(ResearchUiParts.label(ResearchUiParts.text("time", node.researchTicks(), format(node.researchTicks() / 20.0))));
+        costs.addChild(ResearchUiParts.label(ResearchUiParts.text("energy", format(node.aePerTick()), format(node.aePerTick() * node.researchTicks()))));
+        costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials")));
+        if (node.inputs().isEmpty()) costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
+        for (ResearchInput input : node.inputs()) {
+            costs.addChild(ResearchUiParts.label(ResearchUiParts.text("material", input.key().getDisplayName(), input.amount())));
+        }
+        if (presentation == Presentation.COSTS) return;
         if (!projectData.containsKey(node.id()) && !unlocked.contains(node.id())) {
-            Button request = ResearchUiParts.button(ResearchUiParts.text("request_materials"),
+            Button request = ResearchUiParts.graphButton(ResearchUiParts.text("request_materials"),
                     () -> menu.request("request_materials", displayed.id().toString()));
             request.setActive(stationOperable() && available(node) && canTarget(node));
-            content.addScrollViewChild(request);
+            details.addChild(request);
         }
         for (ResourceLocation id : node.prerequisites()) {
             ResearchNode prerequisite = lookup(menu.nodes(), id);
-            content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text(unlocked.contains(id) ? "prerequisite_met" : "prerequisite_missing",
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text(unlocked.contains(id) ? "prerequisite_met" : "prerequisite_missing",
                     prerequisite == null ? Component.literal(id.toString()) : Component.translatable(prerequisite.name()))));
         }
         CompoundTag pending = lookup(projectData, node.id());
         if (unlocked.contains(node.id())) {
-            content.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("unlocked")));
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("unlocked")));
         } else if (pending != null) {
-            content.addScrollViewChild(ResearchUiParts.label(projectStatus(node, pending)));
+            details.addChild(ResearchUiParts.label(projectStatus(node, pending)));
             if (pending.getBoolean("running")) {
-                content.addScrollViewChild(ResearchUiParts.button(ResearchUiParts.text("cancel"), () -> menu.request("cancel", displayed.id().toString())));
+                details.addChild(ResearchUiParts.graphButton(ResearchUiParts.text("cancel"), () -> menu.request("cancel", displayed.id().toString())));
             } else {
-                var resume = ResearchUiParts.button(ResearchUiParts.text("resume"), () -> menu.request("resume", displayed.id().toString()));
+                var resume = ResearchUiParts.graphButton(ResearchUiParts.text("resume"), () -> menu.request("resume", displayed.id().toString()));
                 resume.setActive(stationOperable() && runningCount() < 2 && !pending.getBoolean("faulted"));
-                content.addScrollViewChild(resume);
+                details.addChild(resume);
             }
         } else {
-            var start = ResearchUiParts.button(ResearchUiParts.text("start"), () -> menu.request("start", displayed.id().toString()));
+            var start = ResearchUiParts.graphButton(ResearchUiParts.text("start"), () -> menu.request("start", displayed.id().toString()));
             start.setActive(stationOperable() && available(node) && runningCount() < 2 && canTarget(node));
-            content.addScrollViewChild(start);
+            details.addChild(start);
         }
     }
 

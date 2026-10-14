@@ -13,6 +13,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 
 import net.minecraft.network.chat.Component;
 
@@ -61,6 +63,25 @@ final class ResearchUiParts {
     }
 
     static Button button(Component text, Runnable action) {
+        Button button = button(text);
+        button.setOnClick(event -> action.run());
+        return button;
+    }
+
+    /** Canvas actions fire on release so a press can become a pan before any research request is sent. */
+    static Button graphButton(Component text, Runnable action) {
+        Button button = button(text);
+        button.addEventListener(UIEvents.CLICK, event -> {
+            if (event.button == 0 && button.isActive()) {
+                UISoundUtils.playButtonClickSound();
+                action.run();
+                event.stopPropagation();
+            }
+        });
+        return button;
+    }
+
+    private static Button button(Component text) {
         Button button = new Button();
         button.text.setText(text);
         button.buttonStyle(style -> style.baseTexture(BUTTON).hoverTexture(BUTTON_HOVER).pressedTexture(BUTTON_PRESSED));
@@ -69,7 +90,6 @@ final class ResearchUiParts {
                 .adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL)
                 .textAlignHorizontal(Horizontal.CENTER).textAlignVertical(Vertical.CENTER));
         button.layout(layout -> layout.widthPercent(100).height(22).minHeight(22).flexShrink(0));
-        button.setOnClick(event -> action.run());
         return button;
     }
 

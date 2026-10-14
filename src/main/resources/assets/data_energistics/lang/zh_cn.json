@@ -621,7 +621,6 @@
 	"gui.data_energistics.research.material": "%s × %s",
 	"gui.data_energistics.research.materials": "消耗材料（开始时扣除）",
 	"gui.data_energistics.research.materials_none": "无需材料",
-	"gui.data_energistics.research.navigation": "右键拖动 · 滚轮缩放",
 	"gui.data_energistics.research.no_power": "等待能量",
 	"gui.data_energistics.research.paused": "已暂停",
 	"gui.data_energistics.research.prerequisite_met": "✓ %s",

@@ -3,48 +3,62 @@ package com.fish_dan_.data_energistics.gui.ldlib2.research;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
+import com.lowdragmc.lowdraglib2.gui.ui.Style;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.PortCapacity;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.PortModelOptions;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.NodeElement;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.NodeTitleElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.NodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.NodeDefinitionScope;
+import com.lowdragmc.lowdraglib2.utils.TextUtilities;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import dev.vfyjxf.taffy.style.AlignItems;
+import dev.vfyjxf.taffy.style.FlexDirection;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /** Native toolkit node carrying only its displayed identity, icon and state. */
 final class ResearchGraphNode extends NodeModel {
 
+    private static final int SUMMARY_WIDTH = 112;
     private final ResourceLocation researchId;
     private final IGuiTexture icon;
     private final Consumer<ResourceLocation> selection;
-    private final Consumer<@Nullable ResourceLocation> hover;
+    private final BiConsumer<ResourceLocation, Boolean> hover;
+    private final Runnable layoutChanged;
     private Component status = Component.empty();
     private int stateColor = 0xFF7A8097;
-    private boolean expanded;
+    private Presentation presentation = Presentation.COLLAPSED;
     private int presentationRevision;
-    private @Nullable Consumer<ScrollerView> content;
+    private int layoutWidth = SUMMARY_WIDTH;
+    private int layoutHeight = 48;
+    private @Nullable BiConsumer<UIElement, UIElement> content;
 
     ResearchGraphNode(ResourceLocation id, Component title, ItemStack icon,
-                      Consumer<ResourceLocation> selection, Consumer<@Nullable ResourceLocation> hover) {
+                      Consumer<ResourceLocation> selection, BiConsumer<ResourceLocation, Boolean> hover, Runnable layoutChanged) {
         this.researchId = id;
         this.icon = new ItemStackTexture(icon);
         this.selection = selection;
         this.hover = hover;
+        this.layoutChanged = layoutChanged;
         setTitle(title);
-        setMinWidth(106);
+        setMinWidth(SUMMARY_WIDTH);
+        // The toolkit anchors collapsed ports to the title edges; research nodes never expose port editors.
+        setCollapsed(true);
     }
 
     ResourceLocation researchId() {
@@ -56,18 +70,25 @@ final class ResearchGraphNode extends NodeModel {
         this.stateColor = color;
     }
 
-    void expand(boolean expanded) {
-        if (this.expanded == expanded) return;
-        this.expanded = expanded;
-        setMinWidth(expanded ? 316 : 112);
+    void present(Presentation presentation) {
+        if (this.presentation == presentation) return;
+        this.presentation = presentation;
         presentationRevision++;
     }
 
-    boolean expanded() {
-        return expanded;
+    Presentation presentation() {
+        return presentation;
     }
 
-    void content(Consumer<ScrollerView> content) {
+    int layoutHeight() {
+        return layoutHeight;
+    }
+
+    int layoutWidth() {
+        return layoutWidth;
+    }
+
+    void content(BiConsumer<UIElement, UIElement> content) {
         this.content = content;
         presentationRevision++;
     }
@@ -93,65 +114,137 @@ final class ResearchGraphNode extends NodeModel {
         return new ResearchNodeElement(this);
     }
 
+    enum Presentation {
+
+        COLLAPSED,
+        COSTS,
+        DETAILS
+    }
+
     private static final class ResearchNodeElement extends NodeElement {
 
         private final ResearchGraphNode research;
+        private final NodeTitleElement title;
+        private final UIElement header = new UIElement();
+        private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
         private int renderedColor;
         private int renderedRevision = -1;
-        private final ScrollerView expandedContent = ResearchUiParts.scroll(0, 0, 1, 1);
-        private float savedScrollOffset;
-        private boolean restoreScroll;
+        private final UIElement costs = new UIElement();
+        private final UIElement details = new UIElement();
+        private int renderedCostWidth;
+        private boolean pointerInside;
 
         ResearchNodeElement(ResearchGraphNode model) {
             super(model);
             this.research = model;
-            addEventListener(UIEvents.MOUSE_DOWN, event -> {
-                if (event.button == 0) research.selection.accept(research.researchId);
-            });
-            addEventListener(UIEvents.MOUSE_ENTER, event -> research.hover.accept(research.researchId));
-            addEventListener(UIEvents.MOUSE_LEAVE, event -> research.hover.accept(null));
-            addEventListener(UIEvents.TICK, event -> {
-                if (restoreScroll) {
-                    float range = Math.max(0, expandedContent.getContainerHeight() - expandedContent.viewPort.getContentHeight());
-                    expandedContent.verticalScroller.setNormalizedValue(range > 0 ? Math.clamp(savedScrollOffset / range, 0F, 1F) : 0F, true);
-                    restoreScroll = false;
+            this.title = new NodeTitleElement(model);
+            addEventListener(UIEvents.CLICK, event -> {
+                if (event.button == 0 && event.target.getStructurePath().stream().noneMatch(Button.class::isInstance)) {
+                    refreshHover();
+                    research.selection.accept(research.researchId);
                 }
+            });
+            addEventListener(UIEvents.MOUSE_ENTER, event -> refreshHover(), true);
+            addEventListener(UIEvents.MOUSE_LEAVE, event -> refreshHover(), true);
+            addEventListener(UIEvents.TICK, event -> {
+                refreshHover();
                 status.setText(research.status);
                 if (renderedColor != research.stateColor) {
                     renderedColor = research.stateColor;
-                    style(style -> style.backgroundTexture(new ColorRectTexture(renderedColor)));
+                    summary.style(style -> style.backgroundTexture(new ColorRectTexture(renderedColor)));
                 }
                 if (renderedRevision != research.presentationRevision) {
                     renderedRevision = research.presentationRevision;
-                    layout(layout -> layout.width(research.expanded ? 316 : 112));
-                    if (nodeTittle != null) nodeTittle.getNodeTittle().layout(layout -> layout.width(research.expanded ? 282 : 78));
-                    ResearchUiParts.show(expandedContent, research.expanded);
-                    savedScrollOffset = Math.max(0, -expandedContent.viewContainer.getLayoutY());
-                    expandedContent.clearAllScrollViewChildren();
-                    if (research.expanded && research.content != null) research.content.accept(expandedContent);
-                    restoreScroll = research.expanded;
+                    Presentation presentation = research.presentation;
+                    ResearchUiParts.show(costs, presentation != Presentation.COLLAPSED);
+                    ResearchUiParts.show(details, presentation == Presentation.DETAILS);
+                    costs.clearAllChildren();
+                    details.clearAllChildren();
+                    if (presentation != Presentation.COLLAPSED && research.content != null) research.content.accept(costs, details);
+                    resizeCosts();
                 }
             });
         }
 
+        private void refreshHover() {
+            boolean inside = isSelfOrChildHover();
+            if (pointerInside == inside) return;
+            pointerInside = inside;
+            research.hover.accept(research.researchId, inside);
+        }
+
+        @Override
+        public boolean wantsDefaultMouseWiring() {
+            return false;
+        }
+
+        @Override
+        protected void buildPartList() {
+            parts.add(nodeTittle = title);
+        }
+
         @Override
         protected void buildUI() {
-            super.buildUI();
-            layout(layout -> layout.width(112).paddingAll(3).gapAll(2));
-            if (nodeTittle != null) {
-                nodeTittle.getNodeTittle().textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false)
-                        .fontSize(10).textColor(0xFFFFFFFF).textShadow(true).textWrap(TextWrap.HOVER_ROLL));
-                nodeTittle.getNodeTittle().layout(layout -> layout.width(78).height(18));
-                nodeTittle.getNodeIcon().layout(layout -> layout.width(16).height(16));
-            }
+            Style.importantPipeline(getLayout(), layout -> layout.positionType(TaffyPosition.ABSOLUTE));
+            layout(layout -> layout.width(research.layoutWidth).heightAuto().paddingAll(0).gapAll(0)
+                    .flexDirection(FlexDirection.COLUMN));
+            style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+            header.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.ROW)
+                    .alignItems(AlignItems.STRETCH).gapAll(0).flexShrink(0));
+            summary.layout(layout -> layout.width(SUMMARY_WIDTH).heightAuto().paddingAll(3).gapAll(2)
+                    .flexDirection(FlexDirection.COLUMN).flexShrink(0));
+            title.getNodeTittle().textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false)
+                    .fontSize(10).textColor(0xFFFFFFFF).textShadow(true).textWrap(TextWrap.HOVER_ROLL));
+            title.getNodeTittle().layout(layout -> layout.width(78).height(18));
+            title.getNodeIcon().layout(layout -> layout.width(16).height(16));
             status.textStyle(style -> style.fontSize(9).textColor(0xFFFFFFFF).textShadow(true));
-            addChild(status);
-            // Native NodeElement owns this body; its ports and dependency graph follow every size change.
-            expandedContent.layout(layout -> layout.positionType(TaffyPosition.RELATIVE)
-                    .left(0).top(0).widthPercent(100).height(250).flexShrink(0));
-            addChild(expandedContent);
-            ResearchUiParts.show(expandedContent, research.expanded);
+            summary.addChildren(title, status);
+            costs.layout(layout -> layout.width(60).heightAuto().paddingAll(6).gapAll(3)
+                    .flexDirection(FlexDirection.COLUMN).flexShrink(0));
+            costs.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
+            details.layout(layout -> layout.widthPercent(100).heightAuto().paddingAll(6).gapAll(3)
+                    .flexDirection(FlexDirection.COLUMN).flexShrink(0));
+            details.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
+            header.addChildren(summary, costs);
+            addChildren(header, details);
+            ResearchUiParts.show(costs, research.presentation != Presentation.COLLAPSED);
+            ResearchUiParts.show(details, research.presentation == Presentation.DETAILS);
+        }
+
+        /** Measure translated lines at the actual text font; long material names wrap within the upper bound. */
+        private void resizeCosts() {
+            int width = 0;
+            if (research.presentation != Presentation.COLLAPSED) {
+                float preferred = 0;
+                for (UIElement child : costs.getChildren()) {
+                    if (child instanceof Label label) {
+                        var textStyle = label.getTextStyle();
+                        for (var line : TextUtilities.computeFormattedLines(label.getFont(),
+                                TextUtilities.withFont(label.getText(), textStyle.font()), textStyle.fontSize(), Float.MAX_VALUE)) {
+                            preferred = Math.max(preferred, line.getB());
+                        }
+                    }
+                }
+                width = Math.clamp((int) Math.ceil(preferred), 48, 240) + 12;
+            }
+            if (renderedCostWidth == width) return;
+            renderedCostWidth = width;
+            int nodeWidth = SUMMARY_WIDTH + width;
+            layout(layout -> layout.width(nodeWidth));
+            costs.layout(layout -> layout.width(renderedCostWidth));
+        }
+
+        @Override
+        protected void onLayoutChanged() {
+            super.onLayoutChanged();
+            resizeCosts();
+            int width = (int) Math.ceil(getSizeWidth());
+            int height = (int) Math.ceil(getSizeHeight());
+            if (research.layoutWidth == width && research.layoutHeight == height) return;
+            research.layoutWidth = width;
+            research.layoutHeight = height;
+            research.layoutChanged.run();
         }
 
         @Override

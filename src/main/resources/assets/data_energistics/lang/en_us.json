@@ -621,7 +621,6 @@
 	"gui.data_energistics.research.material": "%s × %s",
 	"gui.data_energistics.research.materials": "Materials (charged at start)",
 	"gui.data_energistics.research.materials_none": "No materials required",
-	"gui.data_energistics.research.navigation": "Right-drag · Scroll to zoom",
 	"gui.data_energistics.research.no_power": "Waiting for energy",
 	"gui.data_energistics.research.paused": "Paused",
 	"gui.data_energistics.research.prerequisite_met": "✓ %s",

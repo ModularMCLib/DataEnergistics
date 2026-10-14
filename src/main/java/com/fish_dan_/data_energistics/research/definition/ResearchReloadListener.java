@@ -5,10 +5,6 @@ import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.RegistryOps;
@@ -23,7 +19,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -77,42 +72,14 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
                 if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("target.items: unknown item " + item);
             }
         }
-        ObjectList<ResearchInput> inputs = original.inputs();
-        if (json.has("inputs")) {
-            inputs = new ObjectArrayList<>();
-            for (JsonElement element : json.getAsJsonArray("inputs")) {
-                String field = "inputs[" + inputs.size() + "]";
-                try {
-                    inputs.add(input(element.getAsJsonObject(), field));
-                } catch (RuntimeException error) {
-                    throw new IllegalArgumentException(field + ": " + error.getMessage(), error);
-                }
-            }
-        }
+        ObjectList<ResearchInput> inputs = json.has("inputs")
+                ? ResearchInputParser.parse(json.get("inputs"), operations) : original.inputs();
         return new ResearchNode(original.id(), original.scope(), original.name(),
                 json.has("description") ? string(json.get("description"), "description") : original.description(),
                 original.icon(), target, inputs,
                 json.has("prerequisites") ? ids(json, "prerequisites") : original.prerequisites(),
                 json.has("research_ticks") ? number(json.get("research_ticks"), "research_ticks").intValueExact() : original.researchTicks(),
                 json.has("ae_per_tick") ? number(json.get("ae_per_tick"), "ae_per_tick").doubleValue() : original.aePerTick());
-    }
-
-    private ResearchInput input(JsonObject input, String field) {
-        AEKey key = switch (string(input.get("type"), field + ".type")) {
-            case "item" -> {
-                ResourceLocation item = ResourceLocation.parse(string(input.get("id"), field + ".id"));
-                if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("Unknown item " + item);
-                yield AEItemKey.of(BuiltInRegistries.ITEM.get(item));
-            }
-            case "fluid" -> {
-                ResourceLocation fluid = ResourceLocation.parse(string(input.get("id"), field + ".id"));
-                if (!BuiltInRegistries.FLUID.containsKey(fluid)) throw new IllegalArgumentException("Unknown fluid " + fluid);
-                yield AEFluidKey.of(BuiltInRegistries.FLUID.get(fluid));
-            }
-            case "ae_key" -> AEKey.CODEC.parse(operations, input.get("key")).getOrThrow();
-            default -> throw new IllegalArgumentException("type must be item, fluid or ae_key");
-        };
-        return new ResearchInput(key, number(input.get("amount"), field + ".amount").longValueExact());
     }
 
     private static String string(@Nullable JsonElement value, String field) {

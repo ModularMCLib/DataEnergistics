@@ -80,7 +80,7 @@ public final class ExampleResearchRegistration {
 
 ## Datapack 覆盖
 
-路径为 `data/<namespace>/researchtechnology/<path>.json`，对应节点 ID `<namespace>:<path>`。专用目录避免读取 Astral Sorcery 等 Mod 自有的 `research/` 数据格式，同时允许其他 Mod 的 Java 注册节点使用自己的 namespace。之前使用 `data/<namespace>/research/` 的研究站覆盖文件需移动到新目录；节点 ID 与世界解锁存档无需修改。节点必须已由 Java 注册。字段省略时继承 Java 默认值；提供数组时替换整个数组。`target` 对象提供后，内部省略的 `items` 或 `tags` 视为空集。
+路径为 `data/<namespace>/researchtechnology/<path>.json`，对应节点 ID `<namespace>:<path>`。专用目录避免读取 Astral Sorcery 等 Mod 自有的 `research/` 数据格式，同时允许其他 Mod 的 Java 注册节点使用自己的 namespace。之前使用 `data/<namespace>/research/` 的研究站覆盖文件需移动到新目录；节点 ID 与世界解锁存档无需修改。节点必须已由 Java 注册。字段省略时继承 Java 默认值；提供 `inputs` 时替换全部材料费用，提供前置数组时替换全部前置。`target` 对象提供后，内部省略的 `items` 或 `tags` 视为空集。
 
 当前读取的字段如下：
 
@@ -89,7 +89,7 @@ public final class ExampleResearchRegistration {
 | `id` | 可选 ResourceLocation 字符串；必须等于文件路径对应 ID |
 | `description` | 可选翻译键字符串 |
 | `target` | 可选对象，包含 `items`、`tags` 两个可选 ResourceLocation 字符串数组 |
-| `inputs` | 可选材料对象数组；空数组表示无材料费用 |
+| `inputs` | 可选对象，包含 `items`、`fluids`、`resources` 三个可选“ID → 用量”映射；空对象表示无材料费用 |
 | `prerequisites` | 可选已注册研究 ID 字符串数组；空数组清除前置节点 |
 | `research_ticks` | 可选整数，范围 1 至 2,147,483,647，单位 server ticks |
 | `ae_per_tick` | 可选有限非负 JSON number，单位 AE/t |
@@ -106,32 +106,51 @@ public final class ExampleResearchRegistration {
     "items": ["minecraft:diamond_pickaxe"],
     "tags": []
   },
-  "inputs": [
-    {"type": "item", "id": "minecraft:diamond", "amount": 8},
-    {"type": "fluid", "id": "minecraft:water", "amount": 2000},
-    {
-      "type": "ae_key",
-      "key": {"#t": "ae2:i", "id": "minecraft:iron_ingot"},
-      "amount": 16
+  "inputs": {
+    "items": {
+      "minecraft:diamond": 8,
+      "minecraft:iron_ingot": 16,
+      "minecraft:nether_star": 7
+    },
+    "fluids": {
+      "minecraft:water": 2000
+    },
+    "resources": {
+      "data_energistics:manifest_binary": 67
     }
-  ],
+  },
   "prerequisites": ["example_mod:precision_tools"],
   "research_ticks": 3600,
   "ae_per_tick": 128
 }
 ```
 
-每个材料对象的 `amount` 必须是 1 至 9,223,372,036,854,775,807 的整数；相同 AEKey 合计也不能超过此上限。物品单位是件数，流体单位是 mB，第三方 AEKey 使用其类型定义的原生数量单位。
+映射 key 已经提供 ID，材料类型由分组确定，普通条目只填用量。`items` 的 key 是物品 ID，`fluids` 的 key 是流体 ID，`resources` 的 key 是已注册的 AEKeyType ID。类型 codec 不需要额外字段时，资源也可以直接填数字，例如 `manifest_binary`。用量必须是 1 至 9,223,372,036,854,775,807 的整数；相同 AEKey 合计也不能超过此上限。物品单位是件数，流体单位是 mB，第三方 AEKey 使用其类型定义的原生数量单位。
 
-`type` 的三种形式：
+需要精确匹配组件或提供 AEKey 的附加数据时，将数字换成对象。对象内 `amount` 可省略，默认为 1；物品和流体只支持额外的 `components`，使用 Minecraft DataComponentPatch codec。自定义资源对象的其他字段直接传给该类型的 codec，不能重复写 `#t` 或 `key_type`。同一 ID 有多个组件变体，或同一 AEKeyType 对应多种资源时，用数组列出各个对象：
 
-- `item`：使用 `id` 物品 ID 与 `amount`。
-- `fluid`：使用 `id` 流体 ID 与 `amount`。
-- `ae_key`：使用 `key` 序列化对象与 `amount`；用于 DataComponent 精确匹配及第三方已注册 AEKey 类型。
+```json
+{
+  "inputs": {
+    "items": {
+      "minecraft:diamond_pickaxe": {
+        "amount": 2,
+        "components": {"minecraft:damage": 5}
+      }
+    },
+    "resources": {
+      "data_energistics:digitalization": [
+        {"resource": "data_energistics:data_flow", "amount": 100},
+        {"resource": "data_energistics:stellar_flux", "amount": 250}
+      ]
+    }
+  }
+}
+```
 
-当前 AE2 19.2.18 的通用 AEKey codec 使用 `#t` 字段分派已注册的 key type。物品类型为 `ae2:i`，流体类型为 `ae2:f`。这两种类型均使用 `id`，并可附带符合 Minecraft DataComponentPatch codec 的 `components` 对象；数量由外层 `amount` 表达，不写在 `key` 中。第三方类型的 `#t` 值和剩余字段必须来自该类型实际注册的 codec，不可仅凭资源 ID 推测。
+旧的材料数组及 `type` / `id` / `key` 条目格式不再接受，覆盖文件必须改为上述映射结构；空费用使用 `"inputs": {}`。这里只调整 Datapack 格式，Java 注册 API、已付款项目快照和世界存档中的 AEKey 表示保持原有契约。
 
-需要生成复杂 key JSON 时，可在拥有当前服务器注册表 Provider 的环境中使用实际 codec：
+需要生成自定义资源对象的附加字段时，可在拥有当前服务器注册表 Provider 的环境中使用实际 codec，将生成数据移除 `#t` 后放在 `resources` 对应类型 ID 下，并附加 `amount`：
 
 ```java
 import appeng.api.stacks.AEKey;
@@ -140,11 +159,14 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.RegistryOps;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 
 public static JsonElement researchKeyJson(HolderLookup.Provider registries, AEKey key) {
     RegistryOps<JsonElement> operations = registries.createSerializationContext(JsonOps.INSTANCE);
-    return AEKey.CODEC.encodeStart(operations, key).getOrThrow();
+    JsonObject data = AEKey.CODEC.encodeStart(operations, key).getOrThrow().getAsJsonObject();
+    data.remove("#t");
+    return data;
 }
 ```
 

@@ -107,11 +107,11 @@ public final class ResearchExecution {
             try {
                 double needed = project.node.aePerTick() - project.energyCredit;
                 double available = grid.getEnergyService().extractAEPower(needed, Actionable.SIMULATE, PowerMultiplier.ONE);
-                if (available + 1.0e-7 < needed) break;
+                if (available + 1.0e-7 < needed) continue;
                 double consumed = grid.getEnergyService().extractAEPower(needed, Actionable.MODULATE, PowerMultiplier.ONE);
                 project.energyCredit += consumed;
                 data.setDirty();
-                if (project.energyCredit + 1.0e-7 < project.node.aePerTick()) break;
+                if (project.energyCredit + 1.0e-7 < project.node.aePerTick()) continue;
                 project.energyCredit = 0;
                 project.powered = true;
                 if (project.progress + 1 == project.node.researchTicks()) {

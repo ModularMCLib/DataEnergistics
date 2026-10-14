@@ -96,7 +96,7 @@ public class CommonProxy {
         modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
 
         CommonEventRegistrar.register();
-        modEventBus.register(new ResearchRegistrationEvents(modEventBus));
+        modEventBus.register(new ResearchRegistrationEvents());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

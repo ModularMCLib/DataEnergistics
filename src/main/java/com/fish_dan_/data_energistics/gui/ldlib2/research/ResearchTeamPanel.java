@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
@@ -16,19 +16,37 @@ final class ResearchTeamPanel extends UIElement {
 
     private final ResearchStationMenu menu;
     private final TextField teamName = new TextField();
-    private final ScrollerView membership = ResearchUiParts.scroll(0, 23, 205, 194);
-    private final ScrollerView invitations = ResearchUiParts.scroll(211, 0, 205, 217);
+    private final ScrollerView membership = ResearchUiParts.scroll(0, 0, 1, 1);
+    private final ScrollerView invitations = ResearchUiParts.scroll(0, 0, 1, 1);
+    private final Button create;
 
     ResearchTeamPanel(ResearchStationMenu menu) {
         this.menu = menu;
-        ResearchUiParts.at(this, 8, 29, 424, 218);
-        style(style -> style.backgroundTexture(new ColorRectTexture(ResearchUiParts.SURFACE)));
+        style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
         teamName.setAnyString();
-        teamName.textFieldStyle(style -> style.placeholder(ResearchUiParts.text("team_name")).fontSize(9));
-        addChild(ResearchUiParts.at(teamName, 3, 2, 140, 17));
-        addChild(ResearchUiParts.at(ResearchUiParts.button(ResearchUiParts.text("team_create"),
-                () -> request("create", teamName.getValue())), 147, 2, 58, 17));
-        addChildren(membership, invitations);
+        ResearchUiParts.input(teamName);
+        teamName.textFieldStyle(style -> style.placeholder(ResearchUiParts.text("team_name")));
+        create = ResearchUiParts.button(ResearchUiParts.text("team_create"), () -> request("create", teamName.getValue()));
+        addChildren(teamName, create, membership, invitations);
+    }
+
+    void resize(int left, int top, int width, int height) {
+        ResearchUiParts.at(this, left, top, width, height);
+        int contentWidth = Math.max(1, width - 8);
+        int createWidth = Math.clamp(contentWidth / 4, 40, 80);
+        ResearchUiParts.at(teamName, 4, 4, Math.max(1, contentWidth - createWidth - 4), 22);
+        ResearchUiParts.at(create, Math.max(4, width - createWidth - 4), 4, createWidth, 22);
+        int contentHeight = Math.max(1, height - 34);
+        if (width >= 500) {
+            int columnWidth = Math.max(1, (contentWidth - 6) / 2);
+            ResearchUiParts.at(membership, 4, 30, columnWidth, contentHeight);
+            ResearchUiParts.at(invitations, 10 + columnWidth, 30, columnWidth, contentHeight);
+        } else {
+            int membershipHeight = Math.max(1, (contentHeight - 6) / 2);
+            ResearchUiParts.at(membership, 4, 30, contentWidth, membershipHeight);
+            ResearchUiParts.at(invitations, 4, 36 + membershipHeight, contentWidth,
+                    Math.max(1, contentHeight - membershipHeight - 6));
+        }
     }
 
     void refresh(CompoundTag data) {
@@ -38,7 +56,7 @@ final class ResearchTeamPanel extends UIElement {
         boolean hasTeam = data.contains("custom_team", Tag.TAG_COMPOUND);
         boolean owner = hasTeam && menu.getPlayer().getUUID().toString().equals(custom.getString("owner"));
         teamName.setActive(!hasTeam);
-        getChildren().get(1).setActive(!hasTeam);
+        create.setActive(!hasTeam);
         if (hasTeam) {
             membership.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("team_current", custom.getString("name"))));
             membership.addScrollViewChild(ResearchUiParts.label(ResearchUiParts.text("team_shared")));

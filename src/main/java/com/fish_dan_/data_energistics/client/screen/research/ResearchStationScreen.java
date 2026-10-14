@@ -24,6 +24,8 @@ public final class ResearchStationScreen extends AbstractContainerScreen<Researc
         imageWidth = (int) ui.getWidth();
         imageHeight = (int) ui.getHeight();
         super.init();
+        leftPos = Math.round(ui.getLeftPos());
+        topPos = Math.round(ui.getTopPos());
         setFocused(ui.getWidget());
     }
 

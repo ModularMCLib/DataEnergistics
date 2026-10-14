@@ -67,7 +67,6 @@ public final class ResearchStationUi {
     private final InventorySlots backpackInventory = new InventorySlots();
     private final ObjectList<Button> pageButtons = new ObjectArrayList<>();
     private final Label empty = ResearchUiParts.label(ResearchUiParts.text("catalog_empty"));
-    private final Label targetStatus = ResearchUiParts.label(Component.empty());
     private final Label projectTitle = ResearchUiParts.label(ResearchUiParts.text("projects", 0));
     private final ResearchTeamPanel teams;
     private final ItemSlot targetSlot;
@@ -147,7 +146,8 @@ public final class ResearchStationUi {
         targetSlot = new ItemSlot(menu.targetSlot());
         targetSlot.setId("research_station_target");
         SharedBackpackStyles.standalone(targetSlot);
-        root.addChildren(targetSlot, targetStatus);
+        targetSlot.style(style -> style.tooltips(ResearchUiParts.text("target_empty")));
+        root.addChild(targetSlot);
         backpack.style(style -> style.zIndex(1000));
         backpack.setId("research_station_backpack");
         SharedBackpackStyles.window(backpack, backpackHeader);
@@ -207,7 +207,8 @@ public final class ResearchStationUi {
         int contentWidth = Math.max(1, width - margin * 2);
         root.layout(style -> style.width(width).height(height));
         ResearchUiParts.at(research, 0, 0, width, height);
-        ResearchUiParts.at(title, margin, margin, Math.max(1, contentWidth - 210), 22);
+        ResearchUiParts.at(title, margin, margin, Math.max(1, contentWidth - 238), 22);
+        ResearchUiParts.at(targetSlot, width - margin - 230, margin, 22, 22);
         ResearchUiParts.at(teamTab, width - margin - 202, margin, 84, 22);
         ResearchUiParts.at(backpackButton, width - margin - 112, margin, 84, 22);
         ResearchUiParts.at(close, width - margin - 22, margin, 22, 22);
@@ -230,17 +231,15 @@ public final class ResearchStationUi {
         ResearchUiParts.at(projectPane, layout.sidebarLeft(), layout.bodyTop(), layout.sidebarWidth(), projectHeight);
         ResearchUiParts.at(projectTitle, 5, 4, Math.max(1, layout.sidebarWidth() - 10), 16);
         ResearchUiParts.at(projects, 0, 23, layout.sidebarWidth(), Math.max(1, projectHeight - 23));
-        ResearchUiParts.at(targetSlot, margin, layout.footerTop() + 5, 18, 18);
-        ResearchUiParts.at(targetStatus, margin + 26, layout.footerTop(), Math.max(1, contentWidth - 26), 28);
-        teams.resize(margin, 35, contentWidth, Math.max(1, layout.footerTop() - 42));
-        ResearchBackpackLayout backpackLayout = ResearchBackpackLayout.forViewport(width, height);
+        teams.resize(margin, 35, contentWidth, Math.max(1, height - margin - 35));
+        ResearchBackpackLayout backpackLayout = ResearchBackpackLayout.fixed();
         int backpackLeft = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutX()) : (width - backpackLayout.width()) / 2;
         int backpackTop = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutY()) : (height - backpackLayout.height()) / 2;
         ResearchUiParts.at(backpack, Math.clamp(backpackLeft, 0, Math.max(0, width - backpackLayout.width())),
                 Math.clamp(backpackTop, 0, Math.max(0, height - backpackLayout.height())), backpackLayout.width(), backpackLayout.height());
         ResearchUiParts.at(backpackHeader, backpackLayout.padding(), backpackLayout.padding(),
                 backpackLayout.inventoryWidth(), backpackLayout.headerHeight());
-        backpackHeader.textStyle(style -> style.fontSize(Math.max(10, backpackLayout.slotSize() / 2F)).adaptiveHeight(false));
+        backpackHeader.textStyle(style -> style.fontSize(12).adaptiveHeight(false));
         ResearchUiParts.at(backpackInventory, backpackLayout.padding(), backpackLayout.inventoryTop(),
                 backpackLayout.inventoryWidth(), backpackLayout.inventoryHeight());
         backpackInventory.apply(slot -> slot.layout(style -> style.width(backpackLayout.slotSize()).height(backpackLayout.slotSize())
@@ -318,7 +317,8 @@ public final class ResearchStationUi {
         refreshGraph();
         refreshExpandedNodes();
         refreshProjects();
-        targetStatus.setText(ResearchUiParts.text(menu.targetLocked() ? "target_locked" : target().isEmpty() ? "target_empty" : "target_ready"));
+        targetSlot.style(style -> style.tooltips(ResearchUiParts.text(
+                menu.targetLocked() ? "target_locked" : target().isEmpty() ? "target_empty" : "target_ready")));
     }
 
     private boolean available(ResearchNode node) {
@@ -358,9 +358,8 @@ public final class ResearchStationUi {
             int color = unlocked.contains(node.id()) ? 0xFF50785F : pending != null ? 0xFF826941 : available(node) ? 0xFF505F87 : 0xFF666A78;
             graphNodes.get(node.id()).state(state, color);
         }
-        ResearchUiParts.show(empty, shown.isEmpty());
-        empty.setText(ResearchUiParts.text(scope == ResearchScope.ITEM_UPGRADE && target().isEmpty() ? "insert_item" :
-                menu.nodes().isEmpty() ? "catalog_empty" : "filter_empty"));
+        ResearchUiParts.show(empty, scope == ResearchScope.TECHNOLOGY && shown.isEmpty());
+        empty.setText(ResearchUiParts.text(menu.nodes().isEmpty() ? "catalog_empty" : "filter_empty"));
         graph.focus(selected, hovered);
     }
 

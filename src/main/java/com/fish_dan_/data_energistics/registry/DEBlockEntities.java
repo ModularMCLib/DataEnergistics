@@ -22,6 +22,7 @@ import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.Astronomical
 import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.InterferenceArrayCoreBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumReturnPortalBlockEntity;
@@ -48,6 +49,14 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class DEBlockEntities {
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Data_Energistics.MODID);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ResearchStationBlockEntity>> RESEARCH_STATION = BLOCK_ENTITY_TYPES.register(
+            "digital_transformation_research_station", () -> {
+                var type = BlockEntityType.Builder.of(ResearchStationBlockEntity::new, DEBlocks.RESEARCH_STATION.get()).build(null);
+                DEBlocks.RESEARCH_STATION.get().setBlockEntity(ResearchStationBlockEntity.class, type, null,
+                        (level, pos, state, host) -> host.serverTick());
+                return type;
+            });
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BeamFormerBlockEntity>> ME_BEAM_FORMER = BLOCK_ENTITY_TYPES.register(
             "me_beam_former", () -> {

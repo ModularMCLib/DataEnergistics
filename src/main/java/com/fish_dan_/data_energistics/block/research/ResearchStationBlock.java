@@ -1,15 +1,14 @@
 package com.fish_dan_.data_energistics.block.research;
 
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
+import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.block.AEBaseEntityBlock;
-import appeng.menu.MenuOpener;
-import appeng.menu.locator.MenuLocators;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -23,6 +22,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
@@ -32,15 +32,16 @@ import org.jspecify.annotations.Nullable;
 public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStationBlockEntity> {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
 
     public ResearchStationBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.SOUTH));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.SOUTH).setValue(ACTIVE, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, ACTIVE);
     }
 
     public static BlockPos partner(BlockPos pos, BlockState state) {
@@ -72,8 +73,8 @@ public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStatio
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof ResearchStationBlockEntity host) {
-            MenuOpener.open(DEMenus.RESEARCH_STATION.get(), player, MenuLocators.forBlockEntity(host));
+        if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof ResearchStationBlockEntity host) {
+            ResearchStationMenu.open(serverPlayer, host);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
@@ -86,5 +87,10 @@ public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStatio
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return rotate(state, mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    protected BlockState updateBlockStateFromBlockEntity(BlockState state, ResearchStationBlockEntity host) {
+        return state.setValue(ACTIVE, host.working());
     }
 }

@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockE
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.storage.CompositeWarehouseBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotBlockEntity;
@@ -39,6 +40,7 @@ import com.fish_dan_.data_energistics.menu.machine.DataTeleportAnchorMenu;
 import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
 import com.fish_dan_.data_energistics.menu.patternprovider.DigitalPackagedPatternProviderMenu;
 import com.fish_dan_.data_energistics.menu.powered.MatterConvergingCrossbowConfigMenu;
+import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumInterfaceMenu;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
 import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumStatusMenu;
@@ -228,6 +230,15 @@ public final class DEMenus {
             .buildUnregistered(ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "universal_pattern_access_terminal")));
 
     private DEMenus() {}
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ResearchStationMenu>> RESEARCH_STATION = MENUS.register(
+            "digital_transformation_research_station", () -> IMenuTypeExtension.create((id, inventory, buffer) -> {
+                var pos = buffer.readBlockPos();
+                if (!(inventory.player.level().getBlockEntity(pos) instanceof ResearchStationBlockEntity host)) {
+                    throw new IllegalStateException("Missing research station at " + pos);
+                }
+                return new ResearchStationMenu(id, inventory, host);
+            }));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);

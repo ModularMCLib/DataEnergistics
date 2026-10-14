@@ -1,13 +1,11 @@
 package com.fish_dan_.data_energistics.block.research;
 
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
+import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEMenus;
-
-import appeng.menu.MenuOpener;
-import appeng.menu.locator.MenuLocators;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -50,9 +48,18 @@ public final class ResearchStationPartBlock extends Block {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!level.isClientSide() && level.getBlockEntity(main(pos, state)) instanceof ResearchStationBlockEntity host) {
-            MenuOpener.open(DEMenus.RESEARCH_STATION.get(), player, MenuLocators.forBlockEntity(host));
+        if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(main(pos, state)) instanceof ResearchStationBlockEntity host) {
+            ResearchStationMenu.open(serverPlayer, host);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide()) {
+            BlockPos main = main(pos, state);
+            if (level.getBlockState(main).is(DEBlocks.RESEARCH_STATION.get())) level.destroyBlock(main, !player.isCreative(), player);
+        }
+        return super.playerWillDestroy(level, pos, state, player);
     }
 }

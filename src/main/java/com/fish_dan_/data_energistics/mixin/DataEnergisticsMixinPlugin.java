@@ -44,7 +44,7 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("extendedcrafting", "technology.extendedcrafting.");
         addModCompatMixin("ae2jeiintegration", "ae.ae2jeiintegration.jei.");
         addModCompatMixin("jei", "viewer.jei.");
-        addModCompatMixin("emi", "viewer.emi.ae2.");
+        addModCompatMixin("emi", "viewer.emi.");
         addModCompatMixin("ftbchunks", "map.ftbchunks.");
         addModCompatMixin("ftblibrary", "library.ftblibrary.");
         addModCompatMixin("guideme", "guide.guideme.");

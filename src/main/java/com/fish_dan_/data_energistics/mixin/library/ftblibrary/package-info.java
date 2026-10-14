@@ -1,2 +1,5 @@
-/** Client-only FTB Library compatibility that scopes sidebar visibility to the orbital terminal screen. */
+/** Client-only FTB Library compatibility for full-screen orbital and research workspaces. */
+@NullMarked
 package com.fish_dan_.data_energistics.mixin.library.ftblibrary;
+
+import org.jspecify.annotations.NullMarked;

@@ -89,7 +89,7 @@ public final class ResearchExecution {
     }
 
     private static Component requestMaterials(ResearchStationBlockEntity host, ServerPlayer player, ResearchNode node,
-                                               IGrid grid, ResearchStationState state, ResearchSavedData data) {
+                                              IGrid grid, ResearchStationState state, ResearchSavedData data) {
         data.trackMaterialCalculations(state.materialRequests);
         return state.materialRequests.request(host, player, node, grid);
     }

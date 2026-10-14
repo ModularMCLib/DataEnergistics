@@ -72,8 +72,7 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
                 if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("target.items: unknown item " + item);
             }
         }
-        ObjectList<ResearchInput> inputs = json.has("inputs")
-                ? ResearchInputParser.parse(json.get("inputs"), operations) : original.inputs();
+        ObjectList<ResearchInput> inputs = json.has("inputs") ? ResearchInputParser.parse(json.get("inputs"), operations) : original.inputs();
         return new ResearchNode(original.id(), original.scope(), original.name(),
                 json.has("description") ? string(json.get("description"), "description") : original.description(),
                 original.icon(), target, inputs,

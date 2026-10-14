@@ -84,9 +84,7 @@ final class ResearchInputParser {
                 if (!name.equals("components")) throw new IllegalArgumentException("unexpected field " + name + "; expected amount or components");
             }
             data.addProperty("id", id.toString());
-            key = group.equals("items")
-                    ? AEItemKey.CODEC.parse(operations, data).getOrThrow()
-                    : AEFluidKey.CODEC.parse(operations, data).getOrThrow();
+            key = group.equals("items") ? AEItemKey.CODEC.parse(operations, data).getOrThrow() : AEFluidKey.CODEC.parse(operations, data).getOrThrow();
         }
         result.add(new ResearchInput(key, amount));
     }

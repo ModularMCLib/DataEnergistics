@@ -19,7 +19,6 @@ import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -229,9 +228,6 @@ public final class TrinityDataCoreHostUi {
             throw mountViolation("Trinity Data Core UI must contain exactly 36 native player ItemSlots");
         }
         holder.setModularUI(modularUI);
-
-        ColorRectTexture playerSlotHover = new ColorRectTexture(0x6633FF99);
-        expectedPlayerSlots.forEach(itemSlot -> itemSlot.slotStyle(style -> style.hoverOverlay(playerSlotHover)));
 
         if (holder.getModularUI() != modularUI || modularUI.getMenu() != menu) {
             throw mountViolation("LDLib2 did not establish the expected menu/UI references");

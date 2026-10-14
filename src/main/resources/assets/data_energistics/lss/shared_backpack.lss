@@ -1,0 +1,36 @@
+/* Extracted Trinity player inventory: preserve the original edge tiles and green hover. */
+.shared-backpack-window {
+    background: sprite(data_energistics:textures/guis/background.png);
+}
+
+.shared-backpack-title {
+    text-color: #FF343548;
+    text-shadow: false;
+    adaptive-width: false;
+    adaptive-height: false;
+    horizontal-align: left;
+    vertical-align: center;
+}
+
+.shared-backpack-slot {
+    width: 18px;
+    height: 18px;
+    padding-all: 1px;
+    hover-overlay: #6633FF99;
+}
+
+.shared-backpack-top-left { background: sprite(data_energistics:textures/guis/backpack/top_left.png); }
+.shared-backpack-top-center { background: sprite(data_energistics:textures/guis/backpack/above_average.png); }
+.shared-backpack-top-right { background: sprite(data_energistics:textures/guis/backpack/top_right.png); }
+.shared-backpack-middle-left { background: sprite(data_energistics:textures/guis/backpack/left_center.png); }
+.shared-backpack-middle-center { background: sprite(data_energistics:textures/guis/backpack/middle.png); }
+.shared-backpack-middle-right { background: sprite(data_energistics:textures/guis/backpack/right_middle.png); }
+.shared-backpack-bottom-left { background: sprite(data_energistics:textures/guis/backpack/bottom_left.png); }
+.shared-backpack-bottom-center { background: sprite(data_energistics:textures/guis/backpack/below_average.png); }
+.shared-backpack-bottom-right { background: sprite(data_energistics:textures/guis/backpack/bottom_right.png); }
+.shared-backpack-hotbar-left { background: sprite(data_energistics:textures/guis/backpack/left_of_the_inventory.png); }
+.shared-backpack-hotbar-center { background: sprite(data_energistics:textures/guis/backpack/in_the_inventory.png); }
+.shared-backpack-hotbar-right { background: sprite(data_energistics:textures/guis/backpack/right_side_of_the_inventory.png); }
+.shared-backpack-standalone {
+    background: group(sprite(data_energistics:textures/guis/inventory_slot.png), border(-1, #FF696D88));
+}

@@ -628,6 +628,7 @@
 	"gui.data_energistics.research.project_status": "%s · %s/%s ticks",
 	"gui.data_energistics.research.projects": "Research projects %s/2",
 	"gui.data_energistics.research.projects_empty": "No research projects",
+	"gui.data_energistics.research.projects_tab": "Projects",
 	"gui.data_energistics.research.request_materials": "Request materials",
 	"gui.data_energistics.research.research_tab": "Research graph",
 	"gui.data_energistics.research.reset": "Reset view",

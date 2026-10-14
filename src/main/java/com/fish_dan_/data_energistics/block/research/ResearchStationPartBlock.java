@@ -34,7 +34,7 @@ public final class ResearchStationPartBlock extends Block {
     }
 
     private static BlockPos main(BlockPos pos, BlockState state) {
-        return pos.relative(state.getValue(ResearchStationBlock.FACING).getCounterClockWise());
+        return pos.relative(state.getValue(ResearchStationBlock.FACING).getClockWise());
     }
 
     @Override

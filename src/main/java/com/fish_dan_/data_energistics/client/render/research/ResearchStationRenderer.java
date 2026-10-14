@@ -59,10 +59,10 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
         try {
             pose.translate(0.5, 0, 0.5);
             float angle = switch (host.getBlockState().getValue(ResearchStationBlock.FACING)) {
-                case SOUTH -> 0;
-                case WEST -> -90;
-                case NORTH -> 180;
-                case EAST -> 90;
+                case NORTH -> 0;
+                case EAST -> -90;
+                case SOUTH -> -180;
+                case WEST -> 90;
                 default -> throw new IllegalStateException("Research facing must be horizontal");
             };
             pose.mulPose(Axis.YP.rotationDegrees(angle));

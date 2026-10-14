@@ -1,34 +1,32 @@
 {
 	"variants": {
-		"active=false,facing=south": {
-			"model": "data_energistics:block/digital_transformation_research_station_off",
-			"y": 0
-		},
-		"active=true,facing=south": {
-			"model": "data_energistics:block/digital_transformation_research_station_on",
-			"y": 0
-		},
-		"active=false,facing=west": {
-			"model": "data_energistics:block/digital_transformation_research_station_off",
-			"y": 90
-		},
-		"active=true,facing=west": {
-			"model": "data_energistics:block/digital_transformation_research_station_on",
-			"y": 90
-		},
 		"active=false,facing=north": {
-			"model": "data_energistics:block/digital_transformation_research_station_off",
-			"y": 180
+			"model": "data_energistics:block/digital_transformation_research_station_off"
 		},
 		"active=true,facing=north": {
-			"model": "data_energistics:block/digital_transformation_research_station_on",
-			"y": 180
+			"model": "data_energistics:block/digital_transformation_research_station_on"
 		},
 		"active=false,facing=east": {
 			"model": "data_energistics:block/digital_transformation_research_station_off",
-			"y": 270
+			"y": 90
 		},
 		"active=true,facing=east": {
+			"model": "data_energistics:block/digital_transformation_research_station_on",
+			"y": 90
+		},
+		"active=false,facing=south": {
+			"model": "data_energistics:block/digital_transformation_research_station_off",
+			"y": 180
+		},
+		"active=true,facing=south": {
+			"model": "data_energistics:block/digital_transformation_research_station_on",
+			"y": 180
+		},
+		"active=false,facing=west": {
+			"model": "data_energistics:block/digital_transformation_research_station_off",
+			"y": 270
+		},
+		"active=true,facing=west": {
 			"model": "data_energistics:block/digital_transformation_research_station_on",
 			"y": 270
 		}

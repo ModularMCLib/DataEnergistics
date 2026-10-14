@@ -36,7 +36,7 @@ public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStatio
 
     public ResearchStationBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.SOUTH).setValue(ACTIVE, false));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(ACTIVE, false));
     }
 
     @Override
@@ -45,7 +45,7 @@ public final class ResearchStationBlock extends AEBaseEntityBlock<ResearchStatio
     }
 
     public static BlockPos partner(BlockPos pos, BlockState state) {
-        return pos.relative(state.getValue(FACING).getClockWise());
+        return pos.relative(state.getValue(FACING).getCounterClockWise());
     }
 
     @Override

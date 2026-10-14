@@ -13,6 +13,7 @@ import com.fish_dan_.data_energistics.client.render.entity.LightBladeChargeRende
 import com.fish_dan_.data_energistics.client.render.entity.MatterConvergingBoltRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.OrbitalAnnihilatorRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.ThrownLightSaberRenderer;
+import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEEntities;
 
@@ -24,6 +25,7 @@ final class ClientRendererRegistrar {
     private ClientRendererRegistrar() {}
 
     static void register(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(DEBlockEntities.RESEARCH_STATION.get(), ResearchStationRenderer::new);
         event.registerBlockEntityRenderer(DEBlockEntities.ME_BEAM_FORMER.get(), context -> new BeamFormerRenderer());
         event.registerBlockEntityRenderer(DEBlockEntities.ME_OMNI_BEAM_FORMER.get(), context -> new BeamFormerRenderer());
         event.registerBlockEntityRenderer(DEBlockEntities.DATA_EXTRACTOR_BLOCK_ENTITY.get(), DataExtractorRenderer::new);

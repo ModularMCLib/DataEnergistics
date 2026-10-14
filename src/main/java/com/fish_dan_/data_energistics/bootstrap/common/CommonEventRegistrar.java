@@ -22,6 +22,7 @@ import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftTransformLogic;
 import com.fish_dan_.data_energistics.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.world.sanctum.DataSanctumPortalLogic;
+import com.fish_dan_.data_energistics.research.definition.ResearchReloadListener;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
@@ -32,6 +33,8 @@ final class CommonEventRegistrar {
 
     static void register() {
         NeoForge.EVENT_BUS.register(new ServerLifecycleEventHandler());
+        NeoForge.EVENT_BUS.addListener(( event) ->  (event instanceof AddReloadListenerEvent Addevent ) {
+                Addevent.addListener(new ResearchReloadListener()}));
         NeoForge.EVENT_BUS.register(new PackagedRecoveryTicker());
         NeoForge.EVENT_BUS.register(new OrbitalEndpointChunkTickets());
         NeoForge.EVENT_BUS.register(new OrbitalReserveTicker());

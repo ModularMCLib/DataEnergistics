@@ -424,6 +424,7 @@
 	"config.jade.plugin_data_energistics.data_sanctum_interface": "维度解离总站接口",
 	"config.jade.plugin_data_energistics.data_teleport_anchor": "数据传送锚",
 	"config.jade.plugin_data_energistics.digital_storage_depot": "数位化存储仓",
+	"config.jade.plugin_data_energistics.digital_supply_interface": "数位化供应接口",
 	"config.jade.plugin_data_energistics.me_solar_panel": "ME太阳能板",
 	"config.jade.plugin_data_energistics.multiblock": "多方块",
 	"config.jade.plugin_data_energistics.multiblock.debug": "多方块：调试详情",

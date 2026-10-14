@@ -84,7 +84,9 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
         if (faulted) return;
         try {
             ResearchExecution.tick(this);
-            boolean next = state().projects.values().stream().anyMatch(project -> project.powered);
+            ResearchStationState state = state();
+            boolean next = getMainNode().isOnline() && state.lastTick == serverLevel().getServer().getTickCount() &&
+                    state.projects.values().stream().anyMatch(project -> project.powered);
             if (working != next) {
                 working = next;
                 markForUpdate();

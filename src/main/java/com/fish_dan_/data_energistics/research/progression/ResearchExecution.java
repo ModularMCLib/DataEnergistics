@@ -95,10 +95,10 @@ public final class ResearchExecution {
         ResearchSavedData data = ResearchSavedData.get(server);
         ResearchStationState state = host.state();
         if (state.lastTick == server.getTickCount()) return;
-        state.lastTick = server.getTickCount();
         IGrid grid = host.getMainNode().getGrid();
-        for (ResearchProject project : state.projects.values()) project.powered = false;
         if (grid == null || !host.getMainNode().isOnline()) return;
+        state.lastTick = server.getTickCount();
+        for (ResearchProject project : state.projects.values()) project.powered = false;
         ResearchPayment.refund(grid.getStorageService().getInventory(), IActionSource.ofMachine(host), state, data);
         var projects = new ObjectArrayList<>(state.projects.values());
         projects.sort(Comparator.comparingLong(project -> project.order));
@@ -114,10 +114,9 @@ public final class ResearchExecution {
                 if (project.energyCredit + 1.0e-7 < project.node.aePerTick()) break;
                 project.energyCredit = 0;
                 project.powered = true;
-                project.progress++;
-                if (project.progress == project.node.researchTicks()) {
+                if (project.progress + 1 == project.node.researchTicks()) {
                     if (project.node.scope() == ResearchScope.ITEM_UPGRADE) {
-                        if (!project.node.target().matches(state.target)) throw new IllegalStateException("Locked research target changed");
+                        if (state.target.isEmpty()) throw new IllegalStateException("Locked research target is missing");
                         state.target.set(DEDataComponents.RESEARCH_UPGRADES.get(), ItemResearchUpgrades.of(state.target).with(project.node.id()));
                     } else {
                         data.unlock(project.subjects, project.node.id());
@@ -125,10 +124,13 @@ public final class ResearchExecution {
                     state.projects.remove(project.node.id());
                     state.revision++;
                     host.saveChanges();
+                } else {
+                    project.progress++;
                 }
             } catch (RuntimeException error) {
                 project.faulted = true;
                 project.running = false;
+                project.powered = false;
                 state.revision++;
                 data.setDirty();
                 Data_Energistics.LOGGER.error("Stopped research project {} in station {} at {}/{}", project.node.id(),

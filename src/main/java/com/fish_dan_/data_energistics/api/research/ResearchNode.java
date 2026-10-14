@@ -1,7 +1,11 @@
 package com.fish_dan_.data_energistics.api.research;
 
+import appeng.api.stacks.AEKey;
+
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -29,6 +33,14 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
         }
         if (scope == ResearchScope.ITEM_UPGRADE && target.items().isEmpty() && target.tags().isEmpty()) {
             throw new IllegalArgumentException("Item upgrades require a target item or tag");
+        }
+        Object2LongMap<AEKey> totals = new Object2LongLinkedOpenHashMap<>();
+        for (ResearchInput input : inputs) {
+            try {
+                totals.mergeLong(input.key(), input.amount(), Math::addExact);
+            } catch (ArithmeticException error) {
+                throw new IllegalArgumentException("Research input total overflows for node " + id + ", key " + input.key(), error);
+            }
         }
         inputs = new ObjectImmutableList<>(inputs);
         prerequisites = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(prerequisites));

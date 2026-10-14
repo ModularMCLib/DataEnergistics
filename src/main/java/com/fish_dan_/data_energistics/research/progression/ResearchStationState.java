@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.research.progression;
 
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
+import com.fish_dan_.data_energistics.research.crafting.ResearchMaterialRequests;
 import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
 
 import appeng.api.stacks.AEKey;
@@ -24,6 +25,7 @@ public final class ResearchStationState {
     public ItemStack target = ItemStack.EMPTY;
     public final Object2ObjectMap<ResourceLocation, ResearchProject> projects = new Object2ObjectLinkedOpenHashMap<>();
     public final Object2LongMap<AEKey> refunds = new Object2LongLinkedOpenHashMap<>();
+    public final ResearchMaterialRequests materialRequests = new ResearchMaterialRequests();
     public long revision;
     public long nextOrder;
     public long lastTick = Long.MIN_VALUE;

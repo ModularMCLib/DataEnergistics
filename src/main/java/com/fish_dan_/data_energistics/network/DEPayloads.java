@@ -26,6 +26,7 @@ import com.fish_dan_.data_energistics.network.patternencoding.PatternEncodingPre
 import com.fish_dan_.data_energistics.network.patternencoding.PatternEncodingPreferencesSyncPayload;
 import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSucceededPayload;
 import com.fish_dan_.data_energistics.network.research.ResearchActionPayload;
+import com.fish_dan_.data_energistics.network.research.ResearchMaterialFavoritesPayload;
 import com.fish_dan_.data_energistics.network.research.ResearchSnapshotPayload;
 import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetsPayload;
 import com.fish_dan_.data_energistics.network.trinity.TrinityHostedActionResponsePayload;
@@ -54,9 +55,10 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("26.9.24");
+        PayloadRegistrar registrar = event.registrar("26.10.14");
         registrar.playToServer(ResearchActionPayload.TYPE, ResearchActionPayload.STREAM_CODEC, ResearchActionPayload::handle);
         registrar.playToClient(ResearchSnapshotPayload.TYPE, ResearchSnapshotPayload.STREAM_CODEC, ResearchSnapshotPayload::handle);
+        registrar.playToClient(ResearchMaterialFavoritesPayload.TYPE, ResearchMaterialFavoritesPayload.STREAM_CODEC, ResearchMaterialFavoritesPayload::handle);
         registrar.playToServer(CannonChargePayload.TYPE, CannonChargePayload.STREAM_CODEC, CannonChargePayload::handle);
         registrar.playToClient(RailChainPayload.TYPE, RailChainPayload.STREAM_CODEC, RailChainPayload::handle);
         registrar.playToClient(ChromaticGlowPayload.TYPE, ChromaticGlowPayload.STREAM_CODEC, ChromaticGlowPayload::handle);

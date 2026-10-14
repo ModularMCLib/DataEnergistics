@@ -43,11 +43,13 @@ public final class ResearchExecution {
             data.setDirty();
             return message("cancelled");
         }
-        if (!action.equals("start") && !action.equals("resume")) return message("unknown_action");
-        if (state.runningCount() >= 2) return message("full");
+        boolean requestMaterials = action.equals("request_materials");
+        if (!requestMaterials && !action.equals("start") && !action.equals("resume")) return message("unknown_action");
+        if (!requestMaterials && state.runningCount() >= 2) return message("full");
         ResearchNode node = ResearchDefinitions.find(id);
         if (node == null) return message("unavailable");
         if (existing != null) {
+            if (requestMaterials) return message("materials_paid");
             if (existing.running) return message("already_running");
             if (!existing.initiator.equals(player.getUUID()) && !player.hasPermissions(2)) return message("project_owner");
             if (existing.faulted) return message("faulted");
@@ -67,10 +69,11 @@ public final class ResearchExecution {
         IGrid grid = host.getMainNode().getGrid();
         if (grid == null || !host.getMainNode().isOnline()) return message("offline");
         if (!state.refunds.isEmpty()) return message("refund_pending");
+        if (requestMaterials) return requestMaterials(host, player, node, grid, state, data);
         try {
             if (!ResearchPayment.withdraw(node.inputs(), grid.getStorageService().getInventory(),
                     IActionSource.ofPlayer(player, host), state, data))
-                return message("materials");
+                return state.refunds.isEmpty() ? requestMaterials(host, player, node, grid, state, data) : message("refund_pending");
             ResearchProject project = new ResearchProject(node, subjects, player.getUUID(), state.nextOrder++);
             state.projects.put(id, project);
             state.refunds.clear();
@@ -83,6 +86,12 @@ public final class ResearchExecution {
             data.setDirty();
             return message("faulted");
         }
+    }
+
+    private static Component requestMaterials(ResearchStationBlockEntity host, ServerPlayer player, ResearchNode node,
+                                               IGrid grid, ResearchStationState state, ResearchSavedData data) {
+        data.trackMaterialCalculations(state.materialRequests);
+        return state.materialRequests.request(host, player, node, grid);
     }
 
     private static boolean unlocked(ResearchNode node, ResearchStationState state, ResearchSavedData data, ObjectSet<UUID> subjects) {

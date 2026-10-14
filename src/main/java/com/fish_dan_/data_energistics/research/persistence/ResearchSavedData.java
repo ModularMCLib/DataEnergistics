@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.research.persistence;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.research.crafting.ResearchMaterialRequests;
 import com.fish_dan_.data_energistics.research.progression.ResearchStationState;
 
 import net.minecraft.core.HolderLookup;
@@ -18,6 +19,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -32,6 +34,7 @@ public final class ResearchSavedData extends SavedData {
     private final Object2ObjectMap<UUID, ResearchStationState> stations = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<UUID, CompoundTag> quarantined = new Object2ObjectLinkedOpenHashMap<>();
     private final ObjectList<Tag> quarantinedEntries = new ObjectArrayList<>();
+    private final ReferenceOpenHashSet<ResearchMaterialRequests> materialCalculations = new ReferenceOpenHashSet<>();
 
     public static ResearchSavedData get(MinecraftServer server) {
         if (!server.isSameThread()) throw new IllegalStateException("Research data requires the server thread");
@@ -56,6 +59,27 @@ public final class ResearchSavedData extends SavedData {
 
     public ObjectSet<ResourceLocation> unlocked(UUID subject) {
         return ObjectSets.unmodifiable(unlocks.getOrDefault(subject, ObjectSets.emptySet()));
+    }
+
+    /** Registers transient planning work for server-thread polling independently of loaded block entities. */
+    public void trackMaterialCalculations(ResearchMaterialRequests requests) {
+        materialCalculations.add(requests);
+    }
+
+    /** Polls only active queues once in the server's post tick; no station journals are scanned. */
+    public void tickMaterialCalculations(MinecraftServer server) {
+        var iterator = materialCalculations.iterator();
+        while (iterator.hasNext()) {
+            ResearchMaterialRequests requests = iterator.next();
+            requests.tick(server);
+            if (!requests.hasPendingCalculations()) iterator.remove();
+        }
+    }
+
+    /** Stops transient calculations before the server releases its worlds; paid projects remain saved. */
+    public void cancelMaterialCalculations() {
+        materialCalculations.forEach(ResearchMaterialRequests::cancelCalculations);
+        materialCalculations.clear();
     }
 
     public void unlock(Iterable<UUID> subjects, ResourceLocation node) {

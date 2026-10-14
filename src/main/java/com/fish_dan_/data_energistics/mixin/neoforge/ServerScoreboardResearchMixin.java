@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.mixin.research;
+package com.fish_dan_.data_energistics.mixin.neoforge;
 
 import com.fish_dan_.data_energistics.research.team.ResearchTeams;
 
@@ -17,7 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerScoreboard.class)
 public abstract class ServerScoreboardResearchMixin {
 
-    @Shadow @Final private MinecraftServer server;
+    @Shadow
+    @Final
+    private MinecraftServer server;
 
     @Inject(method = "onTeamRemoved", at = @At("RETURN"))
     private void dataEnergistics$forgetResearchSubject(PlayerTeam team, CallbackInfo callback) {

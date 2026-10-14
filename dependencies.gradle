@@ -79,6 +79,7 @@ dependencies {
     // FTB
     compileOnly(forge.ftbultimine)
     compileOnly(forge.ftbchunks)
+    compileOnly(forge.ftbteams)
 
     // Optional tactical-map integrations
     compileOnly(forge.journeymap.api) {
@@ -166,6 +167,8 @@ dependencies {
     localRuntime(forge.jei.neoforge.impl)
 
     // Optional machine integrations for local development; runtime libraries are declared explicitly.
+    extraLocalRuntime(forge.ftbteams)
+
     extraLocalRuntime(forge.mystical.agriculture) { transitive = false }
     extraLocalRuntime(forge.cucumber) { transitive = false }
     extraLocalRuntime(forge.ars.nouveau) { transitive = false }

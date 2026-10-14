@@ -148,7 +148,7 @@ public final class ResearchTeams {
         teams.then(Commands.literal("create")
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .executes(context -> command(context, "create", StringArgumentType.getString(context, "name")))));
-        for (String action : new String[]{"invite", "accept", "reject", "kick", "transfer"}) {
+        for (String action : new String[] { "invite", "accept", "reject", "kick", "transfer" }) {
             teams.then(Commands.literal(action)
                     .then(Commands.argument("target", StringArgumentType.word())
                             .suggests((context, builder) -> {
@@ -160,7 +160,7 @@ public final class ResearchTeams {
                             })
                             .executes(context -> command(context, action, StringArgumentType.getString(context, "target")))));
         }
-        for (String action : new String[]{"leave", "disband"}) {
+        for (String action : new String[] { "leave", "disband" }) {
             teams.then(Commands.literal(action).executes(context -> command(context, action, "")));
         }
         event.getDispatcher().register(Commands.literal("dataenergistics")
@@ -169,15 +169,11 @@ public final class ResearchTeams {
 
     private static void suggestTargets(ServerPlayer player, String action, SuggestionsBuilder builder) {
         CompoundTag snapshot = snapshot(player);
-        String listKey = action.equals("invite") ? "online_players"
-                : action.equals("accept") || action.equals("reject") ? "invitations" : "members";
-        ListTag targets = listKey.equals("members")
-                ? snapshot.getCompound("custom_team").getList(listKey, Tag.TAG_COMPOUND)
-                : snapshot.getList(listKey, Tag.TAG_COMPOUND);
+        String listKey = action.equals("invite") ? "online_players" : action.equals("accept") || action.equals("reject") ? "invitations" : "members";
+        ListTag targets = listKey.equals("members") ? snapshot.getCompound("custom_team").getList(listKey, Tag.TAG_COMPOUND) : snapshot.getList(listKey, Tag.TAG_COMPOUND);
         for (int index = 0; index < targets.size(); index++) {
             CompoundTag target = targets.getCompound(index);
-            String value = listKey.equals("invitations") ? target.getString("id")
-                    : action.equals("invite") ? target.getString("name") : target.getString("uuid");
+            String value = listKey.equals("invitations") ? target.getString("id") : action.equals("invite") ? target.getString("name") : target.getString("uuid");
             if (value.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase())) {
                 builder.suggest(value, Component.literal(target.getString("name")));
             }
@@ -185,7 +181,7 @@ public final class ResearchTeams {
     }
 
     private static int command(CommandContext<CommandSourceStack> context, String action, String argument)
-            throws CommandSyntaxException {
+                                                                                                           throws CommandSyntaxException {
         ResearchTeamSavedData.Result result = perform(context.getSource().getPlayerOrException(), action, argument);
         if (result.success()) {
             context.getSource().sendSuccess(result::message, false);

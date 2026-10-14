@@ -20,8 +20,7 @@ public final class FtbResearchTeamMembership {
             return null;
         }
         Team team = api.getManager().getTeamForPlayer(player).orElse(null);
-        if (team == null || !team.isValid() || !team.isPartyTeam()
-                || !team.getRankForPlayer(player.getUUID()).isMemberOrBetter()) {
+        if (team == null || !team.isValid() || !team.isPartyTeam() || !team.getRankForPlayer(player.getUUID()).isMemberOrBetter()) {
             return null;
         }
         return new ResearchTeamSubject(team.getId(), team.getName().getString(), "ftbteams");

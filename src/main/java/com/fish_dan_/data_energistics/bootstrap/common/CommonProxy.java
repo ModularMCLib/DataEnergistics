@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.bootstrap.common;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.api.research.RegisterResearchNodesEvent;
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
 import com.fish_dan_.data_energistics.ae2.dataflow.GenericKeyItemExportStrategy;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
@@ -44,6 +43,7 @@ import com.fish_dan_.data_energistics.registry.DEStructures;
 import com.fish_dan_.data_energistics.registry.DEUpgrades;
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.registry.UniversalTerminalAdapters;
+import com.fish_dan_.data_energistics.research.lifecycle.ResearchRegistrationEvents;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
@@ -96,7 +96,7 @@ public class CommonProxy {
         modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
 
         CommonEventRegistrar.register();
-        modEventBus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(() -> modEventBus.post(new RegisterResearchNodesEvent())));
+        modEventBus.register(new ResearchRegistrationEvents(modEventBus));
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

@@ -9,7 +9,9 @@ import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
@@ -29,6 +31,12 @@ import java.io.Reader;
 
 /** Reloads data/<namespace>/research/<id>.json, retaining Java defaults for absent fields. */
 public final class ResearchReloadListener extends SimplePreparableReloadListener<Object2ObjectMap<ResourceLocation, ResearchNode>> {
+
+    private final RegistryOps<JsonElement> operations;
+
+    public ResearchReloadListener(HolderLookup.Provider registries) {
+        this.operations = registries.createSerializationContext(JsonOps.INSTANCE);
+    }
 
     @Override
     protected Object2ObjectMap<ResourceLocation, ResearchNode> prepare(ResourceManager resources, ProfilerFiller profiler) {
@@ -53,7 +61,7 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
         ResearchDefinitions.publish(nodes);
     }
 
-    private static ResearchNode override(ResearchNode original, JsonObject json) {
+    private ResearchNode override(ResearchNode original, JsonObject json) {
         if (json.has("id") && !ResourceLocation.parse(json.get("id").getAsString()).equals(original.id())) {
             throw new IllegalArgumentException("id must match the file path");
         }
@@ -81,17 +89,17 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
                         if (!BuiltInRegistries.FLUID.containsKey(fluid)) throw new IllegalArgumentException("Unknown input fluid: " + fluid);
                         yield AEFluidKey.of(BuiltInRegistries.FLUID.get(fluid));
                     }
-                    case "ae_key" -> AEKey.CODEC.parse(JsonOps.INSTANCE, input.get("key")).getOrThrow();
+                    case "ae_key" -> AEKey.CODEC.parse(operations, input.get("key")).getOrThrow();
                     default -> throw new IllegalArgumentException("inputs.type must be item, fluid or ae_key");
                 };
-                inputs.add(new ResearchInput(key, input.get("amount").getAsLong()));
+                inputs.add(new ResearchInput(key, input.get("amount").getAsBigDecimal().longValueExact()));
             }
         }
         return new ResearchNode(original.id(), original.scope(), original.name(),
                 json.has("description") ? json.get("description").getAsString() : original.description(),
                 original.icon(), target, inputs,
                 json.has("prerequisites") ? ids(json, "prerequisites") : original.prerequisites(),
-                json.has("research_ticks") ? json.get("research_ticks").getAsInt() : original.researchTicks(),
+                json.has("research_ticks") ? json.get("research_ticks").getAsBigDecimal().intValueExact() : original.researchTicks(),
                 json.has("ae_per_tick") ? json.get("ae_per_tick").getAsDouble() : original.aePerTick());
     }
 

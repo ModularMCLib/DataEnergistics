@@ -121,6 +121,13 @@ ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]
+modId = "ftbteams"
+type = "optional"
+versionRange = "[${ftbteams_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
 modId = "ae2cs"
 type = "optional"
 versionRange = "[0,)"

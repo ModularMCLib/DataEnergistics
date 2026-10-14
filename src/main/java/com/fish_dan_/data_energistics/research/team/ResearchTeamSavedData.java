@@ -9,6 +9,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
@@ -22,8 +23,7 @@ import java.util.UUID;
 /** Overworld membership authority. Invitations intentionally belong only to the running server session. */
 final class ResearchTeamSavedData extends SavedData {
 
-    private static final Factory<ResearchTeamSavedData> FACTORY =
-            new Factory<>(ResearchTeamSavedData::new, ResearchTeamSavedData::load);
+    private static final Factory<ResearchTeamSavedData> FACTORY = new Factory<>(ResearchTeamSavedData::new, ResearchTeamSavedData::load);
     private static final String DATA_NAME = Data_Energistics.MODID + "_research_teams";
 
     private final Object2ObjectMap<UUID, Team> teams = new Object2ObjectLinkedOpenHashMap<>();
@@ -43,7 +43,8 @@ final class ResearchTeamSavedData extends SavedData {
         return data;
     }
 
-    @Nullable Team teamFor(UUID playerId) {
+    @Nullable
+    Team teamFor(UUID playerId) {
         UUID teamId = membership.get(playerId);
         return teamId == null ? null : teams.get(teamId);
     }
@@ -212,8 +213,7 @@ final class ResearchTeamSavedData extends SavedData {
             custom.putString("owner", team.owner.toString());
             ListTag members = new ListTag();
             for (var member : team.members.object2ObjectEntrySet()) {
-                ServerPlayer online = player.serverLevel().getServer().getPlayerList().getPlayer(member.getKey());
-                String name = online == null ? member.getValue() : online.getGameProfile().getName();
+                String name = memberName(player.serverLevel().getServer(), member.getKey(), member.getValue());
                 if (!name.equals(member.getValue())) {
                     member.setValue(name);
                     setDirty();
@@ -256,6 +256,16 @@ final class ResearchTeamSavedData extends SavedData {
         return entry;
     }
 
+    private static String memberName(MinecraftServer server, UUID id, String persistedName) {
+        ServerPlayer online = server.getPlayerList().getPlayer(id);
+        if (online != null) {
+            return online.getGameProfile().getName();
+        }
+        GameProfileCache profiles = server.getProfileCache();
+        // Dedicated server profile caches are an optional external API; persisted names cover offline owners.
+        return profiles == null ? persistedName : profiles.get(id).map(profile -> profile.getName()).orElse(persistedName);
+    }
+
     private static ResearchTeamSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         ResearchTeamSavedData data = new ResearchTeamSavedData();
         for (Tag raw : tag.getList("teams", Tag.TAG_COMPOUND)) {
@@ -267,8 +277,7 @@ final class ResearchTeamSavedData extends SavedData {
             UUID id = entry.getUUID("id");
             UUID owner = entry.getUUID("owner");
             String name = entry.getString("name").strip();
-            if (name.isBlank() || name.length() > 64 || name.codePoints().anyMatch(Character::isISOControl)
-                    || data.teams.containsKey(id) || data.membership.containsKey(owner)) {
+            if (name.isBlank() || name.length() > 64 || name.codePoints().anyMatch(Character::isISOControl) || data.teams.containsKey(id) || data.membership.containsKey(owner)) {
                 Data_Energistics.LOGGER.warn("Skipping invalid or duplicate saved research team {}", id);
                 continue;
             }
@@ -340,6 +349,7 @@ final class ResearchTeamSavedData extends SavedData {
     record Result(boolean success, Component message) {}
 
     static final class Team {
+
         final UUID id;
         final String name;
         UUID owner;

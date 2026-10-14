@@ -80,7 +80,7 @@ public final class ExampleResearchRegistration {
 
 ## Datapack 覆盖
 
-路径为 `data/<namespace>/research/<path>.json`，对应节点 ID `<namespace>:<path>`。节点必须已由 Java 注册。字段省略时继承 Java 默认值；提供数组时替换整个数组。`target` 对象提供后，内部省略的 `items` 或 `tags` 视为空集。
+路径为 `data/<namespace>/researchtechnology/<path>.json`，对应节点 ID `<namespace>:<path>`。专用目录避免读取 Astral Sorcery 等 Mod 自有的 `research/` 数据格式，同时允许其他 Mod 的 Java 注册节点使用自己的 namespace。之前使用 `data/<namespace>/research/` 的研究站覆盖文件需移动到新目录；节点 ID 与世界解锁存档无需修改。节点必须已由 Java 注册。字段省略时继承 Java 默认值；提供数组时替换整个数组。`target` 对象提供后，内部省略的 `items` 或 `tags` 视为空集。
 
 当前读取的字段如下：
 
@@ -96,7 +96,7 @@ public final class ExampleResearchRegistration {
 
 `scope`、`name`、`icon` 固定取 Java 注册值，不能通过这些 JSON 覆盖入口修改。目标物品和普通 item/fluid 材料必须存在于 Minecraft 注册表。前置节点缺失或形成环时，该节点及依赖该非法链的节点不会发布；解析失败的覆盖文件也不会退回 Java 默认值。
 
-例如 `data/example_mod/research/reinforced_pickaxe.json`：
+例如 `data/example_mod/researchtechnology/reinforced_pickaxe.json`：
 
 ```json
 {

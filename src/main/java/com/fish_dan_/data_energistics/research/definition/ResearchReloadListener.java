@@ -32,9 +32,10 @@ import org.jspecify.annotations.Nullable;
 import java.io.Reader;
 import java.math.BigDecimal;
 
-/** Reloads data/<namespace>/research/<id>.json, retaining Java defaults for absent fields. */
+/** Reloads data/<namespace>/researchtechnology/<id>.json without reading other mods' research formats. */
 public final class ResearchReloadListener extends SimplePreparableReloadListener<Object2ObjectMap<ResourceLocation, ResearchNode>> {
 
+    private static final String DIRECTORY = "researchtechnology";
     private final RegistryOps<JsonElement> operations;
 
     public ResearchReloadListener(HolderLookup.Provider registries) {
@@ -44,12 +45,12 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
     @Override
     protected Object2ObjectMap<ResourceLocation, ResearchNode> prepare(ResourceManager resources, ProfilerFiller profiler) {
         var nodes = ResearchDefinitions.defaults();
-        resources.listResources("research", path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
+        resources.listResources(DIRECTORY, path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(path.getNamespace(),
-                    path.getPath().substring("research/".length(), path.getPath().length() - 5));
+                    path.getPath().substring(DIRECTORY.length() + 1, path.getPath().length() - 5));
             try (Reader reader = resource.openAsReader()) {
+                if (!nodes.containsKey(id)) throw new IllegalArgumentException("ID was not registered by Java: " + id);
                 ResearchNode original = nodes.get(id);
-                if (original == null) throw new IllegalArgumentException("ID was not registered by Java: " + id);
                 nodes.put(id, override(original, JsonParser.parseReader(reader).getAsJsonObject()));
             } catch (Exception error) {
                 nodes.remove(id);

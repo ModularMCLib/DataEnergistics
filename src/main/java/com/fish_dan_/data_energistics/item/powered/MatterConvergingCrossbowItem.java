@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.item.powered;
 
+import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.ElementalGrenade;
@@ -107,6 +108,10 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
         return stack.getItem() instanceof MatterConvergingCrossbowItem && mode(stack) != MatterConvergingCrossbowMode.CROSSBOW;
     }
 
+    public static boolean isModeUnlocked(ItemStack stack, MatterConvergingCrossbowMode mode) {
+        return stack.getItem() instanceof MatterConvergingCrossbowItem && ResearchAccess.hasUpgrade(stack, mode.researchId());
+    }
+
     public static boolean isCharged(ItemStack stack) {
         return !stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY).isEmpty();
     }
@@ -139,7 +144,9 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     /** Server entry for a left-button press. No ammo or energy is spent until release. */
     public void beginCannonCharge(Player player, InteractionHand hand, ItemStack stack) {
-        if (mode(stack) == MatterConvergingCrossbowMode.RAIL) {
+        MatterConvergingCrossbowMode selectedMode = mode(stack);
+        if (!isModeUnlocked(stack, selectedMode)) return;
+        if (selectedMode == MatterConvergingCrossbowMode.RAIL) {
             RailLauncher.begin(player, hand, stack);
             return;
         }
@@ -159,7 +166,12 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     /** Server release consumes the charge exactly once; packets contain no client-chosen charge/damage value. */
     public void releaseCannonCharge(Player player, InteractionHand hand, ItemStack stack, Vec3 muzzleOffset, Vec3 direction) {
-        if (mode(stack) == MatterConvergingCrossbowMode.RAIL) {
+        MatterConvergingCrossbowMode selectedMode = mode(stack);
+        if (!isModeUnlocked(stack, selectedMode)) {
+            RailLauncher.cancel(stack);
+            return;
+        }
+        if (selectedMode == MatterConvergingCrossbowMode.RAIL) {
             RailLauncher.release(player, hand, stack, muzzleOffset, direction);
             return;
         }
@@ -260,6 +272,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
             }
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
+        if (!isModeUnlocked(stack, mode(stack))) return InteractionResultHolder.fail(stack);
         if (isCannon(stack)) return InteractionResultHolder.pass(stack);
         ChargedProjectiles charged = stack.getOrDefault(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
         if (!charged.isEmpty()) {
@@ -284,7 +297,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        if (isCannon(stack)) return;
+        if (isCannon(stack) || !isModeUnlocked(stack, MatterConvergingCrossbowMode.CROSSBOW)) return;
         if (this.hasMaxSpeedCards(stack)) {
             return;
         }
@@ -295,7 +308,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     @Override
     public void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack, int remainingUseTicks) {
-        if (isCannon(stack)) return;
+        if (isCannon(stack) || !isModeUnlocked(stack, MatterConvergingCrossbowMode.CROSSBOW)) return;
         if (!level.isClientSide) {
             float progress = (float) (stack.getUseDuration(livingEntity) - remainingUseTicks) / (float) getChargeDuration(stack, livingEntity);
             if (this.hasMaxSpeedCards(stack) && progress >= 1.0F && !isCharged(stack) && this.tryLoadProjectile(livingEntity, stack)) {
@@ -369,7 +382,7 @@ public class MatterConvergingCrossbowItem extends Item implements IAEItemPowerSt
 
     public void performShooting(Level level, LivingEntity shooter, ItemStack stack,
                                 float inaccuracy, @Nullable LivingEntity target) {
-        if (!(level instanceof ServerLevel serverLevel)) {
+        if (!(level instanceof ServerLevel serverLevel) || !isModeUnlocked(stack, MatterConvergingCrossbowMode.CROSSBOW)) {
             return;
         }
 

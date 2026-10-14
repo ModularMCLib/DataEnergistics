@@ -34,7 +34,7 @@ public record MatterConvergingCrossbowModePayload(boolean offHand, MatterConverg
             Player player = context.player();
             InteractionHand hand = payload.offHand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
             ItemStack stack = player.getItemInHand(hand);
-            if (!(stack.getItem() instanceof MatterConvergingCrossbowItem)) return;
+            if (!MatterConvergingCrossbowItem.isModeUnlocked(stack, mode)) return;
             RailLauncher.cancel(stack);
             ItemStack updated = stack.copy();
             updated.remove(DEDataComponents.CANNON_CHARGE.get());

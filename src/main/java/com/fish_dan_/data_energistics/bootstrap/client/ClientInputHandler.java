@@ -17,7 +17,6 @@ import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPa
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
 import com.fish_dan_.data_energistics.network.action.MeVacuumLaunchPayload;
 import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEMobEffects;
 
 import net.minecraft.client.Minecraft;
@@ -241,9 +240,9 @@ final class ClientInputHandler {
         }
         if (!(stack.getItem() instanceof MatterConvergingCrossbowItem)) return;
         MatterConvergingCrossbowMode requested = arms ? MatterConvergingCrossbowMode.CROSSBOW : MatterConvergingCrossbowMode.RAIL;
-        MatterConvergingCrossbowMode current = MatterConvergingCrossbowMode.fromId(
-                stack.getOrDefault(DEDataComponents.MATTER_CONVERGING_CROSSBOW_MODE.get(), MatterConvergingCrossbowMode.GRENADE.id()));
+        MatterConvergingCrossbowMode current = MatterConvergingCrossbowItem.mode(stack);
         MatterConvergingCrossbowMode mode = current == requested ? MatterConvergingCrossbowMode.GRENADE : requested;
+        if (!MatterConvergingCrossbowItem.isModeUnlocked(stack, mode)) return;
         CannonChargeInput.cancel();
         PacketDistributor.sendToServer(new MatterConvergingCrossbowModePayload(offHand, mode));
     }

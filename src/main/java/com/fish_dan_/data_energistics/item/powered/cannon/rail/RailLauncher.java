@@ -45,7 +45,7 @@ public final class RailLauncher {
     }
 
     public static void begin(Player player, InteractionHand hand, ItemStack weapon) {
-        if (!(player.level() instanceof ServerLevel level) || !(weapon.getItem() instanceof MatterConvergingCrossbowItem item) || player.getItemInHand(hand) != weapon || MatterConvergingCrossbowItem.mode(weapon) != MatterConvergingCrossbowMode.RAIL || !player.isAlive() || player.isSpectator() || player.isUsingItem() || player.hasEffect(DEMobEffects.RADIX_LOSS) || player.containerMenu != player.inventoryMenu || MatterConvergingCrossbowItem.isCharged(weapon) || weapon.has(DEDataComponents.CANNON_CHARGE.get()) || cooling(weapon, level.getGameTime()) || player.getCooldowns().isOnCooldown(item)) return;
+        if (!(player.level() instanceof ServerLevel level) || !(weapon.getItem() instanceof MatterConvergingCrossbowItem item) || !MatterConvergingCrossbowItem.isModeUnlocked(weapon, MatterConvergingCrossbowMode.RAIL) || player.getItemInHand(hand) != weapon || MatterConvergingCrossbowItem.mode(weapon) != MatterConvergingCrossbowMode.RAIL || !player.isAlive() || player.isSpectator() || player.isUsingItem() || player.hasEffect(DEMobEffects.RADIX_LOSS) || player.containerMenu != player.inventoryMenu || MatterConvergingCrossbowItem.isCharged(weapon) || weapon.has(DEDataComponents.CANNON_CHARGE.get()) || cooling(weapon, level.getGameTime()) || player.getCooldowns().isOnCooldown(item)) return;
         var key = MountedAmmoCells.selectedKey(weapon, MatterConvergingCrossbowMode.RAIL);
         var ammo = key == null ? null : RailAmmunition.fromKey(key);
         if (ammo == null || ammo == RailAmmunition.HEAVY && RailRecovery.recovering(weapon, level.getGameTime()) || item.getAECurrentPower(weapon) < ENERGY_PER_SHOT || MountedAmmoCells.transfer(weapon, key, ammo.cost(), false, Actionable.SIMULATE) != ammo.cost()) return;
@@ -57,6 +57,10 @@ public final class RailLauncher {
 
     public static void release(Player player, InteractionHand hand, ItemStack weapon, Vec3 offset, Vec3 direction) {
         if (!(player.level() instanceof ServerLevel level) || !(weapon.getItem() instanceof MatterConvergingCrossbowItem item)) return;
+        if (!MatterConvergingCrossbowItem.isModeUnlocked(weapon, MatterConvergingCrossbowMode.RAIL)) {
+            cancel(weapon);
+            return;
+        }
         var charge = weapon.get(DEDataComponents.CANNON_CHARGE.get());
         var key = weapon.get(DEDataComponents.RAIL_CHARGE_AMMO.get());
         cancel(weapon);

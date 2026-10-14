@@ -9,9 +9,9 @@ import net.minecraft.world.item.ItemStack;
 
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 /** Immutable, synchronized upgrades carried by this item rather than by its current owner. */
 public record ItemResearchUpgrades(ObjectList<ResourceLocation> ids) {
@@ -32,7 +32,8 @@ public record ItemResearchUpgrades(ObjectList<ResourceLocation> ids) {
             });
 
     public ItemResearchUpgrades {
-        ids = new ObjectImmutableList<>(new ObjectOpenHashSet<>(ids));
+        ids = new ObjectImmutableList<>(new ObjectLinkedOpenHashSet<>(ids));
+        if (ids.size() > 4096) throw new IllegalArgumentException("Too many item research upgrades");
     }
 
     public static ItemResearchUpgrades of(ItemStack stack) {
@@ -40,7 +41,7 @@ public record ItemResearchUpgrades(ObjectList<ResourceLocation> ids) {
     }
 
     public ItemResearchUpgrades with(ResourceLocation id) {
-        var updated = new ObjectOpenHashSet<>(ids);
+        var updated = new ObjectLinkedOpenHashSet<>(ids);
         updated.add(id);
         return new ItemResearchUpgrades(new ObjectImmutableList<>(updated));
     }

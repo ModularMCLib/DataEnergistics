@@ -20,14 +20,17 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Reader;
+import java.math.BigDecimal;
 
 /** Reloads data/<namespace>/research/<id>.json, retaining Java defaults for absent fields. */
 public final class ResearchReloadListener extends SimplePreparableReloadListener<Object2ObjectMap<ResourceLocation, ResearchNode>> {
@@ -62,7 +65,7 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
     }
 
     private ResearchNode override(ResearchNode original, JsonObject json) {
-        if (json.has("id") && !ResourceLocation.parse(json.get("id").getAsString()).equals(original.id())) {
+        if (json.has("id") && !ResourceLocation.parse(string(json.get("id"), "id")).equals(original.id())) {
             throw new IllegalArgumentException("id must match the file path");
         }
         ResearchTarget target = original.target();
@@ -70,42 +73,60 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
             JsonObject object = json.getAsJsonObject("target");
             target = new ResearchTarget(ids(object, "items"), ids(object, "tags"));
             for (ResourceLocation item : target.items()) {
-                if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("Unknown target item: " + item);
+                if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("target.items: unknown item " + item);
             }
         }
         ObjectList<ResearchInput> inputs = original.inputs();
         if (json.has("inputs")) {
             inputs = new ObjectArrayList<>();
             for (JsonElement element : json.getAsJsonArray("inputs")) {
-                JsonObject input = element.getAsJsonObject();
-                AEKey key = switch (input.get("type").getAsString()) {
-                    case "item" -> {
-                        ResourceLocation item = ResourceLocation.parse(input.get("id").getAsString());
-                        if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("Unknown input item: " + item);
-                        yield AEItemKey.of(BuiltInRegistries.ITEM.get(item));
-                    }
-                    case "fluid" -> {
-                        ResourceLocation fluid = ResourceLocation.parse(input.get("id").getAsString());
-                        if (!BuiltInRegistries.FLUID.containsKey(fluid)) throw new IllegalArgumentException("Unknown input fluid: " + fluid);
-                        yield AEFluidKey.of(BuiltInRegistries.FLUID.get(fluid));
-                    }
-                    case "ae_key" -> AEKey.CODEC.parse(operations, input.get("key")).getOrThrow();
-                    default -> throw new IllegalArgumentException("inputs.type must be item, fluid or ae_key");
-                };
-                inputs.add(new ResearchInput(key, input.get("amount").getAsBigDecimal().longValueExact()));
+                String field = "inputs[" + inputs.size() + "]";
+                try {
+                    inputs.add(input(element.getAsJsonObject(), field));
+                } catch (RuntimeException error) {
+                    throw new IllegalArgumentException(field + ": " + error.getMessage(), error);
+                }
             }
         }
         return new ResearchNode(original.id(), original.scope(), original.name(),
-                json.has("description") ? json.get("description").getAsString() : original.description(),
+                json.has("description") ? string(json.get("description"), "description") : original.description(),
                 original.icon(), target, inputs,
                 json.has("prerequisites") ? ids(json, "prerequisites") : original.prerequisites(),
-                json.has("research_ticks") ? json.get("research_ticks").getAsBigDecimal().intValueExact() : original.researchTicks(),
-                json.has("ae_per_tick") ? json.get("ae_per_tick").getAsDouble() : original.aePerTick());
+                json.has("research_ticks") ? number(json.get("research_ticks"), "research_ticks").intValueExact() : original.researchTicks(),
+                json.has("ae_per_tick") ? number(json.get("ae_per_tick"), "ae_per_tick").doubleValue() : original.aePerTick());
+    }
+
+    private ResearchInput input(JsonObject input, String field) {
+        AEKey key = switch (string(input.get("type"), field + ".type")) {
+            case "item" -> {
+                ResourceLocation item = ResourceLocation.parse(string(input.get("id"), field + ".id"));
+                if (!BuiltInRegistries.ITEM.containsKey(item)) throw new IllegalArgumentException("Unknown item " + item);
+                yield AEItemKey.of(BuiltInRegistries.ITEM.get(item));
+            }
+            case "fluid" -> {
+                ResourceLocation fluid = ResourceLocation.parse(string(input.get("id"), field + ".id"));
+                if (!BuiltInRegistries.FLUID.containsKey(fluid)) throw new IllegalArgumentException("Unknown fluid " + fluid);
+                yield AEFluidKey.of(BuiltInRegistries.FLUID.get(fluid));
+            }
+            case "ae_key" -> AEKey.CODEC.parse(operations, input.get("key")).getOrThrow();
+            default -> throw new IllegalArgumentException("type must be item, fluid or ae_key");
+        };
+        return new ResearchInput(key, number(input.get("amount"), field + ".amount").longValueExact());
+    }
+
+    private static String string(@Nullable JsonElement value, String field) {
+        if (value instanceof JsonPrimitive primitive && primitive.isString()) return primitive.getAsString();
+        throw new IllegalArgumentException(field + " must be a JSON string");
+    }
+
+    private static BigDecimal number(@Nullable JsonElement value, String field) {
+        if (value instanceof JsonPrimitive primitive && primitive.isNumber()) return primitive.getAsBigDecimal();
+        throw new IllegalArgumentException(field + " must be a JSON number");
     }
 
     private static ObjectSet<ResourceLocation> ids(JsonObject json, String field) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
-        if (json.has(field)) for (JsonElement element : json.getAsJsonArray(field)) result.add(ResourceLocation.parse(element.getAsString()));
+        if (json.has(field)) for (JsonElement element : json.getAsJsonArray(field)) result.add(ResourceLocation.parse(string(element, field)));
         return result;
     }
 }

@@ -32,8 +32,16 @@ public final class ResearchNbt {
 
     public static ObjectSet<ResourceLocation> readIds(CompoundTag tag, String field) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
-        for (Tag value : tag.getList(field, Tag.TAG_STRING)) result.add(ResourceLocation.parse(value.getAsString()));
+        for (Tag value : readList(tag, field, Tag.TAG_STRING)) result.add(ResourceLocation.parse(value.getAsString()));
         return result;
+    }
+
+    /** Missing optional lists are empty; present lists must retain their declared element type. */
+    public static ListTag readList(CompoundTag tag, String field, int elementType) {
+        Tag value = tag.get(field);
+        if (value == null) return new ListTag();
+        if (value instanceof ListTag list && (list.isEmpty() || list.getElementType() == elementType)) return list;
+        throw new IllegalArgumentException("Research field " + field + " must be an NBT list of type " + elementType);
     }
 
     public static CompoundTag input(ResearchInput input, HolderLookup.Provider registries) {
@@ -69,7 +77,7 @@ public final class ResearchNbt {
 
     public static ResearchNode readNode(CompoundTag tag, HolderLookup.Provider registries) {
         ObjectList<ResearchInput> inputs = new ObjectArrayList<>();
-        for (Tag value : tag.getList("inputs", Tag.TAG_COMPOUND)) inputs.add(readInput((CompoundTag) value, registries));
+        for (Tag value : readList(tag, "inputs", Tag.TAG_COMPOUND)) inputs.add(readInput((CompoundTag) value, registries));
         return new ResearchNode(ResourceLocation.parse(tag.getString("id")), ResearchScope.valueOf(tag.getString("scope")),
                 tag.getString("name"), tag.getString("description"), ResourceLocation.parse(tag.getString("icon")),
                 new ResearchTarget(readIds(tag, "target_items"), readIds(tag, "target_tags")), inputs,

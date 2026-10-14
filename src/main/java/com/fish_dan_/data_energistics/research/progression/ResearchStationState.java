@@ -56,12 +56,14 @@ public final class ResearchStationState {
         if (state.target.getCount() > 1) throw new IllegalArgumentException("Research target must be a single item");
         state.revision = tag.getLong("revision");
         state.nextOrder = tag.getLong("next_order");
-        for (Tag value : tag.getList("projects", Tag.TAG_COMPOUND)) {
+        if (state.revision < 0 || state.nextOrder < 0) throw new IllegalArgumentException("Invalid research revision or next order");
+        for (Tag value : ResearchNbt.readList(tag, "projects", Tag.TAG_COMPOUND)) {
             ResearchProject project = ResearchProject.load((CompoundTag) value, registries);
+            if (project.order >= state.nextOrder) throw new IllegalArgumentException("Saved research project order exceeds next order");
             if (state.projects.putIfAbsent(project.node.id(), project) != null) throw new IllegalArgumentException("Duplicate saved research project");
         }
         if (state.runningCount() > 2 || (state.locked() && state.target.isEmpty())) throw new IllegalArgumentException("Invalid research concurrency or target");
-        for (Tag value : tag.getList("refunds", Tag.TAG_COMPOUND)) {
+        for (Tag value : ResearchNbt.readList(tag, "refunds", Tag.TAG_COMPOUND)) {
             ResearchInput input = ResearchNbt.readInput((CompoundTag) value, registries);
             state.refunds.mergeLong(input.key(), input.amount(), Math::addExact);
         }

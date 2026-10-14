@@ -56,17 +56,18 @@ public final class ResearchProject {
 
     public static ResearchProject load(CompoundTag tag, HolderLookup.Provider registries) {
         ObjectSet<UUID> subjects = new ObjectOpenHashSet<>();
-        for (Tag value : tag.getList("subjects", Tag.TAG_COMPOUND)) subjects.add(((CompoundTag) value).getUUID("id"));
+        for (Tag value : ResearchNbt.readList(tag, "subjects", Tag.TAG_COMPOUND)) subjects.add(((CompoundTag) value).getUUID("id"));
         ResearchProject project = new ResearchProject(ResearchNbt.readNode(tag.getCompound("node"), registries),
                 subjects, tag.getUUID("initiator"), tag.getLong("order"));
         project.progress = tag.getInt("progress");
         project.energyCredit = tag.getDouble("energy_credit");
-        if (project.progress < 0 || project.progress >= project.node.researchTicks() ||
+        if (subjects.isEmpty() || project.order < 0 || project.progress < 0 || project.progress >= project.node.researchTicks() ||
                 !Double.isFinite(project.energyCredit) || project.energyCredit < 0 || project.energyCredit > project.node.aePerTick()) {
-            throw new IllegalArgumentException("Invalid saved research progress or energy credit");
+            throw new IllegalArgumentException("Invalid saved research subjects, order, progress or energy credit");
         }
         project.running = tag.getBoolean("running");
         project.faulted = tag.getBoolean("faulted");
+        if (project.running && project.faulted) throw new IllegalArgumentException("Faulted research cannot be running");
         return project;
     }
 }

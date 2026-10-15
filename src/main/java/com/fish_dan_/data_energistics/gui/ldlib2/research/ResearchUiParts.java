@@ -4,6 +4,7 @@ import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.SDFRectTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
@@ -35,6 +36,8 @@ final class ResearchUiParts {
     static final int SURFACE = 0xFFADB0C4;
     static final int TEXT = 0xFF141D30;
     static final int NODE_BACKGROUND = 0xFFCBCCD4;
+    static final int NODE_SECTION = 0xFF46DBC2;
+    static final int CORNER_RADIUS = 6;
     static final int NODE_BORDER = 0xFFF2F2F2;
     static final int NODE_COMPLETED = 0xFF57E0BB;
     static final int NODE_RUNNING = 0xFFB06FDD;
@@ -47,6 +50,10 @@ final class ResearchUiParts {
     static final String PREFIX = "gui.data_energistics.research.";
 
     private ResearchUiParts() {}
+
+    static SDFRectTexture rounded(int color) {
+        return SDFRectTexture.of(color).setRadius(CORNER_RADIUS);
+    }
 
     static Component text(String key, Object... arguments) {
         return Component.translatable(PREFIX + key, arguments);

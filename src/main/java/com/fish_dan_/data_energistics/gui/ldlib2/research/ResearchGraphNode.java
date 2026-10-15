@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
-import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.SDFRectTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.Style;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
@@ -131,7 +131,8 @@ final class ResearchGraphNode extends NodeModel {
         private final UIElement header = new UIElement();
         private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
-        private final ColorBorderTexture border = new ColorBorderTexture(-1, ResearchUiParts.NODE_BORDER);
+        private final SDFRectTexture border = ResearchUiParts.rounded(0).setStroke(1).setBorderColor(ResearchUiParts.NODE_BORDER);
+        private final IGuiTexture divider = new ColorRectTexture(ResearchUiParts.NODE_SECTION);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
         private final UIElement details = new UIElement();
@@ -195,11 +196,12 @@ final class ResearchGraphNode extends NodeModel {
             Style.importantPipeline(getLayout(), layout -> layout.positionType(TaffyPosition.ABSOLUTE));
             layout(layout -> layout.width(research.layoutWidth).heightAuto().paddingAll(0).gapAll(0)
                     .flexDirection(FlexDirection.COLUMN));
-            style(style -> style.backgroundTexture(new ColorRectTexture(ResearchUiParts.NODE_BACKGROUND)));
+            style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND)));
             header.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.ROW)
                     .alignItems(AlignItems.STRETCH).gapAll(0).flexShrink(0));
             summary.layout(layout -> layout.width(SUMMARY_WIDTH).heightAuto().paddingAll(3).gapAll(2)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
+            summary.style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION)));
             title.getNodeTittle().textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false)
                     .fontSize(10).textColor(0xFFFFFFFF).textShadow(true).textWrap(TextWrap.HOVER_ROLL));
             title.getNodeTittle().layout(layout -> layout.width(78).height(18));
@@ -267,8 +269,15 @@ final class ResearchGraphNode extends NodeModel {
 
         @Override
         public void drawBackgroundOverlay(GUIContext context) {
+            if (research.presentation != Presentation.COLLAPSED) {
+                context.drawTexture(divider, costs.getPositionX(), header.getPositionY() + 1, 1, header.getSizeHeight() - 1);
+            }
+            if (research.presentation == Presentation.DETAILS) {
+                context.drawTexture(divider, details.getPositionX() + 1, details.getPositionY(), details.getSizeWidth() - 2, 1);
+            }
             int color = isSelected() || shouldBeHighlighted() || isSelfOrChildHover() ? ResearchUiParts.NODE_SELECTED : research.stateColor;
-            context.drawTexture(border.setColor(color), getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
+            if (border.getBorderColor() != color) border.setBorderColor(color);
+            context.drawTexture(border, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
         }
 
         @Override

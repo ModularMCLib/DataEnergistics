@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.GraphView.DragOffset;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -29,7 +29,9 @@ final class ResearchGraphView extends GraphView {
         canvas.clearAllChildren();
         canvas.addChild(graphView);
         canvas.layout(layout -> layout.widthPercent(100).heightPercent(100));
-        graphView.style(style -> style.backgroundTexture(new ColorRectTexture(ResearchUiParts.SURFACE)));
+        style(style -> style.backgroundTexture(IGuiTexture.EMPTY).overflowVisible(false)
+                .overflowClip(ResearchUiParts.rounded(0xFFFFFFFF)));
+        graphView.style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.SURFACE)));
         graphView.graphViewStyle(style -> style.allowPan(true).allowZoom(true).minScale(0.25F).maxScale(2F)
                 .gridLineColor(0).gridAccentColor(0).lodEnabled(false));
         // Capture above the canvas: its own target phase also runs the toolkit's default handlers.

@@ -29,6 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import org.joml.Vector4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiConsumer;
@@ -132,6 +133,7 @@ final class ResearchGraphNode extends NodeModel {
         private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
         private final SDFRectTexture border = ResearchUiParts.rounded(0).setStroke(1).setBorderColor(ResearchUiParts.NODE_BORDER);
+        private final SDFRectTexture summaryBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION);
         private final IGuiTexture divider = new ColorRectTexture(ResearchUiParts.NODE_SECTION);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
@@ -164,6 +166,7 @@ final class ResearchGraphNode extends NodeModel {
                 if (renderedRevision != research.presentationRevision) {
                     renderedRevision = research.presentationRevision;
                     Presentation presentation = research.presentation;
+                    updateSummaryCorners(presentation);
                     ResearchUiParts.show(costs, presentation != Presentation.COLLAPSED);
                     ResearchUiParts.show(details, presentation == Presentation.DETAILS);
                     costs.clearAllChildren();
@@ -201,7 +204,8 @@ final class ResearchGraphNode extends NodeModel {
                     .alignItems(AlignItems.STRETCH).gapAll(0).flexShrink(0));
             summary.layout(layout -> layout.width(SUMMARY_WIDTH).heightAuto().paddingAll(3).gapAll(2)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            summary.style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION)));
+            summary.style(style -> style.backgroundTexture(summaryBackground));
+            updateSummaryCorners(research.presentation);
             title.getNodeTittle().textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false)
                     .fontSize(10).textColor(0xFFFFFFFF).textShadow(true).textWrap(TextWrap.HOVER_ROLL));
             title.getNodeTittle().layout(layout -> layout.width(78).height(18));
@@ -216,6 +220,16 @@ final class ResearchGraphNode extends NodeModel {
             addChildren(header, details);
             ResearchUiParts.show(costs, research.presentation != Presentation.COLLAPSED);
             ResearchUiParts.show(details, research.presentation == Presentation.DETAILS);
+        }
+
+        private void updateSummaryCorners(Presentation presentation) {
+            float radius = ResearchUiParts.CORNER_RADIUS;
+            // LDLib orders these as bottom-left, bottom-right, top-right, top-left.
+            summaryBackground.setRadius(switch (presentation) {
+                case COLLAPSED -> new Vector4f(radius);
+                case COSTS -> new Vector4f(radius, 0, 0, radius);
+                case DETAILS -> new Vector4f(0, 0, 0, radius);
+            });
         }
 
         /** Measure translated lines at the actual text font; long material names wrap within the upper bound. */

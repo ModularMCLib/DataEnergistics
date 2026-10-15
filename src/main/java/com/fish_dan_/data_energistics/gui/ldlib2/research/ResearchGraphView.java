@@ -17,13 +17,15 @@ import org.jspecify.annotations.Nullable;
 /** Research viewport with canvas-wide left-button panning and pointer-centered zoom. */
 final class ResearchGraphView extends GraphView {
 
+    private final ResearchPrerequisitePath prerequisitePath;
     private @Nullable ResourceLocation selectedId;
     private @Nullable ResourceLocation hoveredId;
     private final ObjectSet<ResourceLocation> relatedIds = new ObjectOpenHashSet<>();
     private boolean panned;
     private long pressedAt;
 
-    ResearchGraphView() {
+    ResearchGraphView(ResearchPrerequisitePath prerequisitePath) {
+        this.prerequisitePath = prerequisitePath;
         setReadOnly(true);
         header.removeSelf();
         canvas.clearAllChildren();
@@ -103,13 +105,32 @@ final class ResearchGraphView extends GraphView {
     }
 
     boolean related(ResourceLocation id) {
-        return relatedIds.contains(id);
+        return relatedIds.contains(id) || prerequisitePath.contains(id);
+    }
+
+    boolean missingPrerequisite(ResourceLocation id) {
+        return prerequisitePath.missingPrerequisite(id);
+    }
+
+    int connectionColor(ResearchGraphNode from, ResearchGraphNode to) {
+        if (prerequisitePath.contains(to.researchId())) {
+            // Item-root links can stand in for prerequisites outside the current filtered view.
+            if (prerequisitePath.blocked(from.researchId()) ||
+                    (!prerequisitePath.contains(from.researchId()) && prerequisitePath.blocked(to.researchId()))) {
+                return ResearchUiParts.NODE_BLOCKED;
+            }
+            return to.progress() == ResearchGraphNode.Progress.RUNNING ? ResearchUiParts.NODE_RUNNING : ResearchUiParts.NODE_SECTION;
+        }
+        return to.connectionColor();
     }
 
     boolean related(WireModel wire) {
-        return wire.getFromPort() != null && wire.getToPort() != null &&
-                ((wire.getFromPort().getNodeModel() instanceof ResearchGraphNode from && focused(from.researchId())) ||
-                        (wire.getToPort().getNodeModel() instanceof ResearchGraphNode to && focused(to.researchId())));
+        var fromPort = wire.getFromPort();
+        var toPort = wire.getToPort();
+        return fromPort != null && toPort != null &&
+                ((fromPort.getNodeModel() instanceof ResearchGraphNode from && focused(from.researchId())) ||
+                        (toPort.getNodeModel() instanceof ResearchGraphNode to &&
+                                (focused(to.researchId()) || prerequisitePath.contains(to.researchId()))));
     }
 
     private boolean focused(ResourceLocation id) {

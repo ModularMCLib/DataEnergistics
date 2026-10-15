@@ -48,7 +48,7 @@ final class ResearchGraphNode extends NodeModel {
     private final BiConsumer<ResourceLocation, Boolean> hover;
     private final Runnable layoutChanged;
     private Component status = Component.empty();
-    private int stateColor = ResearchUiParts.NODE_BORDER;
+    private Progress progress = Progress.IDLE;
     private Presentation presentation = Presentation.COLLAPSED;
     private int presentationRevision;
     private int layoutWidth = SUMMARY_WIDTH;
@@ -72,9 +72,17 @@ final class ResearchGraphNode extends NodeModel {
         return researchId;
     }
 
-    void state(Component status, int color) {
+    void state(Component status, Progress progress) {
         this.status = status;
-        this.stateColor = color;
+        this.progress = progress;
+    }
+
+    Progress progress() {
+        return progress;
+    }
+
+    int connectionColor() {
+        return progress.connectionColor;
     }
 
     void present(Presentation presentation) {
@@ -119,6 +127,21 @@ final class ResearchGraphNode extends NodeModel {
     @Override
     public GraphElement<?> createElementUI() {
         return new ResearchNodeElement(this);
+    }
+
+    enum Progress {
+
+        IDLE(ResearchUiParts.NODE_BORDER, ResearchUiParts.NODE_BORDER),
+        RUNNING(ResearchUiParts.NODE_RUNNING, ResearchUiParts.NODE_RUNNING),
+        COMPLETED(ResearchUiParts.NODE_COMPLETED, ResearchUiParts.NODE_SECTION);
+
+        private final int borderColor;
+        private final int connectionColor;
+
+        Progress(int borderColor, int connectionColor) {
+            this.borderColor = borderColor;
+            this.connectionColor = connectionColor;
+        }
     }
 
     enum Presentation {
@@ -294,7 +317,11 @@ final class ResearchGraphNode extends NodeModel {
             if (research.presentation == Presentation.DETAILS) {
                 context.drawTexture(divider, details.getPositionX() + 1, details.getPositionY(), details.getSizeWidth() - 2, 1);
             }
-            int color = isSelected() || shouldBeHighlighted() || isSelfOrChildHover() ? ResearchUiParts.NODE_SELECTED : research.stateColor;
+            int color = isSelected() || isSelfOrChildHover() || (shouldBeHighlighted() && research.progress == Progress.IDLE) ?
+                    ResearchUiParts.NODE_SELECTED : research.progress.borderColor;
+            if (graphView instanceof ResearchGraphView view && view.missingPrerequisite(research.researchId)) {
+                color = ResearchUiParts.NODE_BLOCKED;
+            }
             if (border.getBorderColor() != color) border.setBorderColor(color);
             context.drawTexture(border, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
         }

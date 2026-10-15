@@ -94,8 +94,18 @@ final class ResearchGraphWire extends WireModel {
             updatePortPosition();
             if (drawPoints.isEmpty()) return;
             boolean highlighted = graphView instanceof ResearchGraphView view && view.related(getModel());
-            int color = highlighted ? ResearchUiParts.NODE_SELECTED : ResearchUiParts.NODE_BORDER;
-            drawStroke(context, color, highlighted ? 3.0F : 1.5F);
+            drawStroke(context, connectionColor(), highlighted ? 3.0F : 1.5F);
+        }
+
+        private int connectionColor() {
+            PortModel fromPort = getModel().getFromPort();
+            PortModel toPort = getModel().getToPort();
+            if (fromPort == null || toPort == null ||
+                    !(fromPort.getNodeModel() instanceof ResearchGraphNode fromNode) ||
+                    !(toPort.getNodeModel() instanceof ResearchGraphNode toNode)) {
+                return ResearchUiParts.NODE_BORDER;
+            }
+            return graphView instanceof ResearchGraphView view ? view.connectionColor(fromNode, toNode) : toNode.connectionColor();
         }
 
         private void drawStroke(GUIContext context, int color, float halfWidth) {

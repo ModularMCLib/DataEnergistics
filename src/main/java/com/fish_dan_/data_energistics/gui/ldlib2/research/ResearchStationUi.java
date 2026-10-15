@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.resource.AeKeyAmountRow;
 import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Presentation;
+import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Progress;
 import com.fish_dan_.data_energistics.gui.ldlib2.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
@@ -64,7 +65,8 @@ public final class ResearchStationUi {
     private final UIElement research = new UIElement();
     private final UIElement graphPane = new UIElement();
     private final UIElement projectPane = new UIElement();
-    private final ResearchGraphView graph = new ResearchGraphView();
+    private final ResearchPrerequisitePath prerequisitePath = new ResearchPrerequisitePath();
+    private final ResearchGraphView graph = new ResearchGraphView(prerequisitePath);
     private final ScrollerView projects = ResearchUiParts.scroll(0, 0, 1, 1);
     private final Label title = ResearchUiParts.label(ResearchUiParts.text("title"));
     private final UIElement backpack = new UIElement();
@@ -359,11 +361,12 @@ public final class ResearchStationUi {
         }
         for (ResearchNode node : shown) {
             CompoundTag pending = lookup(projectData, node.id());
-            Component state = unlocked.contains(node.id()) ? ResearchUiParts.text("unlocked") : pending != null ?
+            boolean completed = unlocked.contains(node.id());
+            Component state = completed ? ResearchUiParts.text("unlocked") : pending != null ?
                     projectStatus(node, pending) : ResearchUiParts.text(available(node) ? "available" : "unavailable");
-            int color = unlocked.contains(node.id()) ? ResearchUiParts.NODE_COMPLETED :
-                    pending != null && pending.getBoolean("running") ? ResearchUiParts.NODE_RUNNING : ResearchUiParts.NODE_BORDER;
-            graphNodes.get(node.id()).state(state, color);
+            Progress progress = completed ? Progress.COMPLETED :
+                    pending != null && pending.getBoolean("running") ? Progress.RUNNING : Progress.IDLE;
+            graphNodes.get(node.id()).state(state, progress);
         }
         ResearchUiParts.show(empty, scope == ResearchScope.TECHNOLOGY && shown.isEmpty());
         empty.setText(ResearchUiParts.text(menu.nodes().isEmpty() ? "catalog_empty" : "filter_empty"));
@@ -390,7 +393,7 @@ public final class ResearchStationUi {
         if (scope == ResearchScope.ITEM_UPGRADE && !target().isEmpty()) {
             ResearchGraphNode item = new ResearchGraphNode(ITEM_ROOT, target().getHoverName(), target().copy(),
                     this::select, this::hover, this::positionNodes);
-            item.state(ResearchUiParts.text("initial_item"), ResearchUiParts.NODE_BORDER);
+            item.state(ResearchUiParts.text("initial_item"), Progress.IDLE);
             model.models().add(item);
             graphNodes.put(ITEM_ROOT, item);
         }
@@ -442,6 +445,8 @@ public final class ResearchStationUi {
     }
 
     private void refreshExpandedNodes() {
+        prerequisitePath.update(selected != null && graphNodes.containsKey(selected) ? selected : null,
+                menu.nodes(), projectNodes, unlocked);
         boolean changed = false;
         for (ResearchGraphNode node : graphNodes.values()) {
             Presentation presentation = node.researchId().equals(selected) ? Presentation.DETAILS :

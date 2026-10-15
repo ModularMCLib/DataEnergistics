@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -39,6 +40,8 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
     private static final float WORKBENCH_Y = 18.01F / 16;
     private static final float WORKBENCH_Z = 8F / 16;
     private static final float ITEM_HEIGHT_OFFSET = 2F / 16;
+    private static final float TARGET_YAW_DEGREES = 45F;
+    private static final float TARGET_FRONT_ROTATION_DEGREES = 90F;
     private static final float SWING_DEGREES = 10;
     private static final float YAW_DEGREES = 14;
     private static final float PITCH_DEGREES = 4;
@@ -113,6 +116,12 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
         pose.pushPose();
         try {
             pose.translate(WORKBENCH_X, WORKBENCH_Y + ITEM_HEIGHT_OFFSET, WORKBENCH_Z);
+            if (!(target.getItem() instanceof BlockItem)) {
+                // Ordinary items use the requested front-view roll and top-view yaw;
+                // BlockItem stacks retain their original presentation.
+                pose.mulPose(Axis.ZN.rotationDegrees(TARGET_FRONT_ROTATION_DEGREES));
+                pose.mulPose(Axis.YN.rotationDegrees(TARGET_YAW_DEGREES));
+            }
             itemRenderer.renderStatic(target, ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY,
                     pose, buffers, host.getLevel(), (int) host.getBlockPos().asLong());
         } finally {

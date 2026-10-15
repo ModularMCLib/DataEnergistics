@@ -137,7 +137,8 @@ final class ResearchGraphNode extends NodeModel {
         private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
         private final SDFRectTexture border = ResearchUiParts.rounded(0).setStroke(1).setBorderColor(ResearchUiParts.NODE_BORDER);
-        private final SDFRectTexture summaryBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION);
+        private final SDFRectTexture headerBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION);
+        private final SDFRectTexture costsBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND);
         private final IGuiTexture divider = new ColorRectTexture(ResearchUiParts.NODE_SECTION);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
@@ -171,7 +172,7 @@ final class ResearchGraphNode extends NodeModel {
                 if (renderedRevision != research.presentationRevision) {
                     renderedRevision = research.presentationRevision;
                     Presentation presentation = research.presentation;
-                    updateSummaryCorners(presentation);
+                    updateSectionCorners(presentation);
                     ResearchUiParts.show(costs, presentation != Presentation.COLLAPSED);
                     ResearchUiParts.show(details, presentation == Presentation.DETAILS);
                     costs.clearAllChildren();
@@ -207,10 +208,10 @@ final class ResearchGraphNode extends NodeModel {
             style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND)));
             header.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.ROW)
                     .alignItems(AlignItems.STRETCH).gapAll(0).flexShrink(0));
+            header.style(style -> style.backgroundTexture(headerBackground));
             summary.layout(layout -> layout.width(SUMMARY_WIDTH).heightAuto().paddingAll(3).gapAll(2)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            summary.style(style -> style.backgroundTexture(summaryBackground));
-            updateSummaryCorners(research.presentation);
+            updateSectionCorners(research.presentation);
             title.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
                     ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
             title.layout(layout -> layout.widthPercent(100).height(26).paddingVertical(3).paddingHorizontal(4).flexShrink(0));
@@ -225,6 +226,7 @@ final class ResearchGraphNode extends NodeModel {
             summary.addChildren(title, status);
             costs.layout(layout -> layout.width(60).heightAuto().paddingAll(6).gapAll(3)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
+            costs.style(style -> style.backgroundTexture(costsBackground));
             details.layout(layout -> layout.widthPercent(100).heightAuto().paddingAll(6).gapAll(3)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
             header.addChildren(summary, costs);
@@ -233,14 +235,14 @@ final class ResearchGraphNode extends NodeModel {
             ResearchUiParts.show(details, research.presentation == Presentation.DETAILS);
         }
 
-        private void updateSummaryCorners(Presentation presentation) {
+        private void updateSectionCorners(Presentation presentation) {
             float radius = ResearchUiParts.CORNER_RADIUS;
             // LDLib orders these as bottom-left, bottom-right, top-right, top-left.
-            summaryBackground.setRadius(switch (presentation) {
-                case COLLAPSED -> new Vector4f(radius);
-                case COSTS -> new Vector4f(radius, 0, 0, radius);
-                case DETAILS -> new Vector4f(0, 0, 0, radius);
-            });
+            headerBackground.setRadius(presentation == Presentation.DETAILS ?
+                    new Vector4f(0, 0, radius, radius) : new Vector4f(radius));
+            // The turquoise underlay remains visible around the cost section's inner corners.
+            costsBackground.setRadius(presentation == Presentation.DETAILS ?
+                    new Vector4f(radius, 0, radius, radius) : new Vector4f(radius));
         }
 
         /** Measure translated text and resource columns at their actual fonts within the panel's upper bound. */

@@ -18,7 +18,9 @@ import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
@@ -37,6 +39,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -147,13 +150,17 @@ public final class ResearchStationUi {
         targetSlot.style(style -> style.tooltips(ResearchUiParts.text("target_empty")));
         graphFrame = new ResearchGraphFrame(graph, targetSlot, empty);
         graphPane.addChild(graphFrame);
-        projectPane.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(0xFFEFF1F8, 0xFF53617D)));
+        projectPane.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
+                ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
         projectTitle.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
-                0xFFEFF1F8, 0xFF53617D)));
+                ResearchUiParts.NODE_SUMMARY_BACKGROUND, ResearchUiParts.NODE_BORDER)));
+        projectTitle.textStyle(style -> style.fontSize(13).adaptiveWidth(false).adaptiveHeight(false)
+                .textAlignHorizontal(Horizontal.CENTER).textAlignVertical(Vertical.CENTER));
         projects.viewPort.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
-                0xFFEFF1F8, 0xFF53617D)));
+                ResearchUiParts.SURFACE, ResearchUiParts.NODE_BORDER)));
         projects.verticalScroller.scrollContainer.style(style -> style.backgroundTexture(
-                ResearchUiParts.rounded(ResearchUiParts.SURFACE)));
+                ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND)));
+        projects.viewContainer(view -> view.layout(layout -> layout.alignItems(AlignItems.CENTER)));
         projectPane.addChildren(projectTitle, projects);
         research.addChildren(graphPane, projectPane);
         backpack.style(style -> style.zIndex(1000));
@@ -245,11 +252,11 @@ public final class ResearchStationUi {
         ResearchUiParts.at(controls, layout.controlsLeft(), margin, layout.controlsWidth(), Math.max(1, height - margin * 2));
         int projectHeight = layout.bodyHeight();
         ResearchUiParts.at(projectPane, layout.sidebarLeft(), layout.bodyTop(), layout.sidebarWidth(), projectHeight);
-        int projectInset = 5;
+        int projectInset = 6;
         int projectContentWidth = Math.max(1, layout.sidebarWidth() - projectInset * 2);
-        ResearchUiParts.at(projectTitle, projectInset, 4, projectContentWidth, 18);
-        ResearchUiParts.at(projects, projectInset, 27, projectContentWidth,
-                Math.max(1, projectHeight - 32));
+        ResearchUiParts.at(projectTitle, projectInset, 5, projectContentWidth, 30);
+        ResearchUiParts.at(projects, projectInset, 41, projectContentWidth,
+                Math.max(1, projectHeight - 46));
         teams.resize(margin, layout.bodyTop(), workspaceWidth, layout.bodyHeight());
         ResearchBackpackLayout backpackLayout = ResearchBackpackLayout.fixed();
         int backpackLeft = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutX()) : (width - backpackLayout.width()) / 2;
@@ -592,8 +599,9 @@ public final class ResearchStationUi {
             CompoundTag pending = projectData.get(id);
             UIElement entry = new UIElement();
             entry.layout(layout -> layout.widthPercent(100).heightAuto().paddingAll(7).gapAll(4)
-                    .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            entry.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(0xFFEFF1F8, 0xFF53617D)));
+                    .flexDirection(FlexDirection.COLUMN).alignItems(AlignItems.CENTER).flexShrink(0));
+            entry.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
+                    ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
             Button projectButton = ResearchUiParts.button(Component.translatable(node.name()), () -> {
                 if (scope != node.scope() || filter != Filter.ALL || !graphNodes.containsKey(id)) {
                     scope = node.scope();
@@ -604,7 +612,9 @@ public final class ResearchStationUi {
                 select(id);
             });
             entry.addChild(projectButton);
-            entry.addChild(ResearchUiParts.label(projectStatus(node, pending)));
+            Label status = ResearchUiParts.label(projectStatus(node, pending));
+            status.textStyle(style -> style.textAlignHorizontal(Horizontal.CENTER).textAlignVertical(Vertical.CENTER));
+            entry.addChild(status);
             int progress = pending.getInt("progress");
             UIElement bar = new UIElement();
             bar.layout(layout -> layout.widthPercent(100).height(6).flexShrink(0));

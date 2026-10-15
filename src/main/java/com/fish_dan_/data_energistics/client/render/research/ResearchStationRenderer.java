@@ -10,9 +10,13 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.RenderTypeHelper;
@@ -31,7 +35,10 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
     private static final float EMITTER_X = 8F / 16;
     private static final float EMITTER_Y = 6F / 16;
     private static final float EMITTER_Z = 8F / 16;
+    private static final float WORKBENCH_X = -8F / 16;
     private static final float WORKBENCH_Y = 18.01F / 16;
+    private static final float WORKBENCH_Z = 8F / 16;
+    private static final float ITEM_HEIGHT_OFFSET = 2F / 16;
     private static final float SWING_DEGREES = 10;
     private static final int SWING_PERIOD_TICKS = 80;
     private static final int BEAM_COLOR = 0x80A8FFE0;
@@ -45,9 +52,11 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
                     Axis.ZP, 0, 0, 0, Mth.TWO_PI * 2 / 3)
     };
     private final BlockRenderDispatcher renderer;
+    private final ItemRenderer itemRenderer;
 
     public ResearchStationRenderer(BlockEntityRendererProvider.Context context) {
         this.renderer = context.getBlockRenderDispatcher();
+        this.itemRenderer = context.getItemRenderer();
     }
 
     @Override
@@ -76,6 +85,7 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
             };
             pose.mulPose(Axis.YP.rotationDegrees(angle));
             pose.translate(-0.5, 0, -0.5);
+            renderTarget(host, pose, buffers, light);
             for (HeadPlacement head : HEADS) {
                 Matrix4f placement = head.transform(working, phase);
                 pose.pushPose();
@@ -90,6 +100,19 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
                     pose.popPose();
                 }
             }
+        } finally {
+            pose.popPose();
+        }
+    }
+
+    private void renderTarget(ResearchStationBlockEntity host, PoseStack pose, MultiBufferSource buffers, int light) {
+        ItemStack target = host.targetInventory().getStackInSlot(0);
+        if (target.isEmpty()) return;
+        pose.pushPose();
+        try {
+            pose.translate(WORKBENCH_X, WORKBENCH_Y + ITEM_HEIGHT_OFFSET, WORKBENCH_Z);
+            itemRenderer.renderStatic(target, ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY,
+                    pose, buffers, host.getLevel(), (int) host.getBlockPos().asLong());
         } finally {
             pose.popPose();
         }

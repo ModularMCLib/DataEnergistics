@@ -40,7 +40,7 @@ import java.util.UUID;
 public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
 
     private UUID stationId = UUID.randomUUID();
-    private ItemStack clientTarget = ItemStack.EMPTY;
+    private ItemStack displayedTarget = ItemStack.EMPTY;
     private final InternalInventory inventory = new TargetInventory();
     private boolean working;
     private boolean faulted;
@@ -98,11 +98,13 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
             ensurePartnerBlockEntity();
             ResearchExecution.tick(this);
             ResearchStationState state = state();
+            boolean targetChanged = !ItemStack.matches(displayedTarget, state.target);
+            if (targetChanged) displayedTarget = state.target.copy();
             boolean next = getMainNode().isOnline() && state.lastTick == serverLevel().getServer().getTickCount() &&
                     state.projects.values().stream().anyMatch(project -> project.powered);
-            if (working != next) {
+            if (working != next || targetChanged) {
                 working = next;
-                markForUpdate();
+                markForClientUpdate();
             }
         } catch (RuntimeException error) {
             faulted = true;
@@ -161,6 +163,7 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
         buffer.writeUUID(stationId);
         buffer.writeBoolean(working);
         buffer.writeBoolean(faulted);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, state().target);
     }
 
     @Override
@@ -169,9 +172,11 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
         stationId = buffer.readUUID();
         boolean next = buffer.readBoolean();
         boolean nextFaulted = buffer.readBoolean();
-        changed |= working != next || faulted != nextFaulted;
+        ItemStack nextTarget = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+        changed |= working != next || faulted != nextFaulted || !ItemStack.matches(displayedTarget, nextTarget);
         working = next;
         faulted = nextFaulted;
+        displayedTarget = nextTarget;
         return changed;
     }
 
@@ -189,7 +194,7 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
 
         @Override
         public ItemStack getStackInSlot(int slot) {
-            return level != null && level.isClientSide() ? clientTarget : state().target;
+            return level != null && level.isClientSide() ? displayedTarget : state().target;
         }
 
         @Override
@@ -200,7 +205,7 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
         @Override
         public void setItemDirect(int slot, ItemStack stack) {
             if (level != null && level.isClientSide()) {
-                clientTarget = stack;
+                displayedTarget = stack;
                 return;
             }
             ResearchStationState state = state();

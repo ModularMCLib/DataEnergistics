@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.resource.AeKeyAmountRow;
 
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SDFRectTexture;
@@ -139,7 +138,7 @@ final class ResearchGraphNode extends NodeModel {
         private final SDFRectTexture border = ResearchUiParts.rounded(0).setStroke(1).setBorderColor(ResearchUiParts.NODE_BORDER);
         private final SDFRectTexture headerBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION);
         private final SDFRectTexture costsBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND);
-        private final IGuiTexture divider = new ColorRectTexture(ResearchUiParts.NODE_SECTION);
+        private final SDFRectTexture divider = SDFRectTexture.of(ResearchUiParts.NODE_SECTION).setRadius(1);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
         private final UIElement details = new UIElement();
@@ -238,8 +237,7 @@ final class ResearchGraphNode extends NodeModel {
         private void updateSectionCorners(Presentation presentation) {
             float radius = ResearchUiParts.CORNER_RADIUS;
             // LDLib orders these as bottom-left, bottom-right, top-right, top-left.
-            headerBackground.setRadius(presentation == Presentation.DETAILS ?
-                    new Vector4f(0, 0, radius, radius) : new Vector4f(radius));
+            headerBackground.setRadius(new Vector4f(radius));
             // The turquoise underlay remains visible around the cost section's inner corners.
             costsBackground.setRadius(presentation == Presentation.DETAILS ?
                     new Vector4f(radius, 0, radius, radius) : new Vector4f(radius));

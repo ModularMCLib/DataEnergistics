@@ -32,7 +32,6 @@ import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import dev.vfyjxf.taffy.style.TaffyDisplay;
 import dev.vfyjxf.taffy.style.TaffyPosition;
-import org.joml.Vector4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiConsumer;
@@ -159,9 +158,7 @@ final class ResearchGraphNode extends NodeModel {
         private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
         private final SDFRectTexture border = ResearchUiParts.rounded(0).setStroke(1).setBorderColor(ResearchUiParts.NODE_BORDER);
-        private final SDFRectTexture headerBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION);
-        private final SDFRectTexture costsBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND);
-        private final SDFRectTexture divider = SDFRectTexture.of(ResearchUiParts.NODE_SECTION).setRadius(1);
+        private final SDFRectTexture sectionBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
         private final UIElement details = new UIElement();
@@ -194,7 +191,6 @@ final class ResearchGraphNode extends NodeModel {
                 if (renderedRevision != research.presentationRevision) {
                     renderedRevision = research.presentationRevision;
                     Presentation presentation = research.presentation;
-                    updateSectionCorners(presentation);
                     ResearchUiParts.show(costs, presentation != Presentation.COLLAPSED);
                     ResearchUiParts.show(details, presentation == Presentation.DETAILS);
                     costs.clearAllChildren();
@@ -227,13 +223,11 @@ final class ResearchGraphNode extends NodeModel {
             Style.importantPipeline(getLayout(), layout -> layout.positionType(TaffyPosition.ABSOLUTE));
             layout(layout -> layout.width(research.layoutWidth).heightAuto().paddingAll(0).gapAll(0)
                     .flexDirection(FlexDirection.COLUMN));
-            style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND)));
+            style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.NODE_SECTION)));
             header.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.ROW)
                     .alignItems(AlignItems.STRETCH).gapAll(0).flexShrink(0));
-            header.style(style -> style.backgroundTexture(headerBackground));
             summary.layout(layout -> layout.width(SUMMARY_WIDTH).heightAuto().paddingAll(3).gapAll(2)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            updateSectionCorners(research.presentation);
             title.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
                     ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
             title.layout(layout -> layout.widthPercent(100).height(26).paddingVertical(3).paddingHorizontal(4).flexShrink(0));
@@ -248,22 +242,12 @@ final class ResearchGraphNode extends NodeModel {
             summary.addChildren(title, status);
             costs.layout(layout -> layout.width(60).heightAuto().paddingAll(6).gapAll(3)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            costs.style(style -> style.backgroundTexture(costsBackground));
             details.layout(layout -> layout.widthPercent(100).heightAuto().paddingAll(6).gapAll(3)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
             header.addChildren(summary, costs);
             addChildren(header, details);
             ResearchUiParts.show(costs, research.presentation != Presentation.COLLAPSED);
             ResearchUiParts.show(details, research.presentation == Presentation.DETAILS);
-        }
-
-        private void updateSectionCorners(Presentation presentation) {
-            float radius = ResearchUiParts.CORNER_RADIUS;
-            // LDLib orders these as bottom-left, bottom-right, top-right, top-left.
-            headerBackground.setRadius(new Vector4f(radius));
-            // The turquoise underlay remains visible around the cost section's inner corners.
-            costsBackground.setRadius(presentation == Presentation.DETAILS ?
-                    new Vector4f(radius, 0, radius, radius) : new Vector4f(radius));
         }
 
         /** Measure translated text and resource columns at their actual fonts within the panel's upper bound. */
@@ -310,13 +294,21 @@ final class ResearchGraphNode extends NodeModel {
         }
 
         @Override
-        public void drawBackgroundOverlay(GUIContext context) {
+        public void drawBackgroundAdditional(GUIContext context) {
+            super.drawBackgroundAdditional(context);
+            // A continuous turquoise underlay fills the seams; rounded grey panels leave one-pixel dividers.
             if (research.presentation != Presentation.COLLAPSED) {
-                context.drawTexture(divider, costs.getPositionX(), header.getPositionY() + 1, 1, header.getSizeHeight() - 1);
+                context.drawTexture(sectionBackground, costs.getPositionX() + 1, costs.getPositionY(),
+                        costs.getSizeWidth() - 1, costs.getSizeHeight());
             }
             if (research.presentation == Presentation.DETAILS) {
-                context.drawTexture(divider, details.getPositionX() + 1, details.getPositionY(), details.getSizeWidth() - 2, 1);
+                context.drawTexture(sectionBackground, details.getPositionX(), details.getPositionY() + 1,
+                        details.getSizeWidth(), details.getSizeHeight() - 1);
             }
+        }
+
+        @Override
+        public void drawBackgroundOverlay(GUIContext context) {
             int color = isSelected() || isSelfOrChildHover() || (shouldBeHighlighted() && research.progress == Progress.IDLE) ?
                     ResearchUiParts.NODE_SELECTED : research.progress.borderColor;
             if (graphView instanceof ResearchGraphView view && view.missingPrerequisite(research.researchId)) {

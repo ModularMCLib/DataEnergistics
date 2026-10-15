@@ -77,6 +77,7 @@ public final class ResearchStationUi {
     private final Label projectTitle = ResearchUiParts.label(ResearchUiParts.text("projects", 0));
     private final ResearchTeamPanel teams;
     private final ItemSlot targetSlot;
+    private final ResearchGraphFrame graphFrame;
     private final Button teamTab;
     private final Button close;
     private final Button technologyTab;
@@ -148,15 +149,15 @@ public final class ResearchStationUi {
         zoomOut = ResearchUiParts.button(Component.literal("−"), () -> graph.graphView.setScale(graph.graphView.getScale() - 0.15F));
         zoomIn = ResearchUiParts.button(Component.literal("+"), () -> graph.graphView.setScale(graph.graphView.getScale() + 0.15F));
         reset = ResearchUiParts.button(ResearchUiParts.text("reset"), graph::fitGraphChildren);
-        graphPane.addChildren(graph, empty, zoomOut, zoomIn, reset);
-        projectPane.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
-        projectPane.addChildren(projectTitle, projects);
-        research.addChildren(graphPane, projectPane);
         targetSlot = new ItemSlot(menu.targetSlot());
         targetSlot.setId("research_station_target");
         SharedBackpackStyles.standalone(targetSlot);
         targetSlot.style(style -> style.tooltips(ResearchUiParts.text("target_empty")));
-        root.addChild(targetSlot);
+        graphFrame = new ResearchGraphFrame(graph, targetSlot, empty);
+        graphPane.addChildren(graphFrame, zoomOut, zoomIn, reset);
+        projectPane.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
+        projectPane.addChildren(projectTitle, projects);
+        research.addChildren(graphPane, projectPane);
         backpack.style(style -> style.zIndex(1000));
         backpack.setId("research_station_backpack");
         SharedBackpackStyles.window(backpack, backpackHeader);
@@ -217,7 +218,6 @@ public final class ResearchStationUi {
         root.layout(style -> style.width(width).height(height));
         ResearchUiParts.at(research, 0, 0, width, height);
         ResearchUiParts.at(title, margin, margin, Math.max(1, contentWidth - 238), 22);
-        ResearchUiParts.at(targetSlot, width - margin - 230, margin, 22, 22);
         ResearchUiParts.at(teamTab, width - margin - 202, margin, 84, 22);
         ResearchUiParts.at(backpackButton, width - margin - 112, margin, 84, 22);
         ResearchUiParts.at(close, width - margin - 22, margin, 22, 22);
@@ -230,8 +230,7 @@ public final class ResearchStationUi {
         }
         int graphHeight = Math.max(1, layout.bodyHeight() - 28);
         ResearchUiParts.at(graphPane, margin, layout.bodyTop(), layout.graphWidth(), layout.bodyHeight());
-        ResearchUiParts.at(graph, 0, 0, layout.graphWidth(), graphHeight);
-        ResearchUiParts.at(empty, 7, Math.max(0, graphHeight - 32), Math.max(1, layout.graphWidth() - 14), 30);
+        ResearchUiParts.at(graphFrame, 0, 0, layout.graphWidth(), graphHeight);
         ResearchUiParts.at(zoomOut, 0, graphHeight + 5, 22, 22);
         ResearchUiParts.at(zoomIn, 26, graphHeight + 5, 22, 22);
         ResearchUiParts.at(reset, 52, graphHeight + 5, 72, 22);
@@ -271,8 +270,7 @@ public final class ResearchStationUi {
         ResearchUiParts.show(projectPane, projectsOpen);
         int graphWidth = projectsOpen && layout.wide() ? layout.graphWidth() : layout.width() - layout.margin() * 2;
         ResearchUiParts.at(graphPane, layout.margin(), layout.bodyTop(), graphWidth, layout.bodyHeight());
-        ResearchUiParts.at(graph, 0, 0, graphWidth, Math.max(1, layout.bodyHeight() - 28));
-        ResearchUiParts.at(empty, 7, Math.max(0, layout.bodyHeight() - 60), Math.max(1, graphWidth - 14), 30);
+        ResearchUiParts.at(graphFrame, 0, 0, graphWidth, Math.max(1, layout.bodyHeight() - 28));
         for (Page entry : Page.values()) {
             Button button = pageButtons.get(entry.ordinal());
             ResearchUiParts.show(button, true);

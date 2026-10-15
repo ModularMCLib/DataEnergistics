@@ -36,10 +36,9 @@ public final class ResearchStationScreen extends AbstractContainerScreen<Researc
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {}
 
     private static ModularUI mountedUi(AbstractContainerMenu menu) {
-        if (menu instanceof IModularUIHolderMenu holder) {
-            ModularUI ui = holder.getModularUI();
-            if (ui != null) return ui;
-        }
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) menu;
+        ModularUI ui = holder.getModularUI();
+        if (ui != null) return ui;
         throw new IllegalStateException("Research station screen requires a mounted LDLib2 UI");
     }
 }

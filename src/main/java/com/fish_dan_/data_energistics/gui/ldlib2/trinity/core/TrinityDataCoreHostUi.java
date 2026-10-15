@@ -192,9 +192,7 @@ public final class TrinityDataCoreHostUi {
      * Validates every invariant that can be checked before LDLib2 mutates the menu.
      */
     private static IModularUIHolderMenu requireUnmountedMenu(TrinityDataCoreMenu menu) {
-        if (!(menu instanceof IModularUIHolderMenu holder)) {
-            throw mountViolation("menu is not an IModularUIHolderMenu: " + menu.getClass().getName());
-        }
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) menu;
         if (holder.getModularUI() != null) {
             throw mountViolation("menu already has a ModularUI: " + menu.getClass().getName());
         }

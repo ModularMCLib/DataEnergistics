@@ -34,7 +34,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -203,8 +202,8 @@ public final class ResearchStationUi {
 
     /** Mount native LDLib2 slots once on both sides; this station has no AE menu or AE screen contract. */
     public static ModularUI mount(ResearchStationMenu menu) {
-        AbstractContainerMenu container = menu;
-        if (!(container instanceof IModularUIHolderMenu holder) || holder.getModularUI() != null || !menu.slots.isEmpty()) {
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) (Object) menu;
+        if (holder.getModularUI() != null || !menu.slots.isEmpty()) {
             throw new IllegalStateException("Research station requires an unmounted native LDLib2 menu");
         }
         ResearchStationUi station = new ResearchStationUi(menu);

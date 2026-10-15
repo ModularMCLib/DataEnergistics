@@ -39,15 +39,13 @@ final class LdlibAeMenuBridge implements AeMenuBridge {
     }
 
     /**
-     * Creates the implementation only after proving that LDLib2 enhanced the target menu.
+     * Creates a bridge for an unmounted menu enhanced by LDLib2's AbstractContainerMenu mixin.
      */
     static AeMenuBridge create(AEBaseMenu menu) {
         if (menu == null) {
             throw violation("menu must not be null");
         }
-        if (!(menu instanceof IModularUIHolderMenu holder)) {
-            throw violation("menu is not an IModularUIHolderMenu: " + menu.getClass().getName());
-        }
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) menu;
         if (holder.getModularUI() != null) {
             throw violation("menu already has a ModularUI: " + menu.getClass().getName());
         }

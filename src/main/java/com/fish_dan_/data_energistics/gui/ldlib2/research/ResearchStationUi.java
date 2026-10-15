@@ -65,6 +65,8 @@ public final class ResearchStationUi {
     private final UIElement research = new UIElement();
     private final UIElement graphPane = new UIElement();
     private final UIElement projectPane = new UIElement();
+    private final ScrollerView controls = ResearchUiParts.scroll(0, 0, 1, 1);
+    private final UIElement researchControls = new UIElement();
     private final ResearchPrerequisitePath prerequisitePath = new ResearchPrerequisitePath();
     private final ResearchGraphView graph = new ResearchGraphView(prerequisitePath);
     private final ScrollerView projects = ResearchUiParts.scroll(0, 0, 1, 1);
@@ -124,7 +126,6 @@ public final class ResearchStationUi {
         teamTab = ResearchUiParts.button(ResearchUiParts.text("team_tab"), this::toggleTeams);
         teamTab.addEventListener(UIEvents.TICK, event -> teamTab.text.setText(ResearchUiParts.text(showTeams ? "research_tab" : "team_tab")));
         close = ResearchUiParts.button(Component.literal("×"), () -> menu.getPlayer().closeContainer());
-        root.addChildren(teamTab, close);
         technologyTab = ResearchUiParts.button(ResearchUiParts.text("technology"), () -> setScope(ResearchScope.TECHNOLOGY));
         technologyTab.addEventListener(UIEvents.TICK, event -> technologyTab.text.setText(
                 Component.literal(scope == ResearchScope.TECHNOLOGY ? "● " : "").append(ResearchUiParts.text("technology"))));
@@ -137,14 +138,12 @@ public final class ResearchStationUi {
         });
         filterButton.addEventListener(UIEvents.TICK, event -> filterButton.text.setText(
                 ResearchUiParts.text("filter_" + filter.name().toLowerCase(Locale.ROOT))));
-        research.addChildren(technologyTab, upgradeTab, filterButton);
         for (Page entry : Page.values()) {
             Button button = ResearchUiParts.button(ResearchUiParts.text(entry.key), () -> {
                 page = entry;
                 updatePages();
             });
             pageButtons.add(button);
-            research.addChild(button);
         }
         zoomOut = ResearchUiParts.button(Component.literal("−"), () -> graph.graphView.setScale(graph.graphView.getScale() - 0.15F));
         zoomIn = ResearchUiParts.button(Component.literal("+"), () -> graph.graphView.setScale(graph.graphView.getScale() + 0.15F));
@@ -154,7 +153,7 @@ public final class ResearchStationUi {
         SharedBackpackStyles.standalone(targetSlot);
         targetSlot.style(style -> style.tooltips(ResearchUiParts.text("target_empty")));
         graphFrame = new ResearchGraphFrame(graph, targetSlot, empty);
-        graphPane.addChildren(graphFrame, zoomOut, zoomIn, reset);
+        graphPane.addChild(graphFrame);
         projectPane.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
         projectPane.addChildren(projectTitle, projects);
         research.addChildren(graphPane, projectPane);
@@ -175,11 +174,38 @@ public final class ResearchStationUi {
             backpackOpen = !backpackOpen;
             ResearchUiParts.show(backpack, backpackOpen);
         });
-        root.addChild(backpackButton);
+        buildControls();
         root.addEventListener(UIEvents.TICK, event -> {
             if (!menu.isServerSide()) refresh();
         });
         resize(Size.of(layout.width(), layout.height()));
+    }
+
+    private void buildControls() {
+        controls.setId("research_station_controls");
+        controls.style(style -> style.zIndex(10));
+        controls.viewPort.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
+                ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
+        controls.viewContainer(view -> view.layout(layout -> layout.paddingAll(6).gapAll(6)));
+        UIElement shortcuts = new UIElement();
+        shortcuts.layout(layout -> layout.widthPercent(100).height(22).flexDirection(FlexDirection.ROW).gapAll(4).flexShrink(0));
+        backpackButton.layout(layout -> layout.flex(1).width(0).minWidth(0));
+        close.layout(layout -> layout.width(22).flexShrink(0));
+        shortcuts.addChildren(backpackButton, close);
+        researchControls.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.COLUMN)
+                .gapAll(6).flexShrink(0));
+        researchControls.addChildren(technologyTab, upgradeTab, filterButton);
+        for (Button button : pageButtons) researchControls.addChild(button);
+        UIElement zoom = new UIElement();
+        zoom.layout(layout -> layout.widthPercent(100).height(22).flexDirection(FlexDirection.ROW).gapAll(4).flexShrink(0));
+        zoomOut.layout(layout -> layout.flex(1).width(0).minWidth(0));
+        zoomIn.layout(layout -> layout.flex(1).width(0).minWidth(0));
+        zoom.addChildren(zoomOut, zoomIn);
+        researchControls.addChildren(zoom, reset);
+        controls.addScrollViewChild(shortcuts);
+        controls.addScrollViewChild(teamTab);
+        controls.addScrollViewChild(researchControls);
+        root.addChild(controls);
     }
 
     /** Mount native LDLib2 slots once on both sides; this station has no AE menu or AE screen contract. */
@@ -214,31 +240,16 @@ public final class ResearchStationUi {
         int width = layout.width();
         int height = layout.height();
         int margin = layout.margin();
-        int contentWidth = Math.max(1, width - margin * 2);
+        int workspaceWidth = layout.workspaceWidth();
         root.layout(style -> style.width(width).height(height));
         ResearchUiParts.at(research, 0, 0, width, height);
-        ResearchUiParts.at(title, margin, margin, Math.max(1, contentWidth - 238), 22);
-        ResearchUiParts.at(teamTab, width - margin - 202, margin, 84, 22);
-        ResearchUiParts.at(backpackButton, width - margin - 112, margin, 84, 22);
-        ResearchUiParts.at(close, width - margin - 22, margin, 22, 22);
-        ResearchUiParts.at(technologyTab, margin, 35, 112, 22);
-        ResearchUiParts.at(upgradeTab, margin + 116, 35, 112, 22);
-        boolean wrapFilter = contentWidth < 328;
-        ResearchUiParts.at(filterButton, wrapFilter ? margin : margin + 232, wrapFilter ? 61 : 35, 96, 22);
-        for (Page entry : Page.values()) {
-            ResearchUiParts.at(pageButtons.get(entry.ordinal()), margin + 116 * entry.ordinal(), wrapFilter ? 87 : 61, 112, 22);
-        }
-        int graphHeight = Math.max(1, layout.bodyHeight() - 28);
-        ResearchUiParts.at(graphPane, margin, layout.bodyTop(), layout.graphWidth(), layout.bodyHeight());
-        ResearchUiParts.at(graphFrame, 0, 0, layout.graphWidth(), graphHeight);
-        ResearchUiParts.at(zoomOut, 0, graphHeight + 5, 22, 22);
-        ResearchUiParts.at(zoomIn, 26, graphHeight + 5, 22, 22);
-        ResearchUiParts.at(reset, 52, graphHeight + 5, 72, 22);
+        ResearchUiParts.at(title, margin, margin, workspaceWidth, 22);
+        ResearchUiParts.at(controls, layout.controlsLeft(), margin, layout.controlsWidth(), Math.max(1, height - margin * 2));
         int projectHeight = layout.bodyHeight();
         ResearchUiParts.at(projectPane, layout.sidebarLeft(), layout.bodyTop(), layout.sidebarWidth(), projectHeight);
         ResearchUiParts.at(projectTitle, 5, 4, Math.max(1, layout.sidebarWidth() - 10), 16);
         ResearchUiParts.at(projects, 0, 23, layout.sidebarWidth(), Math.max(1, projectHeight - 23));
-        teams.resize(margin, 35, contentWidth, Math.max(1, height - margin - 35));
+        teams.resize(margin, layout.bodyTop(), workspaceWidth, layout.bodyHeight());
         ResearchBackpackLayout backpackLayout = ResearchBackpackLayout.fixed();
         int backpackLeft = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutX()) : (width - backpackLayout.width()) / 2;
         int backpackTop = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutY()) : (height - backpackLayout.height()) / 2;
@@ -264,13 +275,14 @@ public final class ResearchStationUi {
     private void updatePages() {
         ResearchUiParts.show(research, !showTeams);
         research.setAllowHitTest(false);
+        ResearchUiParts.show(researchControls, !showTeams);
         ResearchUiParts.show(teams, showTeams);
         boolean projectsOpen = page == Page.PROJECTS;
         ResearchUiParts.show(graphPane, layout.wide() || !projectsOpen);
         ResearchUiParts.show(projectPane, projectsOpen);
-        int graphWidth = projectsOpen && layout.wide() ? layout.graphWidth() : layout.width() - layout.margin() * 2;
+        int graphWidth = projectsOpen && layout.wide() ? layout.graphWidth() : layout.workspaceWidth();
         ResearchUiParts.at(graphPane, layout.margin(), layout.bodyTop(), graphWidth, layout.bodyHeight());
-        ResearchUiParts.at(graphFrame, 0, 0, graphWidth, Math.max(1, layout.bodyHeight() - 28));
+        ResearchUiParts.at(graphFrame, 0, 0, graphWidth, layout.bodyHeight());
         for (Page entry : Page.values()) {
             Button button = pageButtons.get(entry.ordinal());
             ResearchUiParts.show(button, true);

@@ -147,7 +147,13 @@ public final class ResearchStationUi {
         targetSlot.style(style -> style.tooltips(ResearchUiParts.text("target_empty")));
         graphFrame = new ResearchGraphFrame(graph, targetSlot, empty);
         graphPane.addChild(graphFrame);
-        projectPane.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
+        projectPane.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(0xFFEFF1F8, 0xFF53617D)));
+        projectTitle.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
+                0xFFEFF1F8, 0xFF53617D)));
+        projects.viewPort.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
+                0xFFEFF1F8, 0xFF53617D)));
+        projects.verticalScroller.scrollContainer.style(style -> style.backgroundTexture(
+                ResearchUiParts.rounded(ResearchUiParts.SURFACE)));
         projectPane.addChildren(projectTitle, projects);
         research.addChildren(graphPane, projectPane);
         backpack.style(style -> style.zIndex(1000));
@@ -239,8 +245,11 @@ public final class ResearchStationUi {
         ResearchUiParts.at(controls, layout.controlsLeft(), margin, layout.controlsWidth(), Math.max(1, height - margin * 2));
         int projectHeight = layout.bodyHeight();
         ResearchUiParts.at(projectPane, layout.sidebarLeft(), layout.bodyTop(), layout.sidebarWidth(), projectHeight);
-        ResearchUiParts.at(projectTitle, 5, 4, Math.max(1, layout.sidebarWidth() - 10), 16);
-        ResearchUiParts.at(projects, 0, 23, layout.sidebarWidth(), Math.max(1, projectHeight - 23));
+        int projectInset = 5;
+        int projectContentWidth = Math.max(1, layout.sidebarWidth() - projectInset * 2);
+        ResearchUiParts.at(projectTitle, projectInset, 4, projectContentWidth, 18);
+        ResearchUiParts.at(projects, projectInset, 27, projectContentWidth,
+                Math.max(1, projectHeight - 32));
         teams.resize(margin, layout.bodyTop(), workspaceWidth, layout.bodyHeight());
         ResearchBackpackLayout backpackLayout = ResearchBackpackLayout.fixed();
         int backpackLeft = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutX()) : (width - backpackLayout.width()) / 2;

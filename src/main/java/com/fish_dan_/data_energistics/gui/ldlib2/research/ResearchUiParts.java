@@ -44,15 +44,20 @@ final class ResearchUiParts {
     static final int NODE_SELECTED = 0xFF9CD9FF;
     static final int MATERIAL_ICON_SPACE = 19;
     static final IGuiTexture PANEL = framed(0xFFEFF1F8, 0xFF53617D);
-    private static final IGuiTexture BUTTON = framed(0xFFF7F9FF, 0xFF4B5979);
-    private static final IGuiTexture BUTTON_HOVER = framed(0xFFD9FFF0, 0xFF1C7653);
-    private static final IGuiTexture BUTTON_PRESSED = framed(0xFFBCE7D6, 0xFF174934);
+    private static final IGuiTexture INPUT = framed(0xFFF7F9FF, 0xFF4B5979);
+    private static final IGuiTexture BUTTON = roundedFrame(0xFFF7F9FF, 0xFF4B5979);
+    private static final IGuiTexture BUTTON_HOVER = roundedFrame(0xFFD9FFF0, 0xFF1C7653);
+    private static final IGuiTexture BUTTON_PRESSED = roundedFrame(0xFFBCE7D6, 0xFF174934);
     static final String PREFIX = "gui.data_energistics.research.";
 
     private ResearchUiParts() {}
 
     static SDFRectTexture rounded(int color) {
         return SDFRectTexture.of(color).setRadius(CORNER_RADIUS);
+    }
+
+    static IGuiTexture roundedFrame(int background, int border) {
+        return rounded(background).setStroke(1).setBorderColor(border);
     }
 
     static Component text(String key, Object... arguments) {
@@ -149,7 +154,7 @@ final class ResearchUiParts {
     }
 
     static void input(TextField field) {
-        field.style(style -> style.backgroundTexture(BUTTON));
+        field.style(style -> style.backgroundTexture(INPUT));
         field.textFieldStyle(style -> style.fontSize(10).textColor(TEXT).cursorColor(0xFF1C7653)
                 .textShadow(false).focusOverlay(new ColorBorderTexture(-1, 0xFF1C7653)));
     }

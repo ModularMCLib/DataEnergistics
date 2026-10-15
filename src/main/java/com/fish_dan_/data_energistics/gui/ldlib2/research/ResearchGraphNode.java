@@ -7,6 +7,7 @@ import com.lowdragmc.lowdraglib2.gui.texture.SDFRectTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.Style;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -28,6 +29,7 @@ import net.minecraft.world.item.ItemStack;
 
 import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
+import dev.vfyjxf.taffy.style.TaffyDisplay;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import org.joml.Vector4f;
 import org.jspecify.annotations.Nullable;
@@ -150,6 +152,7 @@ final class ResearchGraphNode extends NodeModel {
                 public void updateUIFromModel(ModelUpdateVisitor visitor) {
                     super.updateUIFromModel(visitor);
                     Style.importantPipeline(getNodeTittle().getStyle(), style -> style.tooltips(new Component[0]));
+                    Style.importantPipeline(getColorLine().getLayout(), layout -> layout.display(TaffyDisplay.NONE));
                 }
             };
             addEventListener(UIEvents.CLICK, event -> {
@@ -206,10 +209,16 @@ final class ResearchGraphNode extends NodeModel {
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
             summary.style(style -> style.backgroundTexture(summaryBackground));
             updateSummaryCorners(research.presentation);
+            title.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(
+                    ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
+            title.layout(layout -> layout.widthPercent(100).height(26).paddingVertical(3).paddingHorizontal(4).flexShrink(0));
+            title.getTitleContainer().layout(layout -> layout.flex(1).widthPercent(100).minWidth(0).minHeight(0)
+                    .alignItems(AlignItems.CENTER).gapAll(4));
             title.getNodeTittle().textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false)
-                    .fontSize(10).textColor(0xFFFFFFFF).textShadow(true).textWrap(TextWrap.HOVER_ROLL));
-            title.getNodeTittle().layout(layout -> layout.width(78).height(18));
-            title.getNodeIcon().layout(layout -> layout.width(16).height(16));
+                    .fontSize(10).textColor(ResearchUiParts.TEXT).textShadow(false).textWrap(TextWrap.HOVER_ROLL)
+                    .textAlignVertical(Vertical.CENTER));
+            title.getNodeTittle().layout(layout -> layout.flex(1).minWidth(0).heightPercent(100));
+            title.getNodeIcon().layout(layout -> layout.width(16).height(16).flexShrink(0));
             status.textStyle(style -> style.fontSize(9).textColor(ResearchUiParts.TEXT).textShadow(false));
             summary.addChildren(title, status);
             costs.layout(layout -> layout.width(60).heightAuto().paddingAll(6).gapAll(3)

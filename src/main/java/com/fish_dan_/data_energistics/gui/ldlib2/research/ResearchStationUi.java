@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.research;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
+import com.fish_dan_.data_energistics.gui.ldlib2.ae.resource.AeKeyAmountRow;
 import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Presentation;
 import com.fish_dan_.data_energistics.gui.ldlib2.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
@@ -36,6 +37,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import dev.vfyjxf.taffy.style.FlexDirection;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
@@ -47,6 +49,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.joml.Vector2f;
 import org.jspecify.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
@@ -497,10 +500,19 @@ public final class ResearchStationUi {
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("time", node.researchTicks(), format(node.researchTicks() / 20.0))));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("energy", format(node.aePerTick()), format(node.aePerTick() * node.researchTicks()))));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials")));
-        if (node.inputs().isEmpty()) costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
-        for (ResearchInput input : node.inputs()) {
-            costs.addChild(ResearchUiParts.material(input.key(),
-                    ResearchUiParts.text("material", input.key().getDisplayName(), input.amount())));
+        if (node.inputs().isEmpty()) {
+            costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
+        } else {
+            UIElement materials = new UIElement();
+            materials.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.COLUMN)
+                    .gapAll(0).flexShrink(0));
+            for (ResearchInput input : node.inputs()) {
+                AeKeyAmountRow row = new AeKeyAmountRow();
+                row.setFontSize(9);
+                row.setEntry(input.key(), BigInteger.valueOf(input.amount()));
+                materials.addChild(row);
+            }
+            costs.addChild(materials);
         }
         if (presentation == Presentation.COSTS) return;
         if (!projectData.containsKey(node.id()) && !unlocked.contains(node.id())) {

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
+import com.fish_dan_.data_energistics.gui.ldlib2.ae.resource.AeKeyAmountRow;
+
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
@@ -241,7 +243,7 @@ final class ResearchGraphNode extends NodeModel {
             });
         }
 
-        /** Measure translated lines at the actual text font; long material names wrap within the upper bound. */
+        /** Measure translated text and resource columns at their actual fonts within the panel's upper bound. */
         private void resizeCosts() {
             int width = 0;
             if (research.presentation != Presentation.COLLAPSED) {
@@ -256,13 +258,7 @@ final class ResearchGraphNode extends NodeModel {
         }
 
         private static float preferredCostWidth(UIElement element) {
-            if (element instanceof ResearchUiParts.MaterialRow) {
-                float labelWidth = 0;
-                for (UIElement child : element.getChildren()) {
-                    if (child instanceof Label label) labelWidth = Math.max(labelWidth, preferredLabelWidth(label));
-                }
-                return labelWidth + ResearchUiParts.MATERIAL_ICON_SPACE;
-            }
+            if (element instanceof AeKeyAmountRow row) return row.preferredWidth();
             float width = 0;
             for (UIElement child : element.getChildren()) width = Math.max(width, preferredCostWidth(child));
             return element instanceof Label label ? Math.max(width, preferredLabelWidth(label)) : width;

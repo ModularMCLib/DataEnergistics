@@ -618,7 +618,6 @@
 	"gui.data_energistics.research.initial_item": "初始物品",
 	"gui.data_energistics.research.insert_item": "放入目标物品以查看升级图谱。",
 	"gui.data_energistics.research.item_upgrade": "物品升级",
-	"gui.data_energistics.research.material": "%s × %s",
 	"gui.data_energistics.research.materials": "消耗材料（开始时扣除）",
 	"gui.data_energistics.research.materials_none": "无需材料",
 	"gui.data_energistics.research.no_power": "等待能量",

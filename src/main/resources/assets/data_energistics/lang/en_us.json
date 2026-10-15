@@ -618,7 +618,6 @@
 	"gui.data_energistics.research.initial_item": "Initial item",
 	"gui.data_energistics.research.insert_item": "Insert a target item to view its upgrade graph.",
 	"gui.data_energistics.research.item_upgrade": "Item upgrades",
-	"gui.data_energistics.research.material": "%s × %s",
 	"gui.data_energistics.research.materials": "Materials (charged at start)",
 	"gui.data_energistics.research.materials_none": "No materials required",
 	"gui.data_energistics.research.no_power": "Waiting for energy",

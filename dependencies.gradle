@@ -175,7 +175,7 @@ dependencies {
     extraLocalRuntime(forge.occultism) { transitive = false }
     extraLocalRuntime(forge.modonomicon) { transitive = false }
     extraLocalRuntime(forge.smartbrainlib) { transitive = false }
-    extraLocalRuntime(forge.botania) { transitive = false }
+    //extraLocalRuntime(forge.botania) { transitive = false }
     extraLocalRuntime(forge.patchouli) { transitive = false }
     extraLocalRuntime(forge.extendedcrafting) { transitive = false }
     extraLocalRuntime(forge.malum) { transitive = false }

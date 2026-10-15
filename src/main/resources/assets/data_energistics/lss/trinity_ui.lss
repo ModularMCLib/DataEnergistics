@@ -120,28 +120,6 @@ button.__disabled__ .__button_text__ {
     text-shadow: false;
 }
 
-.trinity-storage-entry-name,
-.trinity-storage-entry-amount {
-    adaptive-width: false;
-    adaptive-height: false;
-    font-size: 6;
-    vertical-align: center;
-    overflow: hidden;
-}
-
-.trinity-storage-entry-name {
-    text-color: #FF404052;
-    horizontal-align: left;
-    text-wrap: hover_roll;
-    text-shadow: false;
-}
-
-.trinity-storage-entry-amount {
-    text-color: #FFFFFFFF;
-    horizontal-align: left;
-    text-shadow: true;
-}
-
 .trinity-storage-type-capacity {
     adaptive-width: false;
     adaptive-height: false;

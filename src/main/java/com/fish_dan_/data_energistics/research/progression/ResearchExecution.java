@@ -62,7 +62,7 @@ public final class ResearchExecution {
         if (action.equals("resume")) return message("unavailable");
         ObjectSet<UUID> subjects = ResearchAccess.subjects(player, host.stationId());
         if (node.scope() == ResearchScope.ITEM_UPGRADE && !node.target().matches(state.target)) return message("wrong_item");
-        ObjectSet<ResourceLocation> unlocked = unlockedIds(node, state, data, subjects);
+        ObjectSet<ResourceLocation> unlocked = unlockedIds(state, data, subjects);
         if (unlocked.contains(node.id())) return message("already_unlocked");
         if (!node.prerequisitesSatisfied(unlocked)) return message("prerequisite");
         IGrid grid = host.getMainNode().getGrid();
@@ -93,14 +93,11 @@ public final class ResearchExecution {
         return state.materialRequests.request(host, player, node, grid);
     }
 
-    private static ObjectSet<ResourceLocation> unlockedIds(ResearchNode node, ResearchStationState state,
-                                                           ResearchSavedData data, ObjectSet<UUID> subjects) {
+    private static ObjectSet<ResourceLocation> unlockedIds(ResearchStationState state, ResearchSavedData data,
+                                                           ObjectSet<UUID> subjects) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
-        if (node.scope() == ResearchScope.ITEM_UPGRADE) {
-            result.addAll(ItemResearchUpgrades.of(state.target).ids());
-        } else {
-            for (UUID subject : subjects) result.addAll(data.unlocked(subject));
-        }
+        result.addAll(ItemResearchUpgrades.of(state.target).ids());
+        for (UUID subject : subjects) result.addAll(data.unlocked(subject));
         return result;
     }
 

@@ -572,7 +572,11 @@ public final class ResearchStationUi {
         for (ResourceLocation id : ordered) {
             ResearchNode node = projectNodes.get(id);
             CompoundTag pending = projectData.get(id);
-            projects.addScrollViewChild(ResearchUiParts.button(Component.translatable(node.name()), () -> {
+            UIElement entry = new UIElement();
+            entry.layout(layout -> layout.widthPercent(100).heightAuto().paddingAll(7).gapAll(4)
+                    .flexDirection(FlexDirection.COLUMN).flexShrink(0));
+            entry.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(0xFFEFF1F8, 0xFF53617D)));
+            Button projectButton = ResearchUiParts.button(Component.translatable(node.name()), () -> {
                 if (scope != node.scope() || filter != Filter.ALL || !graphNodes.containsKey(id)) {
                     scope = node.scope();
                     filter = Filter.ALL;
@@ -580,18 +584,26 @@ public final class ResearchStationUi {
                     refreshGraph();
                 }
                 select(id);
-            }));
-            projects.addScrollViewChild(ResearchUiParts.label(projectStatus(node, pending)));
+            });
+            entry.addChild(projectButton);
+            entry.addChild(ResearchUiParts.label(projectStatus(node, pending)));
             int progress = pending.getInt("progress");
             UIElement bar = new UIElement();
-            bar.layout(layout -> layout.widthPercent(100).height(4).flexShrink(0));
-            bar.style(style -> style.backgroundTexture(new ColorRectTexture(0xFF696F87)));
+            bar.layout(layout -> layout.widthPercent(100).height(6).flexShrink(0));
+            bar.style(style -> style.backgroundTexture(ResearchUiParts.rounded(0xFF53617D)));
             UIElement fill = new UIElement();
-            fill.layout(layout -> layout.widthPercent(100F * progress / node.researchTicks()).height(4));
-            fill.style(style -> style.backgroundTexture(new ColorRectTexture(0xFFF2F2F2)));
+            fill.layout(layout -> layout.widthPercent(100F * progress / node.researchTicks()).height(6));
+            fill.style(style -> style.backgroundTexture(ResearchUiParts.rounded(projectProgressColor(pending))));
             bar.addChild(fill);
-            projects.addScrollViewChild(bar);
+            entry.addChild(bar);
+            projects.addScrollViewChild(entry);
         }
+    }
+
+    private static int projectProgressColor(CompoundTag project) {
+        if (project.getBoolean("faulted")) return ResearchUiParts.NODE_BLOCKED;
+        return project.getBoolean("running") && project.getBoolean("powered") ?
+                ResearchUiParts.NODE_SECTION : ResearchUiParts.NODE_RUNNING;
     }
 
     private static Component projectStatus(ResearchNode node, CompoundTag project) {

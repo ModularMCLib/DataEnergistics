@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.client.render.item.MeVacuumBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelPart;
+import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.registry.DEStorageCells;
 
 import appeng.api.client.StorageCellModels;
@@ -21,9 +22,11 @@ final class ClientModelRegistrar {
     private ClientModelRegistrar() {}
 
     static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
-        event.register(ModelResourceLocation.standalone(StorageCellModels.getDefaultModel()));
         StorageCellModels.models().values()
                 .forEach(model -> event.register(ModelResourceLocation.standalone(model)));
+        event.register(ResearchStationRenderer.HEAD_OFF);
+        event.register(ResearchStationRenderer.HEAD_ON);
+        event.register(ModelResourceLocation.standalone(StorageCellModels.getDefaultModel()));
         event.register(ModelResourceLocation.standalone(DEStorageCells.DRIVE_1K));
         event.register(ModelResourceLocation.standalone(DEStorageCells.DRIVE_4K));
         event.register(ModelResourceLocation.standalone(DEStorageCells.DRIVE_16K));

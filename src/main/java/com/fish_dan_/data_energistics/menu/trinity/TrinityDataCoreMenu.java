@@ -819,9 +819,7 @@ public class TrinityDataCoreMenu extends AbstractContainerMenu implements HostUi
     }
 
     private void removeModularUi() {
-        if (!(this instanceof IModularUIHolderMenu holder)) {
-            throw new IllegalStateException("Trinity Data Core menu does not implement the LDLib2 menu holder");
-        }
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) this;
         var modularUI = holder.getModularUI();
         if (modularUI == null) {
             throw new IllegalStateException("Trinity Data Core menu has no mounted LDLib2 UI to remove");

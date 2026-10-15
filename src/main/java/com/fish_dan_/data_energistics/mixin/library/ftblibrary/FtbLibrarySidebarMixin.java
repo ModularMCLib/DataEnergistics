@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.library.ftblibrary;
 
+import com.fish_dan_.data_energistics.client.screen.research.ResearchStationScreen;
+
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerScreen;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -12,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Hides FTB Library's sidebar only while the orbital control terminal workspace is open. */
+/** Hides FTB Library's sidebar in the orbital terminal and research station workspaces. */
 @Mixin(targets = "dev.ftb.mods.ftblibrary.FTBLibraryClient", remap = false)
 public abstract class FtbLibrarySidebarMixin {
 
@@ -23,7 +25,7 @@ public abstract class FtbLibrarySidebarMixin {
     private static void dataEnergistics$hideOrbitalTerminalSidebar(
                                                                    Screen screen,
                                                                    CallbackInfoReturnable<Boolean> callback) {
-        if (dataEnergistics$isOrbitalControlTerminal(screen)) {
+        if (screen instanceof ResearchStationScreen || dataEnergistics$isOrbitalControlTerminal(screen)) {
             callback.setReturnValue(false);
         }
     }

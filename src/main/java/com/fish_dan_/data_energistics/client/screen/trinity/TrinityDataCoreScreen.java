@@ -133,11 +133,10 @@ public class TrinityDataCoreScreen extends AbstractContainerScreen<TrinityDataCo
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {}
 
     private ModularUI modularUI() {
-        if (this.menu instanceof IModularUIHolderMenu holder) {
-            ModularUI modularUI = holder.getModularUI();
-            if (modularUI != null) {
-                return modularUI;
-            }
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) this.menu;
+        ModularUI modularUI = holder.getModularUI();
+        if (modularUI != null) {
+            return modularUI;
         }
         throw new IllegalStateException("Trinity Data Core screen requires a mounted LDLib2 ModularUI");
     }

@@ -1,0 +1,22 @@
+{
+	"id": "data_energistics:weapon_mode/star_shard",
+	"description": "research.data_energistics.weapon_mode.star_shard.description",
+	"target": {
+		"items": ["data_energistics:star_shard"],
+		"tags": []
+	},
+	"inputs": {
+		"items": {
+			"ae2:annihilation_core": 8,
+			"ae2:matter_cannon": 1,
+			"ae2:quantum_entangled_singularity": 2,
+			"data_energistics:fluix_aggregate_crystal_processor": 16,
+			"minecraft:dropper": 4
+		},
+		"resources": {
+			"data_energistics:manifest_binary": 16
+		}
+	},
+	"research_ticks": 200,
+	"ae_per_tick": 2000
+}

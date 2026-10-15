@@ -38,6 +38,7 @@ neovitae = "1.21.1-1.1.26"
 ftblibrary = "2101.1.36"
 ftbultimine  = "2101.1.15"
 ftbchunks = "2101.1.22"
+ftbteams = "2101.1.9"
 
 ## optional map integrations ##
 jmapi = "2.0.0-1.21.1-20260529.024614-31"
@@ -143,6 +144,7 @@ smartbrainlib       = { module = "net.tslat.smartbrainlib:SmartBrainLib-neoforge
 ftblibrary          = { module = "dev.ftb.mods:ftb-library-neoforge", version.ref = "ftblibrary" }
 ftbultimine         = { module = "dev.ftb.mods:ftb-ultimine-neoforge", version.ref = "ftbultimine" }
 ftbchunks           = { module = "dev.ftb.mods:ftb-chunks-neoforge", version.ref = "ftbchunks" }
+ftbteams            = { module = "dev.ftb.mods:ftb-teams-neoforge", version.ref = "ftbteams" }
 
 journeymap-api      = { module = "info.journeymap:journeymap-api-neoforge", version.ref = "jmapi" }
 journeymap          = { module = "maven.modrinth:journeymap", version.ref = "jmruntime" }

@@ -94,6 +94,10 @@ public final class MatterConvergingCrossbowConfigMenu extends AEBaseMenu {
         sendClientAction(ACTION_SET_MODE, mode.id());
     }
 
+    public boolean isModeUnlocked(MatterConvergingCrossbowMode mode) {
+        return MatterConvergingCrossbowItem.isModeUnlocked(host.getItemStack(), mode);
+    }
+
     public void sendCycleAmmo(MatterConvergingCrossbowMode mode, boolean reverse) {
         sendClientAction(ACTION_CYCLE_AMMO, mode.id() + (reverse ? MountedAmmoCells.SLOT_COUNT : 0));
     }
@@ -101,6 +105,7 @@ public final class MatterConvergingCrossbowConfigMenu extends AEBaseMenu {
     private void setModeFromClient(Integer mode) {
         if (!isServerSide() || !host.isValid() || mode < 0 || mode >= MountedAmmoCells.SLOT_COUNT) return;
         ItemStack weapon = host.getItemStack();
+        if (!MatterConvergingCrossbowItem.isModeUnlocked(weapon, MatterConvergingCrossbowMode.fromId(mode))) return;
         RailLauncher.cancel(weapon);
         weapon.remove(DEDataComponents.CANNON_CHARGE.get());
         weapon.set(DEDataComponents.MATTER_CONVERGING_CROSSBOW_MODE.get(), mode);

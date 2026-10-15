@@ -92,6 +92,7 @@
 		"magic.naturesaura.WoodStandRitualPersistenceMixin",
 		"magic.neovitae.HellfireForgeDropMixin",
 		"magic.neovitae.TabulaVitaeDropMixin",
+		"neoforge.ServerScoreboardResearchMixin",
 		"technology.embers.AlchemyTabletRecipeMixin",
 		"minecraft.accessor.ExperienceOrbAccessor",
 		"minecraft.accessor.LivingEntityDropInvoker",
@@ -157,6 +158,7 @@
 		"technology.avaritia.emi.ExtremeSmithingEmiInputsMixin",
 		"viewer.emi.ae2.AbstractRecipeHandlerMixin",
 		"viewer.emi.ae2.EmiEncodePatternHandlerMixin",
+		"viewer.emi.research.ResearchStationEmiScreenMixin",
 		"viewer.jei.RecipeTransferServiceMixin"
 	],
 	"injectors": {

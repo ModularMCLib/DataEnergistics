@@ -43,6 +43,7 @@ import com.fish_dan_.data_energistics.registry.DEStructures;
 import com.fish_dan_.data_energistics.registry.DEUpgrades;
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.registry.UniversalTerminalAdapters;
+import com.fish_dan_.data_energistics.research.lifecycle.ResearchRegistrationEvents;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
@@ -95,6 +96,7 @@ public class CommonProxy {
         modEventBus.addListener(OrbitalEndpointChunkTickets::registerController);
 
         CommonEventRegistrar.register();
+        modEventBus.register(new ResearchRegistrationEvents());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

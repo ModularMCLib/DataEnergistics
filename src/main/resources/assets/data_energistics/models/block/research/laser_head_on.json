@@ -1,0 +1,7 @@
+{
+	"parent": "data_energistics:block/research/laser_head_off",
+	"textures": {
+		"0": "data_energistics:block/digital_transformation_research_station_on",
+		"particle": "data_energistics:block/digital_transformation_research_station_on"
+	}
+}

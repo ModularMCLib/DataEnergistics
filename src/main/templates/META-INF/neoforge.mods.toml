@@ -121,6 +121,13 @@ ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]
+modId = "ftbteams"
+type = "optional"
+versionRange = "[${ftbteams_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
 modId = "ae2cs"
 type = "optional"
 versionRange = "[0,)"
@@ -161,9 +168,3 @@ type = "optional"
 versionRange = "[0,)"
 ordering = "AFTER"
 side = "BOTH"
-
-# Features are specific properties of the game environment, that you may want to declare you require. This example declares
-# that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
-# stop your mod loading on the server for example.
-#[features."${mod_id}"]
-#openGLVersion="[3.2,)"

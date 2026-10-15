@@ -1,0 +1,22 @@
+{
+	"id": "data_energistics:weapon_mode/crystal_rift_crusher",
+	"description": "research.data_energistics.weapon_mode.crystal_rift_crusher.description",
+	"target": {
+		"items": ["data_energistics:star_shard"],
+		"tags": []
+	},
+	"inputs": {
+		"items": {
+			"ae2:condenser": 2,
+			"data_energistics:data_processor": 7,
+			"data_energistics:fluix_aggregate_crystal_processor": 16,
+			"data_energistics:me_beam_former": 3,
+			"data_energistics:me_vacuum": 1
+		},
+		"resources": {
+			"data_energistics:manifest_binary": 27
+		}
+	},
+	"research_ticks": 200,
+	"ae_per_tick": 2000
+}

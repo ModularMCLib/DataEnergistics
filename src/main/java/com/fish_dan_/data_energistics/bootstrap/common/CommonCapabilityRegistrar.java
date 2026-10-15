@@ -38,9 +38,10 @@ final class CommonCapabilityRegistrar {
     private CommonCapabilityRegistrar() {}
 
     static void register(RegisterCapabilitiesEvent event) {
-        if (MOD.isAstralSorceryLoaded()) {
-            AstralSorceryRegistration.registerCapabilities(event);
-        }
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.RESEARCH_STATION.get(),
+                (blockEntity, side) -> blockEntity);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, DEBlockEntities.RESEARCH_STATION_PART.get(),
+                (blockEntity, side) -> blockEntity);
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 DEBlockEntities.DATA_SOLAR_PANEL_BLOCK_ENTITY.get(),
@@ -372,6 +373,9 @@ final class CommonCapabilityRegistrar {
                     return tower.getEnergyStorageForQuery(pos, context);
                 },
                 DEBlocks.DATA_DISTRIBUTION_TOWER.get());
+        if (MOD.isAstralSorceryLoaded()) {
+            AstralSorceryRegistration.registerCapabilities(event);
+        }
     }
 
     static void registerPartCapabilities(RegisterPartCapabilitiesEvent event) {

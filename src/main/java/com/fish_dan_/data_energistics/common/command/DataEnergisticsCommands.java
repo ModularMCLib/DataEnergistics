@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.orbital.storage.OrbitalOwnershipTransfer;
 import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.research.team.ResearchTeams;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -56,7 +57,29 @@ public final class DataEnergisticsCommands {
                                                                 context.getSource(),
                                                                 UuidArgument.getUuid(context, "storage"),
                                                                 EntityArgument.getPlayer(context, "player")))))))
-                        .then(orbitalRegistration()));
+                        .then(orbitalRegistration())
+                        .then(researchRegistration()));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> researchRegistration() {
+        LiteralArgumentBuilder<CommandSourceStack> teams = Commands.literal("team");
+        teams.then(Commands.literal("create")
+                .then(Commands.argument("name", StringArgumentType.greedyString())
+                        .executes(context -> ResearchTeams.executeCommand(context, "create", StringArgumentType.getString(context, "name")))));
+        for (String action : new String[] { "invite", "accept", "reject", "kick", "transfer" }) {
+            teams.then(Commands.literal(action)
+                    .then(Commands.argument("target", StringArgumentType.word())
+                            .suggests((context, builder) -> {
+                                ServerPlayer player = context.getSource().getPlayer();
+                                if (player != null) ResearchTeams.suggestTargets(player, action, builder);
+                                return builder.buildFuture();
+                            })
+                            .executes(context -> ResearchTeams.executeCommand(context, action, StringArgumentType.getString(context, "target")))));
+        }
+        for (String action : new String[] { "leave", "disband" }) {
+            teams.then(Commands.literal(action).executes(context -> ResearchTeams.executeCommand(context, action, "")));
+        }
+        return Commands.literal("research").then(teams);
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> orbitalRegistration() {

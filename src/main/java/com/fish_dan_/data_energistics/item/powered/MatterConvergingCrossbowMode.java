@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.item.powered;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
+import net.minecraft.resources.ResourceLocation;
+
 import org.jspecify.annotations.Nullable;
 
 /** Persistent firing configuration for the Darkstring Data Settlement Tool. */
@@ -11,10 +15,12 @@ public enum MatterConvergingCrossbowMode {
 
     private final int id;
     private final String name;
+    private final ResourceLocation researchId;
 
     MatterConvergingCrossbowMode(int id, String name) {
         this.id = id;
         this.name = name;
+        this.researchId = Data_Energistics.id("weapon_mode/" + name);
     }
 
     public int id() {
@@ -23,6 +29,10 @@ public enum MatterConvergingCrossbowMode {
 
     public String nameKey() {
         return this.name;
+    }
+
+    public ResourceLocation researchId() {
+        return this.researchId;
     }
 
     public static MatterConvergingCrossbowMode fromId(int id) {

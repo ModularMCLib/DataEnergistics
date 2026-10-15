@@ -57,6 +57,7 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
             setFittedText(rowId, DigitizedWeaponName.modeName(row), 34);
         }
         modeButtons.forEach((row, button) -> button.setState(row == mode));
+        modeButtons.forEach((row, button) -> button.active = menu.isModeUnlocked(row));
     }
 
     private void setFittedText(String id, Component text, int width) {
@@ -97,6 +98,7 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
             for (MatterConvergingCrossbowMode mode : MatterConvergingCrossbowMode.values()) {
                 Slot ammo = menu.ammoSlot(mode);
                 if (x >= ammo.x && x < ammo.x + 16 && y >= ammo.y && y < ammo.y + 16 && menu.getCarried().isEmpty()) {
+                    if (!menu.isModeUnlocked(mode)) return true;
                     if (mode.id() != menu.activeMode) menu.sendSetMode(mode);
                     else menu.sendCycleAmmo(mode, button == 1);
                     return true;
@@ -141,7 +143,8 @@ public final class MatterConvergingCrossbowConfigScreen extends AEBaseScreen<Mat
         if (DEKeyMappings.TOGGLE_CROSSBOW_RAIL.matches(keyCode, scanCode)) requested = MatterConvergingCrossbowMode.RAIL;
         else if (DEKeyMappings.TOGGLE_CROSSBOW_ARMS.matches(keyCode, scanCode)) requested = MatterConvergingCrossbowMode.CROSSBOW;
         if (requested != null) {
-            menu.sendSetMode(requested.id() == menu.activeMode ? MatterConvergingCrossbowMode.GRENADE : requested);
+            MatterConvergingCrossbowMode next = requested.id() == menu.activeMode ? MatterConvergingCrossbowMode.GRENADE : requested;
+            if (menu.isModeUnlocked(next)) menu.sendSetMode(next);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);

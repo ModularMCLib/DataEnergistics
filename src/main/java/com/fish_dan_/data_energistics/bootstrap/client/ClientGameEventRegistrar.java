@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededC
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalProjectionVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalWorldProjectionRenderer;
+import com.fish_dan_.data_energistics.client.research.ResearchClientEvents;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 
@@ -19,6 +20,7 @@ final class ClientGameEventRegistrar {
 
     static void register() {
         OrbitalControlClientBindings.install();
+        NeoForge.EVENT_BUS.register(new ResearchClientEvents());
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMovementInputUpdate);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onInteractionKeyTriggered);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);

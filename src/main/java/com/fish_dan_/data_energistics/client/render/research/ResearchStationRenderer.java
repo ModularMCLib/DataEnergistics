@@ -117,10 +117,10 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
         try {
             pose.translate(WORKBENCH_X, WORKBENCH_Y + ITEM_HEIGHT_OFFSET, WORKBENCH_Z);
             if (!(target.getItem() instanceof BlockItem)) {
-                // Ordinary items use the requested front-view roll and top-view yaw;
-                // BlockItem stacks retain their original presentation.
-                pose.mulPose(Axis.ZN.rotationDegrees(TARGET_FRONT_ROTATION_DEGREES));
+                // PoseStack post-multiplies rotations: lay the item down first,
+                // then turn the horizontal axis left to the requested 135-degree view.
                 pose.mulPose(Axis.YN.rotationDegrees(TARGET_YAW_DEGREES));
+                pose.mulPose(Axis.ZN.rotationDegrees(TARGET_FRONT_ROTATION_DEGREES));
             }
             itemRenderer.renderStatic(target, ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY,
                     pose, buffers, host.getLevel(), (int) host.getBlockPos().asLong());

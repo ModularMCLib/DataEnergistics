@@ -337,7 +337,7 @@ public final class ResearchStationUi {
     }
 
     private boolean available(ResearchNode node) {
-        return unlocked.containsAll(node.prerequisites()) && !unlocked.contains(node.id()) && !projectData.containsKey(node.id());
+        return node.prerequisitesSatisfied(unlocked) && !unlocked.contains(node.id()) && !projectData.containsKey(node.id());
     }
 
     private void refreshGraph() {
@@ -390,7 +390,7 @@ public final class ResearchStationUi {
         for (int pass = 0; pass < nodes.size(); pass++) {
             for (ResearchNode node : nodes) {
                 int rank = scope == ResearchScope.ITEM_UPGRADE ? 1 : 0;
-                for (ResourceLocation prerequisite : node.prerequisites()) {
+                for (ResourceLocation prerequisite : node.prerequisiteIds()) {
                     if (visible.contains(prerequisite)) rank = Math.max(rank, depth.getInt(prerequisite) + 1);
                 }
                 depth.put(node.id(), rank);
@@ -413,7 +413,7 @@ public final class ResearchStationUi {
         for (ResearchNode node : nodes) {
             ResearchGraphNode to = graphNodes.get(node.id());
             boolean connected = false;
-            for (ResourceLocation id : node.prerequisites()) {
+            for (ResourceLocation id : node.prerequisiteIds()) {
                 ResearchGraphNode from = lookup(graphNodes, id);
                 if (from != null) {
                     model.models().connect(from.getOutputsById().get("unlocks"), to.getInputsById().get("requires"));
@@ -533,10 +533,19 @@ public final class ResearchStationUi {
             request.setActive(stationOperable() && available(node) && canTarget(node));
             details.addChild(request);
         }
-        for (ResourceLocation id : node.prerequisites()) {
+        for (ResourceLocation id : node.requiredPrerequisites()) {
             ResearchNode prerequisite = lookup(menu.nodes(), id);
             details.addChild(ResearchUiParts.label(ResearchUiParts.text(unlocked.contains(id) ? "prerequisite_met" : "prerequisite_missing",
                     prerequisite == null ? Component.literal(id.toString()) : Component.translatable(prerequisite.name()))));
+        }
+        for (ObjectSet<ResourceLocation> group : node.optionalPrerequisiteGroups()) {
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("prerequisite_optional")));
+            for (ResourceLocation id : group) {
+                ResearchNode prerequisite = lookup(menu.nodes(), id);
+                details.addChild(ResearchUiParts.label(ResearchUiParts.text(
+                        unlocked.contains(id) ? "prerequisite_met" : "prerequisite_missing",
+                        prerequisite == null ? Component.literal(id.toString()) : Component.translatable(prerequisite.name()))));
+            }
         }
         CompoundTag pending = lookup(projectData, node.id());
         if (unlocked.contains(node.id())) {

@@ -84,7 +84,7 @@ public final class ExampleResearchRegistration {
 
 ## Datapack 覆盖
 
-路径为 `data/<namespace>/researchtechnology/<path>.json`，对应节点 ID `<namespace>:<path>`。专用目录避免读取 Astral Sorcery 等 Mod 自有的 `research/` 数据格式，同时允许其他 Mod 的 Java 注册节点使用自己的 namespace。之前使用 `data/<namespace>/research/` 的研究站覆盖文件需移动到新目录；节点 ID 与世界解锁存档无需修改。节点必须已由 Java 注册。字段省略时继承 Java 默认值；提供 `inputs` 时替换全部材料费用，提供前置数组时替换全部前置。`target` 对象提供后，内部省略的 `items` 或 `tags` 视为空集。
+路径为 `data/<namespace>/researchtechnology/<path>.json`，对应节点 ID `<namespace>:<path>`。专用目录避免读取 Astral Sorcery 等 Mod 自有的 `research/` 数据格式，同时允许其他 Mod 的 Java 注册节点使用自己的 namespace。之前使用 `data/<namespace>/research/` 的研究站覆盖文件需移动到新目录；节点 ID 与世界解锁存档无需修改。节点必须已由 Java 注册。字段省略时继承 Java 默认值；提供 `inputs` 时替换全部材料费用，提供 `prerequisites` 时替换全部前置关系。`target` 对象提供后，内部省略的 `items` 或 `tags` 视为空集。
 
 当前读取的字段如下：
 
@@ -94,7 +94,7 @@ public final class ExampleResearchRegistration {
 | `description` | 可选翻译键字符串 |
 | `target` | 可选对象，包含 `items`、`tags` 两个可选 ResourceLocation 字符串数组 |
 | `inputs` | 可选对象，包含 `items`、`fluids`、`resources` 三个可选“ID → 用量”映射；空对象表示无材料费用 |
-| `prerequisites` | 可选已注册研究 ID 字符串数组；空数组清除前置节点 |
+| `prerequisites` | 可选对象；`required` 是全部必须解锁的 ID 数组，`optional` 是多个“任选其一”数组组成的数组；空数组或空对象清除对应关系 |
 | `research_ticks` | 可选整数，范围 1 至 2,147,483,647，单位 server ticks |
 | `ae_per_tick` | 可选有限非负 JSON number，单位 AE/t |
 
@@ -123,7 +123,12 @@ public final class ExampleResearchRegistration {
       "data_energistics:manifest_binary": 67
     }
   },
-  "prerequisites": ["example_mod:precision_tools"],
+  "prerequisites": {
+    "required": ["example_mod:precision_tools"],
+    "optional": [
+      ["example_mod:advanced_tools", "example_mod:quantum_tools"]
+    ]
+  },
   "research_ticks": 3600,
   "ae_per_tick": 128
 }

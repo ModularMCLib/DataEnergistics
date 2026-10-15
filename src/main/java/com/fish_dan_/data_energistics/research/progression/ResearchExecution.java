@@ -20,6 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Comparator;
@@ -61,11 +62,9 @@ public final class ResearchExecution {
         if (action.equals("resume")) return message("unavailable");
         ObjectSet<UUID> subjects = ResearchAccess.subjects(player, host.stationId());
         if (node.scope() == ResearchScope.ITEM_UPGRADE && !node.target().matches(state.target)) return message("wrong_item");
-        if (unlocked(node, state, data, subjects)) return message("already_unlocked");
-        for (ResourceLocation prerequisite : node.prerequisites()) {
-            ResearchNode previous = ResearchDefinitions.find(prerequisite);
-            if (previous == null || !unlocked(previous, state, data, subjects)) return message("prerequisite");
-        }
+        ObjectSet<ResourceLocation> unlocked = unlockedIds(node, state, data, subjects);
+        if (unlocked.contains(node.id())) return message("already_unlocked");
+        if (!node.prerequisitesSatisfied(unlocked)) return message("prerequisite");
         IGrid grid = host.getMainNode().getGrid();
         if (grid == null || !host.getMainNode().isOnline()) return message("offline");
         if (!state.refunds.isEmpty()) return message("refund_pending");
@@ -94,9 +93,15 @@ public final class ResearchExecution {
         return state.materialRequests.request(host, player, node, grid);
     }
 
-    private static boolean unlocked(ResearchNode node, ResearchStationState state, ResearchSavedData data, ObjectSet<UUID> subjects) {
-        return node.scope() == ResearchScope.ITEM_UPGRADE ? ItemResearchUpgrades.of(state.target).ids().contains(node.id()) :
-                subjects.stream().anyMatch(subject -> data.unlocked(subject).contains(node.id()));
+    private static ObjectSet<ResourceLocation> unlockedIds(ResearchNode node, ResearchStationState state,
+                                                           ResearchSavedData data, ObjectSet<UUID> subjects) {
+        ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
+        if (node.scope() == ResearchScope.ITEM_UPGRADE) {
+            result.addAll(ItemResearchUpgrades.of(state.target).ids());
+        } else {
+            for (UUID subject : subjects) result.addAll(data.unlocked(subject));
+        }
+        return result;
     }
 
     public static void tick(ResearchStationBlockEntity host) {

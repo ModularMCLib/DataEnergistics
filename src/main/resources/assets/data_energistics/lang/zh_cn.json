@@ -624,6 +624,7 @@
 	"gui.data_energistics.research.paused": "已暂停",
 	"gui.data_energistics.research.prerequisite_met": "✓ %s",
 	"gui.data_energistics.research.prerequisite_missing": "缺少前置：%s",
+	"gui.data_energistics.research.prerequisite_optional": "可选前置（任选其一）：",
 	"gui.data_energistics.research.project_status": "%s · %s/%s Tick",
 	"gui.data_energistics.research.projects": "研究项目 %s/2",
 	"gui.data_energistics.research.projects_empty": "暂无研究项目",

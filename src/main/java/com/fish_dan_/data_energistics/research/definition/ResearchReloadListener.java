@@ -13,12 +13,14 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -73,12 +75,37 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
             }
         }
         ObjectList<ResearchInput> inputs = json.has("inputs") ? ResearchInputParser.parse(json.get("inputs"), operations) : original.inputs();
+        Prerequisites prerequisites = json.has("prerequisites") ? prerequisites(json.get("prerequisites")) :
+                new Prerequisites(original.requiredPrerequisites(), original.optionalPrerequisiteGroups());
         return new ResearchNode(original.id(), original.scope(), original.name(),
                 json.has("description") ? string(json.get("description"), "description") : original.description(),
                 original.icon(), target, inputs,
-                json.has("prerequisites") ? ids(json, "prerequisites") : original.prerequisites(),
+                prerequisites.required(), prerequisites.optionalGroups(),
                 json.has("research_ticks") ? number(json.get("research_ticks"), "research_ticks").intValueExact() : original.researchTicks(),
                 json.has("ae_per_tick") ? number(json.get("ae_per_tick"), "ae_per_tick").doubleValue() : original.aePerTick());
+    }
+
+    private static Prerequisites prerequisites(@Nullable JsonElement value) {
+        if (!(value instanceof JsonObject object)) throw new IllegalArgumentException("prerequisites must be an object");
+        ObjectSet<ResourceLocation> required = ids(object, "required");
+        ObjectList<ObjectSet<ResourceLocation>> optionalGroups = new ObjectArrayList<>();
+        if (!object.has("optional")) return new Prerequisites(required, optionalGroups);
+        JsonElement optionalValue = object.get("optional");
+        if (!(optionalValue instanceof JsonArray groups)) {
+            throw new IllegalArgumentException("prerequisites.optional must be an array of prerequisite ID arrays");
+        }
+        for (int index = 0; index < groups.size(); index++) {
+            JsonElement groupValue = groups.get(index);
+            if (!(groupValue instanceof JsonArray group)) {
+                throw new IllegalArgumentException("prerequisites.optional[" + index + "] must be an array");
+            }
+            ObjectSet<ResourceLocation> ids = new ObjectOpenHashSet<>();
+            for (JsonElement element : group) ids.add(ResourceLocation.parse(string(element,
+                    "prerequisites.optional[" + index + "]")));
+            if (ids.isEmpty()) throw new IllegalArgumentException("prerequisites.optional[" + index + "] must not be empty");
+            optionalGroups.add(ids);
+        }
+        return new Prerequisites(required, optionalGroups);
     }
 
     private static String string(@Nullable JsonElement value, String field) {
@@ -96,4 +123,6 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
         if (json.has(field)) for (JsonElement element : json.getAsJsonArray(field)) result.add(ResourceLocation.parse(string(element, field)));
         return result;
     }
+
+    private record Prerequisites(ObjectSet<ResourceLocation> required, ObjectList<ObjectSet<ResourceLocation>> optionalGroups) {}
 }

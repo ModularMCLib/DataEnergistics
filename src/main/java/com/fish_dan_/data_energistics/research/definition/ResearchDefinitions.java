@@ -51,7 +51,7 @@ public final class ResearchDefinitions {
         if (visited.contains(id)) return true;
         ResearchNode node = definitions.get(id);
         if (node == null || !visiting.add(id)) return false;
-        for (ResourceLocation prerequisite : node.prerequisites()) {
+        for (ResourceLocation prerequisite : node.prerequisiteIds()) {
             if (!valid(prerequisite, definitions, visiting, visited)) return false;
         }
         visiting.remove(id);

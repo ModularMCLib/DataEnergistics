@@ -113,12 +113,10 @@ final class ResearchGraphView extends GraphView {
     }
 
     int connectionColor(ResearchGraphNode from, ResearchGraphNode to) {
+        if (prerequisitePath.missingEdge(from.researchId(), to.researchId())) {
+            return ResearchUiParts.NODE_PREREQUISITE;
+        }
         if (prerequisitePath.contains(to.researchId())) {
-            // Item-root links can stand in for prerequisites outside the current filtered view.
-            if (prerequisitePath.blocked(from.researchId()) ||
-                    (!prerequisitePath.contains(from.researchId()) && prerequisitePath.blocked(to.researchId()))) {
-                return ResearchUiParts.NODE_BLOCKED;
-            }
             return to.progress() == ResearchGraphNode.Progress.RUNNING ? ResearchUiParts.NODE_RUNNING : ResearchUiParts.NODE_SECTION;
         }
         return to.connectionColor();

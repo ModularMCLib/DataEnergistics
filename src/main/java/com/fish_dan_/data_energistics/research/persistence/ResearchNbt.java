@@ -36,6 +36,24 @@ public final class ResearchNbt {
         return result;
     }
 
+    public static ListTag prerequisiteGroups(ObjectList<ObjectSet<ResourceLocation>> groups) {
+        ListTag result = new ListTag();
+        for (ObjectSet<ResourceLocation> group : groups) result.add(ids(group));
+        return result;
+    }
+
+    public static ObjectList<ObjectSet<ResourceLocation>> readPrerequisiteGroups(CompoundTag tag, String field) {
+        ObjectList<ObjectSet<ResourceLocation>> result = new ObjectArrayList<>();
+        for (Tag value : readList(tag, field, Tag.TAG_LIST)) {
+            ListTag group = (ListTag) value;
+            ObjectSet<ResourceLocation> ids = new ObjectOpenHashSet<>();
+            for (Tag id : group) ids.add(ResourceLocation.parse(id.getAsString()));
+            if (ids.isEmpty()) throw new IllegalArgumentException("Research field " + field + " contains an empty prerequisite group");
+            result.add(ids);
+        }
+        return result;
+    }
+
     /** Missing optional lists are empty; present lists must retain their declared element type. */
     public static ListTag readList(CompoundTag tag, String field, int elementType) {
         Tag value = tag.get(field);
@@ -66,7 +84,8 @@ public final class ResearchNbt {
         result.putString("icon", node.icon().toString());
         result.put("target_items", ids(node.target().items()));
         result.put("target_tags", ids(node.target().tags()));
-        result.put("prerequisites", ids(node.prerequisites()));
+        result.put("required_prerequisites", ids(node.requiredPrerequisites()));
+        result.put("optional_prerequisites", prerequisiteGroups(node.optionalPrerequisiteGroups()));
         result.putInt("ticks", node.researchTicks());
         result.putDouble("energy", node.aePerTick());
         ListTag inputs = new ListTag();
@@ -81,6 +100,7 @@ public final class ResearchNbt {
         return new ResearchNode(ResourceLocation.parse(tag.getString("id")), ResearchScope.valueOf(tag.getString("scope")),
                 tag.getString("name"), tag.getString("description"), ResourceLocation.parse(tag.getString("icon")),
                 new ResearchTarget(readIds(tag, "target_items"), readIds(tag, "target_tags")), inputs,
-                readIds(tag, "prerequisites"), tag.getInt("ticks"), tag.getDouble("energy"));
+                readIds(tag, "required_prerequisites"), readPrerequisiteGroups(tag, "optional_prerequisites"),
+                tag.getInt("ticks"), tag.getDouble("energy"));
     }
 }

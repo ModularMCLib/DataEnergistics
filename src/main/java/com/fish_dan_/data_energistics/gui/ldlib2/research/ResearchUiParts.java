@@ -37,6 +37,7 @@ final class ResearchUiParts {
     static final int NODE_RUNNING = 0xFF9CD9FF;
     static final int NODE_SELECTED = 0xFF9CD9FF;
     static final int NODE_BLOCKED = 0xFFE06B75;
+    static final int NODE_PREREQUISITE = 0xFFFFD166;
     static final IGuiTexture PANEL = framed(0xFFEFF1F8, 0xFF53617D);
     private static final IGuiTexture INPUT = framed(0xFFF7F9FF, 0xFF4B5979);
     private static final IGuiTexture BUTTON = roundedFrame(0xFFF7F9FF, 0xFF4B5979);

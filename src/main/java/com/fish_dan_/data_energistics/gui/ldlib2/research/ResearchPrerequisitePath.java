@@ -17,6 +17,7 @@ final class ResearchPrerequisitePath {
 
     private final ObjectSet<ResourceLocation> nodeIds = new ObjectOpenHashSet<>();
     private final ObjectSet<ResourceLocation> blockedIds = new ObjectOpenHashSet<>();
+    private final Object2ObjectMap<ResourceLocation, ObjectSet<ResourceLocation>> missingEdges = new Object2ObjectOpenHashMap<>();
     private @Nullable ResourceLocation selected;
 
     void update(@Nullable ResourceLocation selected, Object2ObjectMap<ResourceLocation, ResearchNode> definitions,
@@ -24,6 +25,7 @@ final class ResearchPrerequisitePath {
         this.selected = selected;
         nodeIds.clear();
         blockedIds.clear();
+        missingEdges.clear();
         if (selected == null) return;
 
         Object2ObjectMap<ResourceLocation, ObjectSet<ResourceLocation>> dependents = new Object2ObjectOpenHashMap<>();
@@ -36,7 +38,7 @@ final class ResearchPrerequisitePath {
                     definitions.containsKey(id) ? definitions.get(id) : null;
             // The synthetic item root and removed snapshot definitions have no further known prerequisites.
             if (node == null) continue;
-            for (ResourceLocation prerequisite : node.prerequisites()) {
+            for (ResourceLocation prerequisite : node.prerequisiteIds()) {
                 dependents.computeIfAbsent(prerequisite, ignored -> new ObjectOpenHashSet<>()).add(id);
                 if (nodeIds.add(prerequisite)) pending.add(prerequisite);
             }
@@ -44,17 +46,31 @@ final class ResearchPrerequisitePath {
 
         pending.clear();
         for (ResourceLocation id : nodeIds) {
-            // Selection itself is the research target; only its prerequisite chain seeds missing requirements.
-            if (!id.equals(selected) && !unlocked.contains(id)) {
-                blockedIds.add(id);
-                pending.add(id);
+            ResearchNode node = projects.containsKey(id) ? projects.get(id) :
+                    definitions.containsKey(id) ? definitions.get(id) : null;
+            if (node == null) continue;
+            for (ResourceLocation prerequisite : node.requiredPrerequisites()) {
+                if (!node.prerequisiteMissing(prerequisite, unlocked)) continue;
+                missingEdges.computeIfAbsent(id, ignored -> new ObjectOpenHashSet<>()).add(prerequisite);
+                if (blockedIds.add(prerequisite)) pending.add(prerequisite);
+            }
+            for (ObjectSet<ResourceLocation> group : node.optionalPrerequisiteGroups()) {
+                boolean satisfied = false;
+                for (ResourceLocation prerequisite : group) {
+                    if (unlocked.contains(prerequisite)) satisfied = true;
+                    else missingEdges.computeIfAbsent(id, ignored -> new ObjectOpenHashSet<>()).add(prerequisite);
+                }
+                if (satisfied) continue;
+                for (ResourceLocation prerequisite : group) {
+                    if (blockedIds.add(prerequisite)) pending.add(prerequisite);
+                }
             }
         }
         for (int index = 0; index < pending.size(); index++) {
             ResourceLocation id = pending.get(index);
             if (!dependents.containsKey(id)) continue;
             for (ResourceLocation dependent : dependents.get(id)) {
-                if (blockedIds.add(dependent)) pending.add(dependent);
+                if (!dependent.equals(selected) && blockedIds.add(dependent)) pending.add(dependent);
             }
         }
     }
@@ -69,5 +85,10 @@ final class ResearchPrerequisitePath {
 
     boolean missingPrerequisite(ResourceLocation id) {
         return !id.equals(selected) && blocked(id);
+    }
+
+    boolean missingEdge(ResourceLocation from, ResourceLocation to) {
+        ObjectSet<ResourceLocation> missing = missingEdges.get(to);
+        return missing != null && missing.contains(from);
     }
 }

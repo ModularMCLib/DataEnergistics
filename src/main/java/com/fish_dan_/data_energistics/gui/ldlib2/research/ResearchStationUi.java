@@ -56,6 +56,7 @@ public final class ResearchStationUi {
 
     private static final ResourceLocation ITEM_ROOT = ResourceLocation.fromNamespaceAndPath("data_energistics", "research_item_root");
     private final ResearchStationMenu menu;
+    private final ResearchGraphSelection selection;
     private final UIElement root = new UIElement();
     private final UIElement research = new UIElement();
     private final UIElement graphPane = new UIElement();
@@ -89,7 +90,7 @@ public final class ResearchStationUi {
     private ItemStack previousTarget = ItemStack.EMPTY;
     private long revision = -1;
     private long graphDefinitionRevision = -1;
-    private ResearchScope scope = ResearchScope.TECHNOLOGY;
+    private ResearchScope scope;
     private Filter filter = Filter.ALL;
     private boolean showTeams;
     private boolean backpackOpen;
@@ -103,6 +104,9 @@ public final class ResearchStationUi {
 
     private ResearchStationUi(ResearchStationMenu menu) {
         this.menu = menu;
+        this.selection = ResearchGraphSelection.forMenu(menu);
+        this.scope = selection.scope();
+        this.selected = selection.selected();
         this.teams = new ResearchTeamPanel(menu);
         root.setId("research_station_root");
         root.style(style -> style.backgroundTexture(GuiTextureGroup.of(
@@ -277,7 +281,8 @@ public final class ResearchStationUi {
 
     private void setScope(ResearchScope value) {
         scope = value;
-        selected = null;
+        selection.scope(value);
+        selected = selection.selected();
         hovered = null;
         rebuild = true;
     }
@@ -292,7 +297,7 @@ public final class ResearchStationUi {
         boolean snapshotChanged = revision != menu.viewRevision();
         if (!targetChanged && !snapshotChanged && !rebuild) return;
         if (targetChanged) {
-            if (!target().isEmpty() && (previousTarget.isEmpty() || !ItemStack.isSameItem(previousTarget, target()))) {
+            if (selected == null && !target().isEmpty() && (previousTarget.isEmpty() || !ItemStack.isSameItem(previousTarget, target()))) {
                 setScope(ResearchScope.ITEM_UPGRADE);
             }
             previousTarget = target().copy();
@@ -415,6 +420,7 @@ public final class ResearchStationUi {
 
     private void select(ResourceLocation id) {
         selected = id.equals(selected) ? null : id;
+        selection.select(selected);
         graph.clearAllSelected();
         if (selected != null && graphNodes.containsKey(selected)) graph.addSelected(graphNodes.get(selected));
         graph.focus(selected, hovered);
@@ -428,8 +434,6 @@ public final class ResearchStationUi {
         ResourceLocation next = inside ? id : null;
         if (Objects.equals(hovered, next)) return;
         hovered = next;
-        selected = null;
-        graph.clearAllSelected();
         graph.focus(selected, hovered);
         refreshExpandedNodes();
     }
@@ -437,8 +441,8 @@ public final class ResearchStationUi {
     private void refreshExpandedNodes() {
         boolean changed = false;
         for (ResearchGraphNode node : graphNodes.values()) {
-            Presentation presentation = node.researchId().equals(hovered) ?
-                    node.researchId().equals(selected) ? Presentation.DETAILS : Presentation.COSTS : Presentation.COLLAPSED;
+            Presentation presentation = node.researchId().equals(selected) ? Presentation.DETAILS :
+                    node.researchId().equals(hovered) ? Presentation.COSTS : Presentation.COLLAPSED;
             changed |= node.presentation() != presentation;
             node.present(presentation);
             if (presentation != Presentation.COLLAPSED) node.content((costs, details) -> populateNode(costs, details, node.researchId(), presentation));
@@ -446,7 +450,9 @@ public final class ResearchStationUi {
         if (changed) positionNodes();
     }
 
-    /** Expand column/row spacing around the hovered native node without reloading the graph or resetting its view. */
+    /**
+     * Expand column/row spacing around hovered and selected nodes without reloading the graph or resetting its view.
+     */
     private void positionNodes() {
         Int2IntOpenHashMap widths = new Int2IntOpenHashMap();
         Int2IntOpenHashMap rows = new Int2IntOpenHashMap();

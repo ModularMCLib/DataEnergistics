@@ -353,7 +353,8 @@ public final class ResearchStationUi {
             CompoundTag pending = lookup(projectData, node.id());
             Component state = unlocked.contains(node.id()) ? ResearchUiParts.text("unlocked") : pending != null ?
                     projectStatus(node, pending) : ResearchUiParts.text(available(node) ? "available" : "unavailable");
-            int color = unlocked.contains(node.id()) ? 0xFF50785F : pending != null ? 0xFF826941 : available(node) ? 0xFF505F87 : 0xFF666A78;
+            int color = unlocked.contains(node.id()) ? ResearchUiParts.NODE_COMPLETED :
+                    pending != null && pending.getBoolean("running") ? ResearchUiParts.NODE_RUNNING : ResearchUiParts.NODE_BORDER;
             graphNodes.get(node.id()).state(state, color);
         }
         ResearchUiParts.show(empty, scope == ResearchScope.TECHNOLOGY && shown.isEmpty());
@@ -381,7 +382,7 @@ public final class ResearchStationUi {
         if (scope == ResearchScope.ITEM_UPGRADE && !target().isEmpty()) {
             ResearchGraphNode item = new ResearchGraphNode(ITEM_ROOT, target().getHoverName(), target().copy(),
                     this::select, this::hover, this::positionNodes);
-            item.state(ResearchUiParts.text("initial_item"), 0xFF505F87);
+            item.state(ResearchUiParts.text("initial_item"), ResearchUiParts.NODE_BORDER);
             model.models().add(item);
             graphNodes.put(ITEM_ROOT, item);
         }
@@ -471,10 +472,8 @@ public final class ResearchStationUi {
 
     private void populateNode(UIElement costs, UIElement details, ResourceLocation nodeId, Presentation presentation) {
         if (ITEM_ROOT.equals(nodeId)) {
-            costs.addChild(ResearchUiParts.label(target().getHoverName()));
             costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
             if (presentation == Presentation.DETAILS) {
-                details.addChild(ResearchUiParts.label(target().getHoverName()));
                 details.addChild(ResearchUiParts.label(ResearchUiParts.text("initial_description")));
             }
             return;
@@ -487,10 +486,8 @@ public final class ResearchStationUi {
         }
         ResearchNode displayed = node;
         if (presentation == Presentation.DETAILS) {
-            details.addChild(ResearchUiParts.label(Component.translatable(node.name())));
             details.addChild(ResearchUiParts.label(Component.translatable(node.description())));
         }
-        costs.addChild(ResearchUiParts.label(Component.translatable(node.name())));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("time", node.researchTicks(), format(node.researchTicks() / 20.0))));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("energy", format(node.aePerTick()), format(node.aePerTick() * node.researchTicks()))));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials")));

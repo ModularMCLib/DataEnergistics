@@ -34,6 +34,11 @@ final class ResearchUiParts {
 
     static final int SURFACE = 0xFFADB0C4;
     static final int TEXT = 0xFF141D30;
+    static final int NODE_BACKGROUND = 0xFFCBCCD4;
+    static final int NODE_BORDER = 0xFFF2F2F2;
+    static final int NODE_COMPLETED = 0xFF57E0BB;
+    static final int NODE_RUNNING = 0xFFB06FDD;
+    static final int NODE_SELECTED = 0xFF9CD9FF;
     static final int MATERIAL_ICON_SPACE = 19;
     static final IGuiTexture PANEL = framed(0xFFEFF1F8, 0xFF53617D);
     private static final IGuiTexture BUTTON = framed(0xFFF7F9FF, 0xFF4B5979);

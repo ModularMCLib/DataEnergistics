@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
+import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
@@ -9,10 +10,12 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.PortCapacity;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.PortModelOptions;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphElement;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.dependency.ModelUpdateVisitor;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.NodeElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.NodeTitleElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.NodeModel;
@@ -41,7 +44,7 @@ final class ResearchGraphNode extends NodeModel {
     private final BiConsumer<ResourceLocation, Boolean> hover;
     private final Runnable layoutChanged;
     private Component status = Component.empty();
-    private int stateColor = 0xFF7A8097;
+    private int stateColor = ResearchUiParts.NODE_BORDER;
     private Presentation presentation = Presentation.COLLAPSED;
     private int presentationRevision;
     private int layoutWidth = SUMMARY_WIDTH;
@@ -128,7 +131,7 @@ final class ResearchGraphNode extends NodeModel {
         private final UIElement header = new UIElement();
         private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
-        private int renderedColor;
+        private final ColorBorderTexture border = new ColorBorderTexture(-1, ResearchUiParts.NODE_BORDER);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
         private final UIElement details = new UIElement();
@@ -138,7 +141,14 @@ final class ResearchGraphNode extends NodeModel {
         ResearchNodeElement(ResearchGraphNode model) {
             super(model);
             this.research = model;
-            this.title = new NodeTitleElement(model);
+            this.title = new NodeTitleElement(model) {
+
+                @Override
+                public void updateUIFromModel(ModelUpdateVisitor visitor) {
+                    super.updateUIFromModel(visitor);
+                    Style.importantPipeline(getNodeTittle().getStyle(), style -> style.tooltips(new Component[0]));
+                }
+            };
             addEventListener(UIEvents.CLICK, event -> {
                 if (event.button == 0 && event.target.getStructurePath().stream().noneMatch(Button.class::isInstance)) {
                     refreshHover();
@@ -150,10 +160,6 @@ final class ResearchGraphNode extends NodeModel {
             addEventListener(UIEvents.TICK, event -> {
                 refreshHover();
                 status.setText(research.status);
-                if (renderedColor != research.stateColor) {
-                    renderedColor = research.stateColor;
-                    summary.style(style -> style.backgroundTexture(new ColorRectTexture(renderedColor)));
-                }
                 if (renderedRevision != research.presentationRevision) {
                     renderedRevision = research.presentationRevision;
                     Presentation presentation = research.presentation;
@@ -189,7 +195,7 @@ final class ResearchGraphNode extends NodeModel {
             Style.importantPipeline(getLayout(), layout -> layout.positionType(TaffyPosition.ABSOLUTE));
             layout(layout -> layout.width(research.layoutWidth).heightAuto().paddingAll(0).gapAll(0)
                     .flexDirection(FlexDirection.COLUMN));
-            style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+            style(style -> style.backgroundTexture(new ColorRectTexture(ResearchUiParts.NODE_BACKGROUND)));
             header.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.ROW)
                     .alignItems(AlignItems.STRETCH).gapAll(0).flexShrink(0));
             summary.layout(layout -> layout.width(SUMMARY_WIDTH).heightAuto().paddingAll(3).gapAll(2)
@@ -198,14 +204,12 @@ final class ResearchGraphNode extends NodeModel {
                     .fontSize(10).textColor(0xFFFFFFFF).textShadow(true).textWrap(TextWrap.HOVER_ROLL));
             title.getNodeTittle().layout(layout -> layout.width(78).height(18));
             title.getNodeIcon().layout(layout -> layout.width(16).height(16));
-            status.textStyle(style -> style.fontSize(9).textColor(0xFFFFFFFF).textShadow(true));
+            status.textStyle(style -> style.fontSize(9).textColor(ResearchUiParts.TEXT).textShadow(false));
             summary.addChildren(title, status);
             costs.layout(layout -> layout.width(60).heightAuto().paddingAll(6).gapAll(3)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            costs.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
             details.layout(layout -> layout.widthPercent(100).heightAuto().paddingAll(6).gapAll(3)
                     .flexDirection(FlexDirection.COLUMN).flexShrink(0));
-            details.style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
             header.addChildren(summary, costs);
             addChildren(header, details);
             ResearchUiParts.show(costs, research.presentation != Presentation.COLLAPSED);
@@ -259,6 +263,12 @@ final class ResearchGraphNode extends NodeModel {
             research.layoutWidth = width;
             research.layoutHeight = height;
             research.layoutChanged.run();
+        }
+
+        @Override
+        public void drawBackgroundOverlay(GUIContext context) {
+            int color = isSelected() || shouldBeHighlighted() || isSelfOrChildHover() ? ResearchUiParts.NODE_SELECTED : research.stateColor;
+            context.drawTexture(border.setColor(color), getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
         }
 
         @Override

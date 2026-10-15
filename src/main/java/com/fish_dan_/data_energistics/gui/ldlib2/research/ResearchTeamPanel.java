@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 
+import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
@@ -22,12 +23,24 @@ final class ResearchTeamPanel extends UIElement {
 
     ResearchTeamPanel(ResearchStationMenu menu) {
         this.menu = menu;
-        style(style -> style.backgroundTexture(ResearchUiParts.PANEL));
+        IGuiTexture panel = ResearchUiParts.roundedFrame(0xFFEFF1F8, 0xFF53617D);
+        style(style -> style.backgroundTexture(panel).overflowVisible(false)
+                .overflowClip(ResearchUiParts.rounded(0xFFFFFFFF)));
+        roundScroll(membership, panel);
+        roundScroll(invitations, panel);
         teamName.setAnyString();
         ResearchUiParts.input(teamName);
-        teamName.textFieldStyle(style -> style.placeholder(ResearchUiParts.text("team_name")));
+        teamName.style(style -> style.backgroundTexture(ResearchUiParts.roundedFrame(0xFFF7F9FF, 0xFF4B5979)));
+        teamName.textFieldStyle(style -> style.placeholder(ResearchUiParts.text("team_name"))
+                .focusOverlay(ResearchUiParts.roundedFrame(0, 0xFF1C7653)));
         create = ResearchUiParts.button(ResearchUiParts.text("team_create"), () -> request("create", teamName.getValue()));
         addChildren(teamName, create, membership, invitations);
+    }
+
+    private static void roundScroll(ScrollerView scroll, IGuiTexture panel) {
+        scroll.style(style -> style.overflowVisible(false).overflowClip(ResearchUiParts.rounded(0xFFFFFFFF)));
+        scroll.viewPort.style(style -> style.backgroundTexture(panel));
+        scroll.verticalScroller.scrollContainer.style(style -> style.backgroundTexture(ResearchUiParts.rounded(ResearchUiParts.SURFACE)));
     }
 
     void resize(int left, int top, int width, int height) {

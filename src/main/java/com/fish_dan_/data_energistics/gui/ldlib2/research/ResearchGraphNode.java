@@ -298,11 +298,6 @@ final class ResearchGraphNode extends NodeModel {
         public void drawBackgroundAdditional(GUIContext context) {
             super.drawBackgroundAdditional(context);
             // A continuous turquoise underlay fills the seams; rounded grey panels leave one-pixel dividers.
-            float radius = ResearchUiParts.CORNER_RADIUS;
-            float costEdgeRadius = research.presentation == Presentation.COLLAPSED ? radius : 0;
-            // LDLib orders the corners as bottom-left, bottom-right, top-right, top-left.
-            summaryBackground.getRadius().set(research.presentation == Presentation.DETAILS ? 0 : radius,
-                    costEdgeRadius, costEdgeRadius, radius);
             context.drawTexture(summaryBackground, summary.getPositionX(), summary.getPositionY(),
                     summary.getSizeWidth(), summary.getSizeHeight());
             if (research.presentation != Presentation.COLLAPSED) {

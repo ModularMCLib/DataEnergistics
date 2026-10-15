@@ -74,7 +74,6 @@ public final class ResearchStationUi {
     private final UIElement backpack = new UIElement();
     private final Label backpackHeader = ResearchUiParts.label(ResearchUiParts.text("backpack"));
     private final InventorySlots backpackInventory = new InventorySlots();
-    private final ObjectList<Button> pageButtons = new ObjectArrayList<>();
     private final Label empty = ResearchUiParts.label(ResearchUiParts.text("catalog_empty"));
     private final Label projectTitle = ResearchUiParts.label(ResearchUiParts.text("projects", 0));
     private final ResearchTeamPanel teams;
@@ -82,8 +81,8 @@ public final class ResearchStationUi {
     private final ResearchGraphFrame graphFrame;
     private final Button teamTab;
     private final Button close;
-    private final Button technologyTab;
-    private final Button upgradeTab;
+    private final Button scopeToggle;
+    private final Button pageToggle;
     private final Button filterButton;
     private final Button zoomOut;
     private final Button zoomIn;
@@ -126,25 +125,20 @@ public final class ResearchStationUi {
         teamTab = ResearchUiParts.button(ResearchUiParts.text("team_tab"), this::toggleTeams);
         teamTab.addEventListener(UIEvents.TICK, event -> teamTab.text.setText(ResearchUiParts.text(showTeams ? "research_tab" : "team_tab")));
         close = ResearchUiParts.button(Component.literal("×"), () -> menu.getPlayer().closeContainer());
-        technologyTab = ResearchUiParts.button(ResearchUiParts.text("technology"), () -> setScope(ResearchScope.TECHNOLOGY));
-        technologyTab.addEventListener(UIEvents.TICK, event -> technologyTab.text.setText(
-                Component.literal(scope == ResearchScope.TECHNOLOGY ? "● " : "").append(ResearchUiParts.text("technology"))));
-        upgradeTab = ResearchUiParts.button(ResearchUiParts.text("item_upgrade"), () -> setScope(ResearchScope.ITEM_UPGRADE));
-        upgradeTab.addEventListener(UIEvents.TICK, event -> upgradeTab.text.setText(
-                Component.literal(scope == ResearchScope.ITEM_UPGRADE ? "● " : "").append(ResearchUiParts.text("item_upgrade"))));
+        scopeToggle = ResearchUiParts.button(ResearchUiParts.text(scope == ResearchScope.TECHNOLOGY ? "technology" : "item_upgrade"),
+                () -> setScope(scope == ResearchScope.TECHNOLOGY ? ResearchScope.ITEM_UPGRADE : ResearchScope.TECHNOLOGY));
+        scopeToggle.addEventListener(UIEvents.TICK, event -> scopeToggle.text.setText(
+                ResearchUiParts.text(scope == ResearchScope.TECHNOLOGY ? "technology" : "item_upgrade")));
         filterButton = ResearchUiParts.button(ResearchUiParts.text("filter_all"), () -> {
             filter = Filter.values()[(filter.ordinal() + 1) % Filter.values().length];
             rebuild = true;
         });
         filterButton.addEventListener(UIEvents.TICK, event -> filterButton.text.setText(
                 ResearchUiParts.text("filter_" + filter.name().toLowerCase(Locale.ROOT))));
-        for (Page entry : Page.values()) {
-            Button button = ResearchUiParts.button(ResearchUiParts.text(entry.key), () -> {
-                page = entry;
-                updatePages();
-            });
-            pageButtons.add(button);
-        }
+        pageToggle = ResearchUiParts.button(ResearchUiParts.text(page.key), () -> {
+            page = page == Page.GRAPH ? Page.PROJECTS : Page.GRAPH;
+            updatePages();
+        });
         zoomOut = ResearchUiParts.button(Component.literal("−"), () -> graph.graphView.setScale(graph.graphView.getScale() - 0.15F));
         zoomIn = ResearchUiParts.button(Component.literal("+"), () -> graph.graphView.setScale(graph.graphView.getScale() + 0.15F));
         reset = ResearchUiParts.button(ResearchUiParts.text("reset"), graph::fitGraphChildren);
@@ -194,8 +188,7 @@ public final class ResearchStationUi {
         shortcuts.addChildren(backpackButton, close);
         researchControls.layout(layout -> layout.widthPercent(100).heightAuto().flexDirection(FlexDirection.COLUMN)
                 .gapAll(6).flexShrink(0));
-        researchControls.addChildren(technologyTab, upgradeTab, filterButton);
-        for (Button button : pageButtons) researchControls.addChild(button);
+        researchControls.addChildren(scopeToggle, filterButton, pageToggle);
         UIElement zoom = new UIElement();
         zoom.layout(layout -> layout.widthPercent(100).height(22).flexDirection(FlexDirection.ROW).gapAll(4).flexShrink(0));
         zoomOut.layout(layout -> layout.flex(1).width(0).minWidth(0));
@@ -283,11 +276,7 @@ public final class ResearchStationUi {
         int graphWidth = projectsOpen && layout.wide() ? layout.graphWidth() : layout.workspaceWidth();
         ResearchUiParts.at(graphPane, layout.margin(), layout.bodyTop(), graphWidth, layout.bodyHeight());
         ResearchUiParts.at(graphFrame, 0, 0, graphWidth, layout.bodyHeight());
-        for (Page entry : Page.values()) {
-            Button button = pageButtons.get(entry.ordinal());
-            ResearchUiParts.show(button, true);
-            button.text.setText(Component.literal(page == entry ? "● " : "").append(ResearchUiParts.text(entry.key)));
-        }
+        pageToggle.text.setText(ResearchUiParts.text(page.key));
     }
 
     private ItemStack target() {

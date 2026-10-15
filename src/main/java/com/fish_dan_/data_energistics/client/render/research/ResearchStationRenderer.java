@@ -40,6 +40,8 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
     private static final float WORKBENCH_Z = 8F / 16;
     private static final float ITEM_HEIGHT_OFFSET = 2F / 16;
     private static final float SWING_DEGREES = 10;
+    private static final float YAW_DEGREES = 14;
+    private static final float PITCH_DEGREES = 4;
     private static final int SWING_PERIOD_TICKS = 80;
     private static final int BEAM_COLOR = 0x80A8FFE0;
     // Side heads exchange the supplied model's axes. Their pivots preserve the original idle geometry.
@@ -148,11 +150,18 @@ public final class ResearchStationRenderer implements BlockEntityRenderer<Resear
                                  float idleDegrees, float workingDegrees, float yawDegrees, float phaseOffset) {
 
         private Matrix4f transform(boolean working, float phase) {
-            float angle = working ? workingDegrees + Mth.sin(phase + phaseOffset) * SWING_DEGREES : idleDegrees;
-            return new Matrix4f()
-                    .translation((float) attachment.x / 16, (float) attachment.y / 16, (float) attachment.z / 16)
-                    .rotate(swingAxis.rotationDegrees(angle))
-                    .rotateY(yawDegrees * Mth.DEG_TO_RAD)
+            Matrix4f transform = new Matrix4f()
+                    .translation((float) attachment.x / 16, (float) attachment.y / 16, (float) attachment.z / 16);
+            if (working) {
+                float headPhase = phase + phaseOffset;
+                // Closed, offset cycles scan both axes while keeping each beam on the workbench.
+                transform.rotateY(Mth.cos(headPhase) * YAW_DEGREES * Mth.DEG_TO_RAD)
+                        .rotate(swingAxis.rotationDegrees(workingDegrees + Mth.sin(headPhase) * SWING_DEGREES))
+                        .rotateX(Mth.sin(phase * 2 + phaseOffset) * PITCH_DEGREES * Mth.DEG_TO_RAD);
+            } else {
+                transform.rotate(swingAxis.rotationDegrees(idleDegrees));
+            }
+            return transform.rotateY(yawDegrees * Mth.DEG_TO_RAD)
                     .translate((float) -modelPivot.x / 16, (float) -modelPivot.y / 16, (float) -modelPivot.z / 16);
         }
     }

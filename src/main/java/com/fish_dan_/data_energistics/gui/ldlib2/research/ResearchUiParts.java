@@ -29,6 +29,7 @@ final class ResearchUiParts {
     static final int SURFACE = 0xFFADB0C4;
     static final int TEXT = 0xFF141D30;
     static final int NODE_BACKGROUND = 0xFFCBCCD4;
+    static final int NODE_SUMMARY_BACKGROUND = 0xFF9AB5A5;
     static final int NODE_SECTION = 0xFF46DBC2;
     static final int CORNER_RADIUS = 6;
     static final int NODE_BORDER = 0xFFF2F2F2;

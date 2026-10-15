@@ -158,6 +158,7 @@ final class ResearchGraphNode extends NodeModel {
         private final UIElement summary = new UIElement();
         private final Label status = ResearchUiParts.label(Component.empty());
         private final SDFRectTexture border = ResearchUiParts.rounded(0).setStroke(1).setBorderColor(ResearchUiParts.NODE_BORDER);
+        private final SDFRectTexture summaryBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_SUMMARY_BACKGROUND);
         private final SDFRectTexture sectionBackground = ResearchUiParts.rounded(ResearchUiParts.NODE_BACKGROUND);
         private int renderedRevision = -1;
         private final UIElement costs = new UIElement();
@@ -297,6 +298,13 @@ final class ResearchGraphNode extends NodeModel {
         public void drawBackgroundAdditional(GUIContext context) {
             super.drawBackgroundAdditional(context);
             // A continuous turquoise underlay fills the seams; rounded grey panels leave one-pixel dividers.
+            float radius = ResearchUiParts.CORNER_RADIUS;
+            float costEdgeRadius = research.presentation == Presentation.COLLAPSED ? radius : 0;
+            // LDLib orders the corners as bottom-left, bottom-right, top-right, top-left.
+            summaryBackground.getRadius().set(research.presentation == Presentation.DETAILS ? 0 : radius,
+                    costEdgeRadius, costEdgeRadius, radius);
+            context.drawTexture(summaryBackground, summary.getPositionX(), summary.getPositionY(),
+                    summary.getSizeWidth(), summary.getSizeHeight());
             if (research.presentation != Presentation.COLLAPSED) {
                 context.drawTexture(sectionBackground, costs.getPositionX() + 1, costs.getPositionY(),
                         costs.getSizeWidth() - 1, costs.getSizeHeight());

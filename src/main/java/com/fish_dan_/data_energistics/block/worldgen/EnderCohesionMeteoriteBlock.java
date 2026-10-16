@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.block.worldgen;
 
 import com.fish_dan_.data_energistics.entity.resource.DispersingDataEntity;
-import com.fish_dan_.data_energistics.integration.technology.useless.equipment.SomeUselessThingsCompat;
 
 import appeng.core.definitions.AEItems;
 
@@ -17,13 +16,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.fml.ModList;
 
 import java.util.Set;
 
 public class EnderCohesionMeteoriteBlock extends Block {
 
-    private static final String USELESS_MOD_ID = "useless_mod";
     private static final int MAX_FORTUNE_LEVEL = 3;
     private static final int TELEPORT_HALF_RANGE = 3;
     private final float dispersingDataChance;
@@ -46,7 +43,7 @@ public class EnderCohesionMeteoriteBlock extends Block {
             return;
         }
 
-        this.handleSpecialMining(serverLevel, player, pos, state, tool, hasSpecialSilkTouch(serverLevel, tool), getFortuneLevel(serverLevel, tool));
+        this.handleSpecialMining(serverLevel, player, pos, state, tool, hasSilkTouch(serverLevel, tool), getFortuneLevel(serverLevel, tool));
     }
 
     public void handleSpecialMining(ServerLevel serverLevel, Player player, BlockPos pos, BlockState state, ItemStack tool, boolean silkTouch, int fortuneLevel) {
@@ -69,14 +66,6 @@ public class EnderCohesionMeteoriteBlock extends Block {
     public static boolean hasSilkTouch(ServerLevel level, ItemStack tool) {
         return tool.getEnchantmentLevel(
                 level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH)) > 0;
-    }
-
-    private static boolean hasSpecialSilkTouch(ServerLevel level, ItemStack tool) {
-        return hasSilkTouch(level, tool) || hasUselessSilkTouchMode(tool);
-    }
-
-    private static boolean hasUselessSilkTouchMode(ItemStack tool) {
-        return ModList.get().isLoaded(USELESS_MOD_ID) && SomeUselessThingsCompat.isSilkTouchMode(tool);
     }
 
     public static int getFortuneLevel(ServerLevel level, ItemStack tool) {
@@ -113,7 +102,7 @@ public class EnderCohesionMeteoriteBlock extends Block {
     }
 
     private static int capFortuneLevel(int fortuneLevel) {
-        return Math.min(MAX_FORTUNE_LEVEL, Math.max(0, fortuneLevel));
+        return Math.clamp(fortuneLevel, 0, MAX_FORTUNE_LEVEL);
     }
 
     private static void teleportRandomly(ServerLevel level, ServerPlayer player, RandomSource random) {

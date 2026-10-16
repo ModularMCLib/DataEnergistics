@@ -50,7 +50,6 @@ public final class DataEnergisticsMixinPlugin implements IMixinConfigPlugin {
         addModCompatMixin("guideme", "guide.guideme.");
         addModCompatMixin("neoecoae", "ae.neoecoae.");
         addModCompatMixin("xaeroworldmap", "map.xaeroworldmap.");
-        addModCompatMixin("useless_mod", "useless.");
     }
 
     public DataEnergisticsMixinPlugin() {

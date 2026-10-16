@@ -73,7 +73,7 @@ A special variant based on AE meteorites, with a larger body and crater than an 
 
 Higher-quality Data Crystal mother rocks are progressively rarer. A center-layer Certus bud can appear only when the mother rock below it is a Certus tier; a Data Crystal mother rock below leaves that center position empty. This distribution applies only to newly generated digitized meteorites.
 
-All five Data Crystal mother rocks preserve their own tier when mined with Silk Touch. Without Silk Touch, their existing downgrade rules remain:
+The Deactivated, Powerless, Fatigued and Deficient Data Crystal mother rocks drop themselves when mined with Silk Touch. The Charged mother rock always drops one Deficient mother rock, regardless of Silk Touch. Ordinary mining drops are:
 
 | Mother rock | Ordinary mining |
 |---|---|
@@ -81,7 +81,7 @@ All five Data Crystal mother rocks preserve their own tier when mined with Silk 
 | <ItemImage id="data_energistics:budding_data_crystal_1" /> Powerless | <ItemImage id="data_energistics:budding_data_crystal_0" /> Deactivated |
 | <ItemImage id="data_energistics:budding_data_crystal_2" /> Fatigued | <ItemImage id="data_energistics:budding_data_crystal_1" /> Powerless |
 | <ItemImage id="data_energistics:budding_data_crystal_3" /> Deficient | <ItemImage id="data_energistics:budding_data_crystal_2" /> Fatigued |
-| <ItemImage id="data_energistics:budding_data_crystal_4" /> Charged | <ItemImage id="data_energistics:budding_data_crystal_2" /> Fatigued |
+| <ItemImage id="data_energistics:budding_data_crystal_4" /> Charged | <ItemImage id="data_energistics:budding_data_crystal_3" /> Deficient |
 
 > ⚠ it will be the start of your mod
 >

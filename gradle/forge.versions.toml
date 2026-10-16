@@ -83,7 +83,6 @@ applied-flux = "8204513"
 applied-pneumatics = "8812885"
 applied-create = "8546920"
 mega-cells = "7952621"
-sut = "8865224"
 cloth-config = "5729127"
 amek = "7096962"
 forbidden-arcanus = "6875895"
@@ -184,7 +183,6 @@ applied-flux        = { module = "curse.maven:applied-flux-965012", version.ref 
 applied-pneumatics  = { module = "curse.maven:applied-pneumatics-1355087", version.ref = "applied-pneumatics" }
 applied-create      = { module = "curse.maven:applied-create-1474758", version.ref = "applied-create" }
 mega-cells          = { module = "curse.maven:mega-cells-622112", version.ref = "mega-cells" }
-sut                 = { module = "curse.maven:some-useless-things-1401600", version.ref = "sut"}
 cloth-config        = { module = "curse.maven:cloth-config-348521", version.ref = "cloth-config" }
 amek                = { module = "curse.maven:applied-mekanistics-574300", version.ref = "amek" }
 forbidden-arcanus   = { module = "curse.maven:forbidden-arcanus-309858", version.ref = "forbidden-arcanus" }

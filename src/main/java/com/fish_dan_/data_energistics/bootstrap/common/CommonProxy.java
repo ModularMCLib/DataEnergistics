@@ -12,6 +12,11 @@ import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsRegistryS
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
+import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
+import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchRegistrationEvents;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAccessors;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
@@ -21,10 +26,6 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.Curio
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
-import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
-import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
-import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
-import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEChunkGenerators;
@@ -43,7 +44,6 @@ import com.fish_dan_.data_energistics.registry.DEStructures;
 import com.fish_dan_.data_energistics.registry.DEUpgrades;
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.registry.UniversalTerminalAdapters;
-import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchRegistrationEvents;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;

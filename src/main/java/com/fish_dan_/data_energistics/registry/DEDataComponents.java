@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.registry;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.item.carrier.CropDataCarrierItemData;
 import com.fish_dan_.data_energistics.item.carrier.MobDataCarrierItemData;
 import com.fish_dan_.data_energistics.item.carrier.OreDataCarrierItemData;
@@ -9,8 +11,6 @@ import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotItemData;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
-import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 
 import appeng.api.stacks.AEKey;
 

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.orbital;
 
-import com.fish_dan_.data_energistics.network.orbital.visual.OrbitalAttackVisualsPayload;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualSnapshot;
+import com.fish_dan_.data_energistics.network.orbital.visual.OrbitalAttackVisualsPayload;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;

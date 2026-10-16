@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.common.research.lifecycle;
 
-import com.fish_dan_.data_energistics.network.research.ResearchSnapshotPayload;
-import com.fish_dan_.data_energistics.data.research.ResearchReloadListener;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchSavedData;
 import com.fish_dan_.data_energistics.common.research.synchronization.ResearchSnapshots;
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.data.research.ResearchReloadListener;
+import com.fish_dan_.data_energistics.network.research.ResearchSnapshotPayload;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;

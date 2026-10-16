@@ -5,13 +5,13 @@ import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.condition.ResearchConditionEvaluation;
 import com.fish_dan_.data_energistics.common.research.condition.ResearchConditionEvaluator;
-import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchSavedData;
+import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

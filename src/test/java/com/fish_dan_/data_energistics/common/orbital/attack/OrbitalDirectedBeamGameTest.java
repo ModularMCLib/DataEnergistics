@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.network.orbital.visual.OrbitalAttackVisualsPayload;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamSweep;
 import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
+import com.fish_dan_.data_energistics.network.orbital.visual.OrbitalAttackVisualsPayload;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;

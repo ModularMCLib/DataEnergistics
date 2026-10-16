@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.model;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 /**
  * Immutable deployment state carried by an orbital weapon record.

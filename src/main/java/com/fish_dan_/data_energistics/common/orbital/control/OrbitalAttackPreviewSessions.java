@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.orbital.control;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyDepth;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyStrike;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;

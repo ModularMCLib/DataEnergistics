@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Independent technology gates; the bit positions are used only by the open menu's view state. */
 public enum DigitalAnvilUpgrade {
+
     FIXED_PENALTY("fixed_penalty"),
     UNRESTRICTED_TYPES("unrestricted_types"),
     UNRESTRICTED_LEVELS("unrestricted_levels"),

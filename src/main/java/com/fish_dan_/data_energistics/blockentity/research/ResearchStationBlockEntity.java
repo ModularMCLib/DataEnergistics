@@ -2,12 +2,12 @@ package com.fish_dan_.data_energistics.blockentity.research;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.research.ResearchStationBlock;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchSavedData;
 import com.fish_dan_.data_energistics.common.research.progression.ResearchExecution;
 import com.fish_dan_.data_energistics.common.research.progression.ResearchStationState;
+import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.inventories.BaseInternalInventory;
 import appeng.api.inventories.InternalInventory;

@@ -6,11 +6,11 @@ import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.common.research.condition.ResearchConditionEvaluation;
 import com.fish_dan_.data_energistics.common.research.condition.ResearchConditionEvaluator;
-import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchNbt;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchSavedData;
 import com.fish_dan_.data_energistics.common.research.progression.ResearchExecution;
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

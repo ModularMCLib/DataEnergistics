@@ -10,10 +10,10 @@ import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLoc
 import com.fish_dan_.data_energistics.common.orbital.model.OrbitalAccessRole;
 import com.fish_dan_.data_energistics.common.orbital.storage.OrbitalOwnershipTransfer;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.development.ResearchDevelopmentMode;
 import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;

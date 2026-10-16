@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
+import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 import com.fish_dan_.data_energistics.network.orbital.projection.OrbitalProjectionVisualsPayload;
 import com.fish_dan_.data_energistics.network.orbital.visual.OrbitalAttackVisualsPayload;
-import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;

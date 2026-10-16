@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.orbital.storage;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointAvailability;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointKind;
@@ -15,6 +14,7 @@ import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceR
 import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalReserveCharging;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

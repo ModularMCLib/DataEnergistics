@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.orbital.control.ui.target;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyDepth;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalTargetYMode;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlDraft;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiTheme;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;

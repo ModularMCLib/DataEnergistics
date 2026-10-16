@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
-import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.research.development;
 
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.common.research.persistence.ResearchSavedData;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.server.level.ServerPlayer;
 

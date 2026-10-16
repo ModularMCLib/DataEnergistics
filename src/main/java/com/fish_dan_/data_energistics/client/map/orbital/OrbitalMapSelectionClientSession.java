@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.map.orbital;
 
-import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlConsoleOpenPayload;
-import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlDraft;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiSource;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiSource.Console;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiSource.Terminal;
+import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlConsoleOpenPayload;
+import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;

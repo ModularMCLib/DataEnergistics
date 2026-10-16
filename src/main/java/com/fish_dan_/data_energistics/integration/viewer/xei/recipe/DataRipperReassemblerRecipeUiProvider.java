@@ -17,7 +17,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.utils.IModularUIProvider;
 import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 
 import appeng.api.stacks.GenericStack;
-import appeng.core.AppEng;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -33,10 +32,8 @@ import java.util.List;
 public final class DataRipperReassemblerRecipeUiProvider
                                                          implements IModularUIProvider<DataRipperReassemblerRecipeView> {
 
-    private static final ResourceLocation TEXTURE = AppEng.makeId("textures/guis/data_reassembler.png");
-    private static final int TEXTURE_SIZE = 256;
-    private static final int BACKGROUND_U = 11;
-    private static final int BACKGROUND_V = 19;
+    private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/reassembler.png");
+    private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/recipe/reassembler_progress.png");
     private static final int CANDIDATE_CYCLE_TICKS = 20;
     private static final long PROGRESS_CYCLE_MILLIS = 2_000L;
 
@@ -52,11 +49,7 @@ public final class DataRipperReassemblerRecipeUiProvider
         root.setId("data-reassembler-recipe");
         root.getLayout().width(DataReassemblerLayout.RECIPE_WIDTH);
         root.getLayout().height(DataReassemblerLayout.RECIPE_HEIGHT);
-        root.style(style -> style.backgroundTexture(SpriteTexture.of(TEXTURE).setSprite(
-                BACKGROUND_U,
-                BACKGROUND_V,
-                DataReassemblerLayout.RECIPE_WIDTH,
-                DataReassemblerLayout.RECIPE_HEIGHT)));
+        root.style(style -> style.backgroundTexture(SpriteTexture.of(BACKGROUND)));
 
         addProgress(root);
         addItemInputs(root, recipe);
@@ -71,13 +64,13 @@ public final class DataRipperReassemblerRecipeUiProvider
 
     private void addProgress(UIElement root) {
         var progress = new DataReassemblerProgressElement(
-                TEXTURE,
-                176,
+                PROGRESS,
+                0,
                 0,
                 DataReassemblerLayout.PROGRESS_WIDTH,
                 DataReassemblerLayout.PROGRESS_HEIGHT,
-                TEXTURE_SIZE,
-                TEXTURE_SIZE,
+                DataReassemblerLayout.PROGRESS_WIDTH,
+                DataReassemblerLayout.PROGRESS_HEIGHT,
                 () -> (System.currentTimeMillis() % PROGRESS_CYCLE_MILLIS) / (double) PROGRESS_CYCLE_MILLIS);
         progress.setId("progress");
         place(progress, DataReassemblerLayout.PROGRESS_X, DataReassemblerLayout.PROGRESS_Y);

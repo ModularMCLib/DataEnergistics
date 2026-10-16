@@ -184,7 +184,16 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("trinity_cpu_panel", sprite("cpu_panel.png"));
         provider.addResource("trinity_cpu_task_overlay", sprite("cpu_task_overlay.png"));
         provider.addResource("trinity_drive", sprite("trinity_drive.png"));
-        provider.addResource("trinity_drive_slot", sprite("trinity_drive_slot.png"));
+        provider.addResource("trinity_drive_slot_0", sprite("drive_slot_0.png"));
+        provider.addResource("trinity_drive_slot_1", sprite("drive_slot_1.png"));
+        provider.addResource("trinity_drive_slot_2", sprite("drive_slot_2.png"));
+        provider.addResource("trinity_drive_slot_3", sprite("drive_slot_3.png"));
+        provider.addResource("compartment_warehouse", guiSprite("compartment/warehouse.png"));
+        provider.addResource("compartment_me_input", guiSprite("compartment/me_input.png"));
+        provider.addResource("compartment_me_output", guiSprite("compartment/me_output.png"));
+        provider.addResource("compartment_pattern_buffer", guiSprite("compartment/pattern_buffer.png"));
+        provider.addResource("recipe_reassembler", guiSprite("recipe/reassembler.png"));
+        provider.addResource("recipe_reassembler_progress", guiSprite("recipe/reassembler_progress.png"));
         provider.addResource("trinity_home", sprite("home.png"));
         provider.addResource("trinity_host_layout_reference", sprite("host_layout_reference.png"));
         provider.addResource("trinity_status_panel", sprite("status_panel.png"));

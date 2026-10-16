@@ -21,6 +21,8 @@ final class ResearchGraphView extends GraphView {
     private @Nullable ResourceLocation selectedId;
     private @Nullable ResourceLocation hoveredId;
     private final ObjectSet<ResourceLocation> relatedIds = new ObjectOpenHashSet<>();
+    private final ObjectSet<ResourceLocation> excludedIds = new ObjectOpenHashSet<>();
+    private final ObjectSet<ResourceLocation> winningIds = new ObjectOpenHashSet<>();
     private boolean panned;
     private long pressedAt;
 
@@ -108,11 +110,30 @@ final class ResearchGraphView extends GraphView {
         return relatedIds.contains(id) || prerequisitePath.contains(id);
     }
 
+    void excluded(ObjectSet<ResourceLocation> ids, ObjectSet<ResourceLocation> winners) {
+        excludedIds.clear();
+        excludedIds.addAll(ids);
+        winningIds.clear();
+        winningIds.addAll(winners);
+    }
+
+    boolean excluded(ResourceLocation id) {
+        return excludedIds.contains(id);
+    }
+
+    boolean winningRoute(ResourceLocation id) {
+        return winningIds.contains(id);
+    }
+
     boolean missingPrerequisite(ResourceLocation id) {
         return prerequisitePath.missingPrerequisite(id);
     }
 
-    int connectionColor(ResearchGraphNode from, ResearchGraphNode to) {
+    int connectionColor(ResearchGraphNode from, ResearchGraphNode to, boolean mutuallyExclusive) {
+        if (mutuallyExclusive) {
+            if (excluded(from.researchId()) || excluded(to.researchId())) return ResearchUiParts.NODE_BLOCKED;
+            return ResearchUiParts.NODE_BORDER;
+        }
         if (prerequisitePath.missingEdge(from.researchId(), to.researchId())) {
             return ResearchUiParts.NODE_PREREQUISITE;
         }

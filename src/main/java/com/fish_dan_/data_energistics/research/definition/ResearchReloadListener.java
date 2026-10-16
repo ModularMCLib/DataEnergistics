@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.research.definition;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
+import com.fish_dan_.data_energistics.api.research.FtbQuestTaskCondition;
+import com.fish_dan_.data_energistics.api.research.ResearchCondition;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
@@ -77,12 +80,60 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
         ObjectList<ResearchInput> inputs = json.has("inputs") ? ResearchInputParser.parse(json.get("inputs"), operations) : original.inputs();
         Prerequisites prerequisites = json.has("prerequisites") ? prerequisites(json.get("prerequisites")) :
                 new Prerequisites(original.requiredPrerequisites(), original.optionalPrerequisiteGroups());
+        Conditions conditions = json.has("conditions") ? conditions(json.get("conditions"), original) :
+                new Conditions(original.requiredConditions(), original.optionalConditionGroups());
+        ObjectSet<ResourceLocation> mutuallyExclusive = json.has("mutually_exclusive") ?
+                ids(json, "mutually_exclusive") : original.mutuallyExclusive();
         return new ResearchNode(original.id(), original.scope(), original.name(),
                 json.has("description") ? string(json.get("description"), "description") : original.description(),
                 original.icon(), target, inputs,
                 prerequisites.required(), prerequisites.optionalGroups(),
+                conditions.required(), conditions.optionalGroups(), mutuallyExclusive,
                 json.has("research_ticks") ? number(json.get("research_ticks"), "research_ticks").intValueExact() : original.researchTicks(),
                 json.has("ae_per_tick") ? number(json.get("ae_per_tick"), "ae_per_tick").doubleValue() : original.aePerTick());
+    }
+
+    private static Conditions conditions(@Nullable JsonElement value, ResearchNode original) {
+        if (!(value instanceof JsonObject object)) throw new IllegalArgumentException("conditions must be an object");
+        ObjectSet<ResearchCondition> required = object.has("required") ?
+                conditionArray(object.get("required"), "conditions.required") : original.requiredConditions();
+        if (!object.has("optional")) return new Conditions(required, original.optionalConditionGroups());
+        ObjectList<ObjectSet<ResearchCondition>> optionalGroups = new ObjectArrayList<>();
+        JsonElement optionalValue = object.get("optional");
+        if (!(optionalValue instanceof JsonArray groups)) {
+            throw new IllegalArgumentException("conditions.optional must be an array of condition arrays");
+        }
+        for (int index = 0; index < groups.size(); index++) {
+            JsonElement groupValue = groups.get(index);
+            if (!(groupValue instanceof JsonArray group)) {
+                throw new IllegalArgumentException("conditions.optional[" + index + "] must be an array");
+            }
+            ObjectSet<ResearchCondition> parsed = conditionArray(group, "conditions.optional[" + index + "]");
+            if (parsed.isEmpty()) throw new IllegalArgumentException("conditions.optional[" + index + "] must not be empty");
+            optionalGroups.add(parsed);
+        }
+        return new Conditions(required, optionalGroups);
+    }
+
+    private static ObjectSet<ResearchCondition> conditionArray(@Nullable JsonElement value, String field) {
+        ObjectSet<ResearchCondition> result = new ObjectOpenHashSet<>();
+        if (!(value instanceof JsonArray array)) throw new IllegalArgumentException(field + " must be an array");
+        for (int index = 0; index < array.size(); index++) {
+            ResearchCondition condition = condition(array.get(index), field + "[" + index + "]");
+            if (!result.add(condition)) throw new IllegalArgumentException(field + " contains a duplicate condition");
+        }
+        return result;
+    }
+
+    private static ResearchCondition condition(@Nullable JsonElement value, String field) {
+        if (!(value instanceof JsonObject object)) throw new IllegalArgumentException(field + " must be an object");
+        String type = string(object.get("type"), field + ".type");
+        return switch (type) {
+            case "advancement" -> new AdvancementResearchCondition(ResourceLocation.parse(string(object.get("id"), field + ".id")));
+            case "ftbquests_task" -> new FtbQuestTaskCondition(number(object.get("task"), field + ".task").longValueExact(),
+                    object.has("quest") ? ResourceLocation.parse(string(object.get("quest"), field + ".quest")) : null);
+            default -> throw new IllegalArgumentException(field + ".type has unknown condition type " + type);
+        };
     }
 
     private static Prerequisites prerequisites(@Nullable JsonElement value) {
@@ -100,8 +151,10 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
                 throw new IllegalArgumentException("prerequisites.optional[" + index + "] must be an array");
             }
             ObjectSet<ResourceLocation> ids = new ObjectOpenHashSet<>();
-            for (JsonElement element : group) ids.add(ResourceLocation.parse(string(element,
-                    "prerequisites.optional[" + index + "]")));
+            for (int item = 0; item < group.size(); item++) {
+                ResourceLocation id = ResourceLocation.parse(string(group.get(item), "prerequisites.optional[" + index + "][" + item + "]"));
+                if (!ids.add(id)) throw new IllegalArgumentException("prerequisites.optional[" + index + "] contains duplicate ID " + id);
+            }
             if (ids.isEmpty()) throw new IllegalArgumentException("prerequisites.optional[" + index + "] must not be empty");
             optionalGroups.add(ids);
         }
@@ -120,9 +173,17 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
 
     private static ObjectSet<ResourceLocation> ids(JsonObject json, String field) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
-        if (json.has(field)) for (JsonElement element : json.getAsJsonArray(field)) result.add(ResourceLocation.parse(string(element, field)));
+        if (!json.has(field)) return result;
+        JsonElement value = json.get(field);
+        if (!(value instanceof JsonArray array)) throw new IllegalArgumentException(field + " must be an array");
+        for (int index = 0; index < array.size(); index++) {
+            ResourceLocation id = ResourceLocation.parse(string(array.get(index), field + "[" + index + "]"));
+            if (!result.add(id)) throw new IllegalArgumentException(field + " contains duplicate ID " + id);
+        }
         return result;
     }
+
+    private record Conditions(ObjectSet<ResearchCondition> required, ObjectList<ObjectSet<ResearchCondition>> optionalGroups) {}
 
     private record Prerequisites(ObjectSet<ResourceLocation> required, ObjectList<ObjectSet<ResourceLocation>> optionalGroups) {}
 }

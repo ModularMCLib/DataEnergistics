@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.research.persistence;
 
+import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
+import com.fish_dan_.data_energistics.api.research.FtbQuestTaskCondition;
+import com.fish_dan_.data_energistics.api.research.ResearchCondition;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
@@ -14,10 +17,14 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+
+import java.util.UUID;
 
 /** Shared world/wire representation; toolkit graphs and class names never enter authoritative data. */
 public final class ResearchNbt {
@@ -36,6 +43,62 @@ public final class ResearchNbt {
         return result;
     }
 
+    public static ListTag exclusions(Object2ObjectMap<ResourceLocation, ResourceLocation> winners) {
+        ListTag result = new ListTag();
+        winners.forEach((blocked, winner) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putString("blocked", blocked.toString());
+            entry.putString("winner", winner.toString());
+            result.add(entry);
+        });
+        return result;
+    }
+
+    public static Object2ObjectMap<ResourceLocation, ResourceLocation> readExclusions(CompoundTag tag, String field) {
+        Object2ObjectMap<ResourceLocation, ResourceLocation> result = new Object2ObjectOpenHashMap<>();
+        for (Tag value : readList(tag, field, Tag.TAG_COMPOUND)) {
+            CompoundTag entry = (CompoundTag) value;
+            ResourceLocation blocked = ResourceLocation.parse(entry.getString("blocked"));
+            ResourceLocation winner = ResourceLocation.parse(entry.getString("winner"));
+            if (result.putIfAbsent(blocked, winner) != null) {
+                throw new IllegalArgumentException("Research field " + field + " contains duplicate exclusions for " + blocked);
+            }
+        }
+        return result;
+    }
+
+    public static ListTag uuidIds(Object2ObjectMap<UUID, ObjectSet<ResourceLocation>> values) {
+        ListTag result = new ListTag();
+        values.forEach((uuid, nodeIds) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", uuid);
+            entry.put("nodes", ids(nodeIds));
+            result.add(entry);
+        });
+        return result;
+    }
+
+    public static ListTag uuids(Iterable<UUID> values) {
+        ListTag result = new ListTag();
+        for (UUID uuid : values) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", uuid);
+            result.add(entry);
+        }
+        return result;
+    }
+
+    public static ListTag uuidExclusions(Object2ObjectMap<UUID, Object2ObjectMap<ResourceLocation, ResourceLocation>> values) {
+        ListTag result = new ListTag();
+        values.forEach((uuid, locks) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", uuid);
+            entry.put("locks", exclusions(locks));
+            result.add(entry);
+        });
+        return result;
+    }
+
     public static ListTag prerequisiteGroups(ObjectList<ObjectSet<ResourceLocation>> groups) {
         ListTag result = new ListTag();
         for (ObjectSet<ResourceLocation> group : groups) result.add(ids(group));
@@ -50,6 +113,59 @@ public final class ResearchNbt {
             for (Tag id : group) ids.add(ResourceLocation.parse(id.getAsString()));
             if (ids.isEmpty()) throw new IllegalArgumentException("Research field " + field + " contains an empty prerequisite group");
             result.add(ids);
+        }
+        return result;
+    }
+
+    public static ListTag conditions(Iterable<ResearchCondition> conditions) {
+        ListTag result = new ListTag();
+        for (ResearchCondition condition : conditions) {
+            CompoundTag value = new CompoundTag();
+            if (condition instanceof AdvancementResearchCondition advancement) {
+                value.putString("type", "advancement");
+                value.putString("id", advancement.id().toString());
+            } else if (condition instanceof FtbQuestTaskCondition task) {
+                value.putString("type", "ftbquests_task");
+                value.putLong("task", task.taskId());
+                if (task.quest() != null) value.putString("quest", task.quest().toString());
+            } else {
+                throw new IllegalArgumentException("Unknown research condition type " + condition.getClass().getSimpleName());
+            }
+            result.add(value);
+        }
+        return result;
+    }
+
+    public static ObjectSet<ResearchCondition> readConditions(CompoundTag tag, String field) {
+        ObjectSet<ResearchCondition> result = new ObjectOpenHashSet<>();
+        for (Tag value : readList(tag, field, Tag.TAG_COMPOUND)) {
+            CompoundTag condition = (CompoundTag) value;
+            ResearchCondition parsed = switch (condition.getString("type")) {
+                case "advancement" -> new AdvancementResearchCondition(ResourceLocation.parse(condition.getString("id")));
+                case "ftbquests_task" -> new FtbQuestTaskCondition(condition.getLong("task"),
+                        condition.contains("quest") ? ResourceLocation.parse(condition.getString("quest")) : null);
+                default -> throw new IllegalArgumentException("Unknown research condition type in " + field);
+            };
+            if (!result.add(parsed)) throw new IllegalArgumentException("Duplicate research condition in " + field);
+        }
+        return result;
+    }
+
+    public static ListTag conditionGroups(ObjectList<ObjectSet<ResearchCondition>> groups) {
+        ListTag result = new ListTag();
+        for (ObjectSet<ResearchCondition> group : groups) result.add(conditions(group));
+        return result;
+    }
+
+    public static ObjectList<ObjectSet<ResearchCondition>> readConditionGroups(CompoundTag tag, String field) {
+        ObjectList<ObjectSet<ResearchCondition>> result = new ObjectArrayList<>();
+        for (Tag value : readList(tag, field, Tag.TAG_LIST)) {
+            ListTag group = (ListTag) value;
+            CompoundTag wrapper = new CompoundTag();
+            wrapper.put("conditions", group);
+            ObjectSet<ResearchCondition> conditions = readConditions(wrapper, "conditions");
+            if (conditions.isEmpty()) throw new IllegalArgumentException("Research field " + field + " contains an empty condition group");
+            result.add(conditions);
         }
         return result;
     }
@@ -86,6 +202,9 @@ public final class ResearchNbt {
         result.put("target_tags", ids(node.target().tags()));
         result.put("required_prerequisites", ids(node.requiredPrerequisites()));
         result.put("optional_prerequisites", prerequisiteGroups(node.optionalPrerequisiteGroups()));
+        result.put("required_conditions", conditions(node.requiredConditions()));
+        result.put("optional_conditions", conditionGroups(node.optionalConditionGroups()));
+        result.put("mutually_exclusive", ids(node.mutuallyExclusive()));
         result.putInt("ticks", node.researchTicks());
         result.putDouble("energy", node.aePerTick());
         ListTag inputs = new ListTag();
@@ -101,6 +220,8 @@ public final class ResearchNbt {
                 tag.getString("name"), tag.getString("description"), ResourceLocation.parse(tag.getString("icon")),
                 new ResearchTarget(readIds(tag, "target_items"), readIds(tag, "target_tags")), inputs,
                 readIds(tag, "required_prerequisites"), readPrerequisiteGroups(tag, "optional_prerequisites"),
+                readConditions(tag, "required_conditions"), readConditionGroups(tag, "optional_conditions"),
+                readIds(tag, "mutually_exclusive"),
                 tag.getInt("ticks"), tag.getDouble("energy"));
     }
 }

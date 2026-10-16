@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.orbital.storage.OrbitalOwnershipTransfer;
 import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.research.development.ResearchDevelopmentMode;
 import com.fish_dan_.data_energistics.research.team.ResearchTeams;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -30,6 +31,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
@@ -79,7 +81,40 @@ public final class DataEnergisticsCommands {
         for (String action : new String[] { "leave", "disband" }) {
             teams.then(Commands.literal(action).executes(context -> ResearchTeams.executeCommand(context, action, "")));
         }
-        return Commands.literal("research").then(teams);
+        LiteralArgumentBuilder<CommandSourceStack> research = Commands.literal("research").then(teams);
+        if (Data_Energistics.isDev()) {
+            research.then(Commands.literal("instant")
+                    .requires(source -> source.hasPermission(2))
+                    .then(Commands.literal("technology")
+                            .executes(context -> enableInstantResearch(context.getSource(), "technology")))
+                    .then(Commands.literal("item")
+                            .executes(context -> enableInstantResearch(context.getSource(), "item")))
+                    .then(Commands.literal("player")
+                            .executes(context -> enableInstantResearch(context.getSource(), "player"))));
+        }
+        return research;
+    }
+
+    private static int enableInstantResearch(CommandSourceStack source, String scope) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        boolean enabled = switch (scope) {
+            case "technology" -> {
+                ResearchDevelopmentMode.enableTechnology(player);
+                yield true;
+            }
+            case "item" -> ResearchDevelopmentMode.enableHeldItem(player);
+            case "player" -> {
+                ResearchDevelopmentMode.enablePlayerResearch(player);
+                yield true;
+            }
+            default -> throw new IllegalArgumentException("Unknown development research scope " + scope);
+        };
+        if (!enabled) {
+            source.sendFailure(Component.translatable("commands.data_energistics.research.instant.item_required"));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.translatable("commands.data_energistics.research.instant." + scope), false);
+        return 1;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> orbitalRegistration() {

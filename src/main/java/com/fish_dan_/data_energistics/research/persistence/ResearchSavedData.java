@@ -1,7 +1,10 @@
 package com.fish_dan_.data_energistics.research.persistence;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.research.ResearchNode;
+import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.research.crafting.ResearchMaterialRequests;
+import com.fish_dan_.data_energistics.research.progression.ResearchProject;
 import com.fish_dan_.data_energistics.research.progression.ResearchStationState;
 
 import net.minecraft.core.HolderLookup;
@@ -31,6 +34,11 @@ public final class ResearchSavedData extends SavedData {
     private static final Factory<ResearchSavedData> FACTORY = new Factory<>(ResearchSavedData::new, ResearchSavedData::load);
     private final Object2ObjectMap<String, UUID> identities = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<UUID, ObjectSet<ResourceLocation>> unlocks = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<UUID, ObjectSet<ResourceLocation>> playerUpgrades = new Object2ObjectLinkedOpenHashMap<>();
+    private final ObjectSet<UUID> instantTechnologySubjects = new ObjectOpenHashSet<>();
+    private final ObjectSet<UUID> instantPlayerSubjects = new ObjectOpenHashSet<>();
+    private final Object2ObjectMap<UUID, Object2ObjectMap<ResourceLocation, ResourceLocation>> technologyExclusions = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<UUID, Object2ObjectMap<ResourceLocation, ResourceLocation>> playerExclusions = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<UUID, ResearchStationState> stations = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<UUID, CompoundTag> quarantined = new Object2ObjectLinkedOpenHashMap<>();
     private final ObjectList<Tag> quarantinedEntries = new ObjectArrayList<>();
@@ -61,6 +69,42 @@ public final class ResearchSavedData extends SavedData {
         return ObjectSets.unmodifiable(unlocks.getOrDefault(subject, ObjectSets.emptySet()));
     }
 
+    public ObjectSet<ResourceLocation> playerUpgrades(UUID player) {
+        return ObjectSets.unmodifiable(playerUpgrades.getOrDefault(player, ObjectSets.emptySet()));
+    }
+
+    public boolean hasInstantTechnology(Iterable<UUID> subjects) {
+        for (UUID subject : subjects) if (instantTechnologySubjects.contains(subject)) return true;
+        return false;
+    }
+
+    public boolean hasInstantPlayerResearch(UUID player) {
+        return instantPlayerSubjects.contains(player);
+    }
+
+    public void enableInstantTechnology(Iterable<UUID> subjects) {
+        boolean changed = false;
+        for (UUID subject : subjects) changed |= instantTechnologySubjects.add(subject);
+        if (changed) setDirty();
+    }
+
+    public void enableInstantPlayerResearch(UUID player) {
+        if (instantPlayerSubjects.add(player)) setDirty();
+    }
+
+    public @Nullable ResourceLocation technologyExclusionWinner(Iterable<UUID> subjects, ResourceLocation blocked) {
+        for (UUID subject : subjects) {
+            Object2ObjectMap<ResourceLocation, ResourceLocation> locks = technologyExclusions.get(subject);
+            if (locks != null && locks.containsKey(blocked)) return locks.get(blocked);
+        }
+        return null;
+    }
+
+    public @Nullable ResourceLocation playerExclusionWinner(UUID player, ResourceLocation blocked) {
+        Object2ObjectMap<ResourceLocation, ResourceLocation> locks = playerExclusions.get(player);
+        return locks == null ? null : locks.get(blocked);
+    }
+
     /** Registers transient planning work for server-thread polling independently of loaded block entities. */
     public void trackMaterialCalculations(ResearchMaterialRequests requests) {
         materialCalculations.add(requests);
@@ -82,15 +126,90 @@ public final class ResearchSavedData extends SavedData {
         materialCalculations.clear();
     }
 
-    public void unlock(Iterable<UUID> subjects, ResourceLocation node) {
+    public void unlockTechnology(Iterable<UUID> subjects, ResearchNode node) {
+        boolean changed = false;
         for (UUID subject : subjects) {
-            if (unlocks.computeIfAbsent(subject, unused -> new ObjectOpenHashSet<>()).add(node)) setDirty();
+            changed |= unlocks.computeIfAbsent(subject, unused -> new ObjectOpenHashSet<>()).add(node.id());
+            if (!node.mutuallyExclusive().isEmpty()) {
+                Object2ObjectMap<ResourceLocation, ResourceLocation> locks = technologyExclusions.computeIfAbsent(
+                        subject, unused -> new Object2ObjectLinkedOpenHashMap<>());
+                for (ResourceLocation blocked : node.mutuallyExclusive()) {
+                    changed |= locks.putIfAbsent(blocked, node.id()) == null;
+                }
+            }
         }
+        if (changed) setDirty();
+    }
+
+    public void unlockPlayerUpgrade(UUID player, ResearchNode node) {
+        boolean changed = playerUpgrades.computeIfAbsent(player, unused -> new ObjectOpenHashSet<>()).add(node.id());
+        if (!node.mutuallyExclusive().isEmpty()) {
+            Object2ObjectMap<ResourceLocation, ResourceLocation> locks = playerExclusions.computeIfAbsent(
+                    player, unused -> new Object2ObjectLinkedOpenHashMap<>());
+            for (ResourceLocation blocked : node.mutuallyExclusive()) changed |= locks.putIfAbsent(blocked, node.id()) == null;
+        }
+        if (changed) setDirty();
+    }
+
+    /** Finds a running project on any station that conflicts for the selected scope owner. */
+    public @Nullable ResourceLocation runningMutualProject(ResearchNode node, ObjectSet<UUID> subjects,
+                                                           UUID initiator, UUID station) {
+        for (var stationEntry : stations.object2ObjectEntrySet()) {
+            if (node.scope() == ResearchScope.ITEM_UPGRADE && !station.equals(stationEntry.getKey())) continue;
+            for (ResearchProject project : stationEntry.getValue().projects.values()) {
+                if (project.running && mutuallyExclusive(node, project.node) &&
+                        sameOwner(node.scope(), subjects, initiator, project)) {
+                    return project.node.id();
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Removes conflicting projects after a node wins; paid materials are intentionally not refunded. */
+    public void cancelMutuallyExclusiveProjects(ResearchNode completedNode, ObjectSet<UUID> completedSubjects,
+                                                UUID initiator, UUID sourceStation) {
+        boolean changed = false;
+        for (var stationEntry : stations.object2ObjectEntrySet()) {
+            ResearchStationState state = stationEntry.getValue();
+            ObjectList<ResourceLocation> cancelled = new ObjectArrayList<>();
+            for (ResearchProject project : state.projects.values()) {
+                if (project.node.id().equals(completedNode.id()) || !mutuallyExclusive(completedNode, project.node)) continue;
+                if (completedNode.scope() == ResearchScope.ITEM_UPGRADE && !sourceStation.equals(stationEntry.getKey())) continue;
+                if (!sameOwner(completedNode.scope(), completedSubjects, initiator, project)) continue;
+                cancelled.add(project.node.id());
+            }
+            if (cancelled.isEmpty()) continue;
+            for (ResourceLocation id : cancelled) state.projects.remove(id);
+            state.revision++;
+            changed = true;
+        }
+        if (changed) setDirty();
+    }
+
+    private static boolean sameOwner(ResearchScope scope, ObjectSet<UUID> subjects, UUID initiator, ResearchProject project) {
+        return switch (scope) {
+            case TECHNOLOGY -> {
+                boolean shared = false;
+                for (UUID subject : subjects) {
+                    if (project.subjects.contains(subject)) {
+                        shared = true;
+                        break;
+                    }
+                }
+                yield shared;
+            }
+            case ITEM_UPGRADE -> true;
+            case PLAYER_UPGRADE -> initiator.equals(project.initiator);
+        };
+    }
+
+    private static boolean mutuallyExclusive(ResearchNode first, ResearchNode second) {
+        return first.mutuallyExclusive().contains(second.id()) || second.mutuallyExclusive().contains(first.id());
     }
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        tag.putInt("version", 1);
         ListTag bridge = new ListTag();
         identities.forEach((identity, uuid) -> {
             CompoundTag entry = new CompoundTag();
@@ -107,6 +226,11 @@ public final class ResearchSavedData extends SavedData {
             ledger.add(entry);
         });
         tag.put("unlocks", ledger);
+        tag.put("player_upgrades", ResearchNbt.uuidIds(playerUpgrades));
+        tag.put("instant_technology_subjects", ResearchNbt.uuids(instantTechnologySubjects));
+        tag.put("instant_player_subjects", ResearchNbt.uuids(instantPlayerSubjects));
+        tag.put("technology_exclusions", ResearchNbt.uuidExclusions(technologyExclusions));
+        tag.put("player_exclusions", ResearchNbt.uuidExclusions(playerExclusions));
         ListTag journals = new ListTag();
         stations.forEach((uuid, state) -> {
             CompoundTag entry = state.save(registries);
@@ -158,6 +282,18 @@ public final class ResearchSavedData extends SavedData {
                 data.unlocks.put(uuid, ResearchNbt.readIds(entry, "nodes"));
             });
         }
+        for (Tag value : data.entries(tag, "player_upgrades")) {
+            data.readEntry("player_upgrades", value, entry -> {
+                UUID uuid = readUuid(entry);
+                if (data.playerUpgrades.putIfAbsent(uuid, ResearchNbt.readIds(entry, "nodes")) != null) {
+                    throw new IllegalArgumentException("Duplicate player upgrade UUID: " + uuid);
+                }
+            });
+        }
+        data.readUuidFlags(tag, "instant_technology_subjects", data.instantTechnologySubjects);
+        data.readUuidFlags(tag, "instant_player_subjects", data.instantPlayerSubjects);
+        data.readExclusionLedger(tag, "technology_exclusions", data.technologyExclusions);
+        data.readExclusionLedger(tag, "player_exclusions", data.playerExclusions);
         for (Tag value : data.entries(tag, "stations")) {
             @Nullable
             UUID uuid = null;
@@ -179,6 +315,27 @@ public final class ResearchSavedData extends SavedData {
             }
         }
         return data;
+    }
+
+    private void readExclusionLedger(CompoundTag tag, String field,
+                                     Object2ObjectMap<UUID, Object2ObjectMap<ResourceLocation, ResourceLocation>> target) {
+        for (Tag value : entries(tag, field)) {
+            readEntry(field, value, entry -> {
+                UUID uuid = readUuid(entry);
+                if (target.putIfAbsent(uuid, ResearchNbt.readExclusions(entry, "locks")) != null) {
+                    throw new IllegalArgumentException("Duplicate exclusion owner UUID: " + uuid);
+                }
+            });
+        }
+    }
+
+    private void readUuidFlags(CompoundTag tag, String field, ObjectSet<UUID> target) {
+        for (Tag value : entries(tag, field)) {
+            readEntry(field, value, entry -> {
+                UUID uuid = readUuid(entry);
+                if (!target.add(uuid)) throw new IllegalArgumentException("Duplicate research UUID flag: " + uuid);
+            });
+        }
     }
 
     private ListTag entries(CompoundTag tag, String section) {

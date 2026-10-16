@@ -5,9 +5,9 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Immutable snapshot of pattern-source state that must not leak into a generic multiblock Processing pattern.
@@ -26,8 +26,8 @@ public record PatternEncodingMultiblockTransferState(
                                                      @Nullable ResourceLocation lastEncodedPatternSource,
                                                      @Nullable GenericStack pendingKeyInput,
                                                      @Nullable GenericStack pendingKeyOutput,
-                                                     List<GenericStack> pendingFluidInputs,
-                                                     List<GenericStack> pendingFluidOutputs,
+                                                     ObjectList<GenericStack> pendingFluidInputs,
+                                                     ObjectList<GenericStack> pendingFluidOutputs,
                                                      @Nullable String displayedKeyInputSerialized,
                                                      @Nullable String displayedKeyOutputSerialized) {
 
@@ -36,8 +36,8 @@ public record PatternEncodingMultiblockTransferState(
             null,
             null,
             null,
-            List.of(),
-            List.of(),
+            ObjectLists.emptyList(),
+            ObjectLists.emptyList(),
             null,
             null);
 
@@ -76,11 +76,11 @@ public record PatternEncodingMultiblockTransferState(
         return new GenericStack(stack.what(), stack.amount());
     }
 
-    private static List<GenericStack> copyStacks(String role, List<GenericStack> stacks) {
+    private static ObjectList<GenericStack> copyStacks(String role, ObjectList<GenericStack> stacks) {
         if (stacks == null) {
             throw new IllegalArgumentException("Pattern encoding " + role + " cannot be null");
         }
-        List<GenericStack> copies = new ObjectArrayList<>(stacks.size());
+        ObjectList<GenericStack> copies = new ObjectArrayList<>(stacks.size());
         for (GenericStack stack : stacks) {
             GenericStack copy = copyStack(role, stack);
             if (copy == null) {
@@ -88,6 +88,6 @@ public record PatternEncodingMultiblockTransferState(
             }
             copies.add(copy);
         }
-        return List.copyOf(copies);
+        return ObjectLists.unmodifiable(copies);
     }
 }

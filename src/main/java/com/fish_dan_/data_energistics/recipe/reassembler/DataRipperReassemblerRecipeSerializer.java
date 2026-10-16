@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.recipe.reassembler;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -12,26 +14,29 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 /** Serializer for the concise, semantic data reassembler recipe format. */
 public final class DataRipperReassemblerRecipeSerializer implements RecipeSerializer<DataRipperReassemblerRecipe> {
 
-    private static final Codec<List<DataRipperReassemblerIngredient>> ITEM_INPUTS_CODEC = DataRipperReassemblerIngredient.CODEC.listOf().flatXmap(
-            inputs -> inputs.size() > DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS ? DataResult.error(() -> "Data reassembler supports at most " +
-                    DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS + " item inputs") : DataResult.success(inputs),
-            DataResult::success);
-    private static final Codec<List<GenericStack>> FLUID_INPUTS_CODEC = boundedFluidList(
+    private static final Codec<ObjectList<DataRipperReassemblerIngredient>> ITEM_INPUTS_CODEC = FastUtilCollections.objectListCodec(
+            DataRipperReassemblerIngredient.CODEC).flatXmap(
+                    inputs -> inputs.size() > DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS ? DataResult.error(() -> "Data reassembler supports at most " +
+                            DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS + " item inputs") : DataResult.success(inputs),
+                    DataResult::success);
+    private static final Codec<ObjectList<GenericStack>> FLUID_INPUTS_CODEC = boundedFluidList(
             DataRipperReassemblerRecipe.FLUID_INPUT_SLOTS,
             "inputs");
-    private static final Codec<List<DataReassemblerItemOutput>> ITEM_OUTPUTS_CODEC = DataReassemblerItemOutput.CODEC.codec().listOf().flatXmap(
-            outputs -> outputs.size() > DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS ? DataResult.error(() -> "Data reassembler supports at most " +
-                    DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS + " item outputs") : DataResult.success(outputs),
-            DataResult::success);
-    private static final Codec<List<GenericStack>> FLUID_OUTPUTS_CODEC = boundedFluidList(
+    private static final Codec<ObjectList<DataReassemblerItemOutput>> ITEM_OUTPUTS_CODEC = FastUtilCollections.objectListCodec(
+            DataReassemblerItemOutput.CODEC.codec()).flatXmap(
+                    outputs -> outputs.size() > DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS ? DataResult.error(() -> "Data reassembler supports at most " +
+                            DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS + " item outputs") : DataResult.success(outputs),
+                    DataResult::success);
+    private static final Codec<ObjectList<GenericStack>> FLUID_OUTPUTS_CODEC = boundedFluidList(
             DataRipperReassemblerRecipe.FLUID_OUTPUT_SLOTS,
             "outputs");
     private static final Codec<GenericStack> RESOURCE_CODEC = DataReassemblerStackCodecs.RESOURCE.flatXmap(
@@ -43,16 +48,16 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
             DataResult::success);
 
     private static final MapCodec<Inputs> RAW_INPUTS_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            ITEM_INPUTS_CODEC.optionalFieldOf("items", List.of()).forGetter(Inputs::items),
-            FLUID_INPUTS_CODEC.optionalFieldOf("fluids", List.of()).forGetter(Inputs::fluids),
+            ITEM_INPUTS_CODEC.optionalFieldOf("items", ObjectLists.emptyList()).forGetter(Inputs::items),
+            FLUID_INPUTS_CODEC.optionalFieldOf("fluids", ObjectLists.emptyList()).forGetter(Inputs::fluids),
             RESOURCE_CODEC.optionalFieldOf("resource").forGetter(Inputs::resource))
             .apply(instance, Inputs::new));
     private static final MapCodec<Inputs> INPUTS_CODEC = RAW_INPUTS_CODEC.flatXmap(
             inputs -> inputs.items().isEmpty() && inputs.fluids().isEmpty() && inputs.resource().isEmpty() ? DataResult.error(() -> "Data reassembler recipe must define at least one input") : DataResult.success(inputs),
             DataResult::success);
     private static final MapCodec<Outputs> RAW_OUTPUTS_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            ITEM_OUTPUTS_CODEC.optionalFieldOf("items", List.of()).forGetter(Outputs::items),
-            FLUID_OUTPUTS_CODEC.optionalFieldOf("fluids", List.of()).forGetter(Outputs::fluids),
+            ITEM_OUTPUTS_CODEC.optionalFieldOf("items", ObjectLists.emptyList()).forGetter(Outputs::items),
+            FLUID_OUTPUTS_CODEC.optionalFieldOf("fluids", ObjectLists.emptyList()).forGetter(Outputs::fluids),
             RESOURCE_CODEC.optionalFieldOf("resource").forGetter(Outputs::resource))
             .apply(instance, Outputs::new));
     private static final MapCodec<Outputs> OUTPUTS_CODEC = RAW_OUTPUTS_CODEC.flatXmap(
@@ -75,13 +80,13 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Optional<GenericStack>> OPTIONAL_RESOURCE_STREAM_CODEC = StreamCodec.of(DataRipperReassemblerRecipeSerializer::writeOptionalResource,
             DataRipperReassemblerRecipeSerializer::readOptionalResource);
-    private static final StreamCodec<RegistryFriendlyByteBuf, List<GenericStack>> GENERIC_STACK_LIST_STREAM_CODEC = StreamCodec.of(DataRipperReassemblerRecipeSerializer::writeGenericStackList,
+    private static final StreamCodec<RegistryFriendlyByteBuf, ObjectList<GenericStack>> GENERIC_STACK_LIST_STREAM_CODEC = StreamCodec.of(DataRipperReassemblerRecipeSerializer::writeGenericStackList,
             DataRipperReassemblerRecipeSerializer::readGenericStackList);
     private static final StreamCodec<RegistryFriendlyByteBuf, DataRipperReassemblerRecipe> STREAM_CODEC = StreamCodec.of(DataRipperReassemblerRecipeSerializer::writeRecipe,
             DataRipperReassemblerRecipeSerializer::readRecipe);
 
-    private static Codec<List<GenericStack>> boundedFluidList(int limit, String role) {
-        return DataReassemblerStackCodecs.FLUID.listOf().flatXmap(
+    private static Codec<ObjectList<GenericStack>> boundedFluidList(int limit, String role) {
+        return FastUtilCollections.objectListCodec(DataReassemblerStackCodecs.FLUID).flatXmap(
                 fluids -> {
                     if (fluids.size() > limit) {
                         return DataResult.error(() -> "Data reassembler supports at most " + limit +
@@ -100,7 +105,7 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
 
     private static Inputs inputs(DataRipperReassemblerRecipe recipe) {
         return new Inputs(
-                List.copyOf(recipe.getItemInputs()),
+                recipe.getItemInputs(),
                 recipe.getFluidInputs(),
                 Optional.ofNullable(recipe.getKeyInput()));
     }
@@ -113,10 +118,12 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
     }
 
     private static DataRipperReassemblerRecipe readRecipe(RegistryFriendlyByteBuf buffer) {
-        List<DataRipperReassemblerIngredient> itemInputs = DataRipperReassemblerIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
-        List<GenericStack> fluidInputs = GENERIC_STACK_LIST_STREAM_CODEC.decode(buffer);
-        List<DataReassemblerItemOutput> itemOutputs = DataReassemblerItemOutput.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
-        List<GenericStack> fluidOutputs = GENERIC_STACK_LIST_STREAM_CODEC.decode(buffer);
+        ObjectList<DataRipperReassemblerIngredient> itemInputs = new ObjectArrayList<>(
+                DataRipperReassemblerIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer));
+        ObjectList<GenericStack> fluidInputs = GENERIC_STACK_LIST_STREAM_CODEC.decode(buffer);
+        ObjectList<DataReassemblerItemOutput> itemOutputs = new ObjectArrayList<>(
+                DataReassemblerItemOutput.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer));
+        ObjectList<GenericStack> fluidOutputs = GENERIC_STACK_LIST_STREAM_CODEC.decode(buffer);
         int duration = ByteBufCodecs.VAR_INT.decode(buffer);
         GenericStack resourceInput = OPTIONAL_RESOURCE_STREAM_CODEC.decode(buffer).orElse(null);
         GenericStack resourceOutput = OPTIONAL_RESOURCE_STREAM_CODEC.decode(buffer).orElse(null);
@@ -132,7 +139,7 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
 
     private static void writeRecipe(RegistryFriendlyByteBuf buffer, DataRipperReassemblerRecipe recipe) {
         DataRipperReassemblerIngredient.STREAM_CODEC.apply(ByteBufCodecs.list())
-                .encode(buffer, List.copyOf(recipe.getItemInputs()));
+                .encode(buffer, recipe.getItemInputs());
         GENERIC_STACK_LIST_STREAM_CODEC.encode(buffer, recipe.getFluidInputs());
         DataReassemblerItemOutput.STREAM_CODEC.apply(ByteBufCodecs.list())
                 .encode(buffer, recipe.getItemOutputDefinitions());
@@ -150,16 +157,16 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
         GenericStack.writeBuffer(resource.orElse(null), buffer);
     }
 
-    private static List<GenericStack> readGenericStackList(RegistryFriendlyByteBuf buffer) {
+    private static ObjectList<GenericStack> readGenericStackList(RegistryFriendlyByteBuf buffer) {
         int size = ByteBufCodecs.VAR_INT.decode(buffer);
-        List<GenericStack> stacks = new ObjectArrayList<>(size);
+        ObjectList<GenericStack> stacks = new ObjectArrayList<>(size);
         for (int index = 0; index < size; index++) {
             stacks.add(Objects.requireNonNull(GenericStack.readBuffer(buffer), "Data reassembler fluid stack"));
         }
-        return List.copyOf(stacks);
+        return ObjectLists.unmodifiable(stacks);
     }
 
-    private static void writeGenericStackList(RegistryFriendlyByteBuf buffer, List<GenericStack> stacks) {
+    private static void writeGenericStackList(RegistryFriendlyByteBuf buffer, ObjectList<GenericStack> stacks) {
         ByteBufCodecs.VAR_INT.encode(buffer, stacks.size());
         for (GenericStack stack : stacks) {
             GenericStack.writeBuffer(stack, buffer);
@@ -176,9 +183,9 @@ public final class DataRipperReassemblerRecipeSerializer implements RecipeSerial
         return STREAM_CODEC;
     }
 
-    private record Inputs(List<DataRipperReassemblerIngredient> items, List<GenericStack> fluids,
+    private record Inputs(ObjectList<DataRipperReassemblerIngredient> items, ObjectList<GenericStack> fluids,
                           Optional<GenericStack> resource) {}
 
-    private record Outputs(List<DataReassemblerItemOutput> items, List<GenericStack> fluids,
+    private record Outputs(ObjectList<DataReassemblerItemOutput> items, ObjectList<GenericStack> fluids,
                            Optional<GenericStack> resource) {}
 }

@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.recipe.reassembler;
 
+import com.fish_dan_.data_energistics.recipe.matching.CountedItemInputMatcher;
 import com.fish_dan_.data_energistics.registry.DERecipes;
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -20,12 +22,8 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
 
 public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReassemblerRecipeInput> {
 
@@ -40,12 +38,12 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
     public static final long MAX_FLUID_AMOUNT = 51_200L;
     public static final long MAX_RESOURCE_AMOUNT = 51_200_000L;
     @Getter
-    private final NonNullList<DataRipperReassemblerIngredient> itemInputs;
+    private final ObjectList<DataRipperReassemblerIngredient> itemInputs;
     @Getter
-    private final List<GenericStack> fluidInputs;
-    private final List<DataReassemblerItemOutput> itemOutputs;
+    private final ObjectList<GenericStack> fluidInputs;
+    private final ObjectList<DataReassemblerItemOutput> itemOutputs;
     @Getter
-    private final List<GenericStack> fluidOutputs;
+    private final ObjectList<GenericStack> fluidOutputs;
     @Getter
     private final int processTicks;
     @Nullable
@@ -53,27 +51,28 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
     @Nullable
     private final GenericStack keyOutput;
 
-    public DataRipperReassemblerRecipe(List<DataRipperReassemblerIngredient> itemInputs,
-                                       List<GenericStack> fluidInputs,
-                                       List<DataReassemblerItemOutput> itemOutputs,
-                                       List<GenericStack> fluidOutputs,
+    public DataRipperReassemblerRecipe(ObjectList<DataRipperReassemblerIngredient> itemInputs,
+                                       ObjectList<GenericStack> fluidInputs,
+                                       ObjectList<DataReassemblerItemOutput> itemOutputs,
+                                       ObjectList<GenericStack> fluidOutputs,
                                        int processTicks,
                                        @Nullable GenericStack keyInput,
                                        @Nullable GenericStack keyOutput) {
-        validateRecipe(itemInputs, fluidInputs, itemOutputs, fluidOutputs, processTicks, keyInput, keyOutput);
-        this.itemInputs = NonNullList.copyOf(itemInputs);
-        this.fluidInputs = ObjectLists.unmodifiable(new ObjectArrayList<>(fluidInputs));
-        this.itemOutputs = ObjectLists.unmodifiable(new ObjectArrayList<>(itemOutputs));
-        this.fluidOutputs = ObjectLists.unmodifiable(new ObjectArrayList<>(fluidOutputs));
+        validateRecipe(itemInputs, fluidInputs, itemOutputs, fluidOutputs,
+                processTicks, keyInput, keyOutput);
+        this.itemInputs = FastUtilCollections.immutableList(itemInputs);
+        this.fluidInputs = FastUtilCollections.immutableList(fluidInputs);
+        this.itemOutputs = FastUtilCollections.immutableList(itemOutputs);
+        this.fluidOutputs = FastUtilCollections.immutableList(fluidOutputs);
         this.processTicks = processTicks;
         this.keyInput = keyInput;
         this.keyOutput = keyOutput;
     }
 
-    private static void validateRecipe(List<DataRipperReassemblerIngredient> itemInputs,
-                                       List<GenericStack> fluidInputs,
-                                       List<DataReassemblerItemOutput> itemOutputs,
-                                       List<GenericStack> fluidOutputs,
+    private static void validateRecipe(ObjectList<DataRipperReassemblerIngredient> itemInputs,
+                                       ObjectList<GenericStack> fluidInputs,
+                                       ObjectList<DataReassemblerItemOutput> itemOutputs,
+                                       ObjectList<GenericStack> fluidOutputs,
                                        int processTicks,
                                        @Nullable GenericStack keyInput,
                                        @Nullable GenericStack keyOutput) {
@@ -104,7 +103,7 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
         }
     }
 
-    private static void validateFluids(List<GenericStack> fluids, String role) {
+    private static void validateFluids(ObjectList<GenericStack> fluids, String role) {
         for (GenericStack fluid : fluids) {
             if (!(fluid.what() instanceof AEFluidKey) || fluid.amount() <= 0L || fluid.amount() > MAX_FLUID_AMOUNT) {
                 throw new IllegalArgumentException(
@@ -241,7 +240,7 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
         return outputs;
     }
 
-    public List<DataReassemblerItemOutput> getItemOutputDefinitions() {
+    public ObjectList<DataReassemblerItemOutput> getItemOutputDefinitions() {
         return this.itemOutputs;
     }
 
@@ -261,7 +260,7 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
         return this.keyOutput;
     }
 
-    private boolean matchesKeyInput(List<@Nullable GenericStack> inputKeys) {
+    private boolean matchesKeyInput(ObjectList<@Nullable GenericStack> inputKeys) {
         long available = 0L;
         for (GenericStack inputKey : inputKeys) {
             if (inputKey == null || inputKey.amount() <= 0L) {
@@ -278,7 +277,7 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
         return this.keyInput == null || available >= this.keyInput.amount();
     }
 
-    private boolean matchesFluidInputs(List<GenericStack> inputFluids) {
+    private boolean matchesFluidInputs(ObjectList<GenericStack> inputFluids) {
         Object2LongMap<AEFluidKey> required = getMergedFluidInputAmounts();
         if (required == null) {
             return false;
@@ -303,196 +302,20 @@ public final class DataRipperReassemblerRecipe implements Recipe<DataRipperReass
         return true;
     }
 
-    /**
-     * Matches all non-empty item stacks as one assignment instead of accepting a recipe from only a subset of the
-     * machine inputs. The backtracking assignment is required for overlapping tags and keeps the same assignment for
-     * every ingredient before a recipe is accepted.
-     * <p>
-     * Finds a complete assignment for the recipe's item requirements.
-     *
-     * <p>
-     * The assignment is also used by the machine when it reserves inputs. Keeping the match and reservation on
-     * the same flow result prevents an ingredient that overlaps a tag from being matched one way and consumed another
-     * way.
-     * </p>
-     */
-    public @Nullable ObjectList<ItemInputAssignment> findMatchingItemInputs(List<ItemStack> inputItems) {
-        ObjectList<Integer> inputIndexes = new ObjectArrayList<>();
-        ObjectList<ItemStack> nonEmpty = new ObjectArrayList<>();
-        for (int index = 0; index < inputItems.size(); index++) {
-            ItemStack stack = inputItems.get(index);
-            if (!stack.isEmpty()) {
-                inputIndexes.add(index);
-                nonEmpty.add(stack.copy());
-            }
-        }
-        ObjectList<DataRipperReassemblerIngredient> requirements = getItemInputsForMatching();
-        if (nonEmpty.isEmpty() || requirements.isEmpty()) {
-            return nonEmpty.isEmpty() && requirements.isEmpty() ? ObjectLists.emptyList() : null;
-        }
-
-        for (ItemStack input : nonEmpty) {
-            boolean recognized = false;
-            for (DataRipperReassemblerIngredient requirement : requirements) {
-                if (requirement.ingredient().test(input)) {
-                    recognized = true;
-                    break;
-                }
-            }
-            if (!recognized) {
-                return null;
-            }
-        }
-
-        int source = 0;
-        int requirementStart = 1;
-        int inputStart = requirementStart + requirements.size();
-        int sink = inputStart + nonEmpty.size();
-        ItemFlowNetwork network = new ItemFlowNetwork(sink + 1);
-        ObjectList<ItemAssignmentEdge> assignmentEdges = new ObjectArrayList<>();
-        int requiredAmount = 0;
-        for (int requirementIndex = 0; requirementIndex < requirements.size(); requirementIndex++) {
-            DataRipperReassemblerIngredient requirement = requirements.get(requirementIndex);
-            requiredAmount = Math.addExact(requiredAmount, requirement.count());
-            network.addEdge(source, requirementStart + requirementIndex, requirement.count());
-            for (int inputIndex = 0; inputIndex < nonEmpty.size(); inputIndex++) {
-                if (requirement.ingredient().test(nonEmpty.get(inputIndex))) {
-                    ItemFlowNetwork.Edge edge = network.addEdge(
-                            requirementStart + requirementIndex,
-                            inputStart + inputIndex,
-                            nonEmpty.get(inputIndex).getCount());
-                    assignmentEdges.add(new ItemAssignmentEdge(inputIndexes.get(inputIndex), edge));
-                }
-            }
-        }
-        ObjectList<ItemFlowNetwork.Edge> inputCapacityEdges = new ObjectArrayList<>(nonEmpty.size());
-        for (int inputIndex = 0; inputIndex < nonEmpty.size(); inputIndex++) {
-            inputCapacityEdges.add(network.addEdge(
-                    inputStart + inputIndex,
-                    sink,
-                    nonEmpty.get(inputIndex).getCount()));
-        }
-        if (network.maxFlow(source, sink) != requiredAmount) {
+    /** Finds physical input slots after aggregating identical stacks and assigns the required amounts to them. */
+    public @Nullable ObjectList<ItemInputAssignment> findMatchingItemInputs(ObjectList<ItemStack> inputItems) {
+        ObjectList<CountedItemInputMatcher.Assignment> assignments = CountedItemInputMatcher.match(
+                getItemInputsForMatching(),
+                inputItems);
+        if (assignments == null) {
             return null;
         }
-        for (ItemFlowNetwork.Edge inputCapacityEdge : inputCapacityEdges) {
-            if (inputCapacityEdge.flow() <= 0) {
-                return null;
-            }
-        }
 
-        ObjectList<ItemInputAssignment> assignments = new ObjectArrayList<>();
-        for (ItemAssignmentEdge assignmentEdge : assignmentEdges) {
-            if (assignmentEdge.edge().flow() > 0) {
-                assignments.add(new ItemInputAssignment(
-                        assignmentEdge.inputIndex(), assignmentEdge.edge().flow()));
-            }
-        }
-        return ObjectLists.unmodifiable(assignments);
+        return CountedItemInputMatcher.mapAssignments(assignments, ItemInputAssignment::new);
     }
 
     /** One physical input slot and the amount assigned to one or more recipe requirements. */
     public record ItemInputAssignment(int inputIndex, int amount) {}
-
-    private record ItemAssignmentEdge(int inputIndex, ItemFlowNetwork.Edge edge) {}
-
-    private static final class ItemFlowNetwork {
-
-        private final ObjectList<ObjectList<Edge>> graph;
-        private final int[] levels;
-        private final int[] cursors;
-
-        private ItemFlowNetwork(int nodeCount) {
-            this.graph = new ObjectArrayList<>(nodeCount);
-            for (int index = 0; index < nodeCount; index++) {
-                this.graph.add(new ObjectArrayList<>());
-            }
-            this.levels = new int[nodeCount];
-            this.cursors = new int[nodeCount];
-        }
-
-        private Edge addEdge(int from, int to, int capacity) {
-            Edge forward = new Edge(to, capacity, this.graph.get(to).size());
-            Edge reverse = new Edge(from, 0, this.graph.get(from).size());
-            forward.reverseIndex = this.graph.get(to).size();
-            reverse.reverseIndex = this.graph.get(from).size();
-            this.graph.get(from).add(forward);
-            this.graph.get(to).add(reverse);
-            return forward;
-        }
-
-        private int maxFlow(int source, int sink) {
-            int result = 0;
-            while (buildLevels(source, sink)) {
-                Arrays.fill(this.cursors, 0);
-                int pushed;
-                while ((pushed = push(source, sink, Integer.MAX_VALUE)) > 0) {
-                    result = Math.addExact(result, pushed);
-                }
-            }
-            return result;
-        }
-
-        private boolean buildLevels(int source, int sink) {
-            Arrays.fill(this.levels, -1);
-            int[] queue = new int[this.graph.size()];
-            int head = 0;
-            int tail = 0;
-            queue[tail++] = source;
-            this.levels[source] = 0;
-            while (head < tail) {
-                int node = queue[head++];
-                for (Edge edge : this.graph.get(node)) {
-                    if (edge.capacity > 0 && this.levels[edge.to] < 0) {
-                        this.levels[edge.to] = this.levels[node] + 1;
-                        queue[tail++] = edge.to;
-                    }
-                }
-            }
-            return this.levels[sink] >= 0;
-        }
-
-        private int push(int node, int sink, int amount) {
-            if (node == sink) {
-                return amount;
-            }
-            ObjectList<Edge> edges = this.graph.get(node);
-            for (; this.cursors[node] < edges.size(); this.cursors[node]++) {
-                Edge edge = edges.get(this.cursors[node]);
-                if (edge.capacity <= 0 || this.levels[edge.to] != this.levels[node] + 1) {
-                    continue;
-                }
-                int pushed = push(edge.to, sink, Math.min(amount, edge.capacity));
-                if (pushed <= 0) {
-                    continue;
-                }
-                edge.capacity -= pushed;
-                Edge reverse = this.graph.get(edge.to).get(edge.reverseIndex);
-                reverse.capacity += pushed;
-                return pushed;
-            }
-            return 0;
-        }
-
-        private static final class Edge {
-
-            private final int to;
-            private final int originalCapacity;
-            private int capacity;
-            private int reverseIndex;
-
-            private Edge(int to, int capacity, int reverseIndex) {
-                this.to = to;
-                this.capacity = capacity;
-                this.originalCapacity = capacity;
-                this.reverseIndex = reverseIndex;
-            }
-
-            private int flow() {
-                return this.originalCapacity - this.capacity;
-            }
-        }
-    }
 
     @Override
     public RecipeSerializer<?> getSerializer() {

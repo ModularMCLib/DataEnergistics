@@ -19,6 +19,7 @@ import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeInput;
 import com.fish_dan_.data_energistics.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerPatternModeResolver;
 import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerRecipe;
+import com.fish_dan_.data_energistics.recipe.matching.CountedItemInputMatcher;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
@@ -77,7 +78,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -97,7 +97,6 @@ import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.List;
 
 /**
  * An integrated, buffered front-end for AE2 charger and inscriber recipes plus data charger recipes.
@@ -705,17 +704,22 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
      * Executes data charge press operations before their normal AE2 machine recipes.
      */
     private boolean processDataChargePressOperation(DataChargePressOperation operation) {
-        FluidTank fluidTank = getFluidTank(operation.fluidTank(), this.fluidTanks);
-        if (fluidTank.drain(operation.fluidAmount(), IFluidHandler.FluidAction.SIMULATE)
-                .getAmount() != operation.fluidAmount() ||
-                !consumeOperationEnergy()) {
-            return false;
+        for (FluidInputAssignment fluidInput : operation.fluidInputs()) {
+            FluidTank tank = getFluidTank(fluidInput.tank(), this.fluidTanks);
+            if (tank.drain(fluidInput.amount(), IFluidHandler.FluidAction.SIMULATE).getAmount() != fluidInput.amount()) {
+                return false;
+            }
         }
 
-        FluidStack drained = fluidTank.drain(
-                operation.fluidAmount(), IFluidHandler.FluidAction.EXECUTE);
-        if (drained.getAmount() != operation.fluidAmount()) {
+        if (!consumeOperationEnergy()) {
             return false;
+        }
+        for (FluidInputAssignment fluidInput : operation.fluidInputs()) {
+            FluidTank tank = getFluidTank(fluidInput.tank(), this.fluidTanks);
+            FluidStack drained = tank.drain(fluidInput.amount(), IFluidHandler.FluidAction.EXECUTE);
+            if (drained.getAmount() != fluidInput.amount()) {
+                return false;
+            }
         }
 
         for (DataChargePressRecipe.InputSlot inputSlot : operation.inputSlots()) {
@@ -746,17 +750,20 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
 
-            int materialSlot = findInputSlot(inputs, recipe.getMiddleInput());
+            ObjectList<CountedItemInputMatcher.Assignment> materialAssignments = CountedItemInputMatcher.match(
+                    recipe.getMiddleInput(),
+                    DataChargePressRecipeSupport.CIRCUIT_BOARD_MATERIAL_COUNT,
+                    inputs);
             ItemStack result = DataChargePressRecipeSupport.getTripleResult(recipe);
-            if (materialSlot >= 0 && inputs.get(materialSlot).getCount() >=
-                    DataChargePressRecipeSupport.CIRCUIT_BOARD_MATERIAL_COUNT && findOutputSlot(result) >= 0) {
-                for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
-                    if (DataChargePressRecipeSupport.matchesFluid(getFluidTank(tank, this.fluidTanks).getFluid())) {
-                        return new DataChargePressOperation(result, tank,
-                                DataChargePressRecipeSupport.DATA_CORROSION_AMOUNT,
-                                ObjectLists.singleton(new DataChargePressRecipe.InputSlot(materialSlot,
-                                        DataChargePressRecipeSupport.CIRCUIT_BOARD_MATERIAL_COUNT)));
-                    }
+            if (materialAssignments != null && !materialAssignments.isEmpty() && findOutputSlot(result) >= 0) {
+                ObjectList<DataChargePressRecipe.InputSlot> inputSlots = new ObjectArrayList<>(materialAssignments.size());
+                for (CountedItemInputMatcher.Assignment assignment : materialAssignments) {
+                    inputSlots.add(new DataChargePressRecipe.InputSlot(assignment.inputIndex(), assignment.amount()));
+                }
+                ObjectList<FluidInputAssignment> fluidInputs = findDataCorrosionFluidInputs(
+                        DataChargePressRecipeSupport.DATA_CORROSION_AMOUNT);
+                if (fluidInputs != null) {
+                    return new DataChargePressOperation(result, fluidInputs, inputSlots);
                 }
             }
         }
@@ -786,11 +793,10 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
                 continue;
             }
 
-            for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
-                if (DataChargePressRecipeSupport.matchesFluid(getFluidTank(tank, this.fluidTanks).getFluid(), fluidAmount)) {
-                    return new DataChargePressOperation(result, tank, fluidAmount,
-                            ObjectLists.singleton(new DataChargePressRecipe.InputSlot(inputSlot, 1)));
-                }
+            ObjectList<FluidInputAssignment> fluidInputs = findDataCorrosionFluidInputs(fluidAmount);
+            if (fluidInputs != null) {
+                return new DataChargePressOperation(result, fluidInputs,
+                        ObjectLists.singleton(new DataChargePressRecipe.InputSlot(inputSlot, 1)));
             }
         }
         return null;
@@ -816,27 +822,33 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         for (RecipeHolder<DataChargePressRecipe> holder : DataChargerRecipeRegistry.chargePressMatchingOrder(
                 this.level.getRecipeManager())) {
             DataChargePressRecipe recipe = holder.value();
-            List<DataChargePressRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
+            ObjectList<DataChargePressRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
             ItemStack result = recipe.result();
             if (inputSlots.isEmpty() || findOutputSlot(result) < 0) {
                 continue;
             }
-            for (int tank = 0; tank < FLUID_TANK_COUNT; tank++) {
-                if (recipe.matchesMachineInputs(inputs, getFluidTank(tank, this.fluidTanks).getFluid())) {
-                    return new DataChargePressOperation(result, tank, recipe.fluidAmount(), inputSlots);
-                }
+            ObjectList<FluidInputAssignment> fluidInputs = findDataCorrosionFluidInputs(recipe.fluidAmount());
+            if (fluidInputs != null) {
+                return new DataChargePressOperation(result, fluidInputs, inputSlots);
             }
         }
         return null;
     }
 
-    private static int findInputSlot(List<ItemStack> inputs, Ingredient ingredient) {
-        for (int slot = 0; slot < inputs.size(); slot++) {
-            if (ingredient.test(inputs.get(slot))) {
-                return slot;
+    private @Nullable ObjectList<FluidInputAssignment> findDataCorrosionFluidInputs(int requiredAmount) {
+        ObjectList<FluidInputAssignment> assignments = new ObjectArrayList<>();
+        int remaining = requiredAmount;
+        for (int tank = 0; tank < FLUID_TANK_COUNT && remaining > 0; tank++) {
+            FluidStack fluid = getFluidTank(tank, this.fluidTanks).getFluid();
+            if (!DataChargePressRecipeSupport.matchesFluid(fluid, 1)) {
+                continue;
             }
+
+            int amount = Math.min(remaining, fluid.getAmount());
+            assignments.add(new FluidInputAssignment(tank, amount));
+            remaining -= amount;
         }
-        return -1;
+        return remaining == 0 ? ObjectLists.unmodifiable(assignments) : null;
     }
 
     private @Nullable RecipeHolder<ChargerRecipe> findChargerRecipe(ItemStack input) {
@@ -878,7 +890,7 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         for (RecipeHolder<DataIntegratedChargerRecipe> holder : DataChargerRecipeRegistry.integratedChargerMatchingOrder(
                 this.level.getRecipeManager())) {
             DataIntegratedChargerRecipe recipe = holder.value();
-            List<DataIntegratedChargerRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
+            ObjectList<DataIntegratedChargerRecipe.InputSlot> inputSlots = recipe.findMatchingInputSlots(inputs);
             ItemStack result = recipe.result();
             if (!inputSlots.isEmpty() && findOutputSlot(result) >= 0) {
                 return new DataIntegratedChargerOperation(result, inputSlots);
@@ -1563,11 +1575,13 @@ public class DataIntegratedChargerBlockEntity extends AENetworkedPoweredBlockEnt
         }
     }
 
-    private record DataChargePressOperation(ItemStack result, int fluidTank, int fluidAmount,
-                                            List<DataChargePressRecipe.InputSlot> inputSlots) {}
+    private record DataChargePressOperation(ItemStack result, ObjectList<FluidInputAssignment> fluidInputs,
+                                            ObjectList<DataChargePressRecipe.InputSlot> inputSlots) {}
+
+    private record FluidInputAssignment(int tank, int amount) {}
 
     private record DataIntegratedChargerOperation(ItemStack result,
-                                                  List<DataIntegratedChargerRecipe.InputSlot> inputSlots) {}
+                                                  ObjectList<DataIntegratedChargerRecipe.InputSlot> inputSlots) {}
 
     private static final class StorageFilter implements IAEItemFilter {
 

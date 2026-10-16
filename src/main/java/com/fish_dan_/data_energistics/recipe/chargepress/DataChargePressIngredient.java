@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.recipe.chargepress;
 
+import com.fish_dan_.data_energistics.recipe.matching.CountedItemRequirement;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -15,7 +17,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /** A charge press item input and the number of items consumed from its matching slot. */
-public record DataChargePressIngredient(Ingredient ingredient, int count) {
+public record DataChargePressIngredient(Ingredient ingredient, int count) implements CountedItemRequirement {
 
     private static final Codec<Integer> COUNT_CODEC = Codec.INT.flatXmap(
             count -> count <= 0 ? DataResult.error(() -> "Data charge press ingredient count must be greater than 0") : DataResult.success(count),

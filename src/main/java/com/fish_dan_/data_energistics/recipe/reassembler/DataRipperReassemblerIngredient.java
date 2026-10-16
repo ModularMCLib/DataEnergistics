@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.recipe.reassembler;
 
+import com.fish_dan_.data_energistics.recipe.matching.CountedItemRequirement;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -14,7 +16,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public record DataRipperReassemblerIngredient(Ingredient ingredient, int count) {
+public record DataRipperReassemblerIngredient(Ingredient ingredient, int count) implements CountedItemRequirement {
 
     private static final Codec<Integer> COUNT_CODEC = Codec.INT.flatXmap(
             count -> count <= 0 ? DataResult.error(() -> "Data rippper reassembler ingredient count must be greater than 0") : DataResult.success(count),

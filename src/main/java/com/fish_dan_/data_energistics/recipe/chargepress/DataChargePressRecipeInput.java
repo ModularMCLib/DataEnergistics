@@ -1,19 +1,23 @@
 package com.fish_dan_.data_energistics.recipe.chargepress;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Runtime inputs for a data charge press recipe. */
-public record DataChargePressRecipeInput(List<ItemStack> items, FluidStack fluid, ItemStack module)
+public record DataChargePressRecipeInput(ObjectList<ItemStack> items, FluidStack fluid, ItemStack module)
         implements RecipeInput {
 
-    public DataChargePressRecipeInput {
-        items = List.copyOf(items);
+    public DataChargePressRecipeInput(ObjectList<ItemStack> items, FluidStack fluid, ItemStack module) {
+        this.items = FastUtilCollections.immutableList(items);
         fluid = fluid.copy();
         module = module.copy();
+        this.fluid = fluid;
+        this.module = module;
     }
 
     @Override

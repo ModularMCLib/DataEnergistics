@@ -8,16 +8,16 @@ import com.fish_dan_.data_energistics.client.render.orbital.geometry.OrbitalProj
 import com.fish_dan_.data_energistics.client.render.orbital.geometry.OrbitalRenderBuffers;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalConstructModel;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelRenderer;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackMode;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackPhase;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackVisualSnapshot;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamPath;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamScan;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamScan.Segment;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamSweep;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamVolume;
-import com.fish_dan_.data_energistics.orbital.model.StellarErasureDeviceLifecycleState;
-import com.fish_dan_.data_energistics.orbital.projection.OrbitalProjectionVisualSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackPhase;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamScan.Segment;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamSweep;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamVolume;
+import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceLifecycleState;
+import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

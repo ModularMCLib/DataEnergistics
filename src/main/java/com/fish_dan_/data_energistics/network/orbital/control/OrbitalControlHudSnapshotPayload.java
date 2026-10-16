@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.network.orbital.control;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
-import com.fish_dan_.data_energistics.orbital.control.protocol.OrbitalHudSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalHudSnapshot;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

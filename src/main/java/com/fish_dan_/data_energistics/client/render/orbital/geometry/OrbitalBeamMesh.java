@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.orbital.geometry;
 
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamVolume;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamVolume;
 
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;

@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.network.orbital.map;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalTacticalMapClientState;
-import com.fish_dan_.data_energistics.orbital.map.OrbitalMapTile;
-import com.fish_dan_.data_energistics.orbital.map.OrbitalTacticalMapSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.map.OrbitalMapTile;
+import com.fish_dan_.data_energistics.common.orbital.map.OrbitalTacticalMapSnapshot;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

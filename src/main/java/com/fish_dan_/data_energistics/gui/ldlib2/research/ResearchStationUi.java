@@ -12,10 +12,10 @@ import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Prog
 import com.fish_dan_.data_energistics.gui.ldlib2.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluation;
-import com.fish_dan_.data_energistics.research.item.ItemResearchExclusions;
-import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
+import com.fish_dan_.data_energistics.common.research.condition.ResearchConditionEvaluation;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.research.persistence.ResearchNbt;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;

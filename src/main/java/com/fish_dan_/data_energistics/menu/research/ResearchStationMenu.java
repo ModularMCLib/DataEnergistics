@@ -6,9 +6,9 @@ import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchStationUi;
 import com.fish_dan_.data_energistics.network.research.ResearchActionPayload;
 import com.fish_dan_.data_energistics.network.research.ResearchSnapshotPayload;
 import com.fish_dan_.data_energistics.registry.DEMenus;
-import com.fish_dan_.data_energistics.research.definition.ResearchDefinitions;
-import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
-import com.fish_dan_.data_energistics.research.synchronization.ResearchSnapshots;
+import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
+import com.fish_dan_.data_energistics.common.research.persistence.ResearchNbt;
+import com.fish_dan_.data_energistics.common.research.synchronization.ResearchSnapshots;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 

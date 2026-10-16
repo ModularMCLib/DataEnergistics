@@ -9,8 +9,8 @@ import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotItemData;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
-import com.fish_dan_.data_energistics.research.item.ItemResearchExclusions;
-import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 
 import appeng.api.stacks.AEKey;
 

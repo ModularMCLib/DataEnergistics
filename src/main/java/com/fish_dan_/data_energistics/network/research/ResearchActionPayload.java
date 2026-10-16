@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.network.research;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
-import com.fish_dan_.data_energistics.research.definition.ResearchDefinitions;
-import com.fish_dan_.data_energistics.research.progression.ResearchExecution;
-import com.fish_dan_.data_energistics.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
+import com.fish_dan_.data_energistics.common.research.progression.ResearchExecution;
+import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.library.ftbteams.research;
 
-import com.fish_dan_.data_energistics.research.team.ResearchTeamSubject;
+import com.fish_dan_.data_energistics.common.research.team.ResearchTeamSubject;
 
 import net.minecraft.server.level.ServerPlayer;
 

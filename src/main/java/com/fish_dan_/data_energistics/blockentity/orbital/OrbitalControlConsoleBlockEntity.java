@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.blockentity.orbital;
 
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointKind;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointKind;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 

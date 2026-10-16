@@ -131,7 +131,7 @@ public final class ResearchStationUi {
         this.teams = new ResearchTeamPanel(menu);
         root.setId("research_station_root");
         root.style(style -> style.backgroundTexture(GuiTextureGroup.of(
-                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("data_energistics", "textures/gui/digital_transformation_research_station.png")),
+                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("data_energistics", "textures/guis/digital_panel.png")),
                 new ColorRectTexture(0xC0DDE2F1))));
         root.addChild(research);
         title.textStyle(style -> style.adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL).fontSize(11));

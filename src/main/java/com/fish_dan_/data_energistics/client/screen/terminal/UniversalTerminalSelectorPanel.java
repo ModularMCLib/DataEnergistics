@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 public class UniversalTerminalSelectorPanel extends AbstractWidget {
 
     private static final ResourceLocation AE2_PANEL_TEXTURE = ResourceLocation.fromNamespaceAndPath("ae2", "textures/guis/universal_terminal_selector.png");
-    private static final ResourceLocation CUSTOM_PANEL_TEXTURE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "textures/gui/universal_terminal_selector.png");
+    private static final ResourceLocation CUSTOM_PANEL_TEXTURE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "textures/guis/universal_terminal_selector.png");
     private static final ResourceLocation FALLBACK_PANEL_TEXTURE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "textures/part/entity_speed_ticker_back.png");
     private static ResourceLocation resolvedPanelTexture;
     private static final int TEXTURE_SIZE = 16;

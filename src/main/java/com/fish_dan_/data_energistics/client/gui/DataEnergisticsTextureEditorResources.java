@@ -62,6 +62,7 @@ public final class DataEnergisticsTextureEditorResources {
         var provider = new BuiltinResourceProvider<>(Data_Energistics.MODID, resourceInstance);
         registerComposedTextures(provider);
         registerTextureAssets(provider);
+        registerStateTextures(provider);
         resourceInstance.addBuiltinProvider(provider);
     }
 
@@ -197,6 +198,92 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("trinity_storage_fluid_fill", sprite("storage_fluid_fill.png"));
         provider.addResource("trinity_storage_item_fill", sprite("storage_item_fill.png"));
         provider.addResource("trinity_storage_other_fill", sprite("storage_other_fill.png"));
+    }
+
+    /** Registers all sliced state assets with category-prefixed, collision-free editor names. */
+    private static void registerStateTextures(BuiltinResourceProvider<IGuiTexture> provider) {
+        provider.addResource("states_background_carrier_0", guiSprite("states/background/carrier_0.png"));
+        provider.addResource("states_background_carrier_1", guiSprite("states/background/carrier_1.png"));
+        provider.addResource("states_background_complex_biological_chip", guiSprite("states/background/complex_biological_chip.png"));
+        provider.addResource("states_background_crop", guiSprite("states/background/crop.png"));
+        provider.addResource("states_background_ore", guiSprite("states/background/ore.png"));
+        provider.addResource("states_background_small_anvil", guiSprite("states/background/small_anvil.png"));
+        provider.addResource("states_background_small_forging", guiSprite("states/background/small_forging.png"));
+        provider.addResource("states_background_small_handle", guiSprite("states/background/small_handle.png"));
+        provider.addResource("states_background_small_stone_cutting", guiSprite("states/background/small_stone_cutting.png"));
+        provider.addResource("states_background_small_synthesize", guiSprite("states/background/small_synthesize.png"));
+        provider.addResource("states_background_square", guiSprite("states/background/square.png"));
+        provider.addResource("states_background_sword", guiSprite("states/background/sword.png"));
+        provider.addResource("states_background_synthesize", guiSprite("states/background/synthesize.png"));
+        provider.addResource("states_background_toppin_background", guiSprite("states/background/toppin_background.png"));
+        provider.addResource("states_small_top_surface_small_anvil", guiSprite("states/small_top_surface/small_anvil.png"));
+        provider.addResource("states_small_top_surface_small_arrow_down_0", guiSprite("states/small_top_surface/small_arrow_down_0.png"));
+        provider.addResource("states_small_top_surface_small_arrow_down_1", guiSprite("states/small_top_surface/small_arrow_down_1.png"));
+        provider.addResource("states_small_top_surface_small_arrow_up_0", guiSprite("states/small_top_surface/small_arrow_up_0.png"));
+        provider.addResource("states_small_top_surface_small_arrow_up_1", guiSprite("states/small_top_surface/small_arrow_up_1.png"));
+        provider.addResource("states_small_top_surface_small_button_0", guiSprite("states/small_top_surface/small_button_0.png"));
+        provider.addResource("states_small_top_surface_small_button_1", guiSprite("states/small_top_surface/small_button_1.png"));
+        provider.addResource("states_small_top_surface_small_button_2", guiSprite("states/small_top_surface/small_button_2.png"));
+        provider.addResource("states_small_top_surface_small_close_drag", guiSprite("states/small_top_surface/small_close_drag.png"));
+        provider.addResource("states_small_top_surface_small_coding", guiSprite("states/small_top_surface/small_coding.png"));
+        provider.addResource("states_small_top_surface_small_cog", guiSprite("states/small_top_surface/small_cog.png"));
+        provider.addResource("states_small_top_surface_small_forge_button_0", guiSprite("states/small_top_surface/small_forge_button_0.png"));
+        provider.addResource("states_small_top_surface_small_forge_button_1", guiSprite("states/small_top_surface/small_forge_button_1.png"));
+        provider.addResource("states_small_top_surface_small_forge_button_2", guiSprite("states/small_top_surface/small_forge_button_2.png"));
+        provider.addResource("states_small_top_surface_small_forging", guiSprite("states/small_top_surface/small_forging.png"));
+        provider.addResource("states_small_top_surface_small_handle", guiSprite("states/small_top_surface/small_handle.png"));
+        provider.addResource("states_small_top_surface_small_horizontal_tab", guiSprite("states/small_top_surface/small_horizontal_tab.png"));
+        provider.addResource("states_small_top_surface_small_horizontal_tab_selected", guiSprite("states/small_top_surface/small_horizontal_tab_selected.png"));
+        provider.addResource("states_small_top_surface_small_magnet", guiSprite("states/small_top_surface/small_magnet.png"));
+        provider.addResource("states_small_top_surface_small_maintain", guiSprite("states/small_top_surface/small_maintain.png"));
+        provider.addResource("states_small_top_surface_small_sidebar_0", guiSprite("states/small_top_surface/small_sidebar_0.png"));
+        provider.addResource("states_small_top_surface_small_sidebar_1", guiSprite("states/small_top_surface/small_sidebar_1.png"));
+        provider.addResource("states_small_top_surface_small_sidebar_2", guiSprite("states/small_top_surface/small_sidebar_2.png"));
+        provider.addResource("states_small_top_surface_small_slider_0", guiSprite("states/small_top_surface/small_slider_0.png"));
+        provider.addResource("states_small_top_surface_small_slider_1", guiSprite("states/small_top_surface/small_slider_1.png"));
+        provider.addResource("states_small_top_surface_small_slider_2", guiSprite("states/small_top_surface/small_slider_2.png"));
+        provider.addResource("states_small_top_surface_small_sort_by_amount", guiSprite("states/small_top_surface/small_sort_by_amount.png"));
+        provider.addResource("states_small_top_surface_small_sort_by_name", guiSprite("states/small_top_surface/small_sort_by_name.png"));
+        provider.addResource("states_small_top_surface_small_stone_cutting", guiSprite("states/small_top_surface/small_stone_cutting.png"));
+        provider.addResource("states_small_top_surface_small_storage", guiSprite("states/small_top_surface/small_storage.png"));
+        provider.addResource("states_small_top_surface_small_storage_synthesis", guiSprite("states/small_top_surface/small_storage_synthesis.png"));
+        provider.addResource("states_small_top_surface_small_synthesis", guiSprite("states/small_top_surface/small_synthesis.png"));
+        provider.addResource("states_small_top_surface_small_synthesize", guiSprite("states/small_top_surface/small_synthesize.png"));
+        provider.addResource("states_small_top_surface_small_text_box", guiSprite("states/small_top_surface/small_text_box.png"));
+        provider.addResource("states_small_top_surface_small_text_box_0", guiSprite("states/small_top_surface/small_text_box_0.png"));
+        provider.addResource("states_small_top_surface_small_text_box_1", guiSprite("states/small_top_surface/small_text_box_1.png"));
+        provider.addResource("states_small_top_surface_small_toppin", guiSprite("states/small_top_surface/small_toppin.png"));
+        provider.addResource("states_small_top_surface_small_type_filter_all", guiSprite("states/small_top_surface/small_type_filter_all.png"));
+        provider.addResource("states_small_top_surface_small_zoom", guiSprite("states/small_top_surface/small_zoom.png"));
+        provider.addResource("states_top_surface_ae_fe", guiSprite("states/top_surface/ae_fe.png"));
+        provider.addResource("states_top_surface_ae_output", guiSprite("states/top_surface/ae_output.png"));
+        provider.addResource("states_top_surface_black", guiSprite("states/top_surface/black.png"));
+        provider.addResource("states_top_surface_black_hole", guiSprite("states/top_surface/black_hole.png"));
+        provider.addResource("states_top_surface_black_hole_crack_close", guiSprite("states/top_surface/black_hole_crack_close.png"));
+        provider.addResource("states_top_surface_blacklist", guiSprite("states/top_surface/blacklist.png"));
+        provider.addResource("states_top_surface_charging_mode", guiSprite("states/top_surface/charging_mode.png"));
+        provider.addResource("states_top_surface_embossing_mode", guiSprite("states/top_surface/embossing_mode.png"));
+        provider.addResource("states_top_surface_fluid", guiSprite("states/top_surface/fluid.png"));
+        provider.addResource("states_top_surface_hammer", guiSprite("states/top_surface/hammer.png"));
+        provider.addResource("states_top_surface_item", guiSprite("states/top_surface/item.png"));
+        provider.addResource("states_top_surface_key", guiSprite("states/top_surface/key.png"));
+        provider.addResource("states_top_surface_maintain", guiSprite("states/top_surface/maintain.png"));
+        provider.addResource("states_top_surface_point_to_point_", guiSprite("states/top_surface/point_to_point_.png"));
+        provider.addResource("states_top_surface_production_boost_mode", guiSprite("states/top_surface/production_boost_mode.png"));
+        provider.addResource("states_top_surface_prohibit", guiSprite("states/top_surface/prohibit.png"));
+        provider.addResource("states_top_surface_range", guiSprite("states/top_surface/range.png"));
+        provider.addResource("states_top_surface_recipe_record_0", guiSprite("states/top_surface/recipe_record_0.png"));
+        provider.addResource("states_top_surface_recipe_record_1", guiSprite("states/top_surface/recipe_record_1.png"));
+        provider.addResource("states_top_surface_settings", guiSprite("states/top_surface/settings.png"));
+        provider.addResource("states_top_surface_small_forge_button_0", guiSprite("states/top_surface/small_forge_button_0.png"));
+        provider.addResource("states_top_surface_small_forge_button_1", guiSprite("states/top_surface/small_forge_button_1.png"));
+        provider.addResource("states_top_surface_small_forge_button_2", guiSprite("states/top_surface/small_forge_button_2.png"));
+        provider.addResource("states_top_surface_text_box", guiSprite("states/top_surface/text_box.png"));
+        provider.addResource("states_top_surface_text_box_0", guiSprite("states/top_surface/text_box_0.png"));
+        provider.addResource("states_top_surface_text_box_1", guiSprite("states/top_surface/text_box_1.png"));
+        provider.addResource("states_top_surface_toppin", guiSprite("states/top_surface/toppin.png"));
+        provider.addResource("states_top_surface_whitelist", guiSprite("states/top_surface/whitelist.png"));
+        provider.addResource("digital_panel", guiSprite("digital_panel.png"));
     }
 
     /**

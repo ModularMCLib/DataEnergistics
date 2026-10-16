@@ -9,7 +9,6 @@ import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerRecipe
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.stacks.AEFluidKey;
-import appeng.core.AppEng;
 import appeng.recipes.handlers.InscriberProcessType;
 import appeng.recipes.handlers.InscriberRecipe;
 
@@ -64,9 +63,10 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     private static final int PROGRESS_Y = 24;
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             "ae2", "textures/guis/data_integrated_charger.png");
-    private static final ResourceLocation STATES_TEXTURE = AppEng.makeId("textures/guis/states.png");
-    private static final ResourceLocation DATA_STATES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID, "textures/guis/states.png");
+    private static final ResourceLocation CRYSTAL_GROWTH_ICON = Data_Energistics.id("textures/guis/states/top_surface/production_boost_mode.png");
+    private static final ResourceLocation INSCRIBER_ICON = Data_Energistics.id("textures/guis/states/top_surface/embossing_mode.png");
+    private static final ResourceLocation CHARGER_ICON = Data_Energistics.id("textures/guis/states/top_surface/charging_mode.png");
+    private static final ResourceLocation POWDER_ICON = Data_Energistics.id("textures/guis/states/top_surface/powder_mode.png");
 
     private final DataChargePressRecipeView view;
 
@@ -305,8 +305,7 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     private void addModeIcon(WidgetHolder widgets) {
         ModeIndicator indicator = getModeIndicator(this.view);
         widgets.addTexture(indicator.texture(), MODE_ICON_X, MODE_ICON_Y, 16, 16,
-                indicator.sourceX(), indicator.sourceY(), 16, 16,
-                indicator.textureSize(), indicator.textureSize());
+                0, 0, 16, 16, 16, 16);
         widgets.addTooltipText(
                 ObjectArrayList.of(
                         Component.translatable("button.data_energistics.data_integrated_charger.machine_mode"),
@@ -320,15 +319,14 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
 
     private static ModeIndicator getModeIndicator(DataChargePressRecipeView view) {
         return switch (view.machineMode()) {
-            case CHARGER -> new ModeIndicator(DATA_STATES_TEXTURE, 112, 80, 128, "charger");
-            case CRYSTAL_GROWTH -> new ModeIndicator(DATA_STATES_TEXTURE, 80, 80, 128, "crystal_growth");
-            case INSCRIBER -> new ModeIndicator(DATA_STATES_TEXTURE, 96, 80, 128, "inscriber");
-            case POWDER -> new ModeIndicator(STATES_TEXTURE, 16, 224, 256, "powder");
+            case CHARGER -> new ModeIndicator(CHARGER_ICON, "charger");
+            case CRYSTAL_GROWTH -> new ModeIndicator(CRYSTAL_GROWTH_ICON, "crystal_growth");
+            case INSCRIBER -> new ModeIndicator(INSCRIBER_ICON, "inscriber");
+            case POWDER -> new ModeIndicator(POWDER_ICON, "powder");
         };
     }
 
-    private record ModeIndicator(ResourceLocation texture, int sourceX, int sourceY, int textureSize,
-                                 String translationKey) {}
+    private record ModeIndicator(ResourceLocation texture, String translationKey) {}
 
     private static final class FluidAmountTankWidget extends TankWidget {
 

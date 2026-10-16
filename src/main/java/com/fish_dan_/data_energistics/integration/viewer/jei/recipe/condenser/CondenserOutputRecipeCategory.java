@@ -31,8 +31,7 @@ public final class CondenserOutputRecipeCategory extends AbstractRecipeCategory<
 
     private static final ResourceLocation CONDENSER_TEXTURE = ResourceLocation.fromNamespaceAndPath(
             "ae2", "textures/guis/condenser.png");
-    private static final ResourceLocation DATA_STATES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID, "textures/guis/states.png");
+    private static final ResourceLocation AGGREGATION_MODE_ICON = Data_Energistics.id("textures/guis/states/top_surface/aggregation_mode.png");
     private static final int WIDTH = 96;
     private static final int HEIGHT = 48;
     private static final int STORAGE_X = 53;
@@ -63,8 +62,8 @@ public final class CondenserOutputRecipeCategory extends AbstractRecipeCategory<
                 .buildAnimated(40, IDrawableAnimated.StartDirection.BOTTOM, false);
         this.trash = new JeiIconDrawable(Icon.BACKGROUND_TRASH);
         this.modeBackground = new JeiIconDrawable(Icon.TOOLBAR_BUTTON_BACKGROUND);
-        this.modeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 48, 48, 16, 16)
-                .setTextureSize(128, 128)
+        this.modeIcon = guiHelper.drawableBuilder(AGGREGATION_MODE_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
     }
 

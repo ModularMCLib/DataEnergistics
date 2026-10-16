@@ -62,8 +62,9 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
     private static final int PROGRESS_Y = 24;
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             "ae2", "textures/guis/data_integrated_charger.png");
-    private static final ResourceLocation DATA_STATES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID, "textures/guis/states.png");
+    private static final ResourceLocation CRYSTAL_GROWTH_ICON = Data_Energistics.id("textures/guis/states/top_surface/production_boost_mode.png");
+    private static final ResourceLocation INSCRIBER_ICON = Data_Energistics.id("textures/guis/states/top_surface/embossing_mode.png");
+    private static final ResourceLocation CHARGER_ICON = Data_Energistics.id("textures/guis/states/top_surface/charging_mode.png");
 
     private final IDrawable background;
     private final IDrawableAnimated progress;
@@ -83,14 +84,14 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
         this.progress = guiHelper.drawableBuilder(TEXTURE, 176, 0, 6, 18)
                 .buildAnimated(200, IDrawableAnimated.StartDirection.BOTTOM, false);
         this.powderModeIcon = new JeiIconDrawable(Icon.PLACEMENT_ITEM);
-        this.crystalGrowthModeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 80, 80, 16, 16)
-                .setTextureSize(128, 128)
+        this.crystalGrowthModeIcon = guiHelper.drawableBuilder(CRYSTAL_GROWTH_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
-        this.inscriberModeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 96, 80, 16, 16)
-                .setTextureSize(128, 128)
+        this.inscriberModeIcon = guiHelper.drawableBuilder(INSCRIBER_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
-        this.chargerModeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 112, 80, 16, 16)
-                .setTextureSize(128, 128)
+        this.chargerModeIcon = guiHelper.drawableBuilder(CHARGER_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
     }
 

@@ -62,11 +62,9 @@ public final class CompositeWarehousePanel {
     private static final int PANEL_WIDTH = 194;
     private static final int PANEL_HEIGHT = 155;
     private static final IGuiTexture OPTIONAL_FLUID_TEXTURE = SpriteTexture
-            .of("ae2:textures/guis/composite_warehouse.png")
-            .setSprite(133, 28, 18, 18);
+            .of(Data_Energistics.id("textures/guis/slot/optional_fluid.png"));
     private static final IGuiTexture OPTIONAL_KEY_TEXTURE = SpriteTexture
-            .of("ae2:textures/guis/composite_warehouse.png")
-            .setSprite(151, 28, 18, 18);
+            .of(Data_Energistics.id("textures/guis/slot/optional_key.png"));
     private static final List<SlotSemantic> STORAGE_ROW_SEMANTICS = List.of(
             CompartmentMenu.COMPARTMENT_STORAGE_ROW_1,
             CompartmentMenu.COMPARTMENT_STORAGE_ROW_2,

@@ -126,12 +126,6 @@ public final class ResearchSavedData extends SavedData {
         materialCalculations.clear();
     }
 
-    public void unlock(Iterable<UUID> subjects, ResourceLocation node) {
-        for (UUID subject : subjects) {
-            if (unlocks.computeIfAbsent(subject, unused -> new ObjectOpenHashSet<>()).add(node)) setDirty();
-        }
-    }
-
     public void unlockTechnology(Iterable<UUID> subjects, ResearchNode node) {
         boolean changed = false;
         for (UUID subject : subjects) {
@@ -172,7 +166,7 @@ public final class ResearchSavedData extends SavedData {
         return null;
     }
 
-    /** Removes unpaid route conflicts after a node wins; already paid materials are intentionally not refunded. */
+    /** Removes conflicting projects after a node wins; paid materials are intentionally not refunded. */
     public void cancelMutuallyExclusiveProjects(ResearchNode completedNode, ObjectSet<UUID> completedSubjects,
                                                 UUID initiator, UUID sourceStation) {
         boolean changed = false;

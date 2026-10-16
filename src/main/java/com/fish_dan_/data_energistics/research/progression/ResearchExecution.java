@@ -59,25 +59,22 @@ public final class ResearchExecution {
             if (requestMaterials) return message("materials_paid");
             if (!existing.initiator.equals(player.getUUID()) && !player.hasPermissions(2)) return message("project_owner");
             if (existing.faulted) return message("faulted");
-            ResearchConditionEvaluation evaluation = ResearchConditionEvaluator.evaluate(player, existing.node);
-            boolean evaluationChanged = !evaluation.equals(existing.conditionEvaluation);
-            existing.conditionEvaluation = evaluation;
-            if (evaluationChanged) {
-                state.revision++;
-                data.setDirty();
-            }
-            if (!evaluation.satisfies(existing.node)) {
-                existing.running = false;
-                existing.powered = false;
-                existing.conditionBlocked = true;
-                state.revision++;
-                data.setDirty();
-                return message("condition_missing");
-            }
+            updateConditions(state, existing, data, existing.evaluateConditions(player.server));
+            if (existing.conditionBlocked) return message("condition_missing");
             if (existing.running) return message("already_running");
+            if (!existing.node.prerequisitesSatisfied(unlockedIds(state, data, existing.subjects, existing.initiator))) {
+                return message("prerequisite");
+            }
+            if (exclusionWinner(existing.node, data, existing.subjects, existing.initiator, state.target) != null) {
+                return message("mutually_excluded");
+            }
             ResourceLocation conflict = data.runningMutualProject(existing.node, existing.subjects,
                     existing.initiator, host.stationId());
             if (conflict != null) return message("mutual_project_running");
+            if (instantResearchEnabled(existing.node, data, existing.subjects, existing.initiator, state.target)) {
+                complete(host, state, data, existing.node, existing.subjects, existing.initiator);
+                return message("instant_completed");
+            }
             if (state.runningCount() >= 2) return message("full");
             existing.running = true;
             existing.conditionBlocked = false;
@@ -88,7 +85,7 @@ public final class ResearchExecution {
         if (action.equals("resume")) return message("unavailable");
         ObjectSet<UUID> subjects = ResearchAccess.subjects(player, host.stationId());
         if (node.scope() == ResearchScope.ITEM_UPGRADE && !node.target().matches(state.target)) return message("wrong_item");
-        ObjectSet<ResourceLocation> unlocked = unlockedIds(node.scope(), state, data, subjects, player.getUUID());
+        ObjectSet<ResourceLocation> unlocked = unlockedIds(state, data, subjects, player.getUUID());
         if (unlocked.contains(node.id())) return message("already_unlocked");
         if (!node.prerequisitesSatisfied(unlocked)) return message("prerequisite");
         ResourceLocation winner = exclusionWinner(node, data, subjects, player.getUUID(), state.target);
@@ -98,7 +95,7 @@ public final class ResearchExecution {
         if (!requestMaterials && data.runningMutualProject(node, subjects, player.getUUID(), host.stationId()) != null) {
             return message("mutual_project_running");
         }
-        boolean instant = instantResearchEnabled(node, data, subjects, player, state.target);
+        boolean instant = instantResearchEnabled(node, data, subjects, player.getUUID(), state.target);
         if (requestMaterials && instant) return message("instant_enabled");
         if (!requestMaterials && !instant && state.runningCount() >= 2) return message("full");
         IGrid grid = host.getMainNode().getGrid();
@@ -144,29 +141,30 @@ public final class ResearchExecution {
         return state.materialRequests.request(host, player, node, grid);
     }
 
-    private static ObjectSet<ResourceLocation> unlockedIds(ResearchScope scope, ResearchStationState state, ResearchSavedData data,
-                                                           ObjectSet<UUID> subjects, UUID player) {
+    /** Resolves prerequisite IDs from their owning ledger, including cross-scope prerequisites. */
+    public static ObjectSet<ResourceLocation> unlockedIds(ResearchStationState state, ResearchSavedData data,
+                                                          ObjectSet<UUID> subjects, UUID player) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
-        switch (scope) {
-            case TECHNOLOGY -> subjects.forEach(subject -> result.addAll(data.unlocked(subject)));
-            case ITEM_UPGRADE -> result.addAll(ItemResearchUpgrades.of(state.target).ids());
-            case PLAYER_UPGRADE -> result.addAll(data.playerUpgrades(player));
-        }
+        subjects.forEach(subject -> result.addAll(data.unlocked(subject)));
+        result.addAll(ItemResearchUpgrades.of(state.target).ids());
+        result.addAll(data.playerUpgrades(player));
         return result;
     }
 
-    private static boolean instantResearchEnabled(ResearchNode node, ResearchSavedData data,
-                                                  ObjectSet<UUID> subjects, ServerPlayer player, ItemStack target) {
+    /** The server snapshot and action path share entitlement resolution for the same subject snapshot. */
+    public static boolean instantResearchEnabled(ResearchNode node, ResearchSavedData data,
+                                                 ObjectSet<UUID> subjects, UUID player, ItemStack target) {
         return switch (node.scope()) {
             case TECHNOLOGY -> data.hasInstantTechnology(subjects);
             case ITEM_UPGRADE -> target.getOrDefault(DEDataComponents.RESEARCH_INSTANT.get(), false);
-            case PLAYER_UPGRADE -> data.hasInstantPlayerResearch(player.getUUID());
+            case PLAYER_UPGRADE -> data.hasInstantPlayerResearch(player);
         };
     }
 
-    private static @Nullable ResourceLocation exclusionWinner(ResearchNode node, ResearchSavedData data,
-                                                              ObjectSet<UUID> subjects, UUID player,
-                                                              ItemStack target) {
+    /** Returns the persisted route winner for this scope owner, or null when the route is unlocked. */
+    public static @Nullable ResourceLocation exclusionWinner(ResearchNode node, ResearchSavedData data,
+                                                             ObjectSet<UUID> subjects, UUID player,
+                                                             ItemStack target) {
         return switch (node.scope()) {
             case TECHNOLOGY -> data.technologyExclusionWinner(subjects, node.id());
             case ITEM_UPGRADE -> ItemResearchExclusions.of(target).winner(node.id());
@@ -183,19 +181,7 @@ public final class ResearchExecution {
         for (ResearchProject project : state.projects.values()) project.powered = false;
         ObjectList<ResearchProject> trackedProjects = new ObjectArrayList<>(state.projects.values());
         for (ResearchProject project : trackedProjects) {
-            if (!project.running || project.faulted) continue;
-            ServerPlayer initiator = server.getPlayerList().getPlayer(project.initiator);
-            if (initiator == null) {
-                if (!project.conditionEvaluation.satisfies(project.node)) pauseForCondition(state, project, data);
-                continue;
-            }
-            ResearchConditionEvaluation evaluation = ResearchConditionEvaluator.evaluate(initiator, project.node);
-            if (!evaluation.equals(project.conditionEvaluation)) {
-                project.conditionEvaluation = evaluation;
-                state.revision++;
-                data.setDirty();
-            }
-            if (!evaluation.satisfies(project.node)) pauseForCondition(state, project, data);
+            if (!project.faulted) updateConditions(state, project, data, project.evaluateConditions(server));
         }
         IGrid grid = host.getMainNode().getGrid();
         if (grid == null || !host.getMainNode().isOnline()) return;
@@ -234,10 +220,16 @@ public final class ResearchExecution {
         }
     }
 
-    private static void pauseForCondition(ResearchStationState state, ResearchProject project, ResearchSavedData data) {
-        project.running = false;
-        project.powered = false;
-        project.conditionBlocked = true;
+    private static void updateConditions(ResearchStationState state, ResearchProject project, ResearchSavedData data,
+                                         ResearchConditionEvaluation evaluation) {
+        boolean blocked = !evaluation.satisfies(project.node);
+        if (evaluation.equals(project.conditionEvaluation) && project.conditionBlocked == blocked) return;
+        project.conditionEvaluation = evaluation;
+        project.conditionBlocked = blocked;
+        if (blocked) {
+            project.running = false;
+            project.powered = false;
+        }
         state.revision++;
         data.setDirty();
     }

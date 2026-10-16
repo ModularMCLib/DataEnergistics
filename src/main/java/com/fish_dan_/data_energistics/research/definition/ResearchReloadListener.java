@@ -46,7 +46,6 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
     protected Object2ObjectMap<ResourceLocation, ResearchNode> prepare(ResourceManager resources, ProfilerFiller profiler) {
         var nodes = ResearchDefinitions.defaults();
         resources.listResources(DIRECTORY, path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
-            if (!path.getNamespace().equals(Data_Energistics.MODID)) return;
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(path.getNamespace(),
                     path.getPath().substring(DIRECTORY.length() + 1, path.getPath().length() - 5));
             try (Reader reader = resource.openAsReader()) {
@@ -81,7 +80,7 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
         ObjectList<ResearchInput> inputs = json.has("inputs") ? ResearchInputParser.parse(json.get("inputs"), operations) : original.inputs();
         Prerequisites prerequisites = json.has("prerequisites") ? prerequisites(json.get("prerequisites")) :
                 new Prerequisites(original.requiredPrerequisites(), original.optionalPrerequisiteGroups());
-        Conditions conditions = json.has("conditions") ? conditions(json.get("conditions")) :
+        Conditions conditions = json.has("conditions") ? conditions(json.get("conditions"), original) :
                 new Conditions(original.requiredConditions(), original.optionalConditionGroups());
         ObjectSet<ResourceLocation> mutuallyExclusive = json.has("mutually_exclusive") ?
                 ids(json, "mutually_exclusive") : original.mutuallyExclusive();
@@ -94,11 +93,12 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
                 json.has("ae_per_tick") ? number(json.get("ae_per_tick"), "ae_per_tick").doubleValue() : original.aePerTick());
     }
 
-    private static Conditions conditions(@Nullable JsonElement value) {
+    private static Conditions conditions(@Nullable JsonElement value, ResearchNode original) {
         if (!(value instanceof JsonObject object)) throw new IllegalArgumentException("conditions must be an object");
-        ObjectSet<ResearchCondition> required = conditionArray(object.get("required"), "conditions.required");
+        ObjectSet<ResearchCondition> required = object.has("required") ?
+                conditionArray(object.get("required"), "conditions.required") : original.requiredConditions();
+        if (!object.has("optional")) return new Conditions(required, original.optionalConditionGroups());
         ObjectList<ObjectSet<ResearchCondition>> optionalGroups = new ObjectArrayList<>();
-        if (!object.has("optional")) return new Conditions(required, optionalGroups);
         JsonElement optionalValue = object.get("optional");
         if (!(optionalValue instanceof JsonArray groups)) {
             throw new IllegalArgumentException("conditions.optional must be an array of condition arrays");
@@ -117,7 +117,6 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
 
     private static ObjectSet<ResearchCondition> conditionArray(@Nullable JsonElement value, String field) {
         ObjectSet<ResearchCondition> result = new ObjectOpenHashSet<>();
-        if (value == null) return result;
         if (!(value instanceof JsonArray array)) throw new IllegalArgumentException(field + " must be an array");
         for (int index = 0; index < array.size(); index++) {
             ResearchCondition condition = condition(array.get(index), field + "[" + index + "]");

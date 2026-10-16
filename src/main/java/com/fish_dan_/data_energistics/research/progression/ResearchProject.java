@@ -2,12 +2,14 @@ package com.fish_dan_.data_energistics.research.progression;
 
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluation;
+import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluator;
 import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.MinecraftServer;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -37,6 +39,12 @@ public final class ResearchProject {
         this.initiator = initiator;
         this.order = order;
         this.conditionEvaluation = conditionEvaluation;
+    }
+
+    /** Online initiators use live progress; offline initiators retain the last persisted result. */
+    public ResearchConditionEvaluation evaluateConditions(MinecraftServer server) {
+        var player = server.getPlayerList().getPlayer(initiator);
+        return player == null ? conditionEvaluation : ResearchConditionEvaluator.evaluate(player, node);
     }
 
     public CompoundTag save(HolderLookup.Provider registries) {

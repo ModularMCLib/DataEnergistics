@@ -35,24 +35,55 @@ public final class ResearchDefinitions {
 
     public static void publish(Object2ObjectMap<ResourceLocation, ResearchNode> definitions) {
         ObjectSet<ResourceLocation> rejected = new ObjectOpenHashSet<>();
-        for (ResourceLocation id : definitions.keySet()) {
-            if (!valid(id, definitions, new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>())) {
-                rejected.add(id);
-                Data_Energistics.LOGGER.error("Rejected research node {}: missing or cyclic prerequisite", id);
+        boolean changed;
+        do {
+            int rejectedCount = rejected.size();
+            for (ResourceLocation id : definitions.keySet()) {
+                if (rejected.contains(id)) continue;
+                ResearchNode node = definitions.get(id);
+                for (ResourceLocation exclusiveId : node.mutuallyExclusive()) {
+                    if (!definitions.containsKey(exclusiveId)) {
+                        rejected.add(id);
+                        Data_Energistics.LOGGER.error("Rejected research node {}: mutually_exclusive references missing node {}", id, exclusiveId);
+                        continue;
+                    }
+                    ResearchNode exclusive = definitions.get(exclusiveId);
+                    if (rejected.contains(exclusiveId)) {
+                        rejected.add(id);
+                        Data_Energistics.LOGGER.error("Rejected research node {}: mutually_exclusive references unavailable node {}", id, exclusiveId);
+                        continue;
+                    }
+                    if (exclusive.scope() != node.scope()) {
+                        rejected.add(id);
+                        rejected.add(exclusiveId);
+                        Data_Energistics.LOGGER.error("Rejected research nodes {} and {}: mutually exclusive nodes must share a scope", id, exclusiveId);
+                    } else if (!exclusive.mutuallyExclusive().contains(id)) {
+                        rejected.add(id);
+                        rejected.add(exclusiveId);
+                        Data_Energistics.LOGGER.error("Rejected research nodes {} and {}: mutually_exclusive references must be reciprocal", id, exclusiveId);
+                    }
+                }
+                if (!valid(id, definitions, rejected, new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>())) {
+                    rejected.add(id);
+                    Data_Energistics.LOGGER.error("Rejected research node {}: missing or cyclic prerequisite", id);
+                }
             }
-        }
+            changed = rejected.size() != rejectedCount;
+        } while (changed);
         rejected.forEach(definitions::remove);
         current = Object2ObjectMaps.unmodifiable(new Object2ObjectLinkedOpenHashMap<>(definitions));
         revision++;
     }
 
     private static boolean valid(ResourceLocation id, Object2ObjectMap<ResourceLocation, ResearchNode> definitions,
+                                 ObjectSet<ResourceLocation> rejected,
                                  ObjectSet<ResourceLocation> visiting, ObjectSet<ResourceLocation> visited) {
         if (visited.contains(id)) return true;
+        if (rejected.contains(id) || !definitions.containsKey(id)) return false;
         ResearchNode node = definitions.get(id);
-        if (node == null || !visiting.add(id)) return false;
+        if (!visiting.add(id)) return false;
         for (ResourceLocation prerequisite : node.prerequisiteIds()) {
-            if (!valid(prerequisite, definitions, visiting, visited)) return false;
+            if (!valid(prerequisite, definitions, rejected, visiting, visited)) return false;
         }
         visiting.remove(id);
         visited.add(id);

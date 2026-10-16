@@ -21,6 +21,9 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
                            ResourceLocation icon, ResearchTarget target, ObjectList<ResearchInput> inputs,
                            ObjectSet<ResourceLocation> requiredPrerequisites,
                            ObjectList<ObjectSet<ResourceLocation>> optionalPrerequisiteGroups,
+                           ObjectSet<ResearchCondition> requiredConditions,
+                           ObjectList<ObjectSet<ResearchCondition>> optionalConditionGroups,
+                           ObjectSet<ResourceLocation> mutuallyExclusive,
                            int researchTicks, double aePerTick) {
 
     public ResearchNode {
@@ -30,6 +33,9 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
         Objects.requireNonNull(target, "target");
         Objects.requireNonNull(requiredPrerequisites, "requiredPrerequisites");
         Objects.requireNonNull(optionalPrerequisiteGroups, "optionalPrerequisiteGroups");
+        Objects.requireNonNull(requiredConditions, "requiredConditions");
+        Objects.requireNonNull(optionalConditionGroups, "optionalConditionGroups");
+        Objects.requireNonNull(mutuallyExclusive, "mutuallyExclusive");
         if (!name.matches("[a-zA-Z0-9_.:/-]+") || !description.matches("[a-zA-Z0-9_.:/-]+")) {
             throw new IllegalArgumentException("Research name and description must be translation keys");
         }
@@ -59,6 +65,33 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
             }
             groups.add(ObjectSets.unmodifiable(copy));
         }
+        ObjectSet<ResearchCondition> conditionIds = new ObjectOpenHashSet<>();
+        for (ResearchCondition condition : requiredConditions) {
+            Objects.requireNonNull(condition, "requiredConditions contains null");
+            if (!conditionIds.add(condition)) {
+                throw new IllegalArgumentException("Duplicate research condition " + condition + " for node " + id);
+            }
+        }
+        ObjectList<ObjectSet<ResearchCondition>> conditionGroups = new ObjectArrayList<>(optionalConditionGroups.size());
+        for (ObjectSet<ResearchCondition> group : optionalConditionGroups) {
+            Objects.requireNonNull(group, "optionalConditionGroups contains null");
+            if (group.isEmpty()) throw new IllegalArgumentException("Optional condition groups cannot be empty");
+            ObjectSet<ResearchCondition> copy = new ObjectOpenHashSet<>();
+            for (ResearchCondition condition : group) {
+                Objects.requireNonNull(condition, "optional condition group contains null");
+                if (!copy.add(condition) || !conditionIds.add(condition)) {
+                    throw new IllegalArgumentException("Duplicate research condition " + condition + " for node " + id);
+                }
+            }
+            conditionGroups.add(ObjectSets.unmodifiable(copy));
+        }
+        ObjectSet<ResourceLocation> exclusiveIds = new ObjectOpenHashSet<>();
+        for (ResourceLocation exclusive : mutuallyExclusive) {
+            Objects.requireNonNull(exclusive, "mutuallyExclusive contains null");
+            if (exclusive.equals(id) || !exclusiveIds.add(exclusive)) {
+                throw new IllegalArgumentException("Invalid mutually exclusive research ID " + exclusive + " for node " + id);
+            }
+        }
         Object2LongMap<AEKey> totals = new Object2LongLinkedOpenHashMap<>();
         for (ResearchInput input : inputs) {
             try {
@@ -70,6 +103,9 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
         inputs = new ObjectImmutableList<>(inputs);
         requiredPrerequisites = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(requiredPrerequisites));
         optionalPrerequisiteGroups = ObjectLists.unmodifiable(groups);
+        requiredConditions = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(requiredConditions));
+        optionalConditionGroups = ObjectLists.unmodifiable(conditionGroups);
+        mutuallyExclusive = ObjectSets.unmodifiable(exclusiveIds);
     }
 
     /** Returns every prerequisite edge, including every alternative in an optional group. */
@@ -104,6 +140,22 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
         return false;
     }
 
+    /** Returns whether all required conditions and one member of each optional condition group are satisfied. */
+    public boolean conditionsSatisfied(ObjectSet<ResearchCondition> satisfied) {
+        if (!satisfied.containsAll(requiredConditions)) return false;
+        for (ObjectSet<ResearchCondition> group : optionalConditionGroups) {
+            boolean groupSatisfied = false;
+            for (ResearchCondition condition : group) {
+                if (satisfied.contains(condition)) {
+                    groupSatisfied = true;
+                    break;
+                }
+            }
+            if (!groupSatisfied) return false;
+        }
+        return true;
+    }
+
     /** Required parameters make every node explicitly choose its time and energy cost. */
     public static Builder builder(ResourceLocation id, ResearchScope scope, String name, String description,
                                   int researchTicks, double aePerTick) {
@@ -123,6 +175,9 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
         private final ObjectList<ResearchInput> inputs = new ObjectArrayList<>();
         private final ObjectSet<ResourceLocation> requiredPrerequisites = new ObjectOpenHashSet<>();
         private final ObjectList<ObjectSet<ResourceLocation>> optionalPrerequisiteGroups = new ObjectArrayList<>();
+        private final ObjectSet<ResearchCondition> requiredConditions = new ObjectOpenHashSet<>();
+        private final ObjectList<ObjectSet<ResearchCondition>> optionalConditionGroups = new ObjectArrayList<>();
+        private final ObjectSet<ResourceLocation> mutuallyExclusive = new ObjectOpenHashSet<>();
 
         private Builder(ResourceLocation id, ResearchScope scope, String name, String description, int ticks, double energy) {
             this.id = id;
@@ -161,9 +216,31 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
             return this;
         }
 
+        /** Adds a condition that must pass before this node can start or continue. */
+        public Builder requiredCondition(ResearchCondition value) {
+            requiredConditions.add(value);
+            return this;
+        }
+
+        /** Adds one alternative group; at least one member must pass before this node can start or continue. */
+        public Builder optionalConditions(Iterable<ResearchCondition> values) {
+            ObjectSet<ResearchCondition> group = new ObjectOpenHashSet<>();
+            for (ResearchCondition value : values) group.add(value);
+            if (group.isEmpty()) throw new IllegalArgumentException("Optional condition groups cannot be empty");
+            optionalConditionGroups.add(group);
+            return this;
+        }
+
+        /** Adds a same-scope node that becomes unavailable once this node completes. */
+        public Builder mutuallyExclusive(ResourceLocation value) {
+            mutuallyExclusive.add(value);
+            return this;
+        }
+
         public ResearchNode build() {
             return new ResearchNode(id, scope, name, description, icon, target, inputs,
-                    requiredPrerequisites, optionalPrerequisiteGroups, ticks, energy);
+                    requiredPrerequisites, optionalPrerequisiteGroups, requiredConditions,
+                    optionalConditionGroups, mutuallyExclusive, ticks, energy);
         }
     }
 }

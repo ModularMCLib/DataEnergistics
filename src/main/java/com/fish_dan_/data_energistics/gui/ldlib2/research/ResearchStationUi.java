@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
+import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
+import com.fish_dan_.data_energistics.api.research.FtbQuestTaskCondition;
+import com.fish_dan_.data_energistics.api.research.ResearchCondition;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
@@ -8,6 +11,9 @@ import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Pres
 import com.fish_dan_.data_energistics.gui.ldlib2.research.ResearchGraphNode.Progress;
 import com.fish_dan_.data_energistics.gui.ldlib2.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluation;
+import com.fish_dan_.data_energistics.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
 
@@ -45,6 +51,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -61,6 +68,7 @@ import java.util.Objects;
 public final class ResearchStationUi {
 
     private static final ResourceLocation ITEM_ROOT = ResourceLocation.fromNamespaceAndPath("data_energistics", "research_item_root");
+    private static final ResourceLocation PLAYER_ROOT = ResourceLocation.fromNamespaceAndPath("data_energistics", "research_player_root");
     private final ResearchStationMenu menu;
     private final ResearchGraphSelection selection;
     private final UIElement root = new UIElement();
@@ -93,6 +101,10 @@ public final class ResearchStationUi {
     private final Object2ObjectMap<ResourceLocation, ResearchNode> projectNodes = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, CompoundTag> projectData = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<ResourceLocation, ResearchGraphNode> graphNodes = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<ResourceLocation, ResearchConditionEvaluation> conditionEvaluations = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<ResourceLocation, ResourceLocation> technologyExclusionWinners = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<ResourceLocation, ResourceLocation> playerExclusionWinners = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<ResourceLocation, ResourceLocation> mutualConflicts = new Object2ObjectOpenHashMap<>();
     private Object2IntOpenHashMap<ResourceLocation> graphRanks = new Object2IntOpenHashMap<>();
     private ObjectSet<ResourceLocation> unlocked = new ObjectOpenHashSet<>();
     private ObjectList<ResourceLocation> visibleIds = new ObjectArrayList<>();
@@ -127,10 +139,8 @@ public final class ResearchStationUi {
         teamTab = ResearchUiParts.button(ResearchUiParts.text("team_tab"), this::toggleTeams);
         teamTab.addEventListener(UIEvents.TICK, event -> teamTab.text.setText(ResearchUiParts.text(showTeams ? "research_tab" : "team_tab")));
         close = ResearchUiParts.button(Component.literal("×"), () -> menu.getPlayer().closeContainer());
-        scopeToggle = ResearchUiParts.button(ResearchUiParts.text(scope == ResearchScope.TECHNOLOGY ? "technology" : "item_upgrade"),
-                () -> setScope(scope == ResearchScope.TECHNOLOGY ? ResearchScope.ITEM_UPGRADE : ResearchScope.TECHNOLOGY));
-        scopeToggle.addEventListener(UIEvents.TICK, event -> scopeToggle.text.setText(
-                ResearchUiParts.text(scope == ResearchScope.TECHNOLOGY ? "technology" : "item_upgrade")));
+        scopeToggle = ResearchUiParts.button(scopeLabel(), () -> setScope(nextScope()));
+        scopeToggle.addEventListener(UIEvents.TICK, event -> scopeToggle.text.setText(scopeLabel()));
         filterButton = ResearchUiParts.button(ResearchUiParts.text("filter_all"), () -> {
             filter = Filter.values()[(filter.ordinal() + 1) % Filter.values().length];
             rebuild = true;
@@ -325,7 +335,20 @@ public final class ResearchStationUi {
         if (snapshotChanged || targetChanged) {
             revision = menu.viewRevision();
             unlocked = ResearchNbt.readIds(menu.snapshot(), "unlocked");
+            unlocked.addAll(ResearchNbt.readIds(menu.snapshot(), "player_upgrades"));
             unlocked.addAll(ItemResearchUpgrades.of(target()).ids());
+            conditionEvaluations.clear();
+            for (Tag value : menu.snapshot().getList("condition_results", Tag.TAG_COMPOUND)) {
+                CompoundTag condition = (CompoundTag) value;
+                conditionEvaluations.put(ResourceLocation.parse(condition.getString("id")), new ResearchConditionEvaluation(
+                        ResearchNbt.readConditions(condition, "satisfied"), ResearchNbt.readConditions(condition, "unavailable")));
+            }
+            technologyExclusionWinners.clear();
+            technologyExclusionWinners.putAll(ResearchNbt.readExclusions(menu.snapshot(), "technology_exclusions"));
+            playerExclusionWinners.clear();
+            playerExclusionWinners.putAll(ResearchNbt.readExclusions(menu.snapshot(), "player_exclusions"));
+            mutualConflicts.clear();
+            mutualConflicts.putAll(ResearchNbt.readExclusions(menu.snapshot(), "mutual_conflicts"));
             projectNodes.clear();
             projectData.clear();
             for (Tag value : menu.snapshot().getList("projects", Tag.TAG_COMPOUND)) {
@@ -333,6 +356,9 @@ public final class ResearchStationUi {
                 ResearchNode node = ResearchNbt.readNode(project.getCompound("node"), menu.getPlayer().registryAccess());
                 projectNodes.put(node.id(), node);
                 projectData.put(node.id(), project);
+                conditionEvaluations.put(node.id(), new ResearchConditionEvaluation(
+                        ResearchNbt.readConditions(project, "satisfied_conditions"),
+                        ResearchNbt.readConditions(project, "unavailable_conditions")));
             }
             teams.refresh(menu.snapshot().getCompound("teams"));
         }
@@ -344,7 +370,50 @@ public final class ResearchStationUi {
     }
 
     private boolean available(ResearchNode node) {
-        return node.prerequisitesSatisfied(unlocked) && !unlocked.contains(node.id()) && !projectData.containsKey(node.id());
+        return node.prerequisitesSatisfied(unlocked) && conditionsSatisfied(node) && exclusionWinner(node) == null &&
+                mutualConflict(node) == null &&
+                !unlocked.contains(node.id()) && !projectData.containsKey(node.id()) && canTarget(node);
+    }
+
+    private boolean conditionsSatisfied(ResearchNode node) {
+        ResearchConditionEvaluation evaluation = lookup(conditionEvaluations, node.id());
+        return evaluation == null ? node.requiredConditions().isEmpty() && node.optionalConditionGroups().isEmpty() :
+                evaluation.satisfies(node);
+    }
+
+    private @Nullable ResourceLocation exclusionWinner(ResearchNode node) {
+        CompoundTag pending = lookup(projectData, node.id());
+        if (pending != null) return pending.contains("exclusion_winner") ?
+                ResourceLocation.parse(pending.getString("exclusion_winner")) : null;
+        return switch (node.scope()) {
+            case TECHNOLOGY -> lookup(technologyExclusionWinners, node.id());
+            case ITEM_UPGRADE -> ItemResearchExclusions.of(target()).winner(node.id());
+            case PLAYER_UPGRADE -> lookup(playerExclusionWinners, node.id());
+        };
+    }
+
+    private @Nullable ResourceLocation mutualConflict(ResearchNode node) {
+        CompoundTag pending = lookup(projectData, node.id());
+        if (pending != null) return pending.contains("mutual_conflict") ?
+                ResourceLocation.parse(pending.getString("mutual_conflict")) : null;
+        return lookup(mutualConflicts, node.id());
+    }
+
+    private boolean instantResearchEnabled(ResearchNode node) {
+        return switch (node.scope()) {
+            case TECHNOLOGY -> menu.snapshot().getBoolean("instant_technology");
+            case ITEM_UPGRADE -> target().getOrDefault(DEDataComponents.RESEARCH_INSTANT.get(), false);
+            case PLAYER_UPGRADE -> menu.snapshot().getBoolean("instant_player");
+        };
+    }
+
+    private Component scopeLabel() {
+        return ResearchUiParts.text(scope.name().toLowerCase(Locale.ROOT));
+    }
+
+    private ResearchScope nextScope() {
+        ResearchScope[] scopes = ResearchScope.values();
+        return scopes[(scope.ordinal() + 1) % scopes.length];
     }
 
     private void refreshGraph() {
@@ -382,7 +451,25 @@ public final class ResearchStationUi {
                     pending != null && pending.getBoolean("running") ? Progress.RUNNING : Progress.IDLE;
             graphNodes.get(node.id()).state(state, progress);
         }
-        ResearchUiParts.show(empty, scope == ResearchScope.TECHNOLOGY && shown.isEmpty());
+        ObjectSet<ResourceLocation> excluded = new ObjectOpenHashSet<>();
+        ObjectSet<ResourceLocation> winners = new ObjectOpenHashSet<>();
+        switch (scope) {
+            case TECHNOLOGY -> {
+                excluded.addAll(technologyExclusionWinners.keySet());
+                winners.addAll(technologyExclusionWinners.values());
+            }
+            case ITEM_UPGRADE -> {
+                var itemWinners = ItemResearchExclusions.of(target()).winners();
+                excluded.addAll(itemWinners.keySet());
+                winners.addAll(itemWinners.values());
+            }
+            case PLAYER_UPGRADE -> {
+                excluded.addAll(playerExclusionWinners.keySet());
+                winners.addAll(playerExclusionWinners.values());
+            }
+        }
+        graph.excluded(excluded, winners);
+        ResearchUiParts.show(empty, scope != ResearchScope.ITEM_UPGRADE && shown.isEmpty());
         empty.setText(ResearchUiParts.text(menu.nodes().isEmpty() ? "catalog_empty" : "filter_empty"));
         graph.focus(selected, hovered);
     }
@@ -396,7 +483,7 @@ public final class ResearchStationUi {
         // The validated definition catalog is a DAG; relaxing sorted nodes gives deterministic ranks.
         for (int pass = 0; pass < nodes.size(); pass++) {
             for (ResearchNode node : nodes) {
-                int rank = scope == ResearchScope.ITEM_UPGRADE ? 1 : 0;
+                int rank = scope == ResearchScope.TECHNOLOGY ? 0 : 1;
                 for (ResourceLocation prerequisite : node.prerequisiteIds()) {
                     if (visible.contains(prerequisite)) rank = Math.max(rank, depth.getInt(prerequisite) + 1);
                 }
@@ -411,6 +498,14 @@ public final class ResearchStationUi {
             model.models().add(item);
             graphNodes.put(ITEM_ROOT, item);
         }
+        if (scope == ResearchScope.PLAYER_UPGRADE) {
+            ResearchGraphNode player = new ResearchGraphNode(PLAYER_ROOT, ResearchUiParts.text("player_root"),
+                    new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.withDefaultNamespace("player_head"))),
+                    this::select, this::hover, this::positionNodes);
+            player.state(ResearchUiParts.text("player_root"), Progress.IDLE);
+            model.models().add(player);
+            graphNodes.put(PLAYER_ROOT, player);
+        }
         for (ResearchNode node : nodes) {
             ResearchGraphNode view = new ResearchGraphNode(node.id(), Component.translatable(node.name()),
                     new ItemStack(BuiltInRegistries.ITEM.get(node.icon())), this::select, this::hover, this::positionNodes);
@@ -423,12 +518,21 @@ public final class ResearchStationUi {
             for (ResourceLocation id : node.prerequisiteIds()) {
                 ResearchGraphNode from = lookup(graphNodes, id);
                 if (from != null) {
-                    model.models().connect(from.getOutputsById().get("unlocks"), to.getInputsById().get("requires"));
+                    model.models().connect(from.getOutputsById().get("unlocks"), to.getInputsById().get("requires"), false);
                     connected = true;
                 }
             }
-            if (!connected && graphNodes.containsKey(ITEM_ROOT)) {
-                model.models().connect(graphNodes.get(ITEM_ROOT).getOutputsById().get("unlocks"), to.getInputsById().get("requires"));
+            ResourceLocation rootId = scope == ResearchScope.ITEM_UPGRADE ? ITEM_ROOT :
+                    scope == ResearchScope.PLAYER_UPGRADE ? PLAYER_ROOT : null;
+            if (!connected && rootId != null && graphNodes.containsKey(rootId)) {
+                model.models().connect(graphNodes.get(rootId).getOutputsById().get("unlocks"), to.getInputsById().get("requires"), false);
+            }
+            for (ResourceLocation exclusive : node.mutuallyExclusive()) {
+                if (node.id().compareTo(exclusive) >= 0) continue;
+                ResearchGraphNode other = lookup(graphNodes, exclusive);
+                if (other != null) {
+                    model.models().connect(to.getOutputsById().get("unlocks"), other.getInputsById().get("requires"), true);
+                }
             }
         }
         refreshExpandedNodes();
@@ -499,10 +603,11 @@ public final class ResearchStationUi {
     }
 
     private void populateNode(UIElement costs, UIElement details, ResourceLocation nodeId, Presentation presentation) {
-        if (ITEM_ROOT.equals(nodeId)) {
+        if (ITEM_ROOT.equals(nodeId) || PLAYER_ROOT.equals(nodeId)) {
             costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials_none")));
             if (presentation == Presentation.DETAILS) {
-                details.addChild(ResearchUiParts.label(ResearchUiParts.text("initial_description")));
+                details.addChild(ResearchUiParts.label(ResearchUiParts.text(
+                        ITEM_ROOT.equals(nodeId) ? "initial_description" : "player_initial_description")));
             }
             return;
         }
@@ -513,9 +618,13 @@ public final class ResearchStationUi {
             return;
         }
         ResearchNode displayed = node;
+        CompoundTag pending = lookup(projectData, node.id());
+        boolean instant = !unlocked.contains(node.id()) &&
+                (pending == null ? instantResearchEnabled(node) : pending.getBoolean("instant"));
         if (presentation == Presentation.DETAILS) {
             details.addChild(ResearchUiParts.label(Component.translatable(node.description())));
         }
+        if (instant) costs.addChild(ResearchUiParts.label(ResearchUiParts.text("instant_research_enabled")));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("time", node.researchTicks(), format(node.researchTicks() / 20.0))));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("energy", format(node.aePerTick()), format(node.aePerTick() * node.researchTicks()))));
         costs.addChild(ResearchUiParts.label(ResearchUiParts.text("materials")));
@@ -534,10 +643,10 @@ public final class ResearchStationUi {
             costs.addChild(materials);
         }
         if (presentation == Presentation.COSTS) return;
-        if (!projectData.containsKey(node.id()) && !unlocked.contains(node.id())) {
+        if (pending == null && !unlocked.contains(node.id()) && !instant) {
             Button request = ResearchUiParts.graphButton(ResearchUiParts.text("request_materials"),
                     () -> menu.request("request_materials", displayed.id().toString()));
-            request.setActive(stationOperable() && available(node) && canTarget(node));
+            request.setActive(stationOperable() && available(node));
             details.addChild(request);
         }
         for (ResourceLocation id : node.requiredPrerequisites()) {
@@ -554,27 +663,78 @@ public final class ResearchStationUi {
                         prerequisite == null ? Component.literal(id.toString()) : Component.translatable(prerequisite.name()))));
             }
         }
-        CompoundTag pending = lookup(projectData, node.id());
+        addConditions(details, node);
+        if (!node.mutuallyExclusive().isEmpty()) {
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("mutually_exclusive")));
+            for (ResourceLocation exclusive : node.mutuallyExclusive()) {
+                details.addChild(ResearchUiParts.label(nodeName(exclusive)));
+            }
+        }
+        ResourceLocation exclusionWinner = exclusionWinner(node);
+        if (exclusionWinner != null) {
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("mutually_excluded_by", nodeName(exclusionWinner))));
+        }
+        ResourceLocation conflict = mutualConflict(node);
+        if (conflict != null) {
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("mutual_project_running", nodeName(conflict))));
+        }
         if (unlocked.contains(node.id())) {
             details.addChild(ResearchUiParts.label(ResearchUiParts.text("unlocked")));
         } else if (pending != null) {
             details.addChild(ResearchUiParts.label(projectStatus(node, pending)));
             if (pending.getBoolean("running")) {
-                details.addChild(ResearchUiParts.graphButton(ResearchUiParts.text("cancel"), () -> menu.request("cancel", displayed.id().toString())));
+                var cancel = ResearchUiParts.graphButton(ResearchUiParts.text("cancel"), () -> menu.request("cancel", displayed.id().toString()));
+                cancel.setActive(pending.getBoolean("can_control"));
+                details.addChild(cancel);
             } else {
-                var resume = ResearchUiParts.graphButton(ResearchUiParts.text("resume"), () -> menu.request("resume", displayed.id().toString()));
-                resume.setActive(stationOperable() && runningCount() < 2 && !pending.getBoolean("faulted"));
+                var resume = ResearchUiParts.graphButton(ResearchUiParts.text(instant ? "start_instant" : "resume"),
+                        () -> menu.request("resume", displayed.id().toString()));
+                resume.setActive(pending.getBoolean("can_control") && pending.getBoolean("can_resume") &&
+                        (instant || stationOperable() && runningCount() < 2));
                 details.addChild(resume);
             }
         } else {
-            var start = ResearchUiParts.graphButton(ResearchUiParts.text("start"), () -> menu.request("start", displayed.id().toString()));
-            start.setActive(stationOperable() && available(node) && runningCount() < 2 && canTarget(node));
+            var start = ResearchUiParts.graphButton(ResearchUiParts.text(instant ? "start_instant" : "start"),
+                    () -> menu.request("start", displayed.id().toString()));
+            start.setActive((instant || stationOperable()) && available(node) && (instant || runningCount() < 2));
             details.addChild(start);
         }
     }
 
     private boolean canTarget(ResearchNode node) {
-        return node.scope() == ResearchScope.TECHNOLOGY || (!target().isEmpty() && node.target().matches(target()));
+        return node.scope() != ResearchScope.ITEM_UPGRADE || (!target().isEmpty() && node.target().matches(target()));
+    }
+
+    private void addConditions(UIElement details, ResearchNode node) {
+        ResearchConditionEvaluation evaluation = lookup(conditionEvaluations, node.id());
+        if (node.requiredConditions().isEmpty() && node.optionalConditionGroups().isEmpty()) return;
+        if (!node.requiredConditions().isEmpty()) {
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("conditions_required")));
+            for (ResearchCondition condition : node.requiredConditions()) addCondition(details, condition, evaluation);
+        }
+        for (ObjectSet<ResearchCondition> group : node.optionalConditionGroups()) {
+            details.addChild(ResearchUiParts.label(ResearchUiParts.text("conditions_optional")));
+            for (ResearchCondition condition : group) addCondition(details, condition, evaluation);
+        }
+    }
+
+    private static void addCondition(UIElement details, ResearchCondition condition,
+                                     @Nullable ResearchConditionEvaluation evaluation) {
+        Component name = switch (condition) {
+            case AdvancementResearchCondition advancement -> ResearchUiParts.text("condition_advancement", advancement.id());
+            case FtbQuestTaskCondition task -> task.quest() == null ?
+                    ResearchUiParts.text("condition_ftbquests_task", task.taskId()) :
+                    ResearchUiParts.text("condition_ftbquests_task_quest", task.taskId(), task.quest());
+        };
+        String state = evaluation != null && evaluation.unavailable().contains(condition) ? "condition_unavailable" :
+                evaluation != null && evaluation.satisfied().contains(condition) ? "condition_satisfied" : "condition_missing";
+        details.addChild(ResearchUiParts.label(ResearchUiParts.text("condition_entry", name, ResearchUiParts.text(state))));
+    }
+
+    private Component nodeName(ResourceLocation id) {
+        ResearchNode node = lookup(menu.nodes(), id);
+        if (node == null) node = lookup(projectNodes, id);
+        return node == null ? Component.literal(id.toString()) : Component.translatable(node.name());
     }
 
     private boolean stationOperable() {
@@ -604,7 +764,7 @@ public final class ResearchStationUi {
                     ResearchUiParts.NODE_BACKGROUND, ResearchUiParts.NODE_BORDER)));
             Button projectButton = ResearchUiParts.button(Component.translatable(node.name()), () -> {
                 if (scope != node.scope() || filter != Filter.ALL || !graphNodes.containsKey(id)) {
-                    scope = node.scope();
+                    setScope(node.scope());
                     filter = Filter.ALL;
                     rebuild = true;
                     refreshGraph();
@@ -615,6 +775,11 @@ public final class ResearchStationUi {
             Label status = ResearchUiParts.label(projectStatus(node, pending));
             status.textStyle(style -> style.textAlignHorizontal(Horizontal.CENTER).textAlignVertical(Vertical.CENTER));
             entry.addChild(status);
+            addConditions(entry, node);
+            ResourceLocation winner = exclusionWinner(node);
+            if (winner != null) entry.addChild(ResearchUiParts.label(ResearchUiParts.text("mutually_excluded_by", nodeName(winner))));
+            ResourceLocation conflict = mutualConflict(node);
+            if (conflict != null) entry.addChild(ResearchUiParts.label(ResearchUiParts.text("mutual_project_running", nodeName(conflict))));
             int progress = pending.getInt("progress");
             UIElement bar = new UIElement();
             bar.layout(layout -> layout.widthPercent(100).height(6).flexShrink(0));
@@ -635,8 +800,9 @@ public final class ResearchStationUi {
     }
 
     private static Component projectStatus(ResearchNode node, CompoundTag project) {
-        String state = project.getBoolean("faulted") ? "faulted" : !project.getBoolean("running") ? "paused" :
-                project.getBoolean("powered") ? "running" : "no_power";
+        String state = project.getBoolean("faulted") ? "faulted" : project.getBoolean("condition_blocked") ? "conditions_blocked" :
+                !project.getBoolean("running") ? "paused" :
+                        project.getBoolean("powered") ? "running" : "no_power";
         return ResearchUiParts.text("project_status", ResearchUiParts.text(state), project.getInt("progress"), node.researchTicks());
     }
 

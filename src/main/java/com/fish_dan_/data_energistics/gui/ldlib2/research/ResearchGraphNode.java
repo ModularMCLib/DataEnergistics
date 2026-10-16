@@ -314,9 +314,14 @@ final class ResearchGraphNode extends NodeModel {
         public void drawBackgroundOverlay(GUIContext context) {
             int color = isSelected() || isSelfOrChildHover() || (shouldBeHighlighted() && research.progress == Progress.IDLE) ?
                     ResearchUiParts.NODE_SELECTED : research.progress.borderColor;
-            if (graphView instanceof ResearchGraphView view && view.missingPrerequisite(research.researchId)) {
-                color = ResearchUiParts.NODE_BLOCKED;
+            float stroke = 1;
+            if (graphView instanceof ResearchGraphView view) {
+                if (view.missingPrerequisite(research.researchId) || view.excluded(research.researchId)) {
+                    color = ResearchUiParts.NODE_BLOCKED;
+                }
+                if (view.winningRoute(research.researchId)) stroke = 2;
             }
+            border.setStroke(stroke);
             if (border.getBorderColor() != color) border.setBorderColor(color);
             context.drawTexture(border, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
         }

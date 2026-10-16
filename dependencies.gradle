@@ -68,7 +68,6 @@ dependencies {
     compileOnly(forge.ponder)
     compileOnly(forge.mega.cells)
     compileOnly(forge.aae)
-    compileOnly(forge.sut)
     compileOnly(forge.ae2ji)
     compileOnly(forge.ae2ct)
     compileOnly(forge.amek)
@@ -145,7 +144,6 @@ dependencies {
     localRuntime(forge.appliede)
     localRuntime(forge.projectexpansion)
 
-    extraLocalRuntime(forge.sut)
     extraLocalRuntime(forge.cucumber)
     extraLocalRuntime(forge.mystical.agriculture)
     extraLocalRuntime(forge.ato)

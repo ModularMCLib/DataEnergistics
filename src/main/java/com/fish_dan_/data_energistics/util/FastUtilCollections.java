@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.util;
 
+import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
@@ -20,6 +21,15 @@ public final class FastUtilCollections {
 
     public static <E> ObjectList<E> immutableList(Collection<? extends E> source) {
         return ObjectLists.unmodifiable(new ObjectArrayList<>(source));
+    }
+
+    public static <E> Codec<ObjectList<E>> objectListCodec(Codec<E> elementCodec) {
+        return elementCodec.listOf().xmap(
+                values -> {
+                    ObjectList<E> result = new ObjectArrayList<>(values);
+                    return result;
+                },
+                values -> values);
     }
 
     public static <E> ObjectSet<E> immutableSet(Collection<? extends E> source) {

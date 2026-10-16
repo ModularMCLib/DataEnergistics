@@ -37,11 +37,11 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 public final class PatternEncodingSourceHelper {
@@ -82,12 +82,12 @@ public final class PatternEncodingSourceHelper {
 
     @Nullable
     public static ItemStack encodeProcessingPattern(ConfigInventory inputs, ConfigInventory outputs) {
-        List<@Nullable GenericStack> normalizedInputs = normalizeProcessingPatternInventory(inputs, "input");
+        ObjectList<@Nullable GenericStack> normalizedInputs = normalizeProcessingPatternInventory(inputs, "input");
         if (normalizedInputs == null || normalizedInputs.stream().noneMatch(Objects::nonNull)) {
             return null;
         }
 
-        List<@Nullable GenericStack> normalizedOutputs = normalizeProcessingPatternInventory(outputs, "output");
+        ObjectList<@Nullable GenericStack> normalizedOutputs = normalizeProcessingPatternInventory(outputs, "output");
         if (normalizedOutputs == null || normalizedOutputs.isEmpty() || normalizedOutputs.getFirst() == null) {
             return null;
         }
@@ -115,10 +115,10 @@ public final class PatternEncodingSourceHelper {
     }
 
     @Nullable
-    private static List<@Nullable GenericStack> normalizeProcessingPatternInventory(
-                                                                                    ConfigInventory inventory,
-                                                                                    String inventoryKind) {
-        List<@Nullable GenericStack> normalized = new ObjectArrayList<>(inventory.size());
+    private static ObjectList<@Nullable GenericStack> normalizeProcessingPatternInventory(
+                                                                                          ConfigInventory inventory,
+                                                                                          String inventoryKind) {
+        ObjectList<@Nullable GenericStack> normalized = new ObjectArrayList<>(inventory.size());
         for (int slot = 0; slot < inventory.size(); slot++) {
             GenericStack stack = inventory.getStack(slot);
             if (stack == null || !(stack.what() instanceof AEItemKey itemKey)) {
@@ -342,20 +342,20 @@ public final class PatternEncodingSourceHelper {
     public static void rememberDataRipperTransferMetadata(PatternEncodingTermMenu menu,
                                                           @Nullable GenericStack keyInput,
                                                           @Nullable GenericStack keyOutput,
-                                                          List<GenericStack> fluidInputs,
-                                                          List<GenericStack> fluidOutputs) {
+                                                          ObjectList<GenericStack> fluidInputs,
+                                                          ObjectList<GenericStack> fluidOutputs) {
         syncDataRipperTransferMetadata(menu, new DataRipperTransferMetadata(
                 menu.containerId,
                 copyGenericStack(keyInput),
                 copyGenericStack(keyOutput),
-                copyGenericStacks(fluidInputs),
-                copyGenericStacks(fluidOutputs)));
+                fluidInputs,
+                fluidOutputs));
     }
 
     public static void rememberTransferFluidInputs(PatternEncodingTermMenu menu, EncodingMode transferMode,
                                                    @Nullable Object recipe, @Nullable Object transferContext) {
         if (transferMode != EncodingMode.PROCESSING) {
-            syncPendingTransferFluidInputs(menu, List.of());
+            syncPendingTransferFluidInputs(menu, ObjectLists.emptyList());
             return;
         }
 
@@ -381,7 +381,7 @@ public final class PatternEncodingSourceHelper {
     public static void rememberTransferFluidOutputs(PatternEncodingTermMenu menu, EncodingMode transferMode,
                                                     @Nullable Object recipe, @Nullable Object transferContext) {
         if (transferMode != EncodingMode.PROCESSING) {
-            syncPendingTransferFluidOutputs(menu, List.of());
+            syncPendingTransferFluidOutputs(menu, ObjectLists.emptyList());
             return;
         }
 
@@ -511,7 +511,7 @@ public final class PatternEncodingSourceHelper {
             return;
         }
 
-        List<ItemStack> items = new ObjectArrayList<>(DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS);
+        ObjectList<ItemStack> items = new ObjectArrayList<>(DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS);
         for (int i = 0; i < DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS && i < encodedInputsInv.size(); i++) {
             GenericStack stack = encodedInputsInv.getStack(i);
             if (stack == null || !(stack.what() instanceof AEItemKey itemKey)) {
@@ -527,7 +527,7 @@ public final class PatternEncodingSourceHelper {
             return;
         }
 
-        List<ItemStack> outputs = new ObjectArrayList<>(encodedOutputsInv.size());
+        ObjectList<ItemStack> outputs = new ObjectArrayList<>(encodedOutputsInv.size());
         for (int i = 0; i < encodedOutputsInv.size(); i++) {
             GenericStack stack = encodedOutputsInv.getStack(i);
             if (stack == null || !(stack.what() instanceof AEItemKey itemKey)) {
@@ -539,13 +539,14 @@ public final class PatternEncodingSourceHelper {
 
         LOGGER.debug("[DE][PatternKey] resolve outputs={}", describeItems(outputs));
         GenericStack keyOutput = extractDataRipperKeyStack(encodedOutputsInv);
-        List<GenericStack> fluidOutputs = extractFluidStacks(encodedOutputsInv);
+        ObjectList<GenericStack> fluidOutputs = extractFluidStacks(encodedOutputsInv);
 
         var level = menu.getPlayer().level();
         for (RecipeHolder<DataRipperReassemblerRecipe> holder : level.getRecipeManager()
                 .getAllRecipesFor(DERecipes.DATA_RIPPER_REASSEMBLER_TYPE.get())) {
             DataRipperReassemblerRecipe recipe = holder.value();
-            if (!recipe.matches(new DataRipperReassemblerRecipeInput(items, List.of(), List.of()), level)) {
+            if (!recipe.matches(new DataRipperReassemblerRecipeInput(
+                    items, ObjectLists.emptyList(), ObjectLists.emptyList()), level)) {
                 continue;
             }
             if (!matchesEncodedOutputs(recipe, outputs, keyOutput, fluidOutputs)) {
@@ -639,7 +640,7 @@ public final class PatternEncodingSourceHelper {
     }
 
     private static void applyTransferFluidStacksServer(ConfigInventory inventory, int slotBase, int slotCount,
-                                                       @Nullable List<? extends @Nullable GenericStack> stacks) {
+                                                       @Nullable ObjectList<@Nullable GenericStack> stacks) {
         if (slotBase == DATA_RIPPER_FLUID_INPUT_SLOT_BASE) {
             repackDataRipperInputs(inventory, null, stacks);
             return;
@@ -670,10 +671,10 @@ public final class PatternEncodingSourceHelper {
 
     private static void repackDataRipperInputs(ConfigInventory encodedInputsInv,
                                                @Nullable GenericStack overrideKeyInput,
-                                               @Nullable List<? extends @Nullable GenericStack> overrideFluidInputs) {
-        List<GenericStack> plainItems = collectPlainItemStacks(encodedInputsInv);
+                                               @Nullable ObjectList<@Nullable GenericStack> overrideFluidInputs) {
+        ObjectList<GenericStack> plainItems = collectPlainItemStacks(encodedInputsInv);
         GenericStack keyInput = overrideKeyInput != null ? copyGenericStack(overrideKeyInput) : extractDataRipperKeyStack(encodedInputsInv);
-        List<GenericStack> fluidInputs = overrideFluidInputs != null ? copyGenericStacks(overrideFluidInputs) : extractFluidStacks(encodedInputsInv);
+        ObjectList<GenericStack> fluidInputs = overrideFluidInputs != null ? copyGenericStacks(overrideFluidInputs) : extractFluidStacks(encodedInputsInv);
 
         rewriteStacks(encodedInputsInv, plainItems, keyInput, fluidInputs,
                 DataRipperReassemblerRecipe.ITEM_INPUT_SLOTS + DataRipperReassemblerRecipe.KEY_INPUT_SLOTS +
@@ -682,25 +683,25 @@ public final class PatternEncodingSourceHelper {
 
     private static void repackDataRipperOutputs(ConfigInventory encodedOutputsInv,
                                                 @Nullable GenericStack overrideKeyOutput,
-                                                @Nullable List<? extends @Nullable GenericStack> overrideFluidOutputs) {
-        List<GenericStack> plainItems = collectPlainItemStacks(encodedOutputsInv);
+                                                @Nullable ObjectList<@Nullable GenericStack> overrideFluidOutputs) {
+        ObjectList<GenericStack> plainItems = collectPlainItemStacks(encodedOutputsInv);
         GenericStack keyOutput = overrideKeyOutput != null ? copyGenericStack(overrideKeyOutput) : extractDataRipperKeyStack(encodedOutputsInv);
-        List<GenericStack> fluidOutputs = overrideFluidOutputs != null ? copyGenericStacks(overrideFluidOutputs) : extractFluidStacks(encodedOutputsInv);
+        ObjectList<GenericStack> fluidOutputs = overrideFluidOutputs != null ? copyGenericStacks(overrideFluidOutputs) : extractFluidStacks(encodedOutputsInv);
 
         rewriteStacks(encodedOutputsInv, plainItems, keyOutput, fluidOutputs,
                 DataRipperReassemblerRecipe.ITEM_OUTPUT_SLOTS + DataRipperReassemblerRecipe.KEY_OUTPUT_SLOTS +
                         DataRipperReassemblerRecipe.FLUID_OUTPUT_SLOTS);
     }
 
-    private static void rewriteStacks(ConfigInventory inventory, List<GenericStack> plainItems,
-                                      @Nullable GenericStack keyStack, List<GenericStack> fluidStacks,
+    private static void rewriteStacks(ConfigInventory inventory, ObjectList<GenericStack> plainItems,
+                                      @Nullable GenericStack keyStack, ObjectList<GenericStack> fluidStacks,
                                       int layoutSlots) {
-        List<GenericStack> reordered = new ObjectArrayList<>(plainItems.size() + fluidStacks.size() + 1);
+        ObjectList<GenericStack> reordered = new ObjectArrayList<>(plainItems.size() + fluidStacks.size() + 1);
         reordered.addAll(plainItems);
         if (isMeaningfulGenericStack(keyStack)) {
             reordered.add(keyStack);
         }
-        reordered.addAll(copyGenericStacks(fluidStacks));
+        reordered.addAll(fluidStacks);
 
         int rewriteLimit = Math.min(inventory.size(), layoutSlots);
         for (int i = 0; i < rewriteLimit; i++) {
@@ -709,8 +710,8 @@ public final class PatternEncodingSourceHelper {
         }
     }
 
-    private static List<GenericStack> collectPlainItemStacks(ConfigInventory inventory) {
-        List<GenericStack> result = new ObjectArrayList<>(inventory.size());
+    private static ObjectList<GenericStack> collectPlainItemStacks(ConfigInventory inventory) {
+        ObjectList<GenericStack> result = new ObjectArrayList<>(inventory.size());
         for (int i = 0; i < inventory.size(); i++) {
             GenericStack stack = inventory.getStack(i);
             if (isPlainItemStack(stack)) {
@@ -735,8 +736,8 @@ public final class PatternEncodingSourceHelper {
         return null;
     }
 
-    private static List<GenericStack> extractFluidStacks(ConfigInventory inventory) {
-        List<GenericStack> result = new ObjectArrayList<>();
+    private static ObjectList<GenericStack> extractFluidStacks(ConfigInventory inventory) {
+        ObjectList<GenericStack> result = new ObjectArrayList<>();
         for (int i = 0; i < inventory.size(); i++) {
             GenericStack stack = inventory.getStack(i);
             if (stack != null && stack.amount() > 0 && stack.what() instanceof AEFluidKey) {
@@ -774,10 +775,10 @@ public final class PatternEncodingSourceHelper {
         return itemKey.is(AEItems.WRAPPED_GENERIC_STACK);
     }
 
-    private static boolean matchesEncodedOutputs(DataRipperReassemblerRecipe recipe, List<ItemStack> encodedOutputs,
+    private static boolean matchesEncodedOutputs(DataRipperReassemblerRecipe recipe, ObjectList<ItemStack> encodedOutputs,
                                                  @Nullable GenericStack encodedKeyOutput,
-                                                 List<GenericStack> encodedFluidOutputs) {
-        List<ItemStack> recipeOutputs = recipe.getItemOutputs();
+                                                 ObjectList<GenericStack> encodedFluidOutputs) {
+        var recipeOutputs = recipe.getItemOutputs();
         for (int i = 0; i < recipeOutputs.size(); i++) {
             if (i >= encodedOutputs.size()) {
                 return false;
@@ -800,7 +801,7 @@ public final class PatternEncodingSourceHelper {
             return false;
         }
 
-        List<GenericStack> recipeFluidOutputs = recipe.getFluidOutputs();
+        ObjectList<GenericStack> recipeFluidOutputs = recipe.getFluidOutputs();
         if (recipeFluidOutputs.size() > encodedFluidOutputs.size()) {
             return false;
         }
@@ -888,7 +889,7 @@ public final class PatternEncodingSourceHelper {
 
     public static void applyTransferFluidInputsAction(PatternEncodingTermMenu menu,
                                                       @Nullable String serializedFluidInputs) {
-        List<@Nullable GenericStack> fluidInputs = deserializeTransferFluidStacks(menu, serializedFluidInputs);
+        ObjectList<@Nullable GenericStack> fluidInputs = deserializeTransferFluidStacks(menu, serializedFluidInputs);
         writePendingTransferFluidInputs(menu.getPlayer(), fluidInputs);
 
         if (menu.getMode() != EncodingMode.PROCESSING) {
@@ -910,7 +911,7 @@ public final class PatternEncodingSourceHelper {
 
     public static void applyTransferFluidOutputsAction(PatternEncodingTermMenu menu,
                                                        @Nullable String serializedFluidOutputs) {
-        List<@Nullable GenericStack> fluidOutputs = deserializeTransferFluidStacks(menu, serializedFluidOutputs);
+        ObjectList<@Nullable GenericStack> fluidOutputs = deserializeTransferFluidStacks(menu, serializedFluidOutputs);
         writePendingTransferFluidOutputs(menu.getPlayer(), fluidOutputs);
 
         if (menu.getMode() != EncodingMode.PROCESSING) {
@@ -971,7 +972,7 @@ public final class PatternEncodingSourceHelper {
         writePendingTransferKeyOutput(menu.getPlayer(), keyOutput);
     }
 
-    private static void syncPendingTransferFluidInputs(PatternEncodingTermMenu menu, List<GenericStack> fluidInputs) {
+    private static void syncPendingTransferFluidInputs(PatternEncodingTermMenu menu, ObjectList<GenericStack> fluidInputs) {
         if (menu.isClientSide()) {
             if (menu instanceof PatternEncodingTransferKeyAware transferKeyAware) {
                 transferKeyAware.dataEnergistics$sendTransferFluidInputsAction(
@@ -983,7 +984,7 @@ public final class PatternEncodingSourceHelper {
         writePendingTransferFluidInputs(menu.getPlayer(), fluidInputs);
     }
 
-    private static void syncPendingTransferFluidOutputs(PatternEncodingTermMenu menu, List<GenericStack> fluidOutputs) {
+    private static void syncPendingTransferFluidOutputs(PatternEncodingTermMenu menu, ObjectList<GenericStack> fluidOutputs) {
         if (menu.isClientSide()) {
             if (menu instanceof PatternEncodingTransferKeyAware transferKeyAware) {
                 transferKeyAware.dataEnergistics$sendTransferFluidOutputsAction(
@@ -1007,8 +1008,8 @@ public final class PatternEncodingSourceHelper {
     private static void clearDataRipperTransferMetadata(Player player) {
         writePendingTransferKeyInput(player, null);
         writePendingTransferKeyOutput(player, null);
-        writePendingTransferFluidInputs(player, List.of());
-        writePendingTransferFluidOutputs(player, List.of());
+        writePendingTransferFluidInputs(player, ObjectLists.emptyList());
+        writePendingTransferFluidOutputs(player, ObjectLists.emptyList());
         PatternEncodingSessionState.clearPendingDataRipperTransfer(player.getUUID());
     }
 
@@ -1084,12 +1085,12 @@ public final class PatternEncodingSourceHelper {
         return new GenericStack(stack.what(), stack.amount());
     }
 
-    private static List<GenericStack> deserializeDataRipperTransferFluids(PatternEncodingTermMenu menu,
-                                                                          String serializedFluids,
-                                                                          int maximumSlots,
-                                                                          String description) throws CommandSyntaxException {
+    private static ObjectList<GenericStack> deserializeDataRipperTransferFluids(PatternEncodingTermMenu menu,
+                                                                                String serializedFluids,
+                                                                                int maximumSlots,
+                                                                                String description) throws CommandSyntaxException {
         if (serializedFluids.isEmpty()) {
-            return List.of();
+            return ObjectLists.emptyList();
         }
 
         CompoundTag root = TagParser.parseTag(serializedFluids);
@@ -1106,7 +1107,7 @@ public final class PatternEncodingSourceHelper {
             }
         }
 
-        List<GenericStack> fluids = new ObjectArrayList<>(maximumSlots);
+        ObjectList<GenericStack> fluids = new ObjectArrayList<>(maximumSlots);
         for (int slot = 0; slot < maximumSlots; slot++) {
             String key = Integer.toString(slot);
             if (!root.contains(key, Tag.TAG_COMPOUND)) {
@@ -1118,7 +1119,7 @@ public final class PatternEncodingSourceHelper {
             }
             fluids.add(new GenericStack(stack.what(), stack.amount()));
         }
-        return List.copyOf(fluids);
+        return ObjectLists.unmodifiable(fluids);
     }
 
     private static String serializeTransferKeyInput(PatternEncodingTermMenu menu, @Nullable GenericStack keyInput) {
@@ -1139,7 +1140,8 @@ public final class PatternEncodingSourceHelper {
         return tag.toString();
     }
 
-    private static String serializeTransferFluidStacks(PatternEncodingTermMenu menu, @Nullable List<? extends @Nullable GenericStack> stacks) {
+    private static String serializeTransferFluidStacks(PatternEncodingTermMenu menu,
+                                                       @Nullable ObjectList<@Nullable GenericStack> stacks) {
         if (stacks == null || stacks.isEmpty()) {
             return CLEAR_TRANSFER_FLUID_STACKS;
         }
@@ -1171,10 +1173,10 @@ public final class PatternEncodingSourceHelper {
         }
     }
 
-    private static List<@Nullable GenericStack> deserializeTransferFluidStacks(PatternEncodingTermMenu menu,
-                                                                               @Nullable String serializedFluidStacks) {
+    private static ObjectList<@Nullable GenericStack> deserializeTransferFluidStacks(PatternEncodingTermMenu menu,
+                                                                                     @Nullable String serializedFluidStacks) {
         if (serializedFluidStacks == null || serializedFluidStacks.isEmpty()) {
-            return List.of();
+            return ObjectLists.emptyList();
         }
 
         try {
@@ -1188,10 +1190,13 @@ public final class PatternEncodingSourceHelper {
                 }
             }
             if (maxIndex < 0) {
-                return List.of();
+                return ObjectLists.emptyList();
             }
 
-            List<@Nullable GenericStack> stacks = new ObjectArrayList<>(Collections.nCopies(maxIndex + 1, null));
+            ObjectList<@Nullable GenericStack> stacks = new ObjectArrayList<>(maxIndex + 1);
+            for (int i = 0; i <= maxIndex; i++) {
+                stacks.add(null);
+            }
             for (int i = 0; i <= maxIndex; i++) {
                 String key = Integer.toString(i);
                 if (!root.contains(key, CompoundTag.TAG_COMPOUND)) {
@@ -1205,7 +1210,7 @@ public final class PatternEncodingSourceHelper {
             return stacks;
         } catch (CommandSyntaxException exception) {
             LOGGER.warn("Rejected malformed serialized pattern transfer fluids", exception);
-            return List.of();
+            return ObjectLists.emptyList();
         }
     }
 
@@ -1333,12 +1338,13 @@ public final class PatternEncodingSourceHelper {
         return expected.what().equals(actual.what()) && actual.amount() >= expected.amount();
     }
 
-    public static void writePendingTransferFluidInputs(Player player, @Nullable List<? extends @Nullable GenericStack> fluidInputs) {
+    public static void writePendingTransferFluidInputs(Player player,
+                                                       @Nullable Iterable<@Nullable GenericStack> fluidInputs) {
         if (player.level().isClientSide()) {
             return;
         }
 
-        List<GenericStack> copy = copyGenericStacks(fluidInputs);
+        ObjectList<GenericStack> copy = copyGenericStacks(fluidInputs);
         if (copy.isEmpty()) {
             PatternEncodingSessionState.clearPendingTransferFluidInputs(player.getUUID());
         } else {
@@ -1349,16 +1355,18 @@ public final class PatternEncodingSourceHelper {
     /**
      * Returns a defensive copy of the Data Ripper fluid inputs awaiting the next encode.
      */
-    public static List<GenericStack> readPendingTransferFluidInputs(Player player) {
-        return copyGenericStacks(PatternEncodingSessionState.getPendingTransferFluidInputs(player.getUUID()));
+    public static ObjectList<GenericStack> readPendingTransferFluidInputs(Player player) {
+        ObjectList<GenericStack> fluidInputs = PatternEncodingSessionState.getPendingTransferFluidInputs(player.getUUID());
+        return fluidInputs == null ? ObjectLists.emptyList() : fluidInputs;
     }
 
-    public static void writePendingTransferFluidOutputs(Player player, @Nullable List<? extends @Nullable GenericStack> fluidOutputs) {
+    public static void writePendingTransferFluidOutputs(Player player,
+                                                        @Nullable Iterable<@Nullable GenericStack> fluidOutputs) {
         if (player.level().isClientSide()) {
             return;
         }
 
-        List<GenericStack> copy = copyGenericStacks(fluidOutputs);
+        ObjectList<GenericStack> copy = copyGenericStacks(fluidOutputs);
         if (copy.isEmpty()) {
             PatternEncodingSessionState.clearPendingTransferFluidOutputs(player.getUUID());
         } else {
@@ -1369,27 +1377,28 @@ public final class PatternEncodingSourceHelper {
     /**
      * Returns a defensive copy of the Data Ripper fluid outputs awaiting the next encode.
      */
-    public static List<GenericStack> readPendingTransferFluidOutputs(Player player) {
-        return copyGenericStacks(PatternEncodingSessionState.getPendingTransferFluidOutputs(player.getUUID()));
+    public static ObjectList<GenericStack> readPendingTransferFluidOutputs(Player player) {
+        ObjectList<GenericStack> fluidOutputs = PatternEncodingSessionState.getPendingTransferFluidOutputs(player.getUUID());
+        return fluidOutputs == null ? ObjectLists.emptyList() : fluidOutputs;
     }
 
-    private static List<GenericStack> copyGenericStacks(@Nullable List<? extends @Nullable GenericStack> stacks) {
-        if (stacks == null || stacks.isEmpty()) {
-            return List.of();
+    private static ObjectList<GenericStack> copyGenericStacks(@Nullable Iterable<@Nullable GenericStack> stacks) {
+        if (stacks == null) {
+            return ObjectLists.emptyList();
         }
 
-        List<GenericStack> copy = new ObjectArrayList<>(stacks.size());
+        ObjectList<GenericStack> copy = new ObjectArrayList<>();
         for (GenericStack stack : stacks) {
             if (stack == null || stack.amount() <= 0) {
                 continue;
             }
             copy.add(new GenericStack(stack.what(), stack.amount()));
         }
-        return copy.isEmpty() ? List.of() : List.copyOf(copy);
+        return copy.isEmpty() ? ObjectLists.emptyList() : ObjectLists.unmodifiable(copy);
     }
 
-    private static String describeItems(List<ItemStack> stacks) {
-        List<String> result = new ObjectArrayList<>(stacks.size());
+    private static String describeItems(ObjectList<ItemStack> stacks) {
+        ObjectList<String> result = new ObjectArrayList<>(stacks.size());
         for (ItemStack stack : stacks) {
             if (stack.isEmpty()) {
                 result.add("empty");

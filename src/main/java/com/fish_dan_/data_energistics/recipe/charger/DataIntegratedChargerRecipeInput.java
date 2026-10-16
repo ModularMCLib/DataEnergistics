@@ -1,15 +1,17 @@
 package com.fish_dan_.data_energistics.recipe.charger;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeInput;
 
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Runtime item inputs for a data integrated charger recipe. */
-public record DataIntegratedChargerRecipeInput(List<ItemStack> items) implements RecipeInput {
+public record DataIntegratedChargerRecipeInput(ObjectList<ItemStack> items) implements RecipeInput {
 
-    public DataIntegratedChargerRecipeInput {
-        items = List.copyOf(items);
+    public DataIntegratedChargerRecipeInput(ObjectList<ItemStack> items) {
+        this.items = FastUtilCollections.immutableList(items);
     }
 
     @Override

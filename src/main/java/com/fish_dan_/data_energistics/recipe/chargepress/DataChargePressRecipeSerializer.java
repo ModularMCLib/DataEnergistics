@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.recipe.chargepress;
 
+import com.fish_dan_.data_energistics.util.FastUtilCollections;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -10,19 +12,20 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /** Codec for the compact inputs/fluid_amount/result data charge press schema. */
 public final class DataChargePressRecipeSerializer implements RecipeSerializer<DataChargePressRecipe> {
 
-    private static final Codec<List<DataChargePressIngredient>> INPUTS_CODEC = DataChargePressIngredient.CODEC.listOf().flatXmap(
-            ingredients -> ingredients.isEmpty() ||
-                    ingredients.size() > DataChargePressRecipe.MAX_ITEM_INPUT_COUNT ?
-                            DataResult.error(() -> "Data charge press recipes require between " + DataChargePressRecipe.MIN_ITEM_INPUT_COUNT + " and " +
-                                    DataChargePressRecipe.MAX_ITEM_INPUT_COUNT + " inputs") :
-                            DataResult.success(ingredients),
-            DataResult::success);
+    private static final Codec<ObjectList<DataChargePressIngredient>> INPUTS_CODEC = FastUtilCollections.objectListCodec(
+            DataChargePressIngredient.CODEC).flatXmap(
+                    ingredients -> ingredients.isEmpty() ||
+                            ingredients.size() > DataChargePressRecipe.MAX_ITEM_INPUT_COUNT ?
+                                    DataResult.error(() -> "Data charge press recipes require between " + DataChargePressRecipe.MIN_ITEM_INPUT_COUNT + " and " +
+                                            DataChargePressRecipe.MAX_ITEM_INPUT_COUNT + " inputs") :
+                                    DataResult.success(ingredients),
+                    DataResult::success);
     private static final Codec<Integer> FLUID_AMOUNT_CODEC = Codec.INT.flatXmap(
             amount -> amount <= 0 || amount > DataChargePressRecipe.MAX_FLUID_AMOUNT ?
                     DataResult.error(() -> "Data charge press fluid_amount must be between 1 and " +
@@ -41,7 +44,8 @@ public final class DataChargePressRecipeSerializer implements RecipeSerializer<D
             DataChargePressRecipeSerializer::writeRecipe, DataChargePressRecipeSerializer::readRecipe);
 
     private static DataChargePressRecipe readRecipe(RegistryFriendlyByteBuf buffer) {
-        List<DataChargePressIngredient> inputs = DataChargePressIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
+        ObjectList<DataChargePressIngredient> inputs = new ObjectArrayList<>(
+                DataChargePressIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer));
         int fluidAmount = ByteBufCodecs.VAR_INT.decode(buffer);
         ItemStack result = ItemStack.STREAM_CODEC.decode(buffer);
         return new DataChargePressRecipe(inputs, fluidAmount, result);

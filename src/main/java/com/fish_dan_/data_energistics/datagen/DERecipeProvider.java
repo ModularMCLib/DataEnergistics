@@ -22,9 +22,9 @@ import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 
 import com.glodblock.github.appflux.common.AFSingletons;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class DERecipeProvider extends RecipeProvider {
@@ -107,7 +107,7 @@ public class DERecipeProvider extends RecipeProvider {
 
     private static class IntegratedChargerBuilder {
 
-        private final List<DataChargePressIngredient> inputs = new ObjectArrayList<>();
+        private final ObjectList<DataChargePressIngredient> inputs = new ObjectArrayList<>();
         private int fluidAmount;
         private ItemStack itemOutput = ItemStack.EMPTY;
 
@@ -145,7 +145,7 @@ public class DERecipeProvider extends RecipeProvider {
                 throw new IllegalStateException("Invalid integrated charger crystal growth recipe: " + id);
             }
             var recipe = new DataChargePressRecipe(
-                    List.copyOf(inputs),
+                    inputs,
                     this.fluidAmount,
                     this.itemOutput);
             output.accept(id, recipe, null);

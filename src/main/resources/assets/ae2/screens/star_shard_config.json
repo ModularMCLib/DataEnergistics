@@ -3,7 +3,9 @@
 	"includes": ["common/common.json", "common/player_inventory.json"],
 	"helpTopic": "data_energistics:items-blocks-machines/7.3_star_shard.md",
 	"background": {
-		"texture": "data_energistics:textures/guis/star_shard_config.png",
+		"texture": "data_energistics:textures/guis/background/star_shard_config.png",
+		"textureWidth": 176,
+		"textureHeight": 222,
 		"srcRect": [0, 0, 176, 222]
 	},
 	"palette": {

@@ -62,6 +62,7 @@ public final class DataEnergisticsTextureEditorResources {
         var provider = new BuiltinResourceProvider<>(Data_Energistics.MODID, resourceInstance);
         registerComposedTextures(provider);
         registerTextureAssets(provider);
+        registerScreenTextures(provider);
         registerStateTextures(provider);
         resourceInstance.addBuiltinProvider(provider);
     }
@@ -193,7 +194,7 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("compartment_me_output", guiSprite("compartment/me_output.png"));
         provider.addResource("compartment_pattern_buffer", guiSprite("compartment/pattern_buffer.png"));
         provider.addResource("recipe_reassembler", guiSprite("recipe/reassembler.png"));
-        provider.addResource("recipe_reassembler_progress", guiSprite("recipe/reassembler_progress.png"));
+        provider.addResource("progress_processing", guiSprite("progress/processing.png"));
         provider.addResource("trinity_home", sprite("home.png"));
         provider.addResource("trinity_host_layout_reference", sprite("host_layout_reference.png"));
         provider.addResource("trinity_status_panel", sprite("status_panel.png"));
@@ -201,6 +202,29 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("trinity_storage_fluid_fill", sprite("storage_fluid_fill.png"));
         provider.addResource("trinity_storage_item_fill", sprite("storage_item_fill.png"));
         provider.addResource("trinity_storage_other_fill", sprite("storage_other_fill.png"));
+    }
+
+    /** Registers complete screen backgrounds without source rectangles from the old GUI sheets. */
+    private static void registerScreenTextures(BuiltinResourceProvider<IGuiTexture> provider) {
+        provider.addResource("background_adaptive_pattern_provider", guiSprite("background/adaptive_pattern_provider.png"));
+        provider.addResource("background_data_asynchronous_processing_factory", guiSprite("background/data_asynchronous_processing_factory.png"));
+        provider.addResource("background_data_distribution_tower", guiSprite("background/data_distribution_tower.png"));
+        provider.addResource("background_data_extractor", guiSprite("background/data_extractor.png"));
+        provider.addResource("background_data_integrated_charger", guiSprite("background/data_integrated_charger.png"));
+        provider.addResource("background_data_mimetic_field", guiSprite("background/data_mimetic_field.png"));
+        provider.addResource("background_data_reassembler", guiSprite("background/data_reassembler.png"));
+        provider.addResource("background_data_ripper", guiSprite("background/data_ripper.png"));
+        provider.addResource("background_data_sanctum_interface", guiSprite("background/data_sanctum_interface.png"));
+        provider.addResource("background_data_sanctum_status", guiSprite("background/data_sanctum_status.png"));
+        provider.addResource("background_data_teleport_anchor", guiSprite("background/data_teleport_anchor.png"));
+        provider.addResource("background_digital_packaged_pattern_provider", guiSprite("background/digital_packaged_pattern_provider.png"));
+        provider.addResource("background_digital_storage_depot", guiSprite("background/digital_storage_depot.png"));
+        provider.addResource("background_io_port", guiSprite("background/io_port.png"));
+        provider.addResource("background_me_solar_panel", guiSprite("background/me_solar_panel.png"));
+        provider.addResource("background_me_vacuum", guiSprite("background/me_vacuum.png"));
+        provider.addResource("background_order_package", guiSprite("background/order_package.png"));
+        provider.addResource("background_set_output_sides", guiSprite("background/set_output_sides.png"));
+        provider.addResource("background_star_shard_config", guiSprite("background/star_shard_config.png"));
     }
 
     /** Registers all sliced state assets with category-prefixed, collision-free editor names. */

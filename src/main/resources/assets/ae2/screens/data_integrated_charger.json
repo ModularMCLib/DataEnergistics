@@ -6,7 +6,9 @@
 		"common/toolbox.json"
 	],
 	"background": {
-		"texture": "guis/data_integrated_charger.png",
+		"texture": "data_energistics:textures/guis/background/data_integrated_charger.png",
+		"textureWidth": 176,
+		"textureHeight": 183,
 		"srcRect": [0, 0, 176, 183]
 	},
 	"slots": {
@@ -80,8 +82,10 @@
 	},
 	"images": {
 		"progressBar": {
-			"texture": "guis/data_integrated_charger.png",
-			"srcRect": [176, 0, 6, 18]
+			"texture": "data_energistics:textures/guis/progress/processing.png",
+			"textureWidth": 6,
+			"textureHeight": 18,
+			"srcRect": [0, 0, 6, 18]
 		}
 	},
 	"widgets": {

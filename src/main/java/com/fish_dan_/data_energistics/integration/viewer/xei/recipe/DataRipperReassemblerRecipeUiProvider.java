@@ -33,7 +33,7 @@ public final class DataRipperReassemblerRecipeUiProvider
                                                          implements IModularUIProvider<DataRipperReassemblerRecipeView> {
 
     private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/reassembler.png");
-    private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/recipe/reassembler_progress.png");
+    private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/progress/processing.png");
     private static final int CANDIDATE_CYCLE_TICKS = 20;
     private static final long PROGRESS_CYCLE_MILLIS = 2_000L;
 

@@ -6,7 +6,9 @@
 		"common/toolbox.json"
 	],
 	"background": {
-		"texture": "guis/io_port.png",
+		"texture": "data_energistics:textures/guis/background/io_port.png",
+		"textureWidth": 176,
+		"textureHeight": 168,
 		"srcRect": [0, 0, 176, 168]
 	},
 	"slots": {

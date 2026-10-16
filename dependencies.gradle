@@ -135,7 +135,9 @@ dependencies {
     localRuntime(forge.modern.industrialization)
     localRuntime(forge.grandpower)
     localRuntime(forge.brandonscore)
-    localRuntime(forge.codechickenlib)
+    localRuntime(forge.codechickenlib) {
+        exclude group: 'net.covers1624', module: 'Quack'
+    }
     localRuntime(forge.draconic.evolution)
     localRuntime(forge.if)
     localRuntime(forge.titanium)

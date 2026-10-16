@@ -73,7 +73,7 @@ item_ids:
 
 数据水晶母岩的品质越高，生成概率越低。只有下方母岩为赛特斯母岩时，核心中层才可能生成现有的随机赛特斯晶芽；下方为数据水晶母岩时，中层保持为空。新分布仅影响新生成的数位化陨石。
 
-使用精准采集挖掘时，五档数据水晶母岩都会掉落自身。未使用精准采集时，仍沿用原有的降级规则：
+失活、无能、疲劳和欠亏数据水晶母岩使用精准采集挖掘时会掉落自身。充盈数据水晶母岩无论是否使用精准采集，都只掉落 1 个欠亏数据水晶母岩。普通采集掉落如下：
 
 | 母岩 | 普通采集掉落 |
 |---|---|
@@ -81,7 +81,7 @@ item_ids:
 | <ItemImage id="data_energistics:budding_data_crystal_1" /> 无能 | <ItemImage id="data_energistics:budding_data_crystal_0" /> 失活 |
 | <ItemImage id="data_energistics:budding_data_crystal_2" /> 疲劳 | <ItemImage id="data_energistics:budding_data_crystal_1" /> 无能 |
 | <ItemImage id="data_energistics:budding_data_crystal_3" /> 欠亏 | <ItemImage id="data_energistics:budding_data_crystal_2" /> 疲劳 |
-| <ItemImage id="data_energistics:budding_data_crystal_4" /> 充盈 | <ItemImage id="data_energistics:budding_data_crystal_2" /> 疲劳 |
+| <ItemImage id="data_energistics:budding_data_crystal_4" /> 充盈 | <ItemImage id="data_energistics:budding_data_crystal_3" /> 欠亏 |
 
 >⚠他将作为你本模组的开端
 >

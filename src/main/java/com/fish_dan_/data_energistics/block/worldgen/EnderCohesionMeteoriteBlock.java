@@ -102,7 +102,7 @@ public class EnderCohesionMeteoriteBlock extends Block {
     }
 
     private static int capFortuneLevel(int fortuneLevel) {
-        return Math.min(MAX_FORTUNE_LEVEL, Math.max(0, fortuneLevel));
+        return Math.clamp(fortuneLevel, 0, MAX_FORTUNE_LEVEL);
     }
 
     private static void teleportRandomly(ServerLevel level, ServerPlayer player, RandomSource random) {

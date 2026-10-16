@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerB
 import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.machine.anvil.MeDigitalAnvilBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
@@ -37,6 +38,7 @@ import com.fish_dan_.data_energistics.menu.machine.DataRipperReassemblerMenu;
 import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenu;
 import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenuHost;
 import com.fish_dan_.data_energistics.menu.machine.DataTeleportAnchorMenu;
+import com.fish_dan_.data_energistics.menu.machine.anvil.MeDigitalAnvilMenu;
 import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
 import com.fish_dan_.data_energistics.menu.patternprovider.DigitalPackagedPatternProviderMenu;
 import com.fish_dan_.data_energistics.menu.powered.MatterConvergingCrossbowConfigMenu;
@@ -238,6 +240,14 @@ public final class DEMenus {
                     throw new IllegalStateException("Missing research station at " + pos);
                 }
                 return new ResearchStationMenu(id, inventory, host);
+            }));
+    public static final DeferredHolder<MenuType<?>, MenuType<MeDigitalAnvilMenu>> ME_DIGITAL_ANVIL = MENUS.register(
+            "me_digital_anvil", () -> IMenuTypeExtension.create((id, inventory, buffer) -> {
+                var pos = buffer.readBlockPos();
+                if (!(inventory.player.level().getBlockEntity(pos) instanceof MeDigitalAnvilBlockEntity host)) {
+                    throw new IllegalStateException("Missing ME digital anvil at " + pos);
+                }
+                return new MeDigitalAnvilMenu(id, inventory, host);
             }));
 
     public static void register(IEventBus modEventBus) {

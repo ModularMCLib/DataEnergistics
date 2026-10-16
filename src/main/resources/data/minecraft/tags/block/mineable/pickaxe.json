@@ -1,6 +1,7 @@
 {
 	"replace": false,
 	"values": [
+		"data_energistics:me_digital_anvil",
 		"data_energistics:me_solar_panel",
 		"data_energistics:me_data_solar_panel",
 		"data_energistics:data_extractor",

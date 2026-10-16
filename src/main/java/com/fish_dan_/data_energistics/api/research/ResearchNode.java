@@ -156,6 +156,13 @@ public record ResearchNode(ResourceLocation id, ResearchScope scope, String name
         return true;
     }
 
+    /** Returns all external requirements regardless of their required or alternative group. */
+    public ObjectSet<ResearchCondition> conditionIds() {
+        ObjectSet<ResearchCondition> result = new ObjectOpenHashSet<>(requiredConditions);
+        for (ObjectSet<ResearchCondition> group : optionalConditionGroups) result.addAll(group);
+        return result;
+    }
+
     /** Required parameters make every node explicitly choose its time and energy cost. */
     public static Builder builder(ResourceLocation id, ResearchScope scope, String name, String description,
                                   int researchTicks, double aePerTick) {

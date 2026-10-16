@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotItemData;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotMemoryCardData;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
+import com.fish_dan_.data_energistics.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
 
 import appeng.api.stacks.AEKey;
@@ -38,6 +39,12 @@ public final class DEDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemResearchUpgrades>> RESEARCH_UPGRADES = DATA_COMPONENT_TYPES.register(
             "research_upgrades", () -> DataComponentType.<ItemResearchUpgrades>builder()
                     .persistent(ItemResearchUpgrades.CODEC).networkSynchronized(ItemResearchUpgrades.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemResearchExclusions>> RESEARCH_EXCLUSIONS = DATA_COMPONENT_TYPES.register(
+            "research_exclusions", () -> DataComponentType.<ItemResearchExclusions>builder()
+                    .persistent(ItemResearchExclusions.CODEC).networkSynchronized(ItemResearchExclusions.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> RESEARCH_INSTANT = DATA_COMPONENT_TYPES.register(
+            "research_instant", () -> DataComponentType.<Boolean>builder()
+                    .persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> RESEARCH_STATION_ID = DATA_COMPONENT_TYPES.register(
             "research_station_id", () -> DataComponentType.<UUID>builder()
                     .persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC).build());

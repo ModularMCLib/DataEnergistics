@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.research.definition;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.AdvancementResearchCondition;
 import com.fish_dan_.data_energistics.api.research.FtbQuestTaskCondition;
+import com.fish_dan_.data_energistics.api.research.ResearchCondition;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
-import com.fish_dan_.data_energistics.api.research.ResearchCondition;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 
 import net.minecraft.core.HolderLookup;
@@ -46,6 +46,7 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
     protected Object2ObjectMap<ResourceLocation, ResearchNode> prepare(ResourceManager resources, ProfilerFiller profiler) {
         var nodes = ResearchDefinitions.defaults();
         resources.listResources(DIRECTORY, path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
+            if (!path.getNamespace().equals(Data_Energistics.MODID)) return;
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(path.getNamespace(),
                     path.getPath().substring(DIRECTORY.length() + 1, path.getPath().length() - 5));
             try (Reader reader = resource.openAsReader()) {
@@ -151,8 +152,10 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
                 throw new IllegalArgumentException("prerequisites.optional[" + index + "] must be an array");
             }
             ObjectSet<ResourceLocation> ids = new ObjectOpenHashSet<>();
-            for (JsonElement element : group) ids.add(ResourceLocation.parse(string(element,
-                    "prerequisites.optional[" + index + "]")));
+            for (int item = 0; item < group.size(); item++) {
+                ResourceLocation id = ResourceLocation.parse(string(group.get(item), "prerequisites.optional[" + index + "][" + item + "]"));
+                if (!ids.add(id)) throw new IllegalArgumentException("prerequisites.optional[" + index + "] contains duplicate ID " + id);
+            }
             if (ids.isEmpty()) throw new IllegalArgumentException("prerequisites.optional[" + index + "] must not be empty");
             optionalGroups.add(ids);
         }
@@ -171,7 +174,13 @@ public final class ResearchReloadListener extends SimplePreparableReloadListener
 
     private static ObjectSet<ResourceLocation> ids(JsonObject json, String field) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
-        if (json.has(field)) for (JsonElement element : json.getAsJsonArray(field)) result.add(ResourceLocation.parse(string(element, field)));
+        if (!json.has(field)) return result;
+        JsonElement value = json.get(field);
+        if (!(value instanceof JsonArray array)) throw new IllegalArgumentException(field + " must be an array");
+        for (int index = 0; index < array.size(); index++) {
+            ResourceLocation id = ResourceLocation.parse(string(array.get(index), field + "[" + index + "]"));
+            if (!result.add(id)) throw new IllegalArgumentException(field + " contains duplicate ID " + id);
+        }
         return result;
     }
 

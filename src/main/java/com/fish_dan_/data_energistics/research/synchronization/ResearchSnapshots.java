@@ -1,7 +1,11 @@
 package com.fish_dan_.data_energistics.research.synchronization;
 
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.api.research.ResearchNode;
+import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
+import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluation;
+import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluator;
 import com.fish_dan_.data_energistics.research.definition.ResearchDefinitions;
 import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
 import com.fish_dan_.data_energistics.research.persistence.ResearchSavedData;
@@ -12,8 +16,12 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+
+import java.util.UUID;
 
 /** Envelopes are built on the server thread and scoped to the viewing player. */
 public final class ResearchSnapshots {
@@ -50,8 +58,33 @@ public final class ResearchSnapshots {
         tag.put("projects", projects);
         ResearchSavedData data = ResearchSavedData.get(player.server);
         ObjectSet<ResourceLocation> unlocked = new ObjectOpenHashSet<>();
-        ResearchAccess.subjects(player, host.stationId()).forEach(subject -> unlocked.addAll(data.unlocked(subject)));
+        ObjectSet<UUID> subjects = ResearchAccess.subjects(player, host.stationId());
+        tag.putBoolean("instant_technology", data.hasInstantTechnology(subjects));
+        tag.putBoolean("instant_player", data.hasInstantPlayerResearch(player.getUUID()));
+        subjects.forEach(subject -> unlocked.addAll(data.unlocked(subject)));
         tag.put("unlocked", ResearchNbt.ids(unlocked));
+        tag.put("player_upgrades", ResearchNbt.ids(data.playerUpgrades(player.getUUID())));
+        Object2ObjectMap<ResourceLocation, ResourceLocation> technologyLocks = new Object2ObjectLinkedOpenHashMap<>();
+        Object2ObjectMap<ResourceLocation, ResourceLocation> playerLocks = new Object2ObjectLinkedOpenHashMap<>();
+        ListTag conditionResults = new ListTag();
+        for (ResearchNode node : ResearchDefinitions.nodes().values()) {
+            if (node.scope() == ResearchScope.TECHNOLOGY) {
+                ResourceLocation winner = data.technologyExclusionWinner(subjects, node.id());
+                if (winner != null) technologyLocks.put(node.id(), winner);
+            } else if (node.scope() == ResearchScope.PLAYER_UPGRADE) {
+                ResourceLocation winner = data.playerExclusionWinner(player.getUUID(), node.id());
+                if (winner != null) playerLocks.put(node.id(), winner);
+            }
+            ResearchConditionEvaluation evaluation = ResearchConditionEvaluator.evaluate(player, node);
+            CompoundTag condition = new CompoundTag();
+            condition.putString("id", node.id().toString());
+            condition.put("satisfied", ResearchNbt.conditions(evaluation.satisfied()));
+            condition.put("unavailable", ResearchNbt.conditions(evaluation.unavailable()));
+            conditionResults.add(condition);
+        }
+        tag.put("technology_exclusions", ResearchNbt.exclusions(technologyLocks));
+        tag.put("player_exclusions", ResearchNbt.exclusions(playerLocks));
+        tag.put("condition_results", conditionResults);
         tag.put("teams", ResearchTeams.snapshot(player));
         return tag;
     }

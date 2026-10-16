@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.research.progression;
 
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
+import com.fish_dan_.data_energistics.research.condition.ResearchConditionEvaluation;
 import com.fish_dan_.data_energistics.research.persistence.ResearchNbt;
 
 import net.minecraft.core.HolderLookup;
@@ -21,17 +22,21 @@ public final class ResearchProject {
     public final ObjectSet<UUID> subjects;
     public final UUID initiator;
     public final long order;
+    public ResearchConditionEvaluation conditionEvaluation;
     public int progress;
     public double energyCredit;
     public boolean running = true;
     public boolean powered;
     public boolean faulted;
+    public boolean conditionBlocked;
 
-    public ResearchProject(ResearchNode node, ObjectSet<UUID> subjects, UUID initiator, long order) {
+    public ResearchProject(ResearchNode node, ObjectSet<UUID> subjects, UUID initiator, long order,
+                           ResearchConditionEvaluation conditionEvaluation) {
         this.node = node;
         this.subjects = ObjectSets.unmodifiable(new ObjectOpenHashSet<>(subjects));
         this.initiator = initiator;
         this.order = order;
+        this.conditionEvaluation = conditionEvaluation;
     }
 
     public CompoundTag save(HolderLookup.Provider registries) {
@@ -51,14 +56,20 @@ public final class ResearchProject {
         tag.putBoolean("running", running);
         tag.putBoolean("faulted", faulted);
         tag.putBoolean("powered", powered);
+        tag.putBoolean("condition_blocked", conditionBlocked);
+        tag.put("satisfied_conditions", ResearchNbt.conditions(conditionEvaluation.satisfied()));
+        tag.put("unavailable_conditions", ResearchNbt.conditions(conditionEvaluation.unavailable()));
         return tag;
     }
 
     public static ResearchProject load(CompoundTag tag, HolderLookup.Provider registries) {
         ObjectSet<UUID> subjects = new ObjectOpenHashSet<>();
         for (Tag value : ResearchNbt.readList(tag, "subjects", Tag.TAG_COMPOUND)) subjects.add(((CompoundTag) value).getUUID("id"));
-        ResearchProject project = new ResearchProject(ResearchNbt.readNode(tag.getCompound("node"), registries),
-                subjects, tag.getUUID("initiator"), tag.getLong("order"));
+        ResearchNode node = ResearchNbt.readNode(tag.getCompound("node"), registries);
+        ResearchConditionEvaluation conditionEvaluation = new ResearchConditionEvaluation(
+                ResearchNbt.readConditions(tag, "satisfied_conditions"),
+                ResearchNbt.readConditions(tag, "unavailable_conditions"));
+        ResearchProject project = new ResearchProject(node, subjects, tag.getUUID("initiator"), tag.getLong("order"), conditionEvaluation);
         project.progress = tag.getInt("progress");
         project.energyCredit = tag.getDouble("energy_credit");
         if (subjects.isEmpty() || project.order < 0 || project.progress < 0 || project.progress >= project.node.researchTicks() ||
@@ -67,7 +78,12 @@ public final class ResearchProject {
         }
         project.running = tag.getBoolean("running");
         project.faulted = tag.getBoolean("faulted");
-        if (project.running && project.faulted) throw new IllegalArgumentException("Faulted research cannot be running");
+        project.conditionBlocked = tag.getBoolean("condition_blocked");
+        if ((project.running && (project.faulted || project.conditionBlocked)) ||
+                (project.conditionBlocked && project.faulted) ||
+                (project.running && !conditionEvaluation.satisfies(node))) {
+            throw new IllegalArgumentException("Invalid saved research project state or condition result");
+        }
         return project;
     }
 }

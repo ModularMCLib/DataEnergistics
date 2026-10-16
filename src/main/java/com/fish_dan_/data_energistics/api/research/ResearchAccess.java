@@ -45,4 +45,14 @@ public final class ResearchAccess {
     public static boolean hasUpgrade(ItemStack stack, ResourceLocation upgrade) {
         return ItemResearchUpgrades.of(stack).ids().contains(upgrade);
     }
+
+    /** Checks player-owned body enhancement research on the server thread. */
+    public static boolean hasPlayerUpgrade(ServerPlayer player, ResourceLocation upgrade) {
+        return ResearchSavedData.get(player.server).playerUpgrades(player.getUUID()).contains(upgrade);
+    }
+
+    /** Checks a stable player UUID without requiring that player to be online. */
+    public static boolean hasPlayerUpgrade(MinecraftServer server, UUID player, ResourceLocation upgrade) {
+        return ResearchSavedData.get(server).playerUpgrades(player).contains(upgrade);
+    }
 }

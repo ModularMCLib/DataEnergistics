@@ -44,28 +44,33 @@ public final class ResearchDefinitions {
                 for (ResourceLocation exclusiveId : node.mutuallyExclusive()) {
                     if (!definitions.containsKey(exclusiveId)) {
                         rejected.add(id);
-                        Data_Energistics.LOGGER.error("Rejected research node {}: mutually_exclusive references missing node {}", id, exclusiveId);
+                        Data_Energistics.LOGGER.error("Rejected research file {} field mutually_exclusive: missing node {}",
+                                definitionFile(id), exclusiveId);
                         continue;
                     }
                     ResearchNode exclusive = definitions.get(exclusiveId);
                     if (rejected.contains(exclusiveId)) {
                         rejected.add(id);
-                        Data_Energistics.LOGGER.error("Rejected research node {}: mutually_exclusive references unavailable node {}", id, exclusiveId);
+                        Data_Energistics.LOGGER.error("Rejected research file {} field mutually_exclusive: referenced node {} is unavailable",
+                                definitionFile(id), exclusiveId);
                         continue;
                     }
                     if (exclusive.scope() != node.scope()) {
                         rejected.add(id);
                         rejected.add(exclusiveId);
-                        Data_Energistics.LOGGER.error("Rejected research nodes {} and {}: mutually exclusive nodes must share a scope", id, exclusiveId);
+                        Data_Energistics.LOGGER.error("Rejected research files {} and {} field mutually_exclusive: nodes must share a scope",
+                                definitionFile(id), definitionFile(exclusiveId));
                     } else if (!exclusive.mutuallyExclusive().contains(id)) {
                         rejected.add(id);
                         rejected.add(exclusiveId);
-                        Data_Energistics.LOGGER.error("Rejected research nodes {} and {}: mutually_exclusive references must be reciprocal", id, exclusiveId);
+                        Data_Energistics.LOGGER.error("Rejected research files {} and {} field mutually_exclusive: references must be reciprocal",
+                                definitionFile(id), definitionFile(exclusiveId));
                     }
                 }
                 if (!valid(id, definitions, rejected, new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>())) {
                     rejected.add(id);
-                    Data_Energistics.LOGGER.error("Rejected research node {}: missing or cyclic prerequisite", id);
+                    Data_Energistics.LOGGER.error("Rejected research file {} field prerequisites: missing or cyclic prerequisite",
+                            definitionFile(id));
                 }
             }
             changed = rejected.size() != rejectedCount;
@@ -100,5 +105,9 @@ public final class ResearchDefinitions {
 
     public static long revision() {
         return revision;
+    }
+
+    private static String definitionFile(ResourceLocation id) {
+        return "data/" + id.getNamespace() + "/researchtechnology/" + id.getPath() + ".json";
     }
 }

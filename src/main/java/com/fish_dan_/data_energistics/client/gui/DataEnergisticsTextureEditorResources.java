@@ -194,6 +194,8 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("compartment_me_output", guiSprite("compartment/me_output.png"));
         provider.addResource("compartment_pattern_buffer", guiSprite("compartment/pattern_buffer.png"));
         provider.addResource("recipe_reassembler", guiSprite("recipe/reassembler.png"));
+        provider.addResource("recipe_charge_press", guiSprite("recipe/charge_press.png"));
+        provider.addResource("recipe_condenser", guiSprite("recipe/condenser.png"));
         provider.addResource("progress_processing", guiSprite("progress/processing.png"));
         provider.addResource("trinity_home", sprite("home.png"));
         provider.addResource("trinity_host_layout_reference", sprite("host_layout_reference.png"));
@@ -242,6 +244,7 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_background_square", guiSprite("states/background/square.png"));
         provider.addResource("states_background_blank_pattern", guiSprite("states/background/blank_pattern.png"));
         provider.addResource("states_background_trash", guiSprite("states/background/trash.png"));
+        provider.addResource("states_background_trash_slot", guiSprite("states/background/trash_slot.png"));
         provider.addResource("states_background_sword", guiSprite("states/background/sword.png"));
         provider.addResource("states_background_synthesize", guiSprite("states/background/synthesize.png"));
         provider.addResource("states_background_toppin_background", guiSprite("states/background/toppin_background.png"));
@@ -305,6 +308,8 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_top_surface_production_boost_mode", guiSprite("states/top_surface/production_boost_mode.png"));
         provider.addResource("states_top_surface_prohibit", guiSprite("states/top_surface/prohibit.png"));
         provider.addResource("states_top_surface_powder_mode", guiSprite("states/top_surface/powder_mode.png"));
+        provider.addResource("states_top_surface_pull_enabled", guiSprite("states/top_surface/pull_enabled.png"));
+        provider.addResource("states_top_surface_pull_disabled", guiSprite("states/top_surface/pull_disabled.png"));
         provider.addResource("states_top_surface_range", guiSprite("states/top_surface/range.png"));
         provider.addResource("states_top_surface_recipe_record_0", guiSprite("states/top_surface/recipe_record_0.png"));
         provider.addResource("states_top_surface_recipe_record_1", guiSprite("states/top_surface/recipe_record_1.png"));
@@ -315,6 +320,7 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_top_surface_text_box", guiSprite("states/top_surface/text_box.png"));
         provider.addResource("states_top_surface_text_box_0", guiSprite("states/top_surface/text_box_0.png"));
         provider.addResource("states_top_surface_text_box_1", guiSprite("states/top_surface/text_box_1.png"));
+        provider.addResource("states_top_surface_toolbar_button", guiSprite("states/top_surface/toolbar_button.png"));
         provider.addResource("states_top_surface_toppin", guiSprite("states/top_surface/toppin.png"));
         provider.addResource("states_top_surface_whitelist", guiSprite("states/top_surface/whitelist.png"));
         provider.addResource("digital_panel", guiSprite("digital_panel.png"));

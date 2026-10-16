@@ -40,9 +40,6 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
         }
     };
 
-    // Keep recipe content in machine coordinates while shifting only the background five pixels forward.
-    private static final int LEFT_CROP = 5;
-    private static final int TOP_CROP = 15;
     private static final int BACKGROUND_WIDTH = 160;
     private static final int WIDTH = BACKGROUND_WIDTH + 2;
     private static final int HEIGHT = 64;
@@ -61,8 +58,8 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     private static final int SECOND_INPUT_Y = 24;
     private static final int THIRD_INPUT_Y = 42;
     private static final int PROGRESS_Y = 24;
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            "ae2", "textures/guis/data_integrated_charger.png");
+    private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/charge_press.png");
+    private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/progress/processing.png");
     private static final ResourceLocation CRYSTAL_GROWTH_ICON = Data_Energistics.id("textures/guis/states/top_surface/production_boost_mode.png");
     private static final ResourceLocation INSCRIBER_ICON = Data_Energistics.id("textures/guis/states/top_surface/embossing_mode.png");
     private static final ResourceLocation CHARGER_ICON = Data_Energistics.id("textures/guis/states/top_surface/charging_mode.png");
@@ -297,9 +294,10 @@ public final class DataChargePressEmiRecipe extends BasicEmiRecipe {
     }
 
     private static void addMachineBackground(WidgetHolder widgets) {
-        widgets.addTexture(TEXTURE, 0, 0, BACKGROUND_WIDTH, HEIGHT, LEFT_CROP, TOP_CROP);
-        widgets.addAnimatedTexture(TEXTURE, PROGRESS_X, PROGRESS_Y, 6, 18, 176, 0,
-                2_000, false, true, false);
+        widgets.addTexture(BACKGROUND, 0, 0, BACKGROUND_WIDTH, HEIGHT, 0, 0,
+                BACKGROUND_WIDTH, HEIGHT, BACKGROUND_WIDTH, HEIGHT);
+        widgets.addAnimatedTexture(PROGRESS, PROGRESS_X, PROGRESS_Y, 6, 18, 0, 0,
+                6, 18, 6, 18, 2_000, false, true, false);
     }
 
     private void addModeIcon(WidgetHolder widgets) {

@@ -1,10 +1,8 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe.condenser;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.viewer.jei.ui.JeiIconDrawable;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.condenser.CondenserOutputRecipeView;
 
-import appeng.client.gui.Icon;
 import appeng.core.definitions.AEBlocks;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -29,8 +27,10 @@ public final class CondenserOutputRecipeCategory extends AbstractRecipeCategory<
             "condenser",
             CondenserOutputRecipeView.class);
 
-    private static final ResourceLocation CONDENSER_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            "ae2", "textures/guis/condenser.png");
+    private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/condenser.png");
+    private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/progress/processing.png");
+    private static final ResourceLocation TRASH_SLOT = Data_Energistics.id("textures/guis/states/background/trash_slot.png");
+    private static final ResourceLocation TOOLBAR_BUTTON = Data_Energistics.id("textures/guis/states/top_surface/toolbar_button.png");
     private static final ResourceLocation AGGREGATION_MODE_ICON = Data_Energistics.id("textures/guis/states/top_surface/aggregation_mode.png");
     private static final int WIDTH = 96;
     private static final int HEIGHT = 48;
@@ -56,12 +56,16 @@ public final class CondenserOutputRecipeCategory extends AbstractRecipeCategory<
                 guiHelper.createDrawableItemLike(AEBlocks.CONDENSER),
                 WIDTH,
                 HEIGHT);
-        this.background = guiHelper.createDrawable(CONDENSER_TEXTURE, 48, 25, WIDTH, HEIGHT);
-        this.progress = guiHelper.drawableBuilder(CONDENSER_TEXTURE, 176, 0, 6, 18)
+        this.background = guiHelper.drawableBuilder(BACKGROUND, 0, 0, WIDTH, HEIGHT)
+                .setTextureSize(WIDTH, HEIGHT).build();
+        this.progress = guiHelper.drawableBuilder(PROGRESS, 0, 0, 6, 18)
+                .setTextureSize(6, 18)
                 .addPadding(0, 0, 72, 0)
                 .buildAnimated(40, IDrawableAnimated.StartDirection.BOTTOM, false);
-        this.trash = new JeiIconDrawable(Icon.BACKGROUND_TRASH);
-        this.modeBackground = new JeiIconDrawable(Icon.TOOLBAR_BUTTON_BACKGROUND);
+        this.trash = guiHelper.drawableBuilder(TRASH_SLOT, 0, 0, 16, 16)
+                .setTextureSize(16, 16).build();
+        this.modeBackground = guiHelper.drawableBuilder(TOOLBAR_BUTTON, 0, 0, 18, 20)
+                .setTextureSize(18, 20).build();
         this.modeIcon = guiHelper.drawableBuilder(AGGREGATION_MODE_ICON, 0, 0, 16, 16)
                 .setTextureSize(16, 16)
                 .build();

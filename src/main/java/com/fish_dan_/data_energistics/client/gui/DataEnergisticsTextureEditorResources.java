@@ -257,12 +257,15 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_small_top_surface_small_zoom", guiSprite("states/small_top_surface/small_zoom.png"));
         provider.addResource("states_top_surface_ae_fe", guiSprite("states/top_surface/ae_fe.png"));
         provider.addResource("states_top_surface_ae_output", guiSprite("states/top_surface/ae_output.png"));
+        provider.addResource("states_top_surface_aggregation_mode", guiSprite("states/top_surface/aggregation_mode.png"));
         provider.addResource("states_top_surface_black", guiSprite("states/top_surface/black.png"));
         provider.addResource("states_top_surface_black_hole", guiSprite("states/top_surface/black_hole.png"));
         provider.addResource("states_top_surface_black_hole_crack_close", guiSprite("states/top_surface/black_hole_crack_close.png"));
         provider.addResource("states_top_surface_blacklist", guiSprite("states/top_surface/blacklist.png"));
         provider.addResource("states_top_surface_charging_mode", guiSprite("states/top_surface/charging_mode.png"));
+        provider.addResource("states_top_surface_disabled", guiSprite("states/top_surface/disabled.png"));
         provider.addResource("states_top_surface_embossing_mode", guiSprite("states/top_surface/embossing_mode.png"));
+        provider.addResource("states_top_surface_enabled", guiSprite("states/top_surface/enabled.png"));
         provider.addResource("states_top_surface_fluid", guiSprite("states/top_surface/fluid.png"));
         provider.addResource("states_top_surface_hammer", guiSprite("states/top_surface/hammer.png"));
         provider.addResource("states_top_surface_item", guiSprite("states/top_surface/item.png"));

@@ -1,0 +1,144 @@
+{
+	"icons": {
+		"AUTO_EXPORT_AE": {
+			"texture": "guis/states/top_surface/ae_output.png",
+			"width": 16,
+			"height": 16
+		},
+		"BACKGROUND_BLOCK": {
+			"texture": "guis/states/background/square.png",
+			"width": 16,
+			"height": 16
+		},
+		"BACKGROUND_CROP": {
+			"texture": "guis/states/background/crop.png",
+			"width": 16,
+			"height": 16
+		},
+		"BACKGROUND_DATA_CARRIER": {
+			"texture": "guis/states/background/carrier_0.png",
+			"width": 16,
+			"height": 16
+		},
+		"BACKGROUND_DATA_CARRIER_PATTERN": {
+			"texture": "guis/states/background/carrier_1.png",
+			"width": 16,
+			"height": 16
+		},
+		"BACKGROUND_ORE": {
+			"texture": "guis/states/background/ore.png",
+			"width": 16,
+			"height": 16
+		},
+		"BACKGROUND_SWORD": {
+			"texture": "guis/states/background/sword.png",
+			"width": 16,
+			"height": 16
+		},
+		"CONDENSER_OUTPUT_RADIX_CONTAINMENT_SPHERE": {
+			"texture": "guis/states/top_surface/aggregation_mode.png",
+			"width": 16,
+			"height": 16
+		},
+		"DATA_INTEGRATED_CHARGER_1": {
+			"texture": "guis/states/top_surface/production_boost_mode.png",
+			"width": 16,
+			"height": 16
+		},
+		"DATA_INTEGRATED_CHARGER_2": {
+			"texture": "guis/states/top_surface/embossing_mode.png",
+			"width": 16,
+			"height": 16
+		},
+		"DATA_INTEGRATED_CHARGER_3": {
+			"texture": "guis/states/top_surface/charging_mode.png",
+			"width": 16,
+			"height": 16
+		},
+		"PLACEMENT_TOOLBOX": {
+			"texture": "guis/states/top_surface/settings.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_AF": {
+			"texture": "guis/states/top_surface/ae_fe.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_BLACK_HOLE": {
+			"texture": "guis/states/top_surface/black_hole.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_BLACK_LIST": {
+			"texture": "guis/states/top_surface/blacklist.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_CRACK": {
+			"texture": "guis/states/top_surface/black.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_F": {
+			"texture": "guis/states/top_surface/fluid.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_I": {
+			"texture": "guis/states/top_surface/item.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_K": {
+			"texture": "guis/states/top_surface/key.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_NO": {
+			"texture": "guis/states/top_surface/disabled.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_POINT": {
+			"texture": "guis/states/top_surface/point_to_point_.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_SCOPE": {
+			"texture": "guis/states/top_surface/range.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_STANDBY": {
+			"texture": "guis/states/top_surface/black_hole_crack_close.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_WHITE_LIST": {
+			"texture": "guis/states/top_surface/whitelist.png",
+			"width": 16,
+			"height": 16
+		},
+		"POWER_UNIT_YES": {
+			"texture": "guis/states/top_surface/enabled.png",
+			"width": 16,
+			"height": 16
+		},
+		"S_PATTERN_ENCODING_DISABLED": {
+			"texture": "guis/states/top_surface/recipe_record_1.png",
+			"width": 8,
+			"height": 8
+		},
+		"S_PATTERN_ENCODING_ENABLED": {
+			"texture": "guis/states/top_surface/recipe_record_0.png",
+			"width": 8,
+			"height": 8
+		},
+		"TRINITY_REFUND": {
+			"texture": "guis/states/top_surface/charging_mode.png",
+			"width": 16,
+			"height": 16
+		}
+	}
+}

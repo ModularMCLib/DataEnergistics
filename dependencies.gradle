@@ -80,6 +80,7 @@ dependencies {
     compileOnly(forge.ftbultimine)
     compileOnly(forge.ftbchunks)
     compileOnly(forge.ftbteams)
+    compileOnly(forge.ftbquests)
 
     // Optional tactical-map integrations
     compileOnly(forge.journeymap.api) {
@@ -168,6 +169,7 @@ dependencies {
 
     // Optional machine integrations for local development; runtime libraries are declared explicitly.
     extraLocalRuntime(forge.ftbteams)
+    extraLocalRuntime(forge.ftbquests)
 
     extraLocalRuntime(forge.mystical.agriculture) { transitive = false }
     extraLocalRuntime(forge.cucumber) { transitive = false }

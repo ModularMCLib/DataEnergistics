@@ -53,6 +53,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             xaerolib_version        : forge.versions.xaerolib.get(),
             ftbchunks_version       : forge.versions.ftbchunks.get(),
             ftbteams_version        : forge.versions.ftbteams.get(),
+            ftbquests_version       : forge.versions.ftbquests.get(),
             mod_license             : mod_license,
             mod_name                : mod_name,
             mod_description         : mod_description,

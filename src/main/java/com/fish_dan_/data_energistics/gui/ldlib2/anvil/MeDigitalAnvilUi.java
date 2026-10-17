@@ -176,6 +176,7 @@ public final class MeDigitalAnvilUi {
     private static Button step(String direction, Runnable action) {
         StateTextureButton button = new StateTextureButton();
         button.setArrow(direction.equals("up") ? StateTextureButton.Arrow.UP : StateTextureButton.Arrow.DOWN);
+        button.setActive(false);
         button.setOnClick(event -> action.run());
         return button;
     }

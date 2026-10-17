@@ -33,7 +33,17 @@ public final class StateTextureButton extends Button {
         IGuiTexture normal = GuiTextureGroup.of(texture("small_top_surface/small_button_0"), overlay);
         IGuiTexture hover = GuiTextureGroup.of(texture("small_top_surface/small_button_1"), overlay);
         IGuiTexture pressed = GuiTextureGroup.of(texture("small_top_surface/small_button_2"), overlay);
-        buttonStyle(style -> style.baseTexture(normal).hoverTexture(hover).pressedTexture(pressed));
+        buttonStyle(style -> style.baseTexture(isActive() ? normal : pressed).hoverTexture(hover).pressedTexture(pressed));
+    }
+
+    /** Inactive controls keep their overlay while using the shared disabled button surface. */
+    @Override
+    public StateTextureButton setActive(boolean active) {
+        if (isActive() != active) {
+            super.setActive(active);
+            setArrow(arrow);
+        }
+        return this;
     }
 
     private static SpriteTexture texture(String path) {

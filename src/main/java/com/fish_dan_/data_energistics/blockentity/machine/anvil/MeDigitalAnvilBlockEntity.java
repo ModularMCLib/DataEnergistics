@@ -65,7 +65,10 @@ public final class MeDigitalAnvilBlockEntity extends AENetworkedBlockEntity {
         return faulted;
     }
 
-    /** Called on the server thread immediately before removal, transferring state without also dropping its pending refunds. */
+    /**
+     * Called on the server thread immediately before removal, transferring state without also dropping its pending
+     * refunds.
+     */
     public CompoundTag saveForFalling(HolderLookup.Provider registries) {
         CompoundTag data = saveWithoutMetadata(registries);
         falling = true;

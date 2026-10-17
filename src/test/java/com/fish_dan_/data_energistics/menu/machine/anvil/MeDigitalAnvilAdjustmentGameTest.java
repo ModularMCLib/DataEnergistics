@@ -42,7 +42,7 @@ public final class MeDigitalAnvilAdjustmentGameTest {
         adjust(helper, menu, "boost_down", "100", 0);
         adjust(helper, menu, "boost_down", "1", 0);
         adjust(helper, menu, "boost_up", "", 1);
-        for (String invalid : new String[]{"-100", "0", "2", "2147483647", "not a number"}) {
+        for (String invalid : new String[] { "-100", "0", "2", "2147483647", "not a number" }) {
             adjust(helper, menu, "boost_up", invalid, 1);
         }
         helper.assertTrue(!menu.host().faulted(), "Invalid operation amounts must not fault the machine");

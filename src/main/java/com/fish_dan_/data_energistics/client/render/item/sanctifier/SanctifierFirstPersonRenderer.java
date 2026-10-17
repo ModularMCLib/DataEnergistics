@@ -1,0 +1,87 @@
+package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+
+import com.fish_dan_.data_energistics.registry.DEItems;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.player.PlayerModelPart;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import org.joml.Vector3f;
+
+/** Renders player skin hands at the blade grip and the scabbard carrying handle. */
+public final class SanctifierFirstPersonRenderer {
+
+    private SanctifierFirstPersonRenderer() {}
+
+    public static void renderHand(RenderHandEvent event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        var player = minecraft.player;
+        if (player == null || !player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get())) return;
+        boolean supportFree = player.getOffhandItem().isEmpty();
+        if (event.getHand() == InteractionHand.OFF_HAND) {
+            if (supportFree) event.setCanceled(true);
+            return;
+        }
+        SanctifierBakedModel model = SanctifierBakedModel.current();
+        if (model == null) return;
+        event.setCanceled(true);
+        float partial = event.getPartialTick();
+        float draw = SanctifierAnimationStates.draw(player, partial);
+        var combat = SanctifierAnimationStates.pose(player, InteractionHand.MAIN_HAND, partial);
+        SanctifierRig.Frame frame = SanctifierRig.firstPerson(player.getMainArm(), draw, combat);
+        model.renderAssembly(player.getMainHandItem(), event.getPoseStack(), event.getMultiBufferSource(),
+                event.getPackedLight(), frame, draw, SanctifierAnimationStates.isPowered(player.getMainHandItem()), supportFree);
+        if (!player.isInvisible()) {
+            arm(player, player.getMainArm(), frame.sword().getTranslation(new Vector3f()),
+                    event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+            if (supportFree) {
+                arm(player, player.getMainArm().getOpposite(), SanctifierRig.carryGrip(frame.scabbard()),
+                        event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+            }
+        }
+    }
+
+    private static void arm(AbstractClientPlayer player, HumanoidArm arm, Vector3f grip,
+                            PoseStack poses, MultiBufferSource buffers, int light) {
+        if (!(Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) return;
+        float side = arm == HumanoidArm.RIGHT ? 1 : -1;
+        boolean right = arm == HumanoidArm.RIGHT;
+        ModelPart skin = right ? renderer.getModel().rightArm : renderer.getModel().leftArm;
+        ModelPart sleeve = right ? renderer.getModel().rightSleeve : renderer.getModel().leftSleeve;
+        PartPose skinPose = skin.storePose();
+        PartPose sleevePose = sleeve.storePose();
+        float palmX = player.getSkin().model() == PlayerSkin.Model.SLIM ? 0.5F : 1;
+        poses.pushPose();
+        poses.translate(grip.x, grip.y, grip.z);
+        poses.mulPose(Axis.XP.rotationDegrees(-55));
+        poses.mulPose(Axis.ZP.rotationDegrees(side * -10));
+        poses.translate(side * palmX / 16, -9.0F / 16, 0);
+        // Neutral local arms put the palm inside the grip, independent of third-person arm poses.
+        skin.loadPose(PartPose.ZERO);
+        sleeve.loadPose(PartPose.ZERO);
+        try {
+            skin.render(poses, buffers.getBuffer(RenderType.entitySolid(player.getSkin().texture())),
+                    light, OverlayTexture.NO_OVERLAY);
+            if (player.isModelPartShown(right ? PlayerModelPart.RIGHT_SLEEVE : PlayerModelPart.LEFT_SLEEVE)) {
+                sleeve.render(poses, buffers.getBuffer(RenderType.entityTranslucent(player.getSkin().texture())),
+                        light, OverlayTexture.NO_OVERLAY);
+            }
+        } finally {
+            skin.loadPose(skinPose);
+            sleeve.loadPose(sleevePose);
+            poses.popPose();
+        }
+    }
+}

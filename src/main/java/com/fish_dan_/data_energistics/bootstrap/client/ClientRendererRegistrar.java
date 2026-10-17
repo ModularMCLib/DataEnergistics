@@ -13,16 +13,25 @@ import com.fish_dan_.data_energistics.client.render.entity.LightBladeChargeRende
 import com.fish_dan_.data_energistics.client.render.entity.MatterConvergingBoltRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.OrbitalAnnihilatorRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.ThrownLightSaberRenderer;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierCarryLayer;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 import com.fish_dan_.data_energistics.registry.DEEntities;
 
 import net.minecraft.client.renderer.entity.TntRenderer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 final class ClientRendererRegistrar {
 
     private ClientRendererRegistrar() {}
+
+    static void addLayers(EntityRenderersEvent.AddLayers event) {
+        for (var skin : event.getSkins()) {
+            PlayerRenderer renderer = event.getSkin(skin);
+            if (renderer != null) renderer.addLayer(new SanctifierCarryLayer(renderer));
+        }
+    }
 
     static void register(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(DEBlockEntities.RESEARCH_STATION.get(), ResearchStationRenderer::new);

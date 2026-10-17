@@ -1,104 +1,143 @@
 {
-	"format_version": "1.9.0",
-	"credit": "Made with Blockbench, made by TedXenon",
-	"parent": "block/block",
+	"parent": "minecraft:block/block",
+	"loader": "data_energistics:sanctifier",
+	"render_type": "minecraft:cutout",
+	"ambientocclusion": false,
+	"gui_light": "front",
 	"textures": {
-		"base": "data_energistics:item/tool_weapon/light_saber/base",
-		"light": "data_energistics:item/tool_weapon/light_saber/light_special",
-		"particle": "data_energistics:item/tool_weapon/light_saber/base"
+		"particle": "data_energistics:item/tool_weapon/data_sanctifier/alloy",
+		"alloy": "data_energistics:item/tool_weapon/data_sanctifier/alloy"
 	},
-	"elements": [
-		{
-			"name": "handle_light",
-			"from": [7, 2, 7],
-			"to": [9, 5, 9],
-			"faces": {
-				"east": { "uv": [2, 4, 4, 7], "texture": "#light" },
-				"south": { "uv": [0, 4, 2, 7], "texture": "#light" },
-				"west": { "uv": [4, 4, 2, 7], "texture": "#light" }
-			}
-		},
-		{
-			"name": "handle",
-			"from": [7, 0, 7],
-			"to": [9, 6, 9],
-			"faces": {
-				"north": { "uv": [2, 0, 0, 6], "texture": "#base" },
-				"east": { "uv": [2, 0, 4, 6], "texture": "#base" },
-				"south": { "uv": [6, 0, 4, 6], "texture": "#base" },
-				"west": { "uv": [6, 0, 8, 6], "texture": "#base" },
-				"down": { "uv": [0, 6, 2, 8], "texture": "#base" }
-			}
-		},
-		{
-			"name": "trigger",
-			"from": [7.5, 3, 6.5],
-			"to": [8.5, 6, 7.5],
-			"faces": {
-				"north": { "uv": [2, 6, 3, 9], "texture": "#base" },
-				"east": { "uv": [2, 6, 3, 9], "texture": "#base" },
-				"west": { "uv": [2, 6, 3, 9], "texture": "#base" },
-				"up": { "uv": [2, 6, 3, 7], "texture": "#base" },
-				"down": { "uv": [2, 8, 3, 9], "texture": "#base" }
-			}
-		},
-		{
-			"name": "ring",
-			"from": [6.5, 6, 6.5],
-			"to": [9.5, 7, 9.5],
-			"faces": {
-				"north": { "uv": [8, 3, 11, 4], "texture": "#base" },
-				"east": { "uv": [11, 3, 8, 4], "texture": "#base" },
-				"south": { "uv": [8, 3, 11, 4], "texture": "#base" },
-				"west": { "uv": [11, 3, 8, 4], "texture": "#base" },
-				"up": { "uv": [8, 0, 11, 3], "texture": "#base" },
-				"down": { "uv": [8, 0, 11, 3], "texture": "#base" }
-			}
-		},
-		{
-			"name": "connector",
-			"from": [7, 7, 7],
-			"to": [9, 9, 9],
-			"faces": {
-				"north": { "uv": [0, 6, 2, 8], "texture": "#base" },
-				"east": { "uv": [0, 6, 2, 8], "texture": "#base" },
-				"south": { "uv": [0, 6, 2, 8], "texture": "#base" },
-				"west": { "uv": [0, 6, 2, 8], "texture": "#base" },
-				"up": { "uv": [0, 6, 2, 8], "texture": "#base" }
-			}
-		}
-	],
+	"parts": {
+		"sword": "data_energistics:models/item/data_sanctifier/sword.obj",
+		"blade_edge": "data_energistics:models/item/data_sanctifier/blade_edge.obj",
+		"scabbard": "data_energistics:models/item/data_sanctifier/scabbard.obj",
+		"scabbard_latch": "data_energistics:models/item/data_sanctifier/scabbard_latch.obj",
+		"sword_lights": "data_energistics:models/item/data_sanctifier/sword_lights.obj",
+		"scabbard_lights": "data_energistics:models/item/data_sanctifier/scabbard_lights.obj"
+	},
 	"display": {
 		"thirdperson_righthand": {
-			"translation": [0, 2.75, 1.75]
+			"rotation": [
+				0,
+				-90,
+				0
+			],
+			"translation": [
+				0,
+				1.0,
+				0
+			],
+			"scale": [
+				0.52,
+				0.52,
+				0.52
+			]
 		},
 		"thirdperson_lefthand": {
-			"translation": [0, 2.75, 1.75]
+			"rotation": [
+				0,
+				90,
+				0
+			],
+			"translation": [
+				0,
+				1.0,
+				0
+			],
+			"scale": [
+				0.52,
+				0.52,
+				0.52
+			]
 		},
 		"firstperson_righthand": {
-			"translation": [2, 2, -0.75],
-			"scale": [0.75, 0.75, 0.75]
+			"rotation": [
+				0,
+				-75,
+				-16
+			],
+			"translation": [
+				0.5,
+				1.0,
+				-2.5
+			],
+			"scale": [
+				0.44,
+				0.44,
+				0.44
+			]
 		},
 		"firstperson_lefthand": {
-			"translation": [2, 2, -0.75],
-			"scale": [0.75, 0.75, 0.75]
-		},
-		"ground": {
-			"rotation": [90, 0, 0],
-			"translation": [0, -1, -2.75],
-			"scale": [0.6, 0.6, 0.6]
+			"rotation": [
+				0,
+				75,
+				16
+			],
+			"translation": [
+				0.5,
+				1.0,
+				-2.5
+			],
+			"scale": [
+				0.44,
+				0.44,
+				0.44
+			]
 		},
 		"gui": {
-			"rotation": [-15, 45, 60],
-			"translation": [2.5, -2.5, 0],
-			"scale": [0.8, 0.8, 0.8]
+			"rotation": [
+				0,
+				20,
+				-40
+			],
+			"scale": [
+				0.27,
+				0.27,
+				0.27
+			]
 		},
-		"head": {
-			"rotation": [-45, 0, 0]
+		"ground": {
+			"rotation": [
+				0,
+				0,
+				90
+			],
+			"translation": [
+				0,
+				2,
+				0
+			],
+			"scale": [
+				0.28,
+				0.28,
+				0.28
+			]
 		},
 		"fixed": {
-			"rotation": [-90, 45, 90],
-			"translation": [3, -3.25, 0.25]
+			"rotation": [
+				0,
+				0,
+				-40
+			],
+			"scale": [
+				0.3,
+				0.3,
+				0.3
+			]
+		},
+		"head": {
+			"rotation": [
+				0,
+				0,
+				90
+			],
+			"scale": [
+				0.35,
+				0.35,
+				0.35
+			]
 		}
-	}
+	},
+	"static_draw": 0
 }

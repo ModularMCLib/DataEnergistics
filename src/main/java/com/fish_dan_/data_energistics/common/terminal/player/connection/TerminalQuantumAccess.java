@@ -11,6 +11,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.core.definitions.AEItems;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -39,6 +40,21 @@ public final class TerminalQuantumAccess {
         if (!stack.is(AEItems.QUANTUM_ENTANGLED_SINGULARITY.asItem())) return;
         Long frequency = stack.get(AEComponents.ENTANGLED_SINGULARITY_ID);
         if (frequency != null) values.add(frequency.longValue());
+    }
+
+    /** Finds the physical connection credential without creating an item or changing its inventory slot. */
+    public static ItemStack carried(Player player, long frequency) {
+        for (int index = 0; index < player.getInventory().getContainerSize(); index++) {
+            ItemStack stack = player.getInventory().getItem(index);
+            if (matches(stack, frequency)) return stack;
+        }
+        return MOD.isCuriosLoaded() ? CuriosTerminalSingularities.find(player, frequency) : ItemStack.EMPTY;
+    }
+
+    public static boolean matches(ItemStack stack, long frequency) {
+        if (!stack.is(AEItems.QUANTUM_ENTANGLED_SINGULARITY.asItem())) return false;
+        Long paired = stack.get(AEComponents.ENTANGLED_SINGULARITY_ID);
+        return paired != null && paired.longValue() == frequency;
     }
 
     public static @Nullable TerminalConnection resolve(ServerPlayer player, TerminalPlayerState state) {

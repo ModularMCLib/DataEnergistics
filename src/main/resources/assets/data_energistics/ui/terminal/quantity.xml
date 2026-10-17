@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="quantity_popup" class="terminal-popup quantity-popup">
+        <label id="popup_title" class="popup-title"/><button id="back" class="popup-back"/>
+        <element id="selected" class="quantity-selected"/>
+        <text-field id="amount" class="quantity-amount"/>
+        <button id="minus" class="quantity-minus"/>
+        <button id="plus" class="quantity-plus"/>
+        <button id="plan" class="quantity-plan"/>
+    </root>
+</ui>

@@ -34,7 +34,9 @@ public final class TerminalContainerTransfer {
             var input = inventory.get(index);
             if (input == null) continue;
             if (!(input.what() instanceof AEItemKey)) return "unsupported_resource";
-            bill.mergeLong(input.what(), input.amount(), Math::addExact);
+            long previous = bill.getLong(input.what());
+            if (input.amount() > Long.MAX_VALUE - previous) return "invalid_amount";
+            bill.put(input.what(), previous + input.amount());
         }
         if (bill.isEmpty()) return "missing_inputs";
         ObjectList<ItemStack> simulated = new ObjectArrayList<>();

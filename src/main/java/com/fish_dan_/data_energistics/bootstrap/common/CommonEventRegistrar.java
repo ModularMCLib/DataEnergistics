@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.orbital.map.OrbitalTacticalMapCoord
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalReserveTicker;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEventHandler;
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchEvents;
+import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.effect.ChromaticGlow;
 import com.fish_dan_.data_energistics.effect.RadixLossControlLogic;
@@ -34,6 +35,7 @@ final class CommonEventRegistrar {
     static void register() {
         NeoForge.EVENT_BUS.register(new ServerLifecycleEventHandler());
         NeoForge.EVENT_BUS.register(new ResearchEvents());
+        NeoForge.EVENT_BUS.register(new TerminalSessions());
         NeoForge.EVENT_BUS.register(new PackagedRecoveryTicker());
         NeoForge.EVENT_BUS.register(new OrbitalEndpointChunkTickets());
         NeoForge.EVENT_BUS.register(new OrbitalReserveTicker());

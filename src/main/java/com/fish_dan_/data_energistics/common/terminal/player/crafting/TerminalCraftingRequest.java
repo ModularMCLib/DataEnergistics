@@ -95,13 +95,6 @@ public final class TerminalCraftingRequest {
         return "craft_failed";
     }
 
-    public void cancelCpu(TerminalConnection connection, int index) {
-        if (!cpus.containsKey(index) || cpuGrid != connection.grid()) return;
-        var cpu = cpus.get(index);
-        if (!connection.grid().getCraftingService().getCpus().contains(cpu)) return;
-        cpu.cancelJob();
-    }
-
     public void cancel() {
         if (pending != null) pending.cancel(true);
         pending = null;

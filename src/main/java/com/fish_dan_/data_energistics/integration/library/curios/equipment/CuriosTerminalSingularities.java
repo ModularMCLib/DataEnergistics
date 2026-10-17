@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.integration.library.curios.equipment;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -30,5 +31,21 @@ public final class CuriosTerminalSingularities {
                     TerminalQuantumAccess.add(stacks.getStackInSlot(index), frequencies);
             }
         });
+    }
+
+    public static ItemStack find(Player player, long frequency) {
+        return CuriosApi.getCuriosInventory(player).map(inventory -> {
+            var curios = inventory.getCurios();
+            ObjectList<String> slots = new ObjectArrayList<>(curios.keySet());
+            slots.sort(String::compareTo);
+            for (String slot : slots) {
+                var stacks = curios.get(slot).getStacks();
+                for (int index = 0; index < stacks.getSlots(); index++) {
+                    ItemStack stack = stacks.getStackInSlot(index);
+                    if (TerminalQuantumAccess.matches(stack, frequency)) return stack;
+                }
+            }
+            return ItemStack.EMPTY;
+        }).orElse(ItemStack.EMPTY);
     }
 }

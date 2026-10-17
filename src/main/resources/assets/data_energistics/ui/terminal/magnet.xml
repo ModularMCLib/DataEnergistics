@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="magnet_popup" class="terminal-popup magnet-popup">
+        <label id="popup_title" class="popup-title"/><button id="back" class="popup-back"/>
+        <button id="mode_off" class="magnet-mode mode-off"/>
+        <button id="mode_inventory" class="magnet-mode mode-inventory"/>
+        <button id="mode_network" class="magnet-mode mode-network"/>
+        <button id="mode_pickup_network" class="magnet-mode mode-pickup"/>
+        <button id="restock" class="magnet-restock"/>
+        <button id="filters" class="magnet-filters icon-settings"/>
+    </root>
+</ui>

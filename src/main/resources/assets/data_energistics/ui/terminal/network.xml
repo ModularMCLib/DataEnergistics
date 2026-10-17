@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="network_popup" class="terminal-popup network-popup">
+        <label id="popup_title" class="popup-title"/>
+        <button id="back" class="popup-back"/>
+        <label id="connection_status" class="connection-status"/>
+        <scroller-view id="frequencies" class="frequency-list terminal-list"/>
+    </root>
+</ui>

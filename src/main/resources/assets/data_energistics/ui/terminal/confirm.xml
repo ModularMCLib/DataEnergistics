@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="confirm_popup" class="terminal-popup confirm-popup">
+        <label id="popup_title" class="popup-title"/><button id="back" class="popup-back"/>
+        <label id="craft_status" class="craft-status"/>
+        <scroller-view id="used" class="craft-used terminal-list"/>
+        <scroller-view id="missing" class="craft-missing terminal-list"/>
+        <button id="cpu" class="craft-cpu"/>
+        <button id="cancel" class="craft-cancel"/>
+        <button id="start" class="craft-start"/>
+    </root>
+</ui>

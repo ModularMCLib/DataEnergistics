@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="anvil" class="terminal-workspace workspace-anvil">
+        <label id="workspace_title" class="workspace-title"/>
+        <element id="inputs" class="workspace-inputs"/>
+        <element id="outputs" class="workspace-outputs"/>
+        <element id="result" class="workspace-result"/>
+        <text-field id="name" class="anvil-name"/><button id="boost_down" class="boost-down"/><label id="boost" class="boost-value"/><button id="boost_up" class="boost-up"/>
+        <button id="recipe_previous" class="recipe-previous"/>
+        <label id="recipe_index" class="recipe-index"/>
+        <button id="recipe_next" class="recipe-next"/>
+    </root>
+</ui>

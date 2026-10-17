@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="terminal_root" class="terminal-root">
+        <button id="entry" class="terminal-entry"/>
+        <element id="window" class="terminal-window">
+            <label id="title" class="terminal-title"/>
+            <button id="drag" class="terminal-drag"/>
+            <button id="close" class="terminal-close"/>
+            <text-field id="search" class="terminal-search"/>
+            <element id="settings" class="terminal-settings">
+                <button id="tasks" class="terminal-small icon-tasks"/>
+                <button id="sort" class="terminal-small icon-sort"/>
+                <button id="direction" class="terminal-small icon-direction"/>
+                <button id="display" class="terminal-small icon-display"/>
+                <button id="type" class="terminal-small icon-type"/>
+                <button id="network" class="terminal-small icon-network"/>
+                <button id="magnet" class="terminal-small icon-magnet"/>
+                <button id="insert" class="terminal-small icon-insert"/>
+            </element>
+            <element id="storage" class="terminal-storage"/>
+            <scroller-vertical id="storage_scroll" class="terminal-storage-scroll"/>
+            <button id="page_previous" class="terminal-page previous"/>
+            <label id="page" class="terminal-page-label"/>
+            <button id="page_next" class="terminal-page next"/>
+            <button id="fold" class="terminal-fold"/>
+            <label id="status" class="terminal-status"/>
+            <element id="workspaces" class="terminal-workspaces"/>
+            <element id="tabs" class="terminal-tabs">
+                <button id="tab_crafting" class="terminal-tab icon-crafting"/>
+                <button id="tab_processing" class="terminal-tab icon-processing"/>
+                <button id="tab_smithing" class="terminal-tab icon-smithing"/>
+                <button id="tab_stonecutting" class="terminal-tab icon-stonecutting"/>
+                <button id="tab_anvil" class="terminal-tab icon-anvil"/>
+            </element>
+            <button id="resize" class="terminal-resize"/>
+        </element>
+    </root>
+</ui>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+    <stylesheet location="data_energistics:lss/player_terminal.lss"/>
+    <root id="processing" class="terminal-workspace workspace-processing">
+        <label id="workspace_title" class="workspace-title"/>
+        <element id="inputs" class="workspace-inputs"/>
+        <element id="outputs" class="workspace-outputs"/>
+        <element id="result" class="workspace-result"/>
+        <button id="encoding" class="encoding"/><button id="substitutes" class="substitutes"/><button id="fluid_substitutes" class="fluid-substitutes"/><element id="patterns" class="pattern-slots"/>
+        <button id="recipe_previous" class="recipe-previous"/>
+        <label id="recipe_index" class="recipe-index"/>
+        <button id="recipe_next" class="recipe-next"/>
+        <button id="transfer_processing" class="transfer-processing"/>
+    </root>
+</ui>

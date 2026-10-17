@@ -42,16 +42,14 @@ public final class SanctifierAnimationStates {
         return entity.getOffhandItem().isEmpty() && SanctifierRig.support(draw(entity, partialTick)) > 0;
     }
 
-    /**
-     * Samples a held item's animation without advancing it; called by the item model's hand pass.
-     */
-    static SanctifierAnimation.Pose pose(LivingEntity entity, InteractionHand hand, float partialTick) {
+    /** Samples the item's mechanical and vanilla attack clocks without advancing either. */
+    static Input input(LivingEntity entity, InteractionHand hand, float partialTick) {
         HandAnimation tracked = animation(entity, hand);
         boolean held = isSanctifier(entity.getItemInHand(hand));
         float swing = held && entity.swingingArm == hand ? entity.getAttackAnim(partialTick) : 0;
         float charge = held && entity.isUsingItem() && entity.getUsedItemHand() == hand ? Math.clamp((entity.getTicksUsingItem() + partialTick) / 10.0F, 0, 1) : 0;
-        return SanctifierAnimation.sample(tracked == null ? 0 : tracked.animation().draw(partialTick), swing, charge,
-                (entity.tickCount % 1200) + partialTick);
+        return new Input(tracked == null ? 0 : tracked.animation().draw(partialTick), swing, charge,
+                (entity.tickCount % 1200) + partialTick, tracked != null && tracked.animation().isDrawing());
     }
 
     /**
@@ -112,4 +110,7 @@ public final class SanctifierAnimationStates {
     }
 
     private record HandAnimation(ItemStack stack, SanctifierAnimation animation) {}
+
+    /** A render sample keeps the vanilla swing clock separate from the mechanical release. */
+    record Input(float draw, float swing, float charge, float age, boolean drawing) {}
 }

@@ -16,10 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 /** Renders player skin hands at the blade grip and the scabbard carrying handle. */
 public final class SanctifierFirstPersonRenderer {
@@ -42,22 +39,23 @@ public final class SanctifierFirstPersonRenderer {
         SanctifierBakedModel model = SanctifierBakedModel.current();
         if (model == null) return;
         event.setCanceled(true);
-        float draw = SanctifierAnimationStates.draw(player, partial);
-        var combat = SanctifierAnimationStates.pose(player, InteractionHand.MAIN_HAND, partial);
-        SanctifierRig.Frame frame = SanctifierRig.firstPerson(player.getMainArm(), draw, combat);
+        var input = SanctifierAnimationStates.input(player, InteractionHand.MAIN_HAND, partial);
+        float draw = input.draw();
+        boolean powered = SanctifierAnimationStates.isPowered(stack);
+        var frame = SanctifierRig.firstPerson(player.getMainArm(), input);
         model.renderAssembly(stack, event.getPoseStack(), event.getMultiBufferSource(),
-                event.getPackedLight(), frame, draw, SanctifierAnimationStates.isPowered(stack), supportFree && draw < 1);
+                event.getPackedLight(), frame.assembly(), draw, powered, supportFree && draw < 1);
         if (!player.isInvisible()) {
-            arm(player, player.getMainArm(), frame.sword(), SanctifierRig.swordGrip(frame.sword()),
+            arm(player, player.getMainArm(), frame.mainHand(),
                     event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
             if (support) {
-                arm(player, player.getMainArm().getOpposite(), frame.scabbard(), SanctifierRig.carryGrip(frame.scabbard()),
+                arm(player, player.getMainArm().getOpposite(), frame.supportHand(),
                         event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
             }
         }
     }
 
-    private static void arm(AbstractClientPlayer player, HumanoidArm arm, Matrix4f frame, Vector3f grip,
+    private static void arm(AbstractClientPlayer player, HumanoidArm arm, Matrix4f hand,
                             PoseStack poses, MultiBufferSource buffers, int light) {
         if (!(Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) return;
         float side = arm == HumanoidArm.RIGHT ? 1 : -1;
@@ -68,15 +66,9 @@ public final class SanctifierFirstPersonRenderer {
         PartPose sleevePose = sleeve.storePose();
         float palmX = player.getSkin().model() == PlayerSkin.Model.SLIM ? 0.5F : 1;
         poses.pushPose();
-        poses.translate(grip.x, grip.y, grip.z);
-        // Inherit only grip orientation: the skin arm retains its normal player scale.
-        Quaternionf orientation = frame.getUnnormalizedRotation(new Quaternionf());
-        Vector3f forearm = new Quaternionf(orientation).conjugate().transform(new Vector3f(side * 0.8F, -0.65F, 0.65F));
-        poses.mulPose(orientation);
-        // Project the shoulder direction around the hilt, keeping both forearms below and outside it.
-        poses.mulPose(Axis.YP.rotation((float) Math.atan2(forearm.x, forearm.z)));
-        poses.mulPose(Axis.XP.rotationDegrees(-90));
-        poses.translate(side * palmX / 16, -10.0F / 16, 2.0F / 16);
+        poses.mulPose(hand);
+        // The blade passes through the fist center, rather than touching the knuckle surface.
+        poses.translate(side * palmX / 16, -8.0F / 16, 0);
         // Neutral local arms put the palm inside the grip, independent of third-person arm poses.
         skin.loadPose(PartPose.ZERO);
         sleeve.loadPose(PartPose.ZERO);

@@ -60,10 +60,10 @@ final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
         this.parts = new EnumMap<>(Part.class);
         models.forEach((part, model) -> this.parts.put(part,
                 new ObjectImmutableList<>(model.getQuads(null, null, RandomSource.create(0), ModelData.EMPTY, null))));
-        this.staticQuads = geometry(SanctifierAnimation.sample(staticDraw, 0, 0, 0), false, true);
-        this.poweredQuads = geometry(SanctifierAnimation.sample(staticDraw, 0, 0, 0), true, true);
-        this.thrownQuads = geometry(SanctifierAnimation.sample(1, 0, 0, 0), false, false);
-        this.poweredThrownQuads = geometry(SanctifierAnimation.sample(1, 0, 0, 0), true, false);
+        this.staticQuads = geometry(staticDraw, SanctifierAnimation.sample(staticDraw, 0, 0, 0), false, true);
+        this.poweredQuads = geometry(staticDraw, SanctifierAnimation.sample(staticDraw, 0, 0, 0), true, true);
+        this.thrownQuads = geometry(1, SanctifierAnimation.sample(1, 0, 0, 0), false, false);
+        this.poweredThrownQuads = geometry(1, SanctifierAnimation.sample(1, 0, 0, 0), true, false);
         this.overrides = new ItemOverrides() {
 
             @Override
@@ -153,7 +153,8 @@ final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
                 this.quads = projectile ? (powered ? poweredThrownQuads : thrownQuads) : (powered ? poweredQuads : staticQuads);
                 return this;
             }
-            SanctifierAnimation.Pose pose = SanctifierAnimation.sample(staticDraw, 0, 0, 0);
+            float draw = staticDraw;
+            SanctifierAnimation.Pose pose = SanctifierAnimation.sample(draw, 0, 0, 0);
             if (this.entity != null) {
                 HumanoidArm arm = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
                 InteractionHand hand = this.entity.getMainArm() == arm ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
@@ -164,10 +165,13 @@ final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
                 }
                 if (this.entity.getItemInHand(hand).is(this.stack.getItem())) {
                     float partial = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
-                    pose = SanctifierAnimationStates.pose(this.entity, hand, partial);
+                    var input = SanctifierAnimationStates.input(this.entity, hand, partial);
+                    draw = input.draw();
+                    // Vanilla has already applied the hand's attack transform outside this model.
+                    pose = SanctifierAnimation.sample(draw, 0, input.charge(), input.age());
                 }
             }
-            this.quads = geometry(pose, powered, true);
+            this.quads = geometry(draw, pose, powered, true);
             return this;
         }
 
@@ -188,8 +192,9 @@ final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
         }
     }
 
-    private ObjectList<BakedQuad> geometry(SanctifierAnimation.Pose pose, boolean powered, boolean includeScabbard) {
-        Matrix4f sword = new Matrix4f().translate(0, (pose.swordY() + pose.combatY()) / 16, 0)
+    private ObjectList<BakedQuad> geometry(float draw, SanctifierAnimation.Pose pose, boolean powered, boolean includeScabbard) {
+        Matrix4f sword = SanctifierRig.blend(SanctifierRig.unhinged(new Matrix4f(), draw), new Matrix4f(), SanctifierRig.ready(draw))
+                .translate(0, pose.combatY() / 16, 0)
                 .rotateXYZ(radians(pose.swordPitch()), radians(pose.swordYaw()), radians(pose.swordRoll()));
         Matrix4f sheath = new Matrix4f().translate(pose.scabbardX() / 16, pose.scabbardY() / 16, pose.scabbardZ() / 16)
                 .translate(0, 6.0F / 16, 0).rotateZ(radians(pose.scabbardRoll())).translate(0, -6.0F / 16, 0);

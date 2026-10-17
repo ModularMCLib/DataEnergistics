@@ -71,8 +71,6 @@ final class PatternProviderLeafPanel {
     private static final int SCROLLBAR_X = 114;
     private static final int SCROLLBAR_Y_OFFSET = -3;
     private static final int PANEL_MARGIN = 4;
-    private static final int DRAG_RIGHT_PADDING = 4;
-    private static final int DRAG_TOP_PADDING = -7;
     private static final int BUTTON_TEXTURE_WIDTH = 200;
     private static final int BUTTON_TEXTURE_HEIGHT = 20;
     private static final int BUTTON_SLICE_BORDER = 4;
@@ -219,10 +217,6 @@ final class PatternProviderLeafPanel {
         cancelRename();
     }
 
-    boolean isVisible() {
-        return this.visible;
-    }
-
     boolean ownsWidget(AbstractWidget widget) {
         return widget == this.searchBox || widget == this.renameBox ||
                 widget == this.dragButton;
@@ -242,12 +236,8 @@ final class PatternProviderLeafPanel {
         if (!this.visible) {
             return ObjectLists.emptyList();
         }
-        ObjectArrayList<Rect2i> bounds = new ObjectArrayList<>();
-        bounds.add(getBounds());
-        bounds.add(new Rect2i(
-                this.dragButton.getX(), this.dragButton.getY(),
-                this.dragButton.getWidth(), this.dragButton.getHeight()));
-        return ObjectLists.unmodifiable(bounds);
+        return PatternEncodingPreviewPlacement.interactiveBounds(
+                getBounds(), this.dragButton.getWidth(), this.dragButton.getHeight());
     }
 
     boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -687,8 +677,10 @@ final class PatternProviderLeafPanel {
         this.renameBox.setY(bounds.getY() + SEARCH_Y);
         this.renameBox.setWidth(SEARCH_WIDTH);
         this.renameBox.setHeight(SEARCH_HEIGHT);
-        this.dragButton.setX(bounds.getX() + bounds.getWidth() - this.dragButton.getWidth() - DRAG_RIGHT_PADDING);
-        this.dragButton.setY(bounds.getY() + DRAG_TOP_PADDING);
+        Rect2i dragBounds = PatternEncodingPreviewPlacement.dragHandleBounds(
+                bounds, this.dragButton.getWidth(), this.dragButton.getHeight());
+        this.dragButton.setX(dragBounds.getX());
+        this.dragButton.setY(dragBounds.getY());
         updateScrollbar();
     }
 

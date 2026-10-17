@@ -70,7 +70,11 @@ public final class SanctifierFirstPersonRenderer {
         poses.pushPose();
         poses.translate(grip.x, grip.y, grip.z);
         // Inherit only grip orientation: the skin arm retains its normal player scale.
-        poses.mulPose(frame.getUnnormalizedRotation(new Quaternionf()));
+        Quaternionf orientation = frame.getUnnormalizedRotation(new Quaternionf());
+        Vector3f forearm = new Quaternionf(orientation).conjugate().transform(new Vector3f(side * 0.8F, -0.65F, 0.65F));
+        poses.mulPose(orientation);
+        // Project the shoulder direction around the hilt, keeping both forearms below and outside it.
+        poses.mulPose(Axis.YP.rotation((float) Math.atan2(forearm.x, forearm.z)));
         poses.mulPose(Axis.XP.rotationDegrees(-90));
         poses.translate(side * palmX / 16, -10.0F / 16, 2.0F / 16);
         // Neutral local arms put the palm inside the grip, independent of third-person arm poses.

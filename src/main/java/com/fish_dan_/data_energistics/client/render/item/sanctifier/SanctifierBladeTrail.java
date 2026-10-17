@@ -82,8 +82,7 @@ final class SanctifierBladeTrail {
             if (!this.samples.isEmpty()) {
                 Sample last = this.samples.getLast();
                 // Restarting a swing, reversing into the sheath or changing the clock cannot join old ribbons.
-                if (this.arm != arm || this.drawing != drawing || phase < this.phase || time < last.time()
-                        || time - last.time() >= LIFETIME) this.samples.clear();
+                if (this.arm != arm || this.drawing != drawing || phase < this.phase || time < last.time() || time - last.time() >= LIFETIME) this.samples.clear();
             }
             this.arm = arm;
             this.drawing = drawing;

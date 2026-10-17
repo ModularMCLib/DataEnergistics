@@ -69,7 +69,8 @@ public final class MeDigitalAnvilBlock extends AEBaseEntityBlock<MeDigitalAnvilB
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(FACING).getAxis() == Direction.Axis.X ? EAST_WEST_SHAPE : NORTH_SOUTH_SHAPE;
+        // Blockstate model rotations add 90 degrees so the long side is the front.
+        return state.getValue(FACING).getAxis() == Direction.Axis.Z ? EAST_WEST_SHAPE : NORTH_SOUTH_SHAPE;
     }
 
     @Override

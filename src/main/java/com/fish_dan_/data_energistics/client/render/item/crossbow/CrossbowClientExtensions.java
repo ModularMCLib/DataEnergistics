@@ -19,8 +19,7 @@ public final class CrossbowClientExtensions implements IClientItemExtensions {
     public @Nullable ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
         if (entity.isUsingItem()) {
             ItemStack using = entity.getUseItem();
-            if (!(using.getItem() instanceof MatterConvergingCrossbowItem)
-                    || MatterConvergingCrossbowItem.mode(using) == MatterConvergingCrossbowMode.CROSSBOW) return null;
+            if (!(using.getItem() instanceof MatterConvergingCrossbowItem) || MatterConvergingCrossbowItem.mode(using) == MatterConvergingCrossbowMode.CROSSBOW) return null;
         }
         ItemStack other = entity.getItemInHand(hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND);
         return (other.isEmpty() ? DEEnumProxies.CROSSBOW_HOLD : DEEnumProxies.CROSSBOW_HOLD_SINGLE).getValue();

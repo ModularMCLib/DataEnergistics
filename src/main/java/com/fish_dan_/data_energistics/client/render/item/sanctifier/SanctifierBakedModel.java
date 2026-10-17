@@ -150,8 +150,7 @@ final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
             if (!handView && !projectile) poseStack.translate(0, -17.5 / 16.0, 0);
             boolean powered = SanctifierAnimationStates.isPowered(this.stack);
             if (!handView) {
-                this.quads = projectile ? (powered ? poweredThrownQuads : thrownQuads)
-                        : (powered ? poweredQuads : staticQuads);
+                this.quads = projectile ? (powered ? poweredThrownQuads : thrownQuads) : (powered ? poweredQuads : staticQuads);
                 return this;
             }
             SanctifierAnimation.Pose pose = SanctifierAnimation.sample(staticDraw, 0, 0, 0);

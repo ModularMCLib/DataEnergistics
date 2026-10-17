@@ -8,13 +8,14 @@ import com.fish_dan_.data_energistics.api.research.RegisterResearchNodesEvent;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
+import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.core.definitions.AEItems;
 
-/** Independent, datapack-overridable technology defaults for the ME digital anvil. */
+/** Independent, datapack-overridable upgrades owned by each ME digital anvil item. */
 public final class MeDigitalAnvilResearch {
 
     private MeDigitalAnvilResearch() {}
@@ -36,9 +37,10 @@ public final class MeDigitalAnvilResearch {
     }
 
     private static ResearchNode.Builder node(DigitalAnvilUpgrade upgrade, int ticks, double energy, long data) {
-        return ResearchNode.builder(upgrade.researchId(), ResearchScope.TECHNOLOGY, upgrade.translationKey(),
+        return ResearchNode.builder(upgrade.researchId(), ResearchScope.ITEM_UPGRADE, upgrade.translationKey(),
                 upgrade.translationKey() + ".description", ticks, energy)
                 .icon(Data_Energistics.id("me_digital_anvil"))
+                .target(ResearchTarget.item(Data_Energistics.id("me_digital_anvil")))
                 .input(new ResearchInput(DataKey.of(), data));
     }
 }

@@ -1,13 +1,14 @@
 package com.fish_dan_.data_energistics.menu.machine.anvil;
 
-import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.blockentity.machine.anvil.MeDigitalAnvilBlockEntity;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.anvil.enchantment.DigitalAnvilCalculation;
 import com.fish_dan_.data_energistics.common.anvil.enchantment.DigitalAnvilOperation;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.gui.ldlib2.anvil.MeDigitalAnvilUi;
 import com.fish_dan_.data_energistics.network.anvil.DigitalAnvilActionPayload;
 import com.fish_dan_.data_energistics.network.anvil.DigitalAnvilSnapshotPayload;
+import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -167,8 +168,9 @@ public final class MeDigitalAnvilMenu extends AbstractContainerMenu {
             previousLeft = currentLeft.copy();
         }
         upgrades = 0;
+        var itemUpgrades = host.components().getOrDefault(DEDataComponents.RESEARCH_UPGRADES.get(), ItemResearchUpgrades.EMPTY);
         for (DigitalAnvilUpgrade upgrade : DigitalAnvilUpgrade.values()) {
-            if (ResearchAccess.isUnlocked(player, null, upgrade.researchId())) upgrades |= upgrade.mask();
+            if (itemUpgrades.ids().contains(upgrade.researchId())) upgrades |= upgrade.mask();
         }
         if (!DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(upgrades)) requestedBoost = 0;
         operation = host.faulted() ? DigitalAnvilOperation.EMPTY :

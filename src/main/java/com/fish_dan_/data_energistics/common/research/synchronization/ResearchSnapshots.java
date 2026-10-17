@@ -78,6 +78,10 @@ public final class ResearchSnapshots {
         tag.putBoolean("instant_technology", data.hasInstantTechnology(subjects));
         tag.putBoolean("instant_player", data.hasInstantPlayerResearch(player.getUUID()));
         subjects.forEach(subject -> unlocked.addAll(data.unlocked(subject)));
+        unlocked.removeIf(id -> {
+            ResearchNode node = ResearchDefinitions.find(id);
+            return node != null && node.scope() != ResearchScope.TECHNOLOGY;
+        });
         tag.put("unlocked", ResearchNbt.ids(unlocked));
         tag.put("player_upgrades", ResearchNbt.ids(data.playerUpgrades(player.getUUID())));
         Object2ObjectMap<ResourceLocation, ResourceLocation> technologyLocks = new Object2ObjectLinkedOpenHashMap<>();

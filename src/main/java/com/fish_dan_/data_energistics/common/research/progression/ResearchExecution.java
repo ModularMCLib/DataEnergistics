@@ -146,6 +146,11 @@ public final class ResearchExecution {
                                                           ObjectSet<UUID> subjects, UUID player) {
         ObjectSet<ResourceLocation> result = new ObjectOpenHashSet<>();
         subjects.forEach(subject -> result.addAll(data.unlocked(subject)));
+        // A saved technology must not grant an item upgrade after its definition changes scope.
+        result.removeIf(id -> {
+            ResearchNode node = ResearchDefinitions.find(id);
+            return node != null && node.scope() != ResearchScope.TECHNOLOGY;
+        });
         result.addAll(ItemResearchUpgrades.of(state.target).ids());
         result.addAll(data.playerUpgrades(player));
         return result;

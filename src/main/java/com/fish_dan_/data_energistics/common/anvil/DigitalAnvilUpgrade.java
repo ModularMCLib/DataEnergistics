@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.minecraft.resources.ResourceLocation;
 
-/** Independent technology gates; the bit positions are used only by the open menu's view state. */
+/** Independent item upgrades; the bit positions are used only by the open menu's view state. */
 public enum DigitalAnvilUpgrade {
 
     FIXED_PENALTY("fixed_penalty"),

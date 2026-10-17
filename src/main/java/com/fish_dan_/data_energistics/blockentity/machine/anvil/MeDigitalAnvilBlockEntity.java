@@ -35,6 +35,7 @@ public final class MeDigitalAnvilBlockEntity extends AENetworkedBlockEntity {
 
     private final DigitalAnvilPayment payment = new DigitalAnvilPayment();
     private boolean faulted;
+    private boolean falling;
 
     public MeDigitalAnvilBlockEntity(BlockPos pos, BlockState state) {
         super(DEBlockEntities.ME_DIGITAL_ANVIL.get(), pos, state);
@@ -62,6 +63,13 @@ public final class MeDigitalAnvilBlockEntity extends AENetworkedBlockEntity {
 
     public boolean faulted() {
         return faulted;
+    }
+
+    /** Called on the server thread immediately before removal, transferring state without also dropping its pending refunds. */
+    public CompoundTag saveForFalling(HolderLookup.Provider registries) {
+        CompoundTag data = saveWithoutMetadata(registries);
+        falling = true;
+        return data;
     }
 
     public void fault(RuntimeException error) {
@@ -108,6 +116,7 @@ public final class MeDigitalAnvilBlockEntity extends AENetworkedBlockEntity {
 
     @Override
     public void addAdditionalDrops(Level level, BlockPos pos, List<ItemStack> drops) {
+        if (falling) return;
         super.addAdditionalDrops(level, pos, drops);
         for (var entry : payment.resourceRefunds().object2LongEntrySet()) {
             drops.add(GenericStack.wrapInItemStack(entry.getKey(), entry.getLongValue()));

@@ -3,15 +3,34 @@ package com.fish_dan_.data_energistics.client.screen.patternencoding;
 import net.minecraft.client.renderer.Rect2i;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.List;
 
-/** Chooses a stable, low-overlap automatic anchor for a pattern-provider preview panel. */
+/** Defines stable panel geometry and chooses a low-overlap automatic anchor. */
 final class PatternEncodingPreviewPlacement {
 
     private static final int SCREEN_MARGIN = 4;
+    private static final int DRAG_HANDLE_RIGHT_PADDING = 4;
+    private static final int DRAG_HANDLE_TOP_OFFSET = -7;
 
     private PatternEncodingPreviewPlacement() {}
+
+    /**
+     * Internal controls are already covered by the panel. Their temporary render visibility must not
+     * change JEI's exclusion set, which invalidates the ingredient layout whenever a rectangle changes.
+     */
+    static ObjectList<Rect2i> interactiveBounds(Rect2i panelBounds, int dragHandleWidth, int dragHandleHeight) {
+        return ObjectList.of(panelBounds, dragHandleBounds(panelBounds, dragHandleWidth, dragHandleHeight));
+    }
+
+    /** Derives the handle from the current panel layout, including before widgets are repositioned. */
+    static Rect2i dragHandleBounds(Rect2i panelBounds, int width, int height) {
+        return new Rect2i(
+                panelBounds.getX() + panelBounds.getWidth() - width - DRAG_HANDLE_RIGHT_PADDING,
+                panelBounds.getY() + DRAG_HANDLE_TOP_OFFSET,
+                width, height);
+    }
 
     static Rect2i findBestBounds(Rect2i anchor, int panelWidth, int panelHeight, int preferredY,
                                  int rightOffset, int leftOffset, int verticalGap,
@@ -32,7 +51,7 @@ final class PatternEncodingPreviewPlacement {
         addCandidate(candidates, centeredX, aboveY, panelWidth, panelHeight, screenWidth, screenHeight);
         addCandidate(candidates, centeredX, belowY, panelWidth, panelHeight, screenWidth, screenHeight);
 
-        Rect2i bestCandidate = candidates.get(0);
+        Rect2i bestCandidate = candidates.getFirst();
         long bestScore = computeScore(bestCandidate, anchor, occupiedZones);
         for (int index = 1; index < candidates.size(); index++) {
             Rect2i candidate = candidates.get(index);
@@ -81,8 +100,8 @@ final class PatternEncodingPreviewPlacement {
     }
 
     private static Rect2i clamp(int x, int y, int width, int height, int screenWidth, int screenHeight) {
-        int clampedX = Math.max(SCREEN_MARGIN, Math.min(x, Math.max(SCREEN_MARGIN, screenWidth - width - SCREEN_MARGIN)));
-        int clampedY = Math.max(SCREEN_MARGIN, Math.min(y, Math.max(SCREEN_MARGIN, screenHeight - height - SCREEN_MARGIN)));
+        int clampedX = Math.clamp(x, SCREEN_MARGIN, Math.max(SCREEN_MARGIN, screenWidth - width - SCREEN_MARGIN));
+        int clampedY = Math.clamp(y, SCREEN_MARGIN, Math.max(SCREEN_MARGIN, screenHeight - height - SCREEN_MARGIN));
         return new Rect2i(clampedX, clampedY, width, height);
     }
 
@@ -97,7 +116,7 @@ final class PatternEncodingPreviewPlacement {
         if (!Double.isFinite(value)) {
             return 0.0;
         }
-        return Math.max(0.0, Math.min(1.0, value));
+        return Math.clamp(value, 0.0, 1.0);
     }
 
     private static long computeScore(Rect2i candidate, Rect2i anchor, List<Rect2i> occupiedZones) {

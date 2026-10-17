@@ -176,12 +176,13 @@ public final class ResearchStationUi {
         backpack.style(style -> style.zIndex(1000));
         backpack.setId("research_station_backpack");
         SharedBackpackStyles.window(backpack, backpackHeader);
-        backpackHeader.setAllowHitTest(true);
+        backpackHeader.setAllowHitTest(false);
         backpack.addChild(backpackHeader);
         backpackInventory.setId("research_station_player_inventory");
         SharedBackpackStyles.inventory(backpackInventory);
         backpack.addChild(backpackInventory);
-        WindowDragHelper.setDragMove(backpackHeader, backpack, event -> event.button == 0, event -> backpackDragged = true);
+        WindowDragHelper.setDragMove(backpack, backpack,
+                event -> event.button == 0 && !(event.target instanceof ItemSlot), event -> backpackDragged = true);
         root.addChild(teams);
         ResearchUiParts.show(teams, false);
         root.addChild(backpack);
@@ -273,9 +274,10 @@ public final class ResearchStationUi {
         int backpackTop = backpackDragged && backpackPositioned ? Math.round(backpack.getLayoutY()) : (height - backpackLayout.height()) / 2;
         ResearchUiParts.at(backpack, Math.clamp(backpackLeft, 0, Math.max(0, width - backpackLayout.width())),
                 Math.clamp(backpackTop, 0, Math.max(0, height - backpackLayout.height())), backpackLayout.width(), backpackLayout.height());
-        ResearchUiParts.at(backpackHeader, backpackLayout.padding(), backpackLayout.padding(),
+        int backpackHeaderTop = backpackLayout.padding() / 2;
+        ResearchUiParts.at(backpackHeader, backpackLayout.padding(), backpackHeaderTop,
                 backpackLayout.inventoryWidth(), backpackLayout.headerHeight());
-        backpackHeader.textStyle(style -> style.fontSize(12).adaptiveHeight(false));
+        backpackHeader.textStyle(style -> style.fontSize(10).adaptiveHeight(false));
         ResearchUiParts.at(backpackInventory, backpackLayout.padding(), backpackLayout.inventoryTop(),
                 backpackLayout.inventoryWidth(), backpackLayout.inventoryHeight());
         backpackInventory.apply(slot -> slot.layout(style -> style.width(backpackLayout.slotSize()).height(backpackLayout.slotSize())

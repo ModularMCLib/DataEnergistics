@@ -39,6 +39,7 @@ public final class DEUpgrades {
         ((AdaptivePatternProviderBlock<?>) DEBlocks.ADAPTIVE_PATTERN_PROVIDER.get()).bindBlockEntity();
         DEBlocks.DIGITAL_PACKAGED_PATTERN_PROVIDER.get().bindBlockEntity();
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.RESEARCH_STATION.get(), DEItems.RESEARCH_STATION.get());
+        AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.ME_DIGITAL_ANVIL.get(), DEItems.ME_DIGITAL_ANVIL.get());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.RESEARCH_STATION_PART.get(), DEItems.RESEARCH_STATION.get());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DIGITAL_PACKAGED_PATTERN_PROVIDER.get(), DEItems.DIGITAL_PACKAGED_PATTERN_PROVIDER.get());
         AEBaseBlockEntity.registerBlockEntityItem(DEBlockEntities.DATA_SOLAR_PANEL_BLOCK_ENTITY.get(), DEBlocks.DATA_SOLAR_PANEL.get().asItem());

@@ -6,7 +6,9 @@
 		"common/toolbox.json"
 	],
 	"background": {
-		"texture": "guis/adaptive_pattern_provider.png",
+		"texture": "data_energistics:textures/guis/background/adaptive_pattern_provider.png",
+		"textureWidth": 176,
+		"textureHeight": 256,
 		"srcRect": [0, 0, 176, 256]
 	},
 	"slots": {

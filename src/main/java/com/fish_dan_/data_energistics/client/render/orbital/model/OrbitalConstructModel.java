@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.client.render.orbital.model;
 
 import com.fish_dan_.data_energistics.client.render.orbital.animation.OrbitalAnimationClock;
 import com.fish_dan_.data_energistics.client.render.orbital.geometry.OrbitalProjectionPlacement.Detail;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackMode;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;

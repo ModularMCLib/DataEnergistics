@@ -89,11 +89,9 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
     private static final SpriteTexture ROW_TEXTURE = rowTexture("cpu_entry.png");
     private static final SpriteTexture ROW_SELECTED_TEXTURE = rowTexture("cpu_entry_selected.png");
     private static final SpriteTexture IDLE_TEXTURE = SpriteTexture.of(
-            "data_energistics:textures/guis/trinity_data_core/cpu_idle.png")
-            .setSprite(0, 0, ROW_SPRITE_WIDTH, ROW_HEIGHT);
+            "data_energistics:textures/guis/trinity_data_core/cpu_idle.png");
     private static final SpriteTexture TASK_OVERLAY_TEXTURE = SpriteTexture.of(
-            "data_energistics:textures/guis/trinity_data_core/cpu_task_overlay.png")
-            .setSprite(0, 0, ROW_SPRITE_WIDTH, ROW_HEIGHT);
+            "data_energistics:textures/guis/trinity_data_core/cpu_task_overlay.png");
     private static final SpriteTexture STORAGE_ICON_TEXTURE = iconTexture("cpu_icon_storage.png");
     private static final SpriteTexture PROCESSOR_ICON_TEXTURE = iconTexture("cpu_icon_processor.png");
     private static final SpriteTexture CRAFT_ICON_TEXTURE = iconTexture("cpu_icon_craft.png");
@@ -492,13 +490,11 @@ public final class TrinityCpuStatusList extends BindableUIElement<TrinityCpuList
     }
 
     private static SpriteTexture rowTexture(String fileName) {
-        return SpriteTexture.of("data_energistics:textures/guis/trinity_data_core/" + fileName)
-                .setSprite(0, 0, ROW_SPRITE_WIDTH, ROW_HEIGHT);
+        return SpriteTexture.of("data_energistics:textures/guis/trinity_data_core/" + fileName);
     }
 
     private static SpriteTexture iconTexture(String fileName) {
-        return SpriteTexture.of("data_energistics:textures/guis/trinity_data_core/" + fileName)
-                .setSprite(0, 0, ICON_SIZE, ICON_SIZE);
+        return SpriteTexture.of("data_energistics:textures/guis/trinity_data_core/" + fileName);
     }
 
     /**

@@ -166,8 +166,7 @@ public final class TrinityInfiniteDriveGrid extends UIElement {
         SpriteTexture[] textures = new SpriteTexture[TrinityInfiniteDriveInventory.COLUMN_COUNT];
         for (int column = 0; column < textures.length; column++) {
             textures[column] = SpriteTexture
-                    .of("data_energistics:textures/guis/trinity_data_core/trinity_drive_slot.png")
-                    .setSprite(column * SLOT_SIZE, 0, SLOT_SIZE, SLOT_SIZE);
+                    .of("data_energistics:textures/guis/trinity_data_core/drive_slot_" + column + ".png");
         }
         return textures;
     }

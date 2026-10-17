@@ -6,7 +6,9 @@
 		"common/toolbox.json"
 	],
 	"background": {
-		"texture": "guis/digital_storage_depot.png",
+		"texture": "data_energistics:textures/guis/background/digital_storage_depot.png",
+		"textureWidth": 176,
+		"textureHeight": 183,
 		"srcRect": [0, 0, 176, 183]
 	},
 	"slots": {

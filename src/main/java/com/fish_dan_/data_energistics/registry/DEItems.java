@@ -62,6 +62,7 @@ public final class DEItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Data_Energistics.MODID);
 
     public static final DeferredItem<BlockItem> RESEARCH_STATION = ITEMS.registerSimpleBlockItem(DEBlocks.RESEARCH_STATION);
+    public static final DeferredItem<BlockItem> ME_DIGITAL_ANVIL = ITEMS.registerSimpleBlockItem(DEBlocks.ME_DIGITAL_ANVIL);
     private static final Tool NO_MINING_SWORD_TOOL = new Tool(List.of(), 1.0F, 2);
     private static final Tier DATA_CRYSTAL_TOOL_TIER = new SimpleTier(
             BlockTags.INCORRECT_FOR_NETHERITE_TOOL,

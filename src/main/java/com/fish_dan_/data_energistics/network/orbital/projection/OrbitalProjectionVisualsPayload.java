@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.network.orbital.projection;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalProjectionVisualClientState;
-import com.fish_dan_.data_energistics.orbital.model.StellarErasureDeviceLifecycleState;
-import com.fish_dan_.data_energistics.orbital.projection.OrbitalProjectionVisualSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceLifecycleState;
+import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

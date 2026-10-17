@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.research;
 
-import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.research.synchronization.ResearchClientCatalog;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.research.synchronization.ResearchClientCatalog;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

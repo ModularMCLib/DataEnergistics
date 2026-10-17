@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.widget;
 
+import com.fish_dan_.data_energistics.Data_Energistics;
+
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.Blitter;
 import appeng.client.gui.widgets.ITooltip;
@@ -18,9 +20,9 @@ import java.util.List;
 
 public class AecsPullModeButton extends Button implements ITooltip {
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("ae2cs", "textures/gui/icons.png");
+    private static final ResourceLocation ENABLED_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/pull_enabled.png");
+    private static final ResourceLocation DISABLED_TEXTURE = Data_Energistics.id("textures/guis/states/top_surface/pull_disabled.png");
     private static final int ICON_SIZE = 16;
-    private static final int TEXTURE_SIZE = 256;
 
     private final String titleKey;
     private final String enabledKey;
@@ -65,8 +67,8 @@ public class AecsPullModeButton extends Button implements ITooltip {
                 .zOffset(2)
                 .blit(guiGraphics);
 
-        int textureX = this.state ? 0 : 16;
-        Blitter blitter = Blitter.texture(TEXTURE, TEXTURE_SIZE, TEXTURE_SIZE).src(textureX, 0, ICON_SIZE, ICON_SIZE);
+        Blitter blitter = Blitter.texture(this.state ? ENABLED_TEXTURE : DISABLED_TEXTURE, ICON_SIZE, ICON_SIZE)
+                .src(0, 0, ICON_SIZE, ICON_SIZE);
         if (!this.active) {
             blitter.opacity(0.5f);
         }

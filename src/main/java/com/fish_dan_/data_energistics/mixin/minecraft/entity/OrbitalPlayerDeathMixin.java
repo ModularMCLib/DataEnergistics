@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
-import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
-import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureContext;
-import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureState;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureContext;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureState;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;

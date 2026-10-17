@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.network.orbital.map;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.orbital.map.OrbitalTacticalMapCoordinator;
+import com.fish_dan_.data_energistics.common.orbital.map.OrbitalTacticalMapCoordinator;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

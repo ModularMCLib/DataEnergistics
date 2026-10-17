@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.technology.draconicevolution.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.orbital.attack.entity.OrbitalEntityErasure;
-import com.fish_dan_.data_energistics.orbital.attack.entity.strike.OrbitalErasureOutcome;
-import com.fish_dan_.data_energistics.orbital.attack.entity.strike.OrbitalErasureStrike;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.OrbitalEntityErasure;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureOutcome;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.strike.OrbitalErasureStrike;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;

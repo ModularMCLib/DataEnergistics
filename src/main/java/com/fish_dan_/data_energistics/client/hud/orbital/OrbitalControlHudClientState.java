@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.hud.orbital;
 
+import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlTerminalSnapshot.WeaponEntry;
+import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalHudSnapshot;
 import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlHudSnapshotPayload;
-import com.fish_dan_.data_energistics.orbital.control.OrbitalControlTerminalSnapshot.WeaponEntry;
-import com.fish_dan_.data_energistics.orbital.control.protocol.OrbitalHudSnapshot;
 
 import org.jspecify.annotations.Nullable;
 

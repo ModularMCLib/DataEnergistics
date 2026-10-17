@@ -1,0 +1,12 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": ["PAP", "ICI", "PIP"],
+	"key": {
+		"P": { "item": "data_energistics:data_processor" },
+		"A": { "item": "minecraft:anvil" },
+		"I": { "item": "data_energistics:digisidian_memorize_ingot" },
+		"C": { "item": "data_energistics:resonance_digitalization_core" }
+	},
+	"result": { "id": "data_energistics:me_digital_anvil", "count": 1 }
+}

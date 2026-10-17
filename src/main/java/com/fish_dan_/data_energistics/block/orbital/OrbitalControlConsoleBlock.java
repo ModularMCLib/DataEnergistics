@@ -2,15 +2,15 @@ package com.fish_dan_.data_energistics.block.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalControlConsoleBlockEntity;
-import com.fish_dan_.data_energistics.orbital.control.OrbitalControlTerminalSnapshot;
-import com.fish_dan_.data_energistics.orbital.control.ui.OrbitalControlUiFactory;
-import com.fish_dan_.data_energistics.orbital.control.ui.OrbitalControlUiSource;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLimitException;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLocation;
-import com.fish_dan_.data_energistics.orbital.model.StellarErasureDeviceAction;
-import com.fish_dan_.data_energistics.orbital.model.StellarErasureDeviceRecord;
-import com.fish_dan_.data_energistics.orbital.provisioning.ConsoleWeaponProvisioner;
-import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
+import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlTerminalSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiFactory;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiSource;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLimitException;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
+import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceAction;
+import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
+import com.fish_dan_.data_energistics.common.orbital.provisioning.ConsoleWeaponProvisioner;
+import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 
 import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

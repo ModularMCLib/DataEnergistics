@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.configuration;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackGeometry;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry;
 
 import net.minecraft.resources.ResourceLocation;
 

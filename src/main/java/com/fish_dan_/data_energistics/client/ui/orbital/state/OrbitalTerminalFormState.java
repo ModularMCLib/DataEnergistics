@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.ui.orbital.state;
 
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackMode;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalDirectedEnergyDepth;
-import com.fish_dan_.data_energistics.orbital.control.OrbitalTargetYMode;
-import com.fish_dan_.data_energistics.orbital.control.ui.OrbitalControlDashboard;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyDepth;
+import com.fish_dan_.data_energistics.common.orbital.control.OrbitalTargetYMode;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlDashboard;
 
 import java.util.Objects;
 

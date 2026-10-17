@@ -6,7 +6,9 @@
 		"common/toolbox.json"
 	],
 	"background": {
-		"texture": "guis/me_composite_output_warehouse.png",
+		"texture": "data_energistics:textures/guis/compartment/me_output.png",
+		"textureWidth": 176,
+		"textureHeight": 192,
 		"srcRect": [0, 0, 176, 192]
 	},
 	"slots": {

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
-import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
-import com.fish_dan_.data_energistics.orbital.attack.entity.lifecycle.OrbitalErasureContext;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
+import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureContext;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;

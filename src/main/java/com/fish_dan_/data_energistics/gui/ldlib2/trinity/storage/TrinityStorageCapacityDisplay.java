@@ -129,8 +129,7 @@ final class TrinityStorageCapacityDisplay extends BindableUIElement<TrinityDataC
     }
 
     private static SpriteTexture fillTexture(String name) {
-        return SpriteTexture.of("data_energistics:textures/guis/storage/" + name)
-                .setSprite(0, 0, BAR_WIDTH, TEXTURE_SLICE_HEIGHT);
+        return SpriteTexture.of("data_energistics:textures/guis/storage/" + name);
     }
 
     private record SegmentHeights(int itemHeight, int fluidHeight, int otherHeight) {

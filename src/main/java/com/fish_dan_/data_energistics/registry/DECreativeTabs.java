@@ -65,6 +65,7 @@ public final class DECreativeTabs {
 
                         // Data processing and network machines.
                         output.accept(DEItems.RESEARCH_STATION);
+                        output.accept(DEItems.ME_DIGITAL_ANVIL);
                         output.accept(DEItems.DATA_FRAMEWORK);
                         output.accept(DEItems.DATA_CHARGER);
                         output.accept(DEItems.EXTENDED_DATA_CHARGER);

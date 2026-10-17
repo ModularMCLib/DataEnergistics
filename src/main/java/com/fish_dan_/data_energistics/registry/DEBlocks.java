@@ -20,6 +20,7 @@ import com.fish_dan_.data_energistics.block.machine.DataMimeticFieldBlock;
 import com.fish_dan_.data_energistics.block.machine.DataRipperReassemblerMainBlock;
 import com.fish_dan_.data_energistics.block.machine.DataSolarPanelBlock;
 import com.fish_dan_.data_energistics.block.machine.DataTeleportAnchorBlock;
+import com.fish_dan_.data_energistics.block.machine.anvil.MeDigitalAnvilBlock;
 import com.fish_dan_.data_energistics.block.orbital.OrbitalControlConsoleBlock;
 import com.fish_dan_.data_energistics.block.orbital.OrbitalUplinkBeaconBlock;
 import com.fish_dan_.data_energistics.block.orbital.astronomy.AstronomicalMirrorBlock;
@@ -70,6 +71,9 @@ public final class DEBlocks {
     public static final DeferredBlock<ResearchStationBlock> RESEARCH_STATION = BLOCKS.registerBlock(
             "digital_transformation_research_station", ResearchStationBlock::new,
             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<MeDigitalAnvilBlock> ME_DIGITAL_ANVIL = BLOCKS.registerBlock(
+            "me_digital_anvil", MeDigitalAnvilBlock::new,
+            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion());
     public static final DeferredBlock<ResearchStationPartBlock> RESEARCH_STATION_PART = BLOCKS.registerBlock(
             "digital_transformation_research_station_part", ResearchStationPartBlock::new,
             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().noLootTable().pushReaction(PushReaction.BLOCK));

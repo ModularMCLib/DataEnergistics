@@ -51,7 +51,7 @@ public final class CompartmentHostUi {
             176,
             253,
             new AePlayerInventoryLayout(8, 169, 227),
-            "ae2:textures/guis/composite_warehouse.png",
+            "data_energistics:textures/guis/compartment/warehouse.png",
             "plain composite warehouse",
             true);
     private static final HostLayout ME_INPUT_LAYOUT = new HostLayout(
@@ -59,7 +59,7 @@ public final class CompartmentHostUi {
             208,
             208,
             new AePlayerInventoryLayout(24, 124, 182),
-            "ae2:textures/guis/me_composite_input_warehouse.png",
+            "data_energistics:textures/guis/compartment/me_input.png",
             "ME input compartment",
             false);
     private static final HostLayout ME_OUTPUT_LAYOUT = new HostLayout(
@@ -67,7 +67,7 @@ public final class CompartmentHostUi {
             176,
             192,
             new AePlayerInventoryLayout(8, 108, 166),
-            "ae2:textures/guis/me_composite_output_warehouse.png",
+            "data_energistics:textures/guis/compartment/me_output.png",
             "ME output compartment",
             false);
     private static final HostLayout PATTERN_BUFFER_LAYOUT = new HostLayout(
@@ -75,7 +75,7 @@ public final class CompartmentHostUi {
             256,
             226,
             new AePlayerInventoryLayout(8, 139, 197),
-            "ae2:textures/guis/me_pattern_buffer.png",
+            "data_energistics:textures/guis/compartment/pattern_buffer.png",
             "ME pattern-buffer compartment",
             false);
 
@@ -167,8 +167,7 @@ public final class CompartmentHostUi {
                 root.setOverflowVisible(true);
             }
             root.style(style -> style.backgroundTexture(SpriteTexture
-                    .of(hostLayout.backgroundTexture())
-                    .setSprite(0, 0, hostLayout.width(), hostLayout.height())));
+                    .of(hostLayout.backgroundTexture())));
             HeaderGeometry header = headerGeometry(menu.getCompartmentType());
             root.addChild(title(
                     TITLE_ID,

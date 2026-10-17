@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.blockentity.orbital.astronomy;
 
-import com.fish_dan_.data_energistics.orbital.astronomy.InterferenceArrayPattern;
+import com.fish_dan_.data_energistics.common.orbital.astronomy.InterferenceArrayPattern;
 import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 
 import net.minecraft.core.BlockPos;

@@ -45,6 +45,7 @@ import com.fish_dan_.data_energistics.registry.DEUpgrades;
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.registry.UniversalTerminalAdapters;
 
+import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -112,6 +113,7 @@ public class CommonProxy {
                     snapshot.patternProviderWorkstationSourceRegistrations());
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
+            DispenserBlock.registerProjectileBehavior(DEItems.DATA_TRIDENT.get());
             OrbitalControlPlayerMenu.register();
             if (MOD.isCuriosLoaded()) {
                 CuriosDataDistributionConnectorAccess.register();

@@ -31,8 +31,11 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.item.crafting.StonecutterRecipe;
 
-import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -43,17 +46,18 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
- * Binds server snapshots to authored XML trees; native container slots and cursor stay with the host.
+ * Binds server snapshots to the Java/LSS composition; native slots and cursor stay with the host.
  */
 @NullMarked
 public final class TerminalOverlayUi {
 
-    public final UI ui = TerminalXmlLayouts.load("main");
+    public final UI ui = TerminalUiLayout.create();
     private final TerminalClientPreferences preferences;
     private final HolderLookup.Provider registries;
     private final BiConsumer<String, CompoundTag> request;
@@ -69,12 +73,13 @@ public final class TerminalOverlayUi {
     private final ObjectList<TerminalResourceCell> inputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> outputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> patterns = new ObjectArrayList<>();
+    private final ObjectList<TerminalResourceCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> insert = new ObjectArrayList<>();
     private final ObjectList<String> types = new ObjectArrayList<>();
     private final Reference2BooleanOpenHashMap<UIElement> modalHitStates = new Reference2BooleanOpenHashMap<>();
-    private final Scroller.Vertical scrollbar = TerminalXmlLayouts.require(window, "storage_scroll", Scroller.Vertical.class);
-    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 8, 8, 148, 198, true);
+    private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
+    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 8, 8, 150, 168, true);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
     private boolean encoding;
@@ -88,7 +93,7 @@ public final class TerminalOverlayUi {
     private CompoundTag previousMagnet = new CompoundTag();
     private long[] previousFrequencies = new long[0];
     private long previousFrequency = Long.MIN_VALUE;
-    private int gridColumns;
+    private ObjectList<TerminalViewportLayout.Cell> positionedStorage = ObjectImmutableList.of();
     private int screenWidth;
     private int screenHeight;
     private boolean adjusting;
@@ -102,18 +107,27 @@ public final class TerminalOverlayUi {
     private boolean geometryDirty = true;
     private boolean visible = true;
 
-    public TerminalOverlayUi(TerminalClientPreferences preferences, BiConsumer<String, CompoundTag> request) {
+    public TerminalOverlayUi(TerminalClientPreferences preferences, BiConsumer<String, CompoundTag> request, Runnable openLargeTerminal) {
         this.preferences = preferences;
         this.request = request;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
         types.add("all");
         for (var type : AEKeyTypes.getAll()) types.add(type.getId().toString());
-        label(window, "title").setText(text("title"));
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
         field(window, "search").style(style -> style.tooltips(text("search_syntax")));
         element(ui.rootElement, "entry").setVisible(false);
-        button(ui.rootElement, "entry", () -> visible(true));
-        button(window, "close", () -> visible(false));
+        Button entry = TerminalUiLayout.require(ui.rootElement, "entry", Button.class);
+        entry.style(style -> style.tooltips(text("entry")));
+        entry.setOnClick(event -> {
+            if (event.button == 0) visible(true);
+            else if (event.button == 1) openLargeTerminal.run();
+        });
+        Button drag = TerminalUiLayout.require(window, "drag", Button.class);
+        drag.style(style -> style.tooltips(text("drag")));
+        drag.setOnClick(event -> {
+            if (event.button == 1) visible(false);
+        });
+        tooltip(window, "resize", text("resize"));
         field(window, "search").setTextResponder(value -> view(true));
         scrollbar.setRange(0, 1);
         scrollbar.setOnValueChanged(value -> {
@@ -157,29 +171,20 @@ public final class TerminalOverlayUi {
         });
         button(window, "tasks", () -> networkAction("cpu_list", new CompoundTag()));
         button(window, "insert", () -> networkAction("insert", new CompoundTag()));
-        button(window, "page_previous", () -> {
-            offset = Math.max(0, offset - storage.size());
-            view(false);
-        });
-        button(window, "page_next", () -> {
-            if (offset + storage.size() < storageIndex.projected().size()) {
-                offset += storage.size();
-                view(false);
-            }
-        });
-        button(window, "fold", () -> {
-            preferences.folded = !preferences.folded;
-            geometry(screenWidth, screenHeight);
-            preferences.save();
-        });
         for (TerminalWorkspace mode : TerminalWorkspace.values()) {
-            UIElement root = TerminalXmlLayouts.load(mode.id()).rootElement;
+            UIElement root = TerminalUiLayout.page(mode);
             workspaces.put(mode.id(), root);
             element(window, "workspaces").addChild(root);
-            label(root, "workspace_title").setText(text("workspace." + mode.id()));
-            button(window, "tab_" + mode.id(), () -> request.accept("workspace", string("id", mode.id())));
+            Button tab = TerminalUiLayout.require(window, "tab_" + mode.id(), Button.class);
+            tab.style(style -> style.tooltips(text("page_gestures", text("workspace." + mode.id()))));
+            tab.setOnClick(event -> {
+                preferences.folded = event.button == 1;
+                if (event.button == 0 && !workspace.equals(mode.id())) request.accept("workspace", string("id", mode.id()));
+                geometry(screenWidth, screenHeight);
+                preferences.save();
+            });
             button(root, "recipe_previous", () -> request.accept("recipe", number("index", Math.max(0, snapshot.getCompound("work").getInt("recipe") - 1))));
-            button(root, "recipe_next", () -> request.accept("recipe", number("index", Math.min(Math.max(0, snapshot.getInt("recipe_count") - 1), snapshot.getCompound("work").getInt("recipe") + 1))));
+            button(root, "recipe_next", () -> request.accept("recipe", number("index", Math.clamp(snapshot.getInt("recipe_count") - 1, 0, snapshot.getCompound("work").getInt("recipe") + 1))));
             if (mode.supportsEncoding()) {
                 button(root, "encoding", () -> request.accept("toggle_encoding", new CompoundTag()));
                 button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
@@ -193,16 +198,14 @@ public final class TerminalOverlayUi {
                 button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
         }
         for (String name : new String[] { "network", "magnet", "filters", "quantity" }) {
-            UIElement root = TerminalXmlLayouts.load(name).rootElement;
+            UIElement root = TerminalUiLayout.popup(name);
             popups.put(name, root);
             root.setVisible(false);
             ui.rootElement.addChild(root);
             label(root, "popup_title").setText(text(name));
             button(root, "back", this::closePopup);
-            root.select(".terminal-list", ScrollerView.class).forEach(list -> {
-                list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER)
-                        .verticalScrollDisplay(ScrollDisplay.AUTO));
-            });
+            root.select(".terminal-list", ScrollerView.class).forEach(list -> list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER)
+                    .verticalScrollDisplay(ScrollDisplay.AUTO)));
         }
         UIElement magnet = popups.get("magnet");
         for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
@@ -229,7 +232,7 @@ public final class TerminalOverlayUi {
 
     private void boost(int direction) {
         int step = UIElement.isCtrlDown() ? 100 : UIElement.isShiftDown() ? 10 : 1;
-        request.accept("boost", number("value", Math.clamp(snapshot.getCompound("work").getInt("boost") + direction * step, 0, 254)));
+        request.accept("boost", number("value", Math.clamp(snapshot.getCompound("work").getInt("boost") + (long) direction * step, 0, 254)));
     }
 
     private void amount(int direction) {
@@ -268,8 +271,7 @@ public final class TerminalOverlayUi {
         fillStorage();
         updateScrollbar();
         Component page = Component.literal((projected.isEmpty() ? 0 : offset + 1) + "–" + Math.min(offset + storage.size(), projected.size()) + "/" + projected.size());
-        label(window, "page").setText(storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : page);
-        tooltip(window, "page", storageIndex.pending() ? Component.empty().append(text("storage_loading", storageIndex.loaded(), storageIndex.total())).append(" ").append(page) : page);
+        tooltip(window, "search", text("search_syntax").copy().append("\n").append(storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : page));
         tooltip(window, "sort", text("sort." + sort));
         tooltip(window, "direction", text(descending ? "descending" : "ascending"));
         tooltip(window, "display", text("display." + filter));
@@ -289,8 +291,7 @@ public final class TerminalOverlayUi {
         for (var entry : workspaces.object2ObjectEntrySet()) {
             entry.getValue().setVisible(entry.getKey().equals(workspace));
             UIElement tab = element(window, "tab_" + entry.getKey());
-            if (entry.getKey().equals(workspace)) tab.addClass("selected");
-            else tab.removeClass("selected");
+            stateClass(tab, "selected", !preferences.folded && entry.getKey().equals(workspace));
         }
         CompoundTag work = value.getCompound("work");
         boolean ghostInputs = encoding || workspace.equals("processing");
@@ -310,6 +311,7 @@ public final class TerminalOverlayUi {
             result.style(style -> style.tooltips(text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels"))));
         }
         boolean recipes = workspace.equals("stonecutting") && value.getInt("recipe_count") > 1;
+        if (workspace.equals("stonecutting")) refreshStonecuttingRecipes();
         element(active, "recipe_previous").setVisible(recipes);
         element(active, "recipe_next").setVisible(recipes);
         element(active, "recipe_index").setVisible(recipes);
@@ -328,11 +330,10 @@ public final class TerminalOverlayUi {
         }
         storageIndex.apply(value, registries);
         view(false);
-        label(window, "title").setText(text(value.getString("reason").equals("fault") ? "reason.fault" : "title"));
-        label(window, "status").setText(Component.literal(value.getString("reason").equals("fault") ? "!" : value.getBoolean("connected") ? "●" : "○"));
-        tooltip(window, "status", text("reason." + value.getString("reason")));
+        stateClass(element(window, "network"), "offline", !value.getBoolean("connected"));
+        tooltip(window, "network", text("reason." + value.getString("reason")));
         if (!value.getString("message").isEmpty())
-            tooltip(window, "status", text("message." + value.getString("message")));
+            tooltip(window, "network", text("message." + value.getString("message")));
         element(window, "insert").setActive(value.getBoolean("connected"));
         element(window, "tasks").setActive(value.getBoolean("connected"));
         element(window, "magnet").setActive(value.getBoolean("magnet_unlocked"));
@@ -352,12 +353,26 @@ public final class TerminalOverlayUi {
                     if (encoding || mode == TerminalWorkspace.PROCESSING) ghost("inputs", index, event.button);
                     else slot("inputs", index, event.button);
                 });
+        for (TerminalResourceCell cell : inputs) cell.addClass("embedded-cell");
+        if (mode == TerminalWorkspace.ANVIL) TerminalUiLayout.at(inputs.get(1), 36, 0, 18, 18);
         createCells(element(root, "outputs"), outputs, mode == TerminalWorkspace.PROCESSING && encoding ? 3 : 0, 1,
                 (index, event) -> ghost("outputs", index, event.button));
         for (TerminalResourceCell cell : inputs) cell.configurable(encoding || mode == TerminalWorkspace.PROCESSING);
         for (TerminalResourceCell cell : outputs) cell.configurable(true);
+        for (TerminalResourceCell cell : outputs) cell.addClass("embedded-cell");
         if (mode.supportsEncoding()) {
             createCells(element(root, "patterns"), patterns, encoding ? 2 : 0, 2, (index, event) -> slot("patterns", index, event.button));
+            if (encoding) {
+                if (mode == TerminalWorkspace.PROCESSING) {
+                    TerminalUiLayout.at(patterns.get(0), 0, 0, 18, 18);
+                    TerminalUiLayout.at(patterns.get(1), 0, 36, 18, 18);
+                } else {
+                    TerminalUiLayout.at(patterns.get(0), mode == TerminalWorkspace.STONECUTTING ? 18 : 22, 0, 18, 18);
+                    TerminalUiLayout.at(patterns.get(1), 0, 0, 18, 18);
+                }
+            }
+            element(root, "substitutes").setVisible(encoding && mode != TerminalWorkspace.PROCESSING);
+            element(root, "fluid_substitutes").setVisible(encoding && mode == TerminalWorkspace.CRAFTING);
         }
         ObjectList<TerminalResourceCell> result = new ObjectArrayList<>();
         createCells(element(root, "result"), result, 1, 1, (index, event) -> {
@@ -365,7 +380,38 @@ public final class TerminalOverlayUi {
             data.putBoolean("shift", UIElement.isShiftDown());
             request.accept("result", data);
         });
+        if (mode != TerminalWorkspace.PROCESSING) result.getFirst().addClass("embedded-cell");
         element(root, "result").setVisible(mode != TerminalWorkspace.PROCESSING || encoding);
+        if (mode == TerminalWorkspace.STONECUTTING) {
+            createCells(element(root, "recipes"), stonecuttingRecipes, encoding ? 4 : 8, 4, (index, event) -> {
+                if (event.button != 0) return;
+                int pageSize = stonecuttingRecipes.size();
+                int first = snapshot.getCompound("work").getInt("recipe") / pageSize * pageSize;
+                if (first + index < snapshot.getInt("recipe_count")) request.accept("recipe", number("index", first + index));
+            });
+            int navigationY = encoding ? 25 : 44;
+            TerminalUiLayout.at(element(root, "recipe_previous"), 25, navigationY, 10, 10);
+            TerminalUiLayout.at(element(root, "recipe_index"), 36, navigationY, 49, 10);
+            TerminalUiLayout.at(element(root, "recipe_next"), 86, navigationY, 10, 10);
+        }
+    }
+
+    private void refreshStonecuttingRecipes() {
+        var level = Objects.requireNonNull(Minecraft.getInstance().level);
+        GenericStack ingredient = inputs.getFirst().stack();
+        ItemStack input = ingredient != null && ingredient.what() instanceof AEItemKey key ? key.toStack(1) : ItemStack.EMPTY;
+        SingleRecipeInput recipeInput = new SingleRecipeInput(input);
+        ObjectList<RecipeHolder<StonecutterRecipe>> recipes = new ObjectArrayList<>(level.getRecipeManager().getRecipesFor(RecipeType.STONECUTTING, recipeInput, level));
+        recipes.sort(Comparator.comparing(recipe -> recipe.id().toString()));
+        int selected = snapshot.getCompound("work").getInt("recipe");
+        int first = selected / stonecuttingRecipes.size() * stonecuttingRecipes.size();
+        for (int index = 0; index < stonecuttingRecipes.size(); index++) {
+            TerminalResourceCell cell = stonecuttingRecipes.get(index);
+            ItemStack output = first + index < recipes.size() ? recipes.get(first + index).value().assemble(recipeInput, registries) : ItemStack.EMPTY;
+            cell.entry(output.isEmpty() ? null : new GenericStack(AEItemKey.of(output), output.getCount()), false);
+            cell.setActive(!output.isEmpty());
+            stateClass(cell, "selected-recipe", first + index == selected && !output.isEmpty());
+        }
     }
 
     private void slot(String inventory, int index, int button) {
@@ -407,8 +453,12 @@ public final class TerminalOverlayUi {
         UIElement list = listHost(popups.get("network"), "frequencies");
         list.clearAllChildren();
         for (long frequency : snapshot.getLongArray("frequencies")) {
-            Button button = new Button();
+            Button button = new TerminalActionButton();
             button.addClass("frequency-row");
+            button.addClass("terminal-control");
+            button.layout(layout -> layout.widthPercent(100).height(14).flexShrink(0));
+            button.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
+            button.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
             button.setText(Component.literal((snapshot.contains("frequency") && snapshot.getLong("frequency") == frequency ? "● " : "○ ") + frequency));
             button.setOnClick(event -> {
                 CompoundTag data = new CompoundTag();
@@ -425,15 +475,15 @@ public final class TerminalOverlayUi {
         previousMagnet = magnet.copy();
         UIElement root = popups.get("magnet");
         for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
-            Button control = TerminalXmlLayouts.require(root, "mode_" + mode.toLowerCase(Locale.ROOT), Button.class);
+            Button control = TerminalUiLayout.require(root, "mode_" + mode.toLowerCase(Locale.ROOT), Button.class);
             control.setText(Component.literal(mode.equals(magnet.getString("mode")) ? "● " : "○ ").append(text("magnet_mode." + mode)));
         }
-        TerminalXmlLayouts.require(root, "restock", Button.class).setText(text(magnet.getBoolean("restock") ? "restock_on" : "restock_off"));
+        TerminalUiLayout.require(root, "restock", Button.class).setText(text(magnet.getBoolean("restock") ? "restock_on" : "restock_off"));
         setCells(pickup, magnet.getList("pickup", Tag.TAG_COMPOUND), true);
         setCells(insert, magnet.getList("insert", Tag.TAG_COMPOUND), true);
         UIElement filters = popups.get("filters");
-        TerminalXmlLayouts.require(filters, "pickup_whitelist", Button.class).setText(text("pickup_" + (magnet.getBoolean("pickup_whitelist") ? "whitelist" : "blacklist")));
-        TerminalXmlLayouts.require(filters, "insert_whitelist", Button.class).setText(text("insert_" + (magnet.getBoolean("insert_whitelist") ? "whitelist" : "blacklist")));
+        TerminalUiLayout.require(filters, "pickup_whitelist", Button.class).setText(text("pickup_" + (magnet.getBoolean("pickup_whitelist") ? "whitelist" : "blacklist")));
+        TerminalUiLayout.require(filters, "insert_whitelist", Button.class).setText(text("insert_" + (magnet.getBoolean("insert_whitelist") ? "whitelist" : "blacklist")));
     }
 
     public void geometry(int width, int height) {
@@ -446,20 +496,14 @@ public final class TerminalOverlayUi {
         preferences.width = viewport.width();
         preferences.height = viewport.height();
         window.layout(style -> style.left(viewport.x()).top(viewport.y()).width(viewport.width()).height(viewport.height()));
-        element(window, "storage").layout(style -> style.width(viewport.storageWidth()).height(viewport.storageHeight()));
-        scrollbar.layout(style -> style.left(TerminalViewportLayout.STORAGE_LEFT + viewport.storageWidth() + 2).height(viewport.storageHeight()));
+        TerminalUiLayout.resize(window, viewport);
+        TerminalUiLayout.at(element(ui.rootElement, "entry"), 0, Math.clamp(preferences.y + 3, 0, Math.max(0, height - 10)), 10, 10);
         element(window, "workspaces").setVisible(!preferences.folded);
-        element(window, "tabs").setVisible(!preferences.folded);
-        int footer = viewport.workspaceHeight();
-        element(window, "page_previous").layout(style -> style.bottom(footer + 15));
-        element(window, "page_next").layout(style -> style.bottom(footer + 15));
-        element(window, "page").layout(style -> style.bottom(footer + 15));
-        element(window, "fold").layout(style -> style.bottom(footer + 3));
-        TerminalXmlLayouts.require(window, "fold", Button.class).setText(text(preferences.folded ? "expand" : "collapse"));
+        for (TerminalWorkspace mode : TerminalWorkspace.values())
+            stateClass(element(window, "tab_" + mode.id()), "selected", !preferences.folded && workspace.equals(mode.id()));
         int cellCount = viewport.cellCount();
-        boolean gridChanged = storage.size() != cellCount || gridColumns != viewport.columns();
-        if (gridChanged) {
-            gridColumns = viewport.columns();
+        boolean gridChanged = !positionedStorage.equals(viewport.cells());
+        if (storage.size() != cellCount) {
             createCells(element(window, "storage"), storage, cellCount, viewport.columns(), (index, event) -> {
                 TerminalResourceCell cell = storage.get(index);
                 if (cell.stack() == null) return;
@@ -476,9 +520,18 @@ public final class TerminalOverlayUi {
             boundCellCount = -1;
             fillStorage();
         }
-        for (UIElement popup : popups.values()) {
+        if (gridChanged) {
+            for (int index = 0; index < storage.size(); index++) {
+                TerminalViewportLayout.Cell cell = viewport.cells().get(index);
+                TerminalUiLayout.at(storage.get(index), cell.column() * TerminalViewportLayout.CELL_SIZE,
+                        cell.row() * TerminalViewportLayout.CELL_SIZE, TerminalViewportLayout.CELL_SIZE, TerminalViewportLayout.CELL_SIZE);
+            }
+            positionedStorage = viewport.cells();
+        }
+        for (var entry : popups.object2ObjectEntrySet()) {
+            UIElement popup = entry.getValue();
             popup.layout(style -> style.left(Math.clamp(preferences.x + viewport.width() + 3, 0, Math.max(0, width - 190)))
-                    .top(Math.clamp(preferences.y, 0, Math.max(0, height - 232))));
+                    .top(Math.clamp(preferences.y, 0, Math.max(0, height - TerminalUiLayout.popupHeight(entry.getKey())))));
         }
         if (gridChanged && snapshot.contains("enabled")) {
             offset = viewport.clampOffset(offset, storageIndex.projected().size());
@@ -490,7 +543,7 @@ public final class TerminalOverlayUi {
     }
 
     public boolean beginDrag(double x, double y, int button) {
-        if (button != 0 || !popupStack.isEmpty()) return false;
+        if (!visible || button != 0 || !popupStack.isEmpty()) return false;
         resizing = over(element(window, "resize"), x, y);
         adjusting = resizing || over(element(window, "drag"), x, y);
         if (!adjusting) return false;
@@ -534,7 +587,12 @@ public final class TerminalOverlayUi {
     }
 
     public boolean contains(double x, double y) {
-        return visible ? over(window, x, y) || (!popupStack.isEmpty() && over(popups.get(popupStack.getLast()), x, y)) : over(element(ui.rootElement, "entry"), x, y);
+        return visible ? over(element(window, "panel"), x, y) || sidebarContains(x, y) || over(element(window, "tabs"), x, y) ||
+                (!popupStack.isEmpty() && over(popups.get(popupStack.getLast()), x, y)) : over(element(ui.rootElement, "entry"), x, y);
+    }
+
+    private boolean sidebarContains(double x, double y) {
+        return x >= viewport.x() && x < viewport.x() + 15 && y >= viewport.y() && y < viewport.y() + 100;
     }
 
     public boolean modal() {
@@ -562,10 +620,13 @@ public final class TerminalOverlayUi {
         int maximumRow = viewport.maximumFirstRow(storageIndex.projected().size());
         scrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) (offset / viewport.columns()) / maximumRow, false);
         scrollbar.scrollerStyle(style -> style.scrollDelta(maximumRow == 0 ? 1 : 1F / maximumRow)
-                .scrollBarSize(maximumRow == 0 ? 100 : Math.max(5, 100F * viewport.rows() / (viewport.rows() + maximumRow))));
+                .scrollBarSize(1500F / viewport.scrollHeight()));
+        scrollbar.scrollBar.setActive(maximumRow > 0);
+        stateClass(scrollbar, "inactive-scroll", maximumRow == 0);
         scrollbar.selfAndAllChildren().forEach(element -> {
-            if (modal()) modalHitStates.put(element, maximumRow > 0);
-            element.setAllowHitTest(maximumRow > 0);
+            boolean interactive = maximumRow > 0 && !element.hasClass("scrollbar-decoration");
+            if (modal()) modalHitStates.put(element, interactive);
+            element.setAllowHitTest(interactive);
         });
         if (modal()) captureWindow();
     }
@@ -596,7 +657,10 @@ public final class TerminalOverlayUi {
             rectangles.add(rect(element(ui.rootElement, "entry")));
             return rectangles;
         }
-        rectangles.add(new Rect2i(viewport.x(), viewport.y(), viewport.width(), viewport.height()));
+        rectangles.add(new Rect2i(viewport.x() + 12, viewport.y(), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12, viewport.height()));
+        rectangles.add(new Rect2i(viewport.x(), viewport.y(), 15, 100));
+        rectangles.add(new Rect2i(viewport.x() + viewport.width() - TerminalViewportLayout.TAB_WIDTH,
+                viewport.y() + viewport.height() - 72, TerminalViewportLayout.TAB_WIDTH, 70));
         if (!popupStack.isEmpty()) rectangles.add(rect(popups.get(popupStack.getLast())));
         return rectangles;
     }
@@ -663,6 +727,7 @@ public final class TerminalOverlayUi {
         window.setVisible(value);
         element(ui.rootElement, "entry").setVisible(!value);
         if (!value) {
+            Objects.requireNonNull(window.getModularUI()).clearFocus();
             for (UIElement popup : popups.values()) popup.setVisible(false);
             popupStack.clear();
             releaseWindow();
@@ -684,7 +749,7 @@ public final class TerminalOverlayUi {
         for (int index = 0; index < count; index++) {
             int slot = index;
             TerminalResourceCell cell = new TerminalResourceCell();
-            cell.layout(style -> style.positionType(TaffyPosition.ABSOLUTE).left(slot % columns * 18).top(slot / columns * 18));
+            TerminalUiLayout.at(cell, slot % columns * 18, slot / columns * 18, 18, 18);
             cell.onResourceClick(event -> click.accept(slot, event));
             cells.add(cell);
             host.addChild(cell);
@@ -729,23 +794,20 @@ public final class TerminalOverlayUi {
     }
 
     private static UIElement element(UIElement root, String id) {
-        return TerminalXmlLayouts.require(root, id, UIElement.class);
+        return TerminalUiLayout.require(root, id, UIElement.class);
     }
 
     private static Label label(UIElement root, String id) {
-        return TerminalXmlLayouts.require(root, id, Label.class);
+        return TerminalUiLayout.require(root, id, Label.class);
     }
 
     private static TextField field(UIElement root, String id) {
-        return TerminalXmlLayouts.require(root, id, TextField.class);
+        return TerminalUiLayout.require(root, id, TextField.class);
     }
 
     private static void button(UIElement root, String id, Runnable action) {
-        Button button = TerminalXmlLayouts.require(root, id, Button.class);
-        button.setText(switch (id) {
-            case "sort", "direction", "display", "type", "network", "magnet", "tasks", "insert", "encoding", "drag", "close", "resize", "entry", "filters", "tab_crafting", "tab_processing", "tab_smithing", "tab_stonecutting", "tab_anvil" -> Component.empty();
-            default -> text(id);
-        });
+        Button button = TerminalUiLayout.require(root, id, Button.class);
+        if (!button.hasClass("terminal-icon")) button.setText(text(id));
         button.style(style -> style.tooltips(text(id)));
         button.setOnClick(event -> {
             if (event.button == 0) action.run();
@@ -763,7 +825,7 @@ public final class TerminalOverlayUi {
     }
 
     private static UIElement listHost(UIElement root, String id) {
-        return TerminalXmlLayouts.require(root, id, ScrollerView.class).viewContainer;
+        return TerminalUiLayout.require(root, id, ScrollerView.class).viewContainer;
     }
 
     private static Component text(String key, Object... args) {

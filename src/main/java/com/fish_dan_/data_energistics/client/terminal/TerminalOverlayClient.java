@@ -19,6 +19,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -159,7 +160,7 @@ public final class TerminalOverlayClient {
             return;
         }
         if (overlay.composition == null) {
-            overlay.composition = new TerminalOverlayUi(overlay.preferences, overlay::send);
+            overlay.composition = new TerminalOverlayUi(overlay.preferences, overlay::send, TerminalOverlayClient::openLargeTerminal);
             overlay.modularUi = new ModularUI(overlay.composition.ui, Minecraft.getInstance().player);
             overlay.composition.geometry(overlay.screen.width, overlay.screen.height);
             overlay.modularUi.setScreenAndInit(overlay.screen);
@@ -234,6 +235,12 @@ public final class TerminalOverlayClient {
             current.releaseUi();
             current = null;
         }
+    }
+
+    private static void openLargeTerminal() {
+        // TODO: Bind the mod's large-terminal entry when that feature is implemented; this gesture is reserved for it.
+        var player = Minecraft.getInstance().player;
+        if (player != null) player.displayClientMessage(Component.translatable("gui.data_energistics.player_terminal.large_terminal_unavailable"), true);
     }
 
     private boolean valid() {

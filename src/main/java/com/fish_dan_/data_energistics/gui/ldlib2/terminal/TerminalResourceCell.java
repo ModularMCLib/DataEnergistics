@@ -34,7 +34,8 @@ public final class TerminalResourceCell extends Button {
 
     public TerminalResourceCell() {
         addClass("terminal-cell");
-        setText(Component.empty());
+        noText();
+        layout(layout -> layout.width(18).height(18).paddingAll(0).flexShrink(0));
         addEventListener(UIEvents.HOVER_TOOLTIPS, event -> {
             if (stack == null) return;
             ObjectList<Component> lines = new ObjectArrayList<>(AEKeyRendering.getTooltip(stack.what()));

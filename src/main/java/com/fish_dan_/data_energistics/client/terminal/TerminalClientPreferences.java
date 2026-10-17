@@ -20,8 +20,8 @@ public final class TerminalClientPreferences {
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics/player_terminal.json");
     public int x = 8;
     public int y = 8;
-    public int width = 148;
-    public int height = 198;
+    public int width = 150;
+    public int height = 168;
     public boolean folded = true;
 
     public static TerminalClientPreferences load() {
@@ -34,6 +34,11 @@ public final class TerminalClientPreferences {
             value.width = json.get("width").getAsInt();
             value.height = json.get("height").getAsInt();
             value.folded = json.get("folded").getAsBoolean();
+            if (!json.has("layout_version")) {
+                // Account for the reduced frame when migrating the original window preferences.
+                value.width += 2;
+                value.height -= 30;
+            }
         } catch (IOException | RuntimeException failure) {
             Data_Energistics.LOGGER.warn("Cannot load player terminal geometry from {}", FILE, failure);
         }
@@ -42,6 +47,7 @@ public final class TerminalClientPreferences {
 
     public void save() {
         JsonObject json = new JsonObject();
+        json.addProperty("layout_version", 2);
         json.addProperty("x", x);
         json.addProperty("y", y);
         json.addProperty("width", width);

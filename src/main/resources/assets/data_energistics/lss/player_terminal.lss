@@ -1,135 +1,99 @@
-/* Fixed geometry lives here. Runtime changes only window placement and storage row/column count. */
-.terminal-root { width: 100%; height: 100%; position: absolute; padding-all: 0px; }
-.terminal-entry { position: absolute; left: 2px; bottom: 2px; width: 14px; height: 14px; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
-.terminal-root button .__button_text__ { font-size: 6; text-shadow: false; text-color: #FF343548; horizontal-align: center; vertical-align: center; }
-.terminal-root label { font-size: 6; text-shadow: false; text-color: #FF343548; adaptive-width: false; adaptive-height: false; }
-.terminal-root text-field { font-size: 7; text-color: #FF343548; text-shadow: false; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
-.terminal-window { position: absolute; width: 148px; height: 144px; padding-all: 0px; background: sprite(data_energistics:textures/guis/background.png); }
-.terminal-title { position: absolute; left: 5px; top: 3px; width: 106px; height: 9px; }
-.terminal-drag { position: absolute; right: 15px; top: 3px; width: 10px; height: 8px; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_handle.png); }
-.terminal-close { position: absolute; right: 3px; top: 3px; width: 9px; height: 8px; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }
-.terminal-search { position: absolute; left: 20px; right: 18px; top: 15px; height: 11px; }
-.terminal-settings { position: absolute; left: 3px; top: 28px; width: 14px; height: 112px; flex-direction: column; gap-all: 1px; }
-.terminal-small { width: 13px; height: 13px; flex-shrink: 0; }
-.terminal-storage { position: absolute; left: 20px; top: 28px; width: 108px; height: 90px; }
-.terminal-storage-scroll { position: absolute; left: 130px; top: 28px; width: 5px; height: 144px; }
-.terminal-storage-scroll .__scroller_scroll_container__ { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png); }
-.terminal-root .terminal-storage-scroll .__scroller_scroll_bar__ { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_2.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_2.png); }
-.terminal-cell { width: 18px; height: 18px; padding-all: 0px; background: sprite(data_energistics:textures/guis/inventory_slot.png); }
-.terminal-cell:hover { background: group(sprite(data_energistics:textures/guis/inventory_slot.png), #6693FFDE); }
-.terminal-page { position: absolute; bottom: 12px; width: 10px; height: 9px; }
-.previous { left: 20px; } .next { right: 19px; }
-.terminal-page-label { position: absolute; left: 31px; right: 30px; bottom: 12px; height: 9px; horizontal-align: center; }
-.terminal-fold { position: absolute; left: 20px; right: 18px; bottom: 2px; height: 9px; }
-.terminal-status { position: absolute; left: 3px; top: 15px; width: 14px; height: 10px; }
-.terminal-workspaces { position: absolute; left: 18px; bottom: 1px; width: 114px; height: 96px; }
-.terminal-tabs { position: absolute; right: 1px; bottom: 5px; width: 14px; height: 91px; flex-direction: column; gap-all: 0px; }
-.terminal-tab { width: 14px; height: 18px; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab.png); }
-.terminal-tab.selected { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png); }
-.terminal-resize { position: absolute; right: 1px; bottom: 1px; width: 4px; height: 4px; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_zoom.png); }
-.terminal-workspace { position: absolute; left: 0px; top: 0px; width: 114px; height: 96px; }
-.workspace-title { position: absolute; left: 1px; top: 1px; width: 92px; height: 9px; }
-.workspace-inputs { position: absolute; left: 0px; top: 13px; width: 54px; height: 54px; }
-.workspace-outputs { position: absolute; left: 60px; top: 13px; width: 54px; height: 54px; }
-.workspace-result { position: absolute; left: 83px; top: 31px; width: 18px; height: 18px; }
-.pattern-slots { position: absolute; left: 0px; top: 75px; width: 36px; height: 18px; }
-.encoding { position: absolute; left: 40px; top: 77px; width: 13px; height: 13px; }
-.substitutes { position: absolute; left: 55px; top: 77px; width: 13px; height: 13px; }
-.fluid-substitutes { position: absolute; left: 70px; top: 77px; width: 13px; height: 13px; }
-.recipe-previous { position: absolute; left: 60px; top: 57px; width: 10px; height: 10px; }
-.recipe-index { position: absolute; left: 71px; top: 57px; width: 30px; height: 10px; horizontal-align: center; }
-.recipe-next { position: absolute; left: 102px; top: 57px; width: 10px; height: 10px; }
-.transfer-processing { position: absolute; left: 87px; top: 76px; width: 25px; height: 15px; }
-.anvil-name { position: absolute; left: 0px; top: 12px; width: 112px; height: 12px; }
-.workspace-anvil .workspace-inputs { top: 31px; }
-.workspace-anvil .workspace-result { left: 83px; top: 31px; }
-.boost-down { position: absolute; left: 22px; top: 72px; width: 12px; height: 12px; }
-.boost-value { position: absolute; left: 35px; top: 73px; width: 42px; height: 10px; horizontal-align: center; }
-.boost-up { position: absolute; left: 78px; top: 72px; width: 12px; height: 12px; }
-.terminal-popup { position: absolute; width: 190px; height: 160px; padding-all: 0px; z-index: 600; background: sprite(data_energistics:textures/guis/background.png); }
-.popup-title { position: absolute; left: 5px; top: 4px; width: 166px; height: 10px; }
-.popup-back { position: absolute; right: 4px; top: 4px; width: 12px; height: 10px; }
-.connection-status { position: absolute; left: 5px; top: 19px; width: 180px; height: 20px; }
-.frequency-list { position: absolute; left: 5px; top: 41px; width: 180px; height: 112px; }
-.frequency-row { width: 180px; height: 14px; }
-.magnet-popup { height: 124px; }
-.magnet-mode { position: absolute; left: 5px; width: 180px; height: 15px; }
-.mode-off { top: 21px; } .mode-inventory { top: 38px; } .mode-network { top: 55px; } .mode-pickup { top: 72px; }
-.magnet-restock { position: absolute; left: 5px; top: 97px; width: 157px; height: 17px; }
-.magnet-filters { position: absolute; right: 5px; top: 97px; width: 18px; height: 17px; }
-.filters-popup { height: 188px; }
-.pickup-policy { position: absolute; left: 5px; top: 20px; width: 162px; height: 12px; }
-.pickup-grid { position: absolute; left: 5px; top: 34px; width: 162px; height: 54px; }
-.filter-copy-up { position: absolute; left: 171px; top: 56px; width: 13px; height: 13px; }
-.filter-swap { position: absolute; left: 171px; top: 74px; width: 13px; height: 13px; }
-.filter-copy-down { position: absolute; left: 171px; top: 92px; width: 13px; height: 13px; }
-.insert-policy { position: absolute; left: 5px; top: 107px; width: 162px; height: 12px; }
-.insert-grid { position: absolute; left: 5px; top: 122px; width: 162px; height: 54px; }
-.quantity-popup { height: 88px; }
-.quantity-selected { position: absolute; left: 7px; top: 23px; width: 18px; height: 18px; }
-.quantity-amount { position: absolute; left: 31px; top: 25px; width: 151px; height: 14px; }
-.quantity-minus { position: absolute; left: 31px; top: 47px; width: 28px; height: 14px; }
-.quantity-plus { position: absolute; left: 62px; top: 47px; width: 28px; height: 14px; }
-.quantity-apply { position: absolute; left: 97px; top: 47px; width: 85px; height: 14px; }
+/* Java owns pixel geometry; this sheet owns the supplied surfaces, glyphs and states. */
+.terminal-root, .terminal-window, .terminal-glyph { background: #00000000; }
+.terminal-panel { background: #FFCBCCD4; }
+.frame-light { background: #FFF0F0F3; }
+.frame-dark { background: #FF555970; }
+.sidebar-top { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_0.png); }
+.sidebar-middle { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_1.png); }
+.sidebar-bottom { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_2.png); }
+
+.terminal-label, .terminal-control .__button_text__ {
+    font-size: 7;
+    text-color: #FF343548;
+    text-shadow: false;
+    adaptive-width: false;
+    adaptive-height: false;
+    horizontal-align: center;
+    vertical-align: center;
+}
+.terminal-field {
+    font-size: 7;
+    text-color: #FF343548;
+    text-shadow: false;
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png);
+    focus-overlay: border(1, #FF9AD8FF);
+}
+.terminal-field:focus { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
+.terminal-control {
+    background: #00000000;
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
+}
+.terminal-resize, .transfer-processing {
+    base-background: #00000000;
+    hover-background: #339AD8FF;
+    pressed-background: #559AD8FF;
+}
+.terminal-tab {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab.png, 2, 0, 12, 14);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+}
+.terminal-tab.selected {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+}
+.terminal-storage-scroll .__scroller_scroll_container__ { background: #00000000; }
+.scroll-rail { background: #FFCBCCD4; }
+.scroll-rail-rim { background: #FFF2F2F2; }
+.scroll-rail-center { background: #FF9A9FB4; }
+.scroll-rail-shadow { background: #FF696D88; }
+.terminal-storage-scroll .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+}
+.terminal-storage-scroll.inactive-scroll .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_2.png);
+}
+.terminal-cell {
+    background: sprite(data_energistics:textures/guis/backpack/middle.png);
+    base-background: #00000000;
+    hover-background: group(#6693FFDE, border(1, #FF57E0BB));
+    pressed-background: #8893FFDE;
+}
+.terminal-cell.embedded-cell { background: #00000000; }
+.terminal-cell.selected-recipe { base-background: #6693FFDE; }
+.terminal-page.page-crafting { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png); }
+.terminal-page.page-processing { background: sprite(data_energistics:textures/guis/states/background/small_handle.png); }
+.terminal-page.page-smithing { background: sprite(data_energistics:textures/guis/states/background/small_forging.png); }
+.terminal-page.page-stonecutting { background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png); }
+.terminal-page.page-anvil { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png); }
+.anvil-boost { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
+.terminal-popup { background: group(#FFCCCDD6, border(1, #FFF0F0F3)); z-index: 600; }
 .terminal-list .__scroller_view_view-container__ { width: 100%; flex-direction: column; gap-all: 1px; padding-all: 0px; }
-.frequency-row { flex-shrink: 0; }
-.terminal-list { padding-all: 0px; }
+
+.icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
+.icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }
+.icon-resize { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_zoom.png); }
+.icon-tasks { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); }
 .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); }
+.sort-amount .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); }
 .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); }
+.descending .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_1.png); }
 .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
+.stored-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
+.craftable-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
 .icon-type { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
 .icon-network { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
 .icon-magnet { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
-.icon-tasks { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); }
 .icon-insert { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
-.icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
-.icon-processing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
+.icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }
+.icon-processing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_handle.png); }
 .icon-smithing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); }
 .icon-stonecutting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_stone_cutting.png); }
 .icon-anvil { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_anvil.png); }
 .icon-settings { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
-.encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
-
-/* Button state textures are separate from the element background in LDLib2. */
-.terminal-root button {
-    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
-    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
-    padding-all: 0px;
-}
-.terminal-root .terminal-small { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png); }
-.terminal-root .terminal-cell {
-    base-background: #00000000;
-    hover-background: #4493FFDE;
-    pressed-background: #6693FFDE;
-}
-.terminal-root .terminal-drag, .terminal-root .terminal-close, .terminal-root .terminal-resize {
-    base-background: #00000000;
-    hover-background: #22FFFFFF;
-    pressed-background: #44FFFFFF;
-}
-.terminal-root .terminal-entry {
-    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png);
-    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png);
-    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png);
-}
-.terminal-root .icon-sort { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); }
-.terminal-root .icon-direction { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); }
-.terminal-root .icon-display { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
-.terminal-root .icon-type { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
-.terminal-root .icon-network { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
-.terminal-root .icon-magnet { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
-.terminal-root .icon-tasks { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); }
-.terminal-root .icon-insert { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
-.terminal-root .icon-crafting { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
-.terminal-root .icon-processing { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
-.terminal-root .icon-smithing { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); }
-.terminal-root .icon-stonecutting { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_stone_cutting.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_stone_cutting.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_stone_cutting.png); }
-.terminal-root .icon-anvil { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_anvil.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_anvil.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_anvil.png); }
-.terminal-root .icon-settings { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
-.terminal-root .encoding { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
-.terminal-root .icon-sort.sort-amount { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); }
-.terminal-root .icon-direction.descending { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_1.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
-.terminal-root .icon-display.stored-only { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
-.terminal-root .icon-display.craftable-only { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }
-.terminal-root .encoding.actual-mode { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
+.icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
+.actual-mode .icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
+.icon-transfer { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }

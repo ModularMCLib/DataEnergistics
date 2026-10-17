@@ -51,7 +51,7 @@ public final class SanctifierThirdPersonPose {
             Vector3f target = SanctifierRig.carryGrip(SanctifierRig.holster(model));
             aim(support, mainArm.getOpposite(), target.sub(SanctifierRig.shoulder(model, mainArm.getOpposite())), returned * lift);
         }
-        Matrix4f sword = SanctifierRig.unhinged(SanctifierRig.carried(model, mainArm, draw), draw);
+        Matrix4f sword = SanctifierRig.unhinged(SanctifierRig.carried(model, mainArm), draw);
         Vector3f supportPalm = SanctifierRig.palm(model, mainArm.getOpposite()).getTranslation(new Vector3f());
         Vector3f separation = SanctifierRig.swordGrip(sword).sub(supportPalm);
         Vector3f supportShoulder = SanctifierRig.shoulder(model, mainArm.getOpposite());

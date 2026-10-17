@@ -17,6 +17,8 @@ import net.neoforged.neoforge.client.event.RenderHandEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /** Renders player skin hands at the blade grip and the scabbard carrying handle. */
@@ -46,16 +48,16 @@ public final class SanctifierFirstPersonRenderer {
         model.renderAssembly(stack, event.getPoseStack(), event.getMultiBufferSource(),
                 event.getPackedLight(), frame, draw, SanctifierAnimationStates.isPowered(stack), supportFree && draw < 1);
         if (!player.isInvisible()) {
-            arm(player, player.getMainArm(), frame.sword().getTranslation(new Vector3f()),
+            arm(player, player.getMainArm(), frame.sword(), SanctifierRig.swordGrip(frame.sword()),
                     event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
             if (support) {
-                arm(player, player.getMainArm().getOpposite(), SanctifierRig.carryGrip(frame.scabbard()),
+                arm(player, player.getMainArm().getOpposite(), frame.scabbard(), SanctifierRig.carryGrip(frame.scabbard()),
                         event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
             }
         }
     }
 
-    private static void arm(AbstractClientPlayer player, HumanoidArm arm, Vector3f grip,
+    private static void arm(AbstractClientPlayer player, HumanoidArm arm, Matrix4f frame, Vector3f grip,
                             PoseStack poses, MultiBufferSource buffers, int light) {
         if (!(Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) return;
         float side = arm == HumanoidArm.RIGHT ? 1 : -1;
@@ -67,9 +69,10 @@ public final class SanctifierFirstPersonRenderer {
         float palmX = player.getSkin().model() == PlayerSkin.Model.SLIM ? 0.5F : 1;
         poses.pushPose();
         poses.translate(grip.x, grip.y, grip.z);
-        poses.mulPose(Axis.XP.rotationDegrees(-55));
-        poses.mulPose(Axis.ZP.rotationDegrees(side * -10));
-        poses.translate(side * palmX / 16, -9.0F / 16, 0);
+        // Inherit only grip orientation: the skin arm retains its normal player scale.
+        poses.mulPose(frame.getUnnormalizedRotation(new Quaternionf()));
+        poses.mulPose(Axis.XP.rotationDegrees(-90));
+        poses.translate(side * palmX / 16, -10.0F / 16, 2.0F / 16);
         // Neutral local arms put the palm inside the grip, independent of third-person arm poses.
         skin.loadPose(PartPose.ZERO);
         sleeve.loadPose(PartPose.ZERO);

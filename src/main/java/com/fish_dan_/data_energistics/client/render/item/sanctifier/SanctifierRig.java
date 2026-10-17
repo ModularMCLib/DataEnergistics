@@ -12,9 +12,10 @@ import org.joml.Vector3f;
 /** Rigid grip anchors shared by the visible hands, blade and scabbard. Coordinates are blocks. */
 final class SanctifierRig {
 
-    static final float SCALE = 0.34F;
+    // The usable hilt is 11.35 model units: a four-pixel hand covers about 46% at this scale.
+    static final float SCALE = 0.76F;
     static final float EXTRACTION_DISTANCE = 45;
-    private static final float FIRST_PERSON_SCALE = 0.31F;
+    private static final Vector3f SWORD_GRIP = new Vector3f(0, -2, 0).div(16);
     private static final Vector3f CARRY_GRIP = new Vector3f(3.85F, 17.3F, 0).div(16);
 
     private SanctifierRig() {}
@@ -50,14 +51,22 @@ final class SanctifierRig {
     static Matrix4f holster(HumanoidModel<?> model) {
         PoseStack local = new PoseStack();
         model.body.translateAndRotate(local);
-        return new Matrix4f(local.last().pose()).translate(0.37F, 0.42F, 0.12F)
-                .rotateX(radians(25)).rotateZ(radians(-12)).scale(SCALE);
+        return new Matrix4f(local.last().pose()).translate(0.42F, 0.38F, 0.08F)
+                .rotateX(radians(67)).rotateZ(radians(-12)).scale(SCALE);
     }
 
     static Matrix4f palm(HumanoidModel<?> model, HumanoidArm arm) {
         PoseStack local = new PoseStack();
         model.translateToHand(arm, local);
-        return new Matrix4f(local.last().pose()).translate(0, 0.625F, 0);
+        float sign = arm == HumanoidArm.RIGHT ? 1 : -1;
+        // Match the vanilla item grip, including PlayerModel's slim-arm correction.
+        return new Matrix4f(local.last().pose()).translate(-sign / 16, 10.0F / 16, -2.0F / 16);
+    }
+
+    static Vector3f shoulder(HumanoidModel<?> model, HumanoidArm arm) {
+        PoseStack local = new PoseStack();
+        model.translateToHand(arm, local);
+        return local.last().pose().getTranslation(new Vector3f());
     }
 
     static Matrix4f carried(HumanoidModel<?> model, HumanoidArm mainArm, float draw) {
@@ -82,19 +91,22 @@ final class SanctifierRig {
 
     private static Matrix4f swordInHand(HumanoidModel<?> model, HumanoidArm mainArm) {
         float sign = mainArm == HumanoidArm.RIGHT ? 1 : -1;
-        return palm(model, mainArm).rotateX((float) Math.PI).rotateZ(radians(sign * 12)).rotateY(radians(sign * 40)).scale(SCALE);
+        return palm(model, mainArm).rotateX(radians(-90))
+                .rotateY(radians(sign * 24)).scale(SCALE).translate(-SWORD_GRIP.x, -SWORD_GRIP.y, -SWORD_GRIP.z);
     }
 
     static Frame firstPerson(HumanoidArm mainArm, float draw, SanctifierAnimation.Pose combat) {
         float sign = mainArm == HumanoidArm.RIGHT ? 1 : -1;
         float lift = lift(draw), ready = ready(draw);
-        Matrix4f lifted = new Matrix4f().translation(-sign * 0.42F, -1.3F + 0.95F * lift, -1.5F)
+        float depth = -1.85F - 1.1F * extraction(draw) * (1 - ready);
+        Matrix4f lifted = new Matrix4f().translation(-sign * 0.5F, -1.6F + 1.22F * lift, depth)
                 .rotateY(radians(-12 * sign)).rotateZ(radians(sign * (170 - 70 * lift + 50 * ready)))
-                .scale(FIRST_PERSON_SCALE).translate(-CARRY_GRIP.x, -CARRY_GRIP.y, -CARRY_GRIP.z);
+                .scale(SCALE).translate(-CARRY_GRIP.x, -CARRY_GRIP.y, -CARRY_GRIP.z);
         Matrix4f sword = new Matrix4f(lifted).translate(0, -EXTRACTION_DISTANCE * extraction(draw) / 16, 0);
-        Matrix4f held = new Matrix4f().translation(sign * 0.38F, -0.52F + combat.combatY() * 0.018F, -1.05F)
-                .rotateY(radians(sign * 50)).rotateZ(radians(sign * (-14 + combat.swordRoll())))
-                .rotateX(radians(-10 + combat.swordPitch())).rotateY(radians(combat.swordYaw())).scale(FIRST_PERSON_SCALE);
+        Matrix4f held = new Matrix4f().translation(sign * 0.56F, -0.54F + combat.combatY() * 0.018F, -1.5F)
+                .rotateZ(radians(-sign * 18 + combat.swordRoll())).rotateX(radians(-12 + combat.swordPitch()))
+                .rotateY(radians(-sign * 18 + combat.swordYaw())).scale(SCALE)
+                .translate(-SWORD_GRIP.x, -SWORD_GRIP.y, -SWORD_GRIP.z);
         Matrix4f sheath = new Matrix4f(lifted);
         sheath.m31(sheath.m31() - 1.2F * holstered(draw));
         return new Frame(blend(sword, held, ready), sheath);
@@ -111,6 +123,10 @@ final class SanctifierRig {
 
     static Vector3f carryGrip(Matrix4f matrix) {
         return matrix.transformPosition(new Vector3f(CARRY_GRIP));
+    }
+
+    static Vector3f swordGrip(Matrix4f matrix) {
+        return matrix.transformPosition(new Vector3f(SWORD_GRIP));
     }
 
     private static float ramp(float value, float start, float end) {

@@ -16,7 +16,8 @@ import java.util.UUID;
  * Per-open identity and sequence keep independent overlay mutations separate from the host menu protocol.
  */
 public record TerminalRequestPayload(int containerId, UUID sessionId, long sequence, String action,
-                                     CompoundTag data) implements CustomPacketPayload {
+                                     CompoundTag data)
+        implements CustomPacketPayload {
 
     public static final Type<TerminalRequestPayload> TYPE = new Type<>(Data_Energistics.id("terminal_request"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TerminalRequestPayload> STREAM_CODEC = StreamCodec.of(

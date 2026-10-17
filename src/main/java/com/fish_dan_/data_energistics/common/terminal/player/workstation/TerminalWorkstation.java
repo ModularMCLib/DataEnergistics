@@ -39,8 +39,7 @@ import java.util.Comparator;
  */
 public final class TerminalWorkstation {
 
-    private TerminalWorkstation() {
-    }
+    private TerminalWorkstation() {}
 
     public static ItemStack preview(ServerPlayer player, TerminalPlayerState state) {
         if (state.work().encoding()) return TerminalPatternEncoding.encode(player, state);

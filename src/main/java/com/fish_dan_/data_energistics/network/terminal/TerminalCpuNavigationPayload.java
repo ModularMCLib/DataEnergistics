@@ -14,7 +14,8 @@ import java.util.UUID;
  * Orders native-menu transitions around the saved client screen without replacing its host menu with a copy.
  */
 public record TerminalCpuNavigationPayload(int hostContainerId, UUID sessionId,
-                                           String phase) implements CustomPacketPayload {
+                                           String phase)
+        implements CustomPacketPayload {
 
     public static final Type<TerminalCpuNavigationPayload> TYPE = new Type<>(Data_Energistics.id("terminal_cpu_navigation"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TerminalCpuNavigationPayload> STREAM_CODEC = StreamCodec.of(

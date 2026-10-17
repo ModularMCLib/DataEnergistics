@@ -18,8 +18,7 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class TerminalSlotActions {
 
-    private TerminalSlotActions() {
-    }
+    private TerminalSlotActions() {}
 
     public static void physical(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
         String group = data.getString("inventory");

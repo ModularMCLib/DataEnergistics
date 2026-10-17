@@ -121,6 +121,7 @@ public final class TerminalStorageIndex {
     }
 
     public record Entry(AEKey key, long amount, boolean craftable) {
+
         public GenericStack stack() {
             return new GenericStack(key, amount);
         }

@@ -22,8 +22,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  */
 public final class TerminalInputTargets {
 
-    private TerminalInputTargets() {
-    }
+    private TerminalInputTargets() {}
 
     public static ObjectList<Slot> resolve(Player player, AbstractContainerMenu menu) {
         ObjectList<Slot> result = new ObjectArrayList<>();

@@ -15,7 +15,8 @@ import java.util.UUID;
  * Snapshot for one acknowledged overlay generation; the client rejects other hosts and older responses.
  */
 public record TerminalSnapshotPayload(int containerId, UUID sessionId, long sequence,
-                                      CompoundTag snapshot) implements CustomPacketPayload {
+                                      CompoundTag snapshot)
+        implements CustomPacketPayload {
 
     public static final Type<TerminalSnapshotPayload> TYPE = new Type<>(Data_Energistics.id("terminal_snapshot"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TerminalSnapshotPayload> STREAM_CODEC = StreamCodec.of(

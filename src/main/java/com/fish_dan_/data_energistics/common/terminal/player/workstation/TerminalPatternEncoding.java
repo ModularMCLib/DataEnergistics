@@ -19,8 +19,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  */
 public final class TerminalPatternEncoding {
 
-    private TerminalPatternEncoding() {
-    }
+    private TerminalPatternEncoding() {}
 
     public static ItemStack encode(ServerPlayer player, TerminalPlayerState state) {
         TerminalWorkspaceState work = state.work();

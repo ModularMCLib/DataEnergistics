@@ -22,8 +22,7 @@ import org.jspecify.annotations.Nullable;
  */
 final class TerminalMagnetTicker {
 
-    private TerminalMagnetTicker() {
-    }
+    private TerminalMagnetTicker() {}
 
     static void tick(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection) {
         if (player.isShiftKeyDown() || player.isSpectator() || !player.isAlive()) return;

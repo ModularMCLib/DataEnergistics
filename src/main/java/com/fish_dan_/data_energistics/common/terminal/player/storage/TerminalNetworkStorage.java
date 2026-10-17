@@ -19,8 +19,7 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class TerminalNetworkStorage {
 
-    private TerminalNetworkStorage() {
-    }
+    private TerminalNetworkStorage() {}
 
     public static void click(ServerPlayer player, TerminalConnection connection, TerminalPlayerState state, AEKey key, int button, boolean shift) {
         if (button != 0 && button != 1) throw new IllegalArgumentException("Invalid storage button");

@@ -17,8 +17,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 @NullMarked
 public final class CuriosTerminalSingularities {
 
-    private CuriosTerminalSingularities() {
-    }
+    private CuriosTerminalSingularities() {}
 
     public static void collect(Player player, LongSet frequencies) {
         CuriosApi.getCuriosInventory(player).ifPresent(inventory -> {

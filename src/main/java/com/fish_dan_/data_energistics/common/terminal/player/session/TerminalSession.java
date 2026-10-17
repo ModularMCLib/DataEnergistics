@@ -99,7 +99,8 @@ public final class TerminalSession {
         // Host input can already be in flight when the server opens the CPU screen. Acknowledge its
         // sequence without applying it to a suspended menu, so the following return stays ordered.
         if (!TerminalCpuNavigation.suspended(player, this) || !valid(player) || !id.equals(request.sessionId()) ||
-                request.containerId() != menu.containerId || request.sequence() != sequence + 1) return false;
+                request.containerId() != menu.containerId || request.sequence() != sequence + 1)
+            return false;
         sequence = request.sequence();
         lastRequest = player.server.getTickCount();
         return true;
@@ -109,8 +110,7 @@ public final class TerminalSession {
         TerminalPlayerState state = runtime.state();
         message = "";
         switch (action) {
-            case "refresh" -> {
-            }
+            case "refresh" -> {}
             case "close" -> close();
             case "visible" -> visible = data.getBoolean("value");
             case "workspace" -> state.workspace(TerminalWorkspace.byId(data.getString("id")));

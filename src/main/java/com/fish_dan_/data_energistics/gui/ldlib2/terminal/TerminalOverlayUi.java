@@ -36,8 +36,8 @@ import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -194,7 +194,7 @@ public final class TerminalOverlayUi {
             if (mode == TerminalWorkspace.PROCESSING)
                 button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
         }
-        for (String name : new String[]{"network", "magnet", "filters", "quantity", "confirm"}) {
+        for (String name : new String[] { "network", "magnet", "filters", "quantity", "confirm" }) {
             UIElement root = TerminalXmlLayouts.load(name).rootElement;
             popups.put(name, root);
             root.setVisible(false);
@@ -207,14 +207,14 @@ public final class TerminalOverlayUi {
             });
         }
         UIElement magnet = popups.get("magnet");
-        for (String mode : new String[]{"OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK"}) {
+        for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
             String id = "mode_" + mode.toLowerCase(Locale.ROOT);
             button(magnet, id, () -> request.accept("magnet_mode", string("value", mode)));
         }
         button(magnet, "restock", () -> request.accept("magnet_restock", new CompoundTag()));
         button(magnet, "filters", () -> open("filters"));
         UIElement filters = popups.get("filters");
-        for (String action : new String[]{"pickup_whitelist", "insert_whitelist", "filter_copy_up", "filter_copy_down", "filter_swap"}) {
+        for (String action : new String[] { "pickup_whitelist", "insert_whitelist", "filter_copy_up", "filter_copy_down", "filter_swap" }) {
             button(filters, action, () -> request.accept(action, new CompoundTag()));
         }
         createCells(element(filters, "pickup"), pickup, 27, 9, (index, event) -> ghost("pickup", index, event.button));
@@ -453,7 +453,7 @@ public final class TerminalOverlayUi {
         if (magnet.equals(previousMagnet)) return;
         previousMagnet = magnet.copy();
         UIElement root = popups.get("magnet");
-        for (String mode : new String[]{"OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK"}) {
+        for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
             Button control = TerminalXmlLayouts.require(root, "mode_" + mode.toLowerCase(Locale.ROOT), Button.class);
             control.setText(Component.literal(mode.equals(magnet.getString("mode")) ? "● " : "○ ").append(text("magnet_mode." + mode)));
         }
@@ -690,8 +690,7 @@ public final class TerminalOverlayUi {
         request.accept("ghost", data);
     }
 
-    public record GhostTarget(Rect2i area, String inventory, int index) {
-    }
+    public record GhostTarget(Rect2i area, String inventory, int index) {}
 
     public void open(String name) {
         Objects.requireNonNull(window.getModularUI(), "Terminal popups require an attached UI").clearFocus();
@@ -701,8 +700,7 @@ public final class TerminalOverlayUi {
         popups.get(name).setVisible(true);
         if (name.equals("quantity") && selected != null) {
             ObjectList<TerminalResourceCell> cells = new ObjectArrayList<>();
-            createCells(element(popups.get(name), "selected"), cells, 1, 1, (index, event) -> {
-            });
+            createCells(element(popups.get(name), "selected"), cells, 1, 1, (index, event) -> {});
             cells.getFirst().entry(new GenericStack(selected, 1), false);
             element(popups.get(name), "plan").setActive(quantityTarget != null || snapshot.getBoolean("connected"));
         }
@@ -805,9 +803,7 @@ public final class TerminalOverlayUi {
     private static void button(UIElement root, String id, Runnable action) {
         Button button = TerminalXmlLayouts.require(root, id, Button.class);
         button.setText(switch (id) {
-            case "sort", "direction", "display", "type", "network", "magnet", "tasks", "insert", "encoding", "drag",
-                 "close", "resize", "entry", "filters", "tab_crafting", "tab_processing", "tab_smithing",
-                 "tab_stonecutting", "tab_anvil" -> Component.empty();
+            case "sort", "direction", "display", "type", "network", "magnet", "tasks", "insert", "encoding", "drag", "close", "resize", "entry", "filters", "tab_crafting", "tab_processing", "tab_smithing", "tab_stonecutting", "tab_anvil" -> Component.empty();
             default -> text(id);
         });
         button.style(style -> style.tooltips(text(id)));

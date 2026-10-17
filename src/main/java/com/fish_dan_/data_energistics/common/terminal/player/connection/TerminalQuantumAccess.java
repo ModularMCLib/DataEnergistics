@@ -25,8 +25,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class TerminalQuantumAccess {
 
-    private TerminalQuantumAccess() {
-    }
+    private TerminalQuantumAccess() {}
 
     public static LongList frequencies(ServerPlayer player) {
         LongSet values = new LongLinkedOpenHashSet();

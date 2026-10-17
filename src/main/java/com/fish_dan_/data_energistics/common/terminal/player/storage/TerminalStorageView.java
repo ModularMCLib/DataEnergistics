@@ -78,6 +78,5 @@ public final class TerminalStorageView {
         snapshot.putInt("storage_total", current.size());
     }
 
-    private record Entry(long amount, boolean craftable) {
-    }
+    private record Entry(long amount, boolean craftable) {}
 }

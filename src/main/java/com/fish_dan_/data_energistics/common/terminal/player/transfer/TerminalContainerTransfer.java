@@ -22,8 +22,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  */
 public final class TerminalContainerTransfer {
 
-    private TerminalContainerTransfer() {
-    }
+    private TerminalContainerTransfer() {}
 
     public static String transfer(ServerPlayer player, TerminalConnection connection, TerminalPlayerState state) {
         ObjectList<Slot> targets = TerminalInputTargets.resolve(player, player.containerMenu);
@@ -100,6 +99,5 @@ public final class TerminalContainerTransfer {
         return key.matches(stack) ? stack.getCount() : 0;
     }
 
-    private record Insertion(Slot slot, AEItemKey key, int amount) {
-    }
+    private record Insertion(Slot slot, AEItemKey key, int amount) {}
 }

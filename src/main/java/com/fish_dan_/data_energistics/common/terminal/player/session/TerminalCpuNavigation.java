@@ -6,14 +6,14 @@ import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalCpuMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalCpuNavigationPayload;
 
-import appeng.menu.MenuOpener;
-import appeng.menu.AEBaseMenu;
-import appeng.menu.me.crafting.CraftingStatusMenu;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
+import appeng.menu.AEBaseMenu;
+import appeng.menu.MenuOpener;
+import appeng.menu.me.crafting.CraftingStatusMenu;
 import appeng.parts.AEBasePart;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.common.NeoForge;
@@ -33,8 +33,7 @@ public final class TerminalCpuNavigation {
 
     private static final Object2ObjectMap<UUID, Visit> VISITS = new Object2ObjectOpenHashMap<>();
 
-    private TerminalCpuNavigation() {
-    }
+    private TerminalCpuNavigation() {}
 
     static void open(ServerPlayer player, TerminalSession session, TerminalConnection connection) {
         if (VISITS.containsKey(player.getUUID())) throw new IllegalStateException("A CPU visit is already active");
@@ -123,7 +122,8 @@ public final class TerminalCpuNavigation {
                 var level = blockEntity.getLevel();
                 BlockPos position = blockEntity.getBlockPos();
                 if (blockEntity.isRemoved() || level == null || !level.getChunkSource().hasChunk(position.getX() >> 4, position.getZ() >> 4) ||
-                        level.getBlockEntity(position) != blockEntity) return false;
+                        level.getBlockEntity(position) != blockEntity)
+                    return false;
             } else if (target instanceof ItemMenuHost<?> itemHost && !itemHost.isValid()) return false;
         }
         return visit.player.isAlive() && !visit.player.isSpectator() && visit.parent.stillValid(visit.player) &&
@@ -135,6 +135,7 @@ public final class TerminalCpuNavigation {
     }
 
     private static final class Visit {
+
         private final ServerPlayer player;
         private final TerminalSession session;
         private final AbstractContainerMenu parent;

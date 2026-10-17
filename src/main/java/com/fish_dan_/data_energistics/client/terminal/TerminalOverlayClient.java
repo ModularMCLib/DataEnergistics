@@ -28,8 +28,8 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.UUID;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Independent screen overlay. It never replaces a host menu, its modular UI, or its carried stack.
@@ -478,8 +478,7 @@ public final class TerminalOverlayClient {
     /**
      * Captures a complete, initialized UI for one synchronous client input event.
      */
-    private record InputTarget(TerminalOverlayClient overlay, TerminalOverlayUi composition, ModularUI modularUi) {
-    }
+    private record InputTarget(TerminalOverlayClient overlay, TerminalOverlayUi composition, ModularUI modularUi) {}
 
     /**
      * Client-thread Back/Escape hook; returns true while this exact native CPU visit owns the return.

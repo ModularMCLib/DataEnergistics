@@ -79,5 +79,4 @@ public final class TerminalResourceCell extends Button {
         }
         context.pose.popPose();
     }
-
 }

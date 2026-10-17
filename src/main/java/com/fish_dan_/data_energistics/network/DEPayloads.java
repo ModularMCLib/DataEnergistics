@@ -30,7 +30,7 @@ import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSucce
 import com.fish_dan_.data_energistics.network.research.ResearchActionPayload;
 import com.fish_dan_.data_energistics.network.research.ResearchMaterialFavoritesPayload;
 import com.fish_dan_.data_energistics.network.research.ResearchSnapshotPayload;
-import com.fish_dan_.data_energistics.network.terminal.TerminalCpuNavigationPayload;
+import com.fish_dan_.data_energistics.network.terminal.TerminalNavigationPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetsPayload;
@@ -63,7 +63,7 @@ public final class DEPayloads {
         PayloadRegistrar registrar = event.registrar("26.10.17");
         registrar.playToServer(TerminalRequestPayload.TYPE, TerminalRequestPayload.STREAM_CODEC, TerminalRequestPayload::handle);
         registrar.playToClient(TerminalSnapshotPayload.TYPE, TerminalSnapshotPayload.STREAM_CODEC, TerminalSnapshotPayload::handle);
-        registrar.playToClient(TerminalCpuNavigationPayload.TYPE, TerminalCpuNavigationPayload.STREAM_CODEC, TerminalCpuNavigationPayload::handle);
+        registrar.playToClient(TerminalNavigationPayload.TYPE, TerminalNavigationPayload.STREAM_CODEC, TerminalNavigationPayload::handle);
         registrar.playToServer(DigitalAnvilActionPayload.TYPE, DigitalAnvilActionPayload.STREAM_CODEC, DigitalAnvilActionPayload::handle);
         registrar.playToClient(DigitalAnvilSnapshotPayload.TYPE, DigitalAnvilSnapshotPayload.STREAM_CODEC, DigitalAnvilSnapshotPayload::handle);
         registrar.playToServer(ResearchActionPayload.TYPE, ResearchActionPayload.STREAM_CODEC, ResearchActionPayload::handle);

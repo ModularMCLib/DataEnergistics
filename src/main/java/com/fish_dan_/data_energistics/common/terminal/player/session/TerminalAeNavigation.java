@@ -3,12 +3,14 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.menu.terminal.TerminalCpuMenuLocator;
-import com.fish_dan_.data_energistics.network.terminal.TerminalCpuNavigationPayload;
+import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
+import com.fish_dan_.data_energistics.network.terminal.TerminalNavigationPayload;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
+import appeng.api.stacks.AEKey;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.MenuOpener;
+import appeng.menu.me.crafting.CraftAmountMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 import appeng.parts.AEBasePart;
 
@@ -27,32 +29,40 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Server-thread visits to AE2's original CPU menu suspend the original container and resume that same object.
+ * Keeps the original container alive while AE2 owns its CPU list or existing crafting-request menu chain.
  */
-public final class TerminalCpuNavigation {
+public final class TerminalAeNavigation {
 
     private static final Object2ObjectMap<UUID, Visit> VISITS = new Object2ObjectOpenHashMap<>();
 
-    private TerminalCpuNavigation() {}
+    private TerminalAeNavigation() {}
 
     static void open(ServerPlayer player, TerminalSession session, TerminalConnection connection) {
-        if (VISITS.containsKey(player.getUUID())) throw new IllegalStateException("A CPU visit is already active");
+        begin(player, session, connection, null);
+    }
+
+    static void openCrafting(ServerPlayer player, TerminalSession session, TerminalConnection connection, AEKey key) {
+        begin(player, session, connection, key);
+    }
+
+    private static void begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, @Nullable AEKey key) {
+        if (VISITS.containsKey(player.getUUID())) throw new IllegalStateException("An AE2 menu visit is already active");
         Visit visit = new Visit(player, session, connection);
         VISITS.put(player.getUUID(), visit);
+        session.nativeVisitStarted();
         send(visit, "suspend");
         // ServerPlayer.openMenu normally removes the previous menu. The parent is retained for the return trip.
         player.containerMenu = player.inventoryMenu;
         try {
-            if (!MenuOpener.open(CraftingStatusMenu.TYPE, player, new TerminalCpuMenuLocator(session.id(), connection.frequency())) ||
-                    !(player.containerMenu instanceof CraftingStatusMenu cpuMenu))
-                throw new IllegalStateException("AE2 could not open the player terminal CPU list");
-            visit.cpu = cpuMenu;
-            session.cpuOpened(cpuMenu.containerId);
+            var locator = new TerminalAeMenuLocator(session.id(), connection.frequency());
+            if (key == null) MenuOpener.open(CraftingStatusMenu.TYPE, player, locator);
+            else CraftAmountMenu.open(player, locator, key, key.getAmountPerUnit());
+            if (!suspended(player, session)) throw new IllegalStateException("AE2 could not open the terminal submenu");
         } catch (RuntimeException failure) {
             VISITS.remove(player.getUUID());
             if (player.containerMenu != player.inventoryMenu) player.containerMenu.removed(player);
             player.containerMenu = visit.parent;
-            session.cpuReturned(player);
+            session.nativeReturned(player);
             send(visit, "resume");
             visit.parent.sendAllDataToRemote();
             throw failure;
@@ -68,13 +78,18 @@ public final class TerminalCpuNavigation {
     static boolean suspended(ServerPlayer player, TerminalSession session) {
         if (!VISITS.containsKey(player.getUUID())) return false;
         Visit visit = VISITS.get(player.getUUID());
-        return visit.session == session && player.containerMenu == visit.cpu;
+        if (visit.session != session || !TerminalAeMenuLocator.matches(player.containerMenu, session.id())) return false;
+        if (visit.nativeMenu != player.containerMenu) {
+            visit.nativeMenu = player.containerMenu;
+            session.nativeOpened(player.containerMenu.containerId);
+        }
+        return true;
     }
 
     static void tick(ServerPlayer player, TerminalSession session, @Nullable TerminalConnection connection) {
         if (!VISITS.containsKey(player.getUUID())) return;
         Visit visit = VISITS.get(player.getUUID());
-        if (visit.session != session || player.containerMenu != visit.cpu) {
+        if (!suspended(player, session)) {
             abandon(player.getUUID(), visit.session.id());
         } else if (!parentValid(visit)) {
             abandon(player.getUUID(), visit.session.id());
@@ -83,18 +98,36 @@ public final class TerminalCpuNavigation {
         }
     }
 
+    static void restoreClosed(ServerPlayer player, TerminalSession session) {
+        if (!VISITS.containsKey(player.getUUID())) return;
+        Visit visit = VISITS.get(player.getUUID());
+        if (visit.session != session || visit.nativeMenu == null || player.containerMenu != player.inventoryMenu) return;
+        if (!parentValid(visit)) {
+            abandon(player.getUUID(), session.id());
+            return;
+        }
+        // AE2 may close an invalid plan before our player tick. Its removed/Close lifecycle has already run.
+        VISITS.remove(player.getUUID());
+        restoreParent(visit);
+    }
+
     public static void resume(ServerPlayer player) {
         if (!VISITS.containsKey(player.getUUID())) return;
         Visit visit = VISITS.get(player.getUUID());
-        if (player.containerMenu != visit.cpu || !parentValid(visit)) {
+        if (!suspended(player, visit.session) || !parentValid(visit)) {
             abandon(player.getUUID(), visit.session.id());
             return;
         }
         VISITS.remove(player.getUUID());
-        visit.cpu.removed(player);
-        NeoForge.EVENT_BUS.post(new PlayerContainerEvent.Close(player, visit.cpu));
-        player.containerMenu = visit.parent;
-        visit.session.cpuReturned(player);
+        AbstractContainerMenu nativeMenu = player.containerMenu;
+        nativeMenu.removed(player);
+        NeoForge.EVENT_BUS.post(new PlayerContainerEvent.Close(player, nativeMenu));
+        restoreParent(visit);
+    }
+
+    private static void restoreParent(Visit visit) {
+        visit.player.containerMenu = visit.parent;
+        visit.session.nativeReturned(visit.player);
         send(visit, "resume");
         visit.parent.sendAllDataToRemote();
     }
@@ -104,7 +137,7 @@ public final class TerminalCpuNavigation {
         Visit visit = VISITS.get(playerId);
         if (!visit.session.id().equals(sessionId)) return;
         VISITS.remove(playerId);
-        if (visit.player.containerMenu == visit.cpu) visit.player.closeContainer();
+        if (TerminalAeMenuLocator.matches(visit.player.containerMenu, sessionId)) visit.player.closeContainer();
         visit.parent.removed(visit.player);
         NeoForge.EVENT_BUS.post(new PlayerContainerEvent.Close(visit.player, visit.parent));
         send(visit, "abort");
@@ -112,7 +145,7 @@ public final class TerminalCpuNavigation {
 
     private static boolean parentValid(Visit visit) {
         // AEBaseMenu normally checks these identities in broadcastChanges, which the suspended parent no longer runs.
-        // Validate the public host without broadcasting packets into the native CPU screen.
+        // Validate the public host without broadcasting packets into the native submenu.
         if (visit.parent instanceof AEBaseMenu aeMenu) {
             Object target = aeMenu.getTarget();
             if (target instanceof AEBasePart part) {
@@ -131,7 +164,7 @@ public final class TerminalCpuNavigation {
     }
 
     private static void send(Visit visit, String phase) {
-        PacketDistributor.sendToPlayer(visit.player, new TerminalCpuNavigationPayload(visit.parent.containerId, visit.session.id(), phase));
+        PacketDistributor.sendToPlayer(visit.player, new TerminalNavigationPayload(visit.parent.containerId, visit.session.id(), phase));
     }
 
     private static final class Visit {
@@ -140,7 +173,7 @@ public final class TerminalCpuNavigation {
         private final TerminalSession session;
         private final AbstractContainerMenu parent;
         private final TerminalConnection connection;
-        private @Nullable CraftingStatusMenu cpu;
+        private @Nullable AbstractContainerMenu nativeMenu;
 
         private Visit(ServerPlayer player, TerminalSession session, TerminalConnection connection) {
             this.player = player;

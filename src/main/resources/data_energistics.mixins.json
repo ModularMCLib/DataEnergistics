@@ -129,7 +129,7 @@
 		"ae.ae2.client.crafting.CraftConfirmScreenMixin",
 		"ae.ae2.client.crafting.CraftConfirmTableRendererMixin",
 		"ae.ae2.client.crafting.CraftingCPUScreenMixin",
-		"ae.ae2.client.crafting.PlayerTerminalCpuReturnMixin",
+		"ae.ae2.client.crafting.PlayerTerminalReturnMixin",
 		"ae.ae2.client.crafting.CraftingStatusTableRendererMixin",
 		"ae.ae2.client.crafting.NumberEntryWidgetAccessor",
 		"ae.ae2.client.crafting.NumberEntryWidgetValidationMixin",

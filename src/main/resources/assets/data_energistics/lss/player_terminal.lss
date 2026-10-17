@@ -70,17 +70,9 @@
 .quantity-amount { position: absolute; left: 31px; top: 25px; width: 151px; height: 14px; }
 .quantity-minus { position: absolute; left: 31px; top: 47px; width: 28px; height: 14px; }
 .quantity-plus { position: absolute; left: 62px; top: 47px; width: 28px; height: 14px; }
-.quantity-plan { position: absolute; left: 97px; top: 47px; width: 85px; height: 14px; }
-.confirm-popup { height: 232px; }
-.craft-status { position: absolute; left: 5px; top: 20px; width: 180px; height: 24px; }
-.craft-used { position: absolute; left: 5px; top: 48px; width: 180px; height: 70px; }
-.craft-missing { position: absolute; left: 5px; top: 122px; width: 180px; height: 70px; }
-.craft-cpu { position: absolute; left: 5px; top: 196px; width: 180px; height: 13px; }
-.craft-cancel { position: absolute; left: 5px; top: 213px; width: 85px; height: 14px; }
-.craft-start { position: absolute; right: 5px; top: 213px; width: 85px; height: 14px; }
-.cost-row { width: 180px; height: 11px; font-size: 5; }
+.quantity-apply { position: absolute; left: 97px; top: 47px; width: 85px; height: 14px; }
 .terminal-list .__scroller_view_view-container__ { width: 100%; flex-direction: column; gap-all: 1px; padding-all: 0px; }
-.frequency-row, .cost-row { flex-shrink: 0; }
+.frequency-row { flex-shrink: 0; }
 .terminal-list { padding-all: 0px; }
 .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); }
 .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); }

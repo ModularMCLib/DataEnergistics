@@ -2,8 +2,11 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
+import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;
@@ -27,6 +30,7 @@ public final class TerminalResourceCell extends Button {
     private boolean craftable;
     private boolean configurable;
     private boolean storageCell;
+    private @Nullable UIEventListener resourceClick;
 
     public TerminalResourceCell() {
         addClass("terminal-cell");
@@ -57,6 +61,18 @@ public final class TerminalResourceCell extends Button {
 
     public void storageCell(boolean value) {
         storageCell = value;
+    }
+
+    public void onResourceClick(UIEventListener listener) {
+        resourceClick = listener;
+    }
+
+    @Override
+    protected void onMouseDown(UIEvent event) {
+        if (!isActive() || event.button < 0 || event.button > (storageCell ? 2 : 1)) return;
+        UISoundUtils.playButtonClickSound();
+        if (resourceClick != null) resourceClick.handleEvent(event);
+        setButtonState(State.PRESSED);
     }
 
     public void entry(@Nullable GenericStack value, boolean canCraft) {

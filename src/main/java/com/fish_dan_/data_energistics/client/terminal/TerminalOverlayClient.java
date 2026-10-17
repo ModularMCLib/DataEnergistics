@@ -1,13 +1,17 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
+import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 
 import appeng.api.stacks.GenericStack;
-import appeng.client.gui.me.crafting.CraftingStatusScreen;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
+import appeng.client.gui.me.crafting.CraftErrorScreen;
+import appeng.menu.me.crafting.CraftAmountMenu;
+import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 
 import net.minecraft.client.Minecraft;
@@ -60,8 +64,8 @@ public final class TerminalOverlayClient {
     private boolean suspended;
     private boolean restoring;
     private boolean returnRequested;
-    private @Nullable CraftingStatusScreen nativeCpuScreen;
-    private @Nullable CraftingStatusMenu nativeCpuMenu;
+    private @Nullable AbstractContainerScreen<?> nativeScreen;
+    private @Nullable AbstractContainerMenu nativeMenu;
     private int width;
     private int height;
     private double mouseX;
@@ -74,7 +78,7 @@ public final class TerminalOverlayClient {
     }
 
     /**
-     * Applies only authenticated CPU navigation phases; server confirmation alone restores the saved host.
+     * Applies only authenticated native-menu navigation phases; server confirmation alone restores the saved host.
      */
     public static void navigation(int hostContainerId, UUID sessionId, String phase) {
         TerminalOverlayClient overlay = current;
@@ -86,8 +90,8 @@ public final class TerminalOverlayClient {
                 overlay.clearInputCapture();
                 overlay.suspended = true;
                 overlay.returnRequested = false;
-                overlay.nativeCpuMenu = null;
-                overlay.nativeCpuScreen = null;
+                overlay.nativeMenu = null;
+                overlay.nativeScreen = null;
             }
             case "resume" -> {
                 if (!overlay.suspended) return;
@@ -113,8 +117,8 @@ public final class TerminalOverlayClient {
                     overlay.clearInputCapture();
                     overlay.suspended = false;
                     overlay.returnRequested = false;
-                    overlay.nativeCpuMenu = null;
-                    overlay.nativeCpuScreen = null;
+                    overlay.nativeMenu = null;
+                    overlay.nativeScreen = null;
                     overlay.ticks = 0;
                     overlay.lastRequestTick = 0;
                     overlay.pendingGeometry = false;
@@ -126,7 +130,7 @@ public final class TerminalOverlayClient {
             case "abort" -> {
                 if (overlay.suspended) clear();
             }
-            default -> throw new IllegalArgumentException("Unknown terminal CPU navigation phase: " + phase);
+            default -> throw new IllegalArgumentException("Unknown terminal navigation phase: " + phase);
         }
     }
 
@@ -241,8 +245,9 @@ public final class TerminalOverlayClient {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || !minecraft.player.isAlive() || minecraft.level == null || minecraft.getConnection() == null)
             return false;
-        if (nativeCpuScreen == null) return minecraft.screen == screen && minecraft.player.containerMenu == menu;
-        return minecraft.screen == nativeCpuScreen && minecraft.player.containerMenu == nativeCpuMenu;
+        if (nativeScreen == null) return minecraft.screen == screen && minecraft.player.containerMenu == menu;
+        if (minecraft.screen == null && minecraft.player.containerMenu == minecraft.player.inventoryMenu) return true;
+        return minecraft.screen == nativeScreen && minecraft.player.containerMenu == nativeMenu;
     }
 
     private void clearInputCapture() {
@@ -279,8 +284,8 @@ public final class TerminalOverlayClient {
         keyboardOwned = false;
         pointerOwned = false;
         suspended = false;
-        nativeCpuMenu = null;
-        nativeCpuScreen = null;
+        nativeMenu = null;
+        nativeScreen = null;
     }
 
     private void publishGeometry(boolean immediately) {
@@ -322,7 +327,7 @@ public final class TerminalOverlayClient {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void click(ScreenEvent.MouseButtonPressed.Pre event) {
-        if (Minecraft.getInstance().options.keyInventory.matchesMouse(event.getButton()) && requestCpuReturn(event.getScreen())) {
+        if (Minecraft.getInstance().options.keyInventory.matchesMouse(event.getButton()) && closeNativeScreen(event.getScreen())) {
             event.setCanceled(true);
             return;
         }
@@ -393,7 +398,7 @@ public final class TerminalOverlayClient {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void key(ScreenEvent.KeyPressed.Pre event) {
         if ((event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE || Minecraft.getInstance().options.keyInventory.matches(event.getKeyCode(), event.getScanCode())) &&
-                requestCpuReturn(event.getScreen())) {
+                closeNativeScreen(event.getScreen())) {
             event.setCanceled(true);
             return;
         }
@@ -446,20 +451,25 @@ public final class TerminalOverlayClient {
         TerminalOverlayClient overlay = current;
         if (overlay == null || !overlay.suspended || overlay.restoring) return;
         Screen next = event.getNewScreen();
-        if (overlay.nativeCpuScreen == null && event.getCurrentScreen() == overlay.screen && next instanceof CraftingStatusScreen cpu &&
-                cpu.getMenu().getType() == CraftingStatusMenu.TYPE && Minecraft.getInstance().player != null &&
-                Minecraft.getInstance().player.containerMenu == cpu.getMenu()) {
-            overlay.nativeCpuScreen = cpu;
-            overlay.nativeCpuMenu = cpu.getMenu();
+        if (next instanceof AbstractContainerScreen<?> nativeScreen && TerminalAeMenuLocator.matches(nativeScreen.getMenu(), overlay.session) &&
+                Minecraft.getInstance().player != null && Minecraft.getInstance().player.containerMenu == nativeScreen.getMenu()) {
+            overlay.nativeScreen = nativeScreen;
+            overlay.nativeMenu = nativeScreen.getMenu();
             return;
         }
-        if (next != overlay.nativeCpuScreen) clear();
+        // A server-side AE2 invalidation sends a close before the authenticated parent-resume phase.
+        if (next == null && overlay.nativeScreen != null && Minecraft.getInstance().player != null &&
+                Minecraft.getInstance().player.containerMenu == Minecraft.getInstance().player.inventoryMenu)
+            return;
+        if (next != overlay.nativeScreen) clear();
     }
 
     @SubscribeEvent
     public static void closing(ScreenEvent.Closing event) {
         if (current != null && current.suspended) {
-            if (current.restoring || event.getScreen() == current.screen && current.nativeCpuScreen != null) return;
+            if (current.restoring || event.getScreen() == current.screen && current.nativeScreen != null ||
+                    event.getScreen() instanceof AbstractContainerScreen<?> nativeScreen && TerminalAeMenuLocator.matches(nativeScreen.getMenu(), current.session))
+                return;
             clear();
             return;
         }
@@ -480,18 +490,31 @@ public final class TerminalOverlayClient {
      */
     private record InputTarget(TerminalOverlayClient overlay, TerminalOverlayUi composition, ModularUI modularUi) {}
 
+    private static boolean closeNativeScreen(Screen screen) {
+        TerminalOverlayClient overlay = current;
+        if (overlay == null || !overlay.suspended || overlay.nativeScreen != screen) return false;
+        if (overlay.nativeMenu instanceof CraftingStatusMenu || overlay.nativeMenu instanceof CraftAmountMenu)
+            return requestTerminalReturn(screen);
+        if ((screen instanceof CraftConfirmScreen || screen instanceof CraftErrorScreen) && overlay.nativeMenu instanceof CraftConfirmMenu confirm) {
+            confirm.goBack();
+            return true;
+        }
+        // Existing Trinity and plan-tree screens keep their own popup and return handling.
+        return false;
+    }
+
     /**
-     * Client-thread Back/Escape hook; returns true while this exact native CPU visit owns the return.
+     * Client-thread Back hook; only this exact native menu visit may restore the saved terminal parent.
      */
-    public static boolean requestCpuReturn(@Nullable Screen screen) {
+    public static boolean requestTerminalReturn(@Nullable Screen screen) {
         if (screen == null) return false;
         TerminalOverlayClient overlay = current;
-        if (overlay == null || !overlay.suspended || overlay.nativeCpuScreen != screen || !overlay.suspendedHostValid())
+        if (overlay == null || !overlay.suspended || overlay.nativeScreen != screen || !overlay.suspendedHostValid())
             return false;
         if (!overlay.returnRequested) {
             overlay.returnRequested = true;
-            PacketDistributor.sendToServer(new TerminalRequestPayload(Objects.requireNonNull(overlay.nativeCpuMenu).containerId, overlay.session,
-                    ++overlay.sequence, "cpu_return", new CompoundTag()));
+            PacketDistributor.sendToServer(new TerminalRequestPayload(Objects.requireNonNull(overlay.nativeMenu).containerId, overlay.session,
+                    ++overlay.sequence, "native_return", new CompoundTag()));
         }
         return true;
     }

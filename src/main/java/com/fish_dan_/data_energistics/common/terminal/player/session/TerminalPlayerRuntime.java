@@ -92,12 +92,15 @@ public final class TerminalPlayerRuntime {
     public void tick() {
         if (player.tickCount % 20 == 0 && !returnFaulted) settleReturns();
         if (faulted) return;
-        if (session != null && !session.valid(player)) close();
+        if (session != null) {
+            TerminalAeNavigation.restoreClosed(player, session);
+            if (!session.valid(player)) close();
+        }
         if (!ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL)) return;
         boolean magnet = ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET) && state.magnet().active();
         boolean wantsNetwork = (session != null && session.visible()) || magnet;
         TerminalConnection connection = wantsNetwork ? connection() : null;
-        if (session != null) TerminalCpuNavigation.tick(player, session, connection);
+        if (session != null) TerminalAeNavigation.tick(player, session, connection);
         if (magnet) TerminalMagnetTicker.tick(player, state, connection);
         if (session != null && player.tickCount % 5 == 0) session.send(player, this, connection);
     }

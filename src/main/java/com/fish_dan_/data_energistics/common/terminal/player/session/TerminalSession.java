@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
-import com.fish_dan_.data_energistics.common.terminal.player.crafting.TerminalCraftingRequest;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
@@ -26,6 +25,8 @@ import net.minecraft.util.StringUtil;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -39,10 +40,9 @@ public final class TerminalSession {
     private final UUID id;
     private final UUID owner;
     private final TerminalStorageView storage = new TerminalStorageView();
-    private final TerminalCraftingRequest crafting = new TerminalCraftingRequest();
     private long sequence;
     private int lastRequest;
-    private int cpuMenuId = -1;
+    private final IntSet nativeMenuIds = new IntOpenHashSet();
     private boolean visible = true;
     private boolean closed;
     private String message = "";
@@ -63,16 +63,20 @@ public final class TerminalSession {
         return id;
     }
 
-    void cpuOpened(int containerId) {
-        cpuMenuId = containerId;
+    void nativeOpened(int containerId) {
+        nativeMenuIds.add(containerId);
     }
 
-    void cpuReturned(ServerPlayer player) {
+    void nativeVisitStarted() {
+        nativeMenuIds.clear();
+    }
+
+    void nativeReturned(ServerPlayer player) {
         lastRequest = player.server.getTickCount();
     }
 
     public boolean valid(ServerPlayer player) {
-        boolean suspended = TerminalCpuNavigation.suspended(player, this);
+        boolean suspended = TerminalAeNavigation.suspended(player, this);
         return !closed && (player.containerMenu == menu || suspended) && menu.stillValid(player) && player.isAlive() &&
                 (suspended || player.server.getTickCount() - lastRequest < 100) && ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL);
     }
@@ -85,20 +89,20 @@ public final class TerminalSession {
         return true;
     }
 
-    boolean acceptsCpuReturn(ServerPlayer player, TerminalRequestPayload request) {
+    boolean acceptsNativeReturn(ServerPlayer player, TerminalRequestPayload request) {
         // A native Back packet may already have resumed the host before a queued Escape arrives.
         // Consume that one valid sequence as well, keeping later overlay mutations ordered.
-        if (!valid(player) || !id.equals(request.sessionId()) || request.containerId() != cpuMenuId || request.sequence() != sequence + 1)
+        if (!valid(player) || !id.equals(request.sessionId()) || !nativeMenuIds.contains(request.containerId()) || request.sequence() != sequence + 1)
             return false;
         sequence = request.sequence();
         lastRequest = player.server.getTickCount();
         return true;
     }
 
-    boolean discardDuringCpuVisit(ServerPlayer player, TerminalRequestPayload request) {
-        // Host input can already be in flight when the server opens the CPU screen. Acknowledge its
+    boolean discardDuringNativeVisit(ServerPlayer player, TerminalRequestPayload request) {
+        // Host input can already be in flight when the server opens a native submenu. Acknowledge its
         // sequence without applying it to a suspended menu, so the following return stays ordered.
-        if (!TerminalCpuNavigation.suspended(player, this) || !valid(player) || !id.equals(request.sessionId()) ||
+        if (!TerminalAeNavigation.suspended(player, this) || !valid(player) || !id.equals(request.sessionId()) ||
                 request.containerId() != menu.containerId || request.sequence() != sequence + 1)
             return false;
         sequence = request.sequence();
@@ -147,7 +151,6 @@ public final class TerminalSession {
             case "frequency" -> {
                 long value = data.getLong("value");
                 if (TerminalQuantumAccess.frequencies(player).contains(value)) {
-                    crafting.cancel();
                     state.frequency(value);
                 }
             }
@@ -179,7 +182,6 @@ public final class TerminalSession {
                 requireMagnet(player);
                 state.magnet().pickup.swap(state.magnet().insert);
             }
-            case "craft_cancel" -> crafting.cancel();
             default -> networkAction(player, runtime, action, data);
         }
         if (player.containerMenu == menu) menu.broadcastChanges();
@@ -192,18 +194,14 @@ public final class TerminalSession {
             return;
         }
         switch (action) {
-            case "storage" -> {
-                if (!data.getBoolean("craft"))
-                    TerminalNetworkStorage.click(player, connection, runtime.state(), key(player, data), data.getInt("button"), data.getBoolean("shift"));
-            }
+            case "storage" -> TerminalNetworkStorage.click(player, connection, runtime.state(), key(player, data), data.getInt("button"), data.getBoolean("shift"));
             case "insert" -> TerminalNetworkStorage.insertCursor(player, connection, Integer.MAX_VALUE);
             case "transfer_processing" -> {
                 if (runtime.state().workspace() == TerminalWorkspace.PROCESSING && !runtime.state().work().encoding())
                     message = TerminalContainerTransfer.transfer(player, connection, runtime.state());
             }
-            case "craft_plan" -> crafting.begin(player, connection, key(player, data), data.getLong("amount"));
-            case "craft_start" -> message = crafting.start(connection, data.getInt("cpu"));
-            case "cpu_list" -> TerminalCpuNavigation.open(player, this, connection);
+            case "craft_request" -> TerminalAeNavigation.openCrafting(player, this, connection, key(player, data));
+            case "cpu_list" -> TerminalAeNavigation.open(player, this, connection);
             default -> throw new IllegalArgumentException("Unknown player terminal action " + action);
         }
     }
@@ -220,7 +218,7 @@ public final class TerminalSession {
     }
 
     public void send(ServerPlayer player, TerminalPlayerRuntime runtime, @Nullable TerminalConnection connection) {
-        if (closed || TerminalCpuNavigation.suspended(player, this)) return;
+        if (closed || TerminalAeNavigation.suspended(player, this)) return;
         TerminalPlayerState state = runtime.state();
         CompoundTag snapshot = new CompoundTag();
         snapshot.putBoolean("enabled", true);
@@ -236,7 +234,6 @@ public final class TerminalSession {
         snapshot.putBoolean("magnet_unlocked", ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET));
         snapshot.put("magnet", state.magnet().save(player.registryAccess()));
         snapshot.put("work", state.work().save(player.registryAccess()));
-        snapshot.put("craft", crafting.snapshot(player, connection));
         snapshot.putBoolean("transfer_supported", !TerminalInputTargets.resolve(player, menu).isEmpty());
         storage.snapshot(snapshot, connection, player.registryAccess());
         TerminalWorkstation.snapshot(player, state, snapshot);
@@ -250,8 +247,7 @@ public final class TerminalSession {
     public void close() {
         if (closed) return;
         closed = true;
-        crafting.cancel();
-        TerminalCpuNavigation.abandon(owner, id);
+        TerminalAeNavigation.abandon(owner, id);
     }
 
     void failure(ServerPlayer player) {

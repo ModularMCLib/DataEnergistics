@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.menu.terminal;
 
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
-import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalCpuNavigation;
+import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalAeNavigation;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.networking.IGridNode;
@@ -26,15 +26,15 @@ import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Adapts the actual connection credential to AE2's native CPU screen and its parent-menu return contract.
+ * Adapts the actual connection credential to AE2's native submenus and their parent-menu return contract.
  */
-final class TerminalCpuMenuHost extends ItemMenuHost<Item> implements ITerminalHost, IActionHost {
+final class TerminalAeMenuHost extends ItemMenuHost<Item> implements ITerminalHost, IActionHost {
 
     private final @Nullable TerminalConnection connection;
-    private final TerminalCpuMenuLocator locator;
+    private final TerminalAeMenuLocator locator;
     private final IConfigManager settings = new ConfigManager((IConfigManagerListener) null);
 
-    TerminalCpuMenuHost(Player player, TerminalCpuMenuLocator locator, @Nullable TerminalConnection connection) {
+    TerminalAeMenuHost(Player player, TerminalAeMenuLocator locator, @Nullable TerminalConnection connection) {
         super(AEItems.QUANTUM_ENTANGLED_SINGULARITY.asItem(), player, locator);
         this.connection = connection;
         this.locator = locator;
@@ -45,7 +45,7 @@ final class TerminalCpuMenuHost extends ItemMenuHost<Item> implements ITerminalH
         // Let the overlay session resume its local parent when the credential disappears.
         // Vanilla item-host invalidation would close the native menu before that coordinated return.
         if (getPlayer() instanceof ServerPlayer player)
-            return TerminalCpuNavigation.connection(player, locator.sessionId(), locator.frequency()) != null;
+            return TerminalAeNavigation.connection(player, locator.sessionId(), locator.frequency()) != null;
         return super.isValid();
     }
 
@@ -78,6 +78,6 @@ final class TerminalCpuMenuHost extends ItemMenuHost<Item> implements ITerminalH
 
     @Override
     public void returnToMainMenu(Player player, ISubMenu subMenu) {
-        if (player instanceof ServerPlayer serverPlayer) TerminalCpuNavigation.resume(serverPlayer);
+        if (player instanceof ServerPlayer serverPlayer) TerminalAeNavigation.resume(serverPlayer);
     }
 }

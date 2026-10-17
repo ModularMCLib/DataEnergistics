@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalSavedData;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.menu.terminal.TerminalCpuMenuLocator;
+import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
@@ -37,7 +37,7 @@ public final class TerminalSessions {
     private static final ObjectSet<UUID> FAILED = new ObjectOpenHashSet<>();
 
     public TerminalSessions() {
-        TerminalCpuMenuLocator.register();
+        TerminalAeMenuLocator.register();
     }
 
     private static TerminalPlayerRuntime runtime(ServerPlayer player) {
@@ -45,16 +45,16 @@ public final class TerminalSessions {
     }
 
     public static void handle(ServerPlayer player, TerminalRequestPayload request) {
-        if (request.action().equals("cpu_return")) {
+        if (request.action().equals("native_return")) {
             if (player.isSpectator() || !PLAYERS.containsKey(player.getUUID())) return;
             try {
                 TerminalPlayerRuntime runtime = PLAYERS.get(player.getUUID());
                 TerminalSession session = runtime.session();
-                if (session == null || !session.acceptsCpuReturn(player, request)) return;
-                TerminalCpuNavigation.resume(player);
+                if (session == null || !session.acceptsNativeReturn(player, request)) return;
+                TerminalAeNavigation.resume(player);
                 session.send(player, runtime, session.visible() ? runtime.connection() : null);
             } catch (RuntimeException failure) {
-                fail(player, "CPU return", failure);
+                fail(player, "native-menu return", failure);
             }
             return;
         }
@@ -62,7 +62,7 @@ public final class TerminalSessions {
         if (PLAYERS.containsKey(player.getUUID())) {
             try {
                 TerminalSession session = PLAYERS.get(player.getUUID()).session();
-                if (session != null && session.discardDuringCpuVisit(player, request)) return;
+                if (session != null && session.discardDuringNativeVisit(player, request)) return;
             } catch (RuntimeException failure) {
                 fail(player, "suspended host input", failure);
                 return;

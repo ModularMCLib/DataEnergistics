@@ -12,13 +12,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Keeps the original CPU Back button while ordering its return with this terminal's session protocol.
+ * Keeps AE2's original Back buttons while ordering the terminal-parent return with this session protocol.
  */
 @Mixin(value = AESubScreen.class, remap = false)
-public abstract class PlayerTerminalCpuReturnMixin {
+public abstract class PlayerTerminalReturnMixin {
 
     @Inject(method = "goBack", at = @At("HEAD"), cancellable = true)
     private static void dataEnergistics$returnToPlayerTerminal(CallbackInfo callback) {
-        if (TerminalOverlayClient.requestCpuReturn(Minecraft.getInstance().screen)) callback.cancel();
+        if (TerminalOverlayClient.requestTerminalReturn(Minecraft.getInstance().screen)) callback.cancel();
     }
 }

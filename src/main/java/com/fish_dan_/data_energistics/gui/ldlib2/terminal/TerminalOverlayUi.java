@@ -83,10 +83,8 @@ public final class TerminalOverlayUi {
     private boolean descending;
     private int typeIndex;
     private int offset;
-    private int cpu = -1;
     private @Nullable AEKey selected;
     private @Nullable GhostTarget quantityTarget;
-    private CompoundTag previousCraft = new CompoundTag();
     private CompoundTag previousMagnet = new CompoundTag();
     private long[] previousFrequencies = new long[0];
     private long previousFrequency = Long.MIN_VALUE;
@@ -194,7 +192,7 @@ public final class TerminalOverlayUi {
             if (mode == TerminalWorkspace.PROCESSING)
                 button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
         }
-        for (String name : new String[] { "network", "magnet", "filters", "quantity", "confirm" }) {
+        for (String name : new String[] { "network", "magnet", "filters", "quantity" }) {
             UIElement root = TerminalXmlLayouts.load(name).rootElement;
             popups.put(name, root);
             root.setVisible(false);
@@ -225,11 +223,7 @@ public final class TerminalOverlayUi {
         field(quantity, "amount").setNumbersOnlyLong(1, Long.MAX_VALUE).setText("1", false);
         button(quantity, "minus", () -> amount(-1));
         button(quantity, "plus", () -> amount(1));
-        button(quantity, "plan", this::plan);
-        UIElement confirm = popups.get("confirm");
-        button(confirm, "cancel", () -> request.accept("craft_cancel", new CompoundTag()));
-        button(confirm, "start", () -> networkAction("craft_start", number("cpu", cpu)));
-        button(confirm, "cpu", this::nextCpu);
+        button(quantity, "apply_quantity", this::applyQuantity);
         refreshWorkCells();
     }
 
@@ -245,37 +239,15 @@ public final class TerminalOverlayUi {
         field.setText(Long.toString(direction > 0 ? Math.min(Long.MAX_VALUE - step, current) + step : Math.max(1, current - step)), false);
     }
 
-    private void plan() {
-        if (selected == null) return;
-        if (quantityTarget != null) {
-            drop(quantityTarget, new GenericStack(selected, quantityAmount()));
-            closePopup();
-            return;
-        }
-        CompoundTag data = key(selected);
-        data.putLong("amount", quantityAmount());
-        networkAction("craft_plan", data);
-        open("confirm");
+    private void applyQuantity() {
+        if (selected == null || quantityTarget == null) return;
+        drop(quantityTarget, new GenericStack(selected, quantityAmount()));
+        closePopup();
     }
 
     private long quantityAmount() {
         String value = field(popups.get("quantity"), "amount").getValue();
         return value.isEmpty() ? 1 : Long.parseLong(value);
-    }
-
-    private void nextCpu() {
-        ListTag cpus = snapshot.getCompound("craft").getList("cpus", Tag.TAG_COMPOUND);
-        int next = -1;
-        for (int index = 0; index < cpus.size(); index++) {
-            int id = cpus.getCompound(index).getInt("id");
-            if (cpu == -1 || next == -2) {
-                next = id;
-                break;
-            }
-            if (id == cpu) next = -2;
-        }
-        cpu = next < 0 ? -1 : next;
-        refreshCraft();
     }
 
     public void view(boolean reset) {
@@ -367,7 +339,6 @@ public final class TerminalOverlayUi {
         label(popups.get("network"), "connection_status").setText(text("reason." + value.getString("reason")));
         refreshNetwork();
         refreshMagnet();
-        refreshCraft();
     }
 
     private void refreshWorkCells() {
@@ -465,30 +436,6 @@ public final class TerminalOverlayUi {
         TerminalXmlLayouts.require(filters, "insert_whitelist", Button.class).setText(text("insert_" + (magnet.getBoolean("insert_whitelist") ? "whitelist" : "blacklist")));
     }
 
-    private void refreshCraft() {
-        CompoundTag craft = snapshot.getCompound("craft");
-        UIElement confirm = popups.get("confirm");
-        TerminalXmlLayouts.require(confirm, "cpu", Button.class).setText(text("cpu_selection", cpu < 0 ? text("automatic") : cpu));
-        element(confirm, "start").setActive(snapshot.getBoolean("connected") && craft.getString("status").equals("ready"));
-        if (craft.equals(previousCraft)) return;
-        previousCraft = craft.copy();
-        label(confirm, "craft_status").setText(text("craft_status", text("craft." + craft.getString("status")), craft.getLong("bytes"), craft.getString("message")));
-        costRows(listHost(confirm, "used"), craft.getList("used", Tag.TAG_COMPOUND));
-        costRows(listHost(confirm, "missing"), craft.getList("missing", Tag.TAG_COMPOUND));
-    }
-
-    private void costRows(UIElement host, ListTag entries) {
-        host.clearAllChildren();
-        for (int index = 0; index < entries.size(); index++) {
-            GenericStack stack = generic(entries.getCompound(index));
-            if (stack == null) continue;
-            Label row = new Label();
-            row.addClass("cost-row");
-            row.setText(Component.literal(stack.amount() + " × ").append(stack.what().getDisplayName()));
-            host.addChild(row);
-        }
-    }
-
     public void geometry(int width, int height) {
         screenWidth = width;
         screenHeight = height;
@@ -516,16 +463,12 @@ public final class TerminalOverlayUi {
             createCells(element(window, "storage"), storage, cellCount, viewport.columns(), (index, event) -> {
                 TerminalResourceCell cell = storage.get(index);
                 if (cell.stack() == null) return;
-                if (cell.craftable() && (UIElement.isCtrlDown() || cell.stack().amount() == 0)) {
-                    selected = cell.stack().what();
-                    quantityTarget = null;
-                    field(popups.get("quantity"), "amount").setText("1", false);
-                    open("quantity");
+                if (event.button == 2 || cell.craftable() && (UIElement.isCtrlDown() || cell.stack().amount() == 0)) {
+                    networkAction("craft_request", key(cell.stack().what()));
                 } else {
                     CompoundTag data = key(cell.stack().what());
                     data.putInt("button", event.button);
                     data.putBoolean("shift", UIElement.isShiftDown());
-                    data.putBoolean("craft", false);
                     networkAction("storage", data);
                 }
             });
@@ -702,7 +645,6 @@ public final class TerminalOverlayUi {
             ObjectList<TerminalResourceCell> cells = new ObjectArrayList<>();
             createCells(element(popups.get(name), "selected"), cells, 1, 1, (index, event) -> {});
             cells.getFirst().entry(new GenericStack(selected, 1), false);
-            element(popups.get(name), "plan").setActive(quantityTarget != null || snapshot.getBoolean("connected"));
         }
         geometryDirty = true;
     }
@@ -743,9 +685,7 @@ public final class TerminalOverlayUi {
             int slot = index;
             TerminalResourceCell cell = new TerminalResourceCell();
             cell.layout(style -> style.positionType(TaffyPosition.ABSOLUTE).left(slot % columns * 18).top(slot / columns * 18));
-            cell.setOnClick(event -> {
-                if (event.button == 0 || event.button == 1) click.accept(slot, event);
-            });
+            cell.onResourceClick(event -> click.accept(slot, event));
             cells.add(cell);
             host.addChild(cell);
         }

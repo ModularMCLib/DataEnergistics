@@ -7,6 +7,6 @@
         <text-field id="amount" class="quantity-amount"/>
         <button id="minus" class="quantity-minus"/>
         <button id="plus" class="quantity-plus"/>
-        <button id="plan" class="quantity-plan"/>
+        <button id="apply_quantity" class="quantity-apply"/>
     </root>
 </ui>

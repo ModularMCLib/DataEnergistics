@@ -20,15 +20,23 @@ final class SanctifierRig {
     private SanctifierRig() {}
 
     static float lift(float draw) {
-        return ramp(draw, 0, 0.25F);
+        return ramp(draw, 0.06F, 0.23F);
+    }
+
+    static float support(float draw) {
+        return ramp(draw, 0, 0.12F) * (1 - ramp(draw, 0.94F, 1));
+    }
+
+    static float holstered(float draw) {
+        return ramp(draw, 0.79F, 0.94F);
     }
 
     static float extraction(float draw) {
-        return ramp(draw, 0.27F, 0.78F);
+        return ramp(draw, 0.25F, 0.62F);
     }
 
     static float ready(float draw) {
-        return ramp(draw, 0.8F, 1);
+        return ramp(draw, 0.64F, 0.79F);
     }
 
     static float latch(float draw) {
@@ -66,9 +74,10 @@ final class SanctifierRig {
             Matrix4f sword = new Matrix4f(holster).translate(0, -EXTRACTION_DISTANCE * extraction(draw) / 16, 0);
             return new Frame(blend(sword, swordInHand(model, entity.getMainArm()), ready(draw)), holster);
         }
-        Matrix4f sheath = blend(holster, carried(model, entity.getMainArm(), draw), lift(draw));
-        Matrix4f sword = new Matrix4f(sheath).translate(0, -EXTRACTION_DISTANCE * extraction(draw) / 16, 0);
-        return new Frame(blend(sword, swordInHand(model, entity.getMainArm()), ready(draw)), sheath);
+        Matrix4f lifted = blend(holster, carried(model, entity.getMainArm(), draw), lift(draw));
+        Matrix4f sword = new Matrix4f(lifted).translate(0, -EXTRACTION_DISTANCE * extraction(draw) / 16, 0);
+        return new Frame(blend(sword, swordInHand(model, entity.getMainArm()), ready(draw)),
+                blend(lifted, holster, holstered(draw)));
     }
 
     private static Matrix4f swordInHand(HumanoidModel<?> model, HumanoidArm mainArm) {
@@ -79,13 +88,15 @@ final class SanctifierRig {
     static Frame firstPerson(HumanoidArm mainArm, float draw, SanctifierAnimation.Pose combat) {
         float sign = mainArm == HumanoidArm.RIGHT ? 1 : -1;
         float lift = lift(draw), ready = ready(draw);
-        Matrix4f sheath = new Matrix4f().translation(-sign * 0.42F, -1.08F + 1.13F * lift, -1.15F)
+        Matrix4f lifted = new Matrix4f().translation(-sign * 0.42F, -1.3F + 0.95F * lift, -1.5F)
                 .rotateY(radians(-12 * sign)).rotateZ(radians(sign * (170 - 70 * lift + 50 * ready)))
                 .scale(FIRST_PERSON_SCALE).translate(-CARRY_GRIP.x, -CARRY_GRIP.y, -CARRY_GRIP.z);
-        Matrix4f sword = new Matrix4f(sheath).translate(0, -EXTRACTION_DISTANCE * extraction(draw) / 16, 0);
+        Matrix4f sword = new Matrix4f(lifted).translate(0, -EXTRACTION_DISTANCE * extraction(draw) / 16, 0);
         Matrix4f held = new Matrix4f().translation(sign * 0.38F, -0.52F + combat.combatY() * 0.018F, -1.05F)
                 .rotateY(radians(sign * 50)).rotateZ(radians(sign * (-14 + combat.swordRoll())))
                 .rotateX(radians(-10 + combat.swordPitch())).rotateY(radians(combat.swordYaw())).scale(FIRST_PERSON_SCALE);
+        Matrix4f sheath = new Matrix4f(lifted);
+        sheath.m31(sheath.m31() - 1.2F * holstered(draw));
         return new Frame(blend(sword, held, ready), sheath);
     }
 

@@ -1,10 +1,14 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.common.data.DEEnumProxies;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.HumanoidModel.ArmPose;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -14,17 +18,36 @@ public final class SanctifierThirdPersonPose {
 
     private SanctifierThirdPersonPose() {}
 
+    /** Selection has already changed when sheathing; the native pose still owns this render only. */
+    public static void prepare(RenderPlayerEvent.Pre event) {
+        var player = event.getEntity();
+        if (!SanctifierAnimationStates.isSheathing(player) || !player.getOffhandItem().isEmpty()) return;
+        var model = event.getRenderer().getModel();
+        if (player.getMainArm() == HumanoidArm.RIGHT) {
+            model.rightArmPose = DEEnumProxies.SANCTIFIER_DRAW.getValue();
+            model.leftArmPose = ArmPose.EMPTY;
+        } else {
+            model.leftArmPose = DEEnumProxies.SANCTIFIER_DRAW.getValue();
+            model.rightArmPose = ArmPose.EMPTY;
+        }
+    }
+
     /** Client render thread only; called by the native two-handed ArmPose extension. */
     public static void apply(HumanoidModel<?> model, LivingEntity entity, HumanoidArm mainArm) {
         float partial = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
         float draw = SanctifierAnimationStates.draw(entity, partial);
-        float lift = SanctifierRig.lift(draw);
+        float lift = SanctifierRig.support(draw);
         ModelPart support = mainArm == HumanoidArm.RIGHT ? model.leftArm : model.rightArm;
         ModelPart main = mainArm == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
         float sign = mainArm == HumanoidArm.RIGHT ? 1 : -1;
         support.xRot += (-0.8F - support.xRot) * lift;
         support.yRot *= 1 - lift;
         support.zRot += (-sign * 0.12F - support.zRot) * lift;
+        float returned = SanctifierRig.holstered(draw);
+        if (returned > 0) {
+            Vector3f target = SanctifierRig.carryGrip(SanctifierRig.holster(model));
+            aim(support, target.sub(shoulder(model, mainArm.getOpposite())), returned * lift);
+        }
         Matrix4f sword = new Matrix4f(SanctifierRig.carried(model, mainArm, draw))
                 .translate(0, -SanctifierRig.EXTRACTION_DISTANCE * SanctifierRig.extraction(draw) / 16, 0);
         Vector3f supportPalm = SanctifierRig.palm(model, mainArm.getOpposite()).getTranslation(new Vector3f());
@@ -44,7 +67,7 @@ public final class SanctifierThirdPersonPose {
         if (direction.lengthSquared() < 0.000001F) direction.set(0, 0, 1).cross(normal);
         float radius = (float) Math.sqrt(0.625F * 0.625F - distance * distance / 4);
         Vector3f supportTarget = midpoint.add(direction.normalize().mul(radius));
-        float reach = lift * (1 - SanctifierRig.ready(draw));
+        float reach = SanctifierRig.lift(draw) * (1 - SanctifierRig.ready(draw));
         aim(support, new Vector3f(supportTarget).sub(supportShoulder), reach);
         aim(main, supportTarget.add(separation).sub(mainShoulder), reach);
     }

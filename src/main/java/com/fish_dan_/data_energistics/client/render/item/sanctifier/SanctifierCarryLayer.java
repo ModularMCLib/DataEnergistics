@@ -24,16 +24,16 @@ public final class SanctifierCarryLayer extends RenderLayer<AbstractClientPlayer
     public void render(PoseStack poses, MultiBufferSource buffers, int light, AbstractClientPlayer player,
                        float limbSwing, float limbAmount, float partialTick, float age, float yaw, float pitch) {
         if (player.isInvisible() || player.isSpectator()) return;
-        SanctifierCarryState state = player == Minecraft.getInstance().player
-                ? SanctifierCarryState.fromHotbar(player) : SanctifierCarryState.tracked(player);
-        boolean held = player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get());
-        if (!state.carried() && !held) return;
+        SanctifierCarryState state = player == Minecraft.getInstance().player ? SanctifierCarryState.fromHotbar(player) : SanctifierCarryState.tracked(player);
+        ItemStack stack = SanctifierAnimationStates.renderStack(player);
+        boolean animated = !stack.isEmpty();
+        if (!state.carried() && !animated) return;
         SanctifierBakedModel model = SanctifierBakedModel.current();
         if (model == null) return;
-        ItemStack stack = held ? player.getMainHandItem() : DEItems.DATA_SANCTIFIER.toStack();
-        float draw = held ? SanctifierAnimationStates.draw(player, partialTick) : 0;
+        if (!animated) stack = DEItems.DATA_SANCTIFIER.toStack();
+        float draw = animated ? SanctifierAnimationStates.draw(player, partialTick) : 0;
         SanctifierRig.Frame frame = SanctifierRig.thirdPerson(getParentModel(), player, draw);
-        boolean powered = held ? SanctifierAnimationStates.isPowered(stack) : state.powered();
+        boolean powered = animated ? SanctifierAnimationStates.isPowered(stack) : state.powered();
         model.renderAssembly(stack, poses, buffers, light, frame, draw, powered, true);
     }
 }

@@ -7,27 +7,28 @@ package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 public final class SanctifierAnimation {
 
     public static final int DRAW_TICKS = 32;
-    private static final float[] TIMES = {0, 0.15F, 0.4F, 0.72F, 0.9F, 1.08F, 1.2F};
-    private static final float[] SWORD_Y = {0, 0, -18, -36, -36, -9, 0};
-    private static final float[] SCABBARD_X = {0, 0, 0, 0, -8, -8, -8};
-    private static final float[] SCABBARD_Y = {0, 0, 4.5F, 9, 9, 2.25F, -4};
-    private static final float[] SCABBARD_Z = {0, 0, 0, 0, 1.2F, 1.2F, 1.2F};
-    private static final float[] SCABBARD_ROLL = {0, 0, 0, 0, 0, -135, -180};
+    private static final float[] TIMES = { 0, 0.15F, 0.4F, 0.72F, 0.9F, 1.08F, 1.2F };
+    private static final float[] SWORD_Y = { 0, 0, -18, -36, -36, -9, 0 };
+    private static final float[] SCABBARD_X = { 0, 0, 0, 0, -8, -8, -8 };
+    private static final float[] SCABBARD_Y = { 0, 0, 4.5F, 9, 9, 2.25F, -4 };
+    private static final float[] SCABBARD_Z = { 0, 0, 0, 0, 1.2F, 1.2F, 1.2F };
+    private static final float[] SCABBARD_ROLL = { 0, 0, 0, 0, 0, -135, -180 };
 
     private int previousDraw;
     private int draw;
 
     /**
-     * Selection starts drawing even with an empty battery. Switching away resets the sequence.
+     * Selection draws even with an empty battery. Switching away reverses from the current pose,
+     * so selecting the item again during sheathing does not restart or snap the sequence.
      */
     public void tick(boolean held) {
         this.previousDraw = this.draw;
-        if (!held) {
-            this.previousDraw = 0;
-            this.draw = 0;
-        } else {
-            if (this.draw < DRAW_TICKS) this.draw++;
-        }
+        this.draw = Math.clamp(this.draw + (held ? 1 : -1), 0, DRAW_TICKS);
+    }
+
+    /** Keep the final interpolated frame alive until both tick positions have reached the holster. */
+    boolean isSheathed() {
+        return this.previousDraw == 0 && this.draw == 0;
     }
 
     /**
@@ -89,6 +90,5 @@ public final class SanctifierAnimation {
      */
     public record Pose(float swordY, float scabbardX, float scabbardY, float scabbardZ,
                        float scabbardRoll, float latchRoll, float ignition,
-                       float swordPitch, float swordYaw, float swordRoll, float combatY) {
-    }
+                       float swordPitch, float swordYaw, float swordRoll, float combatY) {}
 }

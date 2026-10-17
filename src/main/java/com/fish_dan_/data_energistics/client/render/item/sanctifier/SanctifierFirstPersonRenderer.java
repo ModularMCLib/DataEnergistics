@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
-import com.fish_dan_.data_energistics.registry.DEItems;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -14,6 +12,7 @@ import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelPart;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -28,25 +27,28 @@ public final class SanctifierFirstPersonRenderer {
     public static void renderHand(RenderHandEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
         var player = minecraft.player;
-        if (player == null || !player.getMainHandItem().is(DEItems.DATA_SANCTIFIER.get())) return;
+        if (player == null || player.isSpectator()) return;
+        ItemStack stack = SanctifierAnimationStates.renderStack(player);
+        if (stack.isEmpty()) return;
         boolean supportFree = player.getOffhandItem().isEmpty();
+        float partial = event.getPartialTick();
+        boolean support = SanctifierAnimationStates.usesSupportHand(player, partial);
         if (event.getHand() == InteractionHand.OFF_HAND) {
-            if (supportFree) event.setCanceled(true);
+            if (support) event.setCanceled(true);
             return;
         }
         SanctifierBakedModel model = SanctifierBakedModel.current();
         if (model == null) return;
         event.setCanceled(true);
-        float partial = event.getPartialTick();
         float draw = SanctifierAnimationStates.draw(player, partial);
         var combat = SanctifierAnimationStates.pose(player, InteractionHand.MAIN_HAND, partial);
         SanctifierRig.Frame frame = SanctifierRig.firstPerson(player.getMainArm(), draw, combat);
-        model.renderAssembly(player.getMainHandItem(), event.getPoseStack(), event.getMultiBufferSource(),
-                event.getPackedLight(), frame, draw, SanctifierAnimationStates.isPowered(player.getMainHandItem()), supportFree);
+        model.renderAssembly(stack, event.getPoseStack(), event.getMultiBufferSource(),
+                event.getPackedLight(), frame, draw, SanctifierAnimationStates.isPowered(stack), supportFree && draw < 1);
         if (!player.isInvisible()) {
             arm(player, player.getMainArm(), frame.sword().getTranslation(new Vector3f()),
                     event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
-            if (supportFree) {
+            if (support) {
                 arm(player, player.getMainArm().getOpposite(), SanctifierRig.carryGrip(frame.scabbard()),
                         event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
             }

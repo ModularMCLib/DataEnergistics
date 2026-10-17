@@ -131,7 +131,14 @@ public final class MeDigitalAnvilMenu extends AbstractContainerMenu {
             }
             case "boost_up", "boost_down" -> {
                 if (!DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(upgrades)) return;
-                requestedBoost = Math.clamp(requestedBoost + (action.equals("boost_up") ? 1 : -1), 0, 254);
+                int amount = switch (value) {
+                    case "", "1" -> 1;
+                    case "10" -> 10;
+                    case "100" -> 100;
+                    default -> 0;
+                };
+                if (amount == 0) return;
+                requestedBoost = Math.clamp(requestedBoost + (action.equals("boost_up") ? amount : -amount), 0, 254);
             }
             default -> {
                 return;

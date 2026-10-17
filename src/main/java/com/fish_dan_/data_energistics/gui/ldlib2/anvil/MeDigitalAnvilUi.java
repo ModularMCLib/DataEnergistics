@@ -23,6 +23,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
+import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 
@@ -34,6 +36,9 @@ import net.minecraft.world.item.ItemStack;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
 
 /** Compact native LDLib2 composition based on the supplied anvil layout and shared player inventory. */
 public final class MeDigitalAnvilUi {
@@ -67,7 +72,7 @@ public final class MeDigitalAnvilUi {
         name.layout(layout -> layout.paddingAll(3));
         name.style(style -> style.backgroundTexture(texture("top_surface/text_box_0")));
         name.textFieldStyle(style -> style.fontSize(8).textColor(TEXT).textShadow(false)
-                .focusOverlay(new ColorBorderTexture(-1, 0xFF343548)));
+                .focusOverlay(IGuiTexture.EMPTY));
         name.setTextResponder(value -> {
             if (!menu.isServerSide() && value.length() <= 50) menu.request("rename", value);
         });
@@ -83,8 +88,8 @@ public final class MeDigitalAnvilUi {
         errorOverlay.setAllowHitTest(false);
         errorOverlay.setVisible(false);
         root.addChild(errorOverlay);
-        up = step("up", () -> menu.request("boost_up", ""));
-        down = step("down", () -> menu.request("boost_down", ""));
+        up = step("up");
+        down = step("down");
         root.addChildren(at(up, 159, 46, 10, 10), at(down, 159, 58, 10, 10));
         UIElement statusFrame = at(new UIElement(), 25, 72, 129, 14);
         statusFrame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
@@ -105,6 +110,7 @@ public final class MeDigitalAnvilUi {
         inventory.setId("me_digital_anvil_inventory");
         SharedBackpackStyles.inventory(inventory);
         root.addChild(at(inventory, 8, 95, 162, 76));
+        root.addEventListener(UIEvents.KEY_DOWN, this::onKeyDown, true);
         root.addEventListener(UIEvents.TICK, event -> {
             if (!menu.isServerSide()) refresh();
         });
@@ -148,8 +154,6 @@ public final class MeDigitalAnvilUi {
         boolean levels = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(data.getInt("upgrades"));
         up.setActive(levels && data.getInt("boost") < 254);
         down.setActive(levels && data.getInt("boost") > 0);
-        up.style(style -> style.tooltips(text(levels ? "boost_up" : "levels_locked", data.getInt("boost"))));
-        down.style(style -> style.tooltips(text(levels ? "boost_down" : "levels_locked", data.getInt("boost"))));
         String state = data.getBoolean("faulted") ? "faulted" : !data.getBoolean("online") ? "offline" :
                 data.getBoolean("refund_pending") ? "refund_pending" : !data.getBoolean("valid") ? "invalid" :
                         !data.getBoolean("ready") ? "insufficient" : "ready";
@@ -173,24 +177,53 @@ public final class MeDigitalAnvilUi {
         icon.style(style -> style.tooltips(research.toArray(Component[]::new)));
     }
 
-    private static Button step(String direction, Runnable action) {
+    private Button step(String direction) {
         StateTextureButton button = new StateTextureButton();
         button.setArrow(direction.equals("up") ? StateTextureButton.Arrow.UP : StateTextureButton.Arrow.DOWN);
         button.setActive(false);
-        button.setOnClick(event -> action.run());
+        button.setOnClick(event -> {
+            if (!menu.isServerSide() && event.button == 0) requestBoost(direction);
+        });
+        button.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> {
+            CompoundTag data = menu.snapshot();
+            Component action = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(data.getInt("upgrades")) ?
+                    text("boost_" + direction, boostStep(), data.getInt("boost")) : text("levels_locked");
+            event.hoverTooltips = new HoverTooltips(List.of(action, text("boost_shortcuts")), null, null, null);
+        });
         return button;
+    }
+
+    private void onKeyDown(UIEvent event) {
+        if (menu.isServerSide() || name.isFocused()) return;
+        String direction = switch (event.keyCode) {
+            case GLFW.GLFW_KEY_UP -> "up";
+            case GLFW.GLFW_KEY_DOWN -> "down";
+            default -> "";
+        };
+        if (!direction.isEmpty() && (direction.equals("up") ? up : down).isActive()) {
+            requestBoost(direction);
+            event.stopPropagation();
+        }
+    }
+
+    private void requestBoost(String direction) {
+        menu.request("boost_" + direction, Integer.toString(boostStep()));
+    }
+
+    private static int boostStep() {
+        return UIElement.isCtrlDown() ? 100 : UIElement.isShiftDown() ? 10 : 1;
     }
 
     private static UIElement framedSlot(Slot machineSlot, int x) {
         UIElement frame = at(new UIElement(), x, 46, 22, 22);
         frame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
-        UIElement rim = at(new UIElement(), 2, 2, 18, 18);
-        rim.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
-        ItemSlot slot = at(new ItemSlot(machineSlot), 1, 1, 16, 16);
-        slot.layout(layout -> layout.paddingAll(0));
-        slot.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/inventory_slot.png"))));
-        rim.addChild(slot);
-        frame.addChild(rim);
+        ItemSlot slot = at(new ItemSlot(machineSlot), 2, 2, 18, 18);
+        SharedBackpackStyles.standalone(slot);
+        slot.layout(layout -> layout.paddingAll(1));
+        slot.style(style -> style.backgroundTexture(GuiTextureGroup.of(
+                SpriteTexture.of(Data_Energistics.id("textures/guis/backpack/middle.png")),
+                new ColorBorderTexture(-1, OUTLINE))));
+        frame.addChild(slot);
         return frame;
     }
 

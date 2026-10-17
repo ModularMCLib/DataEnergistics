@@ -217,14 +217,13 @@ public final class MeDigitalAnvilUi {
     private static UIElement framedSlot(Slot machineSlot, int x) {
         UIElement frame = at(new UIElement(), x, 46, 22, 22);
         frame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
-        UIElement rim = at(new UIElement(), 2, 2, 18, 18);
-        rim.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
-        ItemSlot slot = at(new ItemSlot(machineSlot), 1, 1, 16, 16);
+        ItemSlot slot = at(new ItemSlot(machineSlot), 2, 2, 18, 18);
         SharedBackpackStyles.standalone(slot);
-        slot.layout(layout -> layout.paddingAll(0));
-        slot.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/inventory_slot.png"))));
-        rim.addChild(slot);
-        frame.addChild(rim);
+        slot.layout(layout -> layout.paddingAll(1));
+        slot.style(style -> style.backgroundTexture(GuiTextureGroup.of(
+                SpriteTexture.of(Data_Energistics.id("textures/guis/backpack/middle.png")),
+                new ColorBorderTexture(-1, OUTLINE))));
+        frame.addChild(slot);
         return frame;
     }
 

@@ -45,6 +45,8 @@ public final class SanctifierFirstPersonRenderer {
         var frame = SanctifierRig.firstPerson(player.getMainArm(), input);
         model.renderAssembly(stack, event.getPoseStack(), event.getMultiBufferSource(),
                 event.getPackedLight(), frame.assembly(), draw, powered, supportFree && draw < 1);
+        SanctifierBladeTrail.render(player, SanctifierBladeTrail.View.FIRST_PERSON, input, frame.assembly().sword(),
+                event.getPoseStack(), event.getMultiBufferSource(), powered);
         if (!player.isInvisible()) {
             arm(player, player.getMainArm(), frame.mainHand(),
                     event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());

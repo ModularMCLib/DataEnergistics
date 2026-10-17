@@ -9,6 +9,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -35,5 +36,10 @@ public final class SanctifierCarryLayer extends RenderLayer<AbstractClientPlayer
         SanctifierRig.Frame frame = SanctifierRig.thirdPerson(getParentModel(), player, draw);
         boolean powered = animated ? SanctifierAnimationStates.isPowered(stack) : state.powered();
         model.renderAssembly(stack, poses, buffers, light, frame, draw, powered, true);
+        if (animated) {
+            SanctifierBladeTrail.render(player, SanctifierBladeTrail.View.THIRD_PERSON,
+                    SanctifierAnimationStates.input(player, InteractionHand.MAIN_HAND, partialTick),
+                    frame.sword(), poses, buffers, powered);
+        }
     }
 }

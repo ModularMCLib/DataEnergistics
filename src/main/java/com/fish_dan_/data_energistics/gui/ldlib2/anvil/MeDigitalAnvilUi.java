@@ -8,6 +8,8 @@ import com.fish_dan_.data_energistics.menu.machine.anvil.MeDigitalAnvilMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -39,6 +41,7 @@ public final class MeDigitalAnvilUi {
     private static final int WIDTH = 178;
     private static final int HEIGHT = 180;
     private static final int TEXT = 0xFF343548;
+    private static final int OUTLINE = 0xFFF2F2F2;
     private final MeDigitalAnvilMenu menu;
     private final UIElement root = new UIElement();
     private final TextField name = new TextField();
@@ -55,46 +58,49 @@ public final class MeDigitalAnvilUi {
         root.setId("me_digital_anvil");
         root.layout(layout -> layout.width(WIDTH).height(HEIGHT));
         root.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/digital_panel.png"))));
-        at(icon, 17, 8, 30, 30);
+        at(icon, 18, 9, 32, 32);
         icon.style(style -> style.backgroundTexture(texture("top_surface/hammer")));
         root.addChild(icon);
-        UIElement workArea = at(new UIElement(), 50, 25, 108, 58);
-        workArea.style(style -> style.backgroundTexture(texture("background/small_anvil")));
-        root.addChild(workArea);
         name.setAnyString();
         name.setTextValidator(value -> value.length() <= 50);
-        at(name, 3, 5, 96, 10);
-        name.layout(layout -> layout.paddingAll(1));
-        name.style(style -> style.backgroundTexture(texture("small_top_surface/small_text_box_0")));
+        at(name, 60, 22, 110, 16);
+        name.layout(layout -> layout.paddingAll(3));
+        name.style(style -> style.backgroundTexture(texture("top_surface/text_box_0")));
         name.textFieldStyle(style -> style.fontSize(8).textColor(TEXT).textShadow(false)
                 .focusOverlay(new ColorBorderTexture(-1, 0xFF343548)));
         name.setTextResponder(value -> {
             if (!menu.isServerSide() && value.length() <= 50) menu.request("rename", value);
         });
-        workArea.addChild(name);
-        ItemSlot left = new ItemSlot(menu.leftSlot());
-        ItemSlot right = new ItemSlot(menu.rightSlot());
-        ItemSlot output = new ItemSlot(menu.outputSlot());
-        for (ItemSlot slot : new ItemSlot[] { left, right, output }) {
-            slot.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
-        }
-        at(left, 3, 20, 18, 18);
-        at(right, 39, 20, 18, 18);
-        at(output, 78, 20, 18, 18);
-        workArea.addChildren(left, right, output);
-        at(errorOverlay, 60, 21, 16, 16);
+        root.addChild(name);
+        root.addChildren(framedSlot(menu.leftSlot(), 25), framedSlot(menu.rightSlot(), 74), framedSlot(menu.outputSlot(), 132));
+        UIElement addition = at(new UIElement(), 54, 51, 13, 13);
+        addition.style(style -> style.backgroundTexture(texture("background/addition")));
+        UIElement progress = at(new UIElement(), 103, 49, 22, 16);
+        progress.style(style -> style.backgroundTexture(texture("background/progress")));
+        root.addChildren(addition, progress);
+        at(errorOverlay, 104, 50, 16, 16);
         errorOverlay.style(style -> style.zIndex(1).backgroundTexture(texture("top_surface/prohibit")));
         errorOverlay.setAllowHitTest(false);
         errorOverlay.setVisible(false);
-        workArea.addChild(errorOverlay);
+        root.addChild(errorOverlay);
         up = step("up", () -> menu.request("boost_up", ""));
         down = step("down", () -> menu.request("boost_down", ""));
         root.addChildren(at(up, 159, 46, 10, 10), at(down, 159, 58, 10, 10));
-        at(status, 3, 43, 96, 10);
-        status.style(style -> style.backgroundTexture(texture("small_top_surface/small_text_box_0")));
+        UIElement statusFrame = at(new UIElement(), 25, 72, 129, 14);
+        statusFrame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
+        UIElement statusSurface = at(new UIElement(), 2, 2, 125, 10);
+        statusSurface.style(style -> style.backgroundTexture(GuiTextureGroup.of(
+                new ColorRectTexture(0xFF9A9FB4), new ColorBorderTexture(-1, OUTLINE))));
+        UIElement statusShadow = at(new UIElement(), 1, 1, 123, 2);
+        statusShadow.style(style -> style.backgroundTexture(new ColorRectTexture(0xFF696D88)));
+        at(status, 1, 1, 123, 8);
+        status.layout(layout -> layout.paddingAll(0));
+        status.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
         status.textStyle(style -> style.fontSize(8).textWrap(TextWrap.HOVER_ROLL));
         status.setAllowHitTest(true);
-        workArea.addChild(status);
+        statusSurface.addChildren(statusShadow, status);
+        statusFrame.addChild(statusSurface);
+        root.addChild(statusFrame);
         InventorySlots inventory = new InventorySlots();
         inventory.setId("me_digital_anvil_inventory");
         SharedBackpackStyles.inventory(inventory);
@@ -172,6 +178,19 @@ public final class MeDigitalAnvilUi {
         button.setArrow(direction.equals("up") ? StateTextureButton.Arrow.UP : StateTextureButton.Arrow.DOWN);
         button.setOnClick(event -> action.run());
         return button;
+    }
+
+    private static UIElement framedSlot(Slot machineSlot, int x) {
+        UIElement frame = at(new UIElement(), x, 46, 22, 22);
+        frame.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
+        UIElement rim = at(new UIElement(), 2, 2, 18, 18);
+        rim.style(style -> style.backgroundTexture(new ColorBorderTexture(-1, OUTLINE)));
+        ItemSlot slot = at(new ItemSlot(machineSlot), 1, 1, 16, 16);
+        slot.layout(layout -> layout.paddingAll(0));
+        slot.style(style -> style.backgroundTexture(SpriteTexture.of(Data_Energistics.id("textures/guis/inventory_slot.png"))));
+        rim.addChild(slot);
+        frame.addChild(rim);
+        return frame;
     }
 
     private static IGuiTexture texture(String path) {

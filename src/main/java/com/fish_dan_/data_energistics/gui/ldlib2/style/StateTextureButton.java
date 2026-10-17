@@ -28,14 +28,15 @@ public final class StateTextureButton extends Button {
     @ConfigSetter(field = "arrow")
     public void setArrow(Arrow arrow) {
         this.arrow = arrow;
-        String path = "small_top_surface/small_arrow_" + (arrow == Arrow.UP ? "up" : "down");
-        IGuiTexture normal = GuiTextureGroup.of(texture("small_top_surface/small_button_0"), texture(path + "_0"));
-        IGuiTexture hover = GuiTextureGroup.of(texture("small_top_surface/small_button_1"), texture(path + "_0"));
-        IGuiTexture pressed = GuiTextureGroup.of(texture("small_top_surface/small_button_2"), texture(path + "_1"));
+        String path = "small_top_surface/small_arrow_" + (arrow == Arrow.UP ? "up" : "down") + "_1";
+        IGuiTexture overlay = texture(path).transform(0, arrow == Arrow.DOWN ? 1 : 0);
+        IGuiTexture normal = GuiTextureGroup.of(texture("small_top_surface/small_button_0"), overlay);
+        IGuiTexture hover = GuiTextureGroup.of(texture("small_top_surface/small_button_1"), overlay);
+        IGuiTexture pressed = GuiTextureGroup.of(texture("small_top_surface/small_button_2"), overlay);
         buttonStyle(style -> style.baseTexture(normal).hoverTexture(hover).pressedTexture(pressed));
     }
 
-    private static IGuiTexture texture(String path) {
+    private static SpriteTexture texture(String path) {
         return SpriteTexture.of(Data_Energistics.id("textures/guis/states/" + path + ".png"));
     }
 

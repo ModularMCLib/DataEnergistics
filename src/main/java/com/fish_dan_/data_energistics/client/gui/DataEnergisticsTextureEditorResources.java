@@ -231,11 +231,13 @@ public final class DataEnergisticsTextureEditorResources {
 
     /** Registers all sliced state assets with category-prefixed, collision-free editor names. */
     private static void registerStateTextures(BuiltinResourceProvider<IGuiTexture> provider) {
+        provider.addResource("states_background_addition", guiSprite("states/background/addition.png"));
         provider.addResource("states_background_carrier_0", guiSprite("states/background/carrier_0.png"));
         provider.addResource("states_background_carrier_1", guiSprite("states/background/carrier_1.png"));
         provider.addResource("states_background_complex_biological_chip", guiSprite("states/background/complex_biological_chip.png"));
         provider.addResource("states_background_crop", guiSprite("states/background/crop.png"));
         provider.addResource("states_background_ore", guiSprite("states/background/ore.png"));
+        provider.addResource("states_background_progress", guiSprite("states/background/progress.png"));
         provider.addResource("states_background_small_anvil", guiSprite("states/background/small_anvil.png"));
         provider.addResource("states_background_small_forging", guiSprite("states/background/small_forging.png"));
         provider.addResource("states_background_small_handle", guiSprite("states/background/small_handle.png"));

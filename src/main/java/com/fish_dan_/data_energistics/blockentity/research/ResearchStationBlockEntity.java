@@ -78,7 +78,8 @@ public final class ResearchStationBlockEntity extends AENetworkedBlockEntity {
     @Override
     public EnumSet<Direction> getGridConnectableSides(BlockOrientation orientation) {
         Direction facing = getBlockState().getValue(ResearchStationBlock.FACING);
-        return EnumSet.of(Direction.DOWN, facing.getOpposite(), facing.getCounterClockWise());
+        // The outer side is the model's cable port; the inner side connects the left housing.
+        return EnumSet.of(Direction.DOWN, facing.getClockWise(), facing.getCounterClockWise());
     }
 
     @Override

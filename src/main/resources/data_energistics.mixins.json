@@ -157,6 +157,7 @@
 		"minecraft.client.render.crossbow.CrossbowFirstPersonAnimationMixin",
 		"minecraft.client.render.crossbow.CrossbowHumanoidHoldMixin",
 		"minecraft.client.render.crossbow.CrossbowThirdPersonAnimationMixin",
+		"minecraft.client.render.trident.ThrownTridentRendererMixin",
 		"technology.avaritia.emi.ExtremeSmithingEmiInputsMixin",
 		"viewer.emi.ae2.AbstractRecipeHandlerMixin",
 		"viewer.emi.ae2.EmiEncodePatternHandlerMixin",

@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.storage;
 
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 
+import appeng.api.networking.IGrid;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
@@ -9,86 +10,74 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.function.Predicate;
-
-/**
- * Projects a sorted page of stored and craftable resources; requests identify resources by key, never row number.
- */
+/** Publishes a bounded resource-index delta; localized searching and JECh matching belong to the client. */
 public final class TerminalStorageView {
 
-    private Predicate<AEKey> search = key -> true;
-    private String sort = "name";
-    private String filter = "all";
-    private String type = "all";
-    private boolean descending;
-    private int offset;
-    private int limit = 96;
-
-    public void configure(CompoundTag tag) {
-        String nextQuery = tag.getString("query");
-        String nextSort = tag.getString("sort");
-        String nextFilter = tag.getString("filter");
-        int nextOffset = tag.getInt("offset");
-        int nextLimit = tag.getInt("limit");
-        if (nextQuery.length() > 256 || !(nextSort.equals("name") || nextSort.equals("amount") || nextSort.equals("mod")) ||
-                !(nextFilter.equals("all") || nextFilter.equals("stored") || nextFilter.equals("craftable")) ||
-                nextOffset < 0 || nextLimit < 1 || nextLimit > 512)
-            throw new IllegalArgumentException("Invalid terminal storage view");
-        search = TerminalResourceSearch.compile(nextQuery);
-        sort = nextSort;
-        filter = nextFilter;
-        type = tag.getString("type");
-        descending = tag.getBoolean("descending");
-        offset = nextOffset;
-        limit = nextLimit;
-    }
+    private static final int MAX_CHANGES = 512;
+    private final Object2ObjectMap<AEKey, Entry> published = new Object2ObjectLinkedOpenHashMap<>();
+    private final ObjectLinkedOpenHashSet<AEKey> changedKeys = new ObjectLinkedOpenHashSet<>();
+    private @Nullable IGrid grid;
+    private boolean initialized;
+    private long revision;
 
     public void snapshot(CompoundTag snapshot, @Nullable TerminalConnection connection, HolderLookup.Provider registries) {
-        ObjectList<Entry> entries = new ObjectArrayList<>();
-        if (connection != null) {
-            var amounts = new Object2LongOpenHashMap<AEKey>();
-            for (var entry : connection.grid().getStorageService().getCachedInventory()) {
-                if (entry.getLongValue() > 0) amounts.put(entry.getKey(), entry.getLongValue());
+        IGrid nextGrid = connection == null ? null : connection.grid();
+        boolean reset = !initialized || grid != nextGrid;
+        if (reset) {
+            initialized = true;
+            grid = nextGrid;
+            published.clear();
+            changedKeys.clear();
+        }
+        Object2ObjectMap<AEKey, Entry> current = new Object2ObjectLinkedOpenHashMap<>();
+        if (grid != null) {
+            for (var entry : grid.getStorageService().getCachedInventory()) {
+                if (entry.getLongValue() > 0) current.put(entry.getKey(), new Entry(entry.getLongValue(), false));
             }
-            var craftables = connection.grid().getCraftingService().getCraftables(key -> true);
-            for (AEKey key : craftables) amounts.putIfAbsent(key, 0);
-            for (var entry : amounts.object2LongEntrySet()) {
-                AEKey key = entry.getKey();
-                boolean craftable = craftables.contains(key);
-                if ((!type.equals("all") && !key.getType().getId().toString().equals(type)) ||
-                        (filter.equals("stored") && entry.getLongValue() == 0) || (filter.equals("craftable") && !craftable) || !search.test(key))
-                    continue;
-                entries.add(new Entry(key, entry.getLongValue(), craftable));
+            for (AEKey key : grid.getCraftingService().getCraftables(value -> true)) {
+                long amount = current.containsKey(key) ? current.get(key).amount() : 0;
+                current.put(key, new Entry(amount, true));
             }
         }
-        Comparator<Entry> comparator = switch (sort) {
-            case "amount" -> Comparator.comparingLong(Entry::amount);
-            case "mod" -> Comparator.comparing(value -> value.key().getModId());
-            default ->
-                    Comparator.comparing(value -> value.key().getDisplayName().getString(), String.CASE_INSENSITIVE_ORDER);
-        };
-        if (descending) comparator = comparator.reversed();
-        entries.sort(comparator.thenComparing(value -> value.key().getId().toString()).thenComparingInt(value -> value.key().hashCode()));
-        offset = Math.min(offset, Math.max(0, entries.size() - 1));
-        ListTag page = new ListTag();
-        for (int index = offset; index < Math.min(entries.size(), offset + limit); index++) {
-            Entry entry = entries.get(index);
-            CompoundTag tag = new CompoundTag();
-            tag.put("stack", GenericStack.writeTag(registries, new GenericStack(entry.key(), entry.amount())));
-            tag.putBoolean("craftable", entry.craftable());
-            page.add(tag);
+        // Keep unsent keys in arrival order. Frequently changing entries must not starve the rest of a large index.
+        for (AEKey key : published.keySet()) if (!current.containsKey(key)) changedKeys.add(key);
+        for (var entry : current.object2ObjectEntrySet()) {
+            if (!entry.getValue().equals(published.get(entry.getKey()))) changedKeys.add(entry.getKey());
         }
-        snapshot.put("storage", page);
-        snapshot.putInt("storage_total", entries.size());
-        snapshot.putInt("storage_offset", offset);
+        int changes = 0;
+        ListTag removed = new ListTag();
+        ListTag updates = new ListTag();
+        while (!changedKeys.isEmpty() && changes < MAX_CHANGES) {
+            AEKey key = changedKeys.removeFirst();
+            if (current.containsKey(key)) {
+                Entry entry = current.get(key);
+                if (entry.equals(published.get(key))) continue;
+                CompoundTag tag = new CompoundTag();
+                tag.put("stack", GenericStack.writeTag(registries, new GenericStack(key, entry.amount())));
+                tag.putBoolean("craftable", entry.craftable());
+                updates.add(tag);
+                published.put(key, entry);
+            } else {
+                if (!published.containsKey(key)) continue;
+                removed.add(key.toTagGeneric(registries));
+                published.remove(key);
+            }
+            changes++;
+        }
+        if (reset || changes > 0) revision++;
+        snapshot.put("storage", updates);
+        snapshot.put("storage_removed", removed);
+        snapshot.putLong("storage_revision", revision);
+        snapshot.putBoolean("storage_reset", reset);
+        snapshot.putBoolean("storage_pending", !changedKeys.isEmpty());
+        snapshot.putInt("storage_total", current.size());
     }
 
-    private record Entry(AEKey key, long amount, boolean craftable) {
+    private record Entry(long amount, boolean craftable) {
     }
 }

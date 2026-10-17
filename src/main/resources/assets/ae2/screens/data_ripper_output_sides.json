@@ -2,7 +2,9 @@
 	"$schema": "schema.json",
 	"includes": ["common/common.json"],
 	"background": {
-		"texture": "guis/set_output_sides.png",
+		"texture": "data_energistics:textures/guis/background/set_output_sides.png",
+		"textureWidth": 93,
+		"textureHeight": 92,
 		"srcRect": [0, 0, 93, 92]
 	},
 	"text": {

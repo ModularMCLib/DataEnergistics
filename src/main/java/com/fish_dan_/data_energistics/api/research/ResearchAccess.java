@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.api.research;
 
-import com.fish_dan_.data_energistics.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.research.persistence.ResearchSavedData;
-import com.fish_dan_.data_energistics.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
+import com.fish_dan_.data_energistics.common.research.persistence.ResearchSavedData;
+import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;

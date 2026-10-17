@@ -61,8 +61,7 @@ public final class PatternBufferCompartmentPanel {
     private static final int PANEL_WIDTH = 249;
     private static final int PANEL_HEIGHT = 214;
     private static final IGuiTexture EMPTY_PATTERN_TEXTURE = SpriteTexture
-            .of("ae2:textures/guis/states.png")
-            .setSprite(240, 128, 16, 16);
+            .of(Data_Energistics.id("textures/guis/states/background/blank_pattern.png"));
 
     private PatternBufferCompartmentPanel() {}
 

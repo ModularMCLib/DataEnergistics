@@ -10,6 +10,8 @@ import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPa
 import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
 import com.fish_dan_.data_energistics.network.action.MeVacuumLaunchPayload;
 import com.fish_dan_.data_energistics.network.action.RailChainPayload;
+import com.fish_dan_.data_energistics.network.anvil.DigitalAnvilActionPayload;
+import com.fish_dan_.data_energistics.network.anvil.DigitalAnvilSnapshotPayload;
 import com.fish_dan_.data_energistics.network.crafting.tree.action.CraftingPlanTreeActionPayload;
 import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphPayload;
 import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassRequestPayload;
@@ -56,6 +58,8 @@ public final class DEPayloads {
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("26.10.14");
+        registrar.playToServer(DigitalAnvilActionPayload.TYPE, DigitalAnvilActionPayload.STREAM_CODEC, DigitalAnvilActionPayload::handle);
+        registrar.playToClient(DigitalAnvilSnapshotPayload.TYPE, DigitalAnvilSnapshotPayload.STREAM_CODEC, DigitalAnvilSnapshotPayload::handle);
         registrar.playToServer(ResearchActionPayload.TYPE, ResearchActionPayload.STREAM_CODEC, ResearchActionPayload::handle);
         registrar.playToClient(ResearchSnapshotPayload.TYPE, ResearchSnapshotPayload.STREAM_CODEC, ResearchSnapshotPayload::handle);
         registrar.playToClient(ResearchMaterialFavoritesPayload.TYPE, ResearchMaterialFavoritesPayload.STREAM_CODEC, ResearchMaterialFavoritesPayload::handle);

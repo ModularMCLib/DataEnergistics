@@ -7,7 +7,6 @@ import com.fish_dan_.data_energistics.registry.DEBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -20,7 +19,6 @@ import mezz.jei.api.recipe.category.AbstractRecipeCategory;
 public final class DataChargerRecipeCategory extends AbstractRecipeCategory<DataChargerRecipe> {
 
     public static final RecipeType<DataChargerRecipe> RECIPE_TYPE = RecipeType.create(Data_Energistics.MODID, "data_charger", DataChargerRecipe.class);
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("jei", "textures/jei/gui/gui_vanilla.png");
     private static final int WIDTH = 92;
     private static final int HEIGHT = 40;
     private static final int INPUT_X = 12;
@@ -39,7 +37,7 @@ public final class DataChargerRecipeCategory extends AbstractRecipeCategory<Data
                 guiHelper.createDrawableItemLike(DEBlocks.DATA_CHARGER.get()),
                 WIDTH,
                 HEIGHT);
-        this.arrow = guiHelper.createDrawable(TEXTURE, 82, 128, 24, 17);
+        this.arrow = guiHelper.getRecipeArrow();
     }
 
     @Override

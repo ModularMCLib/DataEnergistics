@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.client.hud.orbital.rendering;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudPreferences.DisplayMode;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudPreferences.Preferences;
 import com.fish_dan_.data_energistics.client.hud.orbital.layout.OrbitalHudPlacement;
-import com.fish_dan_.data_energistics.orbital.control.OrbitalControlTerminalSnapshot.WeaponEntry;
-import com.fish_dan_.data_energistics.orbital.control.ui.OrbitalControlPresentation;
-import com.fish_dan_.data_energistics.orbital.control.ui.OrbitalControlUiTheme;
+import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlTerminalSnapshot.WeaponEntry;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPresentation;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiTheme;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

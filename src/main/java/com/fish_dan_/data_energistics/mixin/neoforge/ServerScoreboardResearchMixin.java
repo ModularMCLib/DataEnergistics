@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.neoforge;
 
-import com.fish_dan_.data_energistics.research.team.ResearchTeams;
+import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerScoreboard;

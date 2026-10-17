@@ -38,8 +38,7 @@ final class PreviewCandidateColumn extends UIElement {
     private static final int ENTRY_WIDTH = 16;
     private static final int ENTRY_HEIGHT = 18;
     private static final SpriteTexture ENTRY_TEXTURE = SpriteTexture.of(
-            "data_energistics:textures/guis/autobuild/replaceable_block_column.png")
-            .setSprite(0, 0, ENTRY_WIDTH, ENTRY_HEIGHT);
+            "data_energistics:textures/guis/autobuild/replaceable_block_column.png");
 
     private final List<CandidateEntry> entries = new ObjectArrayList<>(VISIBLE_ENTRY_COUNT);
     private final ObjIntConsumer<PreviewPredicateKey> candidateSelectionHandler;

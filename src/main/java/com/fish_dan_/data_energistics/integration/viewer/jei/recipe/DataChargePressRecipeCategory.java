@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.integration.viewer.jei.ui.JeiIconDrawable;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataChargePressRecipeView;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressIngredient;
 import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipeSupport;
@@ -10,7 +9,6 @@ import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.GenericStack;
-import appeng.client.gui.Icon;
 import appeng.recipes.handlers.InscriberProcessType;
 import appeng.recipes.handlers.InscriberRecipe;
 
@@ -39,9 +37,6 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
 
     public static final RecipeType<DataChargePressRecipeView> RECIPE_TYPE = RecipeType.create(
             Data_Energistics.MODID, "data_charge_press", DataChargePressRecipeView.class);
-    // Keep recipe content in machine coordinates while shifting only the background five pixels forward.
-    private static final int LEFT_CROP = 5;
-    private static final int TOP_CROP = 15;
     private static final int BACKGROUND_WIDTH = 160;
     private static final int WIDTH = BACKGROUND_WIDTH + 2;
     private static final int HEIGHT = 64;
@@ -60,10 +55,12 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
     private static final int SECOND_INPUT_Y = 24;
     private static final int THIRD_INPUT_Y = 42;
     private static final int PROGRESS_Y = 24;
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            "ae2", "textures/guis/data_integrated_charger.png");
-    private static final ResourceLocation DATA_STATES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            Data_Energistics.MODID, "textures/guis/states.png");
+    private static final ResourceLocation BACKGROUND = Data_Energistics.id("textures/guis/recipe/charge_press.png");
+    private static final ResourceLocation PROGRESS = Data_Energistics.id("textures/guis/progress/processing.png");
+    private static final ResourceLocation POWDER_ICON = Data_Energistics.id("textures/guis/states/top_surface/powder_mode.png");
+    private static final ResourceLocation CRYSTAL_GROWTH_ICON = Data_Energistics.id("textures/guis/states/top_surface/production_boost_mode.png");
+    private static final ResourceLocation INSCRIBER_ICON = Data_Energistics.id("textures/guis/states/top_surface/embossing_mode.png");
+    private static final ResourceLocation CHARGER_ICON = Data_Energistics.id("textures/guis/states/top_surface/charging_mode.png");
 
     private final IDrawable background;
     private final IDrawableAnimated progress;
@@ -79,18 +76,21 @@ public final class DataChargePressRecipeCategory extends AbstractRecipeCategory<
                 guiHelper.createDrawableItemLike(DEBlocks.DATA_INTEGRATED_CHARGER.get()),
                 WIDTH,
                 HEIGHT);
-        this.background = guiHelper.createDrawable(TEXTURE, LEFT_CROP, TOP_CROP, BACKGROUND_WIDTH, HEIGHT);
-        this.progress = guiHelper.drawableBuilder(TEXTURE, 176, 0, 6, 18)
+        this.background = guiHelper.drawableBuilder(BACKGROUND, 0, 0, BACKGROUND_WIDTH, HEIGHT)
+                .setTextureSize(BACKGROUND_WIDTH, HEIGHT).build();
+        this.progress = guiHelper.drawableBuilder(PROGRESS, 0, 0, 6, 18)
+                .setTextureSize(6, 18)
                 .buildAnimated(200, IDrawableAnimated.StartDirection.BOTTOM, false);
-        this.powderModeIcon = new JeiIconDrawable(Icon.PLACEMENT_ITEM);
-        this.crystalGrowthModeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 80, 80, 16, 16)
-                .setTextureSize(128, 128)
+        this.powderModeIcon = guiHelper.drawableBuilder(POWDER_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16).build();
+        this.crystalGrowthModeIcon = guiHelper.drawableBuilder(CRYSTAL_GROWTH_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
-        this.inscriberModeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 96, 80, 16, 16)
-                .setTextureSize(128, 128)
+        this.inscriberModeIcon = guiHelper.drawableBuilder(INSCRIBER_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
-        this.chargerModeIcon = guiHelper.drawableBuilder(DATA_STATES_TEXTURE, 112, 80, 16, 16)
-                .setTextureSize(128, 128)
+        this.chargerModeIcon = guiHelper.drawableBuilder(CHARGER_ICON, 0, 0, 16, 16)
+                .setTextureSize(16, 16)
                 .build();
     }
 

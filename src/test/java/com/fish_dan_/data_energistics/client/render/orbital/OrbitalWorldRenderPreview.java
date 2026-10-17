@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.client.render.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackPhase;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceLifecycleState;
+import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
 import com.fish_dan_.data_energistics.network.orbital.projection.OrbitalProjectionVisualsPayload;
 import com.fish_dan_.data_energistics.network.orbital.visual.OrbitalAttackVisualsPayload;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackMode;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackPhase;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackVisualSnapshot;
-import com.fish_dan_.data_energistics.orbital.model.StellarErasureDeviceLifecycleState;
-import com.fish_dan_.data_energistics.orbital.projection.OrbitalProjectionVisualSnapshot;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;

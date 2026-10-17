@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.api.research;
 
-import com.fish_dan_.data_energistics.research.definition.ResearchDefinitions;
+import com.fish_dan_.data_energistics.data.research.ResearchDefinitions;
 
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;

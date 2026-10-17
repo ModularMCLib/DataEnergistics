@@ -14,9 +14,8 @@ import org.jspecify.annotations.Nullable;
 public final class TrinityPatternProgressBar extends UIElement {
 
     private static final String TEXTURE_ROOT = "textures/guis/trinity/progress/";
-    private static final int HORIZONTAL_TRACK_TEXTURE_WIDTH = 175;
-    private static final Geometry HORIZONTAL = new Geometry(175, 10, 3, 4, 169, 2, 4, 2);
-    private static final Geometry VERTICAL = new Geometry(10, 154, 4, 3, 148, 2, 2, 4);
+    private static final Geometry HORIZONTAL = new Geometry(175, 10, 3, 4, 169, 2);
+    private static final Geometry VERTICAL = new Geometry(10, 154, 4, 3, 148, 2);
 
     private final Orientation orientation;
     private final Geometry geometry;
@@ -28,14 +27,12 @@ public final class TrinityPatternProgressBar extends UIElement {
                                       String id,
                                       Orientation orientation,
                                       Geometry geometry,
-                                      String trackTexture,
-                                      int trackTextureWidth,
-                                      int trackTextureHeight) {
+                                      String trackTexture) {
         this.orientation = orientation;
         this.geometry = geometry;
         setId(id);
         setAllowHitTest(false);
-        style(style -> style.backgroundTexture(sprite(trackTexture, trackTextureWidth, trackTextureHeight)));
+        style(style -> style.backgroundTexture(sprite(trackTexture)));
         layout(layout -> layout.width(geometry.width()).height(geometry.height()));
 
         this.reveal.setId(id + "_reveal");
@@ -53,14 +50,12 @@ public final class TrinityPatternProgressBar extends UIElement {
                 id,
                 Orientation.HORIZONTAL,
                 HORIZONTAL,
-                "track_horizontal",
-                HORIZONTAL_TRACK_TEXTURE_WIDTH,
-                HORIZONTAL.height());
+                "track_horizontal");
     }
 
     public static TrinityPatternProgressBar vertical(String id) {
         return new TrinityPatternProgressBar(
-                id, Orientation.VERTICAL, VERTICAL, "track_vertical", VERTICAL.width(), VERTICAL.height());
+                id, Orientation.VERTICAL, VERTICAL, "track_vertical");
     }
 
     /** Shows {@code progress} of the selected state while preserving the fill texture's track-relative phase. */
@@ -69,7 +64,6 @@ public final class TrinityPatternProgressBar extends UIElement {
             ResourceLocation texture = this.orientation == Orientation.HORIZONTAL ? appearance.horizontalTexture() : appearance.verticalTexture();
             this.fill.style(style -> style.backgroundTexture(SpriteTexture
                     .of(texture)
-                    .setSprite(0, 0, this.geometry.tileWidth(), this.geometry.tileHeight())
                     .setWrapMode(SpriteTexture.WrapMode.REPEAT)));
             this.appearance = appearance;
         }
@@ -102,11 +96,11 @@ public final class TrinityPatternProgressBar extends UIElement {
         place(this.fill, 0, -hiddenPixels, this.geometry.laneSize(), this.geometry.laneLength());
     }
 
-    private static SpriteTexture sprite(String name, int width, int height) {
+    private static SpriteTexture sprite(String name) {
         ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(
                 Data_Energistics.MODID,
                 TEXTURE_ROOT + name + ".png");
-        return SpriteTexture.of(texture).setSprite(0, 0, width, height);
+        return SpriteTexture.of(texture);
     }
 
     private static void place(UIElement element, int left, int top, int width, int height) {
@@ -129,7 +123,5 @@ public final class TrinityPatternProgressBar extends UIElement {
                             int laneLeft,
                             int laneTop,
                             int laneLength,
-                            int laneSize,
-                            int tileWidth,
-                            int tileHeight) {}
+                            int laneSize) {}
 }

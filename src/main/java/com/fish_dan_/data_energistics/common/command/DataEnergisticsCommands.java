@@ -1,19 +1,19 @@
 package com.fish_dan_.data_energistics.common.command;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackRecord;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackSavedData;
-import com.fish_dan_.data_energistics.orbital.control.OrbitalOwnershipActionDispatcher;
-import com.fish_dan_.data_energistics.orbital.control.StellarErasureDeviceAdministrationDispatcher;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointChunkTickets;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLocation;
-import com.fish_dan_.data_energistics.orbital.model.OrbitalAccessRole;
-import com.fish_dan_.data_energistics.orbital.storage.OrbitalOwnershipTransfer;
-import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackRecord;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
+import com.fish_dan_.data_energistics.common.orbital.control.OrbitalOwnershipActionDispatcher;
+import com.fish_dan_.data_energistics.common.orbital.control.StellarErasureDeviceAdministrationDispatcher;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
+import com.fish_dan_.data_energistics.common.orbital.model.OrbitalAccessRole;
+import com.fish_dan_.data_energistics.common.orbital.storage.OrbitalOwnershipTransfer;
+import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
+import com.fish_dan_.data_energistics.common.research.development.ResearchDevelopmentMode;
+import com.fish_dan_.data_energistics.common.research.team.ResearchTeams;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.research.development.ResearchDevelopmentMode;
-import com.fish_dan_.data_energistics.research.team.ResearchTeams;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;

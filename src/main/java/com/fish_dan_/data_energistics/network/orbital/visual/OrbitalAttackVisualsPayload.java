@@ -2,11 +2,11 @@ package com.fish_dan_.data_energistics.network.orbital.visual;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackMode;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackPhase;
-import com.fish_dan_.data_energistics.orbital.attack.OrbitalAttackVisualSnapshot;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamPath;
-import com.fish_dan_.data_energistics.orbital.attack.beam.OrbitalBeamSweep;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackPhase;
+import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualSnapshot;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
+import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamSweep;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

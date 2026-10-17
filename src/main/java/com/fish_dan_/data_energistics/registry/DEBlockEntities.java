@@ -15,6 +15,7 @@ import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockE
 import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataSolarPanelBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.machine.anvil.MeDigitalAnvilBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalControlConsoleBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalUplinkBeaconBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.orbital.astronomy.AstronomicalMirrorBlockEntity;
@@ -55,6 +56,13 @@ public final class DEBlockEntities {
             "digital_transformation_research_station", () -> {
                 var type = BlockEntityType.Builder.of(ResearchStationBlockEntity::new, DEBlocks.RESEARCH_STATION.get()).build(null);
                 DEBlocks.RESEARCH_STATION.get().setBlockEntity(ResearchStationBlockEntity.class, type, null,
+                        (level, pos, state, host) -> host.serverTick());
+                return type;
+            });
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MeDigitalAnvilBlockEntity>> ME_DIGITAL_ANVIL = BLOCK_ENTITY_TYPES.register(
+            "me_digital_anvil", () -> {
+                var type = BlockEntityType.Builder.of(MeDigitalAnvilBlockEntity::new, DEBlocks.ME_DIGITAL_ANVIL.get()).build(null);
+                DEBlocks.ME_DIGITAL_ANVIL.get().setBlockEntity(MeDigitalAnvilBlockEntity.class, type, null,
                         (level, pos, state, host) -> host.serverTick());
                 return type;
             });

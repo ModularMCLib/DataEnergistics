@@ -6,7 +6,9 @@
 		"common/toolbox.json"
 	],
 	"background": {
-		"texture": "guis/data_asynchronous_processing_factory.png",
+		"texture": "data_energistics:textures/guis/background/data_asynchronous_processing_factory.png",
+		"textureWidth": 195,
+		"textureHeight": 235,
 		"srcRect": [0, 0, 195, 235]
 	},
 	"slots": {
@@ -118,8 +120,10 @@
 	},
 	"images": {
 		"progressBar": {
-			"texture": "guis/data_asynchronous_processing_factory.png",
-			"srcRect": [195, 0, 6, 18]
+			"texture": "data_energistics:textures/guis/progress/processing.png",
+			"textureWidth": 6,
+			"textureHeight": 18,
+			"srcRect": [0, 0, 6, 18]
 		}
 	},
 	"widgets": {

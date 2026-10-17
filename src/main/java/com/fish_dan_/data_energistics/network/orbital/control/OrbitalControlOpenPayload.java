@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.network.orbital.control;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.orbital.control.ui.OrbitalControlPlayerMenu;
+import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

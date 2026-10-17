@@ -2,11 +2,11 @@ package com.fish_dan_.data_energistics.block.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalUplinkBeaconBlockEntity;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointKind;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLimitException;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLocation;
-import com.fish_dan_.data_energistics.orbital.model.StellarErasureDeviceRecord;
-import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointKind;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLimitException;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
+import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
+import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 
 import appeng.block.AEBaseBlock;
 

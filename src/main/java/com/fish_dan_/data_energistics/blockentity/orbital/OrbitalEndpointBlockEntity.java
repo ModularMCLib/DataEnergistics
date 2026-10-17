@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.blockentity.orbital;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointChunkTickets;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointKind;
-import com.fish_dan_.data_energistics.orbital.endpoint.OrbitalEndpointLocation;
-import com.fish_dan_.data_energistics.orbital.storage.StellarErasureDeviceSavedData;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointKind;
+import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointLocation;
+import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.orientation.BlockOrientation;

@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierModelLoader;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.MOD;
@@ -114,8 +115,14 @@ public final class DataEnergisticsClient {
     }
 
     @SubscribeEvent
+    public static void onAddPlayerLayers(EntityRenderersEvent.AddLayers event) {
+        ClientRendererRegistrar.addLayers(event);
+    }
+
+    @SubscribeEvent
     public static void onRegisterGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
         event.register(Data_Energistics.id("star_shard"), new CrossbowModelLoader());
+        event.register(Data_Energistics.id("sanctifier"), new SanctifierModelLoader());
     }
 
     @SubscribeEvent

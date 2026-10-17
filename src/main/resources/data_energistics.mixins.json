@@ -153,7 +153,6 @@
 		"minecraft.accessor.AbstractContainerScreenAccessor",
 		"minecraft.client.render.crossbow.ChromaticGlowMixin",
 		"minecraft.client.render.crossbow.CrossbowFirstPersonAnimationMixin",
-		"minecraft.client.render.crossbow.CrossbowHumanoidHoldMixin",
 		"minecraft.client.render.crossbow.CrossbowThirdPersonAnimationMixin",
 		"technology.avaritia.emi.ExtremeSmithingEmiInputsMixin",
 		"viewer.emi.ae2.AbstractRecipeHandlerMixin",

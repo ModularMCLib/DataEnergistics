@@ -1,11 +1,59 @@
 {
-	"parent": "data_energistics:item/data_sanctifier_off",
-	"overrides": [
-		{
-			"predicate": {
-				"data_energistics:powered": 1.0
-			},
-			"model": "data_energistics:item/data_sanctifier_on"
+	"parent": "minecraft:block/block",
+	"loader": "data_energistics:sanctifier",
+	"render_type": "minecraft:cutout",
+	"ambientocclusion": false,
+	"gui_light": "front",
+	"textures": {
+		"particle": "data_energistics:item/tool_weapon/data_sanctifier/alloy",
+		"alloy": "data_energistics:item/tool_weapon/data_sanctifier/alloy"
+	},
+	"parts": {
+		"sword": "data_energistics:models/item/data_sanctifier/sword.obj",
+		"blade_edge": "data_energistics:models/item/data_sanctifier/blade_edge.obj",
+		"scabbard": "data_energistics:models/item/data_sanctifier/scabbard.obj",
+		"scabbard_latch": "data_energistics:models/item/data_sanctifier/scabbard_latch.obj",
+		"sword_lights": "data_energistics:models/item/data_sanctifier/sword_lights.obj",
+		"scabbard_lights": "data_energistics:models/item/data_sanctifier/scabbard_lights.obj"
+	},
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [0, -90, 0],
+			"translation": [0, 1.0, 0],
+			"scale": [0.52, 0.52, 0.52]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [0, 90, 0],
+			"translation": [0, 1.0, 0],
+			"scale": [0.52, 0.52, 0.52]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, -75, -16],
+			"translation": [0.5, 1.0, -2.5],
+			"scale": [0.44, 0.44, 0.44]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, 75, 16],
+			"translation": [0.5, 1.0, -2.5],
+			"scale": [0.44, 0.44, 0.44]
+		},
+		"gui": {
+			"rotation": [0, 20, -40],
+			"scale": [0.27, 0.27, 0.27]
+		},
+		"ground": {
+			"rotation": [0, 0, 90],
+			"translation": [0, 2, 0],
+			"scale": [0.28, 0.28, 0.28]
+		},
+		"fixed": {
+			"rotation": [0, 0, -40],
+			"scale": [0.3, 0.3, 0.3]
+		},
+		"head": {
+			"rotation": [0, 0, 90],
+			"scale": [0.35, 0.35, 0.35]
 		}
-	]
+	},
+	"static_draw": 0
 }

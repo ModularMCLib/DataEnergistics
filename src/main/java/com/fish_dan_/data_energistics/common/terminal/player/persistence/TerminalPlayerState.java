@@ -11,8 +11,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
-import org.jspecify.annotations.Nullable;
-
 import java.util.EnumMap;
 import java.util.function.Consumer;
 
@@ -23,7 +21,6 @@ public final class TerminalPlayerState {
 
     private final EnumMap<TerminalWorkspace, TerminalWorkspaceState> workspaces = new EnumMap<>(TerminalWorkspace.class);
     private final Runnable changed;
-    private @Nullable Long frequency;
     private TerminalWorkspace workspace = TerminalWorkspace.CRAFTING;
     private final TerminalMagnetSettings magnet;
     private final TerminalPinnedResources pins;
@@ -38,10 +35,6 @@ public final class TerminalPlayerState {
         pins = new TerminalPinnedResources(changed);
         for (TerminalWorkspace page : TerminalWorkspace.values())
             workspaces.put(page, new TerminalWorkspaceState(page, changed));
-    }
-
-    public @Nullable Long frequency() {
-        return frequency;
     }
 
     public TerminalWorkspace workspace() {
@@ -80,11 +73,6 @@ public final class TerminalPlayerState {
         changed.run();
     }
 
-    public void frequency(long value) {
-        frequency = value;
-        changed.run();
-    }
-
     public void workspace(TerminalWorkspace value) {
         workspace = value;
         changed.run();
@@ -114,7 +102,6 @@ public final class TerminalPlayerState {
 
     public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
-        if (frequency != null) tag.putLong("frequency", frequency);
         tag.putString("workspace", workspace.id());
         CompoundTag pages = new CompoundTag();
         for (var entry : workspaces.entrySet()) pages.put(entry.getKey().id(), entry.getValue().save(registries));
@@ -129,7 +116,6 @@ public final class TerminalPlayerState {
 
     public static TerminalPlayerState load(CompoundTag tag, HolderLookup.Provider registries, Runnable changed) {
         TerminalPlayerState state = new TerminalPlayerState(changed);
-        if (tag.contains("frequency", Tag.TAG_LONG)) state.frequency = tag.getLong("frequency");
         state.workspace = TerminalWorkspace.byId(tag.getString("workspace"));
         CompoundTag pages = tag.getCompound("workspaces");
         for (var entry : state.workspaces.entrySet())

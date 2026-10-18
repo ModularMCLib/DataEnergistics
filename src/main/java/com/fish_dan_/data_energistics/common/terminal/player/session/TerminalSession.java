@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
-import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternUpload;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalRecipeTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
@@ -195,12 +194,6 @@ public final class TerminalSession {
                 TerminalConnection connection = state.workspace() == TerminalWorkspace.ANVIL ? runtime.connection() : null;
                 message = TerminalWorkstation.take(player, state, connection, data.getBoolean("shift"));
             }
-            case "frequency" -> {
-                long value = data.getLong("value");
-                if (TerminalQuantumAccess.frequencies(player).contains(value)) {
-                    state.frequency(value);
-                }
-            }
             case "magnet_mode" -> {
                 requireMagnet(player);
                 state.magnet().mode(TerminalMagnetSettings.Mode.valueOf(data.getString("value")));
@@ -278,8 +271,6 @@ public final class TerminalSession {
         snapshot.putBoolean("substitutes", state.work().substitutes());
         snapshot.putBoolean("fluid_substitutes", state.work().fluidSubstitutes());
         snapshot.putBoolean("record_recipe_type", state.work().recordRecipeType());
-        if (state.frequency() != null) snapshot.putLong("frequency", state.frequency());
-        snapshot.putLongArray("frequencies", TerminalQuantumAccess.frequencies(player).toLongArray());
         snapshot.putBoolean("magnet_unlocked", ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET));
         snapshot.put("magnet", state.magnet().save(player.registryAccess()));
         snapshot.put("pins", state.pins().save(player.registryAccess()));

@@ -56,7 +56,7 @@ public final class TerminalPlayerRuntime {
     }
 
     public @Nullable TerminalConnection connection() {
-        TerminalConnection connection = TerminalQuantumAccess.resolve(player, state);
+        TerminalConnection connection = TerminalQuantumAccess.resolve(player);
         if (connection == null) return null;
         int tick = player.server.getTickCount();
         if (paidTick == tick) return paidGrid == connection.grid() ? connection : null;

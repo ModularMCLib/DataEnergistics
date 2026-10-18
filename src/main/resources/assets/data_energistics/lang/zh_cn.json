@@ -1795,7 +1795,7 @@
 	"gui.data_energistics.player_terminal.quantity": "资源数量",
 	"gui.data_energistics.player_terminal.reason.fault": "本次操作失败，详情见服务端日志",
 	"gui.data_energistics.player_terminal.reason.locked": "需要完成玩家小终端研究",
-	"gui.data_energistics.player_terminal.reason.offline": "网络未连接：携带已链接的量子缠绕奇点并选择频率。本地工作区仍可使用。",
+	"gui.data_energistics.player_terminal.reason.offline": "网络未连接",
 	"gui.data_energistics.player_terminal.reason.online": "量子网络已连接",
 	"gui.data_energistics.player_terminal.recipe_next": "›",
 	"gui.data_energistics.player_terminal.recipe_previous": "‹",

@@ -1795,7 +1795,7 @@
 	"gui.data_energistics.player_terminal.quantity": "Resource amount",
 	"gui.data_energistics.player_terminal.reason.fault": "The operation failed; see the server log",
 	"gui.data_energistics.player_terminal.reason.locked": "Player Mini Terminal research required",
-	"gui.data_energistics.player_terminal.reason.offline": "Network unavailable: carry a linked Quantum Entangled Singularity and choose a frequency. Local workspaces remain available.",
+	"gui.data_energistics.player_terminal.reason.offline": "Network disconnected",
 	"gui.data_energistics.player_terminal.reason.online": "Quantum connection active",
 	"gui.data_energistics.player_terminal.recipe_next": "›",
 	"gui.data_energistics.player_terminal.recipe_previous": "‹",

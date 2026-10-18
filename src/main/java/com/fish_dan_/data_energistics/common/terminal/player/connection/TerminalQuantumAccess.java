@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.terminal.player.connection;
 
-import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosTerminalSingularities;
 
@@ -27,12 +26,19 @@ public final class TerminalQuantumAccess {
 
     private TerminalQuantumAccess() {}
 
-    public static LongList frequencies(ServerPlayer player) {
-        LongSet values = new LongLinkedOpenHashSet();
-        for (int index = 0; index < player.getInventory().getContainerSize(); index++)
-            add(player.getInventory().getItem(index), values);
-        if (MOD.isCuriosLoaded()) CuriosTerminalSingularities.collect(player, values);
+    private static LongList frequencies(ServerPlayer player) {
+        LongSet values = accessoryFrequencies(player);
+        if (values.isEmpty()) {
+            for (int index = 0; index < player.getInventory().getContainerSize(); index++)
+                add(player.getInventory().getItem(index), values);
+        }
         return new LongArrayList(values);
+    }
+
+    private static LongSet accessoryFrequencies(Player player) {
+        LongSet values = new LongLinkedOpenHashSet();
+        if (MOD.isCuriosLoaded()) CuriosTerminalSingularities.collect(player, values);
+        return values;
     }
 
     public static void add(ItemStack stack, LongSet values) {
@@ -43,11 +49,12 @@ public final class TerminalQuantumAccess {
 
     /** Finds the physical connection credential without creating an item or changing its inventory slot. */
     public static ItemStack carried(Player player, long frequency) {
+        if (!accessoryFrequencies(player).isEmpty()) return CuriosTerminalSingularities.find(player, frequency);
         for (int index = 0; index < player.getInventory().getContainerSize(); index++) {
             ItemStack stack = player.getInventory().getItem(index);
             if (matches(stack, frequency)) return stack;
         }
-        return MOD.isCuriosLoaded() ? CuriosTerminalSingularities.find(player, frequency) : ItemStack.EMPTY;
+        return ItemStack.EMPTY;
     }
 
     public static boolean matches(ItemStack stack, long frequency) {
@@ -56,24 +63,18 @@ public final class TerminalQuantumAccess {
         return paired != null && paired.longValue() == frequency;
     }
 
-    public static @Nullable TerminalConnection resolve(ServerPlayer player, TerminalPlayerState state) {
+    public static @Nullable TerminalConnection resolve(ServerPlayer player) {
+        if (player.isSpectator()) return null;
         LongList frequencies = frequencies(player);
-        if (state.frequency() == null && !frequencies.isEmpty()) {
-            for (long frequency : frequencies) {
-                TerminalConnection available = resolve(player, frequency);
-                if (available != null) {
-                    state.frequency(frequency);
-                    return available;
-                }
-            }
-            state.frequency(frequencies.getLong(0));
-        }
-        Long selected = state.frequency();
-        return selected == null || !frequencies.contains(selected.longValue()) ? null : resolve(player, selected.longValue());
+        return frequencies.isEmpty() ? null : locate(player, frequencies.getLong(0));
     }
 
     public static @Nullable TerminalConnection resolve(ServerPlayer player, long frequency) {
         if (!frequencies(player).contains(frequency) || player.isSpectator()) return null;
+        return locate(player, frequency);
+    }
+
+    private static @Nullable TerminalConnection locate(ServerPlayer player, long frequency) {
         IActionHost host = Locatables.quantumNetworkBridges().get(player.level(), frequency);
         TerminalConnection connection = connection(player, frequency, host);
         if (connection != null) return connection;

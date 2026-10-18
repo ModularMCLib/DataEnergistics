@@ -18,6 +18,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -38,6 +39,7 @@ public final class TerminalStorageIndex {
     private String sort = "name";
     private String filter = "all";
     private ObjectSet<AEKeyType> types = ObjectSet.of();
+    private ObjectSet<AEKey> excluded = ObjectSet.of();
     private boolean descending;
     private Language language = Language.getInstance();
     private TerminalSearchQuery search = new TerminalSearchQuery("");
@@ -74,7 +76,7 @@ public final class TerminalStorageIndex {
     /**
      * Rebuilds only after actual index, language or query-option changes; equal projections keep their identity.
      */
-    public void project(String query, String sort, boolean descending, String filter, ObjectSet<AEKeyType> types) {
+    public void project(String query, String sort, boolean descending, String filter, ObjectSet<AEKeyType> types, ObjectSet<AEKey> excluded) {
         Language currentLanguage = Language.getInstance();
         if (!this.query.equals(query) || language != currentLanguage) {
             this.query = query;
@@ -82,17 +84,18 @@ public final class TerminalStorageIndex {
             search = new TerminalSearchQuery(query);
             dirty = true;
         }
-        if (!this.sort.equals(sort) || this.descending != descending || !this.filter.equals(filter) || !this.types.equals(types))
+        if (!this.sort.equals(sort) || this.descending != descending || !this.filter.equals(filter) || !this.types.equals(types) || !this.excluded.equals(excluded))
             dirty = true;
         this.sort = sort;
         this.descending = descending;
         this.filter = filter;
         if (!this.types.equals(types)) this.types = new ObjectOpenHashSet<>(types);
+        if (!this.excluded.equals(excluded)) this.excluded = new ObjectOpenHashSet<>(excluded);
         if (!dirty) return;
         dirty = false;
         ObjectList<Entry> matches = new ObjectArrayList<>();
         for (Entry entry : entries.values()) {
-            if (!this.types.contains(entry.key().getType()) ||
+            if (this.excluded.contains(entry.key()) || !this.types.contains(entry.key().getType()) ||
                     (filter.equals("stored") && entry.amount() == 0) || (filter.equals("craftable") && !entry.craftable()) || !search.test(entry.key()))
                 continue;
             matches.add(entry);
@@ -109,6 +112,10 @@ public final class TerminalStorageIndex {
 
     public ObjectList<Entry> projected() {
         return projected;
+    }
+
+    public @Nullable Entry entry(AEKey key) {
+        return entries.getOrDefault(key, null);
     }
 
     public int loaded() {

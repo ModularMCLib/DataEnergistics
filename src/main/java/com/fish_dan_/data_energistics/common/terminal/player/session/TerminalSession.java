@@ -309,6 +309,7 @@ public final class TerminalSession {
     }
 
     void failure(ServerPlayer player) {
+        previousSnapshot = null;
         CompoundTag fault = new CompoundTag();
         fault.putBoolean("enabled", true);
         fault.putString("reason", "fault");

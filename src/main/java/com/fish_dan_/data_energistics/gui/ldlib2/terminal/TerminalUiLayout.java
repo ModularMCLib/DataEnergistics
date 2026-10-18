@@ -4,13 +4,11 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 
-import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
@@ -51,7 +49,7 @@ public final class TerminalUiLayout {
                 at(element("sidebar_middle_3", "sidebar-middle"), 0, 60, 15, 15),
                 at(element("sidebar_middle_4", "sidebar-middle"), 0, 75, 15, 15),
                 at(element("sidebar_bottom", "sidebar-bottom"), 0, 90, 15, 15));
-        String[] controls = { "tasks", "sort", "direction", "display", "type", "network", "magnet", "insert" };
+        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "insert" };
         for (int index = 0; index < controls.length; index++) {
             String id = controls[index];
             window.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
@@ -59,6 +57,7 @@ public final class TerminalUiLayout {
         window.addChildren(at(field("search"), 16, 3, 108, 12),
                 icon("drag", "terminal-drag", "icon-drag", 125, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
+                at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
                 at(storageScrollbar(), 126, 18, 6, 148),
                 at(element("workspaces", "terminal-pages"), 30, 108, 108, 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
@@ -139,13 +138,6 @@ public final class TerminalUiLayout {
         UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, popupWidth(name), popupHeight(name));
         root.addChildren(at(label("popup_title"), 5, 4, 166, 10), control("back", 174, 4, 12, 10));
         switch (name) {
-            case "network" -> {
-                ScrollerView list = at(named(new ScrollerView(), "frequencies", "terminal-list"), 5, 41, 180, 112);
-                list.viewPort.layout(layout -> layout.paddingAll(0));
-                list.viewPort.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
-                list.viewContainer.layout(layout -> layout.widthPercent(100).paddingAll(0));
-                root.addChildren(at(label("connection_status"), 5, 19, 180, 20), list);
-            }
             case "magnet" -> root.addChildren(control("mode_off", 5, 21, 180, 15), control("mode_inventory", 5, 38, 180, 15),
                     control("mode_network", 5, 55, 180, 15), control("mode_pickup_network", 5, 72, 180, 15),
                     control("restock", 5, 97, 157, 17), icon("filters", "filters", "icon-settings", 167, 97, 18, 17));
@@ -169,7 +161,9 @@ public final class TerminalUiLayout {
         atWithin(require(window, "search", UIElement.class), 16, 3, viewport.width() - 42, 12, viewport.width(), viewport.height());
         atWithin(require(window, "drag", UIElement.class), viewport.width() - 25, 3, 10, 10, viewport.width(), viewport.height());
         atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
-        atWithin(require(window, "storage_scroll", UIElement.class), viewport.width() - 24, 18, 6, viewport.scrollHeight(), viewport.width(), viewport.height());
+        atWithin(require(window, "pinned_resources", UIElement.class), 16, 18, viewport.storageWidth(), viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE, viewport.width(), viewport.height());
+        atWithin(require(window, "storage_scroll", UIElement.class), viewport.width() - 24, 18 + viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE,
+                6, viewport.scrollHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "storage_rail", UIElement.class), 0, 0, 6, viewport.scrollHeight(), 6, viewport.scrollHeight());
         atWithin(require(window, "storage_rail_rim", UIElement.class), 1, 1, 4, viewport.scrollHeight() - 2, 6, viewport.scrollHeight());
         atWithin(require(window, "storage_rail_center", UIElement.class), 2, 2, 2, viewport.scrollHeight() - 4, 6, viewport.scrollHeight());
@@ -182,7 +176,7 @@ public final class TerminalUiLayout {
 
     public static int popupHeight(String name) {
         return switch (name) {
-            case "network", "key_types" -> 160;
+            case "key_types" -> 160;
             case "magnet" -> 124;
             case "filters" -> 188;
             case "quantity" -> 107;

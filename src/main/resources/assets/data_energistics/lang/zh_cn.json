@@ -1787,14 +1787,13 @@
 	"gui.data_energistics.player_terminal.mode_off": "关闭磁力拾取",
 	"gui.data_energistics.player_terminal.mode_pickup_network": "仅将正常拾取的物品存入网络",
 	"gui.data_energistics.player_terminal.name": "数位砧物品名称",
-	"gui.data_energistics.player_terminal.network": "网络连接",
 	"gui.data_energistics.player_terminal.page_next": "›",
 	"gui.data_energistics.player_terminal.page_previous": "‹",
 	"gui.data_energistics.player_terminal.pickup_blacklist": "拾取：黑名单",
 	"gui.data_energistics.player_terminal.pickup_whitelist": "拾取：白名单",
 	"gui.data_energistics.player_terminal.apply_quantity": "应用数量",
 	"gui.data_energistics.player_terminal.quantity": "资源数量",
-	"gui.data_energistics.player_terminal.reason.fault": "终端已停止，详情见服务端日志",
+	"gui.data_energistics.player_terminal.reason.fault": "本次操作失败，详情见服务端日志",
 	"gui.data_energistics.player_terminal.reason.locked": "需要完成玩家小终端研究",
 	"gui.data_energistics.player_terminal.reason.offline": "网络未连接：携带已链接的量子缠绕奇点并选择频率。本地工作区仍可使用。",
 	"gui.data_energistics.player_terminal.reason.online": "量子网络已连接",
@@ -1849,5 +1848,8 @@
 	"gui.data_energistics.player_terminal.message.upload_unavailable": "当前上传目标不可用，样板已保留",
 	"gui.data_energistics.player_terminal.encoded_gestures": "点击取出已编码样板；Shift＋左键移入背包",
 	"gui.data_energistics.player_terminal.stonecutting_gestures": "左键切石并拿到手上；右键选取配方，再点击小编码按钮写入下方样板格",
-	"gui.data_energistics.player_terminal.entry_gestures": "左键展开，右键打开大终端；左键按住并拖动可移动位置"
+	"gui.data_energistics.player_terminal.entry_gestures": "左键展开，右键打开大终端；左键按住并拖动可移动位置",
+	"gui.data_energistics.player_terminal.pins": "资源标记：%s 行\nShift + 左键增加一行；Shift + 右键减少一行\n收起行保留手动标记，合成标记沿用 AE 的自动清理",
+	"gui.data_energistics.player_terminal.manual_pin_hint": "持有物品点击设置标记，不消耗物品\n空手左键取出；空手右键取消标记；中键使用 AE 合成请求",
+	"gui.data_energistics.player_terminal.crafting_pin_hint": "AE 自动合成标记：任务结束并关闭终端后自动清理"
 }

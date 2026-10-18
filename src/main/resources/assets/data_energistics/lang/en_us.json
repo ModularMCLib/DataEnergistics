@@ -1787,14 +1787,13 @@
 	"gui.data_energistics.player_terminal.mode_off": "Turn magnetic collection off",
 	"gui.data_energistics.player_terminal.mode_pickup_network": "Send normally picked-up items to the network",
 	"gui.data_energistics.player_terminal.name": "Anvil item name",
-	"gui.data_energistics.player_terminal.network": "Network connection",
 	"gui.data_energistics.player_terminal.page_next": "›",
 	"gui.data_energistics.player_terminal.page_previous": "‹",
 	"gui.data_energistics.player_terminal.pickup_blacklist": "Pickup: blacklist",
 	"gui.data_energistics.player_terminal.pickup_whitelist": "Pickup: whitelist",
 	"gui.data_energistics.player_terminal.apply_quantity": "Apply amount",
 	"gui.data_energistics.player_terminal.quantity": "Resource amount",
-	"gui.data_energistics.player_terminal.reason.fault": "Terminal stopped; see the server log",
+	"gui.data_energistics.player_terminal.reason.fault": "The operation failed; see the server log",
 	"gui.data_energistics.player_terminal.reason.locked": "Player Mini Terminal research required",
 	"gui.data_energistics.player_terminal.reason.offline": "Network unavailable: carry a linked Quantum Entangled Singularity and choose a frequency. Local workspaces remain available.",
 	"gui.data_energistics.player_terminal.reason.online": "Quantum connection active",
@@ -1849,5 +1848,8 @@
 	"gui.data_energistics.player_terminal.message.upload_unavailable": "Upload target unavailable; the pattern was retained",
 	"gui.data_energistics.player_terminal.encoded_gestures": "Click to take the encoded pattern; Shift-left-click to move it to inventory",
 	"gui.data_energistics.player_terminal.stonecutting_gestures": "Left-click to cut into the cursor; right-click to select, then use the encode button to write the pattern below",
-	"gui.data_energistics.player_terminal.entry_gestures": "Left-click to expand, right-click for the large terminal, or hold and drag to move"
+	"gui.data_energistics.player_terminal.entry_gestures": "Left-click to expand, right-click for the large terminal, or hold and drag to move",
+	"gui.data_energistics.player_terminal.pins": "Resource pins: %s rows\nShift + left-click adds a row; Shift + right-click removes a row\nHidden rows retain manual pins; crafting pins use AE's automatic cleanup",
+	"gui.data_energistics.player_terminal.manual_pin_hint": "Click with a carried item to pin it without consuming it\nEmpty cursor: left-click to extract, right-click to unpin; middle-click uses AE's crafting request",
+	"gui.data_energistics.player_terminal.crafting_pin_hint": "AE crafting pin: cleared after the job ends and the terminal closes"
 }

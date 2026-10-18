@@ -8,16 +8,14 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -55,7 +53,6 @@ import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
@@ -77,6 +74,7 @@ public final class TerminalOverlayUi {
     private final ObjectList<String> popupStack = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> storage = new ObjectArrayList<>();
     private final TerminalStorageIndex storageIndex = new TerminalStorageIndex();
+    private final TerminalPinnedResourcesUi pinnedUi;
     private ObjectList<TerminalStorageIndex.Entry> boundStorage = ObjectImmutableList.of();
     private boolean boundConnected;
     private int boundCellCount = -1;
@@ -96,7 +94,7 @@ public final class TerminalOverlayUi {
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
     private final Scroller.Vertical processingScrollbar;
     private final Scroller.Vertical stonecuttingScrollbar;
-    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 150, 168, true);
+    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 150, 168, true, 0, 0);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
     private String sort = "name";
@@ -104,8 +102,6 @@ public final class TerminalOverlayUi {
     private boolean descending;
     private int offset;
     private CompoundTag previousMagnet = new CompoundTag();
-    private long[] previousFrequencies = new long[0];
-    private long previousFrequency = Long.MIN_VALUE;
     private ObjectList<TerminalViewportLayout.Cell> positionedStorage = ObjectImmutableList.of();
     private int screenWidth;
     private int screenHeight;
@@ -130,6 +126,7 @@ public final class TerminalOverlayUi {
         this.request = request;
         visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
+        pinnedUi = new TerminalPinnedResourcesUi(element(window, "pinned_resources"), registries, request, this::storageClick);
         keyTypeSelection = new KeyTypeSelection(this::keyTypesChanged, ignored -> true);
         ObjectList<AEKeyType> enabledTypes = new ObjectArrayList<>();
         for (var type : AEKeyTypes.getAll())
@@ -165,6 +162,10 @@ public final class TerminalOverlayUi {
             scrollbar.scrollByWheel(event.deltaY);
             event.stopPropagation();
         });
+        element(window, "pinned_resources").addEventListener(UIEvents.MOUSE_WHEEL, event -> {
+            scrollbar.scrollByWheel(event.deltaY);
+            event.stopPropagation();
+        });
         button(window, "sort", () -> {
             sort = switch (sort) {
                 case "name" -> "amount";
@@ -186,7 +187,12 @@ public final class TerminalOverlayUi {
             view(true);
         });
         button(window, "type", () -> open("key_types"));
-        button(window, "network", () -> open("network"));
+        TerminalUiLayout.require(window, "pins", Button.class).setOnClick(event -> {
+            if (UIElement.isShiftDown() && pinnedUi.changeRows(event.button, viewport)) {
+                geometry(screenWidth, screenHeight);
+                view(false);
+            }
+        });
         button(window, "magnet", () -> {
             if (snapshot.getBoolean("magnet_unlocked")) open("magnet");
         });
@@ -225,15 +231,13 @@ public final class TerminalOverlayUi {
                 button(root, "boost_up", () -> boost(1));
             }
         }
-        for (String name : new String[] { "network", "magnet", "filters", "quantity", "encoding_info", "transfer_info", "upload", "key_types" }) {
+        for (String name : new String[] { "magnet", "filters", "quantity", "encoding_info", "transfer_info", "upload", "key_types" }) {
             UIElement root = TerminalUiLayout.popup(name);
             popups.put(name, root);
             root.setVisible(false);
             ui.rootElement.addChild(root);
             label(root, "popup_title").setText(text(name));
             button(root, "back", this::closePopup);
-            root.select(".terminal-list", ScrollerView.class).forEach(list -> list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER)
-                    .verticalScrollDisplay(ScrollDisplay.AUTO)));
         }
         uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
         keyTypeUi = new TerminalKeyTypeUi(popups.get("key_types"), keyTypeSelection);
@@ -346,7 +350,8 @@ public final class TerminalOverlayUi {
     public void view(boolean reset) {
         ObjectList<TerminalStorageIndex.Entry> previous = storageIndex.projected();
         AEKey anchor = !reset && offset < previous.size() ? previous.get(offset).key() : null;
-        storageIndex.project(field(window, "search").getValue(), sort, descending, filter, enabledKeyTypes);
+        pinnedUi.bind(storageIndex, snapshot.getBoolean("connected"));
+        storageIndex.project(field(window, "search").getValue(), sort, descending, filter, enabledKeyTypes, pinnedUi.visibleKeys());
         ObjectList<TerminalStorageIndex.Entry> projected = storageIndex.projected();
         if (reset) offset = 0;
         else if (previous != projected && anchor != null) {
@@ -368,6 +373,8 @@ public final class TerminalOverlayUi {
         Component typeDescription = enabledKeyTypes.size() == AEKeyTypes.getAll().size() ? text("type.all") :
                 enabledKeyTypes.size() == 1 ? enabledKeyTypes.iterator().next().getDescription() : text("type.selected", enabledKeyTypes.size());
         tooltip(window, "type", text("type", typeDescription));
+        tooltip(window, "pins", text("pins", pinnedUi.rows()));
+        tooltip(window, "tasks", text("tasks").copy().append("\n").append(connectionStatus()));
         stateClass(element(window, "sort"), "sort-amount", sort.equals("amount"));
         stateClass(element(window, "direction"), "descending", descending);
         stateClass(element(window, "display"), "stored-only", filter.equals("stored"));
@@ -448,16 +455,12 @@ public final class TerminalOverlayUi {
                     !value.getBoolean("connected") ? "message.offline" : "transfer_processing"));
         }
         storageIndex.apply(value, registries);
+        boolean pinsChanged = pinnedUi.apply(value.getCompound("pins"));
+        if (pinnedUi.refreshAutomatic(storageIndex) || pinsChanged) geometry(screenWidth, screenHeight);
         view(false);
-        stateClass(element(window, "network"), "offline", !value.getBoolean("connected"));
-        tooltip(window, "network", text("reason." + value.getString("reason")));
-        if (!value.getString("message").isEmpty())
-            tooltip(window, "network", text("message." + value.getString("message")));
         element(window, "insert").setActive(value.getBoolean("connected"));
         element(window, "tasks").setActive(value.getBoolean("connected"));
         element(window, "magnet").setActive(value.getBoolean("magnet_unlocked"));
-        label(popups.get("network"), "connection_status").setText(text("reason." + value.getString("reason")));
-        refreshNetwork();
         refreshMagnet();
         uploadUi.apply(value);
         amountUi.apply(value);
@@ -469,6 +472,17 @@ public final class TerminalOverlayUi {
             visibilitySent = true;
             if (!visible) request.accept("visible", booleanValue("value", false));
         }
+    }
+
+    public void tick() {
+        if (pinnedUi.refreshAutomatic(storageIndex)) {
+            geometry(screenWidth, screenHeight);
+            view(false);
+        }
+    }
+
+    public void removed() {
+        pinnedUi.removed();
     }
 
     private void refreshWorkCells() {
@@ -579,31 +593,6 @@ public final class TerminalOverlayUi {
         request.accept("ghost", data);
     }
 
-    private void refreshNetwork() {
-        long currentFrequency = snapshot.contains("frequency") ? snapshot.getLong("frequency") : Long.MIN_VALUE;
-        long[] frequencies = snapshot.getLongArray("frequencies");
-        if (currentFrequency == previousFrequency && Arrays.equals(frequencies, previousFrequencies)) return;
-        previousFrequency = currentFrequency;
-        previousFrequencies = frequencies.clone();
-        UIElement list = listHost(popups.get("network"), "frequencies");
-        list.clearAllChildren();
-        for (long frequency : snapshot.getLongArray("frequencies")) {
-            Button button = new TerminalActionButton();
-            button.addClass("frequency-row");
-            button.addClass("terminal-control");
-            button.layout(layout -> layout.widthPercent(100).height(14).flexShrink(0));
-            button.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
-            button.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
-            button.setText(Component.literal((snapshot.contains("frequency") && snapshot.getLong("frequency") == frequency ? "● " : "○ ") + frequency));
-            button.setOnClick(event -> {
-                CompoundTag data = new CompoundTag();
-                data.putLong("value", frequency);
-                request.accept("frequency", data);
-            });
-            list.addChild(button);
-        }
-    }
-
     private void refreshMagnet() {
         CompoundTag magnet = snapshot.getCompound("magnet");
         if (magnet.equals(previousMagnet)) return;
@@ -625,7 +614,7 @@ public final class TerminalOverlayUi {
         screenWidth = width;
         screenHeight = height;
         viewport = TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
-                preferences.width, preferences.height, preferences.folded);
+                preferences.width, preferences.height, preferences.folded, pinnedUi.rows(), pinnedUi.automaticCount());
         preferences.xPercent = width <= viewport.width() ? 0 : (float) viewport.x() / (width - viewport.width());
         preferences.yPercent = height <= viewport.height() ? 0 : (float) viewport.y() / (height - viewport.height());
         preferences.width = viewport.width();
@@ -633,6 +622,7 @@ public final class TerminalOverlayUi {
         window.layout(style -> style.leftPercent(width == 0 ? 0 : viewport.x() * 100F / width)
                 .topPercent(height == 0 ? 0 : viewport.y() * 100F / height).width(viewport.width()).height(viewport.height()));
         TerminalUiLayout.resize(window, viewport);
+        pinnedUi.layout(viewport);
         element(ui.rootElement, "entry").layout(style -> style.positionType(TaffyPosition.ABSOLUTE)
                 .leftPercent(width == 0 ? 0 : viewport.x() * 100F / width)
                 .topPercent(height == 0 ? 0 : viewport.y() * 100F / height).width(10).height(10).paddingAll(0));
@@ -642,18 +632,7 @@ public final class TerminalOverlayUi {
         int cellCount = viewport.cellCount();
         boolean gridChanged = !positionedStorage.equals(viewport.cells());
         if (storage.size() != cellCount) {
-            createCells(element(window, "storage"), storage, cellCount, viewport.columns(), (index, event) -> {
-                TerminalResourceCell cell = storage.get(index);
-                if (cell.stack() == null) return;
-                if (event.button == 2 || cell.craftable() && (UIElement.isCtrlDown() || cell.stack().amount() == 0)) {
-                    networkAction("craft_request", key(cell.stack().what()));
-                } else {
-                    CompoundTag data = key(cell.stack().what());
-                    data.putInt("button", event.button);
-                    data.putBoolean("shift", UIElement.isShiftDown());
-                    networkAction("storage", data);
-                }
-            });
+            createCells(element(window, "storage"), storage, cellCount, viewport.columns(), (index, event) -> storageClick(storage.get(index), event));
             for (TerminalResourceCell cell : storage) cell.storageCell(true);
             boundCellCount = -1;
             fillStorage();
@@ -864,9 +843,12 @@ public final class TerminalOverlayUi {
                 collectTargets(targets, pickup, "pickup");
                 collectTargets(targets, insert, "insert");
             }
-        } else if (!preferences.folded) {
-            if (!workspace.equals("anvil")) collectTargets(targets, inputs, "inputs");
-            if (workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
+        } else {
+            collectTargets(targets, pinnedUi.manualCells(), "pins");
+            if (!preferences.folded) {
+                if (!workspace.equals("anvil")) collectTargets(targets, inputs, "inputs");
+                if (workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
+            }
         }
         return targets;
     }
@@ -882,7 +864,7 @@ public final class TerminalOverlayUi {
         data.putInt("button", 0);
         data.putLong("amount", Math.max(1, stack.amount()));
         data.put("stack", GenericStack.writeTag(registries, new GenericStack(stack.what(), Math.max(1, stack.amount()))));
-        request.accept("ghost", data);
+        request.accept(target.inventory().equals("pins") ? "pin" : "ghost", data);
     }
 
     public record GhostTarget(Rect2i area, String inventory, int index) {}
@@ -936,6 +918,25 @@ public final class TerminalOverlayUi {
 
     private void networkAction(String action, CompoundTag data) {
         if (snapshot.getBoolean("connected")) request.accept(action, data);
+    }
+
+    private Component connectionStatus() {
+        Component status = text("reason." + snapshot.getString("reason"));
+        String message = snapshot.getString("message");
+        return message.isEmpty() ? status : status.copy().append("\n").append(text("message." + message));
+    }
+
+    private void storageClick(TerminalResourceCell cell, UIEvent event) {
+        GenericStack stack = cell.stack();
+        if (stack == null) return;
+        if (event.button == 2 || cell.craftable() && (UIElement.isCtrlDown() || stack.amount() == 0)) {
+            networkAction("craft_request", key(stack.what()));
+        } else {
+            CompoundTag data = key(stack.what());
+            data.putInt("button", event.button);
+            data.putBoolean("shift", UIElement.isShiftDown());
+            networkAction("storage", data);
+        }
     }
 
     private static void createCells(UIElement host, ObjectList<TerminalResourceCell> cells, int count, int columns,
@@ -1024,10 +1025,6 @@ public final class TerminalOverlayUi {
         if (value) {
             if (!element.hasClass(name)) element.addClass(name);
         } else element.removeClass(name);
-    }
-
-    private static UIElement listHost(UIElement root, String id) {
-        return TerminalUiLayout.require(root, id, ScrollerView.class).viewContainer;
     }
 
     private static Component text(String key, Object... args) {

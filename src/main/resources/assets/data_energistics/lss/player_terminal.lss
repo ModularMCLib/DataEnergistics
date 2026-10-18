@@ -73,6 +73,8 @@
 }
 .terminal-cell.embedded-cell { background: #00000000; }
 .terminal-cell.selected-recipe { base-background: #6693FFDE; }
+.terminal-cell.manual-pin { base-background: #199AD8FF; }
+.terminal-cell.crafting-pin { base-background: #1993FFDE; }
 .terminal-page.page-crafting { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png); }
 .terminal-page.page-processing { background: sprite(data_energistics:textures/guis/states/background/small_handle.png); }
 .terminal-page.page-smithing { background: sprite(data_energistics:textures/guis/states/background/small_forging.png); }
@@ -80,7 +82,6 @@
 .terminal-page.page-anvil { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png); }
 .anvil-boost { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
 .terminal-popup { background: group(#FFCCCDD6, border(1, #FFF0F0F3)); z-index: 600; }
-.terminal-list .__scroller_view_view-container__ { width: 100%; flex-direction: column; gap-all: 1px; padding-all: 0px; }
 
 .icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
 .icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }
@@ -94,7 +95,7 @@
 .stored-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
 .craftable-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
 .icon-type { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
-.icon-network { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
+.icon-pins { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
 .icon-magnet { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
 .icon-insert { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
 .icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }

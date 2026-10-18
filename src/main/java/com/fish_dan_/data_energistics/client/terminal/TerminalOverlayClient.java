@@ -151,7 +151,6 @@ public final class TerminalOverlayClient {
         if (snapshot.getString("reason").equals("fault")) {
             CompoundTag retained = overlay.lastSnapshot.copy();
             retained.merge(snapshot);
-            retained.putBoolean("connected", false);
             if (!retained.contains("workspace")) retained.putString("workspace", "crafting");
             snapshot = retained;
         }
@@ -199,6 +198,7 @@ public final class TerminalOverlayClient {
         }
         if (current == null || current.modularUi == null || current.composition == null) return;
         current.modularUi.tick();
+        current.composition.tick();
         if (!minecraft.isWindowActive() && current.pointerOwned) {
             current.modularUi.getWidget().mouseReleased(current.mouseX, current.mouseY, current.pointerButton);
             current.composition.endDrag();
@@ -294,6 +294,7 @@ public final class TerminalOverlayClient {
 
     private void releaseUi() {
         clearInputCapture();
+        if (composition != null) composition.removed();
         if (modularUi != null) modularUi.onRemoved();
         modularUi = null;
         composition = null;

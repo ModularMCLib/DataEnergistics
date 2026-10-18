@@ -121,18 +121,12 @@ public final class TerminalReturnLedger {
         for (Tag value : tags) {
             CompoundTag entry = (CompoundTag) value;
             long frequency = entry.getLong("frequency");
-            if (resources.containsKey(frequency) || energy.containsKey(frequency))
-                throw new IllegalArgumentException("Duplicate terminal return frequency");
             double power = entry.getDouble("energy");
-            if (!Double.isFinite(power) || power < 0)
-                throw new IllegalArgumentException("Invalid saved terminal energy return");
             if (power > 0) energy.put(frequency, power);
             Object2LongMap<AEKey> pending = new Object2LongLinkedOpenHashMap<>();
             for (Tag resource : entry.getList("resources", Tag.TAG_COMPOUND)) {
                 GenericStack stack = GenericStack.readTag(registries, (CompoundTag) resource);
-                if (stack == null || stack.amount() <= 0)
-                    throw new IllegalArgumentException("Invalid saved terminal resource return");
-                pending.mergeLong(stack.what(), stack.amount(), Math::addExact);
+                if (stack != null) pending.mergeLong(stack.what(), stack.amount(), Math::addExact);
             }
             if (!pending.isEmpty()) resources.put(frequency, pending);
         }

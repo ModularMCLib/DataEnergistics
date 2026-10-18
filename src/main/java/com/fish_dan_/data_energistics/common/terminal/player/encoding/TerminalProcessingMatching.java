@@ -51,16 +51,7 @@ public final class TerminalProcessingMatching {
     }
 
     public void load(CompoundTag tag) {
-        String inputModes = tag.getString("inputs");
-        String outputModes = tag.getString("outputs");
-        validate(inputModes, TerminalWorkspace.PROCESSING.patternInputSlots());
-        validate(outputModes, TerminalWorkspace.PROCESSING.patternOutputSlots());
-        inputs = inputModes;
-        outputs = outputModes;
-    }
-
-    private static void validate(String modes, int size) {
-        if (modes.length() > size || !modes.chars().allMatch(value -> value >= '0' && value < '0' + ProcessingMatchMode.values().length))
-            throw new IllegalArgumentException("Invalid saved processing matching modes");
+        inputs = tag.getString("inputs");
+        outputs = tag.getString("outputs");
     }
 }

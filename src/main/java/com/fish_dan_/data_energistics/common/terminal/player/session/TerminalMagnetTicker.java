@@ -50,7 +50,7 @@ final class TerminalMagnetTicker {
     }
 
     static void pickup(ItemEntityPickupEvent.Pre event, ServerPlayer player, TerminalPlayerRuntime runtime) {
-        if (runtime.faulted() || player.isShiftKeyDown() || event.canPickup() == TriState.FALSE || player.isSpectator())
+        if (player.isShiftKeyDown() || event.canPickup() == TriState.FALSE || player.isSpectator())
             return;
         var state = runtime.state();
         if (!state.magnet().mode().insert()) return;

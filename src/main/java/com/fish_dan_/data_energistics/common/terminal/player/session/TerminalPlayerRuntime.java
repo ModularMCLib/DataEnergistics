@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.common.terminal.player.session;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
@@ -30,8 +29,6 @@ public final class TerminalPlayerRuntime {
     private @Nullable TerminalSession session;
     private @Nullable IGrid paidGrid;
     private int paidTick = -1;
-    private boolean faulted;
-    private boolean returnFaulted;
     private final ObjectSet<UUID> openedSessions = new ObjectOpenHashSet<>();
 
     public TerminalPlayerRuntime(ServerPlayer player, TerminalPlayerState state) {
@@ -47,15 +44,6 @@ public final class TerminalPlayerRuntime {
         return session;
     }
 
-    public boolean faulted() {
-        return faulted;
-    }
-
-    public void fault() {
-        faulted = true;
-        close();
-    }
-
     public void open(UUID id) {
         if (!openedSessions.add(id)) return;
         close();
@@ -68,7 +56,6 @@ public final class TerminalPlayerRuntime {
     }
 
     public @Nullable TerminalConnection connection() {
-        if (faulted) return null;
         TerminalConnection connection = TerminalQuantumAccess.resolve(player, state);
         if (connection == null) return null;
         int tick = player.server.getTickCount();
@@ -90,8 +77,7 @@ public final class TerminalPlayerRuntime {
     }
 
     public void tick() {
-        if (player.tickCount % 20 == 0 && !returnFaulted) settleReturns();
-        if (faulted) return;
+        if (player.tickCount % 20 == 0) settleReturns();
         if (session != null) {
             TerminalAeNavigation.restoreClosed(player, session);
             if (!session.valid(player)) close();
@@ -106,21 +92,13 @@ public final class TerminalPlayerRuntime {
     }
 
     private void settleReturns() {
-        try {
-            // A stopped workspace still owes refunds to the original network.
-            for (long frequency : state.returns().frequencies()) {
-                var original = TerminalQuantumAccess.resolve(player, frequency);
-                if (original != null) TerminalNetworkStorage.refund(original, state);
-            }
-            if (state.anvilPayment().pending()) {
-                var original = TerminalQuantumAccess.resolve(player, state.paymentFrequency());
-                if (original != null) TerminalNetworkStorage.refund(original, state);
-            }
-        } catch (RuntimeException failure) {
-            returnFaulted = true;
-            if (session != null) session.failure(player);
-            fault();
-            Data_Energistics.LOGGER.error("Preserved unsettled terminal returns for {} after a return operation failed", player.getUUID(), failure);
+        for (long frequency : state.returns().frequencies()) {
+            var original = TerminalQuantumAccess.resolve(player, frequency);
+            if (original != null) TerminalNetworkStorage.refund(original, state);
+        }
+        if (state.anvilPayment().pending()) {
+            var original = TerminalQuantumAccess.resolve(player, state.paymentFrequency());
+            if (original != null) TerminalNetworkStorage.refund(original, state);
         }
     }
 }

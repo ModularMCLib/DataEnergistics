@@ -63,7 +63,6 @@ public final class TerminalOverlayClient {
     private boolean keyboardOwned;
     private boolean pointerOwned;
     private int pointerButton;
-    private boolean faulted;
     private boolean suspended;
     private boolean restoring;
     private boolean returnRequested;
@@ -149,8 +148,7 @@ public final class TerminalOverlayClient {
         overlay.appliedSequence = payload.sequence();
         CompoundTag snapshot = payload.snapshot().copy();
         snapshot.remove("sequence");
-        overlay.faulted = snapshot.getString("reason").equals("fault");
-        if (overlay.faulted) {
+        if (snapshot.getString("reason").equals("fault")) {
             CompoundTag retained = overlay.lastSnapshot.copy();
             retained.merge(snapshot);
             retained.putBoolean("connected", false);
@@ -190,7 +188,7 @@ public final class TerminalOverlayClient {
         if (current == null && minecraft.player != null && minecraft.screen instanceof AbstractContainerScreen<?> screen &&
                 screen.getMenu() == minecraft.player.containerMenu)
             current = new TerminalOverlayClient(screen);
-        if (current != null && !current.faulted && ++current.ticks - current.lastRequestTick >= 40) {
+        if (current != null && ++current.ticks - current.lastRequestTick >= 40) {
             if (current.lastSnapshot.getString("reason").equals("locked")) {
                 current.session = UUID.randomUUID();
                 current.sequence = 0;
@@ -281,7 +279,6 @@ public final class TerminalOverlayClient {
     }
 
     private void send(String action, CompoundTag data) {
-        if (faulted && !action.equals("visible") && !action.equals("close")) return;
         if (valid()) {
             lastRequestTick = ticks;
             PacketDistributor.sendToServer(new TerminalRequestPayload(menu.containerId, session, ++sequence, action, data));

@@ -23,8 +23,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.UUID;
 
@@ -34,7 +32,6 @@ import java.util.UUID;
 public final class TerminalSessions {
 
     private static final Object2ObjectMap<UUID, TerminalPlayerRuntime> PLAYERS = new Object2ObjectOpenHashMap<>();
-    private static final ObjectSet<UUID> FAILED = new ObjectOpenHashSet<>();
 
     public TerminalSessions() {
         TerminalAeMenuLocator.register();
@@ -76,10 +73,8 @@ public final class TerminalSessions {
             PacketDistributor.sendToPlayer(player, new TerminalSnapshotPayload(request.containerId(), request.sessionId(), request.sequence(), locked));
             return;
         }
-        if (FAILED.contains(player.getUUID())) return;
         try {
             TerminalPlayerRuntime runtime = runtime(player);
-            if (runtime.faulted()) return;
             if (request.action().equals("open") && request.sequence() == 0) runtime.open(request.sessionId());
             else {
                 TerminalSession session = runtime.session();
@@ -100,8 +95,7 @@ public final class TerminalSessions {
     @SubscribeEvent
     public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player) ||
-                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) && !PLAYERS.containsKey(player.getUUID()) ||
-                FAILED.contains(player.getUUID()) && !PLAYERS.containsKey(player.getUUID()))
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) && !PLAYERS.containsKey(player.getUUID()))
             return;
         try {
             runtime(player).tick();
@@ -115,10 +109,8 @@ public final class TerminalSessions {
         if (!(event.getPlayer() instanceof ServerPlayer player) || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) ||
                 !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET))
             return;
-        if (FAILED.contains(player.getUUID())) return;
         try {
             TerminalPlayerRuntime runtime = runtime(player);
-            if (runtime.faulted()) return;
             TerminalMagnetTicker.pickup(event, player, runtime);
         } catch (RuntimeException failure) {
             fail(player, "item pickup", failure);
@@ -162,11 +154,9 @@ public final class TerminalSessions {
     public void stopped(ServerStoppedEvent event) {
         PLAYERS.values().forEach(TerminalPlayerRuntime::close);
         PLAYERS.clear();
-        FAILED.clear();
     }
 
     private static void remove(UUID player) {
-        FAILED.remove(player);
         if (PLAYERS.containsKey(player)) PLAYERS.remove(player).close();
     }
 
@@ -174,9 +164,7 @@ public final class TerminalSessions {
         if (PLAYERS.containsKey(player.getUUID())) {
             TerminalPlayerRuntime runtime = PLAYERS.get(player.getUUID());
             if (runtime.session() != null) runtime.session().failure(player);
-            runtime.fault();
         }
-        if (FAILED.add(player.getUUID()))
-            Data_Energistics.LOGGER.error("Stopped player terminal for {} during {}", player.getUUID(), operation, failure);
+        Data_Energistics.LOGGER.error("Player terminal operation failed for {} during {}", player.getUUID(), operation, failure);
     }
 }

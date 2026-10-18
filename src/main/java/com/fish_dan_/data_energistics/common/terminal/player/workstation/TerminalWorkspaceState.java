@@ -137,9 +137,6 @@ public final class TerminalWorkspaceState {
         context = TerminalPatternContext.load(tag.getCompound("context"));
         recordRecipeType = !tag.contains("record_recipe_type") || tag.getBoolean("record_recipe_type");
         matching.load(tag.getCompound("matching"));
-        if (recipeIndex < 0 || name.length() > 32767 || boost < 0 || boost > 254) {
-            throw new IllegalArgumentException("Invalid saved workspace settings");
-        }
     }
 
     private static ListTag saveSlots(SimpleContainer inventory, HolderLookup.Provider registries) {
@@ -150,14 +147,7 @@ public final class TerminalWorkspaceState {
     }
 
     private static void loadSlots(SimpleContainer inventory, ListTag slots, HolderLookup.Provider registries) {
-        if (slots.size() != inventory.getContainerSize())
-            throw new IllegalArgumentException("Unexpected physical workspace inventory size");
-        for (int index = 0; index < slots.size(); index++) {
-            CompoundTag raw = slots.getCompound(index);
-            ItemStack stack = raw.isEmpty() ? ItemStack.EMPTY : ItemStack.parse(registries, raw).orElseThrow(() -> new IllegalArgumentException("Invalid saved workspace item"));
-            if (stack.getCount() > stack.getMaxStackSize())
-                throw new IllegalArgumentException("Oversized saved workspace item");
-            inventory.setItem(index, stack);
-        }
+        for (int index = 0; index < inventory.getContainerSize(); index++)
+            inventory.setItem(index, ItemStack.parseOptional(registries, slots.getCompound(index)));
     }
 }

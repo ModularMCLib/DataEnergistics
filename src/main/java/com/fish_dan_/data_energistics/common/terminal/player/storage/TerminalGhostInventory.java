@@ -3,9 +3,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.storage;
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 
 import org.jspecify.annotations.Nullable;
 
@@ -61,15 +59,7 @@ public final class TerminalGhostInventory {
     }
 
     public void load(ListTag list, HolderLookup.Provider registries) {
-        if (list.size() != values.length)
-            throw new IllegalArgumentException("Unexpected ghost inventory size " + list.size());
-        for (int index = 0; index < values.length; index++) {
-            Tag raw = list.get(index);
-            if (!(raw instanceof CompoundTag entry))
-                throw new IllegalArgumentException("Ghost entry must be a compound");
-            GenericStack value = GenericStack.readTag(registries, entry);
-            if (value != null && value.amount() <= 0) throw new IllegalArgumentException("Invalid saved ghost amount");
-            values[index] = value;
-        }
+        for (int index = 0; index < values.length; index++)
+            values[index] = GenericStack.readTag(registries, list.getCompound(index));
     }
 }

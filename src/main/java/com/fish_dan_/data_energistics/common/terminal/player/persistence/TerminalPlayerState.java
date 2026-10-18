@@ -107,7 +107,6 @@ public final class TerminalPlayerState {
 
     public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("version", 1);
         if (frequency != null) tag.putLong("frequency", frequency);
         tag.putString("workspace", workspace.id());
         CompoundTag pages = new CompoundTag();
@@ -121,7 +120,6 @@ public final class TerminalPlayerState {
     }
 
     public static TerminalPlayerState load(CompoundTag tag, HolderLookup.Provider registries, Runnable changed) {
-        if (tag.getInt("version") != 1) throw new IllegalArgumentException("Unsupported player terminal data version");
         TerminalPlayerState state = new TerminalPlayerState(changed);
         if (tag.contains("frequency", Tag.TAG_LONG)) state.frequency = tag.getLong("frequency");
         state.workspace = TerminalWorkspace.byId(tag.getString("workspace"));

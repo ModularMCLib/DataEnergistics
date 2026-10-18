@@ -261,8 +261,6 @@ public final class TerminalOverlayUi {
         for (TerminalResourceCell cell : insert) cell.configurable(true);
         UIElement quantity = popups.get("quantity");
         field(quantity, "amount").setNumbersOnlyLong(1, Long.MAX_VALUE).setText("1", false);
-        button(quantity, "minus", () -> amount(-1));
-        button(quantity, "plus", () -> amount(1));
         button(quantity, "apply_quantity", this::applyQuantity);
         refreshWorkCells();
     }
@@ -328,13 +326,6 @@ public final class TerminalOverlayUi {
     private void boost(int direction) {
         int step = UIElement.isCtrlDown() ? 100 : UIElement.isShiftDown() ? 10 : 1;
         request.accept("boost", number("value", Math.clamp(snapshot.getCompound("work").getInt("boost") + (long) direction * step, 0, 254)));
-    }
-
-    private void amount(int direction) {
-        TextField field = field(popups.get("quantity"), "amount");
-        long current = quantityAmount();
-        long step = UIElement.isCtrlDown() ? 100 : UIElement.isShiftDown() ? 10 : 1;
-        field.setText(Long.toString(direction > 0 ? Math.min(Long.MAX_VALUE - step, current) + step : Math.max(1, current - step)), false);
     }
 
     private void applyQuantity() {

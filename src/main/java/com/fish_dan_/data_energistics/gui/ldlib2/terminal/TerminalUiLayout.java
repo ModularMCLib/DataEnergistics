@@ -154,8 +154,7 @@ public final class TerminalUiLayout {
                     control("filter_swap", 171, 74, 13, 13), control("filter_copy_down", 171, 92, 13, 13),
                     control("insert_whitelist", 5, 107, 162, 12), at(element("insert", "filter-grid"), 5, 122, 162, 54));
             case "quantity" -> root.addChildren(at(element("selected", "quantity-selected"), 7, 23, 18, 18),
-                    at(field("amount"), 31, 25, 151, 14), control("minus", 31, 47, 28, 14),
-                    control("plus", 62, 47, 28, 14), control("apply_quantity", 97, 47, 85, 14));
+                    at(field("amount"), 31, 25, 151, 14), control("apply_quantity", 97, 47, 85, 14));
             case "encoding_info" -> root.addChildren(icon("record_type", "terminal-small", "icon-record-type", 5, 21, 10, 10),
                     at(label("record_type_text"), 20, 21, 163, 10), at(label("encoding_details"), 5, 40, 180, 48));
             case "transfer_info" -> root.addChild(at(label("transfer_details"), 5, 21, 180, 88));

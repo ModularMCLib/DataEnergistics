@@ -134,7 +134,7 @@ public final class TerminalOverlayUi {
         if (!enabledTypes.isEmpty()) keyTypeSelection.setEnabledSet(enabledTypes);
         enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
-        field(window, "search").style(style -> style.tooltips(text("search_syntax")));
+        field(window, "search").style(style -> style.tooltips(text("search")));
         window.setVisible(visible);
         element(ui.rootElement, "entry").setVisible(!visible);
         Button entry = TerminalUiLayout.require(ui.rootElement, "entry", Button.class);
@@ -365,8 +365,7 @@ public final class TerminalOverlayUi {
         offset = viewport.clampOffset(offset, projected.size());
         fillStorage();
         updateScrollbar();
-        Component page = Component.literal((projected.isEmpty() ? 0 : offset + 1) + "–" + Math.min(offset + storage.size(), projected.size()) + "/" + projected.size());
-        tooltip(window, "search", text("search_syntax").copy().append("\n").append(storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : page));
+        tooltip(window, "search", storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : text("search"));
         tooltip(window, "sort", text("sort." + sort));
         tooltip(window, "direction", text(descending ? "descending" : "ascending"));
         tooltip(window, "display", text("display." + filter));

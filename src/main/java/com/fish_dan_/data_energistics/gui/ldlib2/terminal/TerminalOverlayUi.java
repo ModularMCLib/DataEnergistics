@@ -410,7 +410,11 @@ public final class TerminalOverlayUi {
             result.entry(physical(value.getCompound("result")), false);
             if (workspace.equals("anvil")) {
                 if (!field(active, "name").isFocused()) field(active, "name").setText(work.getString("name"), false);
-                label(active, "boost").setText(Component.literal("+" + work.getInt("boost")));
+                label(active, "anvil_status").setText(Component.translatable("gui.data_energistics.me_digital_anvil." +
+                        (result.stack() == null ? "invalid" : "cost"), value.getLong("anvil_energy"), value.getLong("anvil_levels")));
+                element(active, "anvil_status").style(style -> style.tooltips(TerminalTooltipLines.split(
+                        text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels")),
+                        Component.translatable("gui.data_energistics.me_digital_anvil.boost", work.getInt("boost")))));
                 boolean levels = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(value.getInt("anvil_upgrades"));
                 element(active, "boost_down").setActive(levels && work.getInt("boost") > 0);
                 element(active, "boost_up").setActive(levels && work.getInt("boost") < 254);

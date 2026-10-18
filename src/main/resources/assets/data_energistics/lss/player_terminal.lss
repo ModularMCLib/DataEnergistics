@@ -81,7 +81,9 @@
 .terminal-page.page-smithing { background: sprite(data_energistics:textures/guis/states/background/small_forging.png); }
 .terminal-page.page-stonecutting { background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png); }
 .terminal-page.page-anvil { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png); }
-.anvil-boost { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
+.anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
+.anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png); }
+.anvil-boost-step:disabled .terminal-glyph { background: #00000000; }
 .terminal-popup { background: group(#FFCCCDD6, border(1, #FFF0F0F3)); z-index: 600; }
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
@@ -108,6 +110,8 @@
 .sort-amount .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); }
 .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_0.png); }
 .descending .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
+.icon-boost-up { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); }
+.icon-boost-down { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_1.png); }
 .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
 .stored-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
 .craftable-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }

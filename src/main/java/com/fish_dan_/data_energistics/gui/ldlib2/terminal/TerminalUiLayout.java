@@ -126,11 +126,15 @@ public final class TerminalUiLayout {
                 pageAt(require(root, "encoded", UIElement.class), 3, 36, 18, 18);
             }
         } else {
-            root.addChild(pageAt(field("name"), 3, 4, 96, 10));
-            UIElement boost = pageAt(element("boost_controls", "anvil-boost"), 3, 44, 96, 10);
-            boost.addChildren(pageAt(control("boost_down", 0, 0, 10, 10), 0, 0, 10, 10),
-                    pageAt(label("boost"), 11, 0, 74, 10), pageAt(control("boost_up", 86, 0, 10, 10), 86, 0, 10, 10));
-            root.addChild(boost);
+            root.addChildren(pageAt(field("name"), 3, 5, 96, 10),
+                    pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 97, 18, 10, 10),
+                    pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 97, 30, 10, 10));
+            Label status = pageAt(label("anvil_status"), 3, 43, 96, 10);
+            status.addClass("anvil-status");
+            status.setText(Component.translatable("gui.data_energistics.me_digital_anvil.invalid"));
+            status.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));
+            status.setAllowHitTest(true);
+            root.addChild(status);
         }
         return root;
     }
@@ -303,14 +307,16 @@ public final class TerminalUiLayout {
         int glyphSize = switch (glyph) {
             case "icon-transfer-info", "icon-record-type" -> 8;
             case "icon-filter-list" -> 16;
+            case "icon-boost-up", "icon-boost-down" -> 10;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
         };
         int glyphHeight = glyph.equals("icon-close") ? 9 : glyphSize;
-        UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, (height - glyphHeight) / 2, glyphSize, glyphHeight);
+        int glyphTop = (height - glyphHeight) / 2 + (glyph.equals("icon-boost-down") ? 1 : 0);
+        UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, glyphTop, glyphSize, glyphHeight);
         icon.addClass(glyph);
         icon.setAllowHitTest(false);
         button.addChild(icon);
-        ((TerminalActionButton) button).glyph(icon, (height - glyphHeight) / 2);
+        ((TerminalActionButton) button).glyph(icon, glyphTop);
         return button;
     }
 

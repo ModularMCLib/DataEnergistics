@@ -43,18 +43,20 @@ public final class TerminalUiLayout {
                 at(element("left_edge", "frame-light"), 0, 0, 1, 168),
                 at(element("bottom_edge", "frame-dark"), 0, 167, 126, 1));
         window.addChild(panel);
-        window.addChildren(at(element("sidebar_top", "sidebar-top"), 0, 0, 15, 15),
-                at(element("sidebar_middle_0", "sidebar-middle"), 0, 15, 15, 15),
-                at(element("sidebar_middle_1", "sidebar-middle"), 0, 30, 15, 15),
-                at(element("sidebar_middle_2", "sidebar-middle"), 0, 45, 15, 15),
-                at(element("sidebar_middle_3", "sidebar-middle"), 0, 60, 15, 15),
-                at(element("sidebar_middle_4", "sidebar-middle"), 0, 75, 15, 15),
-                at(element("sidebar_bottom", "sidebar-bottom"), 0, 90, 15, 15));
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
+        UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, 0, 15, 15 + (controls.length - 1) * 12);
+        // Each button has a backing tile; the tiles overlap by three pixels behind the buttons.
+        for (int index = 0; index < controls.length; index++) {
+            String surface = index == 0 ? "sidebar-top" : index == controls.length - 1 ? "sidebar-bottom" : "sidebar-middle";
+            UIElement backing = at(element("sidebar_" + index, surface), 0, index * 12, 15, 15);
+            backing.setAllowHitTest(false);
+            sidebar.addChild(backing);
+        }
         for (int index = 0; index < controls.length; index++) {
             String id = controls[index];
-            window.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
+            sidebar.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
         }
+        window.addChild(sidebar);
         window.addChildren(at(field("search"), 16, 3, 108, 12),
                 icon("drag", "terminal-drag", "icon-drag", 125, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),

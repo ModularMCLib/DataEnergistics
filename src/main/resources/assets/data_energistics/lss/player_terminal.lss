@@ -1,5 +1,5 @@
 /* Java owns pixel geometry; this sheet owns the supplied surfaces, glyphs and states. */
-.terminal-root, .terminal-window, .terminal-glyph { background: #00000000; }
+.terminal-root, .terminal-window, .terminal-sidebar, .terminal-glyph { background: #00000000; }
 .terminal-panel { background: #FFCBCCD4; }
 .frame-light { background: #FFF0F0F3; }
 .frame-dark { background: #FF555970; }

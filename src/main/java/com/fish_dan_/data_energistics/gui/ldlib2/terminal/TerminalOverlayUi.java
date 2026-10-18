@@ -754,12 +754,8 @@ public final class TerminalOverlayUi {
     }
 
     public boolean contains(double x, double y) {
-        return visible ? over(element(window, "panel"), x, y) || sidebarContains(x, y) || over(element(window, "tabs"), x, y) ||
+        return visible ? over(element(window, "panel"), x, y) || over(element(window, "sidebar"), x, y) || over(element(window, "tabs"), x, y) ||
                 (!popupStack.isEmpty() && popupContains(x, y)) : over(element(ui.rootElement, "entry"), x, y);
-    }
-
-    private boolean sidebarContains(double x, double y) {
-        return x >= viewport.x() && x < viewport.x() + 15 && y >= viewport.y() && y < viewport.y() + 105;
     }
 
     public boolean modal() {
@@ -844,7 +840,7 @@ public final class TerminalOverlayUi {
             return rectangles;
         }
         rectangles.add(new Rect2i(viewport.x() + 12, viewport.y(), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12, viewport.height()));
-        rectangles.add(new Rect2i(viewport.x(), viewport.y(), 15, 105));
+        rectangles.add(rect(element(window, "sidebar")));
         rectangles.add(new Rect2i(viewport.x() + viewport.width() - TerminalViewportLayout.TAB_WIDTH,
                 viewport.y() + viewport.height() - 72, TerminalViewportLayout.TAB_WIDTH, 70));
         if (!popupStack.isEmpty()) rectangles.add(rect(popups.get(popupStack.getLast())));

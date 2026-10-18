@@ -45,8 +45,12 @@ public final class TerminalUiLayout {
                 at(element("bottom_edge", "frame-dark"), 0, 167, 126, 1));
         window.addChild(panel);
         window.addChildren(at(element("sidebar_top", "sidebar-top"), 0, 0, 15, 15),
-                at(element("sidebar_middle", "sidebar-middle"), 0, 15, 15, 70),
-                at(element("sidebar_bottom", "sidebar-bottom"), 0, 85, 15, 15));
+                at(element("sidebar_middle_0", "sidebar-middle"), 0, 15, 15, 15),
+                at(element("sidebar_middle_1", "sidebar-middle"), 0, 30, 15, 15),
+                at(element("sidebar_middle_2", "sidebar-middle"), 0, 45, 15, 15),
+                at(element("sidebar_middle_3", "sidebar-middle"), 0, 60, 15, 15),
+                at(element("sidebar_middle_4", "sidebar-middle"), 0, 75, 15, 15),
+                at(element("sidebar_bottom", "sidebar-bottom"), 0, 90, 15, 15));
         String[] controls = { "tasks", "sort", "direction", "display", "type", "network", "magnet", "insert" };
         for (int index = 0; index < controls.length; index++) {
             String id = controls[index];
@@ -70,49 +74,62 @@ public final class TerminalUiLayout {
         UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, 108, 58);
         root.addClass("page-" + mode.id());
         UIElement inputs = element("inputs", "page-inputs");
+        inputs.setOverflowVisible(false);
         UIElement result = element("result", "page-result");
         switch (mode) {
             case CRAFTING -> {
-                at(inputs, 3, 2, 54, 54);
-                at(result, 84, 10, 18, 18);
+                pageAt(inputs, 3, 2, 54, 54);
+                pageAt(result, 84, 10, 18, 18);
             }
             case PROCESSING -> {
-                at(inputs, 9, 2, 54, 54);
-                at(result, 64, 20, 18, 18);
+                pageAt(inputs, 9, 2, 54, 54);
+                pageAt(result, 64, 20, 18, 18);
             }
             case SMITHING -> {
-                at(inputs, 3, 20, 54, 18);
-                at(result, 84, 10, 18, 18);
+                pageAt(inputs, 3, 20, 54, 18);
+                pageAt(result, 84, 10, 18, 18);
             }
             case STONECUTTING -> {
-                at(inputs, 3, 6, 18, 18);
-                at(result, 3, 36, 18, 18);
-                root.addChild(at(element("recipes", "stonecutting-recipes"), 25, 7, 72, 36));
+                pageAt(inputs, 3, 6, 18, 18);
+                UIElement recipes = element("recipes", "stonecutting-recipes");
+                recipes.setOverflowVisible(false);
+                root.addChildren(pageAt(recipes, 25, 6, 72, 48), pageAt(stonecuttingScrollbar(), 99, 6, 6, 48));
             }
             case ANVIL -> {
-                at(inputs, 3, 20, 54, 18);
-                at(result, 78, 20, 18, 18);
+                pageAt(inputs, 3, 20, 54, 18);
+                pageAt(result, 78, 20, 18, 18);
             }
         }
-        root.addChildren(inputs, at(element("outputs", "page-outputs"), 84, 2, 18, 54), result);
-        root.addChildren(control("recipe_previous", 25, 44, 10, 10),
-                at(label("recipe_index"), 36, 44, 49, 10), control("recipe_next", 86, 44, 10, 10));
+        UIElement outputs = element("outputs", "page-outputs");
+        outputs.setOverflowVisible(false);
+        outputs.setVisible(mode != TerminalWorkspace.STONECUTTING);
+        root.addChildren(inputs, pageAt(outputs, 84, 2, 18, 54));
+        if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) root.addChild(result);
         if (mode.supportsEncoding()) {
-            int modeX = mode == TerminalWorkspace.PROCESSING ? 0 : mode == TerminalWorkspace.STONECUTTING ? 6 : 62;
-            root.addChild(icon("encoding", "encoding", "icon-encoding", modeX, mode == TerminalWorkspace.STONECUTTING ? 25 : 23, 10, 10));
-            root.addChildren(control("substitutes", 62, 2, 9, 9), control("fluid_substitutes", 73, 2, 9, 9));
-            root.addChild(at(element("patterns", "pattern-slots"), 62, 36, 40, 18));
+            int modeX = mode == TerminalWorkspace.STONECUTTING ? 6 : 67;
+            root.addChild(pageIcon("encoding", "encoding", "icon-encoding", modeX, 25, 8, 8));
+            if (mode == TerminalWorkspace.CRAFTING) {
+                root.addChildren(pageIcon("substitutes", "terminal-small", "icon-substitutes", 62, 2, 8, 8),
+                        pageIcon("fluid_substitutes", "terminal-small", "icon-fluid-substitutes", 72, 2, 8, 8));
+            } else if (mode == TerminalWorkspace.SMITHING) {
+                root.addChild(pageIcon("substitutes", "terminal-small", "icon-substitutes", 62, 2, 8, 8));
+            } else if (mode == TerminalWorkspace.PROCESSING) {
+                root.addChildren(pageIcon("encoding_info", "terminal-small", "icon-encoding-info", 62, 2, 8, 8),
+                        pageIcon("transfer_info", "terminal-small", "icon-transfer-info", 72, 2, 8, 8),
+                        pageIcon("transfer_processing", "transfer-processing", "icon-transfer", 69, 43, 8, 8),
+                        pageAt(processingScrollbar(), 1, 2, 6, 54));
+            }
+            root.addChild(pageAt(element("encoded", "encoded-pattern"), 84, 36, 18, 18));
             if (mode == TerminalWorkspace.PROCESSING) {
-                at(require(root, "patterns", UIElement.class), 64, 2, 18, 54);
-                root.addChild(icon("transfer_processing", "transfer-processing", "icon-transfer", 66, 22, 14, 14));
+                pageAt(require(root, "encoded", UIElement.class), 64, 38, 18, 18);
             } else if (mode == TerminalWorkspace.STONECUTTING) {
-                at(require(root, "patterns", UIElement.class), 60, 35, 36, 18);
-                at(require(root, "substitutes", UIElement.class), 25, 35, 9, 9);
+                pageAt(require(root, "encoded", UIElement.class), 3, 36, 18, 18);
             }
         } else {
-            root.addChild(at(field("name"), 3, 4, 96, 10));
-            UIElement boost = at(element("boost_controls", "anvil-boost"), 3, 44, 96, 10);
-            boost.addChildren(control("boost_down", 0, 0, 10, 10), at(label("boost"), 11, 0, 74, 10), control("boost_up", 86, 0, 10, 10));
+            root.addChild(pageAt(field("name"), 3, 4, 96, 10));
+            UIElement boost = pageAt(element("boost_controls", "anvil-boost"), 3, 44, 96, 10);
+            boost.addChildren(pageAt(control("boost_down", 0, 0, 10, 10), 0, 0, 10, 10),
+                    pageAt(label("boost"), 11, 0, 74, 10), pageAt(control("boost_up", 86, 0, 10, 10), 86, 0, 10, 10));
             root.addChild(boost);
         }
         return root;
@@ -139,28 +156,31 @@ public final class TerminalUiLayout {
             case "quantity" -> root.addChildren(at(element("selected", "quantity-selected"), 7, 23, 18, 18),
                     at(field("amount"), 31, 25, 151, 14), control("minus", 31, 47, 28, 14),
                     control("plus", 62, 47, 28, 14), control("apply_quantity", 97, 47, 85, 14));
+            case "encoding_info" -> root.addChildren(icon("record_type", "terminal-small", "icon-record-type", 5, 21, 10, 10),
+                    at(label("record_type_text"), 20, 21, 163, 10), at(label("encoding_details"), 5, 40, 180, 48));
+            case "transfer_info" -> root.addChild(at(label("transfer_details"), 5, 21, 180, 88));
         }
         return root;
     }
 
     public static void resize(UIElement window, TerminalViewportLayout viewport) {
         int panelWidth = viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12;
-        at(require(window, "panel", UIElement.class), 12, 0, panelWidth, viewport.height());
-        at(require(window, "top_edge", UIElement.class), 0, 0, panelWidth, 1);
-        at(require(window, "left_edge", UIElement.class), 0, 0, 1, viewport.height());
-        at(require(window, "bottom_edge", UIElement.class), 0, viewport.height() - 1, panelWidth, 1);
-        at(require(window, "search", UIElement.class), 16, 3, viewport.width() - 42, 12);
-        at(require(window, "drag", UIElement.class), viewport.width() - 25, 3, 10, 10);
-        at(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight());
-        at(require(window, "storage_scroll", UIElement.class), viewport.width() - 24, 18, 6, viewport.scrollHeight());
-        at(require(window, "storage_rail", UIElement.class), 0, 0, 6, viewport.scrollHeight());
-        at(require(window, "storage_rail_rim", UIElement.class), 1, 1, 4, viewport.scrollHeight() - 2);
-        at(require(window, "storage_rail_center", UIElement.class), 2, 2, 2, viewport.scrollHeight() - 4);
-        at(require(window, "workspaces", UIElement.class), viewport.operationLeft(), viewport.operationTop(),
-                TerminalViewportLayout.OPERATION_WIDTH, TerminalViewportLayout.OPERATION_HEIGHT);
-        at(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 72,
-                TerminalViewportLayout.TAB_WIDTH, 70);
-        at(require(window, "resize", UIElement.class), viewport.width() - 18, viewport.height() - 4, 4, 4);
+        atWithin(require(window, "panel", UIElement.class), 12, 0, panelWidth, viewport.height(), viewport.width(), viewport.height());
+        atWithin(require(window, "top_edge", UIElement.class), 0, 0, panelWidth, 1, viewport.width(), viewport.height());
+        atWithin(require(window, "left_edge", UIElement.class), 0, 0, 1, viewport.height(), viewport.width(), viewport.height());
+        atWithin(require(window, "bottom_edge", UIElement.class), 0, viewport.height() - 1, panelWidth, 1, viewport.width(), viewport.height());
+        atWithin(require(window, "search", UIElement.class), 16, 3, viewport.width() - 42, 12, viewport.width(), viewport.height());
+        atWithin(require(window, "drag", UIElement.class), viewport.width() - 25, 3, 10, 10, viewport.width(), viewport.height());
+        atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
+        atWithin(require(window, "storage_scroll", UIElement.class), viewport.width() - 24, 18, 6, viewport.scrollHeight(), viewport.width(), viewport.height());
+        atWithin(require(window, "storage_rail", UIElement.class), 0, 0, 6, viewport.scrollHeight(), 6, viewport.scrollHeight());
+        atWithin(require(window, "storage_rail_rim", UIElement.class), 1, 1, 4, viewport.scrollHeight() - 2, 6, viewport.scrollHeight());
+        atWithin(require(window, "storage_rail_center", UIElement.class), 2, 2, 2, viewport.scrollHeight() - 4, 6, viewport.scrollHeight());
+        atWithin(require(window, "workspaces", UIElement.class), viewport.operationLeft(), viewport.operationTop(),
+                TerminalViewportLayout.OPERATION_WIDTH, TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
+        atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 72,
+                TerminalViewportLayout.TAB_WIDTH, 70, viewport.width(), viewport.height());
+        atWithin(require(window, "resize", UIElement.class), viewport.width() - 18, viewport.height() - 4, 4, 4, viewport.width(), viewport.height());
     }
 
     public static int popupHeight(String name) {
@@ -169,6 +189,9 @@ public final class TerminalUiLayout {
             case "magnet" -> 124;
             case "filters" -> 188;
             case "quantity" -> 88;
+            case "encoding_info" -> 96;
+            case "transfer_info" -> 116;
+            case "upload" -> 188;
             default -> throw new IllegalArgumentException("Unknown terminal popup " + name);
         };
     }
@@ -180,6 +203,24 @@ public final class TerminalUiLayout {
     public static <T extends UIElement> T at(T element, int x, int y, int width, int height) {
         element.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).left(x).top(y).width(width).height(height).paddingAll(0).flexShrink(0));
         return element;
+    }
+
+    private static <T extends UIElement> T atWithin(T element, int x, int y, int width, int height, int parentWidth, int parentHeight) {
+        element.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE)
+                .leftPercent(parentWidth == 0 ? 0 : x * 100F / parentWidth)
+                .topPercent(parentHeight == 0 ? 0 : y * 100F / parentHeight)
+                .width(width).height(height).paddingAll(0).flexShrink(0));
+        return element;
+    }
+
+    private static <T extends UIElement> T pageAt(T element, int x, int y, int width, int height) {
+        element.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).leftPercent(x * 100F / 108)
+                .topPercent(y * 100F / 58).width(width).height(height).paddingAll(0).flexShrink(0));
+        return element;
+    }
+
+    private static Button pageIcon(String id, String style, String glyph, int x, int y, int width, int height) {
+        return pageAt(icon(id, style, glyph, 0, 0, width, height), x, y, width, height);
     }
 
     private static UIElement element(String id, String style) {
@@ -226,6 +267,34 @@ public final class TerminalUiLayout {
         return scrollbar;
     }
 
+    private static Scroller.Vertical processingScrollbar() {
+        Scroller.Vertical scrollbar = named(new Scroller.Vertical(), "pattern_scroll", "terminal-pattern-scroll");
+        scrollbar.headButton.setDisplay(false);
+        scrollbar.tailButton.setDisplay(false);
+        scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
+        scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
+        scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        UIElement rail = at(element("pattern_rail", "scroll-rail"), 0, 0, 6, 54);
+        rail.addChildren(at(element("pattern_rail_rim", "scroll-rail-rim"), 1, 1, 4, 52),
+                at(element("pattern_rail_center", "scroll-rail-center"), 2, 2, 2, 50));
+        rail.selfAndAllChildren().forEach(element -> {
+            element.addClass("scrollbar-decoration");
+            element.setAllowHitTest(false);
+        });
+        scrollbar.scrollContainer.addChildAt(rail, 0);
+        return scrollbar;
+    }
+
+    private static Scroller.Vertical stonecuttingScrollbar() {
+        Scroller.Vertical scrollbar = named(new Scroller.Vertical(), "recipe_scroll", "terminal-stonecutting-scroll");
+        scrollbar.headButton.setDisplay(false);
+        scrollbar.tailButton.setDisplay(false);
+        scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
+        scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
+        scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        return scrollbar;
+    }
+
     private static Button control(String id, int x, int y, int width, int height) {
         Button button = at(named(new TerminalActionButton(), id, "terminal-control"), x, y, width, height);
         button.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
@@ -237,11 +306,15 @@ public final class TerminalUiLayout {
         Button button = control(id, x, y, width, height);
         button.noText().addClass(style);
         button.addClass("terminal-icon");
-        int glyphSize = style.equals("terminal-tab") ? 9 : Math.min(10, Math.min(width, height));
+        int glyphSize = switch (glyph) {
+            case "icon-transfer-info", "icon-record-type" -> 8;
+            default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
+        };
         UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, (height - glyphSize) / 2, glyphSize, glyphSize);
         icon.addClass(glyph);
         icon.setAllowHitTest(false);
         button.addChild(icon);
+        ((TerminalActionButton) button).glyph(icon, (height - glyphSize) / 2);
         return button;
     }
 

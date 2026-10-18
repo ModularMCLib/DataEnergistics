@@ -2,7 +2,9 @@ package com.fish_dan_.data_energistics.mixin.viewer.jei;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
+import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.JeiPatternTransferContextBridge;
+import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.PlayerTerminalJeiRecipeTransfer;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.source.PatternEncodingSourceHelper;
@@ -39,6 +41,8 @@ public abstract class RecipeTransferServiceMixin {
                                                                                   boolean maxTransfer,
                                                                                   boolean doTransfer,
                                                                                   Operation<Optional<IRecipeTransferError>> original) {
+        if (TerminalOverlayClient.encodingWorkspace(screen.getMenu()) != null)
+            return PlayerTerminalJeiRecipeTransfer.transfer(screen.getMenu(), recipeLayout, doTransfer);
         if (!doTransfer || !(screen.getMenu() instanceof PatternEncodingTermMenu menu)) {
             return original.call(screen, recipeLayout, player, maxTransfer, doTransfer);
         }

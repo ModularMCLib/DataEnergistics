@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
+import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
@@ -65,6 +67,7 @@ public final class TerminalOverlayClient {
     private boolean suspended;
     private boolean restoring;
     private boolean returnRequested;
+    private boolean viewingRecipes;
     private @Nullable AbstractContainerScreen<?> nativeScreen;
     private @Nullable AbstractContainerMenu nativeMenu;
     private int width;
@@ -245,7 +248,17 @@ public final class TerminalOverlayClient {
 
     private boolean valid() {
         Minecraft minecraft = Minecraft.getInstance();
-        return !suspended && minecraft.player != null && minecraft.screen == screen && minecraft.player.containerMenu == menu;
+        return !suspended && minecraft.player != null && (minecraft.screen == screen || viewingRecipes && TerminalViewerScreens.contains(minecraft.screen)) && minecraft.player.containerMenu == menu;
+    }
+
+    public static @Nullable TerminalWorkspace encodingWorkspace(AbstractContainerMenu menu) {
+        TerminalOverlayClient overlay = current;
+        return overlay != null && overlay.menu == menu && overlay.valid() && overlay.composition != null ? overlay.composition.encodingWorkspace() : null;
+    }
+
+    public static void transferRecipe(AbstractContainerMenu menu, CompoundTag data) {
+        TerminalOverlayClient overlay = current;
+        if (overlay != null && encodingWorkspace(menu) != null) overlay.send("recipe_transfer", data);
     }
 
     private boolean suspendedHostValid() {
@@ -443,7 +456,7 @@ public final class TerminalOverlayClient {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void tooltip(RenderTooltipEvent.Pre event) {
         TerminalOverlayClient overlay = current;
-        if (overlay != null && overlay.suspended) return;
+        if (overlay != null && (overlay.suspended || Minecraft.getInstance().screen != overlay.screen)) return;
         if (overlay != null) {
             Minecraft minecraft = Minecraft.getInstance();
             overlay.mouseX = minecraft.mouseHandler.xpos() * overlay.screen.width / minecraft.getWindow().getScreenWidth();
@@ -456,6 +469,10 @@ public final class TerminalOverlayClient {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void opening(ScreenEvent.Opening event) {
         TerminalOverlayClient overlay = current;
+        if (overlay != null && !overlay.suspended) {
+            overlay.viewingRecipes = TerminalViewerScreens.contains(event.getNewScreen());
+            if (overlay.viewingRecipes) overlay.clearInputCapture();
+        }
         if (overlay == null || !overlay.suspended || overlay.restoring) return;
         Screen next = event.getNewScreen();
         if (next instanceof AbstractContainerScreen<?> nativeScreen && TerminalAeMenuLocator.matches(nativeScreen.getMenu(), overlay.session) &&
@@ -481,6 +498,7 @@ public final class TerminalOverlayClient {
             return;
         }
         if (current != null && current.screen == event.getScreen()) {
+            if (current.viewingRecipes) return;
             current.close();
             current = null;
         }

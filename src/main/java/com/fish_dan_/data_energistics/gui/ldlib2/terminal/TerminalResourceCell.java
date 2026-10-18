@@ -31,17 +31,22 @@ public final class TerminalResourceCell extends Button {
     private boolean configurable;
     private boolean storageCell;
     private @Nullable UIEventListener resourceClick;
+    private @Nullable Component actionHint;
 
     public TerminalResourceCell() {
         addClass("terminal-cell");
         noText();
         layout(layout -> layout.width(18).height(18).paddingAll(0).flexShrink(0));
         addEventListener(UIEvents.HOVER_TOOLTIPS, event -> {
-            if (stack == null) return;
+            if (stack == null) {
+                if (actionHint != null) event.hoverTooltips = new HoverTooltips(ObjectList.of(actionHint), null, null, null);
+                return;
+            }
             ObjectList<Component> lines = new ObjectArrayList<>(AEKeyRendering.getTooltip(stack.what()));
             lines.add(Component.literal(stack.what().formatAmount(stack.amount(), AmountFormat.FULL)));
             if (craftable) lines.add(Component.translatable("gui.data_energistics.player_terminal.craftable_hint"));
             if (configurable) lines.add(Component.translatable("gui.data_energistics.player_terminal.ghost_hint"));
+            if (actionHint != null) lines.add(actionHint);
             if (storageCell && !(stack.what() instanceof AEItemKey))
                 lines.add(Component.translatable("gui.data_energistics.player_terminal.container_hint"));
             event.hoverTooltips = new HoverTooltips(lines, null, null, null);
@@ -66,6 +71,10 @@ public final class TerminalResourceCell extends Button {
 
     public void onResourceClick(UIEventListener listener) {
         resourceClick = listener;
+    }
+
+    public void actionHint(@Nullable Component value) {
+        actionHint = value;
     }
 
     @Override

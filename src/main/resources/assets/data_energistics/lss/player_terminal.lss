@@ -30,7 +30,7 @@
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
     pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
 }
-.terminal-resize, .transfer-processing {
+.terminal-resize {
     base-background: #00000000;
     hover-background: #339AD8FF;
     pressed-background: #559AD8FF;
@@ -53,6 +53,15 @@
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
     pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
 }
+.terminal-pattern-scroll .__scroller_scroll_bar__, .terminal-stonecutting-scroll .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+}
+.terminal-stonecutting-scroll.inactive-scroll .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_2.png);
+}
+.terminal-pattern-scroll .__scroller_scroll_container__, .terminal-stonecutting-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-storage-scroll.inactive-scroll .__scroller_scroll_bar__ {
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_2.png);
 }
@@ -79,8 +88,8 @@
 .icon-tasks { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); }
 .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); }
 .sort-amount .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); }
-.icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_1.png); }
-.descending .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_1.png); }
+.icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_0.png); }
+.descending .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
 .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
 .stored-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
 .craftable-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
@@ -97,3 +106,13 @@
 .icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
 .actual-mode .icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
 .icon-transfer { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
+.encode-action .icon-transfer { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
+.icon-encoding-info { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
+.icon-transfer-info { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
+.icon-substitutes { background: sprite(data_energistics:textures/guis/states/top_surface/item.png, 3, 2, 10, 10); }
+.icon-fluid-substitutes { background: sprite(data_energistics:textures/guis/states/top_surface/fluid.png, 3, 2, 10, 10); }
+.icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_1.png); }
+.option-enabled .icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
+.terminal-control.option-enabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
+.icon-previous { background: sprite(data_energistics:textures/guis/front.png); }
+.icon-next { background: sprite(data_energistics:textures/guis/back.png); }

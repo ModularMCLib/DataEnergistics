@@ -5,6 +5,8 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
+import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -25,17 +27,19 @@ import appeng.api.stacks.GenericStack;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -59,7 +63,7 @@ public final class TerminalOverlayUi {
 
     public final UI ui = TerminalUiLayout.create();
     private final TerminalClientPreferences preferences;
-    private final HolderLookup.Provider registries;
+    private final RegistryAccess registries;
     private final BiConsumer<String, CompoundTag> request;
     private final UIElement window = element(ui.rootElement, "window");
     private final Object2ObjectMap<String, UIElement> workspaces = new Object2ObjectLinkedOpenHashMap<>();
@@ -72,14 +76,18 @@ public final class TerminalOverlayUi {
     private int boundCellCount = -1;
     private final ObjectList<TerminalResourceCell> inputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> outputs = new ObjectArrayList<>();
-    private final ObjectList<TerminalResourceCell> patterns = new ObjectArrayList<>();
+    private final ObjectList<TerminalResourceCell> encodedPatterns = new ObjectArrayList<>();
+    private final TerminalPatternUploadUi uploadUi;
+    private boolean pendingEncode;
     private final ObjectList<TerminalResourceCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> insert = new ObjectArrayList<>();
     private final ObjectList<String> types = new ObjectArrayList<>();
     private final Reference2BooleanOpenHashMap<UIElement> modalHitStates = new Reference2BooleanOpenHashMap<>();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
-    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 8, 8, 150, 168, true);
+    private final Scroller.Vertical processingScrollbar;
+    private final Scroller.Vertical stonecuttingScrollbar;
+    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 150, 168, true);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
     private boolean encoding;
@@ -105,19 +113,26 @@ public final class TerminalOverlayUi {
     private int startWidth;
     private int startHeight;
     private boolean geometryDirty = true;
-    private boolean visible = true;
+    private boolean visible;
+    private boolean visibilitySent;
+    private boolean entryPressed;
+    private boolean entryDragging;
+    private int processingScrollRow;
+    private int stonecuttingScrollRow;
 
     public TerminalOverlayUi(TerminalClientPreferences preferences, BiConsumer<String, CompoundTag> request, Runnable openLargeTerminal) {
         this.preferences = preferences;
         this.request = request;
+        visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
         types.add("all");
         for (var type : AEKeyTypes.getAll()) types.add(type.getId().toString());
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
         field(window, "search").style(style -> style.tooltips(text("search_syntax")));
-        element(ui.rootElement, "entry").setVisible(false);
+        window.setVisible(visible);
+        element(ui.rootElement, "entry").setVisible(!visible);
         Button entry = TerminalUiLayout.require(ui.rootElement, "entry", Button.class);
-        entry.style(style -> style.tooltips(text("entry")));
+        entry.style(style -> style.tooltips(text("entry_gestures")));
         entry.setOnClick(event -> {
             if (event.button == 0) visible(true);
             else if (event.button == 1) openLargeTerminal.run();
@@ -183,21 +198,30 @@ public final class TerminalOverlayUi {
                 geometry(screenWidth, screenHeight);
                 preferences.save();
             });
-            button(root, "recipe_previous", () -> request.accept("recipe", number("index", Math.max(0, snapshot.getCompound("work").getInt("recipe") - 1))));
-            button(root, "recipe_next", () -> request.accept("recipe", number("index", Math.clamp(snapshot.getInt("recipe_count") - 1, 0, snapshot.getCompound("work").getInt("recipe") + 1))));
             if (mode.supportsEncoding()) {
                 button(root, "encoding", () -> request.accept("toggle_encoding", new CompoundTag()));
-                button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
-                button(root, "fluid_substitutes", () -> request.accept("fluid_substitutes", new CompoundTag()));
+                if (mode == TerminalWorkspace.CRAFTING) {
+                    button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
+                    button(root, "fluid_substitutes", () -> request.accept("fluid_substitutes", new CompoundTag()));
+                } else if (mode == TerminalWorkspace.SMITHING) {
+                    button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
+                } else if (mode == TerminalWorkspace.PROCESSING) {
+                    button(root, "encoding_info", () -> open("encoding_info"));
+                    button(root, "transfer_info", () -> open("transfer_info"));
+                    button(root, "transfer_processing", () -> {
+                        if (encoding) {
+                            pendingEncode = true;
+                            request.accept("result", new CompoundTag());
+                        } else networkAction("transfer_processing", new CompoundTag());
+                    });
+                }
             } else {
                 field(root, "name").setTextRegexValidator(".{0,50}").setTextResponder(value -> request.accept("name", string("value", value)));
                 button(root, "boost_down", () -> boost(-1));
                 button(root, "boost_up", () -> boost(1));
             }
-            if (mode == TerminalWorkspace.PROCESSING)
-                button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
         }
-        for (String name : new String[] { "network", "magnet", "filters", "quantity" }) {
+        for (String name : new String[] { "network", "magnet", "filters", "quantity", "encoding_info", "transfer_info", "upload" }) {
             UIElement root = TerminalUiLayout.popup(name);
             popups.put(name, root);
             root.setVisible(false);
@@ -207,6 +231,22 @@ public final class TerminalOverlayUi {
             root.select(".terminal-list", ScrollerView.class).forEach(list -> list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER)
                     .verticalScrollDisplay(ScrollDisplay.AUTO)));
         }
+        uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
+        UIElement encodingOptions = popups.get("encoding_info");
+        button(encodingOptions, "record_type", () -> request.accept("record_type", new CompoundTag()));
+        processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
+        configureProcessingScrollbar();
+        for (String host : new String[] { "inputs", "outputs" })
+            element(workspaces.get("processing"), host).addEventListener(UIEvents.MOUSE_WHEEL, event -> {
+                scrollProcessing(event.deltaY > 0 ? -1 : 1);
+                event.stopPropagation();
+            });
+        stonecuttingScrollbar = TerminalUiLayout.require(workspaces.get("stonecutting"), "recipe_scroll", Scroller.Vertical.class);
+        configureStonecuttingScrollbar();
+        element(workspaces.get("stonecutting"), "recipes").addEventListener(UIEvents.MOUSE_WHEEL, event -> {
+            scrollStonecutting(event.deltaY > 0 ? -1 : 1);
+            event.stopPropagation();
+        });
         UIElement magnet = popups.get("magnet");
         for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
             String id = "mode_" + mode.toLowerCase(Locale.ROOT);
@@ -228,6 +268,64 @@ public final class TerminalOverlayUi {
         button(quantity, "plus", () -> amount(1));
         button(quantity, "apply_quantity", this::applyQuantity);
         refreshWorkCells();
+    }
+
+    private void configureProcessingScrollbar() {
+        int maximumRow = 27 - 3;
+        processingScrollbar.setRange(0, 1);
+        processingScrollbar.setScrollBarSize(100F * 15 / 54);
+        processingScrollbar.scrollerStyle(style -> style.scrollDelta(1F / maximumRow));
+        processingScrollbar.setOnValueChanged(value -> setProcessingScrollRow(Math.round(value * maximumRow), false));
+        setProcessingScrollRow(processingScrollRow, true);
+    }
+
+    private void configureStonecuttingScrollbar() {
+        stonecuttingScrollbar.setRange(0, 1);
+        stonecuttingScrollbar.setOnValueChanged(value -> {
+            int maximumRow = maximumStonecuttingScrollRow();
+            setStonecuttingScrollRow(Math.round(value * maximumRow), false);
+            refreshStonecuttingRecipes();
+        });
+    }
+
+    private void scrollProcessing(int rows) {
+        setProcessingScrollRow(processingScrollRow + rows, true);
+    }
+
+    private void setProcessingScrollRow(int row, boolean updateScrollbar) {
+        int maximumRow = 27 - 3;
+        processingScrollRow = Math.clamp(row, 0, maximumRow);
+        if (updateScrollbar) processingScrollbar.setNormalizedValue((float) processingScrollRow / maximumRow, false);
+        for (int index = 0; index < inputs.size(); index++) {
+            int slotRow = index / 3;
+            TerminalUiLayout.at(inputs.get(index), index % 3 * 18, (slotRow - processingScrollRow) * 18, 18, 18);
+            inputs.get(index).setVisible(slotRow >= processingScrollRow && slotRow < processingScrollRow + 3);
+        }
+        for (int index = 0; index < outputs.size(); index++) {
+            TerminalUiLayout.at(outputs.get(index), 0, (index - processingScrollRow) * 18, 18, 18);
+            outputs.get(index).setVisible(index >= processingScrollRow && index < processingScrollRow + 3);
+        }
+    }
+
+    private void scrollStonecutting(int rows) {
+        setStonecuttingScrollRow(stonecuttingScrollRow + rows, true);
+        refreshStonecuttingRecipes();
+    }
+
+    private void setStonecuttingScrollRow(int row, boolean updateScrollbar) {
+        int maximumRow = maximumStonecuttingScrollRow();
+        stonecuttingScrollRow = Math.clamp(row, 0, maximumRow);
+        stonecuttingScrollbar.setActive(maximumRow > 0);
+        stateClass(stonecuttingScrollbar, "inactive-scroll", maximumRow == 0);
+        stonecuttingScrollbar.setScrollBarSize(1500F / 48);
+        stonecuttingScrollbar.scrollerStyle(style -> style.scrollDelta(maximumRow == 0 ? 1F : 1F / maximumRow));
+        if (updateScrollbar) stonecuttingScrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) stonecuttingScrollRow / maximumRow, false);
+        stonecuttingScrollbar.selfAndAllChildren().forEach(element -> element.setAllowHitTest(maximumRow > 0));
+    }
+
+    private int maximumStonecuttingScrollRow() {
+        int totalRows = (snapshot.getInt("recipe_count") + 3) / 4;
+        return Math.max(0, totalRows - 2);
     }
 
     private void boost(int direction) {
@@ -297,30 +395,54 @@ public final class TerminalOverlayUi {
         boolean ghostInputs = encoding || workspace.equals("processing");
         setCells(inputs, work.getList(ghostInputs ? "ghost_inputs" : "items", Tag.TAG_COMPOUND), ghostInputs);
         setCells(outputs, work.getList("ghost_outputs", Tag.TAG_COMPOUND), true);
-        setCells(patterns, work.getList("patterns", Tag.TAG_COMPOUND), false);
+        if (!encodedPatterns.isEmpty()) encodedPatterns.getFirst().entry(physical(work.getList("patterns", Tag.TAG_COMPOUND).getCompound(1)), false);
         UIElement active = workspaces.get(workspace);
-        TerminalResourceCell result = (TerminalResourceCell) element(active, "result").getChildren().getFirst();
-        result.entry(physical(value.getCompound("result")), false);
-        label(active, "recipe_index").setText(Component.literal((work.getInt("recipe") + 1) + "/" + Math.max(1, value.getInt("recipe_count"))));
-        if (workspace.equals("anvil")) {
-            if (!field(active, "name").isFocused()) field(active, "name").setText(work.getString("name"), false);
-            label(active, "boost").setText(Component.literal("+" + work.getInt("boost")));
-            boolean levels = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(value.getInt("anvil_upgrades"));
-            element(active, "boost_down").setActive(levels && work.getInt("boost") > 0);
-            element(active, "boost_up").setActive(levels && work.getInt("boost") < 254);
-            result.style(style -> style.tooltips(text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels"))));
+        if (workspace.equals("stonecutting")) {
+            int selected = work.getInt("recipe");
+            if (selected < stonecuttingScrollRow * 4) setStonecuttingScrollRow(selected / 4, true);
+            else if (selected >= (stonecuttingScrollRow + 2) * 4) setStonecuttingScrollRow(selected / 4 - 1, true);
+            refreshStonecuttingRecipes();
+        } else if (!workspace.equals("processing")) {
+            TerminalResourceCell result = (TerminalResourceCell) element(active, "result").getChildren().getFirst();
+            result.entry(physical(value.getCompound("result")), false);
+            if (workspace.equals("anvil")) {
+                if (!field(active, "name").isFocused()) field(active, "name").setText(work.getString("name"), false);
+                label(active, "boost").setText(Component.literal("+" + work.getInt("boost")));
+                boolean levels = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(value.getInt("anvil_upgrades"));
+                element(active, "boost_down").setActive(levels && work.getInt("boost") > 0);
+                element(active, "boost_up").setActive(levels && work.getInt("boost") < 254);
+                result.style(style -> style.tooltips(text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels"))));
+            } else result.setActive(value.getBoolean("connected"));
         }
-        boolean recipes = workspace.equals("stonecutting") && value.getInt("recipe_count") > 1;
-        if (workspace.equals("stonecutting")) refreshStonecuttingRecipes();
-        element(active, "recipe_previous").setVisible(recipes);
-        element(active, "recipe_next").setVisible(recipes);
-        element(active, "recipe_index").setVisible(recipes);
-        result.setActive(!workspace.equals("anvil") || value.getBoolean("connected"));
         if (!workspace.equals("anvil")) {
             tooltip(active, "encoding", text(encoding ? "encoding_on" : "encoding_off"));
             stateClass(element(active, "encoding"), "actual-mode", !encoding);
-            tooltip(active, "substitutes", text(value.getBoolean("substitutes") ? "substitutes_on" : "substitutes_off"));
-            tooltip(active, "fluid_substitutes", text(value.getBoolean("fluid_substitutes") ? "fluid_substitutes_on" : "fluid_substitutes_off"));
+            boolean substitutes = value.getBoolean("substitutes");
+            boolean fluidSubstitutes = value.getBoolean("fluid_substitutes");
+            if (workspace.equals("crafting") || workspace.equals("smithing")) {
+                stateClass(element(active, "substitutes"), "option-enabled", substitutes);
+                tooltip(active, "substitutes", text(substitutes ? "substitutes_on" : "substitutes_off"));
+            }
+            if (workspace.equals("crafting")) {
+                stateClass(element(active, "fluid_substitutes"), "option-enabled", fluidSubstitutes);
+                tooltip(active, "fluid_substitutes", text(fluidSubstitutes ? "fluid_substitutes_on" : "fluid_substitutes_off"));
+            }
+            if (workspace.equals("processing")) {
+                boolean recordType = value.getBoolean("record_recipe_type");
+                stateClass(element(popups.get("encoding_info"), "record_type"), "option-enabled", recordType);
+                label(popups.get("encoding_info"), "record_type_text").setText(Component.translatable(
+                        "button.data_energistics.pattern_encoding_recipe_type_toggle." + (recordType ? "enabled" : "disabled")));
+                label(popups.get("encoding_info"), "encoding_details")
+                        .setText(text("encoding_details", text("workspace." + workspace), value.getLong("blank_patterns")));
+                CompoundTag context = work.getCompound("context");
+                String type = context.getString("type");
+                Component transfer = text("transfer_details", type.isEmpty() ? text("context_none") :
+                        PatternProviderRecipeTypeNames.resolveDisplayName(ResourceLocation.parse(type)),
+                        context.getString("recipe").isEmpty() ? "—" : context.getString("recipe"));
+                label(popups.get("transfer_info"), "transfer_details").setText(transfer);
+                tooltip(active, "transfer_info", transfer);
+                tooltip(active, "encoding_info", text("encoding_info"));
+            }
         }
         if (workspace.equals("processing")) {
             element(active, "transfer_processing").setVisible(!encoding);
@@ -340,60 +462,80 @@ public final class TerminalOverlayUi {
         label(popups.get("network"), "connection_status").setText(text("reason." + value.getString("reason")));
         refreshNetwork();
         refreshMagnet();
+        uploadUi.apply(value);
+        if (pendingEncode && value.getString("action").equals("result")) {
+            pendingEncode = false;
+            if (value.getString("message").equals("encoded") && encoding) open("upload");
+        }
+        if (!visibilitySent) {
+            visibilitySent = true;
+            if (!visible) request.accept("visible", booleanValue("value", false));
+        }
     }
 
     private void refreshWorkCells() {
         inputs.clear();
         outputs.clear();
-        patterns.clear();
+        encodedPatterns.clear();
         UIElement root = workspaces.get(workspace);
         TerminalWorkspace mode = TerminalWorkspace.byId(workspace);
-        createCells(element(root, "inputs"), inputs, mode.inputSlots(), mode == TerminalWorkspace.ANVIL ? 2 : 3,
+        int inputCount = mode == TerminalWorkspace.PROCESSING ? mode.patternInputSlots() : mode.inputSlots();
+        createCells(element(root, "inputs"), inputs, inputCount, mode == TerminalWorkspace.ANVIL ? 2 : 3,
                 (index, event) -> {
                     if (encoding || mode == TerminalWorkspace.PROCESSING) ghost("inputs", index, event.button);
                     else slot("inputs", index, event.button);
                 });
         for (TerminalResourceCell cell : inputs) cell.addClass("embedded-cell");
         if (mode == TerminalWorkspace.ANVIL) TerminalUiLayout.at(inputs.get(1), 36, 0, 18, 18);
-        createCells(element(root, "outputs"), outputs, mode == TerminalWorkspace.PROCESSING && encoding ? 3 : 0, 1,
+        createCells(element(root, "outputs"), outputs,
+                mode == TerminalWorkspace.PROCESSING && encoding ? mode.patternOutputSlots() : 0, 1,
                 (index, event) -> ghost("outputs", index, event.button));
         for (TerminalResourceCell cell : inputs) cell.configurable(encoding || mode == TerminalWorkspace.PROCESSING);
         for (TerminalResourceCell cell : outputs) cell.configurable(true);
         for (TerminalResourceCell cell : outputs) cell.addClass("embedded-cell");
         if (mode.supportsEncoding()) {
-            createCells(element(root, "patterns"), patterns, encoding ? 2 : 0, 2, (index, event) -> slot("patterns", index, event.button));
-            if (encoding) {
-                if (mode == TerminalWorkspace.PROCESSING) {
-                    TerminalUiLayout.at(patterns.get(0), 0, 0, 18, 18);
-                    TerminalUiLayout.at(patterns.get(1), 0, 36, 18, 18);
-                } else {
-                    TerminalUiLayout.at(patterns.get(0), mode == TerminalWorkspace.STONECUTTING ? 18 : 22, 0, 18, 18);
-                    TerminalUiLayout.at(patterns.get(1), 0, 0, 18, 18);
-                }
-            }
-            element(root, "substitutes").setVisible(encoding && mode != TerminalWorkspace.PROCESSING);
-            element(root, "fluid_substitutes").setVisible(encoding && mode == TerminalWorkspace.CRAFTING);
-        }
-        ObjectList<TerminalResourceCell> result = new ObjectArrayList<>();
-        createCells(element(root, "result"), result, 1, 1, (index, event) -> {
-            CompoundTag data = new CompoundTag();
-            data.putBoolean("shift", UIElement.isShiftDown());
-            request.accept("result", data);
-        });
-        if (mode != TerminalWorkspace.PROCESSING) result.getFirst().addClass("embedded-cell");
-        element(root, "result").setVisible(mode != TerminalWorkspace.PROCESSING || encoding);
-        if (mode == TerminalWorkspace.STONECUTTING) {
-            createCells(element(root, "recipes"), stonecuttingRecipes, encoding ? 4 : 8, 4, (index, event) -> {
-                if (event.button != 0) return;
-                int pageSize = stonecuttingRecipes.size();
-                int first = snapshot.getCompound("work").getInt("recipe") / pageSize * pageSize;
-                if (first + index < snapshot.getInt("recipe_count")) request.accept("recipe", number("index", first + index));
+            createCells(element(root, "encoded"), encodedPatterns, encoding ? 1 : 0, 1, (index, event) -> {
+                if (event.button == 0 && (encodedPatterns.getFirst().stack() == null || UIElement.isCtrlDown())) {
+                    pendingEncode = true;
+                    request.accept("result", new CompoundTag());
+                } else slot("encoded", 1, event.button);
             });
-            int navigationY = encoding ? 25 : 44;
-            TerminalUiLayout.at(element(root, "recipe_previous"), 25, navigationY, 10, 10);
-            TerminalUiLayout.at(element(root, "recipe_index"), 36, navigationY, 49, 10);
-            TerminalUiLayout.at(element(root, "recipe_next"), 86, navigationY, 10, 10);
+            for (TerminalResourceCell cell : encodedPatterns) cell.actionHint(text("encoded_gestures"));
+            if (mode != TerminalWorkspace.PROCESSING)
+                for (TerminalResourceCell cell : encodedPatterns) cell.addClass("embedded-cell");
+            element(root, "encoded").setVisible(encoding);
+            if (mode == TerminalWorkspace.CRAFTING || mode == TerminalWorkspace.SMITHING)
+                element(root, "substitutes").setVisible(encoding);
+            if (mode == TerminalWorkspace.CRAFTING) element(root, "fluid_substitutes").setVisible(encoding);
+            if (mode == TerminalWorkspace.PROCESSING) {
+                element(root, "encoding_info").setVisible(encoding);
+                element(root, "transfer_info").setVisible(encoding);
+                element(root, "transfer_processing").setVisible(!encoding);
+            }
         }
+        if (mode != TerminalWorkspace.STONECUTTING && mode != TerminalWorkspace.PROCESSING) {
+            ObjectList<TerminalResourceCell> result = new ObjectArrayList<>();
+            createCells(element(root, "result"), result, 1, 1, (index, event) -> {
+                if (event.button != 0) return;
+                CompoundTag data = new CompoundTag();
+                data.putBoolean("shift", UIElement.isShiftDown());
+                pendingEncode = encoding;
+                request.accept("result", data);
+            });
+            if (mode != TerminalWorkspace.PROCESSING) result.getFirst().addClass("embedded-cell");
+            result.getFirst().actionHint(encoding ? text("encode_action") : null);
+            element(root, "result").setVisible(mode != TerminalWorkspace.PROCESSING || encoding);
+        }
+        if (mode == TerminalWorkspace.STONECUTTING) {
+            createCells(element(root, "recipes"), stonecuttingRecipes, 8, 4, (index, event) -> {
+                if (event.button == 0) {
+                    int selected = stonecuttingScrollRow * 4 + index;
+                    if (selected < snapshot.getInt("recipe_count")) request.accept("recipe", number("index", selected));
+                }
+            });
+            setStonecuttingScrollRow(stonecuttingScrollRow, true);
+        }
+        if (mode == TerminalWorkspace.PROCESSING) setProcessingScrollRow(processingScrollRow, true);
     }
 
     private void refreshStonecuttingRecipes() {
@@ -404,12 +546,16 @@ public final class TerminalOverlayUi {
         ObjectList<RecipeHolder<StonecutterRecipe>> recipes = new ObjectArrayList<>(level.getRecipeManager().getRecipesFor(RecipeType.STONECUTTING, recipeInput, level));
         recipes.sort(Comparator.comparing(recipe -> recipe.id().toString()));
         int selected = snapshot.getCompound("work").getInt("recipe");
-        int first = selected / stonecuttingRecipes.size() * stonecuttingRecipes.size();
+        setStonecuttingScrollRow(stonecuttingScrollRow, true);
+        int first = stonecuttingScrollRow * 4;
         for (int index = 0; index < stonecuttingRecipes.size(); index++) {
             TerminalResourceCell cell = stonecuttingRecipes.get(index);
             ItemStack output = first + index < recipes.size() ? recipes.get(first + index).value().assemble(recipeInput, registries) : ItemStack.EMPTY;
             cell.entry(output.isEmpty() ? null : new GenericStack(AEItemKey.of(output), output.getCount()), false);
             cell.setActive(!output.isEmpty());
+            int row = index / 4;
+            TerminalUiLayout.at(cell, index % 4 * 18, row * 18, 18, 18);
+            cell.setVisible(true);
             stateClass(cell, "selected-recipe", first + index == selected && !output.isEmpty());
         }
     }
@@ -489,15 +635,18 @@ public final class TerminalOverlayUi {
     public void geometry(int width, int height) {
         screenWidth = width;
         screenHeight = height;
-        viewport = TerminalViewportLayout.compute(width, height, preferences.x, preferences.y,
+        viewport = TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
                 preferences.width, preferences.height, preferences.folded);
-        preferences.x = viewport.x();
-        preferences.y = viewport.y();
+        preferences.xPercent = width <= viewport.width() ? 0 : (float) viewport.x() / (width - viewport.width());
+        preferences.yPercent = height <= viewport.height() ? 0 : (float) viewport.y() / (height - viewport.height());
         preferences.width = viewport.width();
         preferences.height = viewport.height();
-        window.layout(style -> style.left(viewport.x()).top(viewport.y()).width(viewport.width()).height(viewport.height()));
+        window.layout(style -> style.leftPercent(width == 0 ? 0 : viewport.x() * 100F / width)
+                .topPercent(height == 0 ? 0 : viewport.y() * 100F / height).width(viewport.width()).height(viewport.height()));
         TerminalUiLayout.resize(window, viewport);
-        TerminalUiLayout.at(element(ui.rootElement, "entry"), 0, Math.clamp(preferences.y + 3, 0, Math.max(0, height - 10)), 10, 10);
+        element(ui.rootElement, "entry").layout(style -> style.positionType(TaffyPosition.ABSOLUTE)
+                .leftPercent(width == 0 ? 0 : viewport.x() * 100F / width)
+                .topPercent(height == 0 ? 0 : viewport.y() * 100F / height).width(10).height(10).paddingAll(0));
         element(window, "workspaces").setVisible(!preferences.folded);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             stateClass(element(window, "tab_" + mode.id()), "selected", !preferences.folded && workspace.equals(mode.id()));
@@ -530,8 +679,10 @@ public final class TerminalOverlayUi {
         }
         for (var entry : popups.object2ObjectEntrySet()) {
             UIElement popup = entry.getValue();
-            popup.layout(style -> style.left(Math.clamp(preferences.x + viewport.width() + 3, 0, Math.max(0, width - 190)))
-                    .top(Math.clamp(preferences.y, 0, Math.max(0, height - TerminalUiLayout.popupHeight(entry.getKey())))));
+            int popupX = Math.clamp(viewport.x() + viewport.width() + 3, 0, Math.max(0, width - 190));
+            int popupY = Math.clamp(viewport.y(), 0, Math.max(0, height - TerminalUiLayout.popupHeight(entry.getKey())));
+            popup.layout(style -> style.leftPercent(width == 0 ? 0 : popupX * 100F / width)
+                    .topPercent(height == 0 ? 0 : popupY * 100F / height));
         }
         if (gridChanged && snapshot.contains("enabled")) {
             offset = viewport.clampOffset(offset, storageIndex.projected().size());
@@ -543,33 +694,62 @@ public final class TerminalOverlayUi {
     }
 
     public boolean beginDrag(double x, double y, int button) {
-        if (!visible || button != 0 || !popupStack.isEmpty()) return false;
+        if (button != 0 || !popupStack.isEmpty()) return false;
+        if (!visible && over(element(ui.rootElement, "entry"), x, y)) {
+            entryPressed = true;
+            entryDragging = false;
+            dragStartX = x;
+            dragStartY = y;
+            startX = viewport.x();
+            startY = viewport.y();
+            return true;
+        }
+        if (!visible) return false;
         resizing = over(element(window, "resize"), x, y);
         adjusting = resizing || over(element(window, "drag"), x, y);
         if (!adjusting) return false;
         dragStartX = x;
         dragStartY = y;
-        startX = preferences.x;
-        startY = preferences.y;
+        startX = viewport.x();
+        startY = viewport.y();
         startWidth = preferences.width;
         startHeight = preferences.height;
         return true;
     }
 
     public boolean drag(double x, double y) {
+        if (entryPressed) {
+            if (!entryDragging && Math.hypot(x - dragStartX, y - dragStartY) >= 3) {
+                entryDragging = true;
+                adjusting = true;
+                resizing = false;
+            }
+            if (entryDragging) {
+                moveWindow(startX + (int) (x - dragStartX), startY + (int) (y - dragStartY));
+                return true;
+            }
+            return false;
+        }
         if (!adjusting) return false;
         if (resizing) {
             preferences.width = startWidth + (int) (x - dragStartX);
             preferences.height = startHeight + (int) (y - dragStartY);
         } else {
-            preferences.x = startX + (int) (x - dragStartX);
-            preferences.y = startY + (int) (y - dragStartY);
+            moveWindow(startX + (int) (x - dragStartX), startY + (int) (y - dragStartY));
         }
         geometry(screenWidth, screenHeight);
         return true;
     }
 
     public boolean endDrag() {
+        if (entryPressed) {
+            entryPressed = false;
+            if (!entryDragging) {
+                visible(true);
+                return true;
+            }
+            entryDragging = false;
+        }
         if (!adjusting) return false;
         adjusting = false;
         preferences.save();
@@ -592,11 +772,15 @@ public final class TerminalOverlayUi {
     }
 
     private boolean sidebarContains(double x, double y) {
-        return x >= viewport.x() && x < viewport.x() + 15 && y >= viewport.y() && y < viewport.y() + 100;
+        return x >= viewport.x() && x < viewport.x() + 15 && y >= viewport.y() && y < viewport.y() + 105;
     }
 
     public boolean modal() {
         return !popupStack.isEmpty();
+    }
+
+    public @Nullable TerminalWorkspace encodingWorkspace() {
+        return visible && !preferences.folded && encoding && !modal() ? TerminalWorkspace.byId(workspace) : null;
     }
 
     public boolean inputAllowed(double x, double y) {
@@ -605,6 +789,7 @@ public final class TerminalOverlayUi {
 
     private void captureWindow() {
         window.selfAndAllChildren().forEach(element -> {
+            if (element instanceof TerminalActionButton button) button.resetInteraction();
             if (!modalHitStates.containsKey(element)) modalHitStates.put(element, element.isAllowHitTest());
             element.setAllowHitTest(false);
         });
@@ -658,7 +843,7 @@ public final class TerminalOverlayUi {
             return rectangles;
         }
         rectangles.add(new Rect2i(viewport.x() + 12, viewport.y(), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12, viewport.height()));
-        rectangles.add(new Rect2i(viewport.x(), viewport.y(), 15, 100));
+        rectangles.add(new Rect2i(viewport.x(), viewport.y(), 15, 105));
         rectangles.add(new Rect2i(viewport.x() + viewport.width() - TerminalViewportLayout.TAB_WIDTH,
                 viewport.y() + viewport.height() - 72, TerminalViewportLayout.TAB_WIDTH, 70));
         if (!popupStack.isEmpty()) rectangles.add(rect(popups.get(popupStack.getLast())));
@@ -685,7 +870,7 @@ public final class TerminalOverlayUi {
 
     private static void collectTargets(ObjectList<GhostTarget> targets, ObjectList<TerminalResourceCell> cells, String inventory) {
         for (int index = 0; index < cells.size(); index++)
-            targets.add(new GhostTarget(rect(cells.get(index)), inventory, index));
+            if (cells.get(index).isVisible()) targets.add(new GhostTarget(rect(cells.get(index)), inventory, index));
     }
 
     public void drop(GhostTarget target, GenericStack stack) {
@@ -724,9 +909,14 @@ public final class TerminalOverlayUi {
 
     public void visible(boolean value) {
         visible = value;
+        preferences.open = value;
+        preferences.save();
         window.setVisible(value);
         element(ui.rootElement, "entry").setVisible(!value);
         if (!value) {
+            window.selfAndAllChildren().forEach(element -> {
+                if (element instanceof TerminalActionButton button) button.resetInteraction();
+            });
             Objects.requireNonNull(window.getModularUI()).clearFocus();
             for (UIElement popup : popups.values()) popup.setVisible(false);
             popupStack.clear();
@@ -736,6 +926,14 @@ public final class TerminalOverlayUi {
         data.putBoolean("value", value);
         request.accept("visible", data);
         geometryDirty = true;
+    }
+
+    private void moveWindow(int x, int y) {
+        int availableX = Math.max(0, screenWidth - viewport.width());
+        int availableY = Math.max(0, screenHeight - viewport.height());
+        preferences.xPercent = availableX == 0 ? 0 : (float) Math.clamp(x, 0, availableX) / availableX;
+        preferences.yPercent = availableY == 0 ? 0 : (float) Math.clamp(y, 0, availableY) / availableY;
+        geometry(screenWidth, screenHeight);
     }
 
     private void networkAction(String action, CompoundTag data) {
@@ -790,6 +988,12 @@ public final class TerminalOverlayUi {
     private static CompoundTag number(String key, int value) {
         CompoundTag data = new CompoundTag();
         data.putInt(key, value);
+        return data;
+    }
+
+    private static CompoundTag booleanValue(String key, boolean value) {
+        CompoundTag data = new CompoundTag();
+        data.putBoolean(key, value);
         return data;
     }
 

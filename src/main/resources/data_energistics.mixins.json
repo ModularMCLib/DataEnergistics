@@ -159,6 +159,7 @@
 		"technology.avaritia.emi.ExtremeSmithingEmiInputsMixin",
 		"viewer.emi.ae2.AbstractRecipeHandlerMixin",
 		"viewer.emi.ae2.EmiEncodePatternHandlerMixin",
+		"viewer.emi.PlayerTerminalRecipeFillerMixin",
 		"viewer.emi.research.ResearchStationEmiScreenMixin",
 		"viewer.jei.RecipeTransferServiceMixin"
 	],

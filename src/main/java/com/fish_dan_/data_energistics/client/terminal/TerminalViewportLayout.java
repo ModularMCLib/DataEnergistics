@@ -22,7 +22,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     private static final int MIN_WIDTH = 150;
     private static final int MIN_HEIGHT = 100;
 
-    public static TerminalViewportLayout compute(int screenWidth, int screenHeight, int x, int y,
+    public static TerminalViewportLayout compute(int screenWidth, int screenHeight, float xPercent, float yPercent,
                                                  int requestedWidth, int requestedHeight, boolean folded) {
         int width = Math.clamp(requestedWidth, MIN_WIDTH, Math.clamp(screenWidth, MIN_WIDTH, FRAME_WIDTH + 20 * CELL_SIZE));
         int height = Math.clamp(requestedHeight, MIN_HEIGHT, Math.clamp(screenHeight, MIN_HEIGHT, FRAME_HEIGHT + 20 * CELL_SIZE));
@@ -40,8 +40,9 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
                     cells.add(new Cell(column, row));
             }
         }
-        return new TerminalViewportLayout(Math.clamp(x, 0, Math.max(0, screenWidth - width)),
-                Math.clamp(y, 0, Math.max(0, screenHeight - height)), width, height, columns, rows,
+        int x = Math.round(Math.clamp(xPercent, 0, 1) * Math.max(0, screenWidth - width));
+        int y = Math.round(Math.clamp(yPercent, 0, 1) * Math.max(0, screenHeight - height));
+        return new TerminalViewportLayout(x, y, width, height, columns, rows,
                 folded ? height - FRAME_HEIGHT : operationTop - STORAGE_TOP, new ObjectImmutableList<>(cells));
     }
 

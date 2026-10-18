@@ -101,7 +101,8 @@ public final class TerminalOverlayUi {
     private String filter = "all";
     private boolean descending;
     private int offset;
-    private CompoundTag previousMagnet = new CompoundTag();
+    private @Nullable CompoundTag previousMagnet;
+    private boolean previousMagnetUnlocked;
     private ObjectList<TerminalViewportLayout.Cell> positionedStorage = ObjectImmutableList.of();
     private int screenWidth;
     private int screenHeight;
@@ -193,9 +194,7 @@ public final class TerminalOverlayUi {
                 view(false);
             }
         });
-        button(window, "magnet", () -> {
-            if (snapshot.getBoolean("magnet_unlocked")) open("magnet");
-        });
+        button(window, "magnet", () -> open("magnet"));
         button(window, "tasks", () -> networkAction("cpu_list", new CompoundTag()));
         button(window, "insert", () -> networkAction("insert", new CompoundTag()));
         for (TerminalWorkspace mode : TerminalWorkspace.values()) {
@@ -269,8 +268,6 @@ public final class TerminalOverlayUi {
         }
         createCells(element(filters, "pickup"), pickup, 27, 9, (index, event) -> ghost("pickup", index, event.button));
         createCells(element(filters, "insert"), insert, 27, 9, (index, event) -> ghost("insert", index, event.button));
-        for (TerminalResourceCell cell : pickup) cell.configurable(true);
-        for (TerminalResourceCell cell : insert) cell.configurable(true);
         amountUi = new TerminalAmountUi(popups.get("quantity"), registries, request, this::closePopup);
         refreshWorkCells();
     }
@@ -459,7 +456,6 @@ public final class TerminalOverlayUi {
         view(false);
         element(window, "insert").setActive(value.getBoolean("connected"));
         element(window, "tasks").setActive(value.getBoolean("connected"));
-        element(window, "magnet").setActive(value.getBoolean("magnet_unlocked"));
         refreshMagnet();
         uploadUi.apply(value);
         amountUi.apply(value);
@@ -594,17 +590,35 @@ public final class TerminalOverlayUi {
 
     private void refreshMagnet() {
         CompoundTag magnet = snapshot.getCompound("magnet");
-        if (magnet.equals(previousMagnet)) return;
+        boolean unlocked = snapshot.getBoolean("magnet_unlocked");
+        if (magnet.equals(previousMagnet) && unlocked == previousMagnetUnlocked) return;
         previousMagnet = magnet.copy();
+        previousMagnetUnlocked = unlocked;
         UIElement root = popups.get("magnet");
+        Component title = unlocked ? text("magnet") : text("magnet").copy().append(" · ").append(text("reason.locked"));
+        label(root, "popup_title").setText(title);
+        tooltip(window, "magnet", title);
         for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
             Button control = TerminalUiLayout.require(root, "mode_" + mode.toLowerCase(Locale.ROOT), Button.class);
             control.setText(Component.literal(mode.equals(magnet.getString("mode")) ? "● " : "○ ").append(text("magnet_mode." + mode)));
+            control.setActive(unlocked);
         }
-        TerminalUiLayout.require(root, "restock", Button.class).setText(text(magnet.getBoolean("restock") ? "restock_on" : "restock_off"));
+        Button restock = TerminalUiLayout.require(root, "restock", Button.class);
+        restock.setText(text(magnet.getBoolean("restock") ? "restock_on" : "restock_off"));
+        restock.setActive(unlocked);
         setCells(pickup, magnet.getList("pickup", Tag.TAG_COMPOUND), true);
         setCells(insert, magnet.getList("insert", Tag.TAG_COMPOUND), true);
+        for (TerminalResourceCell cell : pickup) {
+            cell.setActive(unlocked);
+            cell.configurable(unlocked);
+        }
+        for (TerminalResourceCell cell : insert) {
+            cell.setActive(unlocked);
+            cell.configurable(unlocked);
+        }
         UIElement filters = popups.get("filters");
+        for (String id : new String[] { "pickup_whitelist", "insert_whitelist", "filter_copy_up", "filter_copy_down", "filter_swap" })
+            element(filters, id).setActive(unlocked);
         TerminalUiLayout.require(filters, "pickup_whitelist", Button.class).setText(text("pickup_" + (magnet.getBoolean("pickup_whitelist") ? "whitelist" : "blacklist")));
         TerminalUiLayout.require(filters, "insert_whitelist", Button.class).setText(text("insert_" + (magnet.getBoolean("insert_whitelist") ? "whitelist" : "blacklist")));
     }
@@ -854,7 +868,7 @@ public final class TerminalOverlayUi {
 
     private static void collectTargets(ObjectList<GhostTarget> targets, ObjectList<TerminalResourceCell> cells, String inventory) {
         for (int index = 0; index < cells.size(); index++)
-            if (cells.get(index).isVisible()) targets.add(new GhostTarget(rect(cells.get(index)), inventory, index));
+            if (cells.get(index).isVisible() && cells.get(index).isActive()) targets.add(new GhostTarget(rect(cells.get(index)), inventory, index));
     }
 
     public void drop(GhostTarget target, GenericStack stack) {

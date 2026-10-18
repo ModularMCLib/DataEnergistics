@@ -50,7 +50,7 @@ public final class TerminalUiLayout {
                 at(element("sidebar_middle_3", "sidebar-middle"), 0, 60, 15, 15),
                 at(element("sidebar_middle_4", "sidebar-middle"), 0, 75, 15, 15),
                 at(element("sidebar_bottom", "sidebar-bottom"), 0, 90, 15, 15));
-        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "insert" };
+        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
         for (int index = 0; index < controls.length; index++) {
             String id = controls[index];
             window.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));

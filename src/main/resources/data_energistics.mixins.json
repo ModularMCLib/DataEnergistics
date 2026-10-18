@@ -152,6 +152,7 @@
 		"library.ftblibrary.FtbLibrarySidebarMixin",
 		"library.ldlib2.ae2.Ldlib2AeProtocolScreenMixin",
 		"minecraft.accessor.AbstractContainerScreenAccessor",
+		"minecraft.client.menu.PlayerTerminalTransferMixin",
 		"minecraft.client.render.crossbow.ChromaticGlowMixin",
 		"minecraft.client.render.crossbow.CrossbowFirstPersonAnimationMixin",
 		"minecraft.client.render.crossbow.CrossbowHumanoidHoldMixin",

@@ -235,7 +235,9 @@ public final class TerminalSession {
         }
         switch (action) {
             case "storage" -> TerminalNetworkStorage.click(player, connection, runtime.state(), key(player, data), data.getInt("button"), data.getBoolean("shift"));
-            case "insert" -> TerminalNetworkStorage.insertCursor(player, connection, Integer.MAX_VALUE);
+            case "inventory_insert" -> {
+                if (visible) TerminalNetworkStorage.insertInventorySlot(player, connection, data.getInt("slot"), key(player, data));
+            }
             case "transfer_processing" -> {
                 if (runtime.state().workspace() == TerminalWorkspace.PROCESSING)
                     message = TerminalContainerTransfer.transfer(player, connection, runtime.state());

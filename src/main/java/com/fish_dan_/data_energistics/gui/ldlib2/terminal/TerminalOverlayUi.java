@@ -200,7 +200,12 @@ public final class TerminalOverlayUi {
         });
         button(window, "magnet", () -> open("magnet"));
         button(window, "tasks", () -> networkAction("cpu_list", new CompoundTag()));
-        button(window, "insert", () -> networkAction("insert", new CompoundTag()));
+        TerminalUiLayout.require(window, "destination", Button.class).setOnClick(event -> {
+            preferences.shiftClickToNetwork = !preferences.shiftClickToNetwork;
+            preferences.save();
+            refreshDestination();
+        });
+        refreshDestination();
         for (TerminalWorkspace mode : TerminalWorkspace.values()) {
             UIElement root = TerminalUiLayout.page(mode);
             workspaces.put(mode.id(), root);
@@ -755,6 +760,15 @@ public final class TerminalOverlayUi {
 
     public boolean modal() {
         return !popupStack.isEmpty();
+    }
+
+    public boolean quickMoveToNetwork() {
+        return visible && !modal() && preferences.shiftClickToNetwork && snapshot.getBoolean("connected");
+    }
+
+    private void refreshDestination() {
+        stateClass(element(window, "destination"), "option-enabled", preferences.shiftClickToNetwork);
+        tooltip(window, "destination", text(preferences.shiftClickToNetwork ? "to_network" : "to_inventory"));
     }
 
     public @Nullable TerminalWorkspace encodingWorkspace() {

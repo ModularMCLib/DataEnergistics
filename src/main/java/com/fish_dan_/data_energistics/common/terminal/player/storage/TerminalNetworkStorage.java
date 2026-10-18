@@ -11,7 +11,9 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.storage.StorageHelper;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -63,6 +65,32 @@ public final class TerminalNetworkStorage {
         checkAmount(inserted, amount);
         cursor.shrink((int) inserted);
         player.containerMenu.setCarried(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
+    }
+
+    /** Main-thread check for real main-inventory and hotbar slots, excluding equipment and configuration slots. */
+    public static boolean isPlayerInventorySlot(Player player, Slot slot) {
+        int index = slot.getContainerSlot();
+        return slot.container == player.getInventory() && index >= 0 && index < player.getInventory().items.size();
+    }
+
+    /**
+     * Server-thread operation after session and connection validation. Stale keys leave the slot untouched;
+     * only the amount accepted by ME is removed from the player's inventory.
+     */
+    public static void insertInventorySlot(ServerPlayer player, TerminalConnection connection, int slotId, AEKey expected) {
+        AbstractContainerMenu menu = player.containerMenu;
+        if (slotId < 0 || slotId >= menu.slots.size()) throw new IllegalArgumentException("Invalid terminal source slot");
+        Slot slot = menu.getSlot(slotId);
+        if (!isPlayerInventorySlot(player, slot) || !slot.isActive() || !slot.mayPickup(player)) return;
+        ItemStack stack = slot.getItem();
+        if (!(expected instanceof AEItemKey item) || !item.matches(stack) || GenericStack.isWrapped(stack)) return;
+        int requested = stack.getCount();
+        long inserted = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(), item, requested, connection.source());
+        checkAmount(inserted, requested);
+        if (inserted == 0) return;
+        ItemStack transferred = stack.copyWithCount((int) inserted);
+        slot.setByPlayer(stack.copyWithCount(requested - (int) inserted));
+        slot.onTake(player, transferred);
     }
 
     public static int inventoryCapacity(ServerPlayer player, ItemStack stack) {

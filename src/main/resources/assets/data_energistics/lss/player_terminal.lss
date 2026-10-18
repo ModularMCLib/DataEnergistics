@@ -114,7 +114,7 @@
 .icon-type { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
 .icon-pins { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
 .icon-magnet { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
-.icon-insert { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
+.icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
 .icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }
 .icon-processing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_handle.png); }
 .icon-smithing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); }

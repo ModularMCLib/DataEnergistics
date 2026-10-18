@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
@@ -9,6 +10,7 @@ import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftErrorScreen;
@@ -22,7 +24,10 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
@@ -257,6 +262,24 @@ public final class TerminalOverlayClient {
     public static void transferRecipe(AbstractContainerMenu menu, CompoundTag data) {
         TerminalOverlayClient overlay = current;
         if (overlay != null && encodingWorkspace(menu) != null) overlay.send("recipe_transfer", data);
+    }
+
+    /** Redirects only the player's inventory quick move while the expanded terminal targets its connected network. */
+    public static boolean quickMoveToNetwork(int containerId, int slotId, int button, ClickType clickType, Player player) {
+        if (clickType != ClickType.QUICK_MOVE || (button != 0 && button != 1)) return false;
+        TerminalOverlayClient overlay = current;
+        if (overlay == null || !overlay.valid() || overlay.menu.containerId != containerId || overlay.composition == null ||
+                !overlay.composition.quickMoveToNetwork() || slotId < 0 || slotId >= overlay.menu.slots.size())
+            return false;
+        Slot slot = overlay.menu.getSlot(slotId);
+        if (!TerminalNetworkStorage.isPlayerInventorySlot(player, slot) || !slot.isActive() || !slot.mayPickup(player)) return false;
+        if (!slot.hasItem()) return true;
+        if (GenericStack.isWrapped(slot.getItem())) return false;
+        CompoundTag data = new CompoundTag();
+        data.putInt("slot", slotId);
+        data.put("key", Objects.requireNonNull(AEItemKey.of(slot.getItem())).toTagGeneric(player.registryAccess()));
+        overlay.send("inventory_insert", data);
+        return true;
     }
 
     private boolean suspendedHostValid() {

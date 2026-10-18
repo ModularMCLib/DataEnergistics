@@ -73,8 +73,9 @@
 }
 .terminal-cell.embedded-cell { background: #00000000; }
 .terminal-cell.selected-recipe { base-background: #6693FFDE; }
-.terminal-cell.manual-pin { base-background: #199AD8FF; }
-.terminal-cell.crafting-pin { base-background: #1993FFDE; }
+.terminal-cell.manual-pin, .terminal-cell.crafting-pin {
+    background: sprite(ae2:textures/guis/terminal.png, 0, 204, 18, 18);
+}
 .terminal-page.page-crafting { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png); }
 .terminal-page.page-processing { background: sprite(data_energistics:textures/guis/states/background/small_handle.png); }
 .terminal-page.page-smithing { background: sprite(data_energistics:textures/guis/states/background/small_forging.png); }

@@ -102,7 +102,7 @@ public final class TerminalPinnedResourcesUi {
     public void layout(TerminalViewportLayout viewport) {
         int automaticRows = Math.min(viewport.pinnedRows(), (automatic.size() + viewport.columns() - 1) / viewport.columns());
         int manualCount = Math.min(rows, viewport.pinnedRows() - automaticRows) * viewport.columns();
-        int automaticCount = Math.min(automatic.size(), automaticRows * viewport.columns());
+        int automaticCount = automaticRows * viewport.columns();
         boolean rebuild = manualCells.size() != manualCount || automaticCells.size() != automaticCount;
         if (rebuild) {
             root.clearAllChildren();
@@ -151,9 +151,14 @@ public final class TerminalPinnedResourcesUi {
             visibleKeys.add(key);
         }
         for (int slot = 0; slot < automaticCells.size(); slot++) {
+            TerminalResourceCell cell = automaticCells.get(slot);
+            if (slot >= automatic.size()) {
+                cell.entry(null, false);
+                if (cell.isActive()) cell.setActive(false);
+                continue;
+            }
             AEKey key = automatic.get(slot);
             var entry = index.entry(key);
-            TerminalResourceCell cell = automaticCells.get(slot);
             cell.entry(entry == null ? null : entry.stack(), entry != null && entry.craftable());
             if (cell.isActive() != connected) cell.setActive(connected);
             if (entry != null) visibleKeys.add(key);

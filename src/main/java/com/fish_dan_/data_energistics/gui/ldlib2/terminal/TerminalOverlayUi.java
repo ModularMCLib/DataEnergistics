@@ -66,6 +66,8 @@ import java.util.function.BiConsumer;
 @NullMarked
 public final class TerminalOverlayUi {
 
+    private static final int SEARCH_TOOLTIP_WIDTH = 260;
+
     public final UI ui = TerminalUiLayout.create();
     private final TerminalClientPreferences preferences;
     private final RegistryAccess registries;
@@ -139,7 +141,7 @@ public final class TerminalOverlayUi {
         if (!enabledTypes.isEmpty()) keyTypeSelection.setEnabledSet(enabledTypes);
         enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
-        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.split(text("search"))));
+        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.wrap(SEARCH_TOOLTIP_WIDTH, text("search"))));
         window.setVisible(visible);
         element(ui.rootElement, "entry").setVisible(!visible);
         Button entry = TerminalUiLayout.require(ui.rootElement, "entry", Button.class);
@@ -364,7 +366,8 @@ public final class TerminalOverlayUi {
         offset = viewport.clampOffset(offset, projected.size());
         fillStorage();
         updateScrollbar();
-        tooltip(window, "search", storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : text("search"));
+        Component searchTooltip = storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : text("search");
+        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.wrap(SEARCH_TOOLTIP_WIDTH, searchTooltip)));
         tooltip(window, "sort", text("sort." + sort));
         tooltip(window, "direction", text(descending ? "descending" : "ascending"));
         tooltip(window, "display", text("display." + filter));

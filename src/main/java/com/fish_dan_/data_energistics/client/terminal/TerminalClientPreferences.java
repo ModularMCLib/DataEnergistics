@@ -4,8 +4,10 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.neoforged.fml.loading.FMLPaths;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
@@ -13,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Local geometry only; inventories, ownership and network settings remain server-authoritative. */
+/** Local geometry and display preferences; inventories, ownership and network settings remain server-authoritative. */
 @NullMarked
 public final class TerminalClientPreferences {
 
@@ -24,6 +26,7 @@ public final class TerminalClientPreferences {
     public int height = 168;
     public boolean folded = true;
     public boolean open = true;
+    public final ObjectOpenHashSet<String> disabledKeyTypes = new ObjectOpenHashSet<>();
 
     public static TerminalClientPreferences load() {
         TerminalClientPreferences value = new TerminalClientPreferences();
@@ -36,6 +39,9 @@ public final class TerminalClientPreferences {
             value.height = json.get("height").getAsInt();
             value.folded = json.get("folded").getAsBoolean();
             if (json.has("open")) value.open = json.get("open").getAsBoolean();
+            if (json.has("disabled_key_types")) {
+                for (var type : json.getAsJsonArray("disabled_key_types")) value.disabledKeyTypes.add(type.getAsString());
+            }
         } catch (IOException | RuntimeException failure) {
             Data_Energistics.LOGGER.warn("Cannot load player terminal geometry from {}", FILE, failure);
         }
@@ -50,6 +56,9 @@ public final class TerminalClientPreferences {
         json.addProperty("height", height);
         json.addProperty("folded", folded);
         json.addProperty("open", open);
+        JsonArray disabledTypes = new JsonArray();
+        disabledKeyTypes.stream().sorted().forEach(disabledTypes::add);
+        json.add("disabled_key_types", disabledTypes);
         try {
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, json.toString(), StandardCharsets.UTF_8);

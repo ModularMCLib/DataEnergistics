@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.client.terminal.storage;
 import com.fish_dan_.data_energistics.client.terminal.search.TerminalSearchQuery;
 
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.core.HolderLookup;
@@ -14,6 +15,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Comparator;
@@ -34,7 +37,7 @@ public final class TerminalStorageIndex {
     private String query = "";
     private String sort = "name";
     private String filter = "all";
-    private String type = "all";
+    private ObjectSet<AEKeyType> types = ObjectSet.of();
     private boolean descending;
     private Language language = Language.getInstance();
     private TerminalSearchQuery search = new TerminalSearchQuery("");
@@ -71,7 +74,7 @@ public final class TerminalStorageIndex {
     /**
      * Rebuilds only after actual index, language or query-option changes; equal projections keep their identity.
      */
-    public void project(String query, String sort, boolean descending, String filter, String type) {
+    public void project(String query, String sort, boolean descending, String filter, ObjectSet<AEKeyType> types) {
         Language currentLanguage = Language.getInstance();
         if (!this.query.equals(query) || language != currentLanguage) {
             this.query = query;
@@ -79,17 +82,17 @@ public final class TerminalStorageIndex {
             search = new TerminalSearchQuery(query);
             dirty = true;
         }
-        if (!this.sort.equals(sort) || this.descending != descending || !this.filter.equals(filter) || !this.type.equals(type))
+        if (!this.sort.equals(sort) || this.descending != descending || !this.filter.equals(filter) || !this.types.equals(types))
             dirty = true;
         this.sort = sort;
         this.descending = descending;
         this.filter = filter;
-        this.type = type;
+        if (!this.types.equals(types)) this.types = new ObjectOpenHashSet<>(types);
         if (!dirty) return;
         dirty = false;
         ObjectList<Entry> matches = new ObjectArrayList<>();
         for (Entry entry : entries.values()) {
-            if ((!type.equals("all") && !entry.key().getType().getId().toString().equals(type)) ||
+            if (!this.types.contains(entry.key().getType()) ||
                     (filter.equals("stored") && entry.amount() == 0) || (filter.equals("craftable") && !entry.craftable()) || !search.test(entry.key()))
                 continue;
             matches.add(entry);

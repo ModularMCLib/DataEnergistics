@@ -182,7 +182,7 @@ public final class TerminalUiLayout {
 
     public static int popupHeight(String name) {
         return switch (name) {
-            case "network" -> 160;
+            case "network", "key_types" -> 160;
             case "magnet" -> 124;
             case "filters" -> 188;
             case "quantity" -> 107;

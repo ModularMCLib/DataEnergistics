@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -23,8 +24,10 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
 import appeng.api.stacks.GenericStack;
+import appeng.api.util.KeyTypeSelection;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
@@ -46,6 +49,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -80,11 +85,13 @@ public final class TerminalOverlayUi {
     private final ObjectList<TerminalResourceCell> encodedPatterns = new ObjectArrayList<>();
     private final TerminalPatternUploadUi uploadUi;
     private final TerminalAmountUi amountUi;
+    private final TerminalKeyTypeUi keyTypeUi;
+    private final KeyTypeSelection keyTypeSelection;
+    private ObjectSet<AEKeyType> enabledKeyTypes;
     private boolean pendingEncode;
     private final ObjectList<TerminalResourceCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> insert = new ObjectArrayList<>();
-    private final ObjectList<String> types = new ObjectArrayList<>();
     private final Reference2BooleanOpenHashMap<UIElement> modalHitStates = new Reference2BooleanOpenHashMap<>();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
     private final Scroller.Vertical processingScrollbar;
@@ -95,7 +102,6 @@ public final class TerminalOverlayUi {
     private String sort = "name";
     private String filter = "all";
     private boolean descending;
-    private int typeIndex;
     private int offset;
     private CompoundTag previousMagnet = new CompoundTag();
     private long[] previousFrequencies = new long[0];
@@ -124,8 +130,12 @@ public final class TerminalOverlayUi {
         this.request = request;
         visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
-        types.add("all");
-        for (var type : AEKeyTypes.getAll()) types.add(type.getId().toString());
+        keyTypeSelection = new KeyTypeSelection(this::keyTypesChanged, ignored -> true);
+        ObjectList<AEKeyType> enabledTypes = new ObjectArrayList<>();
+        for (var type : AEKeyTypes.getAll())
+            if (!preferences.disabledKeyTypes.contains(type.getId().toString())) enabledTypes.add(type);
+        if (!enabledTypes.isEmpty()) keyTypeSelection.setEnabledSet(enabledTypes);
+        enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
         field(window, "search").style(style -> style.tooltips(text("search_syntax")));
         window.setVisible(visible);
@@ -175,10 +185,7 @@ public final class TerminalOverlayUi {
             };
             view(true);
         });
-        button(window, "type", () -> {
-            typeIndex = (typeIndex + 1) % types.size();
-            view(true);
-        });
+        button(window, "type", () -> open("key_types"));
         button(window, "network", () -> open("network"));
         button(window, "magnet", () -> {
             if (snapshot.getBoolean("magnet_unlocked")) open("magnet");
@@ -218,7 +225,7 @@ public final class TerminalOverlayUi {
                 button(root, "boost_up", () -> boost(1));
             }
         }
-        for (String name : new String[] { "network", "magnet", "filters", "quantity", "encoding_info", "transfer_info", "upload" }) {
+        for (String name : new String[] { "network", "magnet", "filters", "quantity", "encoding_info", "transfer_info", "upload", "key_types" }) {
             UIElement root = TerminalUiLayout.popup(name);
             popups.put(name, root);
             root.setVisible(false);
@@ -229,6 +236,7 @@ public final class TerminalOverlayUi {
                     .verticalScrollDisplay(ScrollDisplay.AUTO)));
         }
         uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
+        keyTypeUi = new TerminalKeyTypeUi(popups.get("key_types"), keyTypeSelection);
         UIElement encodingOptions = popups.get("encoding_info");
         button(encodingOptions, "record_type", () -> request.accept("record_type", new CompoundTag()));
         processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
@@ -326,10 +334,19 @@ public final class TerminalOverlayUi {
         request.accept("boost", number("value", Math.clamp(snapshot.getCompound("work").getInt("boost") + (long) direction * step, 0, 254)));
     }
 
+    private void keyTypesChanged() {
+        enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
+        preferences.disabledKeyTypes.clear();
+        for (var type : AEKeyTypes.getAll())
+            if (!enabledKeyTypes.contains(type)) preferences.disabledKeyTypes.add(type.getId().toString());
+        preferences.save();
+        view(false);
+    }
+
     public void view(boolean reset) {
         ObjectList<TerminalStorageIndex.Entry> previous = storageIndex.projected();
         AEKey anchor = !reset && offset < previous.size() ? previous.get(offset).key() : null;
-        storageIndex.project(field(window, "search").getValue(), sort, descending, filter, types.get(typeIndex));
+        storageIndex.project(field(window, "search").getValue(), sort, descending, filter, enabledKeyTypes);
         ObjectList<TerminalStorageIndex.Entry> projected = storageIndex.projected();
         if (reset) offset = 0;
         else if (previous != projected && anchor != null) {
@@ -348,7 +365,9 @@ public final class TerminalOverlayUi {
         tooltip(window, "sort", text("sort." + sort));
         tooltip(window, "direction", text(descending ? "descending" : "ascending"));
         tooltip(window, "display", text("display." + filter));
-        tooltip(window, "type", text("type", types.get(typeIndex)));
+        Component typeDescription = enabledKeyTypes.size() == AEKeyTypes.getAll().size() ? text("type.all") :
+                enabledKeyTypes.size() == 1 ? enabledKeyTypes.iterator().next().getDescription() : text("type.selected", enabledKeyTypes.size());
+        tooltip(window, "type", text("type", typeDescription));
         stateClass(element(window, "sort"), "sort-amount", sort.equals("amount"));
         stateClass(element(window, "direction"), "descending", descending);
         stateClass(element(window, "display"), "stored-only", filter.equals("stored"));
@@ -647,10 +666,14 @@ public final class TerminalOverlayUi {
             }
             positionedStorage = viewport.cells();
         }
+        keyTypeUi.resize(width, height);
         for (var entry : popups.object2ObjectEntrySet()) {
             UIElement popup = entry.getValue();
-            int maximumX = Math.max(0, width - TerminalUiLayout.popupWidth(entry.getKey()));
-            int maximumY = Math.max(0, height - TerminalUiLayout.popupHeight(entry.getKey()));
+            boolean keyTypesPopup = entry.getKey().equals("key_types");
+            int popupWidth = keyTypesPopup ? keyTypeUi.width() : TerminalUiLayout.popupWidth(entry.getKey());
+            int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(entry.getKey());
+            int maximumX = Math.max(0, width - popupWidth);
+            int maximumY = Math.max(0, height - popupHeight);
             int minimumX = entry.getKey().equals("quantity") ? Math.min(18, maximumX) : 0;
             int minimumY = entry.getKey().equals("quantity") ? Math.min(5, maximumY) : 0;
             int popupX = Math.clamp(viewport.x() + viewport.width() + 3, minimumX, maximumX);

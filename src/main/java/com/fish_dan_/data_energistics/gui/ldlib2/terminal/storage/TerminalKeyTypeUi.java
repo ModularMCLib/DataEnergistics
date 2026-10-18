@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage;
 import com.fish_dan_.data_energistics.client.screen.ae2.KeyTypeSelectionLayout;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -57,7 +58,7 @@ public final class TerminalKeyTypeUi {
             TerminalActionButton row = TerminalUiLayout.toggle("key_type_" + rows.size(), type.getDescription(),
                     0, rows.size() * KeyTypeSelectionLayout.KEY_TYPE_SPACING, 174);
             row.layout(layout -> layout.widthPercent(100));
-            row.style(style -> style.tooltips(type.getDescription()));
+            row.style(style -> style.tooltips(TerminalTooltipLines.split(type.getDescription())));
             row.setOnClick(event -> {
                 if (event.button != 0) return;
                 selection.setEnabled(type, !selection.isEnabled(type));
@@ -82,11 +83,11 @@ public final class TerminalKeyTypeUi {
     }
 
     public void resize(int screenWidth, int screenHeight) {
-        int nextWidth = Math.min(190, Math.max(1, screenWidth));
+        int nextWidth = Math.clamp(screenWidth, 1, 190);
         int available = screenHeight - KeyTypeSelectionLayout.SCREEN_MARGIN - KeyTypeSelectionLayout.CONTENT_TOP - KeyTypeSelectionLayout.BOTTOM_PADDING;
         int visibleRows = Math.min(rows.size(), Math.clamp((available + KeyTypeSelectionLayout.PADDING) / KeyTypeSelectionLayout.KEY_TYPE_SPACING, 1, MAX_VISIBLE_ROWS));
         int viewportHeight = visibleRows * KeyTypeSelectionLayout.KEY_TYPE_SPACING - KeyTypeSelectionLayout.PADDING;
-        int nextHeight = Math.min(Math.max(1, screenHeight), KeyTypeSelectionLayout.CONTENT_TOP + viewportHeight + KeyTypeSelectionLayout.BOTTOM_PADDING);
+        int nextHeight = Math.clamp(KeyTypeSelectionLayout.CONTENT_TOP + viewportHeight + KeyTypeSelectionLayout.BOTTOM_PADDING, 1, Math.max(1, screenHeight));
         if (width == nextWidth && height == nextHeight) return;
         width = nextWidth;
         height = nextHeight;

@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatte
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.window.TerminalSubWindow;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
@@ -138,17 +139,17 @@ public final class TerminalOverlayUi {
         if (!enabledTypes.isEmpty()) keyTypeSelection.setEnabledSet(enabledTypes);
         enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
-        field(window, "search").style(style -> style.tooltips(text("search")));
+        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.split(text("search"))));
         window.setVisible(visible);
         element(ui.rootElement, "entry").setVisible(!visible);
         Button entry = TerminalUiLayout.require(ui.rootElement, "entry", Button.class);
-        entry.style(style -> style.tooltips(text("entry_gestures")));
+        entry.style(style -> style.tooltips(TerminalTooltipLines.split(text("entry_gestures"))));
         entry.setOnClick(event -> {
             if (event.button == 0) visible(true);
             else if (event.button == 1) openLargeTerminal.run();
         });
         Button drag = TerminalUiLayout.require(window, "drag", Button.class);
-        drag.style(style -> style.tooltips(text("drag")));
+        drag.style(style -> style.tooltips(TerminalTooltipLines.split(text("drag"))));
         drag.setOnClick(event -> {
             if (event.button == 1) visible(false);
         });
@@ -205,7 +206,7 @@ public final class TerminalOverlayUi {
             workspaces.put(mode.id(), root);
             element(window, "workspaces").addChild(root);
             Button tab = TerminalUiLayout.require(window, "tab_" + mode.id(), Button.class);
-            tab.style(style -> style.tooltips(text("page_gestures", text("workspace." + mode.id()))));
+            tab.style(style -> style.tooltips(TerminalTooltipLines.split(text("page_gestures", text("workspace." + mode.id())))));
             tab.setOnClick(event -> {
                 preferences.folded = event.button == 1;
                 if (event.button == 0 && !workspace.equals(mode.id())) request.accept("workspace", string("id", mode.id()));
@@ -240,7 +241,7 @@ public final class TerminalOverlayUi {
             ui.rootElement.addChild(root);
             label(root, "popup_title").setText(text(name));
             button(root, "close", this::closePopup);
-            element(root, "close").style(style -> style.tooltips(text("close"), text("hold_to_drag")));
+            element(root, "close").style(style -> style.tooltips(TerminalTooltipLines.split(text("close"), text("hold_to_drag"))));
             subWindows.put(name, new TerminalSubWindow(root, this::closePopup));
         }
         uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
@@ -408,7 +409,7 @@ public final class TerminalOverlayUi {
                 boolean levels = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(value.getInt("anvil_upgrades"));
                 element(active, "boost_down").setActive(levels && work.getInt("boost") > 0);
                 element(active, "boost_up").setActive(levels && work.getInt("boost") < 254);
-                result.style(style -> style.tooltips(text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels"))));
+                result.style(style -> style.tooltips(TerminalTooltipLines.split(text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels")))));
             }
             result.setActive(!workspace.equals("anvil") || value.getBoolean("connected"));
         }
@@ -644,7 +645,6 @@ public final class TerminalOverlayUi {
         }
         keyTypeUi.resize(width, height);
         for (var entry : popups.object2ObjectEntrySet()) {
-            UIElement popup = entry.getValue();
             boolean keyTypesPopup = entry.getKey().equals("key_types");
             int popupWidth = keyTypesPopup ? keyTypeUi.width() : TerminalUiLayout.popupWidth(entry.getKey());
             int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(entry.getKey());
@@ -1017,14 +1017,14 @@ public final class TerminalOverlayUi {
     private static void button(UIElement root, String id, Runnable action) {
         Button button = TerminalUiLayout.require(root, id, Button.class);
         if (!button.hasClass("terminal-icon")) button.setText(text(id));
-        button.style(style -> style.tooltips(text(id)));
+        button.style(style -> style.tooltips(TerminalTooltipLines.split(text(id))));
         button.setOnClick(event -> {
             if (event.button == 0) action.run();
         });
     }
 
     private static void tooltip(UIElement root, String id, Component value) {
-        element(root, id).style(style -> style.tooltips(value));
+        element(root, id).style(style -> style.tooltips(TerminalTooltipLines.split(value)));
     }
 
     private static void stateClass(UIElement element, String name, boolean value) {

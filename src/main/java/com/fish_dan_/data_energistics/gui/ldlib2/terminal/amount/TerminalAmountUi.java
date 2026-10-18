@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
@@ -170,8 +171,8 @@ public final class TerminalAmountUi {
         match.removeClass("match-tag");
         if (mode == ProcessingMatchMode.ID) match.addClass("match-id");
         if (mode == ProcessingMatchMode.TAG) match.addClass("match-tag");
-        match.style(style -> style.tooltips(Component.translatable("gui.data_energistics.processing_match." + mode.name().toLowerCase(Locale.ROOT)),
-                Component.translatable("gui.data_energistics.processing_match.hint")));
+        match.style(style -> style.tooltips(TerminalTooltipLines.split(Component.translatable("gui.data_energistics.processing_match." + mode.name().toLowerCase(Locale.ROOT)),
+                Component.translatable("gui.data_energistics.processing_match.hint"))));
     }
 
     private OptionalLong amount() {
@@ -182,7 +183,7 @@ public final class TerminalAmountUi {
         boolean valid = amount().isPresent();
         confirm.setActive(valid);
         value.textFieldStyle(style -> style.textColor(valid ? 0xFF343548 : 0xFFCC3030));
-        value.style(style -> style.tooltips(valid ? Component.empty() : GuiText.InvalidNumber.text()));
+        value.style(style -> style.tooltips(TerminalTooltipLines.split(valid ? Component.empty() : GuiText.InvalidNumber.text())));
     }
 
     private void adjust(int delta) {

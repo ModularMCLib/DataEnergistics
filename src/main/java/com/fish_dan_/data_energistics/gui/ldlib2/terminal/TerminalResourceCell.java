@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
+
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
@@ -39,7 +41,11 @@ public final class TerminalResourceCell extends Button {
         layout(layout -> layout.width(18).height(18).paddingAll(0).flexShrink(0));
         addEventListener(UIEvents.HOVER_TOOLTIPS, event -> {
             if (stack == null) {
-                if (actionHint != null) event.hoverTooltips = new HoverTooltips(ObjectList.of(actionHint), null, null, null);
+                if (actionHint != null) {
+                    ObjectList<Component> lines = new ObjectArrayList<>();
+                    lines.add(actionHint);
+                    event.hoverTooltips = new HoverTooltips(TerminalTooltipLines.split(lines), null, null, null);
+                }
                 return;
             }
             ObjectList<Component> lines = new ObjectArrayList<>(AEKeyRendering.getTooltip(stack.what()));
@@ -49,7 +55,7 @@ public final class TerminalResourceCell extends Button {
             if (actionHint != null) lines.add(actionHint);
             if (storageCell && !(stack.what() instanceof AEItemKey))
                 lines.add(Component.translatable("gui.data_energistics.player_terminal.container_hint"));
-            event.hoverTooltips = new HoverTooltips(lines, null, null, null);
+            event.hoverTooltips = new HoverTooltips(TerminalTooltipLines.split(lines), null, null, null);
         });
     }
 

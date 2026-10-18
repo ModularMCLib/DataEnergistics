@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings.Mode;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -41,7 +42,7 @@ public final class TerminalMagnetUi {
         heading.setText(text("magnet_settings"));
         heading.setAllowHitTest(false);
         Button gear = TerminalUiLayout.icon("filters", "terminal-small", "icon-settings", 154, 40, 14, 14);
-        gear.style(style -> style.tooltips(text("filters")));
+        gear.style(style -> style.tooltips(TerminalTooltipLines.split(text("filters"))));
         gear.setOnClick(event -> {
             if (event.button == 0) openFilters.run();
         });
@@ -75,7 +76,7 @@ public final class TerminalMagnetUi {
 
     private Button action(UIElement root, String id, String glyph, int left) {
         Button button = TerminalUiLayout.icon(id, "terminal-filter-action", glyph, left, 80, 16, 17);
-        button.style(style -> style.tooltips(text(id)));
+        button.style(style -> style.tooltips(TerminalTooltipLines.split(text(id))));
         button.setOnClick(event -> {
             if (event.button == 0) request.accept(id, new CompoundTag());
         });
@@ -106,7 +107,7 @@ public final class TerminalMagnetUi {
 
     private static void filterMode(Button button, String name, boolean whitelist) {
         selected(button, whitelist);
-        button.style(style -> style.tooltips(text(name + (whitelist ? "_whitelist" : "_blacklist"))));
+        button.style(style -> style.tooltips(TerminalTooltipLines.split(text(name + (whitelist ? "_whitelist" : "_blacklist")))));
     }
 
     private static void selected(UIElement element, boolean value) {

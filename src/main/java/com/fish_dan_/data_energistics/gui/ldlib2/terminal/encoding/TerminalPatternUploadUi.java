@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPr
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProvider;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 import com.fish_dan_.data_energistics.network.terminal.TerminalPatternProviderCodec;
@@ -166,7 +167,7 @@ public final class TerminalPatternUploadUi {
         label.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         label.setAllowHitTest(false);
         button.addChildren(TerminalUiLayout.at(icon, leaf == 0 ? 1 : 8, 1, 18, 18), TerminalUiLayout.at(label, leaf == 0 ? 21 : 28, 1, leaf == 0 ? 154 : 147, 18));
-        button.style(style -> style.tooltips(name, text("upload_row_gestures")));
+        button.style(style -> style.tooltips(TerminalTooltipLines.split(name, text("upload_row_gestures"))));
         button.setOnClick(event -> {
             selectedLeaf = leaf;
             if (event.button == 1) {

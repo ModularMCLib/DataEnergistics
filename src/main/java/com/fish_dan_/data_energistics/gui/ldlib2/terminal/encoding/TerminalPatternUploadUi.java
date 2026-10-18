@@ -88,7 +88,7 @@ public final class TerminalPatternUploadUi {
     public void apply(CompoundTag value) {
         snapshot = value;
         var patterns = value.getCompound("work").getList("patterns", Tag.TAG_COMPOUND);
-        ItemStack pattern = patterns.size() > 1 ? ItemStack.parseOptional(registries, patterns.getCompound(1)) : ItemStack.EMPTY;
+        ItemStack pattern = patterns.isEmpty() ? ItemStack.EMPTY : ItemStack.parseOptional(registries, patterns.getCompound(0));
         encoded.entry(pattern.isEmpty() ? null : new GenericStack(AEItemKey.of(pattern), pattern.getCount()), false);
         boolean newConnection = value.getBoolean("connected");
         byte[] data = value.getByteArray("upload_providers");
@@ -176,7 +176,7 @@ public final class TerminalPatternUploadUi {
             } else if (event.button == 0 && connected) {
                 CompoundTag data = target(group.id(), leaf);
                 var patterns = snapshot.getCompound("work").getList("patterns", Tag.TAG_COMPOUND);
-                ItemStack pattern = patterns.size() > 1 ? ItemStack.parseOptional(registries, patterns.getCompound(1)) : ItemStack.EMPTY;
+                ItemStack pattern = patterns.isEmpty() ? ItemStack.EMPTY : ItemStack.parseOptional(registries, patterns.getCompound(0));
                 if (pattern.isEmpty()) return;
                 data.put("encoded", AEItemKey.of(pattern).toTagGeneric(registries));
                 request.accept("upload_pattern", data);

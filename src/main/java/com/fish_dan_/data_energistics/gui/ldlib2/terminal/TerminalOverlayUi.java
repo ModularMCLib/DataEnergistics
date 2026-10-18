@@ -90,7 +90,6 @@ public final class TerminalOverlayUi {
     private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 150, 168, true);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
-    private boolean encoding;
     private String sort = "name";
     private String filter = "all";
     private boolean descending;
@@ -199,7 +198,10 @@ public final class TerminalOverlayUi {
                 preferences.save();
             });
             if (mode.supportsEncoding()) {
-                button(root, "encoding", () -> request.accept("toggle_encoding", new CompoundTag()));
+                button(root, "encoding", () -> {
+                    pendingEncode = true;
+                    request.accept("encode", new CompoundTag());
+                });
                 if (mode == TerminalWorkspace.CRAFTING) {
                     button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
                     button(root, "fluid_substitutes", () -> request.accept("fluid_substitutes", new CompoundTag()));
@@ -208,12 +210,7 @@ public final class TerminalOverlayUi {
                 } else if (mode == TerminalWorkspace.PROCESSING) {
                     button(root, "encoding_info", () -> open("encoding_info"));
                     button(root, "transfer_info", () -> open("transfer_info"));
-                    button(root, "transfer_processing", () -> {
-                        if (encoding) {
-                            pendingEncode = true;
-                            request.accept("result", new CompoundTag());
-                        } else networkAction("transfer_processing", new CompoundTag());
-                    });
+                    button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
                 }
             } else {
                 field(root, "name").setTextRegexValidator(".{0,50}").setTextResponder(value -> request.accept("name", string("value", value)));
@@ -381,10 +378,9 @@ public final class TerminalOverlayUi {
     }
 
     public void apply(CompoundTag value) {
-        boolean rebuild = !workspace.equals(value.getString("workspace")) || encoding != value.getBoolean("encoding");
+        boolean rebuild = !workspace.equals(value.getString("workspace"));
         snapshot = value.copy();
         workspace = value.getString("workspace");
-        encoding = value.getBoolean("encoding");
         if (rebuild) refreshWorkCells();
         for (var entry : workspaces.object2ObjectEntrySet()) {
             entry.getValue().setVisible(entry.getKey().equals(workspace));
@@ -392,10 +388,15 @@ public final class TerminalOverlayUi {
             stateClass(tab, "selected", !preferences.folded && entry.getKey().equals(workspace));
         }
         CompoundTag work = value.getCompound("work");
-        boolean ghostInputs = encoding || workspace.equals("processing");
-        setCells(inputs, work.getList(ghostInputs ? "ghost_inputs" : "items", Tag.TAG_COMPOUND), ghostInputs);
+        ListTag realInputs = work.getList("items", Tag.TAG_COMPOUND);
+        ListTag configuredInputs = work.getList("ghost_inputs", Tag.TAG_COMPOUND);
+        for (int index = 0; index < inputs.size(); index++) {
+            GenericStack actual = physical(realInputs.getCompound(index));
+            inputs.get(index).entry(actual != null ? actual : generic(configuredInputs.getCompound(index)), false);
+            inputs.get(index).configurable(!workspace.equals("anvil") && actual == null);
+        }
         setCells(outputs, work.getList("ghost_outputs", Tag.TAG_COMPOUND), true);
-        if (!encodedPatterns.isEmpty()) encodedPatterns.getFirst().entry(physical(work.getList("patterns", Tag.TAG_COMPOUND).getCompound(1)), false);
+        if (!encodedPatterns.isEmpty()) encodedPatterns.getFirst().entry(physical(work.getList("patterns", Tag.TAG_COMPOUND).getCompound(0)), false);
         UIElement active = workspaces.get(workspace);
         if (workspace.equals("stonecutting")) {
             int selected = work.getInt("recipe");
@@ -412,11 +413,11 @@ public final class TerminalOverlayUi {
                 element(active, "boost_down").setActive(levels && work.getInt("boost") > 0);
                 element(active, "boost_up").setActive(levels && work.getInt("boost") < 254);
                 result.style(style -> style.tooltips(text("anvil_cost", value.getLong("anvil_energy"), value.getLong("anvil_levels"))));
-            } else result.setActive(value.getBoolean("connected"));
+            }
+            result.setActive(!workspace.equals("anvil") || value.getBoolean("connected"));
         }
         if (!workspace.equals("anvil")) {
-            tooltip(active, "encoding", text(encoding ? "encoding_on" : "encoding_off"));
-            stateClass(element(active, "encoding"), "actual-mode", !encoding);
+            tooltip(active, "encoding", text("encode_action"));
             boolean substitutes = value.getBoolean("substitutes");
             boolean fluidSubstitutes = value.getBoolean("fluid_substitutes");
             if (workspace.equals("crafting") || workspace.equals("smithing")) {
@@ -445,7 +446,6 @@ public final class TerminalOverlayUi {
             }
         }
         if (workspace.equals("processing")) {
-            element(active, "transfer_processing").setVisible(!encoding);
             element(active, "transfer_processing").setActive(value.getBoolean("connected") && value.getBoolean("transfer_supported"));
             tooltip(active, "transfer_processing", text(!value.getBoolean("transfer_supported") ? "message.unsupported_container" :
                     !value.getBoolean("connected") ? "message.offline" : "transfer_processing"));
@@ -463,9 +463,9 @@ public final class TerminalOverlayUi {
         refreshNetwork();
         refreshMagnet();
         uploadUi.apply(value);
-        if (pendingEncode && value.getString("action").equals("result")) {
+        if (pendingEncode && value.getString("action").equals("encode")) {
             pendingEncode = false;
-            if (value.getString("message").equals("encoded") && encoding) open("upload");
+            if (value.getString("message").equals("encoded")) open("upload");
         }
         if (!visibilitySent) {
             visibilitySent = true;
@@ -482,36 +482,25 @@ public final class TerminalOverlayUi {
         int inputCount = mode == TerminalWorkspace.PROCESSING ? mode.patternInputSlots() : mode.inputSlots();
         createCells(element(root, "inputs"), inputs, inputCount, mode == TerminalWorkspace.ANVIL ? 2 : 3,
                 (index, event) -> {
-                    if (encoding || mode == TerminalWorkspace.PROCESSING) ghost("inputs", index, event.button);
+                    boolean actual = !snapshot.getCompound("work").getList("items", Tag.TAG_COMPOUND).getCompound(index).isEmpty();
+                    if (mode == TerminalWorkspace.PROCESSING || mode.supportsEncoding() && !actual &&
+                            Objects.requireNonNull(Minecraft.getInstance().player).containerMenu.getCarried().isEmpty())
+                        ghost("inputs", index, event.button);
                     else slot("inputs", index, event.button);
                 });
         for (TerminalResourceCell cell : inputs) cell.addClass("embedded-cell");
         if (mode == TerminalWorkspace.ANVIL) TerminalUiLayout.at(inputs.get(1), 36, 0, 18, 18);
         createCells(element(root, "outputs"), outputs,
-                mode == TerminalWorkspace.PROCESSING && encoding ? mode.patternOutputSlots() : 0, 1,
+                mode == TerminalWorkspace.PROCESSING ? mode.patternOutputSlots() : 0, 1,
                 (index, event) -> ghost("outputs", index, event.button));
-        for (TerminalResourceCell cell : inputs) cell.configurable(encoding || mode == TerminalWorkspace.PROCESSING);
+        for (TerminalResourceCell cell : inputs) cell.configurable(mode.supportsEncoding());
         for (TerminalResourceCell cell : outputs) cell.configurable(true);
         for (TerminalResourceCell cell : outputs) cell.addClass("embedded-cell");
         if (mode.supportsEncoding()) {
-            createCells(element(root, "encoded"), encodedPatterns, encoding ? 1 : 0, 1, (index, event) -> {
-                if (event.button == 0 && (encodedPatterns.getFirst().stack() == null || UIElement.isCtrlDown())) {
-                    pendingEncode = true;
-                    request.accept("result", new CompoundTag());
-                } else slot("encoded", 1, event.button);
-            });
+            createCells(element(root, "encoded"), encodedPatterns, 1, 1, (index, event) -> slot("encoded", 0, event.button));
             for (TerminalResourceCell cell : encodedPatterns) cell.actionHint(text("encoded_gestures"));
             if (mode != TerminalWorkspace.PROCESSING)
                 for (TerminalResourceCell cell : encodedPatterns) cell.addClass("embedded-cell");
-            element(root, "encoded").setVisible(encoding);
-            if (mode == TerminalWorkspace.CRAFTING || mode == TerminalWorkspace.SMITHING)
-                element(root, "substitutes").setVisible(encoding);
-            if (mode == TerminalWorkspace.CRAFTING) element(root, "fluid_substitutes").setVisible(encoding);
-            if (mode == TerminalWorkspace.PROCESSING) {
-                element(root, "encoding_info").setVisible(encoding);
-                element(root, "transfer_info").setVisible(encoding);
-                element(root, "transfer_processing").setVisible(!encoding);
-            }
         }
         if (mode != TerminalWorkspace.STONECUTTING && mode != TerminalWorkspace.PROCESSING) {
             ObjectList<TerminalResourceCell> result = new ObjectArrayList<>();
@@ -519,16 +508,16 @@ public final class TerminalOverlayUi {
                 if (event.button != 0) return;
                 CompoundTag data = new CompoundTag();
                 data.putBoolean("shift", UIElement.isShiftDown());
-                pendingEncode = encoding;
                 request.accept("result", data);
             });
             if (mode != TerminalWorkspace.PROCESSING) result.getFirst().addClass("embedded-cell");
-            result.getFirst().actionHint(encoding ? text("encode_action") : null);
-            element(root, "result").setVisible(mode != TerminalWorkspace.PROCESSING || encoding);
         }
         if (mode == TerminalWorkspace.STONECUTTING) {
             createCells(element(root, "recipes"), stonecuttingRecipes, 8, 4, (index, event) -> {
                 if (event.button == 0) {
+                    int selected = stonecuttingScrollRow * 4 + index;
+                    if (selected < snapshot.getInt("recipe_count")) request.accept("cut", number("index", selected));
+                } else if (event.button == 1) {
                     int selected = stonecuttingScrollRow * 4 + index;
                     if (selected < snapshot.getInt("recipe_count")) request.accept("recipe", number("index", selected));
                 }
@@ -553,6 +542,7 @@ public final class TerminalOverlayUi {
             ItemStack output = first + index < recipes.size() ? recipes.get(first + index).value().assemble(recipeInput, registries) : ItemStack.EMPTY;
             cell.entry(output.isEmpty() ? null : new GenericStack(AEItemKey.of(output), output.getCount()), false);
             cell.setActive(!output.isEmpty());
+            cell.actionHint(text("stonecutting_gestures"));
             int row = index / 4;
             TerminalUiLayout.at(cell, index % 4 * 18, row * 18, 18, 18);
             cell.setVisible(true);
@@ -780,7 +770,8 @@ public final class TerminalOverlayUi {
     }
 
     public @Nullable TerminalWorkspace encodingWorkspace() {
-        return visible && !preferences.folded && encoding && !modal() ? TerminalWorkspace.byId(workspace) : null;
+        TerminalWorkspace page = TerminalWorkspace.byId(workspace);
+        return visible && !preferences.folded && page.supportsEncoding() && !modal() ? page : null;
     }
 
     public boolean inputAllowed(double x, double y) {
@@ -851,7 +842,7 @@ public final class TerminalOverlayUi {
     }
 
     /**
-     * Only visible configuration cells accept dragged viewer ingredients; physical input cells never do.
+     * Visible recipe cells accept viewer templates; the server returns any real input before replacing it.
      */
     public ObjectList<GhostTarget> ghostTargets() {
         ObjectList<GhostTarget> targets = new ObjectArrayList<>();
@@ -862,8 +853,8 @@ public final class TerminalOverlayUi {
                 collectTargets(targets, insert, "insert");
             }
         } else if (!preferences.folded) {
-            if (encoding || workspace.equals("processing")) collectTargets(targets, inputs, "inputs");
-            if (encoding && workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
+            if (!workspace.equals("anvil")) collectTargets(targets, inputs, "inputs");
+            if (workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
         }
         return targets;
     }

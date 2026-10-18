@@ -116,7 +116,7 @@ public final class TerminalUiLayout {
             } else if (mode == TerminalWorkspace.PROCESSING) {
                 root.addChildren(pageIcon("encoding_info", "terminal-small", "icon-encoding-info", 62, 2, 8, 8),
                         pageIcon("transfer_info", "terminal-small", "icon-transfer-info", 72, 2, 8, 8),
-                        pageIcon("transfer_processing", "transfer-processing", "icon-transfer", 69, 43, 8, 8),
+                        pageIcon("transfer_processing", "transfer-processing", "icon-transfer", 74, 14, 8, 8),
                         pageAt(processingScrollbar(), 1, 2, 6, 54));
             }
             root.addChild(pageAt(element("encoded", "encoded-pattern"), 84, 36, 18, 18));

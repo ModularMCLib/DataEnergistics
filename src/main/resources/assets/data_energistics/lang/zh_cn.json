@@ -1746,9 +1746,7 @@
 	"gui.data_energistics.player_terminal.display.craftable": "仅显示可合成资源",
 	"gui.data_energistics.player_terminal.display.stored": "仅显示库存资源",
 	"gui.data_energistics.player_terminal.drag": "左键拖动；右键隐藏小终端",
-	"gui.data_energistics.player_terminal.encoding": "切换样板编码",
-	"gui.data_energistics.player_terminal.encoding_off": "编码已关闭：使用工作台实体输入",
-	"gui.data_energistics.player_terminal.encoding_on": "编码已开启：点击配方预览编码，从下方格子取出样板；空白样板从 ME 网络自动提取",
+	"gui.data_energistics.player_terminal.encoding": "编码当前配方",
 	"gui.data_energistics.player_terminal.entry": "左键展开小终端；右键打开大终端",
 	"gui.data_energistics.player_terminal.large_terminal_unavailable": "大终端尚未开放",
 	"gui.data_energistics.player_terminal.page_gestures": "%s：左键打开或切换；右键收起操作区域",
@@ -1847,6 +1845,7 @@
 	"gui.data_energistics.player_terminal.message.encoded": "样板编码完成",
 	"gui.data_energistics.player_terminal.message.uploaded": "样板上传完成",
 	"gui.data_energistics.player_terminal.message.upload_unavailable": "当前上传目标不可用，样板已保留",
-	"gui.data_energistics.player_terminal.encoded_gestures": "空位左键编码；有样板时左键取出，Ctrl＋左键重新编码",
+	"gui.data_energistics.player_terminal.encoded_gestures": "点击取出已编码样板；Shift＋左键移入背包",
+	"gui.data_energistics.player_terminal.stonecutting_gestures": "左键切石并拿到手上；右键选取配方，再点击小编码按钮写入下方样板格",
 	"gui.data_energistics.player_terminal.entry_gestures": "左键展开，右键打开大终端；左键按住并拖动可移动位置"
 }

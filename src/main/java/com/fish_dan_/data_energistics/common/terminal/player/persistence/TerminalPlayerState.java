@@ -128,8 +128,6 @@ public final class TerminalPlayerState {
         CompoundTag pages = tag.getCompound("workspaces");
         for (var entry : state.workspaces.entrySet())
             entry.getValue().load(pages.getCompound(entry.getKey().id()), registries);
-        if (state.work(TerminalWorkspace.ANVIL).encoding())
-            throw new IllegalArgumentException("The anvil cannot encode patterns");
         state.magnet.load(tag.getCompound("magnet"), registries);
         state.anvilPayment.load(tag, registries);
         state.paymentFrequency = tag.getLong("payment_frequency");

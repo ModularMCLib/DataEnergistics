@@ -10,6 +10,8 @@ import appeng.api.stacks.GenericStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 
@@ -24,9 +26,9 @@ public final class TerminalRecipeTransfer {
 
     private TerminalRecipeTransfer() {}
 
-    public static void apply(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
+    public static String apply(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
         TerminalWorkspace page = TerminalWorkspace.byId(data.getString("workspace"));
-        if (!state.work().encoding() || page != state.workspace() || !page.supportsEncoding())
+        if (page != state.workspace() || !page.supportsEncoding())
             throw new IllegalArgumentException("Recipe transfer no longer targets the active encoder");
         TerminalGhostInventory inputs = new TerminalGhostInventory(page.patternInputSlots(), () -> {});
         TerminalGhostInventory outputs = new TerminalGhostInventory(page.patternOutputSlots(), () -> {});
@@ -53,9 +55,22 @@ public final class TerminalRecipeTransfer {
             for (int index = 0; index < recipes.size(); index++) if (recipes.get(index).id().equals(context.recipeId())) selectedRecipe = index;
             if (selectedRecipe < 0) throw new IllegalArgumentException("Transferred stonecutting recipe does not match its input");
         }
+        if (page != TerminalWorkspace.PROCESSING) {
+            SimpleContainer capacity = new SimpleContainer(player.getInventory().items.size());
+            for (int index = 0; index < capacity.getContainerSize(); index++)
+                capacity.setItem(index, player.getInventory().items.get(index).copy());
+            for (int index = 0; index < state.work().inputs.getContainerSize(); index++)
+                if (!capacity.addItem(state.work().inputs.getItem(index).copy()).isEmpty()) return "inventory_full";
+            for (int index = 0; index < state.work().inputs.getContainerSize(); index++) {
+                ItemStack returned = state.work().inputs.removeItemNoUpdate(index);
+                player.getInventory().add(returned);
+                if (!returned.isEmpty()) throw new IllegalStateException("Recipe transfer lost reserved return capacity");
+            }
+        }
         state.work().patternInputs.copyFrom(inputs);
         state.work().patternOutputs.copyFrom(outputs);
         state.work().context(context);
         state.work().recipeIndex(selectedRecipe);
+        return "";
     }
 }

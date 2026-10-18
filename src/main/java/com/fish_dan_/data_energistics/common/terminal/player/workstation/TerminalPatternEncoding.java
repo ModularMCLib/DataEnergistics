@@ -29,18 +29,6 @@ public final class TerminalPatternEncoding {
 
     private TerminalPatternEncoding() {}
 
-    /** The removed blank slot survives only as a migration source; never accept new items into it. */
-    public static void recoverLegacyBlanks(ServerPlayer player, TerminalPlayerState state) {
-        for (TerminalWorkspace page : TerminalWorkspace.values()) {
-            var inventory = state.work(page).patterns;
-            ItemStack old = inventory.getItem(0);
-            if (old.isEmpty()) continue;
-            ItemStack remainder = old.copy();
-            player.getInventory().add(remainder);
-            if (remainder.getCount() != old.getCount()) inventory.setItem(0, remainder);
-        }
-    }
-
     public static ItemStack encode(ServerPlayer player, TerminalPlayerState state) {
         TerminalWorkspaceState work = state.work();
         ItemStack encoded = switch (state.workspace()) {
@@ -62,7 +50,7 @@ public final class TerminalPatternEncoding {
                 var recipe = player.serverLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, player.level());
                 if (recipe.isEmpty()) yield ItemStack.EMPTY;
                 ItemStack[] items = new ItemStack[9];
-                for (int index = 0; index < 9; index++) items[index] = TerminalWorkstation.input(work, index, true);
+                for (int index = 0; index < 9; index++) items[index] = TerminalWorkstation.input(work, index, true).copyWithCount(1);
                 yield PatternDetailsHelper.encodeCraftingPattern(recipe.get(), items, recipe.get().value().assemble(input, player.registryAccess()), work.substitutes(), work.fluidSubstitutes());
             }
             case SMITHING -> {
@@ -93,23 +81,11 @@ public final class TerminalPatternEncoding {
         return encoded;
     }
 
-    public static ItemStack preview(ServerPlayer player, TerminalPlayerState state) {
-        ItemStack encoded = encode(player, state);
-        if (encoded.isEmpty()) return ItemStack.EMPTY;
-        var details = PatternDetailsHelper.decodePattern(encoded, player.level());
-        if (details == null) return ItemStack.EMPTY;
-        GenericStack output = details.getPrimaryOutput();
-        return output.what() instanceof AEItemKey item ? item.toStack((int) Math.min(output.amount(), Integer.MAX_VALUE)) : GenericStack.wrapInItemStack(output);
-    }
-
     public static String commit(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection) {
         ItemStack encoded = encode(player, state);
         var inventory = state.work().patterns;
-        ItemStack existing = inventory.getItem(1);
-        if (encoded.isEmpty()) {
-            if (PatternDetailsHelper.isEncodedPattern(existing)) inventory.setItem(1, AEItems.BLANK_PATTERN.stack(existing.getCount()));
-            return "invalid_recipe";
-        }
+        ItemStack existing = inventory.getItem(0);
+        if (encoded.isEmpty()) return "invalid_recipe";
         if (!existing.isEmpty() && (existing.getCount() != 1 ||
                 !PatternDetailsHelper.isEncodedPattern(existing) && !AEItems.BLANK_PATTERN.is(existing)))
             return "inventory_full";
@@ -120,9 +96,9 @@ public final class TerminalPatternEncoding {
             TerminalNetworkStorage.checkAmount(extracted, 1);
             if (extracted == 0) return "missing_pattern";
             state.returns().extracted(connection.frequency(), blank, 1);
-            inventory.setItem(1, encoded);
+            inventory.setItem(0, encoded);
             state.returns().delivered(connection.frequency(), blank, 1);
-        } else inventory.setItem(1, encoded);
+        } else inventory.setItem(0, encoded);
         state.changed();
         return "encoded";
     }

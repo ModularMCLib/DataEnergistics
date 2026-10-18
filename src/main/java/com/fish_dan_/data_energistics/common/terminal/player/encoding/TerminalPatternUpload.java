@@ -58,13 +58,13 @@ public final class TerminalPatternUpload {
             tracker.clear();
             grid = nextGrid;
         }
-        if (nextGrid == null || !state.work().encoding()) {
+        if (nextGrid == null || !state.workspace().supportsEncoding()) {
             providers = SyncedPatternProviderList.EMPTY;
             encodedProviders = new byte[0];
             tracker.clear();
             return;
         }
-        AEItemKey definition = AEItemKey.of(state.work().patterns.getItem(1));
+        AEItemKey definition = AEItemKey.of(state.work().patterns.getItem(0));
         var reference = definition == null ? null : EncodedPatternRecipeReference.get(definition.getReadOnlyStack());
         PatternEncodingRankingContext context = reference == null ? null : PatternEncodingRankingContext.of(reference.recipeTypeId());
         preferences.setRecipeContext(context, definition == null ? null : EncodedPatternRecipeReference.getProcessingRecipeId(definition.getReadOnlyStack()));
@@ -83,7 +83,7 @@ public final class TerminalPatternUpload {
 
     public String action(ServerPlayer player, TerminalPlayerState state, TerminalConnection connection, String action, CompoundTag request) {
         refresh(player, state, connection, true);
-        if (!state.work().encoding()) return "invalid_recipe";
+        if (!state.workspace().supportsEncoding()) return "invalid_recipe";
         if (action.equals("upload_refresh")) return "";
         if (action.equals("upload_history")) {
             var context = providers.rankingContext();
@@ -119,7 +119,7 @@ public final class TerminalPatternUpload {
             return "";
         }
         if (!action.equals("upload_pattern")) throw new IllegalArgumentException("Unknown upload action " + action);
-        ItemStack encoded = state.work().patterns.getItem(1);
+        ItemStack encoded = state.work().patterns.getItem(0);
         AEKey expected = AEKey.fromTagGeneric(player.registryAccess(), request.getCompound("encoded"));
         if (!PatternDetailsHelper.isEncodedPattern(encoded) || !AEItemKey.of(encoded).equals(expected)) return "upload_unavailable";
         var preferred = providers.providers().stream().filter(row -> row.id() == group).findFirst().orElseThrow().preferredWorkstationId();
@@ -138,10 +138,10 @@ public final class TerminalPatternUpload {
             return "upload_unavailable";
         }
         if (result.duplicateFound()) {
-            state.work().patterns.setItem(1, AEItems.BLANK_PATTERN.stack(encoded.getCount()));
+            state.work().patterns.setItem(0, AEItems.BLANK_PATTERN.stack(encoded.getCount()));
             player.sendSystemMessage(Component.translatable("message.data_energistics.pattern_provider.duplicate_cleared"));
         } else if (result.transferred()) {
-            state.work().patterns.setItem(1, result.remainder());
+            state.work().patterns.setItem(0, result.remainder());
             PatternUploadRecorder.record(player, preferences, preferences.rankingContext(), result.committedTarget(), PatternUploadSource.DATA_ENERGISTICS);
         }
         refresh(player, state, connection, true);

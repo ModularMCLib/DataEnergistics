@@ -42,24 +42,27 @@ public final class TerminalWorkstation {
     private TerminalWorkstation() {}
 
     public static ItemStack preview(ServerPlayer player, TerminalPlayerState state) {
-        if (state.work().encoding()) return TerminalPatternEncoding.preview(player, state);
+        return preview(player, state, true);
+    }
+
+    private static ItemStack preview(ServerPlayer player, TerminalPlayerState state, boolean configured) {
         ItemStack result = switch (state.workspace()) {
             case CRAFTING -> {
-                CraftingInput input = craftingInput(state.work(), false).input();
+                CraftingInput input = craftingInput(state.work(), configured).input();
                 var recipe = player.serverLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, player.level());
                 yield recipe.filter(value -> value.value().isSpecial() || !player.level().getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(value))
                         .map(value -> value.value().assemble(input, player.registryAccess())).orElse(ItemStack.EMPTY);
             }
             case PROCESSING -> ItemStack.EMPTY;
             case SMITHING -> {
-                SmithingRecipeInput input = smithingInput(state.work(), false);
+                SmithingRecipeInput input = smithingInput(state.work(), configured);
                 var recipe = player.serverLevel().getRecipeManager().getRecipeFor(RecipeType.SMITHING, input, player.level());
                 yield recipe.map(value -> value.value().assemble(input, player.registryAccess())).orElse(ItemStack.EMPTY);
             }
             case STONECUTTING -> {
-                var recipes = stonecuttingRecipes(player, state.work(), false);
+                var recipes = stonecuttingRecipes(player, state.work(), configured);
                 yield recipes.isEmpty() ? ItemStack.EMPTY : recipes.get(Math.min(state.work().recipeIndex(), recipes.size() - 1)).value()
-                        .assemble(new SingleRecipeInput(state.work().inputs.getItem(0)), player.registryAccess());
+                        .assemble(new SingleRecipeInput(input(state.work(), 0, configured)), player.registryAccess());
             }
             case ANVIL -> anvil(player, state.work()).output().copy();
         };
@@ -67,10 +70,9 @@ public final class TerminalWorkstation {
     }
 
     public static String take(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean shift) {
-        if (state.work().encoding()) return TerminalPatternEncoding.commit(player, state, connection);
         int completed = 0;
         for (int repeat = 0; repeat < (shift ? 64 : 1); repeat++) {
-            ItemStack product = preview(player, state);
+            ItemStack product = preview(player, state, false);
             if (product.isEmpty()) break;
             if (!fits(player, product, shift)) return completed == 0 ? "inventory_full" : "crafted";
             if (state.workspace() == TerminalWorkspace.ANVIL) {
@@ -183,7 +185,8 @@ public final class TerminalWorkstation {
     }
 
     public static ItemStack input(TerminalWorkspaceState work, int index, boolean ghosts) {
-        if (!ghosts) return work.inputs.getItem(index);
+        ItemStack physical = work.inputs.getItem(index);
+        if (!ghosts || !physical.isEmpty()) return physical;
         var ghost = work.patternInputs.get(index);
         return ghost != null && ghost.what() instanceof AEItemKey key ? key.toStack(1) : ItemStack.EMPTY;
     }
@@ -210,7 +213,7 @@ public final class TerminalWorkstation {
 
     public static void snapshot(ServerPlayer player, TerminalPlayerState state, CompoundTag tag) {
         tag.put("result", preview(player, state).saveOptional(player.registryAccess()));
-        tag.putInt("recipe_count", state.workspace() == TerminalWorkspace.STONECUTTING ? stonecuttingRecipes(player, state.work(), state.work().encoding()).size() : 0);
+        tag.putInt("recipe_count", state.workspace() == TerminalWorkspace.STONECUTTING ? stonecuttingRecipes(player, state.work(), true).size() : 0);
         tag.putInt("anvil_upgrades", upgrades(player));
         if (state.workspace() == TerminalWorkspace.ANVIL) {
             var cost = anvil(player, state.work()).cost();

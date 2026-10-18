@@ -16,11 +16,10 @@ import net.minecraft.world.item.ItemStack;
 public final class TerminalWorkspaceState {
 
     public final SimpleContainer inputs;
-    public final SimpleContainer patterns = new SimpleContainer(2);
+    public final SimpleContainer patterns = new SimpleContainer(1);
     public final TerminalGhostInventory patternInputs;
     public final TerminalGhostInventory patternOutputs;
     private final Runnable changed;
-    private boolean encoding;
     private boolean substitutes;
     private boolean fluidSubstitutes;
     private int recipeIndex;
@@ -56,10 +55,6 @@ public final class TerminalWorkspaceState {
         patterns.addListener(inventory -> changed.run());
     }
 
-    public boolean encoding() {
-        return encoding;
-    }
-
     public boolean substitutes() {
         return substitutes;
     }
@@ -78,11 +73,6 @@ public final class TerminalWorkspaceState {
 
     public int boost() {
         return boost;
-    }
-
-    public void encoding(boolean value) {
-        encoding = value;
-        changed.run();
     }
 
     public void substitutes(boolean value) {
@@ -120,7 +110,6 @@ public final class TerminalWorkspaceState {
         tag.put("patterns", saveSlots(patterns, registries));
         tag.put("ghost_inputs", patternInputs.save(registries));
         tag.put("ghost_outputs", patternOutputs.save(registries));
-        tag.putBoolean("encoding", encoding);
         tag.putBoolean("substitutes", substitutes);
         tag.putBoolean("fluid_substitutes", fluidSubstitutes);
         tag.putInt("recipe", recipeIndex);
@@ -136,7 +125,6 @@ public final class TerminalWorkspaceState {
         loadSlots(patterns, tag.getList("patterns", Tag.TAG_COMPOUND), registries);
         patternInputs.load(tag.getList("ghost_inputs", Tag.TAG_COMPOUND), registries);
         patternOutputs.load(tag.getList("ghost_outputs", Tag.TAG_COMPOUND), registries);
-        encoding = tag.getBoolean("encoding");
         substitutes = tag.getBoolean("substitutes");
         fluidSubstitutes = tag.getBoolean("fluid_substitutes");
         recipeIndex = tag.getInt("recipe");

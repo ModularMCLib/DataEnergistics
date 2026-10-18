@@ -126,8 +126,8 @@ public final class TerminalSession {
             case "close" -> close();
             case "visible" -> visible = data.getBoolean("value");
             case "workspace" -> state.workspace(TerminalWorkspace.byId(data.getString("id")));
-            case "toggle_encoding" -> {
-                if (state.workspace().supportsEncoding()) state.work().encoding(!state.work().encoding());
+            case "encode" -> {
+                if (state.workspace().supportsEncoding()) message = TerminalPatternEncoding.commit(player, state, runtime.connection());
             }
             case "substitutes" -> {
                 if (state.workspace() == TerminalWorkspace.CRAFTING || state.workspace() == TerminalWorkspace.SMITHING)
@@ -141,19 +141,20 @@ public final class TerminalSession {
                 if (state.workspace() == TerminalWorkspace.PROCESSING)
                     state.work().recordRecipeType(!state.work().recordRecipeType());
             }
-            case "recipe_transfer" -> TerminalRecipeTransfer.apply(player, state, data);
+            case "recipe_transfer" -> message = TerminalRecipeTransfer.apply(player, state, data);
             case "slot" -> TerminalSlotActions.physical(player, state, data);
             case "ghost" -> {
                 if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))
                     requireMagnet(player);
-                TerminalSlotActions.ghost(player, state, data);
+                message = TerminalSlotActions.ghost(player, state, data);
             }
-            case "recipe" -> {
+            case "recipe", "cut" -> {
                 int index = data.getInt("index");
                 if (state.workspace() != TerminalWorkspace.STONECUTTING || index < 0 ||
-                        index >= TerminalWorkstation.stonecuttingRecipes(player, state.work(), state.work().encoding()).size())
+                        index >= TerminalWorkstation.stonecuttingRecipes(player, state.work(), true).size())
                     return;
                 state.work().recipeIndex(index);
+                if (action.equals("cut")) message = TerminalWorkstation.take(player, state, null, false);
             }
             case "name" -> {
                 String name = StringUtil.filterText(data.getString("value"));
@@ -164,7 +165,7 @@ public final class TerminalSession {
                     state.work(TerminalWorkspace.ANVIL).boost(data.getInt("value"));
             }
             case "result" -> {
-                TerminalConnection connection = state.work().encoding() || state.workspace() == TerminalWorkspace.ANVIL ? runtime.connection() : null;
+                TerminalConnection connection = state.workspace() == TerminalWorkspace.ANVIL ? runtime.connection() : null;
                 message = TerminalWorkstation.take(player, state, connection, data.getBoolean("shift"));
             }
             case "frequency" -> {
@@ -216,7 +217,7 @@ public final class TerminalSession {
             case "storage" -> TerminalNetworkStorage.click(player, connection, runtime.state(), key(player, data), data.getInt("button"), data.getBoolean("shift"));
             case "insert" -> TerminalNetworkStorage.insertCursor(player, connection, Integer.MAX_VALUE);
             case "transfer_processing" -> {
-                if (runtime.state().workspace() == TerminalWorkspace.PROCESSING && !runtime.state().work().encoding())
+                if (runtime.state().workspace() == TerminalWorkspace.PROCESSING)
                     message = TerminalContainerTransfer.transfer(player, connection, runtime.state());
             }
             case "craft_request" -> TerminalAeNavigation.openCrafting(player, this, connection, key(player, data));
@@ -241,14 +242,12 @@ public final class TerminalSession {
         if (closed || TerminalAeNavigation.suspended(player, this)) return;
         TerminalPlayerState state = runtime.state();
         CompoundTag snapshot = new CompoundTag();
-        TerminalPatternEncoding.recoverLegacyBlanks(player, state);
         snapshot.putBoolean("enabled", true);
         snapshot.putBoolean("connected", connection != null);
         snapshot.putString("reason", connection == null ? "offline" : "online");
         snapshot.putString("message", message);
         snapshot.putString("action", lastAction);
         snapshot.putString("workspace", state.workspace().id());
-        snapshot.putBoolean("encoding", state.work().encoding());
         snapshot.putBoolean("substitutes", state.work().substitutes());
         snapshot.putBoolean("fluid_substitutes", state.work().fluidSubstitutes());
         snapshot.putBoolean("record_recipe_type", state.work().recordRecipeType());
@@ -257,7 +256,7 @@ public final class TerminalSession {
         snapshot.putBoolean("magnet_unlocked", ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET));
         snapshot.put("magnet", state.magnet().save(player.registryAccess()));
         snapshot.put("work", state.work().save(player.registryAccess()));
-        if (state.work().encoding()) {
+        if (state.workspace().supportsEncoding()) {
             snapshot.put("encoding_preview", TerminalPatternEncoding.encode(player, state).saveOptional(player.registryAccess()));
             long blanks = connection == null ? 0 : connection.storage().getAvailableStacks().get(AEItemKey.of(AEItems.BLANK_PATTERN));
             snapshot.putLong("blank_patterns", blanks);

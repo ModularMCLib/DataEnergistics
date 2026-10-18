@@ -5,6 +5,8 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.util.AmountMath;
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -14,7 +16,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
-import appeng.client.gui.MathExpressionParser;
 import appeng.core.localization.GuiText;
 
 import net.minecraft.client.renderer.Rect2i;
@@ -30,12 +31,8 @@ import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiConsumer;
 
@@ -57,13 +54,11 @@ public final class TerminalAmountUi {
     private final TerminalActionButton confirm = new TerminalActionButton();
     private final TerminalActionButton match = new TerminalActionButton();
     private final ObjectList<TerminalActionButton> steps = new ObjectArrayList<>();
-    private final DecimalFormat numbers = new DecimalFormat("#.######", DecimalFormatSymbols.getInstance());
     private @Nullable GenericStack selected;
     private String inventory = "";
     private int index;
     private boolean processing;
     private boolean stackSteps;
-    private long maximum;
     private ProcessingMatchMode mode = ProcessingMatchMode.EXACT;
 
     public TerminalAmountUi(UIElement root, RegistryAccess registries, BiConsumer<String, CompoundTag> request, Runnable close) {
@@ -71,14 +66,12 @@ public final class TerminalAmountUi {
         this.registries = registries;
         this.request = request;
         this.close = close;
-        numbers.setParseBigDecimal(true);
-        numbers.setNegativePrefix("-");
         root.addClass("terminal-amount-popup");
         root.setOverflowVisible(true);
         TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 8, 6, 136, 10);
         TerminalUiLayout.at(TerminalUiLayout.require(root, "back", Button.class), 152, -5, 20, 20);
         value.addClass("terminal-field");
-        value.setText("1", false).setTextRegexValidator(".{0,16}");
+        value.setText("1", false).setTextRegexValidator(".{0,256}");
         value.setTextResponder(ignored -> validate());
         value.addEventListener(UIEvents.KEY_DOWN, event -> {
             if (event.keyCode == 257 || event.keyCode == 335) {
@@ -145,12 +138,11 @@ public final class TerminalAmountUi {
         this.index = index;
         this.selected = stack;
         this.processing = processing;
-        maximum = processing ? 999999L * stack.what().getAmountPerUnit() : Long.MAX_VALUE;
         resource.entry(stack, false);
         String symbol = stack.what().getUnitSymbol();
         unit.setText(Component.literal(symbol == null ? "" : symbol));
         value.layout(layout -> layout.width(symbol == null ? 66 : 51));
-        value.setText(numbers.format(BigDecimal.valueOf(stack.amount()).divide(BigDecimal.valueOf(stack.what().getAmountPerUnit()), MathContext.DECIMAL128)), false);
+        value.setText(displayAmount(stack.amount()), false);
         updateMatching(work);
         validate();
     }
@@ -184,16 +176,8 @@ public final class TerminalAmountUi {
                 Component.translatable("gui.data_energistics.processing_match.hint")));
     }
 
-    private Optional<BigDecimal> enteredValue() {
-        String text = value.getValue();
-        return MathExpressionParser.parse(text.startsWith("=") ? text.substring(1) : text, numbers);
-    }
-
     private OptionalLong amount() {
-        var parsed = enteredValue();
-        if (parsed.isEmpty() || selection().what().getAmountPerUnit() == 1 && parsed.get().scale() > 0) return OptionalLong.empty();
-        BigDecimal scaled = parsed.get().multiply(BigDecimal.valueOf(selection().what().getAmountPerUnit()), MathContext.DECIMAL128).setScale(0, RoundingMode.UP);
-        return scaled.signum() < 0 || scaled.compareTo(BigDecimal.valueOf(maximum)) > 0 ? OptionalLong.empty() : OptionalLong.of(scaled.longValueExact());
+        return AmountExpressionParser.parseStockAmount(value.getValue(), selection().what().getAmountPerUnit());
     }
 
     private void validate() {
@@ -204,11 +188,17 @@ public final class TerminalAmountUi {
     }
 
     private void adjust(int delta) {
-        BigDecimal current = enteredValue().orElse(BigDecimal.ZERO);
-        BigDecimal next = current.add(BigDecimal.valueOf(delta));
-        BigDecimal limit = BigDecimal.valueOf(maximum).divide(BigDecimal.valueOf(selection().what().getAmountPerUnit()), MathContext.DECIMAL128);
-        if (current.compareTo(BigDecimal.ONE) == 0 && delta > 1) next = next.subtract(BigDecimal.ONE);
-        value.setText(numbers.format(next.max(BigDecimal.ZERO).min(limit)), true);
+        long unitSize = selection().what().getAmountPerUnit();
+        long current = amount().orElse(0);
+        long step = Math.abs((long) delta) * unitSize;
+        long adjusted = delta > 0 ? AmountMath.addNonNegative(current, step) : Math.max(0, current - step);
+        if (current == unitSize && delta > 1) adjusted -= unitSize;
+        value.setText(displayAmount(adjusted), true);
+    }
+
+    private String displayAmount(long amount) {
+        return BigDecimal.valueOf(amount).divide(BigDecimal.valueOf(selection().what().getAmountPerUnit()), MathContext.DECIMAL128)
+                .stripTrailingZeros().toPlainString();
     }
 
     private void stepLabels() {

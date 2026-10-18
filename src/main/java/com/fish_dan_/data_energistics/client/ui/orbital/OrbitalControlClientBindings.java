@@ -25,6 +25,7 @@ import com.fish_dan_.data_energistics.common.orbital.map.OrbitalMapTile;
 import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlConsoleOpenPayload;
 import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
 import com.fish_dan_.data_energistics.network.orbital.map.OrbitalTacticalMapRequestPayload;
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEmitter;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -641,11 +642,8 @@ public final class OrbitalControlClientBindings {
         }
 
         private static int parseInteger(String value, String description) {
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException exception) {
-                throw new IllegalArgumentException("Invalid orbital " + description, exception);
-            }
+            return AmountExpressionParser.parseInt(value, Integer.MIN_VALUE, Integer.MAX_VALUE)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid orbital " + description));
         }
     }
 

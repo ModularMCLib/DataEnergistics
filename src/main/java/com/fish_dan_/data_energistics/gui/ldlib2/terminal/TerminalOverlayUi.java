@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
@@ -78,6 +79,7 @@ public final class TerminalOverlayUi {
     private final ObjectList<TerminalResourceCell> outputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> encodedPatterns = new ObjectArrayList<>();
     private final TerminalPatternUploadUi uploadUi;
+    private final TerminalAmountUi amountUi;
     private boolean pendingEncode;
     private final ObjectList<TerminalResourceCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
@@ -95,8 +97,6 @@ public final class TerminalOverlayUi {
     private boolean descending;
     private int typeIndex;
     private int offset;
-    private @Nullable AEKey selected;
-    private @Nullable GhostTarget quantityTarget;
     private CompoundTag previousMagnet = new CompoundTag();
     private long[] previousFrequencies = new long[0];
     private long previousFrequency = Long.MIN_VALUE;
@@ -259,9 +259,7 @@ public final class TerminalOverlayUi {
         createCells(element(filters, "insert"), insert, 27, 9, (index, event) -> ghost("insert", index, event.button));
         for (TerminalResourceCell cell : pickup) cell.configurable(true);
         for (TerminalResourceCell cell : insert) cell.configurable(true);
-        UIElement quantity = popups.get("quantity");
-        field(quantity, "amount").setNumbersOnlyLong(1, Long.MAX_VALUE).setText("1", false);
-        button(quantity, "apply_quantity", this::applyQuantity);
+        amountUi = new TerminalAmountUi(popups.get("quantity"), registries, request, this::closePopup);
         refreshWorkCells();
     }
 
@@ -326,17 +324,6 @@ public final class TerminalOverlayUi {
     private void boost(int direction) {
         int step = UIElement.isCtrlDown() ? 100 : UIElement.isShiftDown() ? 10 : 1;
         request.accept("boost", number("value", Math.clamp(snapshot.getCompound("work").getInt("boost") + (long) direction * step, 0, 254)));
-    }
-
-    private void applyQuantity() {
-        if (selected == null || quantityTarget == null) return;
-        drop(quantityTarget, new GenericStack(selected, quantityAmount()));
-        closePopup();
-    }
-
-    private long quantityAmount() {
-        String value = field(popups.get("quantity"), "amount").getValue();
-        return value.isEmpty() ? 1 : Long.parseLong(value);
     }
 
     public void view(boolean reset) {
@@ -454,6 +441,7 @@ public final class TerminalOverlayUi {
         refreshNetwork();
         refreshMagnet();
         uploadUi.apply(value);
+        amountUi.apply(value);
         if (pendingEncode && value.getString("action").equals("encode")) {
             pendingEncode = false;
             if (value.getString("message").equals("encoded")) open("upload");
@@ -557,13 +545,14 @@ public final class TerminalOverlayUi {
             default -> inputs;
         };
         GenericStack entry = cells.get(index).stack();
-        if (button == 0 && UIElement.isShiftDown() && entry != null) {
-            selected = entry.what();
-            quantityTarget = new GhostTarget(rect(cells.get(index)), inventory, index);
-            field(popups.get("quantity"), "amount").setText(Long.toString(entry.amount()), false);
+        boolean processing = workspace.equals("processing") && (inventory.equals("inputs") || inventory.equals("outputs"));
+        if (entry != null && (processing || inventory.equals("pickup") || inventory.equals("insert")) &&
+                (button == 2 && processing || button == 0 && UIElement.isShiftDown())) {
+            amountUi.edit(inventory, index, entry, processing, snapshot.getCompound("work"));
             open("quantity");
             return;
         }
+        if (button == 2) return;
         CompoundTag data = string("inventory", inventory);
         data.putInt("index", index);
         data.putInt("button", button);
@@ -660,8 +649,12 @@ public final class TerminalOverlayUi {
         }
         for (var entry : popups.object2ObjectEntrySet()) {
             UIElement popup = entry.getValue();
-            int popupX = Math.clamp(viewport.x() + viewport.width() + 3, 0, Math.max(0, width - 190));
-            int popupY = Math.clamp(viewport.y(), 0, Math.max(0, height - TerminalUiLayout.popupHeight(entry.getKey())));
+            int maximumX = Math.max(0, width - TerminalUiLayout.popupWidth(entry.getKey()));
+            int maximumY = Math.max(0, height - TerminalUiLayout.popupHeight(entry.getKey()));
+            int minimumX = entry.getKey().equals("quantity") ? Math.min(18, maximumX) : 0;
+            int minimumY = entry.getKey().equals("quantity") ? Math.min(5, maximumY) : 0;
+            int popupX = Math.clamp(viewport.x() + viewport.width() + 3, minimumX, maximumX);
+            int popupY = Math.clamp(viewport.y(), minimumY, maximumY);
             popup.layout(style -> style.leftPercent(width == 0 ? 0 : popupX * 100F / width)
                     .topPercent(height == 0 ? 0 : popupY * 100F / height));
         }
@@ -749,7 +742,7 @@ public final class TerminalOverlayUi {
 
     public boolean contains(double x, double y) {
         return visible ? over(element(window, "panel"), x, y) || sidebarContains(x, y) || over(element(window, "tabs"), x, y) ||
-                (!popupStack.isEmpty() && over(popups.get(popupStack.getLast()), x, y)) : over(element(ui.rootElement, "entry"), x, y);
+                (!popupStack.isEmpty() && popupContains(x, y)) : over(element(ui.rootElement, "entry"), x, y);
     }
 
     private boolean sidebarContains(double x, double y) {
@@ -766,7 +759,11 @@ public final class TerminalOverlayUi {
     }
 
     public boolean inputAllowed(double x, double y) {
-        return modal() ? over(popups.get(popupStack.getLast()), x, y) : contains(x, y);
+        return modal() ? popupContains(x, y) : contains(x, y);
+    }
+
+    private boolean popupContains(double x, double y) {
+        return popupStack.getLast().equals("quantity") ? amountUi.contains(x, y) : over(popups.get(popupStack.getLast()), x, y);
     }
 
     private void captureWindow() {
@@ -829,6 +826,7 @@ public final class TerminalOverlayUi {
         rectangles.add(new Rect2i(viewport.x() + viewport.width() - TerminalViewportLayout.TAB_WIDTH,
                 viewport.y() + viewport.height() - 72, TerminalViewportLayout.TAB_WIDTH, 70));
         if (!popupStack.isEmpty()) rectangles.add(rect(popups.get(popupStack.getLast())));
+        if (!popupStack.isEmpty() && popupStack.getLast().equals("quantity")) amountUi.extraRectangles(rectangles);
         return rectangles;
     }
 
@@ -872,11 +870,6 @@ public final class TerminalOverlayUi {
         if (!popupStack.isEmpty()) popups.get(popupStack.getLast()).setVisible(false);
         popupStack.add(name);
         popups.get(name).setVisible(true);
-        if (name.equals("quantity") && selected != null) {
-            ObjectList<TerminalResourceCell> cells = new ObjectArrayList<>();
-            createCells(element(popups.get(name), "selected"), cells, 1, 1, (index, event) -> {});
-            cells.getFirst().entry(new GenericStack(selected, 1), false);
-        }
         geometryDirty = true;
     }
 

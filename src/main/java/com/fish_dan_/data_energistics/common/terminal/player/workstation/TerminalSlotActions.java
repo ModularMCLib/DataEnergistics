@@ -1,11 +1,13 @@
 package com.fish_dan_.data_energistics.common.terminal.player.workstation;
 
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.nbt.CompoundTag;
@@ -13,6 +15,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * Physical cursor clicks and ghost configuration use separate paths and never borrow host slot indices.
@@ -97,6 +101,27 @@ public final class TerminalSlotActions {
         };
         int index = data.getInt("index");
         if (index < 0 || index >= inventory.size()) throw new IllegalArgumentException("Invalid terminal ghost index");
+        GenericStack previous = inventory.get(index);
+        if (data.contains("expected", Tag.TAG_COMPOUND) && (previous == null ||
+                !previous.what().equals(AEKey.fromTagGeneric(player.registryAccess(), data.getCompound("expected")))))
+            return "";
+        @Nullable
+        GenericStack resource = null;
+        if (data.getInt("button") != 1 && (!data.contains("amount", Tag.TAG_LONG) || data.getLong("amount") != 0)) {
+            if (data.contains("stack", Tag.TAG_COMPOUND)) resource = GenericStack.readTag(player.registryAccess(), data.getCompound("stack"));
+            else {
+                resource = GenericStack.fromItemStack(player.containerMenu.getCarried());
+                if (resource == null) resource = previous;
+            }
+            if (resource == null) return "";
+            long amount = data.contains("amount", Tag.TAG_LONG) ? data.getLong("amount") : resource.amount();
+            if (amount <= 0) throw new IllegalArgumentException("Invalid ghost amount");
+            if (inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
+                if (!(resource.what() instanceof AEItemKey)) throw new IllegalArgumentException("Vanilla recipes require item ingredients");
+                amount = 1;
+            }
+            resource = new GenericStack(resource.what(), amount);
+        }
         if (inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
             ItemStack physical = state.work().inputs.getItem(index);
             if (!physical.isEmpty()) {
@@ -106,31 +131,13 @@ public final class TerminalSlotActions {
                 if (!returned.isEmpty()) throw new IllegalStateException("Terminal configuration lost reserved return capacity");
             }
         }
-        if (data.getInt("button") == 1 || data.contains("amount", Tag.TAG_LONG) && data.getLong("amount") == 0) {
-            inventory.set(index, null);
-            if (data.getString("inventory").equals("inputs") || data.getString("inventory").equals("outputs"))
-                state.work().context(TerminalPatternContext.EMPTY);
-            state.work().recipeIndex(0);
-            return "";
-        }
-        GenericStack resource;
-        if (data.contains("stack", Tag.TAG_COMPOUND))
-            resource = GenericStack.readTag(player.registryAccess(), data.getCompound("stack"));
-        else {
-            resource = GenericStack.fromItemStack(player.containerMenu.getCarried());
-            if (resource == null) resource = inventory.get(index);
-        }
-        if (resource == null) return "";
-        long amount = data.contains("amount", Tag.TAG_LONG) ? data.getLong("amount") : resource.amount();
-        if (amount <= 0) throw new IllegalArgumentException("Invalid ghost amount");
-        if (inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
-            if (!(resource.what() instanceof AEItemKey)) throw new IllegalArgumentException("Vanilla recipes require item ingredients");
-            amount = 1;
-        }
-        inventory.set(index, new GenericStack(resource.what(), amount));
-        if (data.getString("inventory").equals("inputs") || data.getString("inventory").equals("outputs"))
+        inventory.set(index, resource);
+        boolean sameResource = previous != null && resource != null && previous.what().equals(resource.what());
+        if ((inputs || outputs) && !sameResource) {
             state.work().context(TerminalPatternContext.EMPTY);
-        state.work().recipeIndex(0);
+            if (state.workspace() == TerminalWorkspace.PROCESSING) state.work().matching.set(outputs, index, ProcessingMatchMode.EXACT);
+            if (inputs) state.work().recipeIndex(0);
+        }
         return "";
     }
 }

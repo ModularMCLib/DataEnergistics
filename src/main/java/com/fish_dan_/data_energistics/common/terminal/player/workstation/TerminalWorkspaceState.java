@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.terminal.player.workstation;
 
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalProcessingMatching;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 
 import net.minecraft.core.HolderLookup;
@@ -19,6 +20,7 @@ public final class TerminalWorkspaceState {
     public final SimpleContainer patterns = new SimpleContainer(1);
     public final TerminalGhostInventory patternInputs;
     public final TerminalGhostInventory patternOutputs;
+    public final TerminalProcessingMatching matching;
     private final Runnable changed;
     private boolean substitutes;
     private boolean fluidSubstitutes;
@@ -51,6 +53,7 @@ public final class TerminalWorkspaceState {
         inputs = new SimpleContainer(workspace.inputSlots());
         patternInputs = new TerminalGhostInventory(workspace.patternInputSlots(), changed);
         patternOutputs = new TerminalGhostInventory(workspace.patternOutputSlots(), changed);
+        matching = new TerminalProcessingMatching(changed);
         inputs.addListener(inventory -> changed.run());
         patterns.addListener(inventory -> changed.run());
     }
@@ -117,6 +120,7 @@ public final class TerminalWorkspaceState {
         tag.putInt("boost", boost);
         tag.put("context", context.save());
         tag.putBoolean("record_recipe_type", recordRecipeType);
+        tag.put("matching", matching.save());
         return tag;
     }
 
@@ -132,6 +136,7 @@ public final class TerminalWorkspaceState {
         boost = tag.getInt("boost");
         context = TerminalPatternContext.load(tag.getCompound("context"));
         recordRecipeType = !tag.contains("record_recipe_type") || tag.getBoolean("record_recipe_type");
+        matching.load(tag.getCompound("matching"));
         if (recipeIndex < 0 || name.length() > 32767 || boost < 0 || boost > 254) {
             throw new IllegalArgumentException("Invalid saved workspace settings");
         }

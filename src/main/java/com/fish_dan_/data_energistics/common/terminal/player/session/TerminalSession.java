@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.terminal.player.session;
 
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
@@ -142,6 +143,21 @@ public final class TerminalSession {
                     state.work().recordRecipeType(!state.work().recordRecipeType());
             }
             case "recipe_transfer" -> message = TerminalRecipeTransfer.apply(player, state, data);
+            case "processing_match" -> {
+                if (state.workspace() != TerminalWorkspace.PROCESSING)
+                    throw new IllegalArgumentException("Matching is only configurable for processing patterns");
+                String group = data.getString("inventory");
+                if (!group.equals("inputs") && !group.equals("outputs")) throw new IllegalArgumentException("Invalid processing match inventory");
+                boolean output = group.equals("outputs");
+                var inventory = output ? state.work().patternOutputs : state.work().patternInputs;
+                int index = data.getInt("index");
+                int mode = data.getInt("mode");
+                if (index < 0 || index >= inventory.size() || mode < 0 || mode >= ProcessingMatchMode.values().length)
+                    throw new IllegalArgumentException("Invalid processing match request");
+                var stack = inventory.get(index);
+                if (stack != null && stack.what() instanceof AEItemKey && stack.what().equals(key(player, data)))
+                    state.work().matching.set(output, index, ProcessingMatchMode.values()[mode]);
+            }
             case "slot" -> TerminalSlotActions.physical(player, state, data);
             case "ghost" -> {
                 if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))

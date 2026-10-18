@@ -86,6 +86,8 @@ public final class TerminalPatternEncoding {
         var inventory = state.work().patterns;
         ItemStack existing = inventory.getItem(0);
         if (encoded.isEmpty()) return "invalid_recipe";
+        if (state.workspace() == TerminalWorkspace.PROCESSING && !state.work().matching.apply(player.serverLevel(), encoded))
+            return "no_declared_tag";
         if (!existing.isEmpty() && (existing.getCount() != 1 ||
                 !PatternDetailsHelper.isEncodedPattern(existing) && !AEItems.BLANK_PATTERN.is(existing)))
             return "inventory_full";

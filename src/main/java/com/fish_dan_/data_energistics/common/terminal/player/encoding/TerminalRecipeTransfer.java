@@ -69,6 +69,7 @@ public final class TerminalRecipeTransfer {
         }
         state.work().patternInputs.copyFrom(inputs);
         state.work().patternOutputs.copyFrom(outputs);
+        state.work().matching.clear();
         state.work().context(context);
         state.work().recipeIndex(selectedRecipe);
         return "";

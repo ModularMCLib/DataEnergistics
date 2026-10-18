@@ -79,10 +79,10 @@ public final class TerminalResourceCell extends Button {
 
     @Override
     protected void onMouseDown(UIEvent event) {
-        if (!isActive() || event.button < 0 || event.button > (storageCell ? 2 : 1)) return;
+        if (!isActive() || event.button < 0 || event.button > (storageCell || configurable ? 2 : 1)) return;
         UISoundUtils.playButtonClickSound();
-        if (resourceClick != null) resourceClick.handleEvent(event);
         setButtonState(State.PRESSED);
+        if (resourceClick != null) resourceClick.handleEvent(event);
     }
 
     public void entry(@Nullable GenericStack value, boolean canCraft) {

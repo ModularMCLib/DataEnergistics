@@ -136,7 +136,7 @@ public final class TerminalUiLayout {
     }
 
     public static UIElement popup(String name) {
-        UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, 190, popupHeight(name));
+        UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, popupWidth(name), popupHeight(name));
         root.addChildren(at(label("popup_title"), 5, 4, 166, 10), control("back", 174, 4, 12, 10));
         switch (name) {
             case "network" -> {
@@ -153,8 +153,6 @@ public final class TerminalUiLayout {
                     at(element("pickup", "filter-grid"), 5, 34, 162, 54), control("filter_copy_up", 171, 56, 13, 13),
                     control("filter_swap", 171, 74, 13, 13), control("filter_copy_down", 171, 92, 13, 13),
                     control("insert_whitelist", 5, 107, 162, 12), at(element("insert", "filter-grid"), 5, 122, 162, 54));
-            case "quantity" -> root.addChildren(at(element("selected", "quantity-selected"), 7, 23, 18, 18),
-                    at(field("amount"), 31, 25, 151, 14), control("apply_quantity", 97, 47, 85, 14));
             case "encoding_info" -> root.addChildren(icon("record_type", "terminal-small", "icon-record-type", 5, 21, 10, 10),
                     at(label("record_type_text"), 20, 21, 163, 10), at(label("encoding_details"), 5, 40, 180, 48));
             case "transfer_info" -> root.addChild(at(label("transfer_details"), 5, 21, 180, 88));
@@ -187,7 +185,7 @@ public final class TerminalUiLayout {
             case "network" -> 160;
             case "magnet" -> 124;
             case "filters" -> 188;
-            case "quantity" -> 88;
+            case "quantity" -> 107;
             case "encoding_info" -> 96;
             case "transfer_info" -> 116;
             case "upload" -> 188;
@@ -197,6 +195,10 @@ public final class TerminalUiLayout {
 
     public static <T extends UIElement> T require(UIElement root, String id, Class<T> type) {
         return root.selectId(id, type).findFirst().orElseThrow(() -> new IllegalStateException("Missing terminal element " + id));
+    }
+
+    public static int popupWidth(String name) {
+        return name.equals("quantity") ? 176 : 190;
     }
 
     public static <T extends UIElement> T at(T element, int x, int y, int width, int height) {

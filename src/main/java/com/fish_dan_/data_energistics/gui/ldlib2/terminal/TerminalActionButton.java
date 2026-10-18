@@ -37,8 +37,14 @@ public final class TerminalActionButton extends Button {
         setText(Component.empty());
     }
 
-    void resetInteraction() {
+    public void resetInteraction() {
         setButtonState(State.DEFAULT);
+    }
+
+    /** Used by window handles whose click is resolved on release, after distinguishing a drag. */
+    public void press() {
+        UISoundUtils.playButtonClickSound();
+        setButtonState(State.PRESSED);
     }
 
     @Override
@@ -50,8 +56,7 @@ public final class TerminalActionButton extends Button {
     @Override
     protected void onMouseDown(UIEvent event) {
         if (!isActive() || event.button < 0 || event.button > 1) return;
-        UISoundUtils.playButtonClickSound();
-        setButtonState(State.PRESSED);
+        press();
         if (action != null) action.handleEvent(event);
     }
 }

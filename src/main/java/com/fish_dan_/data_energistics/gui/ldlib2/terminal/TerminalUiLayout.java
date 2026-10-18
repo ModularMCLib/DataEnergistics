@@ -137,7 +137,9 @@ public final class TerminalUiLayout {
 
     public static UIElement popup(String name) {
         UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, popupWidth(name), popupHeight(name));
-        root.addChildren(at(label("popup_title"), 5, 4, popupWidth(name) - 29, 10), control("back", popupWidth(name) - 16, 4, 12, 10));
+        Label title = at(label("popup_title"), 7, 5, popupWidth(name) - 31, 10);
+        title.addClass("terminal-popup-title");
+        root.addChildren(title, icon("close", "terminal-window-handle", "icon-close", popupWidth(name) - 17, 3, 14, 14));
         switch (name) {
             case "encoding_info" -> root.addChildren(icon("record_type", "terminal-small", "icon-record-type", 5, 21, 10, 10),
                     at(label("record_type_text"), 20, 21, 163, 10), at(label("encoding_details"), 5, 40, 180, 48));
@@ -303,11 +305,12 @@ public final class TerminalUiLayout {
             case "icon-filter-list" -> 16;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
         };
-        UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, (height - glyphSize) / 2, glyphSize, glyphSize);
+        int glyphHeight = glyph.equals("icon-close") ? 9 : glyphSize;
+        UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, (height - glyphHeight) / 2, glyphSize, glyphHeight);
         icon.addClass(glyph);
         icon.setAllowHitTest(false);
         button.addChild(icon);
-        ((TerminalActionButton) button).glyph(icon, (height - glyphSize) / 2);
+        ((TerminalActionButton) button).glyph(icon, (height - glyphHeight) / 2);
         return button;
     }
 

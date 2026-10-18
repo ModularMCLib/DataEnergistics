@@ -98,7 +98,7 @@ public final class TerminalKeyTypeUi {
         height = nextHeight;
         root.layout(layout -> layout.width(width).height(height));
         TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 5, 4, Math.max(0, width - 26), 10);
-        TerminalUiLayout.at(TerminalUiLayout.require(root, "back", Button.class), Math.max(0, width - 16), 4, 12, 10);
+        TerminalUiLayout.at(TerminalUiLayout.require(root, "close", Button.class), Math.max(0, width - 17), 3, 14, 14);
         TerminalUiLayout.at(list, 5, KeyTypeSelectionLayout.CONTENT_TOP, Math.max(0, width - 10),
                 Math.max(0, height - KeyTypeSelectionLayout.CONTENT_TOP - KeyTypeSelectionLayout.BOTTOM_PADDING));
     }

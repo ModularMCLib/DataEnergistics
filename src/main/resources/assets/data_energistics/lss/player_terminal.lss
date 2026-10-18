@@ -84,6 +84,8 @@
 .anvil-boost { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
 .terminal-popup { background: group(#FFCCCDD6, border(1, #FFF0F0F3)); z-index: 600; }
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
+.terminal-popup-title { font-size: 9; horizontal-align: left; }
+.icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
 .terminal-filter-frame { background: group(#FF9A9FB4, border(-1, #FFF0F0F3)); }
 .icon-filter-list { background: sprite(ae2:textures/guis/states.png, 48, 128, 16, 16); }
 .selected .icon-filter-list { background: sprite(ae2:textures/guis/states.png, 32, 128, 16, 16); }

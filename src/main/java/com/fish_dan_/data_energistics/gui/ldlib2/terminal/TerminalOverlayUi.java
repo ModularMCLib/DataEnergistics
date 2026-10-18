@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatte
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.window.TerminalSubWindow;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -71,6 +72,7 @@ public final class TerminalOverlayUi {
     private final UIElement window = element(ui.rootElement, "window");
     private final Object2ObjectMap<String, UIElement> workspaces = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<String, UIElement> popups = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectMap<String, TerminalSubWindow> subWindows = new Object2ObjectLinkedOpenHashMap<>();
     private final ObjectList<String> popupStack = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> storage = new ObjectArrayList<>();
     private final TerminalStorageIndex storageIndex = new TerminalStorageIndex();
@@ -237,7 +239,9 @@ public final class TerminalOverlayUi {
             root.setVisible(false);
             ui.rootElement.addChild(root);
             label(root, "popup_title").setText(text(name));
-            button(root, "back", this::closePopup);
+            button(root, "close", this::closePopup);
+            element(root, "close").style(style -> style.tooltips(text("close"), text("hold_to_drag")));
+            subWindows.put(name, new TerminalSubWindow(root, this::closePopup));
         }
         uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
         keyTypeUi = new TerminalKeyTypeUi(popups.get("key_types"), keyTypeSelection);
@@ -644,14 +648,9 @@ public final class TerminalOverlayUi {
             boolean keyTypesPopup = entry.getKey().equals("key_types");
             int popupWidth = keyTypesPopup ? keyTypeUi.width() : TerminalUiLayout.popupWidth(entry.getKey());
             int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(entry.getKey());
-            int maximumX = Math.max(0, width - popupWidth);
-            int maximumY = Math.max(0, height - popupHeight);
-            int minimumX = entry.getKey().equals("quantity") ? Math.min(18, maximumX) : 0;
-            int minimumY = entry.getKey().equals("quantity") ? Math.min(5, maximumY) : 0;
-            int popupX = Math.clamp(viewport.x() + viewport.width() + 3, minimumX, maximumX);
-            int popupY = Math.clamp(viewport.y(), minimumY, maximumY);
-            popup.layout(style -> style.leftPercent(width == 0 ? 0 : popupX * 100F / width)
-                    .topPercent(height == 0 ? 0 : popupY * 100F / height));
+            subWindows.get(entry.getKey()).place(width, height,
+                    new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight),
+                    entry.getKey().equals("quantity") ? 18 : 0, 0);
         }
         if (gridChanged && snapshot.contains("enabled")) {
             offset = viewport.clampOffset(offset, storageIndex.projected().size());
@@ -663,7 +662,8 @@ public final class TerminalOverlayUi {
     }
 
     public boolean beginDrag(double x, double y, int button) {
-        if (button != 0 || !popupStack.isEmpty()) return false;
+        if (modal()) return subWindows.get(popupStack.getLast()).beginDrag(x, y, button);
+        if (button != 0) return false;
         if (!visible && over(element(ui.rootElement, "entry"), x, y)) {
             entryPressed = true;
             entryDragging = false;
@@ -687,6 +687,11 @@ public final class TerminalOverlayUi {
     }
 
     public boolean drag(double x, double y) {
+        if (modal()) {
+            boolean consumed = subWindows.get(popupStack.getLast()).drag(x, y);
+            if (consumed) geometryDirty = true;
+            return consumed;
+        }
         if (entryPressed) {
             if (!entryDragging && Math.hypot(x - dragStartX, y - dragStartY) >= 3) {
                 entryDragging = true;
@@ -711,6 +716,10 @@ public final class TerminalOverlayUi {
     }
 
     public boolean endDrag() {
+        if (modal() && subWindows.get(popupStack.getLast()).endDrag()) {
+            geometryDirty = true;
+            return true;
+        }
         if (entryPressed) {
             entryPressed = false;
             if (!entryDragging) {
@@ -726,7 +735,7 @@ public final class TerminalOverlayUi {
     }
 
     public boolean adjusting() {
-        return adjusting;
+        return adjusting || modal() && subWindows.get(popupStack.getLast()).dragging();
     }
 
     public boolean takeGeometryDirty() {
@@ -873,7 +882,10 @@ public final class TerminalOverlayUi {
 
     public boolean closePopup() {
         if (popupStack.isEmpty()) return false;
-        popups.get(popupStack.removeLast()).setVisible(false);
+        Objects.requireNonNull(window.getModularUI()).clearFocus();
+        String closed = popupStack.removeLast();
+        subWindows.get(closed).cancelDrag();
+        popups.get(closed).setVisible(false);
         if (!popupStack.isEmpty()) popups.get(popupStack.getLast()).setVisible(true);
         else releaseWindow();
         geometryDirty = true;
@@ -892,6 +904,7 @@ public final class TerminalOverlayUi {
             });
             Objects.requireNonNull(window.getModularUI()).clearFocus();
             for (UIElement popup : popups.values()) popup.setVisible(false);
+            subWindows.values().forEach(TerminalSubWindow::cancelDrag);
             popupStack.clear();
             releaseWindow();
         }

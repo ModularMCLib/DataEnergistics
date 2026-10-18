@@ -9,7 +9,6 @@ import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -69,7 +68,6 @@ public final class TerminalAmountUi {
         root.addClass("terminal-amount-popup");
         root.setOverflowVisible(true);
         TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 8, 6, 136, 10);
-        TerminalUiLayout.at(TerminalUiLayout.require(root, "back", Button.class), 152, -5, 20, 20);
         value.addClass("terminal-field");
         value.setText("1", false).setTextRegexValidator(".{0,256}");
         value.setTextResponder(ignored -> validate());
@@ -230,14 +228,12 @@ public final class TerminalAmountUi {
     }
 
     public boolean contains(double x, double y) {
-        return root.isVisible() && (TerminalOverlayUi.over(root, x, y) || TerminalOverlayUi.over(match, x, y) ||
-                TerminalOverlayUi.over(TerminalUiLayout.require(root, "back", Button.class), x, y));
+        return root.isVisible() && (TerminalOverlayUi.over(root, x, y) || TerminalOverlayUi.over(match, x, y));
     }
 
     public void extraRectangles(ObjectList<Rect2i> rectangles) {
         if (!root.isVisible()) return;
         if (match.isVisible()) rectangles.add(rect(match));
-        rectangles.add(rect(TerminalUiLayout.require(root, "back", Button.class)));
     }
 
     private static Rect2i rect(UIElement element) {

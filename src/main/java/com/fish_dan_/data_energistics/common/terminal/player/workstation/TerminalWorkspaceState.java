@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.terminal.player.workstation;
 
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 
 import net.minecraft.core.HolderLookup;
@@ -25,12 +26,32 @@ public final class TerminalWorkspaceState {
     private int recipeIndex;
     private String name = "";
     private int boost;
+    private TerminalPatternContext context = TerminalPatternContext.EMPTY;
+    private boolean recordRecipeType = true;
+
+    public TerminalPatternContext context() {
+        return context;
+    }
+
+    public void context(TerminalPatternContext value) {
+        context = value;
+        changed.run();
+    }
+
+    public boolean recordRecipeType() {
+        return recordRecipeType;
+    }
+
+    public void recordRecipeType(boolean value) {
+        recordRecipeType = value;
+        changed.run();
+    }
 
     public TerminalWorkspaceState(TerminalWorkspace workspace, Runnable changed) {
         this.changed = changed;
         inputs = new SimpleContainer(workspace.inputSlots());
-        patternInputs = new TerminalGhostInventory(workspace.inputSlots(), changed);
-        patternOutputs = new TerminalGhostInventory(3, changed);
+        patternInputs = new TerminalGhostInventory(workspace.patternInputSlots(), changed);
+        patternOutputs = new TerminalGhostInventory(workspace.patternOutputSlots(), changed);
         inputs.addListener(inventory -> changed.run());
         patterns.addListener(inventory -> changed.run());
     }
@@ -105,6 +126,8 @@ public final class TerminalWorkspaceState {
         tag.putInt("recipe", recipeIndex);
         tag.putString("name", name);
         tag.putInt("boost", boost);
+        tag.put("context", context.save());
+        tag.putBoolean("record_recipe_type", recordRecipeType);
         return tag;
     }
 
@@ -119,6 +142,8 @@ public final class TerminalWorkspaceState {
         recipeIndex = tag.getInt("recipe");
         name = tag.getString("name");
         boost = tag.getInt("boost");
+        context = TerminalPatternContext.load(tag.getCompound("context"));
+        recordRecipeType = !tag.contains("record_recipe_type") || tag.getBoolean("record_recipe_type");
         if (recipeIndex < 0 || name.length() > 32767 || boost < 0 || boost > 254) {
             throw new IllegalArgumentException("Invalid saved workspace settings");
         }

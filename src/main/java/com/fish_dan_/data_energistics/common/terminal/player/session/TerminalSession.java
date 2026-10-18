@@ -4,12 +4,15 @@ import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternUpload;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalRecipeTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageView;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalContainerTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalInputTargets;
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalPatternEncoding;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalSlotActions;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkstation;
@@ -17,7 +20,9 @@ import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.core.definitions.AEItems;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,12 +45,14 @@ public final class TerminalSession {
     private final UUID id;
     private final UUID owner;
     private final TerminalStorageView storage = new TerminalStorageView();
+    private final TerminalPatternUpload upload = new TerminalPatternUpload();
     private long sequence;
     private int lastRequest;
     private final IntSet nativeMenuIds = new IntOpenHashSet();
     private boolean visible = true;
     private boolean closed;
     private String message = "";
+    private String lastAction = "";
     private @Nullable CompoundTag previousSnapshot;
 
     public TerminalSession(ServerPlayer player, UUID id) {
@@ -113,6 +120,7 @@ public final class TerminalSession {
     public void action(ServerPlayer player, TerminalPlayerRuntime runtime, String action, CompoundTag data) {
         TerminalPlayerState state = runtime.state();
         message = "";
+        lastAction = action;
         switch (action) {
             case "refresh" -> {}
             case "close" -> close();
@@ -121,8 +129,19 @@ public final class TerminalSession {
             case "toggle_encoding" -> {
                 if (state.workspace().supportsEncoding()) state.work().encoding(!state.work().encoding());
             }
-            case "substitutes" -> state.work().substitutes(!state.work().substitutes());
-            case "fluid_substitutes" -> state.work().fluidSubstitutes(!state.work().fluidSubstitutes());
+            case "substitutes" -> {
+                if (state.workspace() == TerminalWorkspace.CRAFTING || state.workspace() == TerminalWorkspace.SMITHING)
+                    state.work().substitutes(!state.work().substitutes());
+            }
+            case "fluid_substitutes" -> {
+                if (state.workspace() == TerminalWorkspace.CRAFTING)
+                    state.work().fluidSubstitutes(!state.work().fluidSubstitutes());
+            }
+            case "record_type" -> {
+                if (state.workspace() == TerminalWorkspace.PROCESSING)
+                    state.work().recordRecipeType(!state.work().recordRecipeType());
+            }
+            case "recipe_transfer" -> TerminalRecipeTransfer.apply(player, state, data);
             case "slot" -> TerminalSlotActions.physical(player, state, data);
             case "ghost" -> {
                 if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))
@@ -145,7 +164,7 @@ public final class TerminalSession {
                     state.work(TerminalWorkspace.ANVIL).boost(data.getInt("value"));
             }
             case "result" -> {
-                TerminalConnection connection = state.workspace() == TerminalWorkspace.ANVIL ? runtime.connection() : null;
+                TerminalConnection connection = state.work().encoding() || state.workspace() == TerminalWorkspace.ANVIL ? runtime.connection() : null;
                 message = TerminalWorkstation.take(player, state, connection, data.getBoolean("shift"));
             }
             case "frequency" -> {
@@ -202,6 +221,7 @@ public final class TerminalSession {
             }
             case "craft_request" -> TerminalAeNavigation.openCrafting(player, this, connection, key(player, data));
             case "cpu_list" -> TerminalAeNavigation.open(player, this, connection);
+            case "upload_refresh", "upload_pattern", "upload_rename", "upload_history" -> message = upload.action(player, runtime.state(), connection, action, data);
             default -> throw new IllegalArgumentException("Unknown player terminal action " + action);
         }
     }
@@ -221,19 +241,29 @@ public final class TerminalSession {
         if (closed || TerminalAeNavigation.suspended(player, this)) return;
         TerminalPlayerState state = runtime.state();
         CompoundTag snapshot = new CompoundTag();
+        TerminalPatternEncoding.recoverLegacyBlanks(player, state);
         snapshot.putBoolean("enabled", true);
         snapshot.putBoolean("connected", connection != null);
         snapshot.putString("reason", connection == null ? "offline" : "online");
         snapshot.putString("message", message);
+        snapshot.putString("action", lastAction);
         snapshot.putString("workspace", state.workspace().id());
         snapshot.putBoolean("encoding", state.work().encoding());
         snapshot.putBoolean("substitutes", state.work().substitutes());
         snapshot.putBoolean("fluid_substitutes", state.work().fluidSubstitutes());
+        snapshot.putBoolean("record_recipe_type", state.work().recordRecipeType());
         if (state.frequency() != null) snapshot.putLong("frequency", state.frequency());
         snapshot.putLongArray("frequencies", TerminalQuantumAccess.frequencies(player).toLongArray());
         snapshot.putBoolean("magnet_unlocked", ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET));
         snapshot.put("magnet", state.magnet().save(player.registryAccess()));
         snapshot.put("work", state.work().save(player.registryAccess()));
+        if (state.work().encoding()) {
+            snapshot.put("encoding_preview", TerminalPatternEncoding.encode(player, state).saveOptional(player.registryAccess()));
+            long blanks = connection == null ? 0 : connection.storage().getAvailableStacks().get(AEItemKey.of(AEItems.BLANK_PATTERN));
+            snapshot.putLong("blank_patterns", blanks);
+        }
+        upload.refresh(player, state, connection, false);
+        upload.snapshot(snapshot);
         snapshot.putBoolean("transfer_supported", !TerminalInputTargets.resolve(player, menu).isEmpty());
         storage.snapshot(snapshot, connection, player.registryAccess());
         TerminalWorkstation.snapshot(player, state, snapshot);
@@ -247,6 +277,7 @@ public final class TerminalSession {
     public void close() {
         if (closed) return;
         closed = true;
+        upload.close();
         TerminalAeNavigation.abandon(owner, id);
     }
 

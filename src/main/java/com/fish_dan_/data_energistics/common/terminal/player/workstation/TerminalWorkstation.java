@@ -42,7 +42,7 @@ public final class TerminalWorkstation {
     private TerminalWorkstation() {}
 
     public static ItemStack preview(ServerPlayer player, TerminalPlayerState state) {
-        if (state.work().encoding()) return TerminalPatternEncoding.encode(player, state);
+        if (state.work().encoding()) return TerminalPatternEncoding.preview(player, state);
         ItemStack result = switch (state.workspace()) {
             case CRAFTING -> {
                 CraftingInput input = craftingInput(state.work(), false).input();
@@ -67,7 +67,7 @@ public final class TerminalWorkstation {
     }
 
     public static String take(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean shift) {
-        if (state.work().encoding()) return TerminalPatternEncoding.commit(player, state);
+        if (state.work().encoding()) return TerminalPatternEncoding.commit(player, state, connection);
         int completed = 0;
         for (int repeat = 0; repeat < (shift ? 64 : 1); repeat++) {
             ItemStack product = preview(player, state);

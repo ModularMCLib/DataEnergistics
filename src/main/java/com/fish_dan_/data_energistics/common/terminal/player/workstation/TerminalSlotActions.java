@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.terminal.player.workstation;
 
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 
 import appeng.api.stacks.GenericStack;
-import appeng.core.definitions.AEItems;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -22,7 +22,7 @@ public final class TerminalSlotActions {
 
     public static void physical(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
         String group = data.getString("inventory");
-        boolean patterns = group.equals("patterns");
+        boolean patterns = group.equals("encoded");
         if (!patterns && !group.equals("inputs"))
             throw new IllegalArgumentException("Unknown terminal physical inventory");
         if (patterns ? !state.work().encoding() : state.work().encoding() || state.workspace() == TerminalWorkspace.PROCESSING)
@@ -32,6 +32,7 @@ public final class TerminalSlotActions {
         int button = data.getInt("button");
         if (index < 0 || index >= inventory.getContainerSize() || button < 0 || button > 1)
             throw new IllegalArgumentException("Invalid terminal slot click");
+        if (patterns && index != 1) throw new IllegalArgumentException("There is no local blank-pattern input slot");
         ItemStack before = inventory.getItem(index).copy();
         ItemStack stack = inventory.getItem(index);
         if (data.getBoolean("shift")) {
@@ -43,12 +44,11 @@ public final class TerminalSlotActions {
             }
         } else {
             ItemStack cursor = player.containerMenu.getCarried();
-            boolean outputOnly = patterns && index == 1;
             if (cursor.isEmpty()) {
                 int count = button == 1 ? (stack.getCount() + 1) / 2 : stack.getCount();
                 if (count > 0) player.containerMenu.setCarried(inventory.removeItem(index, count));
-            } else if (!outputOnly && (!patterns || cursor.is(AEItems.BLANK_PATTERN.asItem()))) {
-                int maximum = state.workspace() == TerminalWorkspace.ANVIL && index == 0 && !patterns ? 1 : cursor.getMaxStackSize();
+            } else if (!patterns) {
+                int maximum = state.workspace() == TerminalWorkspace.ANVIL && index == 0 ? 1 : cursor.getMaxStackSize();
                 if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, cursor)) {
                     int moved = Math.min(button == 1 ? 1 : cursor.getCount(), maximum - stack.getCount());
                     if (moved > 0) {
@@ -61,7 +61,7 @@ public final class TerminalSlotActions {
                     cursor = stack;
                 }
                 if (cursor.isEmpty()) player.containerMenu.setCarried(ItemStack.EMPTY);
-            } else if (outputOnly && ItemStack.isSameItemSameComponents(stack, cursor)) {
+            } else if (ItemStack.isSameItemSameComponents(stack, cursor)) {
                 int moved = Math.min(button == 1 ? 1 : stack.getCount(), cursor.getMaxStackSize() - cursor.getCount());
                 if (moved > 0) {
                     cursor.grow(moved);
@@ -92,6 +92,8 @@ public final class TerminalSlotActions {
         if (index < 0 || index >= inventory.size()) throw new IllegalArgumentException("Invalid terminal ghost index");
         if (data.getInt("button") == 1 || data.contains("amount", Tag.TAG_LONG) && data.getLong("amount") == 0) {
             inventory.set(index, null);
+            if (data.getString("inventory").equals("inputs") || data.getString("inventory").equals("outputs"))
+                state.work().context(TerminalPatternContext.EMPTY);
             return;
         }
         GenericStack resource;
@@ -105,6 +107,8 @@ public final class TerminalSlotActions {
         long amount = data.contains("amount", Tag.TAG_LONG) ? data.getLong("amount") : resource.amount();
         if (amount <= 0) throw new IllegalArgumentException("Invalid ghost amount");
         inventory.set(index, new GenericStack(resource.what(), amount));
+        if (data.getString("inventory").equals("inputs") || data.getString("inventory").equals("outputs"))
+            state.work().context(TerminalPatternContext.EMPTY);
         state.work().recipeIndex(0);
     }
 }

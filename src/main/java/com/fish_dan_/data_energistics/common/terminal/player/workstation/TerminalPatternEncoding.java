@@ -1,10 +1,15 @@
 package com.fish_dan_.data_energistics.common.terminal.player.workstation;
 
+import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
+import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
+import appeng.api.storage.StorageHelper;
 import appeng.core.definitions.AEItems;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -13,17 +18,32 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Uses AE2's four native pattern encoders; configuration never substitutes for paid blank patterns.
  */
+@NullMarked
 public final class TerminalPatternEncoding {
 
     private TerminalPatternEncoding() {}
 
+    /** The removed blank slot survives only as a migration source; never accept new items into it. */
+    public static void recoverLegacyBlanks(ServerPlayer player, TerminalPlayerState state) {
+        for (TerminalWorkspace page : TerminalWorkspace.values()) {
+            var inventory = state.work(page).patterns;
+            ItemStack old = inventory.getItem(0);
+            if (old.isEmpty()) continue;
+            ItemStack remainder = old.copy();
+            player.getInventory().add(remainder);
+            if (remainder.getCount() != old.getCount()) inventory.setItem(0, remainder);
+        }
+    }
+
     public static ItemStack encode(ServerPlayer player, TerminalPlayerState state) {
         TerminalWorkspaceState work = state.work();
-        return switch (state.workspace()) {
+        ItemStack encoded = switch (state.workspace()) {
             case PROCESSING -> {
                 var inputs = new ObjectArrayList<GenericStack>();
                 var outputs = new ObjectArrayList<GenericStack>();
@@ -58,27 +78,51 @@ public final class TerminalPatternEncoding {
                 var recipe = recipes.get(Math.min(work.recipeIndex(), recipes.size() - 1));
                 var input = TerminalWorkstation.input(work, 0, true);
                 yield PatternDetailsHelper.encodeStonecuttingPattern(recipe, AEItemKey.of(input),
-                        AEItemKey.of(recipe.value().assemble(new SingleRecipeInput(input), player.registryAccess())), work.substitutes());
+                        AEItemKey.of(recipe.value().assemble(new SingleRecipeInput(input), player.registryAccess())), false);
             }
             case ANVIL -> ItemStack.EMPTY;
         };
+        if (!encoded.isEmpty() && state.workspace() == TerminalWorkspace.PROCESSING) {
+            var context = work.context();
+            ItemStack completed = PackagedPatternEncoding.complete(player.serverLevel(), context.recipeType(), context.recipeId(), encoded);
+            if (completed == null) return ItemStack.EMPTY;
+            encoded = completed;
+            EncodedPatternRecipeReference.applyProcessingRecipeMetadata(encoded,
+                    work.recordRecipeType() ? context.recipeType() : null, context.recipeId());
+        }
+        return encoded;
     }
 
-    public static String commit(ServerPlayer player, TerminalPlayerState state) {
+    public static ItemStack preview(ServerPlayer player, TerminalPlayerState state) {
         ItemStack encoded = encode(player, state);
-        if (encoded.isEmpty()) return "invalid_recipe";
+        if (encoded.isEmpty()) return ItemStack.EMPTY;
+        var details = PatternDetailsHelper.decodePattern(encoded, player.level());
+        if (details == null) return ItemStack.EMPTY;
+        GenericStack output = details.getPrimaryOutput();
+        return output.what() instanceof AEItemKey item ? item.toStack((int) Math.min(output.amount(), Integer.MAX_VALUE)) : GenericStack.wrapInItemStack(output);
+    }
+
+    public static String commit(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection) {
+        ItemStack encoded = encode(player, state);
         var inventory = state.work().patterns;
-        ItemStack blank = inventory.getItem(0);
         ItemStack existing = inventory.getItem(1);
-        if (!blank.is(AEItems.BLANK_PATTERN.asItem())) return "missing_pattern";
-        if (!existing.isEmpty() && (!ItemStack.isSameItemSameComponents(existing, encoded) || existing.getCount() >= existing.getMaxStackSize()))
-            return "inventory_full";
-        inventory.removeItem(0, 1);
-        if (existing.isEmpty()) inventory.setItem(1, encoded);
-        else {
-            existing.grow(1);
-            inventory.setChanged();
+        if (encoded.isEmpty()) {
+            if (PatternDetailsHelper.isEncodedPattern(existing)) inventory.setItem(1, AEItems.BLANK_PATTERN.stack(existing.getCount()));
+            return "invalid_recipe";
         }
+        if (!existing.isEmpty() && (existing.getCount() != 1 ||
+                !PatternDetailsHelper.isEncodedPattern(existing) && !AEItems.BLANK_PATTERN.is(existing)))
+            return "inventory_full";
+        if (existing.isEmpty()) {
+            if (connection == null) return "offline";
+            AEItemKey blank = AEItemKey.of(AEItems.BLANK_PATTERN);
+            long extracted = StorageHelper.poweredExtraction(connection.grid().getEnergyService(), connection.storage(), blank, 1, connection.source());
+            TerminalNetworkStorage.checkAmount(extracted, 1);
+            if (extracted == 0) return "missing_pattern";
+            state.returns().extracted(connection.frequency(), blank, 1);
+            inventory.setItem(1, encoded);
+            state.returns().delivered(connection.frequency(), blank, 1);
+        } else inventory.setItem(1, encoded);
         state.changed();
         return "encoded";
     }

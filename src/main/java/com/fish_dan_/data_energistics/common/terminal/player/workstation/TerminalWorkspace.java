@@ -27,6 +27,14 @@ public enum TerminalWorkspace {
         return inputSlots;
     }
 
+    public int patternInputSlots() {
+        return this == PROCESSING ? 81 : inputSlots;
+    }
+
+    public int patternOutputSlots() {
+        return this == PROCESSING ? 27 : 3;
+    }
+
     public boolean supportsEncoding() {
         return this != ANVIL;
     }

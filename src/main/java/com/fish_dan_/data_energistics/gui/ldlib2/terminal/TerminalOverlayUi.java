@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
@@ -54,7 +55,6 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
@@ -84,6 +84,7 @@ public final class TerminalOverlayUi {
     private final TerminalPatternUploadUi uploadUi;
     private final TerminalAmountUi amountUi;
     private final TerminalKeyTypeUi keyTypeUi;
+    private final TerminalMagnetUi magnetUi;
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
     private boolean pendingEncode;
@@ -255,17 +256,8 @@ public final class TerminalOverlayUi {
             scrollStonecutting(event.deltaY > 0 ? -1 : 1);
             event.stopPropagation();
         });
-        UIElement magnet = popups.get("magnet");
-        for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
-            String id = "mode_" + mode.toLowerCase(Locale.ROOT);
-            button(magnet, id, () -> request.accept("magnet_mode", string("value", mode)));
-        }
-        button(magnet, "restock", () -> request.accept("magnet_restock", new CompoundTag()));
-        button(magnet, "filters", () -> open("filters"));
         UIElement filters = popups.get("filters");
-        for (String action : new String[] { "pickup_whitelist", "insert_whitelist", "filter_copy_up", "filter_copy_down", "filter_swap" }) {
-            button(filters, action, () -> request.accept(action, new CompoundTag()));
-        }
+        magnetUi = new TerminalMagnetUi(popups.get("magnet"), filters, request, () -> open("filters"));
         createCells(element(filters, "pickup"), pickup, 27, 9, (index, event) -> ghost("pickup", index, event.button));
         createCells(element(filters, "insert"), insert, 27, 9, (index, event) -> ghost("insert", index, event.button));
         amountUi = new TerminalAmountUi(popups.get("quantity"), registries, request, this::closePopup);
@@ -598,14 +590,7 @@ public final class TerminalOverlayUi {
         Component title = unlocked ? text("magnet") : text("magnet").copy().append(" · ").append(text("reason.locked"));
         label(root, "popup_title").setText(title);
         tooltip(window, "magnet", title);
-        for (String mode : new String[] { "OFF", "INVENTORY", "NETWORK", "PICKUP_NETWORK" }) {
-            Button control = TerminalUiLayout.require(root, "mode_" + mode.toLowerCase(Locale.ROOT), Button.class);
-            control.setText(Component.literal(mode.equals(magnet.getString("mode")) ? "● " : "○ ").append(text("magnet_mode." + mode)));
-            control.setActive(unlocked);
-        }
-        Button restock = TerminalUiLayout.require(root, "restock", Button.class);
-        restock.setText(text(magnet.getBoolean("restock") ? "restock_on" : "restock_off"));
-        restock.setActive(unlocked);
+        magnetUi.refresh(magnet, unlocked);
         setCells(pickup, magnet.getList("pickup", Tag.TAG_COMPOUND), true);
         setCells(insert, magnet.getList("insert", Tag.TAG_COMPOUND), true);
         for (TerminalResourceCell cell : pickup) {
@@ -616,11 +601,6 @@ public final class TerminalOverlayUi {
             cell.setActive(unlocked);
             cell.configurable(unlocked);
         }
-        UIElement filters = popups.get("filters");
-        for (String id : new String[] { "pickup_whitelist", "insert_whitelist", "filter_copy_up", "filter_copy_down", "filter_swap" })
-            element(filters, id).setActive(unlocked);
-        TerminalUiLayout.require(filters, "pickup_whitelist", Button.class).setText(text("pickup_" + (magnet.getBoolean("pickup_whitelist") ? "whitelist" : "blacklist")));
-        TerminalUiLayout.require(filters, "insert_whitelist", Button.class).setText(text("insert_" + (magnet.getBoolean("insert_whitelist") ? "whitelist" : "blacklist")));
     }
 
     public void geometry(int width, int height) {

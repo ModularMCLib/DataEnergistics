@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
@@ -136,15 +137,8 @@ public final class TerminalUiLayout {
 
     public static UIElement popup(String name) {
         UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, popupWidth(name), popupHeight(name));
-        root.addChildren(at(label("popup_title"), 5, 4, 166, 10), control("back", 174, 4, 12, 10));
+        root.addChildren(at(label("popup_title"), 5, 4, popupWidth(name) - 29, 10), control("back", popupWidth(name) - 16, 4, 12, 10));
         switch (name) {
-            case "magnet" -> root.addChildren(control("mode_off", 5, 21, 180, 15), control("mode_inventory", 5, 38, 180, 15),
-                    control("mode_network", 5, 55, 180, 15), control("mode_pickup_network", 5, 72, 180, 15),
-                    control("restock", 5, 97, 157, 17), icon("filters", "filters", "icon-settings", 167, 97, 18, 17));
-            case "filters" -> root.addChildren(control("pickup_whitelist", 5, 20, 162, 12),
-                    at(element("pickup", "filter-grid"), 5, 34, 162, 54), control("filter_copy_up", 171, 56, 13, 13),
-                    control("filter_swap", 171, 74, 13, 13), control("filter_copy_down", 171, 92, 13, 13),
-                    control("insert_whitelist", 5, 107, 162, 12), at(element("insert", "filter-grid"), 5, 122, 162, 54));
             case "encoding_info" -> root.addChildren(icon("record_type", "terminal-small", "icon-record-type", 5, 21, 10, 10),
                     at(label("record_type_text"), 20, 21, 163, 10), at(label("encoding_details"), 5, 40, 180, 48));
             case "transfer_info" -> root.addChild(at(label("transfer_details"), 5, 21, 180, 88));
@@ -177,8 +171,8 @@ public final class TerminalUiLayout {
     public static int popupHeight(String name) {
         return switch (name) {
             case "key_types" -> 160;
-            case "magnet" -> 124;
-            case "filters" -> 188;
+            case "magnet" -> 98;
+            case "filters" -> 166;
             case "quantity" -> 107;
             case "encoding_info" -> 96;
             case "transfer_info" -> 116;
@@ -192,7 +186,10 @@ public final class TerminalUiLayout {
     }
 
     public static int popupWidth(String name) {
-        return name.equals("quantity") ? 176 : 190;
+        return switch (name) {
+            case "quantity", "magnet", "filters" -> 176;
+            default -> 190;
+        };
     }
 
     public static <T extends UIElement> T at(T element, int x, int y, int width, int height) {
@@ -297,12 +294,13 @@ public final class TerminalUiLayout {
         return button;
     }
 
-    private static Button icon(String id, String style, String glyph, int x, int y, int width, int height) {
+    public static Button icon(String id, String style, String glyph, int x, int y, int width, int height) {
         Button button = control(id, x, y, width, height);
         button.noText().addClass(style);
         button.addClass("terminal-icon");
         int glyphSize = switch (glyph) {
             case "icon-transfer-info", "icon-record-type" -> 8;
+            case "icon-filter-list" -> 16;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
         };
         UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, (height - glyphSize) / 2, glyphSize, glyphSize);
@@ -311,6 +309,21 @@ public final class TerminalUiLayout {
         button.addChild(icon);
         ((TerminalActionButton) button).glyph(icon, (height - glyphSize) / 2);
         return button;
+    }
+
+    /** AE-style checkbox row: the label is separate from the fixed-size switch glyph. */
+    public static TerminalActionButton toggle(String id, Component text, int x, int y, int width) {
+        TerminalActionButton row = at(named(new TerminalActionButton(), id, "terminal-toggle"), x, y, width, 14);
+        row.noText();
+        UIElement glyph = at(element(id + "_icon", "terminal-toggle-glyph"), 0, 1, 22, 12);
+        glyph.setAllowHitTest(false);
+        Label name = at(label(id + "_label"), 26, 0, Math.max(0, width - 26), 14);
+        name.addClass("terminal-toggle-name");
+        name.setText(text);
+        name.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));
+        row.addChildren(glyph, name);
+        row.glyph(glyph, 1);
+        return row;
     }
 
     private static Stylesheet stylesheet() {

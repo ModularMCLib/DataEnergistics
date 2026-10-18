@@ -83,6 +83,20 @@
 .terminal-page.page-anvil { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png); }
 .anvil-boost { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
 .terminal-popup { background: group(#FFCCCDD6, border(1, #FFF0F0F3)); z-index: 600; }
+.terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
+.terminal-filter-frame { background: group(#FF9A9FB4, border(-1, #FFF0F0F3)); }
+.icon-filter-list { background: sprite(ae2:textures/guis/states.png, 48, 128, 16, 16); }
+.selected .icon-filter-list { background: sprite(ae2:textures/guis/states.png, 32, 128, 16, 16); }
+.icon-filter-copy-up { background: sprite(ae2:textures/guis/states.png, 224, 192, 8, 8); }
+.icon-filter-copy-down { background: sprite(ae2:textures/guis/states.png, 232, 192, 8, 8); }
+.icon-filter-swap { background: sprite(ae2:textures/guis/states.png, 232, 200, 8, 8); }
+.terminal-toggle { background: #00000000; base-background: #00000000; hover-background: #00000000; pressed-background: #00000000; }
+.terminal-toggle-name { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; vertical-align: center; }
+.terminal-toggle:disabled .terminal-toggle-name { text-color: #FF858590; }
+.terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 28, 22, 12); }
+.terminal-toggle.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 28, 22, 12); }
+.terminal-toggle.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 40, 22, 12); }
+.terminal-toggle.selected.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 40, 22, 12); }
 
 .icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
 .icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }

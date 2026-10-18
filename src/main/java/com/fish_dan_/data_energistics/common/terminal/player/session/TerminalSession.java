@@ -23,9 +23,11 @@ import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
 import appeng.core.definitions.AEItems;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -127,6 +129,15 @@ public final class TerminalSession {
             case "close" -> close();
             case "visible" -> visible = data.getBoolean("value");
             case "workspace" -> state.workspace(TerminalWorkspace.byId(data.getString("id")));
+            case "pin_rows" -> state.pins().rows(data.getInt("rows"));
+            case "pin" -> {
+                int button = data.getInt("button");
+                if (button < 0 || button > 1) throw new IllegalArgumentException("Invalid terminal pin button");
+                GenericStack stack = data.contains("stack", Tag.TAG_COMPOUND) ? GenericStack.readTag(player.registryAccess(), data.getCompound("stack")) :
+                        GenericStack.fromItemStack(menu.getCarried());
+                if (stack != null) state.pins().set(data.getInt("index"), stack.what());
+                else if (button == 1 && menu.getCarried().isEmpty()) state.pins().set(data.getInt("index"), null);
+            }
             case "encode" -> {
                 if (state.workspace().supportsEncoding()) message = TerminalPatternEncoding.commit(player, state, runtime.connection());
             }
@@ -271,6 +282,7 @@ public final class TerminalSession {
         snapshot.putLongArray("frequencies", TerminalQuantumAccess.frequencies(player).toLongArray());
         snapshot.putBoolean("magnet_unlocked", ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET));
         snapshot.put("magnet", state.magnet().save(player.registryAccess()));
+        snapshot.put("pins", state.pins().save(player.registryAccess()));
         snapshot.put("work", state.work().save(player.registryAccess()));
         if (state.workspace().supportsEncoding()) {
             snapshot.put("encoding_preview", TerminalPatternEncoding.encode(player, state).saveOptional(player.registryAccess()));

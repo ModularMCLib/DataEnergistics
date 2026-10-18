@@ -320,7 +320,8 @@ public final class TerminalUiLayout {
         row.noText();
         UIElement glyph = at(element(id + "_icon", "terminal-toggle-glyph"), 0, 1, 22, 12);
         glyph.setAllowHitTest(false);
-        Label name = at(label(id + "_label"), 26, 0, Math.max(0, width - 26), 14);
+        Label name = at(label(id + "_label"), 0, 0, width, 14);
+        name.layout(layout -> layout.widthPercent(100).paddingLeft(26).paddingRight(2));
         name.addClass("terminal-toggle-name");
         name.setText(text);
         name.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));

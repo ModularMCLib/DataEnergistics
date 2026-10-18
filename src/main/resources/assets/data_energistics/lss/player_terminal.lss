@@ -144,24 +144,6 @@
 .match-id .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 48, 96, 16, 16); }
 .match-tag .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 32, 96, 16, 16); }
 
-.terminal-key-type-row {
-    background: #00000000;
-    base-background: #00000000;
-    hover-background: #00000000;
-    pressed-background: #00000000;
-}
-.terminal-key-type-name {
-    font-size: 9;
-    text-color: #FF343548;
-    text-shadow: false;
-    horizontal-align: left;
-    vertical-align: center;
-}
-.terminal-key-type-row:disabled .terminal-key-type-name { text-color: #FF858590; }
-.terminal-key-type-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 28, 22, 12); }
-.terminal-key-type-row.hovered .terminal-key-type-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 28, 22, 12); }
-.terminal-key-type-row.selected .terminal-key-type-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 40, 22, 12); }
-.terminal-key-type-row.selected.hovered .terminal-key-type-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 40, 22, 12); }
 .terminal-key-type-scroll .__scroller_scroll_container__ { background: #FF9A9FB4; }
 .terminal-key-type-scroll .__scroller_scroll_bar__ {
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png);

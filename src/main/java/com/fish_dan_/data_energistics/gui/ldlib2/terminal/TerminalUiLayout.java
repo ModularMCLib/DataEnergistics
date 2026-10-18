@@ -109,10 +109,10 @@ public final class TerminalUiLayout {
             int modeX = mode == TerminalWorkspace.STONECUTTING ? 6 : 67;
             root.addChild(pageIcon("encoding", "encoding", "icon-encoding", modeX, 25, 8, 8));
             if (mode == TerminalWorkspace.CRAFTING) {
-                root.addChildren(pageIcon("substitutes", "terminal-small", "icon-substitutes", 62, 2, 8, 8),
-                        pageIcon("fluid_substitutes", "terminal-small", "icon-fluid-substitutes", 72, 2, 8, 8));
+                root.addChildren(pageIcon("substitutes", "terminal-substitution", "icon-substitutes", 62, 2, 8, 8),
+                        pageIcon("fluid_substitutes", "terminal-substitution", "icon-fluid-substitutes", 72, 2, 8, 8));
             } else if (mode == TerminalWorkspace.SMITHING) {
-                root.addChild(pageIcon("substitutes", "terminal-small", "icon-substitutes", 62, 2, 8, 8));
+                root.addChild(pageIcon("substitutes", "terminal-substitution", "icon-substitutes", 62, 2, 8, 8));
             } else if (mode == TerminalWorkspace.PROCESSING) {
                 root.addChildren(pageIcon("encoding_info", "terminal-small", "icon-encoding-info", 62, 2, 8, 8),
                         pageIcon("transfer_info", "terminal-small", "icon-transfer-info", 72, 2, 8, 8),

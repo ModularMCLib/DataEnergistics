@@ -129,11 +129,18 @@
 .icon-transfer { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
 .icon-encoding-info { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
 .icon-transfer-info { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
-.icon-substitutes { background: sprite(data_energistics:textures/guis/states/top_surface/item.png, 3, 2, 10, 10); }
-.icon-fluid-substitutes { background: sprite(data_energistics:textures/guis/states/top_surface/fluid.png, 3, 2, 10, 10); }
+.icon-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 208, 8, 8); }
+.option-enabled .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 208, 8, 8); }
+.icon-fluid-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 216, 8, 8); }
+.option-enabled .icon-fluid-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 216, 8, 8); }
 .icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_1.png); }
 .option-enabled .icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
 .terminal-control.option-enabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
+.terminal-substitution, .terminal-substitution.option-enabled {
+    base-background: #00000000;
+    hover-background: #00000000;
+    pressed-background: #00000000;
+}
 .icon-previous { background: sprite(data_energistics:textures/guis/front.png); }
 .icon-next { background: sprite(data_energistics:textures/guis/back.png); }
 .terminal-amount-popup { background: sprite(data_energistics:textures/guis/priority/home.png); }

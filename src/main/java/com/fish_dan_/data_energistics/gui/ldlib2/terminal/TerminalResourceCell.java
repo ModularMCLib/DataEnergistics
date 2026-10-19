@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.rendering.TerminalResourceDepth;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -24,7 +25,6 @@ import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.joml.Matrix3f;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -155,7 +155,7 @@ public final class TerminalResourceCell extends Button {
         if (display == null) return;
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
-        resourceDepth(context);
+        TerminalResourceDepth.flatten(context);
         if (dragPreview != null) context.graphics.fill(0, 0, 16, 16, 0x80FFFFFF);
         AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, display.what());
         boolean craftingLabel = craftable && (craftableOnly || display.amount() <= 0);
@@ -175,7 +175,7 @@ public final class TerminalResourceCell extends Button {
     private void drawEncodedPattern(GUIContext context) {
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
-        resourceDepth(context);
+        TerminalResourceDepth.flatten(context);
         if (stack == null) {
             Icon.BACKGROUND_ENCODED_PATTERN.getBlitter().dest(0, 0).blit(context.graphics);
         } else if (stack.what() instanceof AEItemKey itemKey) {
@@ -188,13 +188,5 @@ public final class TerminalResourceCell extends Button {
             context.graphics.renderItemDecorations(context.mc.font, display, 0, 0);
         }
         context.pose.popPose();
-    }
-
-    /** Native item models and decorations must remain inside their window's UI depth interval. */
-    private static void resourceDepth(GUIContext context) {
-        var normal = new Matrix3f(context.graphics.pose().last().normal());
-        context.pose.scale(1, 1, 0.001F);
-        // Compress depth without changing the model lighting.
-        context.graphics.pose().last().normal().set(normal);
     }
 }

@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal.window;
 
+import com.lowdragmc.lowdraglib2.gui.ui.Style;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.client.renderer.Rect2i;
@@ -12,22 +13,31 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 
 /** Independent floating windows share only their stacking order and the current pointer capture. */
 @NullMarked
 public final class TerminalWindowStack {
 
+    private static final String MAIN = "main";
     private final UIElement root;
+    private final UIElement mainWindow;
+    private final BiPredicate<Double, Double> mainHitTest;
+    private final Supplier<ObjectList<Rect2i>> mainAreas;
     private final Object2ObjectMap<String, Window> windows = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectMap<String, String> parents = new Object2ObjectLinkedOpenHashMap<>();
     private final ObjectList<String> order = new ObjectArrayList<>();
     private @Nullable TerminalSubWindow pointerWindow;
 
-    public TerminalWindowStack(UIElement root) {
+    public TerminalWindowStack(UIElement root, UIElement mainWindow, BiPredicate<Double, Double> mainHitTest, Supplier<ObjectList<Rect2i>> mainAreas) {
         this.root = root;
+        this.mainWindow = mainWindow;
+        this.mainHitTest = mainHitTest;
+        this.mainAreas = mainAreas;
+        order.add(MAIN);
+        layers();
     }
 
     public void add(String name, UIElement element) {
@@ -37,7 +47,7 @@ public final class TerminalWindowStack {
     }
 
     public UIElement root(String name) {
-        return window(name).element;
+        return name.equals(MAIN) ? mainWindow : window(name).element;
     }
 
     public ObjectSet<String> names() {
@@ -64,13 +74,15 @@ public final class TerminalWindowStack {
     }
 
     public boolean contains(double x, double y) {
-        return at(x, y) != null;
+        String name = at(x, y);
+        return name != null && !name.equals(MAIN);
     }
 
     public boolean beginDrag(double x, double y, int button) {
         String name = at(x, y);
         if (name == null) return false;
         raise(name);
+        if (name.equals(MAIN)) return false;
         TerminalSubWindow placement = window(name).placement;
         if (!placement.beginDrag(x, y, button)) return false;
         pointerWindow = placement;
@@ -97,7 +109,7 @@ public final class TerminalWindowStack {
     }
 
     public boolean closeTop() {
-        if (order.isEmpty()) return false;
+        if (order.isEmpty() || order.getLast().equals(MAIN)) return false;
         close(order.getLast());
         return true;
     }
@@ -107,8 +119,8 @@ public final class TerminalWindowStack {
             if (name.equals(parents.get(child))) close(child);
         }
         Window window = window(name);
-        if (window.element.selfAndAllChildren().anyMatch(UIElement::isFocused))
-            Objects.requireNonNull(root.getModularUI()).clearFocus();
+        var ui = root.getModularUI();
+        if (ui != null && window.element.selfAndAllChildren().anyMatch(UIElement::isFocused)) ui.clearFocus();
         window.placement.cancelDrag();
         if (pointerWindow == window.placement) pointerWindow = null;
         window.element.setVisible(false);
@@ -118,24 +130,24 @@ public final class TerminalWindowStack {
     }
 
     public void closeAll() {
-        while (!order.isEmpty()) close(order.getLast());
+        for (String name : new ObjectArrayList<>(order)) if (!name.equals(MAIN) && window(name).element.isVisible()) close(name);
     }
 
     public ObjectList<Rect2i> rectangles() {
         ObjectList<Rect2i> areas = new ObjectArrayList<>();
-        for (String name : order) areas.add(rect(root(name)));
+        for (String name : order) if (!name.equals(MAIN)) areas.add(rect(root(name)));
         return areas;
     }
 
     /** A viewer drop must never target a cell covered by a different floating window. */
     public boolean covers(Rect2i area, @Nullable String owner) {
+        String owningWindow = owner == null ? MAIN : owner;
         for (int index = order.size() - 1; index >= 0; index--) {
             String name = order.get(index);
-            if (name.equals(owner)) return false;
-            Rect2i window = rect(root(name));
-            if (area.getX() < window.getX() + window.getWidth() && area.getX() + area.getWidth() > window.getX() &&
-                    area.getY() < window.getY() + window.getHeight() && area.getY() + area.getHeight() > window.getY())
-                return true;
+            if (name.equals(owningWindow)) return false;
+            if (name.equals(MAIN)) {
+                for (Rect2i visibleArea : mainAreas.get()) if (intersects(area, visibleArea)) return true;
+            } else if (intersects(area, rect(root(name)))) return true;
         }
         return false;
     }
@@ -143,6 +155,10 @@ public final class TerminalWindowStack {
     private @Nullable String at(double x, double y) {
         for (int index = order.size() - 1; index >= 0; index--) {
             String name = order.get(index);
+            if (name.equals(MAIN)) {
+                if (mainWindow.isVisible() && mainHitTest.test(x, y)) return MAIN;
+                continue;
+            }
             Window window = window(name);
             Rect2i area = rect(window.element);
             if (area.contains((int) x, (int) y) || window.extraHitArea != null && window.extraHitArea.test(x, y)) return name;
@@ -152,6 +168,8 @@ public final class TerminalWindowStack {
 
     private void raise(String name) {
         if (!order.isEmpty() && order.getLast().equals(name)) return;
+        var ui = root.getModularUI();
+        if (ui != null && ui.getFocusedElement() != null && root(name).selfAndAllChildren().noneMatch(UIElement::isFocused)) ui.clearFocus();
         order.remove(name);
         order.add(name);
         layers();
@@ -159,13 +177,18 @@ public final class TerminalWindowStack {
 
     private void layers() {
         for (int index = 0; index < order.size(); index++) {
-            int layer = 600 + index;
-            root(order.get(index)).style(style -> style.zIndex(layer));
+            int layer = 1 + index * 4;
+            Style.importantPipeline(root(order.get(index)).getStyle(), style -> style.zIndex(layer));
         }
     }
 
     private Window window(String name) {
-        return Objects.requireNonNull(windows.get(name), "Unknown terminal window " + name);
+        return windows.get(name);
+    }
+
+    private static boolean intersects(Rect2i first, Rect2i second) {
+        return first.getX() < second.getX() + second.getWidth() && first.getX() + first.getWidth() > second.getX() &&
+                first.getY() < second.getY() + second.getHeight() && first.getY() + first.getHeight() > second.getY();
     }
 
     private static Rect2i rect(UIElement element) {

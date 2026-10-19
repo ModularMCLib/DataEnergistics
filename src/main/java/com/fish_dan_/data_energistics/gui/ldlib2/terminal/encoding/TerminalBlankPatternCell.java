@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding;
 
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.rendering.TerminalResourceDepth;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -70,6 +71,7 @@ public final class TerminalBlankPatternCell extends Button {
         super.drawBackgroundAdditional(context);
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
+        TerminalResourceDepth.flatten(context);
         if (amount > 0) {
             var display = AEItems.BLANK_PATTERN.stack();
             context.graphics.renderItem(display, 0, 0);

@@ -115,7 +115,7 @@
 .anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
 .anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_2.png); }
 .anvil-boost-step:disabled .terminal-glyph { opacity: 0.5; }
-.terminal-popup { background: sprite(data_energistics:textures/guis/digital_panel.png, 0, 0, 256, 256, 2, 2, 2, 2); z-index: 600; }
+.terminal-popup { background: sprite(data_energistics:textures/guis/digital_panel.png, 0, 0, 256, 256, 2, 2, 2, 2); }
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
 .icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }

@@ -91,7 +91,7 @@ public final class TerminalOverlayUi {
     private final BiConsumer<String, CompoundTag> request;
     private final UIElement window = element(ui.rootElement, "window");
     private final Object2ObjectMap<String, UIElement> workspaces = new Object2ObjectLinkedOpenHashMap<>();
-    private final TerminalWindowStack subWindows = new TerminalWindowStack(ui.rootElement);
+    private final TerminalWindowStack subWindows = new TerminalWindowStack(ui.rootElement, window, this::mainContains, this::mainRectangles);
     private final ObjectList<TerminalResourceCell> storage = new ObjectArrayList<>();
     private final TerminalStorageIndex storageIndex = new TerminalStorageIndex();
     private final TerminalPinnedResourcesUi pinnedUi;
@@ -841,7 +841,8 @@ public final class TerminalOverlayUi {
     }
 
     public boolean beginDrag(double x, double y, int button) {
-        if (subWindows.contains(x, y)) return subWindows.beginDrag(x, y, button);
+        if (subWindows.beginDrag(x, y, button)) return true;
+        if (subWindows.contains(x, y)) return false;
         if (button != 0) return false;
         if (!visible && over(element(ui.rootElement, "entry"), x, y)) {
             entryPressed = true;
@@ -935,8 +936,15 @@ public final class TerminalOverlayUi {
     }
 
     public boolean contains(double x, double y) {
-        return visible ? over(element(window, "panel"), x, y) || over(element(window, "sidebar"), x, y) || over(element(window, "tabs"), x, y) ||
-                subWindows.contains(x, y) : over(element(ui.rootElement, "entry"), x, y);
+        return visible ? mainContains(x, y) || subWindows.contains(x, y) : over(element(ui.rootElement, "entry"), x, y);
+    }
+
+    private boolean mainContains(double x, double y) {
+        return visible && (over(element(window, "panel"), x, y) || over(element(window, "sidebar"), x, y) || over(element(window, "tabs"), x, y));
+    }
+
+    private ObjectList<Rect2i> mainRectangles() {
+        return visible ? ObjectImmutableList.of(rect(element(window, "panel")), rect(element(window, "sidebar")), rect(element(window, "tabs"))) : ObjectImmutableList.of();
     }
 
     public boolean quickMoveToNetwork() {

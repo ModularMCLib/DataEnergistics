@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting;
 
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.rendering.TerminalResourceDepth;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -64,7 +65,10 @@ public final class TerminalStonecuttingRecipeCell extends Button {
         super.drawBackgroundAdditional(context);
         int x = Math.round(getContentX()) + 2;
         int y = Math.round(getContentY()) + (selected || getState() != State.DEFAULT ? 2 : 1);
+        context.pose.pushPose();
+        TerminalResourceDepth.flatten(context);
         context.graphics.renderItem(output, x, y);
         context.graphics.renderItemDecorations(context.mc.font, output, x, y);
+        context.pose.popPose();
     }
 }

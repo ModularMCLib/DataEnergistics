@@ -34,6 +34,7 @@ public final class TerminalIngredientSupply {
     private final TerminalPlayerState state;
     private final @Nullable TerminalConnection connection;
     private final ObjectList<Target> targets;
+    private final boolean usePlayerInventory;
     private final ObjectList<ItemStack> targetBefore = new ObjectArrayList<>();
     private final ObjectList<Slot> inventorySlots = new ObjectArrayList<>();
     private final ObjectList<ItemStack> inventoryBefore = new ObjectArrayList<>();
@@ -45,11 +46,12 @@ public final class TerminalIngredientSupply {
     private final Object2LongMap<AEItemKey> held = new Object2LongLinkedOpenHashMap<>();
 
     private TerminalIngredientSupply(ServerPlayer player, TerminalPlayerState state,
-                                     @Nullable TerminalConnection connection, ObjectList<Target> targets) {
+                                     @Nullable TerminalConnection connection, ObjectList<Target> targets, boolean usePlayerInventory) {
         this.player = player;
         this.state = state;
         this.connection = connection;
         this.targets = new ObjectArrayList<>(targets);
+        this.usePlayerInventory = usePlayerInventory;
     }
 
     /**
@@ -72,7 +74,13 @@ public final class TerminalIngredientSupply {
      */
     public static Result supply(ServerPlayer player, TerminalPlayerState state,
                                 @Nullable TerminalConnection connection, ObjectList<Target> targets) {
-        return new TerminalIngredientSupply(player, state, connection, targets).run();
+        return new TerminalIngredientSupply(player, state, connection, targets, true).run();
+    }
+
+    /** Small recipe areas consume their physical inputs first and draw any missing ingredients directly from ME. */
+    public static Result supplyFromNetwork(ServerPlayer player, TerminalPlayerState state,
+                                          @Nullable TerminalConnection connection, ObjectList<Target> targets) {
+        return new TerminalIngredientSupply(player, state, connection, targets, false).run();
     }
 
     private Result run() {
@@ -150,7 +158,7 @@ public final class TerminalIngredientSupply {
             inventoryBefore.add(existing);
             int taken = 0;
             AEItemKey key = AEItemKey.of(existing);
-            if (key != null && slot.isActive() && slot.mayPickup(player) && !inventoryLocked(index)) {
+            if (usePlayerInventory && key != null && slot.isActive() && slot.mayPickup(player) && !inventoryLocked(index)) {
                 taken = (int) Math.min(existing.getCount(), network.getLong(key));
                 subtract(network, key, taken);
                 if (taken > 0) removals.add(new Removal(slot, key, taken, true));

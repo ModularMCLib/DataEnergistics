@@ -263,7 +263,7 @@ public final class TerminalSession {
                 refill = null;
                 var result = TerminalIngredientSupply.supply(player, runtime.state(), connection, targets);
                 message = result.message();
-                requestMaterials(player, connection, result, targets, () -> true);
+                requestMaterials(player, connection, result, targets, () -> true, false);
             }
             case "craft_request" -> TerminalAeNavigation.openCrafting(player, this, connection, key(player, data));
             case "cpu_list" -> TerminalAeNavigation.open(player, this, connection);
@@ -283,14 +283,14 @@ public final class TerminalSession {
             var configuration = work.patternInputs.save(player.registryAccess());
             int recipe = work.recipeIndex();
             requestMaterials(player, connection, result, TerminalWorkstation.materialTargets(state),
-                    () -> configuration.equals(work.patternInputs.save(player.registryAccess())) && work.recipeIndex() == recipe);
+                    () -> configuration.equals(work.patternInputs.save(player.registryAccess())) && work.recipeIndex() == recipe, true);
         }
     }
 
     private void requestMaterials(ServerPlayer player, TerminalConnection connection, TerminalIngredientSupply.Result result,
-                                  ObjectList<TerminalIngredientSupply.Target> targets, BooleanSupplier recipeCurrent) {
+                                  ObjectList<TerminalIngredientSupply.Target> targets, BooleanSupplier recipeCurrent, boolean networkOnly) {
         if (result.missing().isEmpty()) return;
-        refill = new TerminalRecipeRefill(connection.frequency(), targets, recipeCurrent);
+        refill = new TerminalRecipeRefill(connection.frequency(), targets, recipeCurrent, networkOnly);
         TerminalAeNavigation.openCraftingList(player, this, connection, result.missing());
     }
 
@@ -301,7 +301,8 @@ public final class TerminalSession {
             return;
         }
         if (connection == null || connection.frequency() != refill.frequency() || player.tickCount % 5 != 0) return;
-        var result = TerminalIngredientSupply.supply(player, runtime.state(), connection, refill.targets());
+        var result = refill.networkOnly() ? TerminalIngredientSupply.supplyFromNetwork(player, runtime.state(), connection, refill.targets()) :
+                TerminalIngredientSupply.supply(player, runtime.state(), connection, refill.targets());
         if (result.message().isEmpty()) {
             refill = null;
             message = "transferred";

@@ -91,7 +91,7 @@ public final class TerminalWorkstation {
                 player.serverLevel().levelEvent(1030, player.blockPosition(), 0);
             } else {
                 rememberInputs(state);
-                var supply = TerminalIngredientSupply.supply(player, state, connection, materialTargets(state));
+                var supply = TerminalIngredientSupply.supplyFromNetwork(player, state, connection, materialTargets(state));
                 if (!supply.message().isEmpty()) return supply;
                 product = preview(player, state, false);
                 if (product.isEmpty()) return result("invalid_recipe");

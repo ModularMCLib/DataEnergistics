@@ -17,11 +17,13 @@ public final class TerminalRecipeRefill {
     private final ObjectList<TerminalIngredientSupply.Target> targets;
     private final ObjectList<ItemStack> expected = new ObjectArrayList<>();
     private final BooleanSupplier recipeCurrent;
+    private final boolean networkOnly;
 
-    public TerminalRecipeRefill(long frequency, ObjectList<TerminalIngredientSupply.Target> targets, BooleanSupplier recipeCurrent) {
+    public TerminalRecipeRefill(long frequency, ObjectList<TerminalIngredientSupply.Target> targets, BooleanSupplier recipeCurrent, boolean networkOnly) {
         this.frequency = frequency;
         this.targets = new ObjectImmutableList<>(targets);
         this.recipeCurrent = recipeCurrent;
+        this.networkOnly = networkOnly;
         for (var target : targets) expected.add(target.slot().getItem().copy());
     }
 
@@ -31,6 +33,10 @@ public final class TerminalRecipeRefill {
 
     public ObjectList<TerminalIngredientSupply.Target> targets() {
         return targets;
+    }
+
+    public boolean networkOnly() {
+        return networkOnly;
     }
 
     public boolean valid() {

@@ -1,0 +1,34 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:spatial_io_port"
+			},
+			{
+				"item": "ae2:io_port"
+			},
+			{
+				"item": "ae2:16k_crafting_storage"
+			},
+			{
+				"item": "ae2:spatial_storage_cell_16"
+			},
+			{
+				"item": "data_energistics:singularity_block",
+				"count": 4
+			}
+		],
+		"resource": {
+			"key_type": "data_energistics:manifest_binary",
+			"amount": 24
+		}
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:data_io_port"
+			}
+		]
+	}
+}

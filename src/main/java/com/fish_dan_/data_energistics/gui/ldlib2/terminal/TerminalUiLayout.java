@@ -34,6 +34,7 @@ public final class TerminalUiLayout {
 
     private static final ResourceLocation STYLES = Data_Energistics.id("lss/player_terminal.lss");
     private static final int STORAGE_SCROLL_WIDTH = 10;
+    private static final int ACTION_BUTTON_SIZE = 14;
 
     private TerminalUiLayout() {}
 
@@ -67,7 +68,7 @@ public final class TerminalUiLayout {
         window.addChild(sidebar);
         window.addChildren(at(field("search"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12),
-                icon("drag", "terminal-drag", "icon-drag", encodingCenter - 5, 3, 10, 10),
+                icon("drag", "terminal-drag", "icon-drag", encodingCenter - ACTION_BUTTON_SIZE / 2, 2, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
                 at(storageScrollbar(), storageScrollLeft(width), 18, STORAGE_SCROLL_WIDTH, 148),
@@ -128,7 +129,7 @@ public final class TerminalUiLayout {
         UIElement actions = at(element("page_actions", "terminal-page-actions"), width, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
         if (mode.supportsEncoding()) {
             actions.addChildren(at(element("blank_pattern", "blank-pattern"), 3, 1, 18, 18),
-                    icon("encoding", "terminal-encode", "icon-encoding", 5, 22, 14, 14),
+                    icon("encoding", "terminal-encode", "icon-encoding", 5, 22, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
                     at(element("encoded", "encoded-pattern"), 3, 37, 18, 18));
             if (mode == TerminalWorkspace.CRAFTING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 60, 2, 8, 8),
@@ -144,8 +145,8 @@ public final class TerminalUiLayout {
             }
         } else {
             root.addChild(pageAt(field("name"), 3, 5, 96, 10));
-            actions.addChildren(pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 7, 18, 10, 10),
-                    pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 7, 30, 10, 10));
+            actions.addChildren(pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 5, 14, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
+                    pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 5, 30, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE));
             Label status = pageAt(label("anvil_status"), 3, 43, 96, 10);
             status.addClass("anvil-status");
             status.setText(Component.translatable("gui.data_energistics.me_digital_anvil.invalid"));
@@ -186,7 +187,8 @@ public final class TerminalUiLayout {
         atWithin(require(window, "bottom_edge", UIElement.class), 0, viewport.height() - 1, panelWidth, 1, viewport.width(), viewport.height());
         atWithin(require(window, "search", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12, viewport.width(), viewport.height());
-        atWithin(require(window, "drag", UIElement.class), encodingCenter - 5, 3, 10, 10, viewport.width(), viewport.height());
+        atWithin(require(window, "drag", UIElement.class), encodingCenter - ACTION_BUTTON_SIZE / 2, 2,
+                ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE, viewport.width(), viewport.height());
         atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "pinned_resources", UIElement.class), 16, 18, viewport.storageWidth(), viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE, viewport.width(), viewport.height());
         atWithin(require(window, "storage_scroll", UIElement.class), storageScrollLeft(viewport.width()),
@@ -368,11 +370,11 @@ public final class TerminalUiLayout {
         button.addClass("terminal-icon");
         int glyphSize = switch (glyph) {
             case "icon-filter-list" -> 16;
-            case "icon-entry", "icon-boost-up", "icon-boost-down", "icon-encoding" -> 10;
+            case "icon-entry", "icon-drag", "icon-boost-up", "icon-boost-down", "icon-encoding" -> 10;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
         };
         int glyphHeight = glyph.equals("icon-close") ? 9 : glyphSize;
-        int glyphTop = (height - glyphHeight) / 2 + (glyph.equals("icon-boost-down") ? 1 : 0);
+        int glyphTop = (height - glyphHeight) / 2;
         UIElement icon = at(element(id + "_icon", "terminal-glyph"), (width - glyphSize) / 2, glyphTop, glyphSize, glyphHeight);
         icon.addClass(glyph);
         icon.setAllowHitTest(false);

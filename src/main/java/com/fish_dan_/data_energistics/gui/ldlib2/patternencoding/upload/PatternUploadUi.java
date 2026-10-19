@@ -53,6 +53,7 @@ public final class PatternUploadUi {
         this.actions = actions;
         root.addClass("terminal-upload-popup");
         search.addClass("terminal-field");
+        search.addClass("terminal-search-field");
         search.setText("", false);
         search.textFieldStyle(style -> style.placeholder(text("search")));
         search.setTextResponder(value -> rebuild());

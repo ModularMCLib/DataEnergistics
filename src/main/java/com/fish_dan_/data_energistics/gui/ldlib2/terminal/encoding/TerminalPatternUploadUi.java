@@ -10,8 +10,10 @@ import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPrevie
 import com.fish_dan_.data_energistics.network.terminal.TerminalPatternProviderCodec;
 import com.fish_dan_.data_energistics.util.TextSearch;
 
-import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
+import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
@@ -28,6 +30,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import dev.vfyjxf.taffy.style.AlignItems;
+import dev.vfyjxf.taffy.style.FlexDirection;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.NullMarked;
@@ -58,6 +62,7 @@ public final class TerminalPatternUploadUi {
     public TerminalPatternUploadUi(UIElement root, RegistryAccess registries, BiConsumer<String, CompoundTag> request) {
         this.registries = registries;
         this.request = request;
+        root.addClass("terminal-upload-popup");
         search.addClass("terminal-field");
         search.setText("", false);
         search.textFieldStyle(style -> style.placeholder(text("search")));
@@ -66,18 +71,22 @@ public final class TerminalPatternUploadUi {
         rename.setText("", false);
         rename.setTextRegexValidator(".{0,50}");
         TerminalUiLayout.verticalScrollbar(list.verticalScroller);
+        list.verticalScroller.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
         TerminalUiLayout.silentScrollbar(list.horizontalScroller);
+        list.addClass("terminal-upload-list");
+        list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER));
         list.viewPort.layout(layout -> layout.paddingAll(0));
-        list.viewPort.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
-        list.viewContainer.layout(layout -> layout.widthPercent(100).paddingAll(0));
+        list.viewContainer.layout(layout -> layout.widthPercent(100).paddingAll(0).gapAll(0));
         status.addClass("terminal-label");
         status.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
+        encoded.encodedPattern();
+        encoded.addClass("terminal-upload-pattern");
         encoded.setAllowHitTest(false);
         root.addChildren(TerminalUiLayout.at(encoded, 5, 20, 18, 18), TerminalUiLayout.at(status, 28, 20, 157, 18),
                 TerminalUiLayout.at(search, 5, 42, 180, 14), TerminalUiLayout.at(list, 5, 60, 180, 100),
                 TerminalUiLayout.at(rename, 5, 166, 124, 14));
         TerminalActionButton renameButton = new TerminalActionButton();
-        renameButton.addClass("terminal-control");
+        renameButton.addClass("terminal-upload-button");
         renameButton.setText(text("upload_rename"));
         renameButton.setOnClick(event -> {
             if (event.button != 0 || selectedGroup == 0) return;
@@ -156,19 +165,33 @@ public final class TerminalPatternUploadUi {
 
     private void row(SyncedPatternProvider group, long leaf, Component name, String iconId, int used, int capacity) {
         TerminalActionButton button = new TerminalActionButton();
-        button.addClass("terminal-control");
+        button.addClass("terminal-upload-button");
+        button.addClass("terminal-upload-row");
+        if (selectedGroup == group.id() && selectedLeaf == leaf) button.addClass("selected");
         button.noText();
-        button.layout(layout -> layout.widthPercent(100).height(20).flexShrink(0));
+        button.layout(layout -> layout.widthPercent(100).height(20).paddingAll(1).paddingLeft(leaf == 0 ? 2 : 9).paddingRight(4)
+                .gapColumn(3).flexDirection(FlexDirection.ROW).alignItems(AlignItems.CENTER).flexShrink(0));
         TerminalResourceCell icon = new TerminalResourceCell();
+        icon.addClass("embedded-cell");
         ItemStack stack = BuiltInRegistries.ITEM.get(ResourceLocation.parse(iconId)).getDefaultInstance();
         icon.entry(stack.isEmpty() ? null : new GenericStack(AEItemKey.of(stack), 1), false);
         icon.setAllowHitTest(false);
         Label label = new Label();
         label.addClass("terminal-label");
-        label.setText(name.copy().append(" " + used + "/" + capacity));
-        label.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
+        label.addClass("terminal-upload-name");
+        label.setText(name);
+        label.layout(layout -> layout.flex(1).minWidth(0).height(18));
+        label.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL));
+        label.setOverflowVisible(false);
         label.setAllowHitTest(false);
-        button.addChildren(TerminalUiLayout.at(icon, leaf == 0 ? 1 : 8, 1, 18, 18), TerminalUiLayout.at(label, leaf == 0 ? 21 : 28, 1, leaf == 0 ? 154 : 147, 18));
+        Label count = new Label();
+        count.addClass("terminal-label");
+        count.addClass("terminal-upload-count");
+        count.setText(Component.literal(used + "/" + capacity));
+        count.layout(layout -> layout.height(18).flexShrink(0));
+        count.textStyle(style -> style.adaptiveWidth(true).adaptiveHeight(false));
+        count.setAllowHitTest(false);
+        button.addChildren(icon, label, count);
         button.style(style -> style.tooltips(TerminalTooltipLines.split(name, text("upload_row_gestures"))));
         button.setOnClick(event -> {
             selectedLeaf = leaf;

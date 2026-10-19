@@ -7,7 +7,7 @@
 .sidebar-middle { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_1.png); }
 .sidebar-bottom { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_2.png, 0, 0, 13, 15); }
 
-.terminal-label, .terminal-control .__button_text__ {
+.terminal-label, .terminal-control .__button_text__, .terminal-upload-button .__button_text__ {
     font-size: 7;
     text-color: #FF343548;
     text-shadow: false;
@@ -81,7 +81,7 @@
     pressed-background: #8893FFDE;
 }
 .terminal-grid-edge { background: #FFF2F2F2; }
-.blank-pattern .terminal-cell, .encoded-pattern .terminal-cell {
+.blank-pattern .terminal-cell, .encoded-pattern .terminal-cell, .terminal-upload-pattern {
     background: sprite(ae2:textures/guis/pattern.png, 146, 85, 18, 18);
     hover-background: group(#669CD3FF, border(-1, #FFDAFFFF));
     pressed-background: group(#669CD3FF, border(-1, #FFDAFFFF));
@@ -198,5 +198,27 @@
 .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 64, 96, 16, 16); }
 .match-id .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 48, 96, 16, 16); }
 .match-tag .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 32, 96, 16, 16); }
+
+.terminal-upload-button {
+    background: #00000000;
+    base-background: sprite(data_energistics:textures/guis/craftingreport/button.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    hover-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    pressed-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+}
+.terminal-upload-row.selected {
+    base-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+}
+.terminal-upload-popup .terminal-label { background: #00000000; }
+.terminal-upload-name { horizontal-align: left; }
+.terminal-upload-count { horizontal-align: right; adaptive-width: true; }
+.terminal-upload-popup .terminal-field {
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1);
+}
+.terminal-upload-popup .terminal-field:focus {
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1);
+}
+.terminal-upload-list, .terminal-upload-list .__scroller_view_view-port__,
+.terminal-upload-list .__scroller_view_view-container__, .terminal-upload-list .__scroller_view_vertical-container__,
+.terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }
 
 .terminal-key-type-scroll .__scroller_scroll_container__ { background: #00000000; }

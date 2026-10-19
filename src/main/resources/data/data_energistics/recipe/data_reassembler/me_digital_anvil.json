@@ -1,0 +1,44 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "minecraft:anvil"
+			},
+			{
+				"item": "data_energistics:data_energy_cell"
+			},
+			{
+				"item": "data_energistics:data_crystal_block",
+				"count": 4
+			},
+			{
+				"item": "minecraft:iron_ingot",
+				"count": 8
+			},
+			{
+				"item": "data_energistics:fluix_aggregate_crystal_processor",
+				"count": 9
+			},
+			{
+				"tag": "ae2:glass_cable",
+				"count": 6
+			},
+			{
+				"item": "data_energistics:digisidian_memorize_ingot",
+				"count": 2
+			}
+		],
+		"resource": {
+			"key_type": "data_energistics:manifest_binary",
+			"amount": 24
+		}
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:me_digital_anvil"
+			}
+		]
+	}
+}

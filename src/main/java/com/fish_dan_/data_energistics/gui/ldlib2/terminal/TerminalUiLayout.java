@@ -37,6 +37,7 @@ public final class TerminalUiLayout {
     public static UI create() {
         int width = TerminalViewportLayout.MIN_WIDTH;
         int panelWidth = width - TerminalViewportLayout.TAB_WIDTH - 12;
+        int encodingCenter = width - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.ENCODING_WIDTH / 2;
         UIElement root = element("terminal_root", "terminal-root");
         root.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).widthPercent(100).heightPercent(100).paddingAll(0));
         root.addChild(icon("entry", "terminal-entry", "icon-entry", 0, 0, 10, 10));
@@ -47,11 +48,12 @@ public final class TerminalUiLayout {
                 at(element("bottom_edge", "frame-dark"), 0, 167, panelWidth, 1));
         window.addChild(panel);
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
-        UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, 0, 15, 15 + (controls.length - 1) * 12);
-        // Each button has a backing tile; the tiles overlap by three pixels behind the buttons.
+        UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, 0, 15, 16 + (controls.length - 1) * 12);
+        // Backing tiles overlap; the cropped bottom cap closes below the final button at the panel edge.
         for (int index = 0; index < controls.length; index++) {
-            String surface = index == 0 ? "sidebar-top" : index == controls.length - 1 ? "sidebar-bottom" : "sidebar-middle";
-            UIElement backing = at(element("sidebar_" + index, surface), 0, index * 12, 15, 15);
+            boolean bottom = index == controls.length - 1;
+            String surface = index == 0 ? "sidebar-top" : bottom ? "sidebar-bottom" : "sidebar-middle";
+            UIElement backing = at(element("sidebar_" + index, surface), 0, index * 12 + (bottom ? 1 : 0), bottom ? 12 : 15, 15);
             backing.setAllowHitTest(false);
             sidebar.addChild(backing);
         }
@@ -60,18 +62,19 @@ public final class TerminalUiLayout {
             sidebar.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
         }
         window.addChild(sidebar);
-        window.addChildren(at(field("search"), 16, 3, width - 42, 12),
-                icon("drag", "terminal-drag", "icon-drag", width - 25, 3, 10, 10),
+        window.addChildren(at(field("search"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING),
+                3, TerminalViewportLayout.OPERATION_WIDTH, 12),
+                icon("drag", "terminal-drag", "icon-drag", encodingCenter - 5, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
-                at(storageScrollbar(), width - 24, 18, 6, 148),
+                at(storageScrollbar(), encodingCenter - 3, 18, 6, 148),
                 at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING), 108,
                         operationWidth(TerminalWorkspace.CRAFTING), 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
         UIElement tabs = at(element("tabs", "terminal-tabs"), width - TerminalViewportLayout.TAB_WIDTH, 96, TerminalViewportLayout.TAB_WIDTH, 70);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             tabs.addChild(icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14));
-        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - 14, 161, 4, 4));
+        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - 16, 162, 4, 4));
         root.addChild(window);
         return UI.of(root, ObjectImmutableList.of(stylesheet()));
     }
@@ -119,9 +122,9 @@ public final class TerminalUiLayout {
         if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) root.addChild(result);
         if (mode.supportsEncoding()) {
             UIElement encoding = at(element("pattern_encoding", "terminal-encoding"), width, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
-            encoding.addChildren(at(element("blank_pattern", "blank-pattern"), 2, 2, 18, 18),
-                    icon("encoding", "terminal-encode", "icon-encoding", 4, 22, 14, 14),
-                    at(element("encoded", "encoded-pattern"), 2, 38, 18, 18));
+            encoding.addChildren(at(element("blank_pattern", "blank-pattern"), 3, 2, 18, 18),
+                    icon("encoding", "terminal-encode", "icon-encoding", 5, 22, 14, 14),
+                    at(element("encoded", "encoded-pattern"), 3, 38, 18, 18));
             root.addChild(encoding);
             if (mode == TerminalWorkspace.CRAFTING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 60, 2, 8, 8),
@@ -164,15 +167,17 @@ public final class TerminalUiLayout {
 
     public static void resize(UIElement window, TerminalViewportLayout viewport) {
         int panelWidth = viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12;
+        int encodingCenter = viewport.width() - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.ENCODING_WIDTH / 2;
         atWithin(require(window, "panel", UIElement.class), 12, 0, panelWidth, viewport.height(), viewport.width(), viewport.height());
         atWithin(require(window, "top_edge", UIElement.class), 0, 0, panelWidth, 1, viewport.width(), viewport.height());
         atWithin(require(window, "left_edge", UIElement.class), 0, 0, 1, viewport.height(), viewport.width(), viewport.height());
         atWithin(require(window, "bottom_edge", UIElement.class), 0, viewport.height() - 1, panelWidth, 1, viewport.width(), viewport.height());
-        atWithin(require(window, "search", UIElement.class), 16, 3, viewport.width() - 42, 12, viewport.width(), viewport.height());
-        atWithin(require(window, "drag", UIElement.class), viewport.width() - 25, 3, 10, 10, viewport.width(), viewport.height());
+        atWithin(require(window, "search", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING),
+                3, TerminalViewportLayout.OPERATION_WIDTH, 12, viewport.width(), viewport.height());
+        atWithin(require(window, "drag", UIElement.class), encodingCenter - 5, 3, 10, 10, viewport.width(), viewport.height());
         atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "pinned_resources", UIElement.class), 16, 18, viewport.storageWidth(), viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE, viewport.width(), viewport.height());
-        atWithin(require(window, "storage_scroll", UIElement.class), viewport.width() - 24, 18 + viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE,
+        atWithin(require(window, "storage_scroll", UIElement.class), encodingCenter - 3, 18 + viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE,
                 6, viewport.scrollHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "storage_rail", UIElement.class), 0, 0, 6, viewport.scrollHeight(), 6, viewport.scrollHeight());
         atWithin(require(window, "storage_rail_rim", UIElement.class), 1, 1, 4, viewport.scrollHeight() - 2, 6, viewport.scrollHeight());
@@ -181,7 +186,7 @@ public final class TerminalUiLayout {
                 viewport.operationWidth(), TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
         atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 72,
                 TerminalViewportLayout.TAB_WIDTH, 70, viewport.width(), viewport.height());
-        atWithin(require(window, "resize", UIElement.class), viewport.width() - 14, viewport.height() - 7, 4, 4, viewport.width(), viewport.height());
+        atWithin(require(window, "resize", UIElement.class), viewport.width() - 16, viewport.height() - 6, 4, 4, viewport.width(), viewport.height());
     }
 
     public static int popupHeight(String name) {

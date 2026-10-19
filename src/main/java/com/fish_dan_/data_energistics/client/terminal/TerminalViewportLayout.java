@@ -19,6 +19,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     public static final int OPERATION_WIDTH = 108;
     public static final int OPERATION_HEIGHT = 58;
     public static final int PROCESSING_WIDTH = 124;
+    public static final int STONECUTTING_WIDTH = 116;
     public static final int ENCODING_WIDTH = 24;
     private static final int FRAME_WIDTH = 42;
     private static final int FRAME_HEIGHT = 20;

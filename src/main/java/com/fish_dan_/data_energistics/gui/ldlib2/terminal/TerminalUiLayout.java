@@ -83,7 +83,7 @@ public final class TerminalUiLayout {
     }
 
     public static UIElement page(TerminalWorkspace mode) {
-        int width = mode == TerminalWorkspace.PROCESSING ? TerminalViewportLayout.PROCESSING_WIDTH : TerminalViewportLayout.OPERATION_WIDTH;
+        int width = pageWidth(mode);
         UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, width, 58);
         root.setOverflowVisible(true);
         root.addClass("page-" + mode.id());
@@ -110,7 +110,7 @@ public final class TerminalUiLayout {
                 pageAt(inputs, 2, 20, 18, 18);
                 UIElement recipes = element("recipes", "stonecutting-recipes");
                 recipes.setOverflowVisible(false);
-                root.addChildren(pageAt(recipes, 23, 11, 72, 36), pageAt(stonecuttingScrollbar(), 100, 6, 6, 46));
+                root.addChildren(pageAt(recipes, 23, 6, 80, 44), pageAt(stonecuttingScrollbar(), 107, 6, 6, 46));
             }
             case ANVIL -> {
                 pageAt(inputs, 3, 20, 54, 18);
@@ -164,8 +164,16 @@ public final class TerminalUiLayout {
     }
 
     public static int operationWidth(TerminalWorkspace mode) {
-        int width = mode == TerminalWorkspace.PROCESSING ? TerminalViewportLayout.PROCESSING_WIDTH : TerminalViewportLayout.OPERATION_WIDTH;
+        int width = pageWidth(mode);
         return width + (mode.supportsEncoding() ? TerminalViewportLayout.ENCODING_WIDTH : 0);
+    }
+
+    private static int pageWidth(TerminalWorkspace mode) {
+        return switch (mode) {
+            case PROCESSING -> TerminalViewportLayout.PROCESSING_WIDTH;
+            case STONECUTTING -> TerminalViewportLayout.STONECUTTING_WIDTH;
+            default -> TerminalViewportLayout.OPERATION_WIDTH;
+        };
     }
 
     public static void resize(UIElement window, TerminalViewportLayout viewport) {
@@ -301,7 +309,9 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical stonecuttingScrollbar() {
-        return named(verticalScrollbar(new Scroller.Vertical()), "recipe_scroll", "terminal-stonecutting-scroll");
+        Scroller.Vertical scrollbar = named(processingScrollbar(), "recipe_scroll", "terminal-stonecutting-scroll");
+        scrollbar.scrollContainer.addChildAt(scrollbarRail("recipe_rail"), 0);
+        return scrollbar;
     }
 
     /** Keeps the supplied 10-by-15 thumb at native size, centered on the six-pixel rail. */

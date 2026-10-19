@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlank
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
@@ -102,7 +103,7 @@ public final class TerminalOverlayUi {
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
     private boolean pendingEncode;
-    private final ObjectList<TerminalResourceCell> stonecuttingRecipes = new ObjectArrayList<>();
+    private final ObjectList<TerminalStonecuttingRecipeCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> insert = new ObjectArrayList<>();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
@@ -563,18 +564,17 @@ public final class TerminalOverlayUi {
             if (mode != TerminalWorkspace.PROCESSING) result.getFirst().addClass("embedded-cell");
         }
         if (mode == TerminalWorkspace.STONECUTTING) {
-            createCells(element(root, "recipes"), stonecuttingRecipes, 8, 4, (index, event) -> {
-                if (event.button == 0) {
-                    int selected = stonecuttingScrollRow * 4 + index;
-                    if (selected < snapshot.getInt("recipe_count")) request.accept("cut", number("index", selected));
-                } else if (event.button == 1) {
-                    int selected = stonecuttingScrollRow * 4 + index;
-                    if (selected < snapshot.getInt("recipe_count")) {
-                        request.accept("recipe", number("index", selected));
-                        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
-                    }
-                }
-            });
+            UIElement recipes = element(root, "recipes");
+            recipes.clearAllChildren();
+            stonecuttingRecipes.clear();
+            for (int index = 0; index < 8; index++) {
+                int slot = index;
+                TerminalStonecuttingRecipeCell cell = TerminalUiLayout.at(new TerminalStonecuttingRecipeCell(event -> stonecuttingRecipeClick(slot, event)),
+                        index % 4 * TerminalStonecuttingRecipeCell.WIDTH, index / 4 * TerminalStonecuttingRecipeCell.HEIGHT,
+                        TerminalStonecuttingRecipeCell.WIDTH, TerminalStonecuttingRecipeCell.HEIGHT);
+                stonecuttingRecipes.add(cell);
+                recipes.addChild(cell);
+            }
             setStonecuttingScrollRow(stonecuttingScrollRow, true);
         }
         if (mode == TerminalWorkspace.PROCESSING) setProcessingScrollRow(processingScrollRow, true);
@@ -591,15 +591,18 @@ public final class TerminalOverlayUi {
         setStonecuttingScrollRow(stonecuttingScrollRow, true);
         int first = stonecuttingScrollRow * 4;
         for (int index = 0; index < stonecuttingRecipes.size(); index++) {
-            TerminalResourceCell cell = stonecuttingRecipes.get(index);
             ItemStack output = first + index < recipes.size() ? recipes.get(first + index).value().assemble(recipeInput, registries) : ItemStack.EMPTY;
-            cell.entry(output.isEmpty() ? null : new GenericStack(AEItemKey.of(output), output.getCount()), false);
-            cell.setActive(!output.isEmpty());
-            cell.actionHint(text("stonecutting_gestures"));
-            int row = index / 4;
-            TerminalUiLayout.at(cell, index % 4 * 18, row * 18, 18, 18);
-            cell.setVisible(true);
-            stateClass(cell, "selected-recipe", first + index == selected && !output.isEmpty());
+            stonecuttingRecipes.get(index).entry(output, first + index == selected && !output.isEmpty());
+        }
+    }
+
+    private void stonecuttingRecipeClick(int index, UIEvent event) {
+        int selected = stonecuttingScrollRow * 4 + index;
+        if (selected >= snapshot.getInt("recipe_count")) return;
+        if (event.button == 0) request.accept("cut", number("index", selected));
+        else if (event.button == 1) {
+            request.accept("recipe", number("index", selected));
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
         }
     }
 

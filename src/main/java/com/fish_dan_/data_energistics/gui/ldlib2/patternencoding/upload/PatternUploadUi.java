@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternReci
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProvider;
@@ -44,7 +45,7 @@ public final class PatternUploadUi {
     private final PatternUploadActions actions;
     private final UIElement viewport = new UIElement();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
-    private final TextField search = new TextField();
+    private final TextField search = new TerminalSearchField();
     private final TerminalResourceCell encoded = new TerminalResourceCell();
     private final Label status = new Label();
     private final ObjectList<ProviderRow> rows = new ObjectArrayList<>();

@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 
 import com.lowdragmc.lowdraglib2.gui.ui.Style;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -273,7 +274,7 @@ public final class TerminalUiLayout {
     }
 
     private static TextField field(String id) {
-        TextField field = named(new TextField(), id, "terminal-field");
+        TextField field = named(id.equals("search") ? new TerminalSearchField() : new TextField(), id, "terminal-field");
         if (id.equals("search")) field.addClass("terminal-search-field");
         field.setText("", false);
         return field;

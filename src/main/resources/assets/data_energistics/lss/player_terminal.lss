@@ -24,14 +24,6 @@
     focus-overlay: border(1, #FF9AD8FF);
 }
 .terminal-field:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
-.terminal-search-field {
-    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png), border(-1, #FFF2F2F2));
-    focus-overlay: border(-1, #FFF2F2F2);
-}
-.terminal-search-field:focused {
-    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png), border(-1, #FFF2F2F2));
-    focus-overlay: border(1, #FF343548);
-}
 .terminal-control {
     background: #00000000;
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
@@ -227,8 +219,8 @@
     horizontal-align: left;
 }
 .terminal-upload-popup .terminal-upload-name:focused {
-    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
-    focus-overlay: border(1, #FF343548);
+    background: #00000000;
+    focus-overlay: border(-1, #FFF2F2F2);
 }
 .terminal-upload-list, .terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }
 

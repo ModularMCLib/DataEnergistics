@@ -33,7 +33,6 @@ public final class PatternUploadWindow {
     private final PatternUploadUi view;
     private final TerminalSubWindow window;
     private final ModularUI ui;
-    private final Consumer<Rect2i> moved;
     private final Runnable close;
     private ObjectList<Rect2i> exclusions = ObjectImmutableList.of();
     private Rect2i bounds = new Rect2i(0, 0, PatternUploadUi.MIN_WIDTH, PatternUploadUi.MIN_HEIGHT);
@@ -41,12 +40,12 @@ public final class PatternUploadWindow {
     private int pointerButton = -1;
     private boolean rendering;
 
-    public PatternUploadWindow(Player player, PatternUploadActions actions, Runnable close, Consumer<Rect2i> moved) {
+    public PatternUploadWindow(Player player, PatternUploadActions actions, Runnable close, Consumer<TerminalSubWindow.Geometry> geometryChanged) {
         this.close = close;
-        this.moved = moved;
         view = new PatternUploadUi(popup, actions);
         window = new TerminalSubWindow(popup, close);
         window.resizable(PatternUploadUi.MIN_WIDTH, PatternUploadUi.MIN_HEIGHT, view::resize);
+        window.onGeometryChanged(geometryChanged);
         popup.addClass("standalone-upload-popup");
         UIElement root = new UIElement();
         root.addClass("terminal-root");
@@ -62,9 +61,9 @@ public final class PatternUploadWindow {
     public void show(Screen screen, Rect2i preferred) {
         visible = true;
         popup.setDisplay(true);
-        view.fit(screen.width - 4, screen.height - 4);
+        view.fit(screen.width - 8, screen.height - 8);
         preferred = new Rect2i(preferred.getX(), preferred.getY(), view.width(), view.height());
-        window.place(screen.width, screen.height, preferred, 4, 4);
+        window.place(screen.width, screen.height, preferred, new Rect2i(4, 4, Math.max(0, screen.width - 8), Math.max(0, screen.height - 8)));
         ui.setScreenAndInit(screen);
         updateBounds();
     }
@@ -97,6 +96,11 @@ public final class PatternUploadWindow {
 
     public int height() {
         return view.height();
+    }
+
+    public void restoreSize(Screen screen, int width, int height) {
+        view.resize(Math.clamp(width, PatternUploadUi.MIN_WIDTH, Math.max(PatternUploadUi.MIN_WIDTH, screen.width - 8)),
+                Math.clamp(height, PatternUploadUi.MIN_HEIGHT, Math.max(PatternUploadUi.MIN_HEIGHT, screen.height - 8)));
     }
 
     public boolean contains(double x, double y) {
@@ -146,10 +150,8 @@ public final class PatternUploadWindow {
 
     public boolean mouseReleased(double x, double y, int button) {
         if (pointerButton != button) return false;
-        boolean dragging = window.dragging();
         if (window.endDrag()) {
             updateBounds();
-            if (dragging) moved.accept(bounds);
             pointerButton = -1;
             return true;
         }
@@ -198,10 +200,11 @@ public final class PatternUploadWindow {
     }
 
     private void updateBounds() {
-        int x = Math.round(popup.getPositionX());
-        int y = Math.round(popup.getPositionY());
-        if (x == bounds.getX() && y == bounds.getY() && view.width() == bounds.getWidth() && view.height() == bounds.getHeight() && !exclusions.isEmpty()) return;
-        bounds = new Rect2i(x, y, view.width(), view.height());
+        Rect2i current = window.bounds();
+        if (current.getX() == bounds.getX() && current.getY() == bounds.getY() &&
+                current.getWidth() == bounds.getWidth() && current.getHeight() == bounds.getHeight() && !exclusions.isEmpty())
+            return;
+        bounds = current;
         exclusions = ObjectImmutableList.of(bounds);
     }
 }

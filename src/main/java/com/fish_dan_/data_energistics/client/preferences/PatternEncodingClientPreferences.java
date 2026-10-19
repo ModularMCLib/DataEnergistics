@@ -72,6 +72,15 @@ public interface PatternEncodingClientPreferences {
     /** Persists an upload-panel position as horizontal and vertical percentages in the range {@code [0, 1]}. */
     void setPreviewPanelPosition(double xPercent, double yPercent);
 
+    /** Returns the saved upload-panel size in GUI pixels, or empty to use the view's default size. */
+    Optional<PreviewPanelSize> previewPanelSize();
+
+    /**
+     * Persists a completed move or resize in one write on the client main thread. Percentages are in
+     * {@code [0, 1]}; the visible size is constrained to the screen when the panel is restored.
+     */
+    void setPreviewPanelGeometry(double xPercent, double yPercent, int width, int height);
+
     /**
      * Clears the percentage upload-panel position and restores automatic placement.
      */
@@ -110,6 +119,8 @@ public interface PatternEncodingClientPreferences {
                       long absoluteCount, long successEpochMillis);
 
     record PreviewPanelPosition(double xPercent, double yPercent) {}
+
+    record PreviewPanelSize(int width, int height) {}
 
     record ProviderDetailPanelPosition(int relativeX, int relativeY) {}
 }

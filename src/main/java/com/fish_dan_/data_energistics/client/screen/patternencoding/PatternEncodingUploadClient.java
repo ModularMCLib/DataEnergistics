@@ -217,9 +217,11 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
     }
 
     private void show() {
-        if (window == null) window = new PatternUploadWindow(menu.getPlayer(), this, this::hide, bounds -> PatternEncodingPreferencesClient.setPreviewPanelPosition(
-                PatternEncodingPreviewPlacement.horizontalPercent(bounds.getX(), bounds.getWidth(), screen.width),
-                PatternEncodingPreviewPlacement.verticalPercent(bounds.getY(), bounds.getHeight(), screen.height)));
+        if (window == null) {
+            window = new PatternUploadWindow(menu.getPlayer(), this, this::hide, geometry -> PatternEncodingPreferencesClient.setPreviewPanelGeometry(
+                    geometry.xPercent(), geometry.yPercent(), geometry.width(), geometry.height()));
+            PatternEncodingPreferencesClient.previewPanelSize().ifPresent(size -> window.restoreSize(screen, size.width(), size.height()));
+        }
         update();
         var saved = PatternEncodingPreferencesClient.previewPanelPosition();
         Rect2i preferred = saved.map(previewPanelPosition -> PatternEncodingPreviewPlacement.fromPercent(previewPanelPosition.xPercent(), previewPanelPosition.yPercent(),

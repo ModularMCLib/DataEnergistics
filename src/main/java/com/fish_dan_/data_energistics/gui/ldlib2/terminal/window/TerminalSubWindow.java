@@ -12,6 +12,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /** One child's percentage placement and shared click-to-close, hold-to-drag handle, owned by the client UI. */
 @NullMarked
@@ -22,6 +23,8 @@ public final class TerminalSubWindow {
     private final Runnable close;
     private int screenWidth;
     private int screenHeight;
+    private int screenRight;
+    private int screenBottom;
     private int minimumX;
     private int minimumY;
     private int maximumX;
@@ -45,6 +48,7 @@ public final class TerminalSubWindow {
     private int currentWidth;
     private int currentHeight;
     private boolean resizing;
+    private @Nullable Consumer<Geometry> geometryChanged;
 
     public TerminalSubWindow(UIElement root, Runnable close) {
         this.root = root;
@@ -56,15 +60,27 @@ public final class TerminalSubWindow {
         resizeControls = new ResizeControls(TerminalUiLayout.require(root, "resize", TerminalActionButton.class), minimumWidth, minimumHeight, resize);
     }
 
+    /** Notifies the client owner once when a move or resize ends, including cancellation by window closure. */
+    public void onGeometryChanged(Consumer<Geometry> listener) {
+        geometryChanged = listener;
+    }
+
     public void place(int screenWidth, int screenHeight, Rect2i preferred, int leftMargin, int topMargin) {
+        place(screenWidth, screenHeight, preferred,
+                new Rect2i(leftMargin, topMargin, Math.max(0, screenWidth - leftMargin), Math.max(0, screenHeight - topMargin)));
+    }
+
+    public void place(int screenWidth, int screenHeight, Rect2i preferred, Rect2i available) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        screenRight = available.getX() + available.getWidth();
+        screenBottom = available.getY() + available.getHeight();
         currentWidth = preferred.getWidth();
         currentHeight = preferred.getHeight();
-        maximumX = Math.max(0, screenWidth - preferred.getWidth());
-        maximumY = Math.max(0, screenHeight - preferred.getHeight());
-        minimumX = Math.min(leftMargin, maximumX);
-        minimumY = Math.min(topMargin, maximumY);
+        maximumX = Math.max(0, screenRight - preferred.getWidth());
+        maximumY = Math.max(0, screenBottom - preferred.getHeight());
+        minimumX = Math.min(available.getX(), maximumX);
+        minimumY = Math.min(available.getY(), maximumY);
         x = positioned ? minimumX + Math.round(xPercent * (maximumX - minimumX)) : Math.clamp(preferred.getX(), minimumX, maximumX);
         y = positioned ? minimumY + Math.round(yPercent * (maximumY - minimumY)) : Math.clamp(preferred.getY(), minimumY, maximumY);
         applyPosition();
@@ -97,14 +113,14 @@ public final class TerminalSubWindow {
         positioned = true;
         var controls = resizeControls;
         if (controls != null && resizing) {
-            int width = Math.clamp(originWidth + (int) (mouseX - pressX), controls.minimumWidth, Math.max(controls.minimumWidth, screenWidth - x));
-            int height = Math.clamp(originHeight + (int) (mouseY - pressY), controls.minimumHeight, Math.max(controls.minimumHeight, screenHeight - y));
+            int width = Math.clamp(originWidth + (int) (mouseX - pressX), controls.minimumWidth, Math.max(controls.minimumWidth, screenRight - x));
+            int height = Math.clamp(originHeight + (int) (mouseY - pressY), controls.minimumHeight, Math.max(controls.minimumHeight, screenBottom - y));
             if (width != currentWidth || height != currentHeight) {
                 controls.resize.accept(width, height);
                 currentWidth = width;
                 currentHeight = height;
-                maximumX = Math.max(minimumX, screenWidth - width);
-                maximumY = Math.max(minimumY, screenHeight - height);
+                maximumX = Math.max(minimumX, screenRight - width);
+                maximumY = Math.max(minimumY, screenBottom - height);
                 rememberPosition();
             }
             return true;
@@ -133,15 +149,22 @@ public final class TerminalSubWindow {
     }
 
     public void cancelDrag() {
+        boolean changed = dragging;
         pressed = false;
         dragging = false;
         resizing = false;
         handle.resetInteraction();
         if (resizeControls != null) resizeControls.handle.resetInteraction();
+        if (changed && geometryChanged != null) geometryChanged.accept(new Geometry(xPercent, yPercent, currentWidth, currentHeight));
     }
 
     public boolean dragging() {
         return dragging;
+    }
+
+    /** Uses the gesture's current geometry even before LDLib2 has completed the next layout pass. */
+    public Rect2i bounds() {
+        return new Rect2i(x, y, currentWidth, currentHeight);
     }
 
     private void applyPosition() {
@@ -155,4 +178,6 @@ public final class TerminalSubWindow {
     }
 
     private record ResizeControls(TerminalActionButton handle, int minimumWidth, int minimumHeight, BiConsumer<Integer, Integer> resize) {}
+
+    public record Geometry(float xPercent, float yPercent, int width, int height) {}
 }

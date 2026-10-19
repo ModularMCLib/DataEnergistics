@@ -151,9 +151,14 @@ public final class PatternEncodingPreferencesClient {
         return PatternEncodingClientPreferencesAccess.get().previewPanelPosition();
     }
 
-    /** Persists one percentage upload-panel position without involving a menu or server. */
-    public static void setPreviewPanelPosition(double xPercent, double yPercent) {
-        PatternEncodingClientPreferencesAccess.get().setPreviewPanelPosition(xPercent, yPercent);
+    /** Returns the saved upload-panel size without involving a menu or server. */
+    public static Optional<PatternEncodingClientPreferences.PreviewPanelSize> previewPanelSize() {
+        return PatternEncodingClientPreferencesAccess.get().previewPanelSize();
+    }
+
+    /** Persists the position and size together after a move or resize, without server synchronization. */
+    public static void setPreviewPanelGeometry(double xPercent, double yPercent, int width, int height) {
+        PatternEncodingClientPreferencesAccess.get().setPreviewPanelGeometry(xPercent, yPercent, width, height);
     }
 
     /** Removes the saved percentage position and restores automatic placement. */

@@ -20,7 +20,6 @@ import net.minecraft.world.level.Level;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-
 /** Uses AE's pattern inventory callback to restore the same sparse recipe and substitution settings as its terminal. */
 @NullMarked
 public final class TerminalPatternImport implements IPatternTerminalLogicHost {

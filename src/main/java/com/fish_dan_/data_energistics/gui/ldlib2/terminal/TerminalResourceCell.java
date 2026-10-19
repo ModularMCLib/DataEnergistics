@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 public final class TerminalResourceCell extends Button {
 
     private @Nullable GenericStack stack;
+    private @Nullable GenericStack dragPreview;
     private boolean craftable;
     private boolean configurable;
     private boolean storageCell;
@@ -72,6 +73,10 @@ public final class TerminalResourceCell extends Button {
 
     public boolean craftable() {
         return craftable;
+    }
+
+    public void dragPreview(@Nullable GenericStack value) {
+        dragPreview = value;
     }
 
     public void configurable(boolean value) {
@@ -139,12 +144,14 @@ public final class TerminalResourceCell extends Button {
             drawEncodedPattern(context);
             return;
         }
-        if (stack == null) return;
+        GenericStack display = dragPreview == null ? stack : dragPreview;
+        if (display == null) return;
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
-        AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, stack.what());
-        if (stack.amount() != 1 || craftable) {
-            String amount = stack.amount() > 1 || !craftable ? stack.what().formatAmount(stack.amount(), AmountFormat.SLOT) : "+";
+        if (dragPreview != null) context.graphics.fill(0, 0, 16, 16, 0x80FFFFFF);
+        AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, display.what());
+        if (display.amount() != 1 || craftable) {
+            String amount = display.amount() > 1 || !craftable ? display.what().formatAmount(display.amount(), AmountFormat.SLOT) : "+";
             context.pose.translate(0, 10, 200);
             context.pose.scale(0.5F, 0.5F, 1);
             context.graphics.drawString(context.mc.font, amount, 32 - context.mc.font.width(amount), 0, 0xFFFFFFFF);

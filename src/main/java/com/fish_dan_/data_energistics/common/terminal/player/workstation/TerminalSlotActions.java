@@ -31,6 +31,7 @@ public final class TerminalSlotActions {
     private TerminalSlotActions() {}
 
     public static String physical(ServerPlayer player, TerminalPlayerState state, CompoundTag data, @Nullable TerminalConnection connection) {
+        if (!state.workspace().id().equals(data.getString("workspace"))) return "";
         String group = data.getString("inventory");
         boolean patterns = group.equals("encoded");
         if (!patterns && !group.equals("inputs"))
@@ -57,7 +58,7 @@ public final class TerminalSlotActions {
                 int count = button == 1 ? (stack.getCount() + 1) / 2 : stack.getCount();
                 if (count > 0) player.containerMenu.setCarried(inventory.removeItem(index, count));
             } else if (!patterns || PatternDetailsHelper.isEncodedPattern(cursor)) {
-                int maximum = patterns || state.workspace() == TerminalWorkspace.ANVIL && index == 0 ? 1 : cursor.getMaxStackSize();
+                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(state.workspace(), index, cursor);
                 boolean placing = stack.isEmpty() || !ItemStack.isSameItemSameComponents(stack, cursor) && cursor.getCount() <= maximum;
                 if (patterns && placing) {
                     String result = TerminalPatternImport.apply(player, state, cursor, connection, data.getBoolean("to_network"));
@@ -88,17 +89,21 @@ public final class TerminalSlotActions {
             }
         }
         inventory.setChanged();
-        if (!patterns && !ItemStack.isSameItemSameComponents(before, inventory.getItem(index))) {
+        if (!patterns) inputChanged(state, index, before);
+        return "";
+    }
+
+    static void inputChanged(TerminalPlayerState state, int index, ItemStack before) {
+        if (!ItemStack.isSameItemSameComponents(before, state.work().inputs.getItem(index))) {
             state.work().patternInputs.set(index, null);
             state.work().context(TerminalPatternContext.EMPTY);
             state.work().recipeIndex(0);
             if (index == 0 && state.workspace() == TerminalWorkspace.ANVIL) {
-                ItemStack left = inventory.getItem(0);
+                ItemStack left = state.work().inputs.getItem(0);
                 state.work().name(left.isEmpty() ? "" : left.getHoverName().getString());
                 state.work().boost(0);
             }
         }
-        return "";
     }
 
     public static String ghost(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
@@ -120,7 +125,6 @@ public final class TerminalSlotActions {
         if (data.contains("expected", Tag.TAG_COMPOUND) && (previous == null ||
                 !previous.what().equals(AEKey.fromTagGeneric(player.registryAccess(), data.getCompound("expected")))))
             return "";
-        @Nullable
         GenericStack resource = null;
         if (data.contains("interaction", Tag.TAG_STRING)) {
             resource = TerminalGhostClicks.apply(previous, player.containerMenu.getCarried(), InventoryAction.valueOf(data.getString("interaction")));

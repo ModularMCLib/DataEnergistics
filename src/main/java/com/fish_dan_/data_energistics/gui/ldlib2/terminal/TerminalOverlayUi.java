@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag.Target;
+import com.fish_dan_.data_energistics.client.terminal.input.TerminalItemDrag;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
@@ -108,6 +109,7 @@ public final class TerminalOverlayUi {
     private ObjectSet<AEKeyType> enabledKeyTypes;
     private final TerminalStorageInput storageInput;
     private final TerminalGhostDrag ghostDrag;
+    private final TerminalItemDrag itemDrag;
     private int storageReleaseButton = -1;
     private boolean pendingEncode;
     private final ObjectList<TerminalStonecuttingRecipeCell> stonecuttingRecipes = new ObjectArrayList<>();
@@ -154,6 +156,7 @@ public final class TerminalOverlayUi {
         descending = preferences.descending;
         visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
+        itemDrag = new TerminalItemDrag(registries, request);
         keyTypeSelection = new KeyTypeSelection(this::keyTypesChanged, ignored -> true);
         ObjectList<AEKeyType> enabledTypes = new ObjectArrayList<>();
         for (var type : AEKeyTypes.getAll())
@@ -634,6 +637,7 @@ public final class TerminalOverlayUi {
 
     private void slot(String inventory, int index, int button) {
         CompoundTag data = string("inventory", inventory);
+        data.putString("workspace", workspace);
         data.putInt("index", index);
         data.putInt("button", button);
         data.putBoolean("shift", UIElement.isShiftDown());
@@ -666,26 +670,64 @@ public final class TerminalOverlayUi {
 
     /** Captures carried-item painting before LDLib dispatches the individual configuration-slot click. */
     public boolean beginSlotInput(double x, double y, int button, ItemStack carried) {
+        cancelSlotInput();
         Minecraft minecraft = Minecraft.getInstance();
         if (button < 0 || button > 1 || minecraft.options.keyPickItem.matchesMouse(button) || UIElement.isShiftDown() ||
                 carried.isEmpty())
             return false;
         Target target = ghostDragTarget(x, y);
-        if (target == null) return false;
-        ghostDrag.begin(target, button);
+        if (target != null) {
+            ghostDrag.begin(target, button);
+            return true;
+        }
+        int index = physicalInputAt(x, y);
+        if (index < 0) return false;
+        itemDrag.begin(workspace, button, carried);
+        dragSlots(x, y, button);
         return true;
     }
 
     public boolean dragSlots(double x, double y, int button) {
-        return ghostDrag.drag(ghostDragTarget(x, y), button);
+        Target target = ghostDragTarget(x, y);
+        if (storageReleaseButton == button && target != null) {
+            storageReleaseButton = -1;
+            ghostDrag.begin(target, button);
+        }
+        if (ghostDrag.drag(target, button)) return true;
+        int index = physicalInputAt(x, y);
+        ItemStack current = index < 0 ? ItemStack.EMPTY : inputStack(index);
+        boolean dragging = itemDrag.drag(index, current, button);
+        if (dragging)
+            for (int slot = 0; slot < inputs.size(); slot++) inputs.get(slot).dragPreview(itemDrag.preview(slot));
+        return dragging;
     }
 
     public boolean releaseSlots(double x, double y, int button) {
-        return ghostDrag.release(ghostDragTarget(x, y), button);
+        boolean released = ghostDrag.release(ghostDragTarget(x, y), button) ||
+                itemDrag.release(physicalInputAt(x, y), button, preferences.shiftClickToNetwork);
+        if (released) cancelSlotInput();
+        return released;
     }
 
     public void cancelSlotInput() {
         ghostDrag.cancel();
+        itemDrag.cancel();
+        for (TerminalResourceCell cell : inputs) cell.dragPreview(null);
+    }
+
+    public ItemStack carriedPreview(ItemStack carried) {
+        return itemDrag.cursor(carried);
+    }
+
+    private int physicalInputAt(double x, double y) {
+        if (!visible || preferences.folded || workspace.equals("processing") || subWindows.contains(x, y)) return -1;
+        for (int index = 0; index < inputs.size(); index++)
+            if (inputs.get(index).isActive() && over(inputs.get(index), x, y)) return index;
+        return -1;
+    }
+
+    private ItemStack inputStack(int index) {
+        return ItemStack.parseOptional(registries, snapshot.getCompound("work").getList("items", Tag.TAG_COMPOUND).getCompound(index));
     }
 
     private @Nullable Target ghostDragTarget(double x, double y) {
@@ -1007,6 +1049,7 @@ public final class TerminalOverlayUi {
     }
 
     public boolean closePopup() {
+        cancelSlotInput();
         if (uploadUi.cancelEditing()) return true;
         if (!subWindows.closeTop()) return false;
         geometryDirty = true;
@@ -1014,6 +1057,7 @@ public final class TerminalOverlayUi {
     }
 
     private void closePopup(String name) {
+        cancelSlotInput();
         subWindows.close(name);
         geometryDirty = true;
     }

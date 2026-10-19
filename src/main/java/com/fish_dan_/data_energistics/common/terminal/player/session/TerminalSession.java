@@ -16,6 +16,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalCo
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalIngredientSupply;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalRecipeRefill;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalViewerTransfer;
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalInputDistribution;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalPatternEncoding;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalSlotActions;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
@@ -181,6 +182,7 @@ public final class TerminalSession {
             }
             case "slot" -> message = TerminalSlotActions.physical(player, state, data,
                     data.getString("inventory").equals("encoded") ? runtime.connection() : null);
+            case "slot_drag" -> TerminalInputDistribution.apply(player, state, data);
             case "ghost" -> {
                 if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))
                     requireMagnet(player);

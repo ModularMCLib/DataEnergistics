@@ -488,8 +488,9 @@ public final class TerminalOverlayClient {
             overlay.modularUi.getWidget().mouseMoved(event.getMouseX(), event.getMouseY());
             overlay.modularUi.getWidget().render(event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick());
             if (overlay.composition.contains(event.getMouseX(), event.getMouseY()) && !overlay.menu.getCarried().isEmpty()) {
-                event.getGuiGraphics().renderItem(overlay.menu.getCarried(), event.getMouseX() - 8, event.getMouseY() - 8);
-                event.getGuiGraphics().renderItemDecorations(Minecraft.getInstance().font, overlay.menu.getCarried(), event.getMouseX() - 8, event.getMouseY() - 8);
+                ItemStack carried = overlay.composition.carriedPreview(overlay.menu.getCarried());
+                event.getGuiGraphics().renderItem(carried, event.getMouseX() - 8, event.getMouseY() - 8);
+                event.getGuiGraphics().renderItemDecorations(Minecraft.getInstance().font, carried, event.getMouseX() - 8, event.getMouseY() - 8);
             }
             if (overlay.viewerGhostHighlights != null) {
                 event.getGuiGraphics().flush();

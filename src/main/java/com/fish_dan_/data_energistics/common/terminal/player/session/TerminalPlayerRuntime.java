@@ -87,17 +87,17 @@ public final class TerminalPlayerRuntime {
         }
         boolean terminal = ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL);
         boolean magnetUnlocked = terminal && ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET);
-        boolean pickBlock = magnetUnlocked && state.magnet().pickBlock();
+        boolean pickBlock = terminal && state.magnet().pickBlock();
         if (sentPickBlock == null || sentPickBlock != pickBlock) {
             PacketDistributor.sendToPlayer(player, new TerminalPickBlockStatePayload(pickBlock));
             sentPickBlock = pickBlock;
         }
         if (!terminal) return;
-        boolean magnet = magnetUnlocked && state.magnet().active();
-        boolean wantsNetwork = (session != null && session.visible()) || magnet;
+        boolean background = state.magnet().active(magnetUnlocked);
+        boolean wantsNetwork = (session != null && session.visible()) || background;
         TerminalConnection connection = wantsNetwork ? connection() : null;
         if (session != null) TerminalAeNavigation.tick(player, session, connection);
-        if (magnet) TerminalMagnetTicker.tick(player, state, connection);
+        if (background) TerminalMagnetTicker.tick(player, state, connection, magnetUnlocked);
         if (session != null && player.tickCount % 5 == 0) session.send(player, this, connection);
     }
 

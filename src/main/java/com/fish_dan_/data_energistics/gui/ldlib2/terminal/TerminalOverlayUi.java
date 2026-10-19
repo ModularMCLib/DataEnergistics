@@ -643,7 +643,7 @@ public final class TerminalOverlayUi {
         previousMagnet = magnet.copy();
         previousMagnetUnlocked = unlocked;
         UIElement root = subWindows.root("magnet");
-        Component title = unlocked ? text("magnet") : text("magnet").copy().append(" · ").append(text("reason.locked"));
+        Component title = text("magnet");
         label(root, "popup_title").setText(title);
         tooltip(window, "magnet", title);
         magnetUi.refresh(magnet, unlocked);

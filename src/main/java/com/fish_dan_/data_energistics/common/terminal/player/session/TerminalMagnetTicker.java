@@ -29,9 +29,9 @@ final class TerminalMagnetTicker {
 
     private TerminalMagnetTicker() {}
 
-    static void tick(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection) {
+    static void tick(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean magnetUnlocked) {
         if (player.isShiftKeyDown() || player.isSpectator() || !player.isAlive()) return;
-        if (state.magnet().mode().attract() && (!state.magnet().mode().insert() || connection != null) && player.tickCount % 5 == 0) {
+        if (magnetUnlocked && state.magnet().mode().attract() && (!state.magnet().mode().insert() || connection != null) && player.tickCount % 5 == 0) {
             for (ItemEntity entity : player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(16), ItemEntity::isAlive)) {
                 if (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID()) || entity.getPersistentData().contains("PreventRemoteMovement"))
                     continue;

@@ -111,9 +111,9 @@ public final class TerminalMagnetUi {
         selected(restock, settings.getBoolean("restock"));
         selected(pickBlock, settings.getBoolean("pick_block"));
         selected(craftIfMissing, settings.getBoolean("craft_if_missing"));
-        for (Button button : new Button[] { attract, insert, restock, pickBlock, pickupMode, insertMode, copyDown, swap, copyUp })
+        for (Button button : new Button[] { attract, insert, pickupMode, insertMode, copyDown, swap, copyUp })
             button.setActive(unlocked);
-        craftIfMissing.setActive(unlocked && settings.getBoolean("pick_block"));
+        craftIfMissing.setActive(settings.getBoolean("pick_block"));
         filterMode(pickupMode, "pickup", settings.getBoolean("pickup_whitelist"));
         filterMode(insertMode, "insert", settings.getBoolean("insert_whitelist"));
     }

@@ -77,8 +77,9 @@ public final class TerminalMagnetSettings {
         return insertWhitelist;
     }
 
-    public boolean active() {
-        return mode != Mode.OFF || restock;
+    /** Restocking belongs to the terminal; only attraction and pickup routing require the magnet upgrade. */
+    public boolean active(boolean magnetUnlocked) {
+        return restock || magnetUnlocked && mode != Mode.OFF;
     }
 
     public void mode(Mode value) {

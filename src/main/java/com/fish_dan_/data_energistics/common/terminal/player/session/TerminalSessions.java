@@ -48,8 +48,7 @@ public final class TerminalSessions {
 
     /** Server-thread validity check for AE2's pick-block crafting menu; unavailable access returns null. */
     public static @Nullable TerminalConnection pickBlockConnection(ServerPlayer player, long frequency) {
-        if (!player.isAlive() || player.isSpectator() || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) ||
-                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET))
+        if (!player.isAlive() || player.isSpectator() || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
             return null;
         TerminalPlayerRuntime runtime = runtime(player);
         if (!runtime.state().magnet().pickBlock()) return null;
@@ -62,7 +61,7 @@ public final class TerminalSessions {
      */
     public static void pickBlock(ServerPlayer player, BlockHitResult hit) {
         if (!player.isAlive() || player.isCreative() || player.isSpectator() || player.containerMenu != player.inventoryMenu ||
-                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET) ||
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) ||
                 !player.canInteractWithBlock(hit.getBlockPos(), 1) ||
                 !player.level().getChunkSource().hasChunk(hit.getBlockPos().getX() >> 4, hit.getBlockPos().getZ() >> 4))
             return;

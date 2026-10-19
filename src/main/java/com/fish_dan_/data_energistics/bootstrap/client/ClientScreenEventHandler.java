@@ -2,8 +2,6 @@ package com.fish_dan_.data_energistics.bootstrap.client;
 
 import com.fish_dan_.data_energistics.client.crafting.tree.CraftingPlanTreeEntry;
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreenRouter;
-import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingPreviewRenderEvents;
-import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingScreenRouter;
 import com.fish_dan_.data_energistics.client.screen.terminal.Ae2TerminalKeyOverlay;
 import com.fish_dan_.data_energistics.client.screen.terminal.UniversalTerminalScreenHook;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
@@ -20,16 +18,12 @@ final class ClientScreenEventHandler {
 
     static void onScreenInitPost(ScreenEvent.Init.Post event) {
         CraftingPlanTreeEntry.onInit(event);
-        PatternEncodingScreenRouter.onScreenInitPost(event);
         UniversalTerminalScreenHook.onScreenInitPost(event);
     }
 
     static void onScreenOpening(ScreenEvent.Opening event) {
         OrbitalControlClientBindings.onScreenOpening(Minecraft.getInstance().screen);
         Screen replacement = TrinityCraftConfirmScreenRouter.routeOpeningScreen(event.getCurrentScreen());
-        if (replacement == null) {
-            replacement = PatternEncodingScreenRouter.routeOpeningScreen(event.getCurrentScreen());
-        }
         if (replacement != null) {
             event.setNewScreen(replacement);
         }
@@ -41,8 +35,6 @@ final class ClientScreenEventHandler {
     }
 
     static void onContainerForeground(ContainerScreenEvent.Render.Foreground event) {
-        // The terminal selector must be composited after upload panels clear their covered depth.
-        PatternEncodingPreviewRenderEvents.onContainerForeground(event);
         UniversalTerminalScreenHook.onContainerForeground(event);
     }
 
@@ -51,6 +43,5 @@ final class ClientScreenEventHandler {
             return;
         }
         UniversalTerminalScreenHook.onRenderTooltip(event);
-        PatternEncodingPreviewRenderEvents.onRenderTooltip(event);
     }
 }

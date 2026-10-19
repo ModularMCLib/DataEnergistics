@@ -214,7 +214,7 @@
     base-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
 }
 .terminal-upload-popup .terminal-label { background: #00000000; }
-.terminal-upload-popup.native-upload-popup { z-index: 0; }
+.terminal-upload-popup.standalone-upload-popup { z-index: 0; }
 .terminal-upload-name { horizontal-align: left; }
 .terminal-upload-count { horizontal-align: right; adaptive-width: true; }
 .terminal-upload-popup .terminal-upload-name {
@@ -225,8 +225,6 @@
 .terminal-upload-popup .terminal-upload-name:focus {
     background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1);
 }
-.terminal-upload-list, .terminal-upload-list .__scroller_view_view-port__,
-.terminal-upload-list .__scroller_view_view-container__, .terminal-upload-list .__scroller_view_vertical-container__,
-.terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }
+.terminal-upload-list, .terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }
 
 .terminal-key-type-scroll .__scroller_scroll_container__ { background: #00000000; }

@@ -21,7 +21,6 @@ import com.fish_dan_.data_energistics.client.screen.machine.MePatternBufferScree
 import com.fish_dan_.data_energistics.client.screen.machine.MeVacuumScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.OrderPackageScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.anvil.MeDigitalAnvilScreen;
-import com.fish_dan_.data_energistics.client.screen.patternencoding.UniversalPatternEncodingTermScreen;
 import com.fish_dan_.data_energistics.client.screen.powered.MatterConvergingCrossbowConfigScreen;
 import com.fish_dan_.data_energistics.client.screen.research.ResearchStationScreen;
 import com.fish_dan_.data_energistics.client.screen.storage.CompositeWarehouseScreen;
@@ -33,8 +32,10 @@ import com.fish_dan_.data_energistics.client.screen.terminal.UniversalMEStorageS
 import com.fish_dan_.data_energistics.client.screen.terminal.UniversalPatternAccessTermScreen;
 import com.fish_dan_.data_energistics.client.screen.trinity.TrinityDataCoreScreen;
 import com.fish_dan_.data_energistics.client.screen.trinity.TrinityInformationExchangeDepotScreen;
+import com.fish_dan_.data_energistics.menu.universal.UniversalPatternEncodingTermMenu;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
+import appeng.client.gui.me.items.PatternEncodingTermScreen;
 import appeng.init.client.InitScreens;
 
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -80,7 +81,8 @@ final class ClientScreenRegistrar {
                 "/screens/digital_packaged_pattern_provider.json");
         InitScreens.register(event, DEMenus.UNIVERSAL_ME_STORAGE.get(), UniversalMEStorageScreen::new, "/screens/universal_me_storage_terminal.json");
         InitScreens.register(event, DEMenus.UNIVERSAL_CRAFTING_TERM.get(), UniversalCraftingTermScreen::new, "/screens/universal_crafting_terminal.json");
-        InitScreens.register(event, DEMenus.UNIVERSAL_PATTERN_ENCODING_TERM.get(), UniversalPatternEncodingTermScreen::new, "/screens/universal_pattern_encoding_terminal.json");
+        InitScreens.register(event, DEMenus.UNIVERSAL_PATTERN_ENCODING_TERM.get(), PatternEncodingTermScreen<UniversalPatternEncodingTermMenu>::new,
+                "/screens/universal_pattern_encoding_terminal.json");
         InitScreens.register(event, DEMenus.UNIVERSAL_PATTERN_ACCESS_TERM.get(), UniversalPatternAccessTermScreen::new, "/screens/universal_pattern_access_terminal.json");
     }
 }

@@ -100,9 +100,9 @@ public final class TerminalUiLayout {
         UIElement result = element("result", "page-result");
         switch (mode) {
             case CRAFTING -> {
-                pageAt(inputs, 3, 1, 54, 54);
+                pageAt(inputs, 2, 1, 54, 54);
                 pageAt(result, 79, 19, 18, 18);
-                root.addChild(recipeArrow(57));
+                root.addChild(recipeArrow(58, 18));
                 root.addChild(TerminalCraftingRecipesUi.create());
             }
             case PROCESSING -> {
@@ -115,7 +115,7 @@ public final class TerminalUiLayout {
             case SMITHING, ANVIL -> {
                 pageAt(inputs, 9, 19, 54, 18);
                 pageAt(result, 96, 19, 18, 18);
-                root.addChild(recipeArrow(69));
+                root.addChild(recipeArrow(69, 22));
             }
             case STONECUTTING -> {
                 int recipesWidth = TerminalStonecuttingRecipeCell.COLUMNS * TerminalStonecuttingRecipeCell.WIDTH;
@@ -141,8 +141,8 @@ public final class TerminalUiLayout {
                     at(element("encoded", "encoded-pattern"), 3, 37, 18, 18));
             if (mode == TerminalWorkspace.CRAFTING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 60, 2, 8, 8),
-                        pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 70, 2, 8, 8),
-                        pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 80, 2, 8, 8));
+                        pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 72, 2, 8, 8),
+                        pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 84, 2, 8, 8));
             } else if (mode == TerminalWorkspace.SMITHING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 9, 8, 8, 8),
                         pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 19, 8, 8, 8));
@@ -166,8 +166,8 @@ public final class TerminalUiLayout {
         return root;
     }
 
-    private static UIElement recipeArrow(int x) {
-        UIElement arrow = pageAt(element("recipe_arrow", "terminal-recipe-arrow"), x, 19, 22, 18);
+    private static UIElement recipeArrow(int x, int width) {
+        UIElement arrow = pageAt(element("recipe_arrow", "terminal-recipe-arrow"), x, 19, width, 18);
         arrow.setAllowHitTest(false);
         return arrow;
     }

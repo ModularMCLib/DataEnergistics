@@ -67,7 +67,7 @@ public final class TerminalCraftingRecipesUi {
     }
 
     public static UIElement create() {
-        UIElement root = TerminalUiLayout.at(new UIElement(), 98, 1, 25, HEIGHT);
+        UIElement root = TerminalUiLayout.at(new UIElement(), 99, 1, 25, HEIGHT);
         root.setId("crafting_choices");
         UIElement list = TerminalUiLayout.at(new UIElement(), 0, 0, CELL_SIZE, HEIGHT);
         list.setId("crafting_recipes");

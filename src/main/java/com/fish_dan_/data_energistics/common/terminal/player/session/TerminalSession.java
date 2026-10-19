@@ -11,7 +11,6 @@ import com.fish_dan_.data_energistics.common.terminal.player.persistence.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageView;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalContainerTransfer;
-import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalInputTargets;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalPatternEncoding;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalSlotActions;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
@@ -153,6 +152,7 @@ public final class TerminalSession {
                     state.work().recordRecipeType(!state.work().recordRecipeType());
             }
             case "recipe_transfer" -> message = TerminalRecipeTransfer.apply(player, state, data);
+            case "clear" -> message = TerminalRecipeTransfer.clear(player, state, runtime.connection(), data.getBoolean("to_network"));
             case "processing_match" -> {
                 if (state.workspace() != TerminalWorkspace.PROCESSING)
                     throw new IllegalArgumentException("Matching is only configurable for processing patterns");
@@ -297,7 +297,6 @@ public final class TerminalSession {
         }
         upload.refresh(player, state, connection, false);
         upload.snapshot(snapshot);
-        snapshot.putBoolean("transfer_supported", !TerminalInputTargets.resolve(player, menu).isEmpty());
         storage.snapshot(snapshot, connection, player.registryAccess());
         TerminalWorkstation.snapshot(player, state, snapshot);
         snapshot.putLong("sequence", sequence);

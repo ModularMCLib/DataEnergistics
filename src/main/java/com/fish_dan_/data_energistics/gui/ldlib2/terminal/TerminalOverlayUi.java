@@ -31,6 +31,7 @@ import appeng.api.stacks.AEKeyTypes;
 import appeng.api.stacks.GenericStack;
 import appeng.api.util.KeyTypeSelection;
 import appeng.core.definitions.AEItems;
+import appeng.core.localization.ButtonToolTips;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
@@ -220,6 +221,12 @@ public final class TerminalOverlayUi {
                 preferences.save();
             });
             if (mode.supportsEncoding()) {
+                if (mode != TerminalWorkspace.STONECUTTING) {
+                    TerminalUiLayout.require(root, "clear", Button.class).setOnClick(event -> {
+                        if (event.button == 0) request.accept("clear", booleanValue("to_network", preferences.shiftClickToNetwork));
+                    });
+                    element(root, "clear").style(style -> style.tooltips(TerminalTooltipLines.split(ButtonToolTips.Clear.text(), ButtonToolTips.ClearSettings.text())));
+                }
                 button(root, "encoding", () -> {
                     pendingEncode = true;
                     request.accept("encode", new CompoundTag());
@@ -231,7 +238,6 @@ public final class TerminalOverlayUi {
                     button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
                 } else if (mode == TerminalWorkspace.PROCESSING) {
                     button(root, "record_type", () -> request.accept("record_type", new CompoundTag()));
-                    button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
                 }
             } else {
                 field(root, "name").setTextRegexValidator(".{0,50}").setTextResponder(value -> request.accept("name", string("value", value)));
@@ -455,10 +461,14 @@ public final class TerminalOverlayUi {
                 element(active, "transfer_info").style(style -> style.tooltips(TerminalTooltipLines.split(text("transfer_info"), transfer)));
             }
         }
-        if (workspace.equals("processing")) {
-            element(active, "transfer_processing").setActive(value.getBoolean("connected") && value.getBoolean("transfer_supported"));
-            tooltip(active, "transfer_processing", text(!value.getBoolean("transfer_supported") ? "message.unsupported_container" :
-                    !value.getBoolean("connected") ? "message.offline" : "transfer_processing"));
+        if (!workspace.equals("anvil") && !workspace.equals("stonecutting")) {
+            var clearTooltip = new ObjectArrayList<Component>(ObjectImmutableList.of(ButtonToolTips.Clear.text(), ButtonToolTips.ClearSettings.text()));
+            if (value.getString("action").equals("clear")) {
+                String message = value.getString("message");
+                if (!message.isEmpty()) clearTooltip.add(text("message." + message));
+                else if (workspace.equals("processing")) setProcessingScrollRow(0, true);
+            }
+            element(active, "clear").style(style -> style.tooltips(TerminalTooltipLines.split(clearTooltip).toArray(Component[]::new)));
         }
         storageIndex.apply(value, registries);
         boolean pinsChanged = pinnedUi.apply(value.getCompound("pins"));

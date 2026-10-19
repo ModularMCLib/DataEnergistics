@@ -11,6 +11,7 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.storage.StorageHelper;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
@@ -65,6 +66,21 @@ public final class TerminalNetworkStorage {
         checkAmount(inserted, amount);
         cursor.shrink((int) inserted);
         player.containerMenu.setCarried(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
+    }
+
+    /** Server-thread return: only accepted items leave their source slots, and any remainder stays available. */
+    public static boolean insertInventory(TerminalConnection connection, SimpleContainer inventory) {
+        boolean complete = true;
+        for (int index = 0; index < inventory.getContainerSize(); index++) {
+            ItemStack stack = inventory.getItem(index);
+            if (stack.isEmpty()) continue;
+            int requested = stack.getCount();
+            long inserted = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(), AEItemKey.of(stack), requested, connection.source());
+            checkAmount(inserted, requested);
+            if (inserted > 0) inventory.removeItem(index, (int) inserted);
+            complete &= inserted == requested;
+        }
+        return complete;
     }
 
     /** Main-thread check for real main-inventory and hotbar slots, excluding equipment and configuration slots. */

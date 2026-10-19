@@ -115,14 +115,16 @@ public final class TerminalUiLayout {
                     at(element("encoded", "encoded-pattern"), 2, 38, 18, 18));
             root.addChild(encoding);
             if (mode == TerminalWorkspace.CRAFTING) {
-                root.addChildren(pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 62, 2, 8, 8),
-                        pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 72, 2, 8, 8));
+                root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 60, 2, 8, 8),
+                        pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 70, 2, 8, 8),
+                        pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 80, 2, 8, 8));
             } else if (mode == TerminalWorkspace.SMITHING) {
-                root.addChild(pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 62, 2, 8, 8));
+                root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 3, 8, 8, 8),
+                        pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 13, 8, 8, 8));
             } else if (mode == TerminalWorkspace.PROCESSING) {
-                root.addChildren(pageIcon("record_type", "terminal-pattern-option", "icon-record-type", 62, 2, 8, 8),
-                        pageAt(element("transfer_info", "icon-transfer-info"), 72, 2, 8, 8),
-                        pageIcon("transfer_processing", "transfer-processing", "icon-transfer", 74, 14, 8, 8),
+                root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 64, 2, 8, 8),
+                        pageIcon("record_type", "terminal-pattern-option", "icon-record-type", 64, 12, 8, 8),
+                        pageAt(element("transfer_info", "icon-transfer-info"), 74, 12, 8, 8),
                         pageAt(processingScrollbar(), 1, 2, 6, 54));
             }
         } else {

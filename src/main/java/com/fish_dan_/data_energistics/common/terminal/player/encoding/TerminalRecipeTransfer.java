@@ -1,7 +1,9 @@
 package com.fish_dan_.data_energistics.common.terminal.player.encoding;
 
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 
 import appeng.api.stacks.AEItemKey;
@@ -17,6 +19,7 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -25,6 +28,18 @@ import java.util.Comparator;
 public final class TerminalRecipeTransfer {
 
     private TerminalRecipeTransfer() {}
+
+    /** Returns real inputs to the selected destination before clearing the active page's configuration. */
+    public static String clear(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean toNetwork) {
+        if (!state.workspace().supportsEncoding()) throw new IllegalArgumentException("The active page is not a recipe encoder");
+        if (toNetwork && !state.work().inputs.isEmpty()) {
+            if (connection == null) return "offline";
+            if (!TerminalNetworkStorage.insertInventory(connection, state.work().inputs)) return "network_full";
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("workspace", state.workspace().id());
+        return apply(player, state, data);
+    }
 
     public static String apply(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
         TerminalWorkspace page = TerminalWorkspace.byId(data.getString("workspace"));

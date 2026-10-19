@@ -85,7 +85,10 @@
     background: sprite(ae2:textures/guis/terminal.png, 0, 204, 18, 18);
 }
 .terminal-page.page-crafting { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png); }
-.terminal-page.page-processing { background: sprite(data_energistics:textures/guis/states/background/small_handle.png); }
+.terminal-page.page-processing { background: group(#FF9A9FB4, border(-1, #FF696D88)); }
+.terminal-processing-surface { background: sprite(data_energistics:textures/guis/states/background/small_handle.png, 1, 1, 82, 56); }
+.page-processing .page-outputs { background: sprite(data_energistics:textures/guis/states/background/small_handle.png, 84, 2, 18, 54); }
+.terminal-processing-step .__button_text__ { font-size: 6; }
 .terminal-page.page-smithing { background: sprite(data_energistics:textures/guis/states/background/small_forging.png); }
 .terminal-page.page-stonecutting { background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png); }
 .terminal-page.page-anvil { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png); }
@@ -136,6 +139,9 @@
 .icon-settings { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
 .icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
 .icon-clear-pattern { background: sprite(ae2:textures/guis/states.png, 224, 200, 8, 8); }
+.icon-cycle-outputs { background: sprite(ae2:textures/guis/states.png, 232, 200, 8, 8); }
+.icon-scale-add { background: sprite(ae2:textures/guis/states.png, 224, 192, 8, 8); }
+.icon-scale-subtract { background: sprite(ae2:textures/guis/states.png, 232, 192, 8, 8); }
 .icon-transfer-info { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
 .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 208, 8, 8); }
 .option-enabled .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 208, 8, 8); }

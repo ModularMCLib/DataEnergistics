@@ -22,7 +22,7 @@ public final class TerminalClientPreferences {
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics/player_terminal.json");
     public float xPercent = 0.047058824F;
     public float yPercent = 0.11111111F;
-    public int width = 160;
+    public int width = TerminalViewportLayout.MIN_WIDTH;
     public int height = 168;
     public boolean folded = true;
     public boolean open = true;

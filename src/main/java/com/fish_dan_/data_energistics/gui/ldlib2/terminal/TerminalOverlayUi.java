@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlankPatternCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
@@ -88,6 +89,7 @@ public final class TerminalOverlayUi {
     private final ObjectList<TerminalResourceCell> encodedPatterns = new ObjectArrayList<>();
     private @Nullable TerminalBlankPatternCell blankPattern;
     private final TerminalPatternUploadUi uploadUi;
+    private final TerminalProcessingControlsUi processingUi;
     private final TerminalAmountUi amountUi;
     private final TerminalKeyTypeUi keyTypeUi;
     private final TerminalMagnetUi magnetUi;
@@ -100,7 +102,8 @@ public final class TerminalOverlayUi {
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
     private final Scroller.Vertical processingScrollbar;
     private final Scroller.Vertical stonecuttingScrollbar;
-    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 160, 168, true, true, 0, 0);
+    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, TerminalViewportLayout.MIN_WIDTH, 168, true,
+            TerminalViewportLayout.OPERATION_WIDTH + TerminalViewportLayout.ENCODING_WIDTH, 0, 0);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
     private String sort = "name";
@@ -245,6 +248,7 @@ public final class TerminalOverlayUi {
                 button(root, "boost_up", () -> boost(1));
             }
         }
+        processingUi = new TerminalProcessingControlsUi(element(workspaces.get("processing"), "processing_amounts"), request);
         for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types" }) {
             UIElement root = TerminalUiLayout.popup(name);
             subWindows.add(name, root);
@@ -478,6 +482,7 @@ public final class TerminalOverlayUi {
         element(window, "tasks").setActive(value.getBoolean("connected"));
         refreshMagnet();
         uploadUi.apply(value);
+        processingUi.apply(value);
         amountUi.apply(value);
         if (pendingEncode && value.getString("action").equals("encode")) {
             pendingEncode = false;
@@ -644,10 +649,11 @@ public final class TerminalOverlayUi {
     public void geometry(int width, int height) {
         screenWidth = width;
         screenHeight = height;
+        int operationWidth = TerminalUiLayout.operationWidth(TerminalWorkspace.byId(workspace));
         viewport = adjusting && resizing ?
-                viewport.resize(width, height, preferences.width, preferences.height, preferences.folded, !workspace.equals("anvil"), pinnedUi.rows(), pinnedUi.automaticCount()) :
+                viewport.resize(width, height, preferences.width, preferences.height, preferences.folded, operationWidth, pinnedUi.rows(), pinnedUi.automaticCount()) :
                 TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
-                        preferences.width, preferences.height, preferences.folded, !workspace.equals("anvil"), pinnedUi.rows(), pinnedUi.automaticCount());
+                        preferences.width, preferences.height, preferences.folded, operationWidth, pinnedUi.rows(), pinnedUi.automaticCount());
         preferences.xPercent = width <= viewport.width() ? 0 : (float) viewport.x() / (width - viewport.width());
         preferences.yPercent = height <= viewport.height() ? 0 : (float) viewport.y() / (height - viewport.height());
         preferences.width = viewport.width();

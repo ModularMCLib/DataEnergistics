@@ -17,19 +17,19 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     public static final int TAB_WIDTH = 12;
     public static final int OPERATION_WIDTH = 108;
     public static final int OPERATION_HEIGHT = 58;
+    public static final int PROCESSING_WIDTH = 124;
     public static final int ENCODING_WIDTH = 24;
     private static final int FRAME_WIDTH = 42;
     private static final int FRAME_HEIGHT = 20;
-    private static final int MIN_WIDTH = STORAGE_LEFT + OPERATION_WIDTH + ENCODING_WIDTH + TAB_WIDTH;
+    public static final int MIN_WIDTH = STORAGE_LEFT + PROCESSING_WIDTH + ENCODING_WIDTH + TAB_WIDTH;
     private static final int MIN_HEIGHT = 100;
 
     public static TerminalViewportLayout compute(int screenWidth, int screenHeight, float xPercent, float yPercent,
-                                                 int requestedWidth, int requestedHeight, boolean folded, boolean encoding, int manualPinRows, int automaticPins) {
+                                                 int requestedWidth, int requestedHeight, boolean folded, int operationWidth, int manualPinRows, int automaticPins) {
         int width = Math.clamp(requestedWidth, MIN_WIDTH, Math.clamp(screenWidth, MIN_WIDTH, FRAME_WIDTH + 20 * CELL_SIZE));
         int height = Math.clamp(requestedHeight, MIN_HEIGHT, Math.clamp(screenHeight, MIN_HEIGHT, FRAME_HEIGHT + 20 * CELL_SIZE));
         int columns = Math.max(6, (width - FRAME_WIDTH) / CELL_SIZE);
         int rows = Math.max(1, (height - FRAME_HEIGHT) / CELL_SIZE);
-        int operationWidth = OPERATION_WIDTH + (encoding ? ENCODING_WIDTH : 0);
         int operationLeft = operationLeft(width, operationWidth);
         int operationTop = operationTop(height);
         int availableScrollHeight = folded ? height - FRAME_HEIGHT : operationTop - STORAGE_TOP;
@@ -53,9 +53,9 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
 
     /** Keeps the top-left corner fixed while resizing within the remaining screen area. */
     public TerminalViewportLayout resize(int screenWidth, int screenHeight, int requestedWidth, int requestedHeight,
-                                         boolean folded, boolean encoding, int manualPinRows, int automaticPins) {
+                                         boolean folded, int operationWidth, int manualPinRows, int automaticPins) {
         TerminalViewportLayout resized = compute(screenWidth - x, screenHeight - y, 0, 0,
-                requestedWidth, requestedHeight, folded, encoding, manualPinRows, automaticPins);
+                requestedWidth, requestedHeight, folded, operationWidth, manualPinRows, automaticPins);
         return new TerminalViewportLayout(x, y, resized.width, resized.height, resized.columns, resized.rows,
                 resized.scrollHeight, resized.pinnedRows, resized.operationWidth, resized.cells);
     }

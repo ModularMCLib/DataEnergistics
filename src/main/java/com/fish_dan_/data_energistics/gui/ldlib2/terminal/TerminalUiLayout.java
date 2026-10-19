@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -34,14 +35,16 @@ public final class TerminalUiLayout {
     private TerminalUiLayout() {}
 
     public static UI create() {
+        int width = TerminalViewportLayout.MIN_WIDTH;
+        int panelWidth = width - TerminalViewportLayout.TAB_WIDTH - 12;
         UIElement root = element("terminal_root", "terminal-root");
         root.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).widthPercent(100).heightPercent(100).paddingAll(0));
         root.addChild(icon("entry", "terminal-entry", "icon-entry", 0, 0, 10, 10));
-        UIElement window = at(element("window", "terminal-window"), 8, 8, 160, 168);
-        UIElement panel = at(element("panel", "terminal-panel"), 12, 0, 136, 168);
-        panel.addChildren(at(element("top_edge", "frame-light"), 0, 0, 136, 1),
+        UIElement window = at(element("window", "terminal-window"), 8, 8, width, 168);
+        UIElement panel = at(element("panel", "terminal-panel"), 12, 0, panelWidth, 168);
+        panel.addChildren(at(element("top_edge", "frame-light"), 0, 0, panelWidth, 1),
                 at(element("left_edge", "frame-light"), 0, 0, 1, 168),
-                at(element("bottom_edge", "frame-dark"), 0, 167, 136, 1));
+                at(element("bottom_edge", "frame-dark"), 0, 167, panelWidth, 1));
         window.addChild(panel);
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
         UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, 0, 15, 15 + (controls.length - 1) * 12);
@@ -57,23 +60,25 @@ public final class TerminalUiLayout {
             sidebar.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
         }
         window.addChild(sidebar);
-        window.addChildren(at(field("search"), 16, 3, 118, 12),
-                icon("drag", "terminal-drag", "icon-drag", 135, 3, 10, 10),
+        window.addChildren(at(field("search"), 16, 3, width - 42, 12),
+                icon("drag", "terminal-drag", "icon-drag", width - 25, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
-                at(storageScrollbar(), 136, 18, 6, 148),
-                at(element("workspaces", "terminal-pages"), 16, 108, 132, 58));
+                at(storageScrollbar(), width - 24, 18, 6, 148),
+                at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING), 108,
+                        operationWidth(TerminalWorkspace.CRAFTING), 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
-        UIElement tabs = at(element("tabs", "terminal-tabs"), 148, 96, TerminalViewportLayout.TAB_WIDTH, 70);
+        UIElement tabs = at(element("tabs", "terminal-tabs"), width - TerminalViewportLayout.TAB_WIDTH, 96, TerminalViewportLayout.TAB_WIDTH, 70);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             tabs.addChild(icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14));
-        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", 142, 164, 4, 4));
+        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - 18, 164, 4, 4));
         root.addChild(window);
         return UI.of(root, ObjectImmutableList.of(stylesheet()));
     }
 
     public static UIElement page(TerminalWorkspace mode) {
-        UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, 108, 58);
+        int width = mode == TerminalWorkspace.PROCESSING ? TerminalViewportLayout.PROCESSING_WIDTH : TerminalViewportLayout.OPERATION_WIDTH;
+        UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, width, 58);
         root.setOverflowVisible(true);
         root.addClass("page-" + mode.id());
         UIElement inputs = element("inputs", "page-inputs");
@@ -85,6 +90,9 @@ public final class TerminalUiLayout {
                 pageAt(result, 84, 20, 18, 18);
             }
             case PROCESSING -> {
+                UIElement surface = at(element("processing_surface", "terminal-processing-surface"), 1, 1, 82, 56);
+                surface.setAllowHitTest(false);
+                root.addChild(surface);
                 pageAt(inputs, 9, 2, 54, 54);
                 pageAt(result, 64, 20, 18, 18);
             }
@@ -107,9 +115,10 @@ public final class TerminalUiLayout {
         outputs.setOverflowVisible(false);
         outputs.setVisible(mode != TerminalWorkspace.STONECUTTING);
         root.addChildren(inputs, pageAt(outputs, 84, 2, 18, 54));
+        if (mode == TerminalWorkspace.PROCESSING) pageAt(outputs, 96, 2, 18, 54);
         if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) root.addChild(result);
         if (mode.supportsEncoding()) {
-            UIElement encoding = at(element("pattern_encoding", "terminal-encoding"), 108, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
+            UIElement encoding = at(element("pattern_encoding", "terminal-encoding"), width, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
             encoding.addChildren(at(element("blank_pattern", "blank-pattern"), 2, 2, 18, 18),
                     icon("encoding", "terminal-encode", "icon-encoding", 4, 22, 14, 14),
                     at(element("encoded", "encoded-pattern"), 2, 38, 18, 18));
@@ -125,7 +134,7 @@ public final class TerminalUiLayout {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 64, 2, 8, 8),
                         pageIcon("record_type", "terminal-pattern-option", "icon-record-type", 64, 12, 8, 8),
                         pageAt(element("transfer_info", "icon-transfer-info"), 74, 12, 8, 8),
-                        pageAt(processingScrollbar(), 1, 2, 6, 54));
+                        pageAt(processingScrollbar(), 1, 2, 6, 54), TerminalProcessingControlsUi.create());
             }
         } else {
             root.addChildren(pageAt(field("name"), 3, 5, 96, 10),
@@ -147,6 +156,11 @@ public final class TerminalUiLayout {
         title.addClass("terminal-popup-title");
         root.addChildren(title, icon("close", "terminal-window-handle", "icon-close", popupWidth(name) - 17, 3, 14, 14));
         return root;
+    }
+
+    public static int operationWidth(TerminalWorkspace mode) {
+        int width = mode == TerminalWorkspace.PROCESSING ? TerminalViewportLayout.PROCESSING_WIDTH : TerminalViewportLayout.OPERATION_WIDTH;
+        return width + (mode.supportsEncoding() ? TerminalViewportLayout.ENCODING_WIDTH : 0);
     }
 
     public static void resize(UIElement window, TerminalViewportLayout viewport) {
@@ -208,9 +222,7 @@ public final class TerminalUiLayout {
     }
 
     private static <T extends UIElement> T pageAt(T element, int x, int y, int width, int height) {
-        element.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).leftPercent(x * 100F / 108)
-                .topPercent(y * 100F / 58).width(width).height(height).paddingAll(0).flexShrink(0));
-        return element;
+        return at(element, x, y, width, height);
     }
 
     private static Button pageIcon(String id, String style, String glyph, int x, int y, int width, int height) {
@@ -293,6 +305,14 @@ public final class TerminalUiLayout {
         Button button = at(named(new TerminalActionButton(), id, "terminal-control"), x, y, width, height);
         button.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         button.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
+        return button;
+    }
+
+    public static Button smallButton(String id, Component text, int x, int y) {
+        Button button = control(id, x, y, 8, 8);
+        button.addClass("terminal-processing-step");
+        button.setText(text);
+        ((TerminalActionButton) button).glyph(button.text, 0);
         return button;
     }
 

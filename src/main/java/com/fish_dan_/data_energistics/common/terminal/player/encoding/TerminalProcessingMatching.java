@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jspecify.annotations.NullMarked;
 
 /** Sparse editor rules keep the original processing slot indexes, including empty and scrolled slots. */
@@ -36,6 +37,18 @@ public final class TerminalProcessingMatching {
     public void clear() {
         inputs = "";
         outputs = "";
+        changed.run();
+    }
+
+    /** Matching rules follow their resources when nonempty outputs rotate, preserving sparse slot indexes. */
+    void cycleOutputs(IntList slots) {
+        StringBuilder rotated = new StringBuilder(outputs);
+        while (rotated.length() <= slots.getInt(slots.size() - 1)) rotated.append('0');
+        for (int index = 0; index < slots.size(); index++) {
+            int source = slots.getInt((index + 1) % slots.size());
+            rotated.setCharAt(slots.getInt(index), source < outputs.length() ? outputs.charAt(source) : '0');
+        }
+        outputs = rotated.toString();
         changed.run();
     }
 

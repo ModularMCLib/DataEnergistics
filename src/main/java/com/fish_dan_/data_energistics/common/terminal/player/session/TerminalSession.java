@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternUpload;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalProcessingAmounts;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalRecipeTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
@@ -153,6 +154,7 @@ public final class TerminalSession {
             }
             case "recipe_transfer" -> message = TerminalRecipeTransfer.apply(player, state, data);
             case "clear" -> message = TerminalRecipeTransfer.clear(player, state, runtime.connection(), data.getBoolean("to_network"));
+            case "processing_amount" -> message = TerminalProcessingAmounts.apply(state, TerminalProcessingAmounts.Operation.valueOf(data.getString("operation")));
             case "processing_match" -> {
                 if (state.workspace() != TerminalWorkspace.PROCESSING)
                     throw new IllegalArgumentException("Matching is only configurable for processing patterns");

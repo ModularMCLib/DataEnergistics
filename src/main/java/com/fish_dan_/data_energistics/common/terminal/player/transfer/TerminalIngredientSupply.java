@@ -79,7 +79,7 @@ public final class TerminalIngredientSupply {
 
     /** Small recipe areas consume their physical inputs first and draw any missing ingredients directly from ME. */
     public static Result supplyFromNetwork(ServerPlayer player, TerminalPlayerState state,
-                                          @Nullable TerminalConnection connection, ObjectList<Target> targets) {
+                                           @Nullable TerminalConnection connection, ObjectList<Target> targets) {
         return new TerminalIngredientSupply(player, state, connection, targets, false).run();
     }
 

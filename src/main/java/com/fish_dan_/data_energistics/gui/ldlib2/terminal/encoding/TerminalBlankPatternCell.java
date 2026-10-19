@@ -8,7 +8,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
-import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;
@@ -53,7 +52,6 @@ public final class TerminalBlankPatternCell extends Button {
     @Override
     protected void onMouseDown(UIEvent event) {
         if (!isActive() || event.button < 0 || event.button > 2) return;
-        UISoundUtils.playButtonClickSound();
         setButtonState(State.PRESSED);
         click.handleEvent(event);
     }

@@ -8,7 +8,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
-import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;
@@ -86,7 +85,6 @@ public final class TerminalResourceCell extends Button {
     @Override
     protected void onMouseDown(UIEvent event) {
         if (!isActive() || event.button < 0 || event.button > (storageCell || configurable ? 2 : 1)) return;
-        UISoundUtils.playButtonClickSound();
         setButtonState(State.PRESSED);
         if (resourceClick != null) resourceClick.handleEvent(event);
     }

@@ -12,6 +12,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 
@@ -258,7 +259,7 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical storageScrollbar() {
-        Scroller.Vertical scrollbar = named(new Scroller.Vertical(), "storage_scroll", "terminal-storage-scroll");
+        Scroller.Vertical scrollbar = named(silentScrollbar(new Scroller.Vertical()), "storage_scroll", "terminal-storage-scroll");
         scrollbar.headButton.setDisplay(false);
         scrollbar.tailButton.setDisplay(false);
         scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
@@ -278,7 +279,7 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical processingScrollbar() {
-        Scroller.Vertical scrollbar = named(new Scroller.Vertical(), "pattern_scroll", "terminal-pattern-scroll");
+        Scroller.Vertical scrollbar = named(silentScrollbar(new Scroller.Vertical()), "pattern_scroll", "terminal-pattern-scroll");
         scrollbar.headButton.setDisplay(false);
         scrollbar.tailButton.setDisplay(false);
         scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
@@ -288,12 +289,20 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical stonecuttingScrollbar() {
-        Scroller.Vertical scrollbar = named(new Scroller.Vertical(), "recipe_scroll", "terminal-stonecutting-scroll");
+        Scroller.Vertical scrollbar = named(silentScrollbar(new Scroller.Vertical()), "recipe_scroll", "terminal-stonecutting-scroll");
         scrollbar.headButton.setDisplay(false);
         scrollbar.tailButton.setDisplay(false);
         scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
         scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
         scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        return scrollbar;
+    }
+
+    /** Configure a newly constructed scroller once: AE scroll thumbs do not play button sounds. */
+    public static <T extends Scroller> T silentScrollbar(T scrollbar) {
+        // LDLib2 prepends listeners: the original Button press handler follows the scroller's drag handler.
+        var thumb = scrollbar.scrollBar;
+        thumb.removeEventListener(UIEvents.MOUSE_DOWN, thumb.getBubbleListeners(UIEvents.MOUSE_DOWN).getLast());
         return scrollbar;
     }
 

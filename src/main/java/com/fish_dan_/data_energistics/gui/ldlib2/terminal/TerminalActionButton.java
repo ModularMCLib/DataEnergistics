@@ -43,7 +43,6 @@ public final class TerminalActionButton extends Button {
 
     /** Used by window handles whose click is resolved on release, after distinguishing a drag. */
     public void press() {
-        UISoundUtils.playButtonClickSound();
         setButtonState(State.PRESSED);
     }
 
@@ -56,6 +55,7 @@ public final class TerminalActionButton extends Button {
     @Override
     protected void onMouseDown(UIEvent event) {
         if (!isActive() || event.button < 0 || event.button > 1) return;
+        UISoundUtils.playButtonClickSound();
         press();
         if (action != null) action.handleEvent(event);
     }

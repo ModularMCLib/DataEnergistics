@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 
 import net.minecraft.client.renderer.Rect2i;
 
@@ -85,7 +86,10 @@ public final class TerminalSubWindow {
         if (!pressed) return false;
         boolean clicked = !dragging && overHandle(pointerX, pointerY);
         cancelDrag();
-        if (clicked) close.run();
+        if (clicked) {
+            UISoundUtils.playButtonClickSound();
+            close.run();
+        }
         return true;
     }
 

@@ -65,6 +65,8 @@ public final class TerminalPatternUploadUi {
         rename.addClass("terminal-field");
         rename.setText("", false);
         rename.setTextRegexValidator(".{0,50}");
+        TerminalUiLayout.silentScrollbar(list.verticalScroller);
+        TerminalUiLayout.silentScrollbar(list.horizontalScroller);
         list.viewPort.layout(layout -> layout.paddingAll(0));
         list.viewPort.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
         list.viewContainer.layout(layout -> layout.widthPercent(100).paddingAll(0));

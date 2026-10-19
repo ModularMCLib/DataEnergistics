@@ -38,12 +38,14 @@ import appeng.core.localization.GuiText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -562,7 +564,10 @@ public final class TerminalOverlayUi {
                     if (selected < snapshot.getInt("recipe_count")) request.accept("cut", number("index", selected));
                 } else if (event.button == 1) {
                     int selected = stonecuttingScrollRow * 4 + index;
-                    if (selected < snapshot.getInt("recipe_count")) request.accept("recipe", number("index", selected));
+                    if (selected < snapshot.getInt("recipe_count")) {
+                        request.accept("recipe", number("index", selected));
+                        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
+                    }
                 }
             });
             setStonecuttingScrollRow(stonecuttingScrollRow, true);

@@ -28,7 +28,7 @@ public final class TerminalKeyTypeUi {
     private final KeyTypeSelection selection;
     private final UIElement viewport = new UIElement();
     private final UIElement content = new UIElement();
-    private final Scroller.Vertical scrollbar = new Scroller.Vertical();
+    private final Scroller.Vertical scrollbar = TerminalUiLayout.silentScrollbar(new Scroller.Vertical());
     private final Object2ObjectLinkedOpenHashMap<AEKeyType, TerminalActionButton> rows = new Object2ObjectLinkedOpenHashMap<>();
     private int width;
     private int height;

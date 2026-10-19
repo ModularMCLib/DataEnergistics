@@ -84,7 +84,7 @@
 .anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
 .anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png); }
 .anvil-boost-step:disabled .terminal-glyph { background: #00000000; }
-.terminal-popup { background: group(#FFCCCDD6, border(1, #FFF0F0F3)); z-index: 600; }
+.terminal-popup { background: sprite(data_energistics:textures/guis/digital_panel.png, 0, 0, 256, 256, 2, 2, 2, 2); z-index: 600; }
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
 .icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
@@ -142,7 +142,6 @@
 }
 .icon-previous { background: sprite(data_energistics:textures/guis/front.png); }
 .icon-next { background: sprite(data_energistics:textures/guis/back.png); }
-.terminal-amount-popup { background: sprite(data_energistics:textures/guis/priority/home.png); }
 .terminal-amount-popup .terminal-label, .terminal-amount-step .__button_text__ { font-size: 9; }
 .terminal-amount-popup .terminal-field { font-size: 9; }
 .terminal-amount-step {

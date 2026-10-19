@@ -67,6 +67,13 @@ public final class PatternUploadUi {
         search.setText("", false);
         search.textFieldStyle(style -> style.placeholder(text("search")));
         search.setTextResponder(value -> rebuildPending = true);
+        search.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            if (event.button == 1) {
+                search.setText("");
+                search.focus();
+                event.stopPropagation();
+            }
+        });
         scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
         scrollbar.setOnValueChanged(value -> viewportPending = true);
         list.addClass("terminal-upload-list");

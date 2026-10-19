@@ -23,13 +23,14 @@
     background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png);
     focus-overlay: border(1, #FF9AD8FF);
 }
-.terminal-field:focus { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
+.terminal-field:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
 .terminal-search-field {
     background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png), border(-1, #FFF2F2F2));
     focus-overlay: border(-1, #FFF2F2F2);
 }
-.terminal-search-field:focus {
+.terminal-search-field:focused {
     background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png), border(-1, #FFF2F2F2));
+    focus-overlay: border(1, #FF343548);
 }
 .terminal-control {
     background: #00000000;
@@ -187,7 +188,7 @@
 .terminal-amount-popup .terminal-amount-unit { text-color: #FFFFFFFF; }
 .terminal-amount-step .__button_text__ { font-size: 9; text-color: #FFE0E0E0; text-shadow: true; }
 .terminal-amount-popup .terminal-field { font-size: 9; background: #00000000; focus-overlay: #00000000; }
-.terminal-amount-popup .terminal-field:focus { background: #00000000; }
+.terminal-amount-popup .terminal-field:focused { background: #00000000; }
 .terminal-amount-input-frame {
     background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
 }
@@ -219,11 +220,12 @@
 .terminal-upload-count { horizontal-align: right; adaptive-width: true; }
 .terminal-upload-popup .terminal-upload-name {
     background: #00000000;
-    focus-overlay: border(-1, #FF9AD8FF);
+    focus-overlay: border(-1, #FFF2F2F2);
     horizontal-align: left;
 }
-.terminal-upload-popup .terminal-upload-name:focus {
-    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1);
+.terminal-upload-popup .terminal-upload-name:focused {
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
+    focus-overlay: border(1, #FF343548);
 }
 .terminal-upload-list, .terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }
 

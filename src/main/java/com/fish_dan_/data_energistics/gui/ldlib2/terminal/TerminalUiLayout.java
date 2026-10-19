@@ -144,10 +144,10 @@ public final class TerminalUiLayout {
                         pageAt(processingScrollbar(), 2, 2, 6, 54), TerminalProcessingControlsUi.create());
             }
         } else {
-            root.addChild(pageAt(field("name"), 3, 5, 96, 10));
+            root.addChild(pageAt(field("name"), 3, 4, 96, 10));
             actions.addChildren(pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 5, 14, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
                     pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 5, 30, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE));
-            Label status = pageAt(label("anvil_status"), 3, 43, 96, 10);
+            Label status = pageAt(label("anvil_status"), 3, 42, 96, 10);
             status.addClass("anvil-status");
             status.setText(Component.translatable("gui.data_energistics.me_digital_anvil.invalid"));
             status.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));

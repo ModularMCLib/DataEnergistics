@@ -1,0 +1,41 @@
+{
+	"type": "data_energistics:data_reassembler",
+	"inputs": {
+		"items": [
+			{
+				"item": "ae2:crafting_terminal"
+			},
+			{
+				"item": "ae2:chest"
+			},
+			{
+				"item": "ae2:controller"
+			},
+			{
+				"item": "data_energistics:complexified_biochips"
+			},
+			{
+				"item": "data_energistics:data_energy_cell"
+			},
+			{
+				"item": "data_energistics:digisidian_memorize_ingot",
+				"count": 4
+			},
+			{
+				"item": "ae2:spatial_pylon",
+				"count": 4
+			},
+			{
+				"item": "data_energistics:data_processor",
+				"count": 24
+			}
+		]
+	},
+	"outputs": {
+		"items": [
+			{
+				"id": "data_energistics:digital_transformation_research_station"
+			}
+		]
+	}
+}

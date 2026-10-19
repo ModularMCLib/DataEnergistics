@@ -193,5 +193,6 @@ public final class TerminalPinnedResourcesUi {
     private void position(TerminalResourceCell cell, int index) {
         TerminalUiLayout.at(cell, index % columns * TerminalViewportLayout.CELL_SIZE, index / columns * TerminalViewportLayout.CELL_SIZE,
                 TerminalViewportLayout.CELL_SIZE, TerminalViewportLayout.CELL_SIZE);
+        cell.gridOutline(index < columns, index % columns == columns - 1, false, index % columns == 0);
     }
 }

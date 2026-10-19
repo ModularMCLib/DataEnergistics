@@ -73,6 +73,7 @@
     hover-background: group(#6693FFDE, border(1, #FF57E0BB));
     pressed-background: #8893FFDE;
 }
+.terminal-grid-edge { background: #FFF2F2F2; }
 .blank-pattern .terminal-cell, .encoded-pattern .terminal-cell {
     background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FF696D88));
 }

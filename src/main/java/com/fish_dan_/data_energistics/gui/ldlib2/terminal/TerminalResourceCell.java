@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
@@ -33,6 +34,8 @@ public final class TerminalResourceCell extends Button {
     private boolean storageCell;
     private @Nullable UIEventListener resourceClick;
     private @Nullable Component actionHint;
+    private @Nullable UIElement gridOutline;
+    private int outlineEdges;
 
     public TerminalResourceCell() {
         addClass("terminal-cell");
@@ -72,6 +75,30 @@ public final class TerminalResourceCell extends Button {
 
     public void storageCell(boolean value) {
         storageCell = value;
+    }
+
+    /** Updates the exposed grid edges when viewport geometry changes; the middle texture supplies cell separators. */
+    public void gridOutline(boolean top, boolean right, boolean bottom, boolean left) {
+        int edges = (top ? 1 : 0) | (right ? 2 : 0) | (bottom ? 4 : 0) | (left ? 8 : 0);
+        if (outlineEdges == edges) return;
+        outlineEdges = edges;
+        if (gridOutline == null) {
+            gridOutline = TerminalUiLayout.at(new UIElement(), 0, 0, 18, 18);
+            gridOutline.setAllowHitTest(false);
+            addChild(gridOutline);
+        }
+        gridOutline.clearAllChildren();
+        if (top) gridOutline.addChild(gridEdge(0, 0, 18, 1));
+        if (right) gridOutline.addChild(gridEdge(17, 0, 1, 18));
+        if (bottom) gridOutline.addChild(gridEdge(0, 17, 18, 1));
+        if (left) gridOutline.addChild(gridEdge(0, 0, 1, 18));
+    }
+
+    private static UIElement gridEdge(int x, int y, int width, int height) {
+        UIElement edge = TerminalUiLayout.at(new UIElement(), x, y, width, height);
+        edge.addClass("terminal-grid-edge");
+        edge.setAllowHitTest(false);
+        return edge;
     }
 
     public void onResourceClick(UIEventListener listener) {

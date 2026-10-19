@@ -53,6 +53,8 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
 
 import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -693,10 +695,19 @@ public final class TerminalOverlayUi {
             fillStorage();
         }
         if (gridChanged) {
+            int columns = viewport.columns();
+            IntSet occupied = new IntOpenHashSet(viewport.cellCount());
+            for (TerminalViewportLayout.Cell cell : viewport.cells()) occupied.add(cell.row() * columns + cell.column());
             for (int index = 0; index < storage.size(); index++) {
                 TerminalViewportLayout.Cell cell = viewport.cells().get(index);
                 TerminalUiLayout.at(storage.get(index), cell.column() * TerminalViewportLayout.CELL_SIZE,
                         cell.row() * TerminalViewportLayout.CELL_SIZE, TerminalViewportLayout.CELL_SIZE, TerminalViewportLayout.CELL_SIZE);
+                int position = cell.row() * columns + cell.column();
+                storage.get(index).gridOutline(
+                        cell.row() == 0 || cell.row() > viewport.pinnedRows() && !occupied.contains(position - columns),
+                        cell.column() == columns - 1 || !occupied.contains(position + 1),
+                        !occupied.contains(position + columns),
+                        cell.column() == 0 || !occupied.contains(position - 1));
             }
             positionedStorage = viewport.cells();
         }

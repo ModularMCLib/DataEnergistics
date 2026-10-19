@@ -155,7 +155,6 @@ public final class TerminalResourceCell extends Button {
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
         if (dragPreview != null) context.graphics.fill(0, 0, 16, 16, 0x80FFFFFF);
-        context.pose.translate(0, -1, 0);
         AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, display.what());
         boolean craftingLabel = craftable && (craftableOnly || display.amount() <= 0);
         if (display.amount() != 1 || craftable) {
@@ -177,7 +176,6 @@ public final class TerminalResourceCell extends Button {
         if (stack == null) {
             Icon.BACKGROUND_ENCODED_PATTERN.getBlitter().dest(0, 0).blit(context.graphics);
         } else if (stack.what() instanceof AEItemKey itemKey) {
-            context.pose.translate(0, -1, 0);
             ItemStack display = itemKey.toStack();
             if (display.getItem() instanceof EncodedPatternItem<?> pattern) {
                 ItemStack output = pattern.getOutput(display);

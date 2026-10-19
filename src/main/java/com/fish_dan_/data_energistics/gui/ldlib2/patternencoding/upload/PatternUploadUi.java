@@ -69,7 +69,7 @@ public final class PatternUploadUi {
         encoded.encodedPattern();
         encoded.addClass("terminal-upload-pattern");
         encoded.setAllowHitTest(false);
-        root.addChildren(TerminalUiLayout.at(encoded, 5, 20, 18, 18), TerminalUiLayout.at(search, 28, 22, 90, 14),
+        root.addChildren(TerminalUiLayout.at(encoded, 5, 19, 18, 18), TerminalUiLayout.at(search, 28, 22, 90, 14),
                 TerminalUiLayout.at(status, 121, 20, 64, 18), TerminalUiLayout.at(list, 5, 42, 180, 138));
     }
 

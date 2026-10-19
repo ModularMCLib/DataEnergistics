@@ -92,22 +92,22 @@ public final class TerminalUiLayout {
         UIElement result = element("result", "page-result");
         switch (mode) {
             case CRAFTING -> {
-                pageAt(inputs, 3, 2, 54, 54);
-                pageAt(result, 84, 20, 18, 18);
+                pageAt(inputs, 3, 1, 54, 54);
+                pageAt(result, 84, 19, 18, 18);
             }
             case PROCESSING -> {
                 UIElement surface = at(element("processing_surface", "terminal-processing-surface"), 1, 1, 82, 56);
                 surface.setAllowHitTest(false);
                 root.addChild(surface);
-                pageAt(inputs, 9, 2, 54, 54);
-                pageAt(result, 64, 20, 18, 18);
+                pageAt(inputs, 9, 1, 54, 54);
+                pageAt(result, 64, 19, 18, 18);
             }
             case SMITHING -> {
-                pageAt(inputs, 3, 20, 54, 18);
-                pageAt(result, 84, 20, 18, 18);
+                pageAt(inputs, 3, 19, 54, 18);
+                pageAt(result, 84, 19, 18, 18);
             }
             case STONECUTTING -> {
-                pageAt(inputs, 2, 20, 18, 18);
+                pageAt(inputs, 2, 19, 18, 18);
                 UIElement frame = pageAt(element("recipes_frame", "stonecutting-recipes-frame"), 21, 6, 85, 46);
                 frame.setAllowHitTest(false);
                 UIElement recipes = element("recipes", "stonecutting-recipes");
@@ -115,21 +115,21 @@ public final class TerminalUiLayout {
                 root.addChildren(frame, pageAt(recipes, 23, 6, 80, 44), pageAt(stonecuttingScrollbar(), 107, 6, 6, 46));
             }
             case ANVIL -> {
-                pageAt(inputs, 3, 20, 54, 18);
-                pageAt(result, 78, 20, 18, 18);
+                pageAt(inputs, 3, 19, 54, 18);
+                pageAt(result, 78, 19, 18, 18);
             }
         }
         UIElement outputs = element("outputs", "page-outputs");
         outputs.setOverflowVisible(false);
         outputs.setVisible(mode != TerminalWorkspace.STONECUTTING);
-        root.addChildren(inputs, pageAt(outputs, 84, 2, 18, 54));
-        if (mode == TerminalWorkspace.PROCESSING) pageAt(outputs, 96, 2, 18, 54);
+        root.addChildren(inputs, pageAt(outputs, 84, 1, 18, 54));
+        if (mode == TerminalWorkspace.PROCESSING) pageAt(outputs, 96, 1, 18, 54);
         if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) root.addChild(result);
         UIElement actions = at(element("page_actions", "terminal-page-actions"), width, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
         if (mode.supportsEncoding()) {
-            actions.addChildren(at(element("blank_pattern", "blank-pattern"), 3, 2, 18, 18),
+            actions.addChildren(at(element("blank_pattern", "blank-pattern"), 3, 1, 18, 18),
                     icon("encoding", "terminal-encode", "icon-encoding", 5, 22, 14, 14),
-                    at(element("encoded", "encoded-pattern"), 3, 38, 18, 18));
+                    at(element("encoded", "encoded-pattern"), 3, 37, 18, 18));
             if (mode == TerminalWorkspace.CRAFTING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 60, 2, 8, 8),
                         pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 70, 2, 8, 8),

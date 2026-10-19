@@ -131,7 +131,7 @@ public final class TerminalAmountUi {
                 toolbarSurface("terminal-amount-toolbar-middle", 3, 15, 10),
                 toolbarSurface("terminal-amount-toolbar-bottom", 13, 12, 3),
                 TerminalUiLayout.at(match, 3, 3, 10, 10));
-        root.addChildren(TerminalUiLayout.at(resource, 22, 52, 18, 18), TerminalUiLayout.at(value, 48, 55, 66, 12),
+        root.addChildren(TerminalUiLayout.at(resource, 22, 51, 18, 18), TerminalUiLayout.at(value, 48, 55, 66, 12),
                 TerminalUiLayout.at(unit, 102, 55, 12, 12), TerminalUiLayout.at(confirm, 120, 51, 38, 20),
                 TerminalUiLayout.at(toolbar, -12, 0, 15, 16));
         root.addEventListener(UIEvents.TICK, event -> {

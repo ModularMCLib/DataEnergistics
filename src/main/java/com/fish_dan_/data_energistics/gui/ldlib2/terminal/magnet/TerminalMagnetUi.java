@@ -78,7 +78,7 @@ public final class TerminalMagnetUi {
     private static UIElement grid(String id, int top) {
         UIElement frame = TerminalUiLayout.at(new UIElement(), 5, top, 166, 58);
         frame.addClass("terminal-filter-frame");
-        UIElement cells = TerminalUiLayout.at(new UIElement(), 2, 2, 162, 54);
+        UIElement cells = TerminalUiLayout.at(new UIElement(), 2, 1, 162, 54);
         cells.setId(id);
         frame.addChild(cells);
         return frame;

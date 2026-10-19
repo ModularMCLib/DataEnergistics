@@ -373,8 +373,8 @@ public final class TerminalOverlayUi {
     }
 
     private int maximumStonecuttingScrollRow() {
-        int totalRows = (snapshot.getInt("recipe_count") + 3) / 4;
-        return Math.max(0, totalRows - 2);
+        int totalRows = (snapshot.getInt("recipe_count") + TerminalStonecuttingRecipeCell.COLUMNS - 1) / TerminalStonecuttingRecipeCell.COLUMNS;
+        return Math.max(0, totalRows - TerminalStonecuttingRecipeCell.ROWS);
     }
 
     private void boost(int direction) {
@@ -601,10 +601,11 @@ public final class TerminalOverlayUi {
             UIElement recipes = element(root, "recipes");
             recipes.clearAllChildren();
             stonecuttingRecipes.clear();
-            for (int index = 0; index < 8; index++) {
+            for (int index = 0; index < TerminalStonecuttingRecipeCell.COLUMNS * TerminalStonecuttingRecipeCell.ROWS; index++) {
                 int slot = index;
                 TerminalStonecuttingRecipeCell cell = TerminalUiLayout.at(new TerminalStonecuttingRecipeCell(event -> stonecuttingRecipeClick(slot, event)),
-                        index % 4 * TerminalStonecuttingRecipeCell.WIDTH, index / 4 * TerminalStonecuttingRecipeCell.HEIGHT,
+                        index % TerminalStonecuttingRecipeCell.COLUMNS * TerminalStonecuttingRecipeCell.WIDTH,
+                        index / TerminalStonecuttingRecipeCell.COLUMNS * TerminalStonecuttingRecipeCell.HEIGHT,
                         TerminalStonecuttingRecipeCell.WIDTH, TerminalStonecuttingRecipeCell.HEIGHT);
                 stonecuttingRecipes.add(cell);
                 recipes.addChild(cell);
@@ -623,7 +624,7 @@ public final class TerminalOverlayUi {
         recipes.sort(Comparator.comparing(recipe -> recipe.id().toString()));
         int selected = snapshot.getCompound("work").getInt("recipe");
         setStonecuttingScrollRow(stonecuttingScrollRow, true);
-        int first = stonecuttingScrollRow * 4;
+        int first = stonecuttingScrollRow * TerminalStonecuttingRecipeCell.COLUMNS;
         for (int index = 0; index < stonecuttingRecipes.size(); index++) {
             ItemStack output = first + index < recipes.size() ? recipes.get(first + index).value().assemble(recipeInput, registries) : ItemStack.EMPTY;
             stonecuttingRecipes.get(index).entry(output, first + index == selected && !output.isEmpty());
@@ -631,7 +632,7 @@ public final class TerminalOverlayUi {
     }
 
     private void stonecuttingRecipeClick(int index, UIEvent event) {
-        int selected = stonecuttingScrollRow * 4 + index;
+        int selected = stonecuttingScrollRow * TerminalStonecuttingRecipeCell.COLUMNS + index;
         if (selected >= snapshot.getInt("recipe_count")) return;
         if (event.button == 0) request.accept("cut", number("index", selected));
         else if (event.button == 1) {

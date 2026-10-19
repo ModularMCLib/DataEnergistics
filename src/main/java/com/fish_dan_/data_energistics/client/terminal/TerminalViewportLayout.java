@@ -20,7 +20,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     public static final int OPERATION_WIDTH = 108;
     public static final int OPERATION_HEIGHT = 58;
     public static final int PROCESSING_WIDTH = 124;
-    public static final int STONECUTTING_WIDTH = 116;
+    public static final int STONECUTTING_WIDTH = PROCESSING_WIDTH;
     public static final int ENCODING_WIDTH = 24;
     private static final int COLUMN_FIT_TOLERANCE = 2;
     private static final int FRAME_WIDTH = STORAGE_LEFT + TAB_WIDTH + ENCODING_WIDTH;
@@ -45,7 +45,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
             for (int column = 0; column < columns; column++) {
                 int left = STORAGE_LEFT + column * CELL_SIZE;
                 int top = STORAGE_TOP + row * CELL_SIZE;
-                if (folded || left + CELL_SIZE <= operationLeft || left >= operationLeft + operationWidth ||
+                if (folded || left + CELL_SIZE <= operationLeft - 1 || left >= operationLeft + operationWidth + 1 ||
                         top + CELL_SIZE <= operationTop || top >= operationTop + OPERATION_HEIGHT)
                     cells.add(new Cell(column, row));
             }

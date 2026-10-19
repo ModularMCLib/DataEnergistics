@@ -22,7 +22,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class TerminalStonecuttingRecipeCell extends Button {
 
-    public static final int WIDTH = 20;
+    public static final int COLUMNS = 5;
+    public static final int ROWS = 2;
+    public static final int WIDTH = 18;
     public static final int HEIGHT = 22;
 
     private final UIEventListener click;
@@ -63,7 +65,7 @@ public final class TerminalStonecuttingRecipeCell extends Button {
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
         super.drawBackgroundAdditional(context);
-        int x = Math.round(getContentX()) + 2;
+        int x = Math.round(getContentX()) + (WIDTH - 16) / 2;
         int y = Math.round(getContentY()) + (selected || getState() != State.DEFAULT ? 2 : 1);
         context.pose.pushPose();
         TerminalResourceDepth.flatten(context);

@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 
 import com.lowdragmc.lowdraglib2.gui.ui.Style;
@@ -87,9 +88,18 @@ public final class TerminalUiLayout {
 
     public static UIElement page(TerminalWorkspace mode) {
         int width = pageWidth(mode);
-        UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, width, 58);
+        UIElement root = at(element(mode.id(), "terminal-page"), mode == TerminalWorkspace.PROCESSING ? 0 : 1, 0, width, 58);
         root.setOverflowVisible(true);
         root.addClass("page-" + mode.id());
+        UIElement background = at(element("page_surface", "terminal-page-surface"), -1, 0, width + 2, 58);
+        background.setAllowHitTest(false);
+        root.addChild(background);
+        if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) {
+            // Preserve the supplied slot and arrow pixels while extending only the outer frame.
+            UIElement art = at(element("page_art", "terminal-page-art"), 1, 1, width - 2, 56);
+            art.setAllowHitTest(false);
+            root.addChild(art);
+        }
         UIElement inputs = element("inputs", "page-inputs");
         inputs.setOverflowVisible(false);
         UIElement result = element("result", "page-result");
@@ -110,12 +120,14 @@ public final class TerminalUiLayout {
                 pageAt(result, 84, 19, 18, 18);
             }
             case STONECUTTING -> {
+                int recipesWidth = TerminalStonecuttingRecipeCell.COLUMNS * TerminalStonecuttingRecipeCell.WIDTH;
                 pageAt(inputs, 2, 19, 18, 18);
-                UIElement frame = pageAt(element("recipes_frame", "stonecutting-recipes-frame"), 21, 6, 85, 46);
+                UIElement frame = pageAt(element("recipes_frame", "stonecutting-recipes-frame"), 21, 6, recipesWidth + 5, 46);
                 frame.setAllowHitTest(false);
                 UIElement recipes = element("recipes", "stonecutting-recipes");
                 recipes.setOverflowVisible(false);
-                root.addChildren(frame, pageAt(recipes, 23, 6, 80, 44), pageAt(stonecuttingScrollbar(), 107, 6, 6, 46));
+                root.addChildren(frame, pageAt(recipes, 23, 6, recipesWidth, TerminalStonecuttingRecipeCell.ROWS * TerminalStonecuttingRecipeCell.HEIGHT),
+                        pageAt(stonecuttingScrollbar(), 27 + recipesWidth, 6, 6, 46));
             }
             case ANVIL -> {
                 pageAt(inputs, 3, 19, 54, 18);

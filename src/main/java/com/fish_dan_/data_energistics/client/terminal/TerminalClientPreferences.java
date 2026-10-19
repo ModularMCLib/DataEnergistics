@@ -27,6 +27,9 @@ public final class TerminalClientPreferences {
     public boolean folded = true;
     public boolean open = true;
     public boolean shiftClickToNetwork;
+    public String sort = "name";
+    public String filter = "all";
+    public boolean descending;
     public final ObjectOpenHashSet<String> disabledKeyTypes = new ObjectOpenHashSet<>();
 
     public static TerminalClientPreferences load() {
@@ -41,6 +44,9 @@ public final class TerminalClientPreferences {
             value.folded = json.get("folded").getAsBoolean();
             if (json.has("open")) value.open = json.get("open").getAsBoolean();
             if (json.has("shift_click_to_network")) value.shiftClickToNetwork = json.get("shift_click_to_network").getAsBoolean();
+            if (json.has("sort")) value.sort = json.get("sort").getAsString();
+            if (json.has("filter")) value.filter = json.get("filter").getAsString();
+            if (json.has("descending")) value.descending = json.get("descending").getAsBoolean();
             if (json.has("disabled_key_types")) {
                 for (var type : json.getAsJsonArray("disabled_key_types")) value.disabledKeyTypes.add(type.getAsString());
             }
@@ -59,6 +65,9 @@ public final class TerminalClientPreferences {
         json.addProperty("folded", folded);
         json.addProperty("open", open);
         json.addProperty("shift_click_to_network", shiftClickToNetwork);
+        json.addProperty("sort", sort);
+        json.addProperty("filter", filter);
+        json.addProperty("descending", descending);
         JsonArray disabledTypes = new JsonArray();
         disabledKeyTypes.stream().sorted().forEach(disabledTypes::add);
         json.add("disabled_key_types", disabledTypes);

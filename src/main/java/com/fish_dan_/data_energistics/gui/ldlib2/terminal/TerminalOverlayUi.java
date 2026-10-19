@@ -117,8 +117,8 @@ public final class TerminalOverlayUi {
             TerminalViewportLayout.OPERATION_WIDTH + TerminalViewportLayout.ENCODING_WIDTH, 0, 0);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
-    private String sort = "name";
-    private String filter = "all";
+    private String sort;
+    private String filter;
     private boolean descending;
     private int offset;
     private @Nullable CompoundTag previousMagnet;
@@ -145,6 +145,9 @@ public final class TerminalOverlayUi {
     public TerminalOverlayUi(TerminalClientPreferences preferences, BiConsumer<String, CompoundTag> request, Runnable openLargeTerminal) {
         this.preferences = preferences;
         this.request = request;
+        sort = preferences.sort;
+        filter = preferences.filter;
+        descending = preferences.descending;
         visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
         keyTypeSelection = new KeyTypeSelection(this::keyTypesChanged, ignored -> true);
@@ -194,10 +197,14 @@ public final class TerminalOverlayUi {
                 case "amount" -> "mod";
                 default -> "name";
             };
+            preferences.sort = sort;
+            preferences.save();
             view(true);
         });
         button(window, "direction", () -> {
             descending = !descending;
+            preferences.descending = descending;
+            preferences.save();
             view(true);
         });
         button(window, "display", () -> {
@@ -206,6 +213,8 @@ public final class TerminalOverlayUi {
                 case "stored" -> "craftable";
                 default -> "all";
             };
+            preferences.filter = filter;
+            preferences.save();
             view(true);
         });
         button(window, "type", () -> open("key_types"));

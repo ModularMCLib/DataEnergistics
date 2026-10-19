@@ -140,7 +140,7 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
     public static void click(ScreenEvent.MouseButtonPressed.Pre event) {
         PatternEncodingUploadClient upload = active(event.getScreen());
         if (upload == null || upload.window == null || TerminalOverlayClient.contains(event.getScreen(), event.getMouseX(), event.getMouseY())) return;
-        if (event.getButton() == 1 && Screen.hasShiftDown() && upload.window.overHandle(event.getMouseX(), event.getMouseY())) {
+        if (event.getButton() == 0 && Screen.hasShiftDown() && upload.window.overHandle(event.getMouseX(), event.getMouseY())) {
             PatternEncodingPreferencesClient.setPreviewPanelPinned(upload.menu, !PatternEncodingPreferencesClient.isPreviewPanelPinned());
             event.setCanceled(true);
         } else if (upload.window.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) event.setCanceled(true);

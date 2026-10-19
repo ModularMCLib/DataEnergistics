@@ -56,7 +56,7 @@ public final class PatternUploadWindow {
         root.addChild(popup);
         TerminalUiLayout.require(popup, "popup_title", Label.class).setText(Component.translatable("gui.data_energistics.player_terminal.upload"));
         TerminalUiLayout.require(popup, "close", UIElement.class).style(style -> style.tooltips(TerminalTooltipLines.split(
-                Component.translatable("gui.data_energistics.player_terminal.close"), Component.translatable("gui.data_energistics.player_terminal.hold_to_drag"))));
+                Component.translatable("screen.data_energistics.pattern_writer_preview.drag_handle"))));
         ui = new ModularUI(UI.of(root, ObjectImmutableList.of(TerminalUiLayout.stylesheet())), player);
     }
 

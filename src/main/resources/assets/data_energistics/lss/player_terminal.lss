@@ -61,6 +61,11 @@
 .terminal-scrollbar.inactive-scroll .__scroller_scroll_bar__, .terminal-scrollbar .__scroller_scroll_bar__:disabled {
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/slider_2.png);
 }
+.terminal-pattern-scroll .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+}
 .terminal-pattern-scroll .__scroller_scroll_container__, .terminal-stonecutting-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-cell {
     background: sprite(data_energistics:textures/guis/backpack/middle.png);

@@ -285,7 +285,14 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical processingScrollbar() {
-        return named(verticalScrollbar(new Scroller.Vertical()), "pattern_scroll", "terminal-pattern-scroll");
+        Scroller.Vertical scrollbar = named(new Scroller.Vertical(), "pattern_scroll", "terminal-pattern-scroll");
+        silentScrollbar(scrollbar);
+        scrollbar.headButton.setDisplay(false);
+        scrollbar.tailButton.setDisplay(false);
+        scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
+        scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
+        scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        return scrollbar;
     }
 
     private static Scroller.Vertical stonecuttingScrollbar() {

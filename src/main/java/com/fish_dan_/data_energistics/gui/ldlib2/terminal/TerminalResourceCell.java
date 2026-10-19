@@ -126,7 +126,7 @@ public final class TerminalResourceCell extends Button {
 
     @Override
     protected void onMouseDown(UIEvent event) {
-        boolean pick = storageCell && event.button >= 0 && Minecraft.getInstance().options.keyPickItem.matchesMouse(event.button);
+        boolean pick = event.button >= 0 && Minecraft.getInstance().options.keyPickItem.matchesMouse(event.button);
         if (!isActive() || event.button < 0 || !pick && event.button > (storageCell || configurable ? 2 : 1)) return;
         setButtonState(State.PRESSED);
         if (resourceClick != null) resourceClick.handleEvent(event);

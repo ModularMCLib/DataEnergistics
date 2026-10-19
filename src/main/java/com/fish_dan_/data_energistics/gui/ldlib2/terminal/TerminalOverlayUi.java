@@ -52,6 +52,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -636,12 +637,15 @@ public final class TerminalOverlayUi {
     }
 
     private void slot(String inventory, int index, int button) {
+        boolean pick = Minecraft.getInstance().options.keyPickItem.matchesMouse(button);
+        if (!pick && (button < 0 || button > 1)) return;
         CompoundTag data = string("inventory", inventory);
         data.putString("workspace", workspace);
         data.putInt("index", index);
         data.putInt("button", button);
         data.putBoolean("shift", UIElement.isShiftDown());
         data.putBoolean("to_network", preferences.shiftClickToNetwork);
+        if (pick) data.putString("shortcut", "clone");
         request.accept("slot", data);
     }
 
@@ -654,13 +658,14 @@ public final class TerminalOverlayUi {
         };
         GenericStack entry = cells.get(index).stack();
         boolean processing = workspace.equals("processing") && (inventory.equals("inputs") || inventory.equals("outputs"));
+        boolean pick = Minecraft.getInstance().options.keyPickItem.matchesMouse(button);
         if (entry != null && (processing || inventory.equals("pickup") || inventory.equals("insert")) &&
-                (button == 2 && processing || button == 0 && UIElement.isShiftDown())) {
+                (pick && processing || button == 0 && UIElement.isShiftDown())) {
             amountUi.edit(inventory, index, entry, processing, snapshot.getCompound("work"));
             open("quantity", processing ? null : "filters");
             return;
         }
-        if (button == 2) return;
+        if (pick || button < 0 || button > 1) return;
         CompoundTag data = string("inventory", inventory);
         data.putInt("index", index);
         data.putInt("button", button);
@@ -1126,9 +1131,60 @@ public final class TerminalOverlayUi {
 
     /** Uses the player's rebound pick-item key while the cursor is over an unobstructed storage slot. */
     public boolean pickStorage(double x, double y) {
+        Target target = ghostDragTarget(x, y);
+        if (target != null && workspace.equals("processing") && (target.inventory().equals("inputs") || target.inventory().equals("outputs"))) {
+            GenericStack entry = (target.inventory().equals("inputs") ? inputs : outputs).get(target.index()).stack();
+            if (entry != null) {
+                amountUi.edit(target.inventory(), target.index(), entry, true, snapshot.getCompound("work"));
+                open("quantity");
+            }
+            return true;
+        }
         TerminalResourceCell cell = storageCellAt(x, y);
         if (cell == null) return false;
         storageInput.pick(cell.stack(), cell.craftable());
+        return true;
+    }
+
+    /** Slot-bound keyboard actions use the foreground target and never reach an obscured host slot. */
+    public boolean slotShortcut(double x, double y, int keyCode, int scanCode) {
+        if (!contains(x, y)) return false;
+        var options = Minecraft.getInstance().options;
+        String shortcut;
+        int hotbar = -1;
+        if (options.keyDrop.matches(keyCode, scanCode)) shortcut = "drop";
+        else if (options.keyPickItem.matches(keyCode, scanCode)) shortcut = "clone";
+        else {
+            if (options.keySwapOffhand.matches(keyCode, scanCode)) hotbar = Inventory.SLOT_OFFHAND;
+            else for (int slot = 0; slot < 9; slot++)
+                if (options.keyHotbarSlots[slot].matches(keyCode, scanCode)) {
+                    hotbar = slot;
+                    break;
+                }
+            if (hotbar < 0) return false;
+            shortcut = "swap";
+        }
+        int index = physicalInputAt(x, y);
+        String inventory = "inputs";
+        if (index < 0 && visible && !preferences.folded && !subWindows.contains(x, y)) {
+            inventory = "encoded";
+            for (int slot = 0; slot < encodedPatterns.size(); slot++)
+                if (over(encodedPatterns.get(slot), x, y)) {
+                    index = slot;
+                    break;
+                }
+        }
+        if (index >= 0) {
+            cancelSlotInput();
+            CompoundTag data = string("inventory", inventory);
+            data.putString("workspace", workspace);
+            data.putInt("index", index);
+            data.putString("shortcut", shortcut);
+            data.putInt("hotbar", hotbar);
+            data.putBoolean("all", UIElement.isCtrlDown());
+            data.putBoolean("to_network", preferences.shiftClickToNetwork);
+            request.accept("slot", data);
+        }
         return true;
     }
 

@@ -19,6 +19,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 import org.jspecify.annotations.Nullable;
@@ -40,8 +41,10 @@ public final class TerminalSlotActions {
             return "";
         SimpleContainer inventory = patterns ? state.work().patterns : state.work().inputs;
         int index = data.getInt("index");
+        if (index < 0 || index >= inventory.getContainerSize()) throw new IllegalArgumentException("Invalid terminal slot index");
+        if (data.contains("shortcut", Tag.TAG_STRING)) return shortcut(player, state, inventory, patterns, index, data, connection);
         int button = data.getInt("button");
-        if (index < 0 || index >= inventory.getContainerSize() || button < 0 || button > 1)
+        if (button < 0 || button > 1)
             throw new IllegalArgumentException("Invalid terminal slot click");
         ItemStack before = inventory.getItem(index).copy();
         ItemStack stack = inventory.getItem(index);
@@ -89,6 +92,50 @@ public final class TerminalSlotActions {
             }
         }
         inventory.setChanged();
+        if (!patterns) inputChanged(state, index, before);
+        return "";
+    }
+
+    private static String shortcut(ServerPlayer player, TerminalPlayerState state, SimpleContainer inventory, boolean patterns,
+                                   int index, CompoundTag data, @Nullable TerminalConnection connection) {
+        if (!player.containerMenu.getCarried().isEmpty()) return "";
+        ItemStack before = inventory.getItem(index).copy();
+        switch (data.getString("shortcut")) {
+            case "drop" -> {
+                if (!before.isEmpty()) player.drop(inventory.removeItem(index, data.getBoolean("all") ? before.getCount() : 1), true);
+            }
+            case "clone" -> {
+                if (player.getAbilities().instabuild && !before.isEmpty()) player.containerMenu.setCarried(before.copyWithCount(before.getMaxStackSize()));
+            }
+            case "swap" -> {
+                int hotbar = data.getInt("hotbar");
+                if (hotbar < 0 || hotbar > 8 && hotbar != Inventory.SLOT_OFFHAND)
+                    throw new IllegalArgumentException("Invalid terminal hotbar slot");
+                ItemStack replacement = player.getInventory().getItem(hotbar);
+                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(state.workspace(), index, replacement);
+                if (!replacement.isEmpty()) {
+                    if (patterns && !PatternDetailsHelper.isEncodedPattern(replacement)) return "";
+                    if (patterns) {
+                        String result = TerminalPatternImport.apply(player, state, replacement, connection, data.getBoolean("to_network"));
+                        if (!result.isEmpty()) return result;
+                        if (inventory != state.work().patterns) {
+                            inventory.setItem(index, ItemStack.EMPTY);
+                            inventory = state.work().patterns;
+                        }
+                    }
+                }
+                if (replacement.getCount() > maximum) {
+                    inventory.setItem(index, replacement.split(maximum));
+                    ItemStack returned = before.copy();
+                    if (!player.getInventory().add(returned) && !returned.isEmpty()) player.drop(returned, true);
+                } else {
+                    inventory.setItem(index, replacement);
+                    player.getInventory().setItem(hotbar, before);
+                }
+                player.getInventory().setChanged();
+            }
+            default -> throw new IllegalArgumentException("Unknown terminal slot shortcut");
+        }
         if (!patterns) inputChanged(state, index, before);
         return "";
     }

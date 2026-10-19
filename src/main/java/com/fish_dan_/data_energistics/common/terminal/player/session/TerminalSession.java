@@ -133,6 +133,13 @@ public final class TerminalSession {
         TerminalPlayerState state = runtime.state();
         message = "";
         lastAction = action;
+        if (TerminalCursorActions.usesCursor(action) && data.contains("creative_carried", Tag.TAG_COMPOUND)) {
+            if (!player.isCreative() || menu != player.inventoryMenu) throw new IllegalArgumentException("Creative cursor requires the creative inventory");
+            ItemStack carried = ItemStack.parseOptional(player.registryAccess(), data.getCompound("creative_carried"));
+            if (!carried.isItemEnabled(player.level().enabledFeatures()) || !carried.isEmpty() && carried.getCount() > carried.getMaxStackSize())
+                throw new IllegalArgumentException("Invalid creative terminal cursor");
+            menu.setCarried(carried);
+        }
         switch (action) {
             case "refresh" -> {}
             case "close" -> close();
@@ -243,13 +250,6 @@ public final class TerminalSession {
             message = "offline";
             return;
         }
-        if ((action.equals("storage") || action.equals("blank_pattern")) && data.contains("creative_carried", Tag.TAG_COMPOUND)) {
-            if (!player.isCreative() || menu != player.inventoryMenu) throw new IllegalArgumentException("Creative cursor requires the creative inventory");
-            ItemStack carried = ItemStack.parseOptional(player.registryAccess(), data.getCompound("creative_carried"));
-            if (!carried.isItemEnabled(player.level().enabledFeatures()) || !carried.isEmpty() && carried.getCount() > carried.getMaxStackSize())
-                throw new IllegalArgumentException("Invalid creative terminal cursor");
-            menu.setCarried(carried);
-        }
         switch (action) {
             case "storage" -> TerminalStorageActions.interact(player, runtime.state(), connection,
                     data.contains("key", Tag.TAG_COMPOUND) ? key(player, data) : null, InventoryAction.valueOf(data.getString("interaction")));
@@ -346,7 +346,7 @@ public final class TerminalSession {
         snapshot.putString("reason", connection == null ? "offline" : "online");
         snapshot.putString("message", message);
         snapshot.putString("action", lastAction);
-        if (lastAction.equals("storage") || lastAction.equals("blank_pattern"))
+        if (TerminalCursorActions.usesCursor(lastAction))
             snapshot.put("carried", menu.getCarried().saveOptional(player.registryAccess()));
         snapshot.putString("workspace", state.workspace().id());
         snapshot.putBoolean("substitutes", state.work().substitutes());

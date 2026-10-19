@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalCursorActions;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
@@ -419,9 +420,9 @@ public final class TerminalOverlayClient {
     private void send(String action, CompoundTag data) {
         if (valid()) {
             lastRequestTick = ticks;
-            if (action.equals("storage") || action.equals("blank_pattern")) {
+            if (TerminalCursorActions.usesCursor(action)) {
                 // Creative inventory gestures keep their cursor locally. Do not overwrite a preceding
-                // storage operation whose authoritative result has not reached the client yet.
+                // cursor operation whose authoritative result has not reached the client yet.
                 if (screen instanceof CreativeModeInventoryScreen && appliedSequence >= lastStorageRequest)
                     data.put("creative_carried", menu.getCarried().saveOptional(Minecraft.getInstance().player.registryAccess()));
                 lastStorageRequest = sequence + 1;
@@ -603,8 +604,12 @@ public final class TerminalOverlayClient {
             event.setCanceled(true);
             return;
         }
-        if (target.modularUi.getFocusedElement() == null && Minecraft.getInstance().options.keyPickItem.matches(event.getKeyCode(), event.getScanCode()) &&
+        if (!textInputFocused(target.modularUi) && Minecraft.getInstance().options.keyPickItem.matches(event.getKeyCode(), event.getScanCode()) &&
                 target.composition.pickStorage(target.overlay.mouseX, target.overlay.mouseY)) {
+            event.setCanceled(true);
+            return;
+        }
+        if (!textInputFocused(target.modularUi) && target.composition.slotShortcut(target.overlay.mouseX, target.overlay.mouseY, event.getKeyCode(), event.getScanCode())) {
             event.setCanceled(true);
             return;
         }

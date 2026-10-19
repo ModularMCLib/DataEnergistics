@@ -468,9 +468,10 @@ public final class TerminalOverlayUi {
         }
         UIElement active = workspaces.get(workspace);
         if (workspace.equals("stonecutting")) {
-            int selected = work.getInt("recipe");
-            if (selected < stonecuttingScrollRow * 4) setStonecuttingScrollRow(selected / 4, true);
-            else if (selected >= (stonecuttingScrollRow + 2) * 4) setStonecuttingScrollRow(selected / 4 - 1, true);
+            int selectedRow = work.getInt("recipe") / TerminalStonecuttingRecipeCell.COLUMNS;
+            if (selectedRow < stonecuttingScrollRow) setStonecuttingScrollRow(selectedRow, true);
+            else if (selectedRow >= stonecuttingScrollRow + TerminalStonecuttingRecipeCell.ROWS)
+                setStonecuttingScrollRow(selectedRow - TerminalStonecuttingRecipeCell.ROWS + 1, true);
             refreshStonecuttingRecipes();
         } else if (!workspace.equals("processing")) {
             TerminalResourceCell result = (TerminalResourceCell) element(active, "result").getChildren().getFirst();

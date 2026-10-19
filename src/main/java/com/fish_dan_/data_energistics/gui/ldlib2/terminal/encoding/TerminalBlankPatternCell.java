@@ -12,6 +12,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AmountFormat;
+import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
 import appeng.client.gui.me.common.StackSizeRenderer;
 import appeng.core.definitions.AEItems;
@@ -21,6 +22,7 @@ import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /** Network-backed blank-pattern display matching the injected AE terminal slot, without a local inventory. */
 @NullMarked
@@ -47,6 +49,13 @@ public final class TerminalBlankPatternCell extends Button {
     public void entry(long amount, boolean craftable) {
         this.amount = amount;
         this.craftable = craftable;
+    }
+
+    /**
+     * Exposes available or craftable patterns to native viewer shortcuts, while the empty background stays decorative.
+     */
+    public @Nullable GenericStack stack() {
+        return amount > 0 || craftable ? new GenericStack(KEY, amount) : null;
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNet
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlankPatternCell;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
@@ -270,14 +271,37 @@ public final class TerminalOverlayClient {
     public static @Nullable StackWithBounds stackUnderMouse(Screen screen, double mouseX, double mouseY) {
         InputTarget target = active(screen);
         if (target == null || !target.composition.contains(mouseX, mouseY)) return null;
-        for (UIElement focused = target.modularUi.getFocusedElement(); focused != null; focused = focused.getParent())
-            if (focused instanceof TextField) return null;
+        if (textInputFocused(target.modularUi)) return null;
         for (UIElement element = target.modularUi.hitTestAtScreen((float) mouseX, (float) mouseY); element != null; element = element.getParent()) {
-            if (element instanceof TerminalResourceCell cell && cell.stack() != null)
-                return new StackWithBounds(cell.stack(), new Rect2i(Math.round(cell.getPositionX()), Math.round(cell.getPositionY()),
-                        Math.round(cell.getSizeWidth()), Math.round(cell.getSizeHeight())));
+            GenericStack stack;
+            if (element instanceof TerminalResourceCell cell) stack = cell.stack();
+            else if (element instanceof TerminalBlankPatternCell cell) stack = cell.stack();
+            else continue;
+            if (stack != null)
+                return new StackWithBounds(stack, new Rect2i(Math.round(element.getPositionX()), Math.round(element.getPositionY()),
+                        Math.round(element.getSizeWidth()), Math.round(element.getSizeHeight())));
         }
         return null;
+    }
+
+    /**
+     * Supplies the foreground editor's focus to native recipe-viewer shortcuts. A null result leaves the host's focus
+     * rules in charge; hovering the terminal uses its LDLib focus instead of an editor behind the window.
+     */
+    public static @Nullable Boolean recipeViewerTextInputFocus(Screen screen) {
+        InputTarget target = active(screen);
+        if (target == null) return null;
+        if (textInputFocused(target.modularUi)) return true;
+        Minecraft minecraft = Minecraft.getInstance();
+        double mouseX = minecraft.mouseHandler.xpos() * screen.width / minecraft.getWindow().getScreenWidth();
+        double mouseY = minecraft.mouseHandler.ypos() * screen.height / minecraft.getWindow().getScreenHeight();
+        return target.composition.contains(mouseX, mouseY) ? Boolean.FALSE : null;
+    }
+
+    private static boolean textInputFocused(ModularUI modularUi) {
+        for (UIElement focused = modularUi.getFocusedElement(); focused != null; focused = focused.getParent())
+            if (focused instanceof TextField) return true;
+        return false;
     }
 
     public static ObjectList<TerminalOverlayUi.GhostTarget> ghostTargets(Screen screen) {

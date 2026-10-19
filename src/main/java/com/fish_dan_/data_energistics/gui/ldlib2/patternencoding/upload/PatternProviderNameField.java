@@ -23,6 +23,7 @@ final class PatternProviderNameField extends TextField {
         addClass("terminal-field");
         addClass("terminal-upload-name");
         setText(name, false);
+        setCursor(0);
         setTextRegexValidator(".{0,50}");
         setFocusable(false);
         layout(layout -> layout.flex(1).minWidth(0).height(14));
@@ -60,5 +61,6 @@ final class PatternProviderNameField extends TextField {
         super.onBlur(event);
         setFocusable(false);
         setText(savedName, false);
+        setCursor(0);
     }
 }

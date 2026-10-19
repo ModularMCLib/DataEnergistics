@@ -227,6 +227,7 @@ public final class TerminalUiLayout {
     public static int popupWidth(String name) {
         return switch (name) {
             case "magnet" -> 200;
+            case "upload" -> 160;
             case "quantity", "filters" -> 176;
             default -> 190;
         };

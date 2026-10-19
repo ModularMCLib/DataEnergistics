@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 /** Standalone host for the shared upload view, with no dependency on a terminal screen or menu. */
 public final class PatternUploadWindow {
 
-    public static final int WIDTH = 190;
+    public static final int WIDTH = TerminalUiLayout.popupWidth("upload");
     public static final int HEIGHT = 188;
     private final UIElement popup = TerminalUiLayout.popup("upload");
     private final PatternUploadUi view;

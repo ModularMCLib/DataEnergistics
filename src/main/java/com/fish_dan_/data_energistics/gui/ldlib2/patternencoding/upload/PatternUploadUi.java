@@ -39,6 +39,7 @@ public final class PatternUploadUi {
 
     private static final int ROW_HEIGHT = 20;
     private static final int LIST_HEIGHT = 138;
+    private static final int ROW_WIDTH = TerminalUiLayout.popupWidth("upload") - 20;
     private static final int VISIBLE_ROWS = (LIST_HEIGHT + ROW_HEIGHT - 1) / ROW_HEIGHT + 1;
     private final PatternUploadActions actions;
     private final UIElement viewport = new UIElement();
@@ -78,8 +79,8 @@ public final class PatternUploadUi {
         scrollbar.setOnValueChanged(value -> viewportPending = true);
         list.addClass("terminal-upload-list");
         viewport.setOverflowVisible(false);
-        list.addChildren(TerminalUiLayout.at(viewport, 0, 0, 170, LIST_HEIGHT),
-                TerminalUiLayout.at(scrollbar, 174, 0, 6, LIST_HEIGHT));
+        list.addChildren(TerminalUiLayout.at(viewport, 0, 0, ROW_WIDTH, LIST_HEIGHT),
+                TerminalUiLayout.at(scrollbar, ROW_WIDTH + 4, 0, 6, LIST_HEIGHT));
         list.addEventListener(UIEvents.MOUSE_WHEEL, event -> {
             cancelEditing();
             scrollbar.scrollByWheel(event.deltaY);
@@ -92,8 +93,9 @@ public final class PatternUploadUi {
         encoded.encodedPattern();
         encoded.addClass("terminal-upload-pattern");
         encoded.setAllowHitTest(false);
-        root.addChildren(TerminalUiLayout.at(encoded, 5, 19, 18, 18), TerminalUiLayout.at(search, 28, 22, 90, 14),
-                TerminalUiLayout.at(status, 121, 20, 64, 18), TerminalUiLayout.at(list, 5, 42, 180, 138));
+        int searchWidth = TerminalUiLayout.popupWidth("upload") - 92;
+        root.addChildren(TerminalUiLayout.at(encoded, 5, 19, 18, 18), TerminalUiLayout.at(search, 28, 22, searchWidth, 14),
+                TerminalUiLayout.at(status, searchWidth + 31, 20, 56, 18), TerminalUiLayout.at(list, 5, 42, ROW_WIDTH + 10, LIST_HEIGHT));
     }
 
     public void apply(SyncedPatternProviderList providers, @Nullable GenericStack pattern, boolean connected) {
@@ -178,7 +180,7 @@ public final class PatternUploadUi {
         button.noText();
         button.layout(layout -> layout.widthPercent(100).height(20).paddingAll(1).paddingLeft(leaf == 0 ? 2 : 9).paddingRight(4)
                 .gapColumn(3).flexDirection(FlexDirection.ROW).alignItems(AlignItems.CENTER).flexShrink(0));
-        TerminalUiLayout.at(button, 0, top, 170, ROW_HEIGHT);
+        TerminalUiLayout.at(button, 0, top, ROW_WIDTH, ROW_HEIGHT);
         TerminalResourceCell icon = new TerminalResourceCell();
         icon.addClass("embedded-cell");
         ItemStack stack = BuiltInRegistries.ITEM.get(iconId).getDefaultInstance();
@@ -192,6 +194,7 @@ public final class PatternUploadUi {
         Label count = new Label();
         count.addClass("terminal-label");
         count.addClass("terminal-upload-count");
+        count.addClass(used * 100L < capacity * 70L ? "capacity-available" : used * 100L < capacity * 90L ? "capacity-warning" : "capacity-critical");
         count.setText(Component.literal(used + "/" + capacity));
         count.layout(layout -> layout.height(18).flexShrink(0));
         count.textStyle(style -> style.adaptiveWidth(true).adaptiveHeight(false));

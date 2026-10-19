@@ -76,6 +76,9 @@
     hover-background: group(#6693FFDE, border(1, #FF57E0BB));
     pressed-background: #8893FFDE;
 }
+.blank-pattern .terminal-cell, .encoded-pattern .terminal-cell {
+    background: group(sprite(data_energistics:textures/guis/backpack/middle.png), border(-1, #FF696D88));
+}
 .terminal-cell.embedded-cell { background: #00000000; }
 .terminal-cell.selected-recipe { base-background: #6693FFDE; }
 .terminal-cell.manual-pin, .terminal-cell.crafting-pin {
@@ -131,7 +134,7 @@
 .icon-stonecutting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_stone_cutting.png); }
 .icon-anvil { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_anvil.png); }
 .icon-settings { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
-.icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_coding.png); }
+.icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
 .icon-transfer { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
 .icon-transfer-info { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
 .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 208, 8, 8); }

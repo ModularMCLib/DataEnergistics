@@ -21,36 +21,18 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
 
 public class NativePatternEncodingTermScreen extends PatternEncodingPreviewScreen<PatternEncodingTermMenu>
                                              implements GenericStackLookupScreen {
 
-    private static final int AE2_PREVIEW_PANEL_Y_OFFSET = 105;
-    private static final int AE2_SEARCH_BOX_X = 42;
-    private static final int AE2_SEARCH_BOX_Y = 6;
-
     public NativePatternEncodingTermScreen(PatternEncodingTermMenu menu, Inventory playerInventory,
                                            Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
-    }
-
-    @Override
-    protected int getPreviewPanelYOffset() {
-        return AE2_PREVIEW_PANEL_Y_OFFSET;
-    }
-
-    @Override
-    protected int getSearchBoxX() {
-        return AE2_SEARCH_BOX_X;
-    }
-
-    @Override
-    protected int getSearchBoxY() {
-        return AE2_SEARCH_BOX_Y;
     }
 
     @Override
@@ -86,13 +68,13 @@ public class NativePatternEncodingTermScreen extends PatternEncodingPreviewScree
         return !stack.isEmpty() && AEItems.WRAPPED_GENERIC_STACK.is(stack);
     }
 
-    private List<FakeSlot> getVisibleProcessingInputSlots() {
+    private ObjectList<FakeSlot> getVisibleProcessingInputSlots() {
         FakeSlot[] processingInputSlots = this.menu.getProcessingInputSlots();
         if (processingInputSlots == null || processingInputSlots.length == 0) {
-            return List.of();
+            return ObjectImmutableList.of();
         }
 
-        List<FakeSlot> visibleSlots = new ObjectArrayList<>(processingInputSlots.length);
+        ObjectList<FakeSlot> visibleSlots = new ObjectArrayList<>(processingInputSlots.length);
         for (FakeSlot slot : processingInputSlots) {
             if (slot != null && slot.isActive()) {
                 visibleSlots.add(slot);

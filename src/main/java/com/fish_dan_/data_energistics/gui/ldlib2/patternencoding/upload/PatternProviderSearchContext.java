@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.screen.patternencoding;
+package com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload;
 
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;

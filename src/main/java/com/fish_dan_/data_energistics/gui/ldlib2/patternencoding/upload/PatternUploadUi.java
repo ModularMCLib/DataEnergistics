@@ -1,12 +1,13 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload;
 
+import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
+import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProvider;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
-import com.fish_dan_.data_energistics.util.TextSearch;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
@@ -30,8 +31,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Comparator;
-
 /** Shared LDLib2 upload view. Menus and the player terminal supply data and retain their own transactions. */
 @NullMarked
 public final class PatternUploadUi {
@@ -42,6 +41,7 @@ public final class PatternUploadUi {
     private final TerminalResourceCell encoded = new TerminalResourceCell();
     private final Label status = new Label();
     private SyncedPatternProviderList providers = SyncedPatternProviderList.EMPTY;
+    private PatternProviderSearchContext searchContext = PatternProviderSearchContext.resolve(null);
     private @Nullable PatternProviderNameField editing;
     private long expandedGroup;
     private long selectedGroup;
@@ -76,7 +76,10 @@ public final class PatternUploadUi {
     public void apply(SyncedPatternProviderList providers, @Nullable GenericStack pattern, boolean connected) {
         encoded.entry(pattern, false);
         status.setText(text(!connected ? "message.offline" : pattern == null ? "upload_empty" : "upload_hint"));
-        boolean changed = this.providers != providers || this.connected != connected;
+        var reference = pattern != null && pattern.what() instanceof AEItemKey itemKey ? EncodedPatternRecipeReference.get(itemKey.getReadOnlyStack()) : null;
+        boolean contextChanged = !searchContext.current(reference);
+        if (contextChanged) searchContext = PatternProviderSearchContext.resolve(reference);
+        boolean changed = this.providers != providers || this.connected != connected || contextChanged;
         this.providers = providers;
         this.connected = connected;
         if (changed) rebuild();
@@ -87,6 +90,12 @@ public final class PatternUploadUi {
         if (rebuildPending && (editing == null || !editing.isFocused())) rebuild();
     }
 
+    public boolean cancelEditing() {
+        if (editing == null || !editing.isFocused()) return false;
+        editing.blur();
+        return true;
+    }
+
     private void rebuild() {
         if (editing != null && editing.isFocused()) {
             rebuildPending = true;
@@ -95,21 +104,23 @@ public final class PatternUploadUi {
         editing = null;
         rebuildPending = false;
         list.viewContainer.clearAllChildren();
-        String query = TextSearch.normalize(search.getValue());
-        var ordered = new ObjectArrayList<>(providers.providers());
-        ordered.sort(Comparator.comparing(SyncedPatternProvider::exactViewerMatch).reversed());
+        var ordered = PatternProviderDisplayOrder.order(providers, search.getValue(), searchContext,
+                id -> BuiltInRegistries.ITEM.get(id).getDescription().getString(), PatternProviderRecipeTypeNames::resolve);
         for (SyncedPatternProvider group : ordered) {
-            if (!TextSearch.matchesNormalized(group.displayName().getString(), query)) continue;
-            row(group, 0, group.displayName(), group.iconItemId(), group.usedPatternSlotCount(), group.patternSlotCount(), group.renameable());
+            row(group, 0, group.displayName(), group.iconItemId(), group.usedPatternSlotCount(), group.patternSlotCount(), group.renameable(),
+                    group.leaves().stream().anyMatch(leaf -> leaf.openable()), null);
             if (expandedGroup == group.id()) {
                 for (var leaf : group.leaves()) {
-                    row(group, leaf.id(), leaf.displayName(), leaf.iconItemId(), leaf.usedPatternSlotCount(), leaf.patternSlotCount(), leaf.renameable());
+                    var location = leaf.location();
+                    Component detail = location.blockPos() == null ? null : Component.literal(location.dimensionId() + " " + location.blockPos().toShortString());
+                    row(group, leaf.id(), leaf.displayName(), leaf.iconItemId(), leaf.usedPatternSlotCount(), leaf.patternSlotCount(), leaf.renameable(), leaf.openable(), detail);
                 }
             }
         }
     }
 
-    private void row(SyncedPatternProvider group, long leaf, Component name, ResourceLocation iconId, int used, int capacity, boolean renameable) {
+    private void row(SyncedPatternProvider group, long leaf, Component name, ResourceLocation iconId, int used, int capacity, boolean renameable,
+                     boolean openable, @Nullable Component detail) {
         TerminalActionButton button = new TerminalActionButton();
         button.addClass("terminal-upload-button");
         button.addClass("terminal-upload-row");
@@ -135,7 +146,12 @@ public final class PatternUploadUi {
         count.textStyle(style -> style.adaptiveWidth(true).adaptiveHeight(false));
         count.setAllowHitTest(false);
         button.addChildren(icon, field, count);
-        button.style(style -> style.tooltips(TerminalTooltipLines.split(name, text("upload_row_gestures"))));
+        var tooltip = new ObjectArrayList<Component>();
+        tooltip.add(name);
+        if (detail != null) tooltip.add(detail);
+        tooltip.add(text("upload_row_gestures"));
+        if (!openable) tooltip.add(Component.translatable("screen.data_energistics.pattern_writer_preview.leaf_open_unavailable"));
+        button.style(style -> style.tooltips(TerminalTooltipLines.split(tooltip).toArray(Component[]::new)));
         button.setOnClick(event -> {
             selectedGroup = group.id();
             selectedLeaf = leaf;
@@ -145,7 +161,7 @@ public final class PatternUploadUi {
             } else if (event.button == 0 && connected) actions.upload(group.id(), leaf);
         });
         button.addEventListener(UIEvents.MOUSE_DOWN, event -> {
-            if (event.button == 2 && connected) {
+            if (event.button == 2 && connected && openable) {
                 actions.open(group.id(), leaf);
                 event.stopPropagation();
             }

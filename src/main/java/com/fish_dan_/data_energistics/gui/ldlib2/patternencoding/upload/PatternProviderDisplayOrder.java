@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.screen.patternencoding;
+package com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload;
 
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
 import com.fish_dan_.data_energistics.util.TextSearch;
@@ -61,6 +61,10 @@ final class PatternProviderDisplayOrder {
         terms.add(provider.displayName().getString());
         terms.add(defaultNames.computeIfAbsent(provider.iconItemId(), defaultNameResolver));
         terms.add(provider.iconItemId().toString());
+        for (var leaf : provider.leaves()) {
+            terms.add(leaf.displayName().getString());
+            if (leaf.location().blockPos() != null) terms.add(leaf.location().blockPos().toShortString());
+        }
         for (ResourceLocation recipeTypeId : provider.supportedRecipeTypeIds()) {
             terms.add(recipeTypeId.toString());
             terms.addAll(recipeTypeNames.computeIfAbsent(recipeTypeId, recipeTypeNameResolver));

@@ -209,6 +209,7 @@
     base-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
 }
 .terminal-upload-popup .terminal-label { background: #00000000; }
+.terminal-upload-popup.native-upload-popup { z-index: 0; }
 .terminal-upload-name { horizontal-align: left; }
 .terminal-upload-count { horizontal-align: right; adaptive-width: true; }
 .terminal-upload-popup .terminal-field {

@@ -177,7 +177,7 @@
 .match-id .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 48, 96, 16, 16); }
 .match-tag .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 32, 96, 16, 16); }
 
-.terminal-key-type-scroll .__scroller_scroll_container__ { background: #FF9A9FB4; }
+.terminal-key-type-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-key-type-scroll .__scroller_scroll_bar__ {
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png);
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);

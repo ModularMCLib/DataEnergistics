@@ -265,17 +265,27 @@ public final class TerminalUiLayout {
         scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
         scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
         scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        scrollbar.scrollContainer.addChildAt(scrollbarRail("storage_rail"), 0);
+        return scrollbar;
+    }
+
+    public static UIElement scrollbarRail(String id) {
         // Match the groove baked into the existing Trinity panels, preserving its pixel-sized caps.
-        UIElement rail = at(element("storage_rail", "scroll-rail"), 0, 0, 6, 148);
-        rail.addChildren(at(element("storage_rail_rim", "scroll-rail-rim"), 1, 1, 4, 146),
-                at(element("storage_rail_center", "scroll-rail-center"), 2, 2, 2, 144),
-                at(element("storage_rail_shadow", "scroll-rail-shadow"), 2, 2, 2, 2));
+        UIElement rail = railLayer(id, "scroll-rail", 0);
+        rail.addChildren(railLayer(id + "_rim", "scroll-rail-rim", 1),
+                railLayer(id + "_center", "scroll-rail-center", 2),
+                at(element(id + "_shadow", "scroll-rail-shadow"), 2, 2, 2, 2));
         rail.selfAndAllChildren().forEach(element -> {
             element.addClass("scrollbar-decoration");
             element.setAllowHitTest(false);
         });
-        scrollbar.scrollContainer.addChildAt(rail, 0);
-        return scrollbar;
+        return rail;
+    }
+
+    private static UIElement railLayer(String id, String style, int inset) {
+        UIElement layer = element(id, style);
+        layer.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).left(inset).top(inset).right(inset).bottom(inset));
+        return layer;
     }
 
     private static Scroller.Vertical processingScrollbar() {

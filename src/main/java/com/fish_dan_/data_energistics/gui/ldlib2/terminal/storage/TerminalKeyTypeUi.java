@@ -52,6 +52,7 @@ public final class TerminalKeyTypeUi {
         scrollbar.tailButton.setDisplay(false);
         scrollbar.layout(layout -> layout.paddingAll(0).gapAll(0));
         scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
+        scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("key_type_rail"), 0);
         scrollbar.scrollBar.layout(layout -> layout.width(6).height(THUMB_HEIGHT).minHeight(THUMB_HEIGHT).maxHeight(THUMB_HEIGHT).paddingAll(0));
         scrollbar.setOnValueChanged(value -> content.layout(layout -> layout.top(-Math.round(value * maximumScroll))));
         for (AEKeyType type : AEKeyTypes.getAll()) {

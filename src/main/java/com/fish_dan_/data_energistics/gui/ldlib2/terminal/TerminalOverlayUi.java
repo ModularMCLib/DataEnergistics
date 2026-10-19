@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences;
+import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences.UploadPanel;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag.Target;
@@ -287,7 +288,14 @@ public final class TerminalOverlayUi {
             element(root, "close").style(style -> style.tooltips(TerminalTooltipLines.split(text("close"), text("hold_to_drag"))));
         }
         uploadUi = new TerminalPatternUploadUi(subWindows.root("upload"), registries, this::networkAction);
+        if (preferences.uploadPanel != null) {
+            uploadUi.resize(Math.max(PatternUploadUi.MIN_WIDTH, preferences.uploadPanel.width()), Math.max(PatternUploadUi.MIN_HEIGHT, preferences.uploadPanel.height()));
+        }
         subWindows.resizable("upload", PatternUploadUi.MIN_WIDTH, PatternUploadUi.MIN_HEIGHT, uploadUi::resize);
+        subWindows.onGeometryChanged("upload", geometry -> {
+            preferences.uploadPanel = new UploadPanel(geometry.xPercent(), geometry.yPercent(), geometry.width(), geometry.height());
+            preferences.save();
+        });
         keyTypeUi = new TerminalKeyTypeUi(subWindows.root("key_types"), keyTypeSelection);
         processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
         configureProcessingScrollbar();
@@ -828,9 +836,11 @@ public final class TerminalOverlayUi {
             boolean keyTypesPopup = name.equals("key_types");
             int popupWidth = keyTypesPopup ? keyTypeUi.width() : name.equals("upload") ? uploadUi.width() : TerminalUiLayout.popupWidth(name);
             int popupHeight = keyTypesPopup ? keyTypeUi.height() : name.equals("upload") ? uploadUi.height() : TerminalUiLayout.popupHeight(name);
-            subWindows.place(name, width, height,
-                    new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight),
-                    name.equals("quantity") ? 12 : 0, 0);
+            var savedUpload = preferences.uploadPanel;
+            Rect2i preferred = name.equals("upload") && savedUpload != null ?
+                    new Rect2i(Math.round(savedUpload.xPercent() * Math.max(0, width - popupWidth)), Math.round(savedUpload.yPercent() * Math.max(0, height - popupHeight)), popupWidth, popupHeight) :
+                    new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight);
+            subWindows.place(name, width, height, preferred, name.equals("quantity") ? 12 : 0, 0);
         }
         if (gridChanged && snapshot.contains("enabled")) {
             offset = viewport.clampOffset(offset, storageIndex.projected().size());

@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,7 @@ public final class TerminalClientPreferences {
     public int height = 168;
     public boolean folded = true;
     public boolean open = true;
+    public @Nullable UploadPanel uploadPanel;
     public boolean shiftClickToNetwork;
     public String sort = "name";
     public String filter = "all";
@@ -55,6 +57,11 @@ public final class TerminalClientPreferences {
                 value.height = window.get("height").getAsInt();
                 value.folded = window.get("folded").getAsBoolean();
                 value.open = window.get("open").getAsBoolean();
+                if (window.has("upload")) {
+                    JsonObject upload = window.getAsJsonObject("upload");
+                    value.uploadPanel = new UploadPanel(Math.clamp(upload.get("x_percent").getAsFloat(), 0, 1),
+                            Math.clamp(upload.get("y_percent").getAsFloat(), 0, 1), upload.get("width").getAsInt(), upload.get("height").getAsInt());
+                }
             }
             if (json.has("shift_click_to_network")) value.shiftClickToNetwork = json.get("shift_click_to_network").getAsBoolean();
             if (json.has("sort")) value.sort = json.get("sort").getAsString();
@@ -77,6 +84,14 @@ public final class TerminalClientPreferences {
         window.addProperty("height", height);
         window.addProperty("folded", folded);
         window.addProperty("open", open);
+        if (uploadPanel != null) {
+            JsonObject upload = new JsonObject();
+            upload.addProperty("x_percent", uploadPanel.xPercent());
+            upload.addProperty("y_percent", uploadPanel.yPercent());
+            upload.addProperty("width", uploadPanel.width());
+            upload.addProperty("height", uploadPanel.height());
+            window.add("upload", upload);
+        }
         screens.add(screenId, window);
         JsonObject json = new JsonObject();
         json.addProperty("shift_click_to_network", shiftClickToNetwork);
@@ -94,4 +109,7 @@ public final class TerminalClientPreferences {
             Data_Energistics.LOGGER.warn("Cannot save player terminal preferences to {}", FILE, failure);
         }
     }
+
+    /** Upload geometry belongs to this host screen; opening the upload panel remains an explicit action. */
+    public record UploadPanel(float xPercent, float yPercent, int width, int height) {}
 }

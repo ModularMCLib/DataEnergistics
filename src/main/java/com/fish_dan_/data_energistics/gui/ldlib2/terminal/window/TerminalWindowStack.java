@@ -15,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Independent floating windows share only their stacking order and the current pointer capture. */
@@ -60,6 +61,10 @@ public final class TerminalWindowStack {
 
     public void resizable(String name, int minimumWidth, int minimumHeight, BiConsumer<Integer, Integer> resize) {
         window(name).placement.resizable(minimumWidth, minimumHeight, resize);
+    }
+
+    public void onGeometryChanged(String name, Consumer<TerminalSubWindow.Geometry> listener) {
+        window(name).placement.onGeometryChanged(listener);
     }
 
     public void place(String name, int width, int height, Rect2i preferred, int leftMargin, int topMargin) {

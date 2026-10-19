@@ -23,13 +23,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -86,9 +84,7 @@ public final class TerminalOverlayClient {
     private TerminalOverlayClient(AbstractContainerScreen<?> screen) {
         this.screen = screen;
         menu = screen.getMenu();
-        String screenId = screen.getClass().getName();
-        if (!(menu instanceof InventoryMenu)) screenId += "/" + BuiltInRegistries.MENU.getKey(menu.getType());
-        preferences = TerminalClientPreferences.load(screenId);
+        preferences = TerminalClientPreferences.load(screen.getClass().getName());
         PacketDistributor.sendToServer(new TerminalRequestPayload(menu.containerId, session, 0, "open", new CompoundTag()));
     }
 

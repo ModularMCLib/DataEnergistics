@@ -1834,7 +1834,7 @@
 	"gui.data_energistics.player_terminal.upload_rename": "Rename",
 	"gui.data_energistics.player_terminal.upload_hint": "Left-click: Upload\nRight-click: Expand",
 	"gui.data_energistics.player_terminal.upload_empty": "No pattern in the encoding output",
-	"gui.data_energistics.player_terminal.upload_row_gestures": "Left-click: Upload\nRight-click: Expand",
+	"gui.data_energistics.player_terminal.upload_row_gestures": "Left-click: Upload\nRight-click: Expand\nMiddle-click name: Rename, Enter to save\nMiddle-click elsewhere: Open GUI",
 	"gui.data_energistics.player_terminal.message.missing_pattern": "No blank pattern is available in ME storage",
 	"gui.data_energistics.player_terminal.message.inventory_full": "Inventory full",
 	"gui.data_energistics.player_terminal.message.network_full": "Insufficient ME storage or energy",

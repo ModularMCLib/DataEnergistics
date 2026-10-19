@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
+import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderMenuOpenHelper;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalNavigationPayload;
 
@@ -10,6 +11,7 @@ import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.stacks.AEKey;
 import appeng.helpers.ICraftingGridMenu;
+import appeng.helpers.patternprovider.PatternContainer;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.me.crafting.CraftAmountMenu;
@@ -57,16 +59,32 @@ public final class TerminalAeNavigation {
     }
 
     private static void begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, Consumer<TerminalAeMenuLocator> open) {
+        begin(player, session, connection, false, open);
+    }
+
+    static void openProvider(ServerPlayer player, TerminalSession session, TerminalConnection connection, ObjectList<PatternContainer> targets) {
+        begin(player, session, connection, true, locator -> {
+            if (!PatternProviderMenuOpenHelper.openProviderMenus(targets, player))
+                throw new IllegalStateException("The selected pattern provider could not open its menu");
+        });
+    }
+
+    private static void begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, boolean provider,
+                              Consumer<TerminalAeMenuLocator> open) {
         if (VISITS.containsKey(player.getUUID())) throw new IllegalStateException("An AE2 menu visit is already active");
-        Visit visit = new Visit(player, session, connection);
+        Visit visit = new Visit(player, session, connection, provider);
         VISITS.put(player.getUUID(), visit);
         session.nativeVisitStarted();
-        send(visit, "suspend");
+        send(visit, provider ? "suspend_provider" : "suspend");
         // ServerPlayer.openMenu normally removes the previous menu. The parent is retained for the return trip.
         player.containerMenu = player.inventoryMenu;
         try {
             var locator = new TerminalAeMenuLocator(session.id(), connection.frequency());
             open.accept(locator);
+            if (provider && player.containerMenu != player.inventoryMenu) {
+                visit.nativeMenu = player.containerMenu;
+                session.nativeOpened(player.containerMenu.containerId);
+            }
             if (!suspended(player, session)) throw new IllegalStateException("AE2 could not open the terminal submenu");
         } catch (RuntimeException failure) {
             VISITS.remove(player.getUUID());
@@ -88,7 +106,7 @@ public final class TerminalAeNavigation {
     static boolean suspended(ServerPlayer player, TerminalSession session) {
         if (!VISITS.containsKey(player.getUUID())) return false;
         Visit visit = VISITS.get(player.getUUID());
-        if (visit.session != session || !TerminalAeMenuLocator.matches(player.containerMenu, session.id())) return false;
+        if (visit.session != session || !matches(visit, player.containerMenu)) return false;
         if (visit.nativeMenu != player.containerMenu) {
             visit.nativeMenu = player.containerMenu;
             session.nativeOpened(player.containerMenu.containerId);
@@ -147,7 +165,7 @@ public final class TerminalAeNavigation {
         Visit visit = VISITS.get(playerId);
         if (!visit.session.id().equals(sessionId)) return;
         VISITS.remove(playerId);
-        if (TerminalAeMenuLocator.matches(visit.player.containerMenu, sessionId)) visit.player.closeContainer();
+        if (matches(visit, visit.player.containerMenu)) visit.player.closeContainer();
         visit.parent.removed(visit.player);
         NeoForge.EVENT_BUS.post(new PlayerContainerEvent.Close(visit.player, visit.parent));
         send(visit, "abort");
@@ -173,6 +191,10 @@ public final class TerminalAeNavigation {
                 ResearchAccess.hasPlayerUpgrade(visit.player, PlayerTerminalResearch.TERMINAL);
     }
 
+    private static boolean matches(Visit visit, AbstractContainerMenu menu) {
+        return visit.provider ? menu == visit.nativeMenu : TerminalAeMenuLocator.matches(menu, visit.session.id());
+    }
+
     private static void send(Visit visit, String phase) {
         PacketDistributor.sendToPlayer(visit.player, new TerminalNavigationPayload(visit.parent.containerId, visit.session.id(), phase));
     }
@@ -183,13 +205,15 @@ public final class TerminalAeNavigation {
         private final TerminalSession session;
         private final AbstractContainerMenu parent;
         private final TerminalConnection connection;
+        private final boolean provider;
         private @Nullable AbstractContainerMenu nativeMenu;
 
-        private Visit(ServerPlayer player, TerminalSession session, TerminalConnection connection) {
+        private Visit(ServerPlayer player, TerminalSession session, TerminalConnection connection, boolean provider) {
             this.player = player;
             this.session = session;
             this.parent = player.containerMenu;
             this.connection = connection;
+            this.provider = provider;
         }
     }
 }

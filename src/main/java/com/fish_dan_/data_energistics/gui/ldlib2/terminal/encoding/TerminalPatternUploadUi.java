@@ -1,37 +1,22 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding;
 
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProvider;
+import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadActions;
+import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 import com.fish_dan_.data_energistics.network.terminal.TerminalPatternProviderCodec;
-import com.fish_dan_.data_energistics.util.TextSearch;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
-import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import dev.vfyjxf.taffy.style.AlignItems;
-import dev.vfyjxf.taffy.style.FlexDirection;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jspecify.annotations.NullMarked;
@@ -40,79 +25,63 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.BiConsumer;
 
-/** LDLib2 presentation of the existing grouped provider upload data; it does not replace the host menu. */
+/** Adapts the player session's upload snapshots and history to the shared upload view. */
 @NullMarked
-public final class TerminalPatternUploadUi {
+public final class TerminalPatternUploadUi implements PatternUploadActions {
 
     private final RegistryAccess registries;
     private final BiConsumer<String, CompoundTag> request;
-    private final ScrollerView list = new ScrollerView();
-    private final TextField search = new TextField();
-    private final TextField rename = new TextField();
-    private final TerminalResourceCell encoded = new TerminalResourceCell();
-    private final Label status = new Label();
+    private final PatternUploadUi view;
     private SyncedPatternProviderList providers = SyncedPatternProviderList.EMPTY;
     private byte[] previous = new byte[0];
-    private CompoundTag snapshot = new CompoundTag();
-    private long selectedGroup;
-    private long selectedLeaf;
+    private ItemStack encoded = ItemStack.EMPTY;
     private boolean connected;
     private CompoundTag sentHistory = new CompoundTag();
 
     public TerminalPatternUploadUi(UIElement root, RegistryAccess registries, BiConsumer<String, CompoundTag> request) {
         this.registries = registries;
         this.request = request;
-        root.addClass("terminal-upload-popup");
-        search.addClass("terminal-field");
-        search.setText("", false);
-        search.textFieldStyle(style -> style.placeholder(text("search")));
-        search.setTextResponder(value -> rebuild());
-        rename.addClass("terminal-field");
-        rename.setText("", false);
-        rename.setTextRegexValidator(".{0,50}");
-        TerminalUiLayout.verticalScrollbar(list.verticalScroller);
-        list.verticalScroller.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
-        TerminalUiLayout.silentScrollbar(list.horizontalScroller);
-        list.addClass("terminal-upload-list");
-        list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER));
-        list.viewPort.layout(layout -> layout.paddingAll(0));
-        list.viewContainer.layout(layout -> layout.widthPercent(100).paddingAll(0).gapAll(0));
-        status.addClass("terminal-label");
-        status.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
-        encoded.encodedPattern();
-        encoded.addClass("terminal-upload-pattern");
-        encoded.setAllowHitTest(false);
-        root.addChildren(TerminalUiLayout.at(encoded, 5, 20, 18, 18), TerminalUiLayout.at(status, 28, 20, 157, 18),
-                TerminalUiLayout.at(search, 5, 42, 180, 14), TerminalUiLayout.at(list, 5, 60, 180, 100),
-                TerminalUiLayout.at(rename, 5, 166, 124, 14));
-        TerminalActionButton renameButton = new TerminalActionButton();
-        renameButton.addClass("terminal-upload-button");
-        renameButton.setText(text("upload_rename"));
-        renameButton.setOnClick(event -> {
-            if (event.button != 0 || selectedGroup == 0) return;
-            CompoundTag data = target(selectedGroup, selectedLeaf);
-            data.putString("name", rename.getValue());
-            request.accept("upload_rename", data);
-        });
-        root.addChild(TerminalUiLayout.at(renameButton, 133, 166, 52, 14));
+        view = new PatternUploadUi(root, this);
     }
 
     public void apply(CompoundTag value) {
-        snapshot = value;
         var patterns = value.getCompound("work").getList("patterns", Tag.TAG_COMPOUND);
-        ItemStack pattern = patterns.isEmpty() ? ItemStack.EMPTY : ItemStack.parseOptional(registries, patterns.getCompound(0));
-        encoded.entry(pattern.isEmpty() ? null : new GenericStack(AEItemKey.of(pattern), pattern.getCount()), false);
+        encoded = patterns.isEmpty() ? ItemStack.EMPTY : ItemStack.parseOptional(registries, patterns.getCompound(0));
         boolean newConnection = value.getBoolean("connected");
         byte[] data = value.getByteArray("upload_providers");
         boolean changed = connected != newConnection || !Arrays.equals(previous, data);
         connected = newConnection;
-        status.setText(text(!connected ? "message.offline" : pattern.isEmpty() ? "upload_empty" : "upload_hint"));
-        if (!changed) return;
-        previous = data;
-        providers = TerminalPatternProviderCodec.decode(data, registries);
-        if (!connected) sentHistory = new CompoundTag();
-        syncHistory();
-        rebuild();
+        if (changed) {
+            previous = data;
+            providers = TerminalPatternProviderCodec.decode(data, registries);
+            if (!connected) sentHistory = new CompoundTag();
+            syncHistory();
+        }
+        view.apply(providers, encoded.isEmpty() ? null : new GenericStack(AEItemKey.of(encoded), encoded.getCount()), connected);
+    }
+
+    public void tick() {
+        view.tick();
+    }
+
+    @Override
+    public void upload(long group, long leaf) {
+        if (encoded.isEmpty()) return;
+        CompoundTag data = target(group, leaf);
+        data.put("encoded", AEItemKey.of(encoded).toTagGeneric(registries));
+        request.accept("upload_pattern", data);
+    }
+
+    @Override
+    public void rename(long group, long leaf, String name) {
+        CompoundTag data = target(group, leaf);
+        data.putString("name", name);
+        request.accept("upload_rename", data);
+    }
+
+    @Override
+    public void open(long group, long leaf) {
+        request.accept("upload_open", target(group, leaf));
     }
 
     private void syncHistory() {
@@ -144,81 +113,10 @@ public final class TerminalPatternUploadUi {
         }
     }
 
-    private void rebuild() {
-        list.viewContainer.clearAllChildren();
-        String query = TextSearch.normalize(search.getValue());
-        var ordered = new ObjectArrayList<>(providers.providers());
-        ordered.sort(Comparator.comparing(SyncedPatternProvider::exactViewerMatch).reversed());
-        for (SyncedPatternProvider group : ordered) {
-            if (!TextSearch.matchesNormalized(group.displayName().getString(), query)) continue;
-            row(group, 0, group.displayName(), group.iconItemId().toString(), group.usedPatternSlotCount(), group.patternSlotCount());
-            if (selectedGroup == group.id()) {
-                for (var leaf : group.leaves()) {
-                    Component name = leaf.displayName().copy();
-                    var location = leaf.location();
-                    if (location.blockPos() != null) name = name.copy().append(" " + location.blockPos().toShortString());
-                    row(group, leaf.id(), name, leaf.iconItemId().toString(), leaf.usedPatternSlotCount(), leaf.patternSlotCount());
-                }
-            }
-        }
-    }
-
-    private void row(SyncedPatternProvider group, long leaf, Component name, String iconId, int used, int capacity) {
-        TerminalActionButton button = new TerminalActionButton();
-        button.addClass("terminal-upload-button");
-        button.addClass("terminal-upload-row");
-        if (selectedGroup == group.id() && selectedLeaf == leaf) button.addClass("selected");
-        button.noText();
-        button.layout(layout -> layout.widthPercent(100).height(20).paddingAll(1).paddingLeft(leaf == 0 ? 2 : 9).paddingRight(4)
-                .gapColumn(3).flexDirection(FlexDirection.ROW).alignItems(AlignItems.CENTER).flexShrink(0));
-        TerminalResourceCell icon = new TerminalResourceCell();
-        icon.addClass("embedded-cell");
-        ItemStack stack = BuiltInRegistries.ITEM.get(ResourceLocation.parse(iconId)).getDefaultInstance();
-        icon.entry(stack.isEmpty() ? null : new GenericStack(AEItemKey.of(stack), 1), false);
-        icon.setAllowHitTest(false);
-        Label label = new Label();
-        label.addClass("terminal-label");
-        label.addClass("terminal-upload-name");
-        label.setText(name);
-        label.layout(layout -> layout.flex(1).minWidth(0).height(18));
-        label.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false).textWrap(TextWrap.HOVER_ROLL));
-        label.setOverflowVisible(false);
-        label.setAllowHitTest(false);
-        Label count = new Label();
-        count.addClass("terminal-label");
-        count.addClass("terminal-upload-count");
-        count.setText(Component.literal(used + "/" + capacity));
-        count.layout(layout -> layout.height(18).flexShrink(0));
-        count.textStyle(style -> style.adaptiveWidth(true).adaptiveHeight(false));
-        count.setAllowHitTest(false);
-        button.addChildren(icon, label, count);
-        button.style(style -> style.tooltips(TerminalTooltipLines.split(name, text("upload_row_gestures"))));
-        button.setOnClick(event -> {
-            selectedLeaf = leaf;
-            if (event.button == 1) {
-                selectedGroup = selectedGroup == group.id() && leaf == 0 ? 0 : group.id();
-                if (!rename.isFocused()) rename.setText(name.getString(), false);
-                rebuild();
-            } else if (event.button == 0 && connected) {
-                CompoundTag data = target(group.id(), leaf);
-                var patterns = snapshot.getCompound("work").getList("patterns", Tag.TAG_COMPOUND);
-                ItemStack pattern = patterns.isEmpty() ? ItemStack.EMPTY : ItemStack.parseOptional(registries, patterns.getCompound(0));
-                if (pattern.isEmpty()) return;
-                data.put("encoded", AEItemKey.of(pattern).toTagGeneric(registries));
-                request.accept("upload_pattern", data);
-            }
-        });
-        list.viewContainer.addChild(button);
-    }
-
     private static CompoundTag target(long group, long leaf) {
         CompoundTag data = new CompoundTag();
         data.putLong("group", group);
         if (leaf != 0) data.putLong("leaf", leaf);
         return data;
-    }
-
-    private static Component text(String key) {
-        return Component.translatable("gui.data_energistics.player_terminal." + key);
     }
 }

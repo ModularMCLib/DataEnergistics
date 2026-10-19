@@ -275,6 +275,11 @@ public final class TerminalSession {
             }
             case "craft_request" -> TerminalAeNavigation.openCrafting(player, this, connection, key(player, data));
             case "cpu_list" -> TerminalAeNavigation.open(player, this, connection);
+            case "upload_open" -> {
+                var targets = upload.openTargets(player, runtime.state(), connection, data);
+                if (targets.isEmpty()) message = "upload_unavailable";
+                else TerminalAeNavigation.openProvider(player, this, connection, targets);
+            }
             case "upload_refresh", "upload_pattern", "upload_rename", "upload_history" -> message = upload.action(player, runtime.state(), connection, action, data);
             default -> throw new IllegalArgumentException("Unknown player terminal action " + action);
         }

@@ -27,7 +27,7 @@ public record TerminalNavigationPayload(int hostContainerId, UUID sessionId,
             buffer -> new TerminalNavigationPayload(buffer.readVarInt(), buffer.readUUID(), buffer.readUtf(16)));
 
     public TerminalNavigationPayload {
-        if (hostContainerId < 0 || !(phase.equals("suspend") || phase.equals("resume") || phase.equals("abort")))
+        if (hostContainerId < 0 || !(phase.equals("suspend") || phase.equals("suspend_provider") || phase.equals("resume") || phase.equals("abort")))
             throw new IllegalArgumentException("Invalid terminal navigation phase");
     }
 

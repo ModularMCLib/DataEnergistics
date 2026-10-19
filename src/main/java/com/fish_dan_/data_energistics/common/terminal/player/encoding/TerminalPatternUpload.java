@@ -148,6 +148,18 @@ public final class TerminalPatternUpload {
         return result.transferred() ? "uploaded" : "upload_unavailable";
     }
 
+    /** Resolves only IDs from the current authorized network snapshot before opening an existing provider menu. */
+    public ObjectList<PatternContainer> openTargets(ServerPlayer player, TerminalPlayerState state, TerminalConnection connection, CompoundTag request) {
+        refresh(player, state, connection, true);
+        long group = request.getLong("group");
+        if (request.contains("leaf")) {
+            PatternContainer leaf = PatternProviderSyncHelper.findProviderLeafById(ids, targets, group, request.getLong("leaf"));
+            return leaf == null ? ObjectList.of() : ObjectList.of(leaf);
+        }
+        ObjectList<PatternContainer> selected = PatternProviderSyncHelper.findProvidersById(targets, group);
+        return selected == null ? ObjectList.of() : selected;
+    }
+
     public void close() {
         PatternEncodingPreferenceSession.clearForMenu(this);
         ids.clear();

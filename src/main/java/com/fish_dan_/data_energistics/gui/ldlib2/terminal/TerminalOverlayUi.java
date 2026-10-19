@@ -521,6 +521,7 @@ public final class TerminalOverlayUi {
     }
 
     public void tick() {
+        uploadUi.tick();
         if (pinnedUi.refreshAutomatic(storageIndex)) {
             geometry(screenWidth, screenHeight);
             view(false);

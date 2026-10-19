@@ -217,6 +217,14 @@
 .terminal-upload-popup .terminal-field:focus {
     background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1);
 }
+.terminal-upload-popup .terminal-upload-name {
+    background: #00000000;
+    focus-overlay: border(-1, #FF9AD8FF);
+    horizontal-align: left;
+}
+.terminal-upload-popup .terminal-upload-name:focus {
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png, 0, 0, 96, 10, 1, 1, 1, 1);
+}
 .terminal-upload-list, .terminal-upload-list .__scroller_view_view-port__,
 .terminal-upload-list .__scroller_view_view-container__, .terminal-upload-list .__scroller_view_vertical-container__,
 .terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }

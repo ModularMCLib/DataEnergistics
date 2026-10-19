@@ -397,7 +397,7 @@ public final class TerminalUiLayout {
         return row;
     }
 
-    private static Stylesheet stylesheet() {
+    public static Stylesheet stylesheet() {
         Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheet(STYLES);
         if (stylesheet != null) return stylesheet;
         String path = "/assets/data_energistics/" + STYLES.getPath();

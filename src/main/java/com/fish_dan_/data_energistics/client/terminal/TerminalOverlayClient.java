@@ -79,6 +79,7 @@ public final class TerminalOverlayClient {
     private boolean pointerOwned;
     private int pointerButton;
     private boolean suspended;
+    private boolean providerVisit;
     private boolean restoring;
     private boolean returnRequested;
     private boolean viewingRecipes;
@@ -104,10 +105,11 @@ public final class TerminalOverlayClient {
         if (overlay == null || overlay.menu.containerId != hostContainerId || !overlay.session.equals(sessionId))
             return;
         switch (phase) {
-            case "suspend" -> {
+            case "suspend", "suspend_provider" -> {
                 if (overlay.suspended || !overlay.valid()) return;
                 overlay.clearInputCapture();
                 overlay.suspended = true;
+                overlay.providerVisit = phase.equals("suspend_provider");
                 overlay.returnRequested = false;
                 overlay.nativeMenu = null;
                 overlay.nativeScreen = null;
@@ -574,7 +576,7 @@ public final class TerminalOverlayClient {
         }
         if (overlay == null || !overlay.suspended || overlay.restoring) return;
         Screen next = event.getNewScreen();
-        if (next instanceof AbstractContainerScreen<?> nativeScreen && TerminalAeMenuLocator.matches(nativeScreen.getMenu(), overlay.session) &&
+        if (next instanceof AbstractContainerScreen<?> nativeScreen && (overlay.providerVisit && overlay.nativeMenu == null || TerminalAeMenuLocator.matches(nativeScreen.getMenu(), overlay.session)) &&
                 Minecraft.getInstance().player != null && Minecraft.getInstance().player.containerMenu == nativeScreen.getMenu()) {
             overlay.nativeScreen = nativeScreen;
             overlay.nativeMenu = nativeScreen.getMenu();
@@ -591,6 +593,7 @@ public final class TerminalOverlayClient {
     public static void closing(ScreenEvent.Closing event) {
         if (current != null && current.suspended) {
             if (current.restoring || event.getScreen() == current.screen && current.nativeScreen != null ||
+                    event.getScreen() == current.nativeScreen ||
                     event.getScreen() instanceof AbstractContainerScreen<?> nativeScreen && TerminalAeMenuLocator.matches(nativeScreen.getMenu(), current.session))
                 return;
             clear();
@@ -634,7 +637,7 @@ public final class TerminalOverlayClient {
             return true;
         }
         // Existing Trinity and plan-tree screens keep their own popup and return handling.
-        return false;
+        return overlay.providerVisit && requestTerminalReturn(screen);
     }
 
     /**

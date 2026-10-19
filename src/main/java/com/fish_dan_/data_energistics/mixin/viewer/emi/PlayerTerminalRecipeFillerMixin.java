@@ -20,10 +20,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @NullMarked
 public abstract class PlayerTerminalRecipeFillerMixin {
 
-    @Inject(method = "getFirstValidHandler", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getFirstValidHandler", at = @At("RETURN"), cancellable = true)
     private static <T extends AbstractContainerMenu> void dataEnergistics$useMiniEncoder(EmiRecipe recipe, @Nullable AbstractContainerScreen<T> screen,
                                                                                          CallbackInfoReturnable<EmiRecipeHandler<T>> cir) {
-        if (screen != null && TerminalOverlayClient.encodingWorkspace(screen.getMenu()) != null)
-            cir.setReturnValue(new PlayerTerminalEmiRecipeTransfer<>());
+        if (screen != null && (TerminalOverlayClient.encodingWorkspace(screen.getMenu()) != null || TerminalOverlayClient.canSupplyRecipe(screen.getMenu())))
+            cir.setReturnValue(new PlayerTerminalEmiRecipeTransfer<>(cir.getReturnValue()));
     }
 }

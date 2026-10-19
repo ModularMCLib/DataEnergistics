@@ -864,6 +864,11 @@ public final class TerminalOverlayUi {
         return visible && !preferences.folded && page.supportsEncoding() ? page : null;
     }
 
+    public long ingredientRank(AEKey key) {
+        var entry = storageIndex.entry(key);
+        return entry == null ? 0 : entry.amount() > 0 ? entry.amount() : entry.craftable() ? 1 : 0;
+    }
+
     private void updateScrollbar() {
         int maximumRow = viewport.maximumFirstRow(storageIndex.projected().size());
         scrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) (offset / viewport.columns()) / maximumRow, false);

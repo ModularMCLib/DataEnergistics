@@ -270,6 +270,25 @@ public final class TerminalOverlayClient {
         }
     }
 
+    public static boolean canSupplyRecipe(AbstractContainerMenu menu) {
+        TerminalOverlayClient overlay = current;
+        return overlay != null && overlay.menu == menu && overlay.valid() && overlay.composition != null && overlay.lastSnapshot.getBoolean("connected");
+    }
+
+    public static void supplyRecipe(AbstractContainerMenu menu, CompoundTag data) {
+        TerminalOverlayClient overlay = current;
+        if (overlay != null && overlay.menu == menu && overlay.valid() && overlay.lastSnapshot.getBoolean("connected"))
+            overlay.send("container_recipe", data);
+    }
+
+    public static long ingredientRank(AbstractContainerMenu menu, AEItemKey key) {
+        TerminalOverlayClient overlay = current;
+        long amount = 0;
+        for (var stack : Minecraft.getInstance().player.getInventory().items)
+            if (key.matches(stack)) amount += stack.getCount();
+        return amount + (overlay != null && overlay.menu == menu && overlay.composition != null ? overlay.composition.ingredientRank(key) : 0);
+    }
+
     /** Redirects only the player's inventory quick move while the expanded terminal targets its connected network. */
     public static boolean quickMoveToNetwork(int containerId, int slotId, int button, ClickType clickType, Player player) {
         if (clickType != ClickType.QUICK_MOVE || (button != 0 && button != 1)) return false;

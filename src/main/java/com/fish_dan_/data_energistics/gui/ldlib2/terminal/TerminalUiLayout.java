@@ -133,8 +133,7 @@ public final class TerminalUiLayout {
             } else if (mode == TerminalWorkspace.PROCESSING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 64, 2, 8, 8),
                         pageIcon("record_type", "terminal-pattern-option", "icon-record-type", 64, 12, 8, 8),
-                        pageAt(element("transfer_info", "icon-transfer-info"), 74, 12, 8, 8),
-                        pageAt(processingScrollbar(), 1, 2, 6, 54), TerminalProcessingControlsUi.create());
+                        pageAt(processingScrollbar(), 2, 2, 6, 54), TerminalProcessingControlsUi.create());
             }
         } else {
             root.addChildren(pageAt(field("name"), 3, 5, 96, 10),
@@ -280,14 +279,6 @@ public final class TerminalUiLayout {
         scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
         scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
         scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
-        UIElement rail = at(element("pattern_rail", "scroll-rail"), 0, 0, 6, 54);
-        rail.addChildren(at(element("pattern_rail_rim", "scroll-rail-rim"), 1, 1, 4, 52),
-                at(element("pattern_rail_center", "scroll-rail-center"), 2, 2, 2, 50));
-        rail.selfAndAllChildren().forEach(element -> {
-            element.addClass("scrollbar-decoration");
-            element.setAllowHitTest(false);
-        });
-        scrollbar.scrollContainer.addChildAt(rail, 0);
         return scrollbar;
     }
 
@@ -321,7 +312,6 @@ public final class TerminalUiLayout {
         button.noText().addClass(style);
         button.addClass("terminal-icon");
         int glyphSize = switch (glyph) {
-            case "icon-transfer-info", "icon-record-type" -> 8;
             case "icon-filter-list" -> 16;
             case "icon-boost-up", "icon-boost-down", "icon-encoding" -> 10;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));

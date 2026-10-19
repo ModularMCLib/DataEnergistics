@@ -454,15 +454,11 @@ public final class TerminalOverlayUi {
                 String type = context.getString("type");
                 Component recipeType = type.isEmpty() ? text("context_none") :
                         PatternProviderRecipeTypeNames.resolveDisplayName(ResourceLocation.parse(type));
-                Component recipeTypeDetail = type.isEmpty() ?
-                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle.detail.none") :
-                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle.detail", recipeType);
-                element(active, "record_type").style(style -> style.tooltips(TerminalTooltipLines.split(
-                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle." + (recordType ? "enabled" : "disabled")),
-                        recipeTypeDetail)));
                 Component transfer = text("transfer_details", recipeType,
                         context.getString("recipe").isEmpty() ? "—" : context.getString("recipe"));
-                element(active, "transfer_info").style(style -> style.tooltips(TerminalTooltipLines.split(text("transfer_info"), transfer)));
+                element(active, "record_type").style(style -> style.tooltips(TerminalTooltipLines.split(
+                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle." + (recordType ? "enabled" : "disabled")),
+                        transfer)));
             }
         }
         if (!workspace.equals("anvil") && !workspace.equals("stonecutting")) {

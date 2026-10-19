@@ -142,7 +142,6 @@
 .icon-cycle-outputs { background: sprite(ae2:textures/guis/states.png, 232, 200, 8, 8); }
 .icon-scale-add { background: sprite(ae2:textures/guis/states.png, 224, 192, 8, 8); }
 .icon-scale-subtract { background: sprite(ae2:textures/guis/states.png, 232, 192, 8, 8); }
-.icon-transfer-info { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
 .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 208, 8, 8); }
 .option-enabled .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 208, 8, 8); }
 .icon-fluid-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 216, 8, 8); }

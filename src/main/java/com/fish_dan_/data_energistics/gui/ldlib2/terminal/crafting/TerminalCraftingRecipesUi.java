@@ -67,12 +67,12 @@ public final class TerminalCraftingRecipesUi {
     }
 
     public static UIElement create() {
-        UIElement root = TerminalUiLayout.at(new UIElement(), 99, 1, 25, HEIGHT);
+        UIElement root = TerminalUiLayout.at(new UIElement(), 103, 1, 21, HEIGHT);
         root.setId("crafting_choices");
         UIElement list = TerminalUiLayout.at(new UIElement(), 0, 0, CELL_SIZE, HEIGHT);
         list.setId("crafting_recipes");
         list.setOverflowVisible(false);
-        root.addChildren(list, TerminalUiLayout.at(TerminalUiLayout.recipeScrollbar("crafting_recipe_scroll"), 19, 0, 6, HEIGHT));
+        root.addChildren(list, TerminalUiLayout.at(TerminalUiLayout.recipeScrollbar("crafting_recipe_scroll"), CELL_SIZE, 0, 3, HEIGHT));
         return root;
     }
 

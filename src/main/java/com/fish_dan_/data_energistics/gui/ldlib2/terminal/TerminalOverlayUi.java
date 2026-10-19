@@ -231,8 +231,7 @@ public final class TerminalOverlayUi {
                 } else if (mode == TerminalWorkspace.SMITHING) {
                     button(root, "substitutes", () -> request.accept("substitutes", new CompoundTag()));
                 } else if (mode == TerminalWorkspace.PROCESSING) {
-                    button(root, "encoding_info", () -> open("encoding_info"));
-                    button(root, "transfer_info", () -> open("transfer_info"));
+                    button(root, "record_type", () -> request.accept("record_type", new CompoundTag()));
                     button(root, "transfer_processing", () -> networkAction("transfer_processing", new CompoundTag()));
                 }
             } else {
@@ -241,7 +240,7 @@ public final class TerminalOverlayUi {
                 button(root, "boost_up", () -> boost(1));
             }
         }
-        for (String name : new String[] { "magnet", "filters", "quantity", "encoding_info", "transfer_info", "upload", "key_types" }) {
+        for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types" }) {
             UIElement root = TerminalUiLayout.popup(name);
             popups.put(name, root);
             root.setVisible(false);
@@ -253,8 +252,6 @@ public final class TerminalOverlayUi {
         }
         uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
         keyTypeUi = new TerminalKeyTypeUi(popups.get("key_types"), keyTypeSelection);
-        UIElement encodingOptions = popups.get("encoding_info");
-        button(encodingOptions, "record_type", () -> request.accept("record_type", new CompoundTag()));
         processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
         configureProcessingScrollbar();
         for (String host : new String[] { "inputs", "outputs" })
@@ -439,19 +436,20 @@ public final class TerminalOverlayUi {
             }
             if (workspace.equals("processing")) {
                 boolean recordType = value.getBoolean("record_recipe_type");
-                stateClass(element(popups.get("encoding_info"), "record_type"), "option-enabled", recordType);
-                label(popups.get("encoding_info"), "record_type_text").setText(Component.translatable(
-                        "button.data_energistics.pattern_encoding_recipe_type_toggle." + (recordType ? "enabled" : "disabled")));
-                label(popups.get("encoding_info"), "encoding_details")
-                        .setText(text("encoding_details", text("workspace." + workspace), value.getLong("blank_patterns")));
+                stateClass(element(active, "record_type"), "option-enabled", recordType);
                 CompoundTag context = work.getCompound("context");
                 String type = context.getString("type");
-                Component transfer = text("transfer_details", type.isEmpty() ? text("context_none") :
-                        PatternProviderRecipeTypeNames.resolveDisplayName(ResourceLocation.parse(type)),
+                Component recipeType = type.isEmpty() ? text("context_none") :
+                        PatternProviderRecipeTypeNames.resolveDisplayName(ResourceLocation.parse(type));
+                Component recipeTypeDetail = type.isEmpty() ?
+                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle.detail.none") :
+                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle.detail", recipeType);
+                element(active, "record_type").style(style -> style.tooltips(TerminalTooltipLines.split(
+                        Component.translatable("button.data_energistics.pattern_encoding_recipe_type_toggle." + (recordType ? "enabled" : "disabled")),
+                        recipeTypeDetail)));
+                Component transfer = text("transfer_details", recipeType,
                         context.getString("recipe").isEmpty() ? "—" : context.getString("recipe"));
-                label(popups.get("transfer_info"), "transfer_details").setText(transfer);
-                tooltip(active, "transfer_info", transfer);
-                tooltip(active, "encoding_info", text("encoding_info"));
+                element(active, "transfer_info").style(style -> style.tooltips(TerminalTooltipLines.split(text("transfer_info"), transfer)));
             }
         }
         if (workspace.equals("processing")) {

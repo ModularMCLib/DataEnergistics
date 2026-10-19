@@ -111,13 +111,13 @@ public final class TerminalUiLayout {
             int modeX = mode == TerminalWorkspace.STONECUTTING ? 6 : 67;
             root.addChild(pageIcon("encoding", "encoding", "icon-encoding", modeX, 25, 8, 8));
             if (mode == TerminalWorkspace.CRAFTING) {
-                root.addChildren(pageIcon("substitutes", "terminal-substitution", "icon-substitutes", 62, 2, 8, 8),
-                        pageIcon("fluid_substitutes", "terminal-substitution", "icon-fluid-substitutes", 72, 2, 8, 8));
+                root.addChildren(pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 62, 2, 8, 8),
+                        pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 72, 2, 8, 8));
             } else if (mode == TerminalWorkspace.SMITHING) {
-                root.addChild(pageIcon("substitutes", "terminal-substitution", "icon-substitutes", 62, 2, 8, 8));
+                root.addChild(pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 62, 2, 8, 8));
             } else if (mode == TerminalWorkspace.PROCESSING) {
-                root.addChildren(pageIcon("encoding_info", "terminal-small", "icon-encoding-info", 62, 2, 8, 8),
-                        pageIcon("transfer_info", "terminal-small", "icon-transfer-info", 72, 2, 8, 8),
+                root.addChildren(pageIcon("record_type", "terminal-pattern-option", "icon-record-type", 62, 2, 8, 8),
+                        pageAt(element("transfer_info", "icon-transfer-info"), 72, 2, 8, 8),
                         pageIcon("transfer_processing", "transfer-processing", "icon-transfer", 74, 14, 8, 8),
                         pageAt(processingScrollbar(), 1, 2, 6, 54));
             }
@@ -146,11 +146,6 @@ public final class TerminalUiLayout {
         Label title = at(label("popup_title"), 7, 5, popupWidth(name) - 31, 10);
         title.addClass("terminal-popup-title");
         root.addChildren(title, icon("close", "terminal-window-handle", "icon-close", popupWidth(name) - 17, 3, 14, 14));
-        switch (name) {
-            case "encoding_info" -> root.addChildren(icon("record_type", "terminal-small", "icon-record-type", 5, 21, 10, 10),
-                    at(label("record_type_text"), 20, 21, 163, 10), at(label("encoding_details"), 5, 40, 180, 48));
-            case "transfer_info" -> root.addChild(at(label("transfer_details"), 5, 21, 180, 88));
-        }
         return root;
     }
 
@@ -182,8 +177,6 @@ public final class TerminalUiLayout {
             case "magnet" -> 98;
             case "filters" -> 166;
             case "quantity" -> 107;
-            case "encoding_info" -> 96;
-            case "transfer_info" -> 116;
             case "upload" -> 188;
             default -> throw new IllegalArgumentException("Unknown terminal popup " + name);
         };

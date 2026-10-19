@@ -85,7 +85,16 @@ public final class TerminalPatternEncoding {
         ItemStack encoded = encode(player, state);
         var inventory = state.work().patterns;
         ItemStack existing = inventory.getItem(0);
-        if (encoded.isEmpty()) return "invalid_recipe";
+        if (encoded.isEmpty()) {
+            if (PatternDetailsHelper.isEncodedPattern(existing) && connection != null) {
+                long returned = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(),
+                        AEItemKey.of(AEItems.BLANK_PATTERN), existing.getCount(), connection.source());
+                TerminalNetworkStorage.checkAmount(returned, existing.getCount());
+                if (returned == existing.getCount()) inventory.setItem(0, ItemStack.EMPTY);
+                else if (returned > 0) inventory.setItem(0, AEItems.BLANK_PATTERN.stack(existing.getCount() - (int) returned));
+            }
+            return "invalid_recipe";
+        }
         if (state.workspace() == TerminalWorkspace.PROCESSING && !state.work().matching.apply(player.serverLevel(), encoded))
             return "no_declared_tag";
         if (!existing.isEmpty() && (existing.getCount() != 1 ||

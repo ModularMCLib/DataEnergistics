@@ -13,6 +13,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
 /** Independent floating windows share only their stacking order and the current pointer capture. */
@@ -45,6 +46,10 @@ public final class TerminalWindowStack {
 
     public void extraHitArea(String name, BiPredicate<Double, Double> hitTest) {
         window(name).extraHitArea = hitTest;
+    }
+
+    public void resizable(String name, int minimumWidth, int minimumHeight, BiConsumer<Integer, Integer> resize) {
+        window(name).placement.resizable(minimumWidth, minimumHeight, resize);
     }
 
     public void place(String name, int width, int height, Rect2i preferred, int leftMargin, int topMargin) {

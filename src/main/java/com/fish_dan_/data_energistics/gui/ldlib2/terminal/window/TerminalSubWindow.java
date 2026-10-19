@@ -9,6 +9,9 @@ import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 import net.minecraft.client.renderer.Rect2i;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.util.function.BiConsumer;
 
 /** One child's percentage placement and shared click-to-close, hold-to-drag handle, owned by the client UI. */
 @NullMarked
@@ -36,6 +39,12 @@ public final class TerminalSubWindow {
     private double pointerY;
     private int originX;
     private int originY;
+    private @Nullable ResizeControls resizeControls;
+    private int originWidth;
+    private int originHeight;
+    private int currentWidth;
+    private int currentHeight;
+    private boolean resizing;
 
     public TerminalSubWindow(UIElement root, Runnable close) {
         this.root = root;
@@ -43,9 +52,15 @@ public final class TerminalSubWindow {
         handle = TerminalUiLayout.require(root, "close", TerminalActionButton.class);
     }
 
+    public void resizable(int minimumWidth, int minimumHeight, BiConsumer<Integer, Integer> resize) {
+        resizeControls = new ResizeControls(TerminalUiLayout.require(root, "resize", TerminalActionButton.class), minimumWidth, minimumHeight, resize);
+    }
+
     public void place(int screenWidth, int screenHeight, Rect2i preferred, int leftMargin, int topMargin) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        currentWidth = preferred.getWidth();
+        currentHeight = preferred.getHeight();
         maximumX = Math.max(0, screenWidth - preferred.getWidth());
         maximumY = Math.max(0, screenHeight - preferred.getHeight());
         minimumX = Math.min(leftMargin, maximumX);
@@ -56,14 +71,20 @@ public final class TerminalSubWindow {
     }
 
     public boolean beginDrag(double mouseX, double mouseY, int button) {
-        if (button != 0 || !overHandle(mouseX, mouseY)) return false;
+        if (button != 0) return false;
+        var controls = resizeControls;
+        resizing = controls != null && controls.handle.isIntersectWithPoint(mouseX, mouseY);
+        if (!resizing && !overHandle(mouseX, mouseY)) return false;
         pressed = true;
         dragging = false;
         pressX = pointerX = mouseX;
         pressY = pointerY = mouseY;
         originX = x;
         originY = y;
-        handle.press();
+        originWidth = currentWidth;
+        originHeight = currentHeight;
+        if (controls != null && resizing) controls.handle.press();
+        else handle.press();
         return true;
     }
 
@@ -74,17 +95,35 @@ public final class TerminalSubWindow {
         if (!dragging && Math.hypot(mouseX - pressX, mouseY - pressY) < 3) return true;
         dragging = true;
         positioned = true;
+        var controls = resizeControls;
+        if (controls != null && resizing) {
+            int width = Math.clamp(originWidth + (int) (mouseX - pressX), controls.minimumWidth, Math.max(controls.minimumWidth, screenWidth - x));
+            int height = Math.clamp(originHeight + (int) (mouseY - pressY), controls.minimumHeight, Math.max(controls.minimumHeight, screenHeight - y));
+            if (width != currentWidth || height != currentHeight) {
+                controls.resize.accept(width, height);
+                currentWidth = width;
+                currentHeight = height;
+                maximumX = Math.max(minimumX, screenWidth - width);
+                maximumY = Math.max(minimumY, screenHeight - height);
+                rememberPosition();
+            }
+            return true;
+        }
         x = Math.clamp(originX + (int) (mouseX - pressX), minimumX, maximumX);
         y = Math.clamp(originY + (int) (mouseY - pressY), minimumY, maximumY);
-        xPercent = maximumX == minimumX ? 0 : (float) (x - minimumX) / (maximumX - minimumX);
-        yPercent = maximumY == minimumY ? 0 : (float) (y - minimumY) / (maximumY - minimumY);
+        rememberPosition();
         applyPosition();
         return true;
     }
 
+    private void rememberPosition() {
+        xPercent = maximumX == minimumX ? 0 : (float) (x - minimumX) / (maximumX - minimumX);
+        yPercent = maximumY == minimumY ? 0 : (float) (y - minimumY) / (maximumY - minimumY);
+    }
+
     public boolean endDrag() {
         if (!pressed) return false;
-        boolean clicked = !dragging && overHandle(pointerX, pointerY);
+        boolean clicked = !resizing && !dragging && overHandle(pointerX, pointerY);
         cancelDrag();
         if (clicked) {
             UISoundUtils.playButtonClickSound();
@@ -96,7 +135,9 @@ public final class TerminalSubWindow {
     public void cancelDrag() {
         pressed = false;
         dragging = false;
+        resizing = false;
         handle.resetInteraction();
+        if (resizeControls != null) resizeControls.handle.resetInteraction();
     }
 
     public boolean dragging() {
@@ -112,4 +153,6 @@ public final class TerminalSubWindow {
         return root.isVisible() && mouseX >= handle.getPositionX() && mouseY >= handle.getPositionY() &&
                 mouseX < handle.getPositionX() + handle.getSizeWidth() && mouseY < handle.getPositionY() + handle.getSizeHeight();
     }
+
+    private record ResizeControls(TerminalActionButton handle, int minimumWidth, int minimumHeight, BiConsumer<Integer, Integer> resize) {}
 }

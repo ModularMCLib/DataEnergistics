@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 
@@ -216,7 +217,7 @@ public final class TerminalUiLayout {
             case "magnet" -> 122;
             case "filters" -> 166;
             case "quantity" -> 107;
-            case "upload" -> 188;
+            case "upload" -> PatternUploadUi.MIN_HEIGHT;
             default -> throw new IllegalArgumentException("Unknown terminal popup " + name);
         };
     }
@@ -228,7 +229,7 @@ public final class TerminalUiLayout {
     public static int popupWidth(String name) {
         return switch (name) {
             case "magnet" -> 200;
-            case "upload" -> 160;
+            case "upload" -> PatternUploadUi.MIN_WIDTH;
             case "quantity", "filters" -> 176;
             default -> 190;
         };

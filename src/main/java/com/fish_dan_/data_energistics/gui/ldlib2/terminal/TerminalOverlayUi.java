@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInd
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlankPatternCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
@@ -286,6 +287,7 @@ public final class TerminalOverlayUi {
             element(root, "close").style(style -> style.tooltips(TerminalTooltipLines.split(text("close"), text("hold_to_drag"))));
         }
         uploadUi = new TerminalPatternUploadUi(subWindows.root("upload"), registries, this::networkAction);
+        subWindows.resizable("upload", PatternUploadUi.MIN_WIDTH, PatternUploadUi.MIN_HEIGHT, uploadUi::resize);
         keyTypeUi = new TerminalKeyTypeUi(subWindows.root("key_types"), keyTypeSelection);
         processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
         configureProcessingScrollbar();
@@ -821,10 +823,11 @@ public final class TerminalOverlayUi {
             positionedStorage = viewport.cells();
         }
         keyTypeUi.resize(width, height);
+        uploadUi.fit(width, height);
         for (String name : subWindows.names()) {
             boolean keyTypesPopup = name.equals("key_types");
-            int popupWidth = keyTypesPopup ? keyTypeUi.width() : TerminalUiLayout.popupWidth(name);
-            int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(name);
+            int popupWidth = keyTypesPopup ? keyTypeUi.width() : name.equals("upload") ? uploadUi.width() : TerminalUiLayout.popupWidth(name);
+            int popupHeight = keyTypesPopup ? keyTypeUi.height() : name.equals("upload") ? uploadUi.height() : TerminalUiLayout.popupHeight(name);
             subWindows.place(name, width, height,
                     new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight),
                     name.equals("quantity") ? 12 : 0, 0);

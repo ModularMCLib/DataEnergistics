@@ -223,7 +223,7 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         update();
         var saved = PatternEncodingPreferencesClient.previewPanelPosition();
         Rect2i preferred = saved.map(previewPanelPosition -> PatternEncodingPreviewPlacement.fromPercent(previewPanelPosition.xPercent(), previewPanelPosition.yPercent(),
-                PatternUploadWindow.WIDTH, PatternUploadWindow.HEIGHT, screen.width, screen.height)).orElseGet(() -> PatternEncodingPreviewPlacement.findBestBounds(anchor, PatternUploadWindow.WIDTH, PatternUploadWindow.HEIGHT, anchor.getY(),
+                window.width(), window.height(), screen.width, screen.height)).orElseGet(() -> PatternEncodingPreviewPlacement.findBestBounds(anchor, window.width(), window.height(), anchor.getY(),
                         4, -4, 4, screen.width, screen.height, occupied));
         window.show(screen, preferred);
     }

@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPrevie
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
@@ -38,9 +39,11 @@ import java.util.Objects;
 public final class PatternUploadUi {
 
     private static final int ROW_HEIGHT = 20;
-    private static final int LIST_HEIGHT = 138;
-    private static final int ROW_WIDTH = TerminalUiLayout.popupWidth("upload") - 20;
-    private static final int VISIBLE_ROWS = (LIST_HEIGHT + ROW_HEIGHT - 1) / ROW_HEIGHT + 1;
+    public static final int MIN_WIDTH = 100;
+    public static final int MIN_HEIGHT = 140;
+    private final UIElement root;
+    private final UIElement list = new UIElement();
+    private final Button resize = TerminalUiLayout.icon("resize", "terminal-resize", "icon-resize", 0, 0, 4, 4);
     private final PatternUploadActions actions;
     private final UIElement viewport = new UIElement();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
@@ -58,10 +61,14 @@ public final class PatternUploadUi {
     private boolean connected;
     private boolean rebuildPending;
     private boolean viewportPending;
+    private int width;
+    private int height;
+    private int rowWidth;
+    private int listHeight;
 
     public PatternUploadUi(UIElement root, PatternUploadActions actions) {
+        this.root = root;
         this.actions = actions;
-        UIElement list = new UIElement();
         root.addClass("terminal-upload-popup");
         search.addClass("terminal-field");
         search.addClass("terminal-search-field");
@@ -79,8 +86,7 @@ public final class PatternUploadUi {
         scrollbar.setOnValueChanged(value -> viewportPending = true);
         list.addClass("terminal-upload-list");
         viewport.setOverflowVisible(false);
-        list.addChildren(TerminalUiLayout.at(viewport, 0, 0, ROW_WIDTH, LIST_HEIGHT),
-                TerminalUiLayout.at(scrollbar, ROW_WIDTH + 4, 0, 6, LIST_HEIGHT));
+        list.addChildren(viewport, scrollbar);
         list.addEventListener(UIEvents.MOUSE_WHEEL, event -> {
             cancelEditing();
             scrollbar.scrollByWheel(event.deltaY);
@@ -93,9 +99,45 @@ public final class PatternUploadUi {
         encoded.encodedPattern();
         encoded.addClass("terminal-upload-pattern");
         encoded.setAllowHitTest(false);
-        int searchWidth = TerminalUiLayout.popupWidth("upload") - 92;
-        root.addChildren(TerminalUiLayout.at(encoded, 5, 19, 18, 18), TerminalUiLayout.at(search, 28, 22, searchWidth, 14),
-                TerminalUiLayout.at(status, searchWidth + 31, 20, 56, 18), TerminalUiLayout.at(list, 5, 42, ROW_WIDTH + 10, LIST_HEIGHT));
+        resize.style(style -> style.tooltips(text("resize")));
+        root.addChildren(TerminalUiLayout.at(encoded, 5, 19, 18, 18), search, status, list, resize);
+        resize(MIN_WIDTH, MIN_HEIGHT);
+    }
+
+    /** Resizes only the list viewport and field widths; row and thumb pixels retain their native size. */
+    public void resize(int width, int height) {
+        if (this.width == width && this.height == height) return;
+        cancelEditing();
+        this.width = width;
+        this.height = height;
+        rowWidth = width - 20;
+        listHeight = height - 50;
+        root.layout(layout -> layout.width(width).height(height));
+        TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 7, 5, width - 31, 10);
+        TerminalUiLayout.at(TerminalUiLayout.require(root, "close", UIElement.class), width - 17, 3, 14, 14);
+        boolean showHint = width >= 160;
+        int searchWidth = showHint ? width - 92 : width - 33;
+        status.setDisplay(showHint);
+        TerminalUiLayout.at(search, 28, 22, searchWidth, 14);
+        TerminalUiLayout.at(status, searchWidth + 31, 20, 56, 18);
+        TerminalUiLayout.at(list, 5, 42, rowWidth + 10, listHeight);
+        TerminalUiLayout.at(viewport, 0, 0, rowWidth, listHeight);
+        TerminalUiLayout.at(scrollbar, rowWidth + 4, 0, 6, listHeight);
+        TerminalUiLayout.at(resize, width - 6, height - 6, 4, 4);
+        updateScrollRange();
+        rebuildViewport();
+    }
+
+    public void fit(int availableWidth, int availableHeight) {
+        resize(Math.clamp(width, MIN_WIDTH, Math.max(MIN_WIDTH, availableWidth)), Math.clamp(height, MIN_HEIGHT, Math.max(MIN_HEIGHT, availableHeight)));
+    }
+
+    public int width() {
+        return width;
+    }
+
+    public int height() {
+        return height;
     }
 
     public void apply(SyncedPatternProviderList providers, @Nullable GenericStack pattern, boolean connected) {
@@ -139,8 +181,13 @@ public final class PatternUploadUi {
                 for (int index = 0; index < group.leaves().size(); index++) rows.add(new ProviderRow(group, index));
             }
         }
-        int maximum = Math.max(0, rows.size() * ROW_HEIGHT - LIST_HEIGHT);
+        updateScrollRange();
+    }
+
+    private void updateScrollRange() {
+        int maximum = Math.max(0, rows.size() * ROW_HEIGHT - listHeight);
         scrollbar.setRange(0, maximum);
+        scrollbar.setValue(Math.min(scrollbar.getValue(), maximum));
         scrollbar.scrollerStyle(style -> style.scrollDelta(maximum == 0 ? 1 : (float) ROW_HEIGHT / maximum));
         scrollbar.setActive(maximum > 0);
         if (maximum == 0) scrollbar.addClass("inactive-scroll");
@@ -155,7 +202,8 @@ public final class PatternUploadUi {
         viewport.clearAllChildren();
         int offset = Math.round(scrollbar.getValue());
         int first = offset / ROW_HEIGHT;
-        for (int index = first; index < Math.min(rows.size(), first + VISIBLE_ROWS); index++) {
+        int visibleRows = (listHeight + ROW_HEIGHT - 1) / ROW_HEIGHT + 1;
+        for (int index = first; index < Math.min(rows.size(), first + visibleRows); index++) {
             ProviderRow entry = rows.get(index);
             SyncedPatternProvider group = entry.group();
             int top = index * ROW_HEIGHT - offset;
@@ -178,7 +226,7 @@ public final class PatternUploadUi {
         button.addClass("terminal-upload-row");
         if (selectedGroup == group.id() && selectedLeaf == leaf) button.addClass("selected");
         button.noText();
-        TerminalUiLayout.at(button, 0, top, ROW_WIDTH, ROW_HEIGHT);
+        TerminalUiLayout.at(button, 0, top, rowWidth, ROW_HEIGHT);
         TerminalResourceCell icon = new TerminalResourceCell();
         icon.addClass("embedded-cell");
         ItemStack stack = BuiltInRegistries.ITEM.get(iconId).getDefaultInstance();
@@ -200,8 +248,8 @@ public final class PatternUploadUi {
         int iconLeft = leaf == 0 ? 2 : 9;
         int nameLeft = iconLeft + 21;
         var font = Minecraft.getInstance().font;
-        int countWidth = Math.min(ROW_WIDTH - nameLeft - 8, (int) Math.ceil(font.width(capacityText) * 7F / font.lineHeight));
-        int countLeft = ROW_WIDTH - countWidth - 4;
+        int countWidth = Math.min(rowWidth - nameLeft - 8, (int) Math.ceil(font.width(capacityText) * 7F / font.lineHeight));
+        int countLeft = rowWidth - countWidth - 4;
         button.addChildren(TerminalUiLayout.at(icon, iconLeft, 1, 18, 18),
                 TerminalUiLayout.at(field, nameLeft, 3, countLeft - nameLeft - 3, 14),
                 TerminalUiLayout.at(count, countLeft, 1, countWidth, 18));

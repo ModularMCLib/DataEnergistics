@@ -96,6 +96,7 @@ public final class TerminalOverlayUi {
     private final TerminalPinnedResourcesUi pinnedUi;
     private ObjectList<TerminalStorageIndex.Entry> boundStorage = ObjectImmutableList.of();
     private boolean boundConnected;
+    private boolean boundCraftableOnly;
     private int boundCellCount = -1;
     private final ObjectList<TerminalResourceCell> inputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> outputs = new ObjectArrayList<>();
@@ -383,7 +384,7 @@ public final class TerminalOverlayUi {
     public void view(boolean reset) {
         ObjectList<TerminalStorageIndex.Entry> previous = storageIndex.projected();
         AEKey anchor = !reset && offset < previous.size() ? previous.get(offset).key() : null;
-        pinnedUi.bind(storageIndex, snapshot.getBoolean("connected"));
+        pinnedUi.bind(storageIndex, snapshot.getBoolean("connected"), filter.equals("craftable"));
         storageIndex.project(field(window, "search").getValue(), sort, descending, filter, enabledKeyTypes, pinnedUi.visibleKeys());
         ObjectList<TerminalStorageIndex.Entry> projected = storageIndex.projected();
         if (reset) offset = 0;
@@ -973,17 +974,20 @@ public final class TerminalOverlayUi {
         ObjectList<TerminalStorageIndex.Entry> next = new ObjectArrayList<>();
         for (int index = Math.min(offset, end); index < end; index++) next.add(entries.get(index));
         boolean connected = snapshot.getBoolean("connected");
+        boolean craftableOnly = filter.equals("craftable");
         boolean force = boundCellCount != storage.size();
-        if (!force && boundConnected == connected && next.equals(boundStorage)) return;
+        if (!force && boundConnected == connected && boundCraftableOnly == craftableOnly && next.equals(boundStorage)) return;
         for (int index = 0; index < storage.size(); index++) {
             TerminalStorageIndex.Entry entry = index < next.size() ? next.get(index) : null;
             TerminalStorageIndex.Entry previous = index < boundStorage.size() ? boundStorage.get(index) : null;
             if (force || !Objects.equals(entry, previous))
                 storage.get(index).entry(entry == null ? null : entry.stack(), entry != null && entry.craftable());
             if (force || boundConnected != connected) storage.get(index).setActive(connected);
+            if (force || boundCraftableOnly != craftableOnly) storage.get(index).craftableOnly(craftableOnly);
         }
         boundStorage = new ObjectImmutableList<>(next);
         boundConnected = connected;
+        boundCraftableOnly = craftableOnly;
         boundCellCount = storage.size();
     }
 

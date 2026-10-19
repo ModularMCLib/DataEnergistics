@@ -63,7 +63,7 @@ public final class TerminalStonecuttingRecipeCell extends Button {
     public void drawBackgroundAdditional(GUIContext context) {
         super.drawBackgroundAdditional(context);
         int x = Math.round(getContentX()) + 2;
-        int y = Math.round(getContentY()) + (selected || getState() != State.DEFAULT ? 3 : 2);
+        int y = Math.round(getContentY()) + (selected || getState() != State.DEFAULT ? 2 : 1);
         context.graphics.renderItem(output, x, y);
         context.graphics.renderItemDecorations(context.mc.font, output, x, y);
     }

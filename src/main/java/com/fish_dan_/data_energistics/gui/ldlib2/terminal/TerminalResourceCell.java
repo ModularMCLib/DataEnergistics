@@ -15,6 +15,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
+import appeng.client.gui.me.common.StackSizeRenderer;
 import appeng.crafting.pattern.EncodedPatternItem;
 
 import net.minecraft.client.Minecraft;
@@ -37,6 +38,7 @@ public final class TerminalResourceCell extends Button {
     private boolean craftable;
     private boolean configurable;
     private boolean storageCell;
+    private boolean craftableOnly;
     private boolean encodedPattern;
     private @Nullable UIEventListener resourceClick;
     private @Nullable Component actionHint;
@@ -85,6 +87,10 @@ public final class TerminalResourceCell extends Button {
 
     public void storageCell(boolean value) {
         storageCell = value;
+    }
+
+    public void craftableOnly(boolean value) {
+        craftableOnly = value;
     }
 
     /** Uses the same primary-output display as AE's encoded-pattern slot, retaining the actual pattern for input. */
@@ -149,13 +155,19 @@ public final class TerminalResourceCell extends Button {
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
         if (dragPreview != null) context.graphics.fill(0, 0, 16, 16, 0x80FFFFFF);
+        context.pose.translate(0, -1, 0);
         AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, display.what());
+        boolean craftingLabel = craftable && (craftableOnly || display.amount() <= 0);
         if (display.amount() != 1 || craftable) {
-            String amount = display.amount() > 1 || !craftable ? display.what().formatAmount(display.amount(), AmountFormat.SLOT) : "+";
+            String amount = craftingLabel ? "+" : display.what().formatAmount(display.amount(), AmountFormat.SLOT);
+            context.pose.pushPose();
             context.pose.translate(0, 10, 200);
             context.pose.scale(0.5F, 0.5F, 1);
             context.graphics.drawString(context.mc.font, amount, 32 - context.mc.font.width(amount), 0, 0xFFFFFFFF);
+            context.pose.popPose();
         }
+        if (storageCell && craftable && !craftingLabel)
+            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -11, -11, "+", false);
         context.pose.popPose();
     }
 
@@ -165,6 +177,7 @@ public final class TerminalResourceCell extends Button {
         if (stack == null) {
             Icon.BACKGROUND_ENCODED_PATTERN.getBlitter().dest(0, 0).blit(context.graphics);
         } else if (stack.what() instanceof AEItemKey itemKey) {
+            context.pose.translate(0, -1, 0);
             ItemStack display = itemKey.toStack();
             if (display.getItem() instanceof EncodedPatternItem<?> pattern) {
                 ItemStack output = pattern.getOutput(display);

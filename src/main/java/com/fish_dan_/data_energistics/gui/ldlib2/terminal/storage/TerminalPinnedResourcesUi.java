@@ -143,9 +143,10 @@ public final class TerminalPinnedResourcesUi {
         root.setVisible(viewport.pinnedRows() > 0);
     }
 
-    public void bind(TerminalStorageIndex index, boolean connected) {
+    public void bind(TerminalStorageIndex index, boolean connected, boolean craftableOnly) {
         visibleKeys.clear();
         for (int slot = 0; slot < manualCells.size(); slot++) {
+            manualCells.get(slot).craftableOnly(craftableOnly);
             if (!templates.containsKey(slot)) {
                 manualCells.get(slot).entry(null, false);
                 continue;
@@ -157,6 +158,7 @@ public final class TerminalPinnedResourcesUi {
         }
         for (int slot = 0; slot < automaticCells.size(); slot++) {
             TerminalResourceCell cell = automaticCells.get(slot);
+            cell.craftableOnly(craftableOnly);
             if (slot >= automatic.size()) {
                 cell.entry(null, false);
                 if (cell.isActive()) cell.setActive(false);

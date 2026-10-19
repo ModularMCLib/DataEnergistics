@@ -118,7 +118,8 @@
 .terminal-processing-step .__button_text__ { font-size: 6; }
 .page-smithing .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_forging.png, 3, 20, 54, 18); }
 .page-stonecutting .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png, 2, 20, 18, 18); }
-.page-anvil .terminal-page-art { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 1, 1, 106, 56) translate(0, -1); }
+.page-anvil .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 3, 20, 54, 18); }
+.page-anvil .page-result { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 78, 20, 18, 18); }
 .anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
 .anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_2.png); }
 .anvil-boost-step:disabled .terminal-glyph { opacity: 0.5; }

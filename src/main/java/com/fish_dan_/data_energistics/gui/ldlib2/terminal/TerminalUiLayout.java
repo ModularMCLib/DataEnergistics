@@ -89,17 +89,12 @@ public final class TerminalUiLayout {
 
     public static UIElement page(TerminalWorkspace mode) {
         int width = pageWidth(mode);
-        UIElement root = at(element(mode.id(), "terminal-page"), mode == TerminalWorkspace.ANVIL ? 1 : 0, 0, width, 58);
+        UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, width, 58);
         root.setOverflowVisible(true);
         root.addClass("page-" + mode.id());
         UIElement background = at(element("page_surface", "terminal-page-surface"), -1, 0, width + 2, 58);
         background.setAllowHitTest(false);
         root.addChild(background);
-        if (mode == TerminalWorkspace.ANVIL) {
-            UIElement art = at(element("page_art", "terminal-page-art"), 1, 1, 106, 56);
-            art.setAllowHitTest(false);
-            root.addChild(art);
-        }
         UIElement inputs = element("inputs", "page-inputs");
         inputs.setOverflowVisible(false);
         UIElement result = element("result", "page-result");
@@ -117,7 +112,7 @@ public final class TerminalUiLayout {
                 pageAt(inputs, 9, 1, 54, 54);
                 pageAt(result, 64, 19, 18, 18);
             }
-            case SMITHING -> {
+            case SMITHING, ANVIL -> {
                 pageAt(inputs, 9, 19, 54, 18);
                 pageAt(result, 96, 19, 18, 18);
                 root.addChild(recipeArrow(69));
@@ -131,10 +126,6 @@ public final class TerminalUiLayout {
                 recipes.setOverflowVisible(false);
                 root.addChildren(frame, pageAt(recipes, 23, 6, recipesWidth, TerminalStonecuttingRecipeCell.ROWS * TerminalStonecuttingRecipeCell.HEIGHT),
                         pageAt(recipeScrollbar("recipe_scroll"), 27 + recipesWidth, 6, 6, 46));
-            }
-            case ANVIL -> {
-                pageAt(inputs, 3, 19, 54, 18);
-                pageAt(result, 78, 19, 18, 18);
             }
         }
         UIElement outputs = element("outputs", "page-outputs");
@@ -161,10 +152,10 @@ public final class TerminalUiLayout {
                         pageAt(processingScrollbar(), 2, 2, 6, 54), TerminalProcessingControlsUi.create());
             }
         } else {
-            root.addChild(pageAt(field("name"), 3, 4, 96, 10));
+            root.addChild(pageAt(field("name"), 9, 4, width - 18, 10));
             actions.addChildren(pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 5, 14, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
                     pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 5, 30, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE));
-            Label status = pageAt(label("anvil_status"), 3, 42, 96, 10);
+            Label status = pageAt(label("anvil_status"), 9, 42, width - 18, 10);
             status.addClass("anvil-status");
             status.setText(Component.translatable("gui.data_energistics.me_digital_anvil.invalid"));
             status.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));
@@ -195,9 +186,8 @@ public final class TerminalUiLayout {
 
     private static int pageWidth(TerminalWorkspace mode) {
         return switch (mode) {
-            case CRAFTING, PROCESSING, SMITHING -> TerminalViewportLayout.PROCESSING_WIDTH;
+            case CRAFTING, PROCESSING, SMITHING, ANVIL -> TerminalViewportLayout.PROCESSING_WIDTH;
             case STONECUTTING -> TerminalViewportLayout.STONECUTTING_WIDTH;
-            default -> TerminalViewportLayout.OPERATION_WIDTH;
         };
     }
 

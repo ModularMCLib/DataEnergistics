@@ -885,8 +885,7 @@ public final class TerminalOverlayUi {
         }
         rectangles.add(new Rect2i(viewport.x() + 12, viewport.y(), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12, viewport.height()));
         rectangles.add(rect(element(window, "sidebar")));
-        rectangles.add(new Rect2i(viewport.x() + viewport.width() - TerminalViewportLayout.TAB_WIDTH,
-                viewport.y() + viewport.height() - 72, TerminalViewportLayout.TAB_WIDTH, 70));
+        rectangles.add(rect(element(window, "tabs")));
         rectangles.addAll(subWindows.rectangles());
         amountUi.extraRectangles(rectangles);
         return rectangles;

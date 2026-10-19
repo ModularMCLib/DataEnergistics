@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 public final class TerminalUiLayout {
 
     private static final ResourceLocation STYLES = Data_Energistics.id("lss/player_terminal.lss");
+    private static final int STORAGE_SCROLL_WIDTH = 10;
 
     private TerminalUiLayout() {}
 
@@ -69,7 +70,7 @@ public final class TerminalUiLayout {
                 icon("drag", "terminal-drag", "icon-drag", encodingCenter - 5, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
-                at(storageScrollbar(), encodingCenter - 3, 18, 6, 148),
+                at(storageScrollbar(), TerminalViewportLayout.STORAGE_LEFT + 108 + 1, 18, STORAGE_SCROLL_WIDTH, 148),
                 at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING) + 1, 108,
                         operationWidth(TerminalWorkspace.CRAFTING), 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
@@ -179,11 +180,12 @@ public final class TerminalUiLayout {
         atWithin(require(window, "drag", UIElement.class), encodingCenter - 5, 3, 10, 10, viewport.width(), viewport.height());
         atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "pinned_resources", UIElement.class), 16, 18, viewport.storageWidth(), viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE, viewport.width(), viewport.height());
-        atWithin(require(window, "storage_scroll", UIElement.class), encodingCenter - 3, 18 + viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE,
-                6, viewport.scrollHeight(), viewport.width(), viewport.height());
-        atWithin(require(window, "storage_rail", UIElement.class), 0, 0, 6, viewport.scrollHeight(), 6, viewport.scrollHeight());
-        atWithin(require(window, "storage_rail_rim", UIElement.class), 1, 1, 4, viewport.scrollHeight() - 2, 6, viewport.scrollHeight());
-        atWithin(require(window, "storage_rail_center", UIElement.class), 2, 2, 2, viewport.scrollHeight() - 4, 6, viewport.scrollHeight());
+        atWithin(require(window, "storage_scroll", UIElement.class), TerminalViewportLayout.STORAGE_LEFT + viewport.storageWidth() + 1,
+                TerminalViewportLayout.STORAGE_TOP + viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE,
+                STORAGE_SCROLL_WIDTH, viewport.scrollHeight(), viewport.width(), viewport.height());
+        atWithin(require(window, "storage_rail", UIElement.class), 0, 0, STORAGE_SCROLL_WIDTH, viewport.scrollHeight(), STORAGE_SCROLL_WIDTH, viewport.scrollHeight());
+        atWithin(require(window, "storage_rail_rim", UIElement.class), 1, 1, STORAGE_SCROLL_WIDTH - 2, viewport.scrollHeight() - 2, STORAGE_SCROLL_WIDTH, viewport.scrollHeight());
+        atWithin(require(window, "storage_rail_center", UIElement.class), 2, 2, STORAGE_SCROLL_WIDTH - 4, viewport.scrollHeight() - 4, STORAGE_SCROLL_WIDTH, viewport.scrollHeight());
         atWithin(require(window, "workspaces", UIElement.class), viewport.operationLeft(), viewport.operationTop(),
                 viewport.operationWidth(), TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
         atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 71,
@@ -261,6 +263,8 @@ public final class TerminalUiLayout {
 
     private static Scroller.Vertical storageScrollbar() {
         Scroller.Vertical scrollbar = named(verticalScrollbar(new Scroller.Vertical()), "storage_scroll", "terminal-storage-scroll");
+        scrollbar.layout(layout -> layout.width(STORAGE_SCROLL_WIDTH));
+        scrollbar.scrollBar.layout(layout -> layout.left(0).flexShrink(0));
         scrollbar.scrollContainer.addChildAt(scrollbarRail("storage_rail"), 0);
         return scrollbar;
     }

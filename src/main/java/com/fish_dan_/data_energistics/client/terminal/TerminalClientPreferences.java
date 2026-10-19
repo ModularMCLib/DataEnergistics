@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 
 import net.neoforged.fml.loading.FMLPaths;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -20,6 +22,9 @@ import java.nio.file.Path;
 public final class TerminalClientPreferences {
 
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics/player_terminal.json");
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private final String screenId;
+    private JsonObject screens = new JsonObject();
     public float xPercent = 0.047058824F;
     public float yPercent = 0.11111111F;
     public int width = TerminalViewportLayout.MIN_WIDTH;
@@ -32,17 +37,25 @@ public final class TerminalClientPreferences {
     public boolean descending;
     public final ObjectOpenHashSet<String> disabledKeyTypes = new ObjectOpenHashSet<>();
 
-    public static TerminalClientPreferences load() {
-        TerminalClientPreferences value = new TerminalClientPreferences();
+    private TerminalClientPreferences(String screenId) {
+        this.screenId = screenId;
+    }
+
+    public static TerminalClientPreferences load(String screenId) {
+        TerminalClientPreferences value = new TerminalClientPreferences(screenId);
         if (!Files.exists(FILE)) return value;
         try {
             JsonObject json = JsonParser.parseString(Files.readString(FILE, StandardCharsets.UTF_8)).getAsJsonObject();
-            if (json.has("x_percent")) value.xPercent = Math.clamp(json.get("x_percent").getAsFloat(), 0, 1);
-            if (json.has("y_percent")) value.yPercent = Math.clamp(json.get("y_percent").getAsFloat(), 0, 1);
-            value.width = json.get("width").getAsInt();
-            value.height = json.get("height").getAsInt();
-            value.folded = json.get("folded").getAsBoolean();
-            if (json.has("open")) value.open = json.get("open").getAsBoolean();
+            if (json.has("screens")) value.screens = json.getAsJsonObject("screens");
+            JsonObject window = value.screens.getAsJsonObject(screenId);
+            if (window != null) {
+                value.xPercent = Math.clamp(window.get("x_percent").getAsFloat(), 0, 1);
+                value.yPercent = Math.clamp(window.get("y_percent").getAsFloat(), 0, 1);
+                value.width = window.get("width").getAsInt();
+                value.height = window.get("height").getAsInt();
+                value.folded = window.get("folded").getAsBoolean();
+                value.open = window.get("open").getAsBoolean();
+            }
             if (json.has("shift_click_to_network")) value.shiftClickToNetwork = json.get("shift_click_to_network").getAsBoolean();
             if (json.has("sort")) value.sort = json.get("sort").getAsString();
             if (json.has("filter")) value.filter = json.get("filter").getAsString();
@@ -51,19 +64,21 @@ public final class TerminalClientPreferences {
                 for (var type : json.getAsJsonArray("disabled_key_types")) value.disabledKeyTypes.add(type.getAsString());
             }
         } catch (IOException | RuntimeException failure) {
-            Data_Energistics.LOGGER.warn("Cannot load player terminal geometry from {}", FILE, failure);
+            Data_Energistics.LOGGER.warn("Cannot load player terminal preferences from {}", FILE, failure);
         }
         return value;
     }
 
     public void save() {
+        JsonObject window = new JsonObject();
+        window.addProperty("x_percent", xPercent);
+        window.addProperty("y_percent", yPercent);
+        window.addProperty("width", width);
+        window.addProperty("height", height);
+        window.addProperty("folded", folded);
+        window.addProperty("open", open);
+        screens.add(screenId, window);
         JsonObject json = new JsonObject();
-        json.addProperty("x_percent", xPercent);
-        json.addProperty("y_percent", yPercent);
-        json.addProperty("width", width);
-        json.addProperty("height", height);
-        json.addProperty("folded", folded);
-        json.addProperty("open", open);
         json.addProperty("shift_click_to_network", shiftClickToNetwork);
         json.addProperty("sort", sort);
         json.addProperty("filter", filter);
@@ -71,11 +86,12 @@ public final class TerminalClientPreferences {
         JsonArray disabledTypes = new JsonArray();
         disabledKeyTypes.stream().sorted().forEach(disabledTypes::add);
         json.add("disabled_key_types", disabledTypes);
+        json.add("screens", screens);
         try {
             Files.createDirectories(FILE.getParent());
-            Files.writeString(FILE, json.toString(), StandardCharsets.UTF_8);
+            Files.writeString(FILE, GSON.toJson(json) + System.lineSeparator(), StandardCharsets.UTF_8);
         } catch (IOException failure) {
-            Data_Energistics.LOGGER.warn("Cannot save player terminal geometry to {}", FILE, failure);
+            Data_Energistics.LOGGER.warn("Cannot save player terminal preferences to {}", FILE, failure);
         }
     }
 }

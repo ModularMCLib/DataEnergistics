@@ -20,13 +20,12 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import dev.vfyjxf.taffy.style.AlignItems;
-import dev.vfyjxf.taffy.style.FlexDirection;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
@@ -179,8 +178,6 @@ public final class PatternUploadUi {
         button.addClass("terminal-upload-row");
         if (selectedGroup == group.id() && selectedLeaf == leaf) button.addClass("selected");
         button.noText();
-        button.layout(layout -> layout.widthPercent(100).height(20).paddingAll(1).paddingLeft(leaf == 0 ? 2 : 9).paddingRight(4)
-                .gapColumn(3).flexDirection(FlexDirection.ROW).alignItems(AlignItems.CENTER).flexShrink(0));
         TerminalUiLayout.at(button, 0, top, ROW_WIDTH, ROW_HEIGHT);
         TerminalResourceCell icon = new TerminalResourceCell();
         icon.addClass("embedded-cell");
@@ -196,11 +193,18 @@ public final class PatternUploadUi {
         count.addClass("terminal-label");
         count.addClass("terminal-upload-count");
         count.addClass(used * 100L < capacity * 70L ? "capacity-available" : used * 100L < capacity * 90L ? "capacity-warning" : "capacity-critical");
-        count.setText(Component.literal(used + "/" + capacity));
-        count.layout(layout -> layout.height(18).flexShrink(0));
-        count.textStyle(style -> style.adaptiveWidth(true).adaptiveHeight(false));
+        String capacityText = used + "/" + capacity;
+        count.setText(Component.literal(capacityText));
+        count.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         count.setAllowHitTest(false);
-        button.addChildren(icon, field, count);
+        int iconLeft = leaf == 0 ? 2 : 9;
+        int nameLeft = iconLeft + 21;
+        var font = Minecraft.getInstance().font;
+        int countWidth = Math.min(ROW_WIDTH - nameLeft - 8, (int) Math.ceil(font.width(capacityText) * 7F / font.lineHeight));
+        int countLeft = ROW_WIDTH - countWidth - 4;
+        button.addChildren(TerminalUiLayout.at(icon, iconLeft, 1, 18, 18),
+                TerminalUiLayout.at(field, nameLeft, 3, countLeft - nameLeft - 3, 14),
+                TerminalUiLayout.at(count, countLeft, 1, countWidth, 18));
         var tooltip = new ObjectArrayList<Component>();
         tooltip.add(name);
         if (detail != null) tooltip.add(detail);

@@ -26,7 +26,6 @@ final class PatternProviderNameField extends TextField {
         setCursor(0);
         setTextRegexValidator(".{0,50}");
         setFocusable(false);
-        layout(layout -> layout.flex(1).minWidth(0).height(14));
     }
 
     @Override

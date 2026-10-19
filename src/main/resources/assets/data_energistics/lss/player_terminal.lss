@@ -209,7 +209,7 @@
 .terminal-upload-popup .terminal-label { background: #00000000; }
 .terminal-upload-popup.standalone-upload-popup { z-index: 0; }
 .terminal-upload-name { horizontal-align: left; }
-.terminal-upload-count { horizontal-align: right; adaptive-width: true; }
+.terminal-upload-count { horizontal-align: right; adaptive-width: false; }
 .terminal-upload-count.capacity-available { text-color: #FF168A16; }
 .terminal-upload-count.capacity-warning { text-color: #FFE0B000; }
 .terminal-upload-count.capacity-critical { text-color: #FFD52C2C; }

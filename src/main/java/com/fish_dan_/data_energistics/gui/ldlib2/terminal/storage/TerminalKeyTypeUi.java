@@ -28,7 +28,7 @@ public final class TerminalKeyTypeUi {
     private final KeyTypeSelection selection;
     private final UIElement viewport = new UIElement();
     private final UIElement content = new UIElement();
-    private final Scroller.Vertical scrollbar = TerminalUiLayout.silentScrollbar(new Scroller.Vertical());
+    private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
     private final Object2ObjectLinkedOpenHashMap<AEKeyType, TerminalActionButton> rows = new Object2ObjectLinkedOpenHashMap<>();
     private int width;
     private int height;
@@ -48,12 +48,7 @@ public final class TerminalKeyTypeUi {
         });
         scrollbar.addClass("terminal-key-type-scroll");
         scrollbar.setRange(0, 1);
-        scrollbar.headButton.setDisplay(false);
-        scrollbar.tailButton.setDisplay(false);
-        scrollbar.layout(layout -> layout.paddingAll(0).gapAll(0));
-        scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
         scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("key_type_rail"), 0);
-        scrollbar.scrollBar.layout(layout -> layout.width(6).height(THUMB_HEIGHT).minHeight(THUMB_HEIGHT).maxHeight(THUMB_HEIGHT).paddingAll(0));
         scrollbar.setOnValueChanged(value -> content.layout(layout -> layout.top(-Math.round(value * maximumScroll))));
         for (AEKeyType type : AEKeyTypes.getAll()) {
             TerminalActionButton row = TerminalUiLayout.toggle("key_type_" + rows.size(), type.getDescription(),
@@ -104,7 +99,7 @@ public final class TerminalKeyTypeUi {
         TerminalUiLayout.at(content, 0, 0, listWidth, contentHeight);
         TerminalUiLayout.at(scrollbar, Math.max(0, width - 11), KeyTypeSelectionLayout.CONTENT_TOP, 6, listHeight);
         scrollbar.setDisplay(scrollable);
-        // ScrollerView rewrites the thumb as a content fraction. This independent scroller keeps the 6x15 sprite
+        // ScrollerView rewrites the thumb as a content fraction. This independent scroller keeps the 10x15 sprite
         // native.
         scrollbar.setScrollBarSize(Math.min(100, 100F * THUMB_HEIGHT / Math.max(1, listHeight)));
         scrollbar.scrollerStyle(style -> style.scrollDelta(scrollable ? (float) KeyTypeSelectionLayout.KEY_TYPE_SPACING / maximumScroll : 1));

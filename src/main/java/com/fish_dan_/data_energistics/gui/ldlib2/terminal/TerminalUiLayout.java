@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 
+import com.lowdragmc.lowdraglib2.gui.ui.Style;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
@@ -259,12 +260,7 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical storageScrollbar() {
-        Scroller.Vertical scrollbar = named(silentScrollbar(new Scroller.Vertical()), "storage_scroll", "terminal-storage-scroll");
-        scrollbar.headButton.setDisplay(false);
-        scrollbar.tailButton.setDisplay(false);
-        scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
-        scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
-        scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        Scroller.Vertical scrollbar = named(verticalScrollbar(new Scroller.Vertical()), "storage_scroll", "terminal-storage-scroll");
         scrollbar.scrollContainer.addChildAt(scrollbarRail("storage_rail"), 0);
         return scrollbar;
     }
@@ -289,31 +285,38 @@ public final class TerminalUiLayout {
     }
 
     private static Scroller.Vertical processingScrollbar() {
-        Scroller.Vertical scrollbar = named(silentScrollbar(new Scroller.Vertical()), "pattern_scroll", "terminal-pattern-scroll");
-        scrollbar.headButton.setDisplay(false);
-        scrollbar.tailButton.setDisplay(false);
-        scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
-        scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
-        scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
-        return scrollbar;
+        return named(verticalScrollbar(new Scroller.Vertical()), "pattern_scroll", "terminal-pattern-scroll");
     }
 
     private static Scroller.Vertical stonecuttingScrollbar() {
-        Scroller.Vertical scrollbar = named(silentScrollbar(new Scroller.Vertical()), "recipe_scroll", "terminal-stonecutting-scroll");
+        return named(verticalScrollbar(new Scroller.Vertical()), "recipe_scroll", "terminal-stonecutting-scroll");
+    }
+
+    /** Keeps the supplied 10-by-15 thumb at native size, centered on the six-pixel rail. */
+    public static <T extends Scroller> T verticalScrollbar(T scrollbar) {
+        silentScrollbar(scrollbar);
+        scrollbar.addClass("terminal-scrollbar");
         scrollbar.headButton.setDisplay(false);
         scrollbar.tailButton.setDisplay(false);
-        scrollbar.layout(layout -> layout.gapRow(0).gapColumn(0));
+        scrollbar.setOverflowVisible(true);
+        scrollbar.layout(layout -> layout.width(6).paddingAll(0).gapAll(0));
+        scrollbar.scrollContainer.setOverflowVisible(true);
         scrollbar.scrollContainer.layout(layout -> layout.paddingAll(0));
-        scrollbar.scrollBar.layout(layout -> layout.width(6).height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        scrollbar.scrollBar.layout(layout -> layout.left(-2).width(10).minWidth(10).maxWidth(10)
+                .height(15).minHeight(15).maxHeight(15).paddingAll(0));
+        scrollbar.scrollContainer.addEventListener(UIEvents.LAYOUT_CHANGED, event -> {
+            float railHeight = scrollbar.scrollContainer.getContentHeight();
+            if (railHeight > 0)
+                Style.importantPipeline(scrollbar.getScrollerStyle(), style -> style.scrollBarSize(1500F / railHeight));
+        });
         return scrollbar;
     }
 
     /** Configure a newly constructed scroller once: AE scroll thumbs do not play button sounds. */
-    public static <T extends Scroller> T silentScrollbar(T scrollbar) {
+    public static void silentScrollbar(Scroller scrollbar) {
         // LDLib2 prepends listeners: the original Button press handler follows the scroller's drag handler.
         var thumb = scrollbar.scrollBar;
         thumb.removeEventListener(UIEvents.MOUSE_DOWN, thumb.getBubbleListeners(UIEvents.MOUSE_DOWN).getLast());
-        return scrollbar;
     }
 
     private static Button control(String id, int x, int y, int width, int height) {

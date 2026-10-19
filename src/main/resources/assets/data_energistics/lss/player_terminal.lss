@@ -30,6 +30,11 @@
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
     pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
 }
+.terminal-encode {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_2.png);
+}
 .terminal-resize {
     base-background: #00000000;
     hover-background: #339AD8FF;

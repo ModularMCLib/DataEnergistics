@@ -37,11 +37,11 @@ public final class TerminalUiLayout {
         UIElement root = element("terminal_root", "terminal-root");
         root.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).widthPercent(100).heightPercent(100).paddingAll(0));
         root.addChild(icon("entry", "terminal-entry", "icon-entry", 0, 0, 10, 10));
-        UIElement window = at(element("window", "terminal-window"), 8, 8, 150, 168);
-        UIElement panel = at(element("panel", "terminal-panel"), 12, 0, 126, 168);
-        panel.addChildren(at(element("top_edge", "frame-light"), 0, 0, 126, 1),
+        UIElement window = at(element("window", "terminal-window"), 8, 8, 160, 168);
+        UIElement panel = at(element("panel", "terminal-panel"), 12, 0, 136, 168);
+        panel.addChildren(at(element("top_edge", "frame-light"), 0, 0, 136, 1),
                 at(element("left_edge", "frame-light"), 0, 0, 1, 168),
-                at(element("bottom_edge", "frame-dark"), 0, 167, 126, 1));
+                at(element("bottom_edge", "frame-dark"), 0, 167, 136, 1));
         window.addChild(panel);
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
         UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, 0, 15, 15 + (controls.length - 1) * 12);
@@ -57,23 +57,24 @@ public final class TerminalUiLayout {
             sidebar.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
         }
         window.addChild(sidebar);
-        window.addChildren(at(field("search"), 16, 3, 108, 12),
-                icon("drag", "terminal-drag", "icon-drag", 125, 3, 10, 10),
+        window.addChildren(at(field("search"), 16, 3, 118, 12),
+                icon("drag", "terminal-drag", "icon-drag", 135, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
-                at(storageScrollbar(), 126, 18, 6, 148),
-                at(element("workspaces", "terminal-pages"), 30, 108, 108, 58));
+                at(storageScrollbar(), 136, 18, 6, 148),
+                at(element("workspaces", "terminal-pages"), 16, 108, 132, 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
-        UIElement tabs = at(element("tabs", "terminal-tabs"), 138, 96, TerminalViewportLayout.TAB_WIDTH, 70);
+        UIElement tabs = at(element("tabs", "terminal-tabs"), 148, 96, TerminalViewportLayout.TAB_WIDTH, 70);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             tabs.addChild(icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14));
-        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", 132, 164, 4, 4));
+        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", 142, 164, 4, 4));
         root.addChild(window);
         return UI.of(root, ObjectImmutableList.of(stylesheet()));
     }
 
     public static UIElement page(TerminalWorkspace mode) {
         UIElement root = at(element(mode.id(), "terminal-page"), 0, 0, 108, 58);
+        root.setOverflowVisible(true);
         root.addClass("page-" + mode.id());
         UIElement inputs = element("inputs", "page-inputs");
         inputs.setOverflowVisible(false);
@@ -81,7 +82,7 @@ public final class TerminalUiLayout {
         switch (mode) {
             case CRAFTING -> {
                 pageAt(inputs, 3, 2, 54, 54);
-                pageAt(result, 84, 10, 18, 18);
+                pageAt(result, 84, 20, 18, 18);
             }
             case PROCESSING -> {
                 pageAt(inputs, 9, 2, 54, 54);
@@ -89,13 +90,13 @@ public final class TerminalUiLayout {
             }
             case SMITHING -> {
                 pageAt(inputs, 3, 20, 54, 18);
-                pageAt(result, 84, 10, 18, 18);
+                pageAt(result, 84, 20, 18, 18);
             }
             case STONECUTTING -> {
-                pageAt(inputs, 3, 6, 18, 18);
+                pageAt(inputs, 2, 20, 18, 18);
                 UIElement recipes = element("recipes", "stonecutting-recipes");
                 recipes.setOverflowVisible(false);
-                root.addChildren(pageAt(recipes, 25, 6, 72, 48), pageAt(stonecuttingScrollbar(), 99, 6, 6, 48));
+                root.addChildren(pageAt(recipes, 23, 11, 72, 36), pageAt(stonecuttingScrollbar(), 100, 6, 6, 46));
             }
             case ANVIL -> {
                 pageAt(inputs, 3, 20, 54, 18);
@@ -108,8 +109,11 @@ public final class TerminalUiLayout {
         root.addChildren(inputs, pageAt(outputs, 84, 2, 18, 54));
         if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) root.addChild(result);
         if (mode.supportsEncoding()) {
-            int modeX = mode == TerminalWorkspace.STONECUTTING ? 6 : 67;
-            root.addChild(pageIcon("encoding", "encoding", "icon-encoding", modeX, 25, 8, 8));
+            UIElement encoding = at(element("pattern_encoding", "terminal-encoding"), 108, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
+            encoding.addChildren(at(element("blank_pattern", "blank-pattern"), 2, 2, 18, 18),
+                    icon("encoding", "terminal-encode", "icon-encoding", 4, 22, 14, 14),
+                    at(element("encoded", "encoded-pattern"), 2, 38, 18, 18));
+            root.addChild(encoding);
             if (mode == TerminalWorkspace.CRAFTING) {
                 root.addChildren(pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 62, 2, 8, 8),
                         pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 72, 2, 8, 8));
@@ -120,12 +124,6 @@ public final class TerminalUiLayout {
                         pageAt(element("transfer_info", "icon-transfer-info"), 72, 2, 8, 8),
                         pageIcon("transfer_processing", "transfer-processing", "icon-transfer", 74, 14, 8, 8),
                         pageAt(processingScrollbar(), 1, 2, 6, 54));
-            }
-            root.addChild(pageAt(element("encoded", "encoded-pattern"), 84, 36, 18, 18));
-            if (mode == TerminalWorkspace.PROCESSING) {
-                pageAt(require(root, "encoded", UIElement.class), 64, 38, 18, 18);
-            } else if (mode == TerminalWorkspace.STONECUTTING) {
-                pageAt(require(root, "encoded", UIElement.class), 3, 36, 18, 18);
             }
         } else {
             root.addChildren(pageAt(field("name"), 3, 5, 96, 10),
@@ -165,7 +163,7 @@ public final class TerminalUiLayout {
         atWithin(require(window, "storage_rail_rim", UIElement.class), 1, 1, 4, viewport.scrollHeight() - 2, 6, viewport.scrollHeight());
         atWithin(require(window, "storage_rail_center", UIElement.class), 2, 2, 2, viewport.scrollHeight() - 4, 6, viewport.scrollHeight());
         atWithin(require(window, "workspaces", UIElement.class), viewport.operationLeft(), viewport.operationTop(),
-                TerminalViewportLayout.OPERATION_WIDTH, TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
+                viewport.operationWidth(), TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
         atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 72,
                 TerminalViewportLayout.TAB_WIDTH, 70, viewport.width(), viewport.height());
         atWithin(require(window, "resize", UIElement.class), viewport.width() - 18, viewport.height() - 4, 4, 4, viewport.width(), viewport.height());
@@ -303,7 +301,7 @@ public final class TerminalUiLayout {
         int glyphSize = switch (glyph) {
             case "icon-transfer-info", "icon-record-type" -> 8;
             case "icon-filter-list" -> 16;
-            case "icon-boost-up", "icon-boost-down" -> 10;
+            case "icon-boost-up", "icon-boost-down", "icon-encoding" -> 10;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
         };
         int glyphHeight = glyph.equals("icon-close") ? 9 : glyphSize;

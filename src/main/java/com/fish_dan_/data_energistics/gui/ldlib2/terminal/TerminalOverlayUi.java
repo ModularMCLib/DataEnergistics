@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInd
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlankPatternCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
@@ -29,6 +30,7 @@ import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
 import appeng.api.stacks.GenericStack;
 import appeng.api.util.KeyTypeSelection;
+import appeng.core.definitions.AEItems;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
@@ -83,6 +85,7 @@ public final class TerminalOverlayUi {
     private final ObjectList<TerminalResourceCell> inputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> outputs = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> encodedPatterns = new ObjectArrayList<>();
+    private @Nullable TerminalBlankPatternCell blankPattern;
     private final TerminalPatternUploadUi uploadUi;
     private final TerminalAmountUi amountUi;
     private final TerminalKeyTypeUi keyTypeUi;
@@ -96,7 +99,7 @@ public final class TerminalOverlayUi {
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
     private final Scroller.Vertical processingScrollbar;
     private final Scroller.Vertical stonecuttingScrollbar;
-    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 150, 168, true, 0, 0);
+    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, 160, 168, true, true, 0, 0);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
     private String sort = "name";
@@ -313,7 +316,7 @@ public final class TerminalOverlayUi {
         stonecuttingScrollRow = Math.clamp(row, 0, maximumRow);
         stonecuttingScrollbar.setActive(maximumRow > 0);
         stateClass(stonecuttingScrollbar, "inactive-scroll", maximumRow == 0);
-        stonecuttingScrollbar.setScrollBarSize(1500F / 48);
+        stonecuttingScrollbar.setScrollBarSize(1500F / 46);
         stonecuttingScrollbar.scrollerStyle(style -> style.scrollDelta(maximumRow == 0 ? 1F : 1F / maximumRow));
         if (updateScrollbar) stonecuttingScrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) stonecuttingScrollRow / maximumRow, false);
         stonecuttingScrollbar.selfAndAllChildren().forEach(element -> element.setAllowHitTest(maximumRow > 0));
@@ -376,7 +379,10 @@ public final class TerminalOverlayUi {
         boolean rebuild = !workspace.equals(value.getString("workspace"));
         snapshot = value.copy();
         workspace = value.getString("workspace");
-        if (rebuild) refreshWorkCells();
+        if (rebuild) {
+            refreshWorkCells();
+            geometry(screenWidth, screenHeight);
+        }
         for (var entry : workspaces.object2ObjectEntrySet()) {
             entry.getValue().setVisible(entry.getKey().equals(workspace));
             UIElement tab = element(window, "tab_" + entry.getKey());
@@ -392,6 +398,10 @@ public final class TerminalOverlayUi {
         }
         setCells(outputs, work.getList("ghost_outputs", Tag.TAG_COMPOUND), true);
         if (!encodedPatterns.isEmpty()) encodedPatterns.getFirst().entry(physical(work.getList("patterns", Tag.TAG_COMPOUND).getCompound(0)), false);
+        if (blankPattern != null) {
+            blankPattern.entry(value.getLong("blank_patterns"), value.getBoolean("blank_patterns_craftable"));
+            blankPattern.setActive(value.getBoolean("connected"));
+        }
         UIElement active = workspaces.get(workspace);
         if (workspace.equals("stonecutting")) {
             int selected = work.getInt("recipe");
@@ -484,6 +494,7 @@ public final class TerminalOverlayUi {
         inputs.clear();
         outputs.clear();
         encodedPatterns.clear();
+        blankPattern = null;
         UIElement root = workspaces.get(workspace);
         TerminalWorkspace mode = TerminalWorkspace.byId(workspace);
         int inputCount = mode == TerminalWorkspace.PROCESSING ? mode.patternInputSlots() : mode.inputSlots();
@@ -504,10 +515,12 @@ public final class TerminalOverlayUi {
         for (TerminalResourceCell cell : outputs) cell.configurable(true);
         for (TerminalResourceCell cell : outputs) cell.addClass("embedded-cell");
         if (mode.supportsEncoding()) {
+            UIElement blanks = element(root, "blank_pattern");
+            blanks.clearAllChildren();
+            blankPattern = TerminalUiLayout.at(new TerminalBlankPatternCell(this::blankPatternClick), 0, 0, 18, 18);
+            blanks.addChild(blankPattern);
             createCells(element(root, "encoded"), encodedPatterns, 1, 1, (index, event) -> slot("encoded", 0, event.button));
             for (TerminalResourceCell cell : encodedPatterns) cell.actionHint(text("encoded_gestures"));
-            if (mode != TerminalWorkspace.PROCESSING)
-                for (TerminalResourceCell cell : encodedPatterns) cell.addClass("embedded-cell");
         }
         if (mode != TerminalWorkspace.STONECUTTING && mode != TerminalWorkspace.PROCESSING) {
             ObjectList<TerminalResourceCell> result = new ObjectArrayList<>();
@@ -555,6 +568,13 @@ public final class TerminalOverlayUi {
             cell.setVisible(true);
             stateClass(cell, "selected-recipe", first + index == selected && !output.isEmpty());
         }
+    }
+
+    private void blankPatternClick(UIEvent event) {
+        if (event.button == 2 || event.button == 0 && UIElement.isCtrlDown()) {
+            if (snapshot.getBoolean("blank_patterns_craftable"))
+                networkAction("craft_request", key(AEItemKey.of(AEItems.BLANK_PATTERN)));
+        } else networkAction("blank_pattern", number("button", event.button));
     }
 
     private void slot(String inventory, int index, int button) {
@@ -615,9 +635,9 @@ public final class TerminalOverlayUi {
         screenWidth = width;
         screenHeight = height;
         viewport = adjusting && resizing ?
-                viewport.resize(width, height, preferences.width, preferences.height, preferences.folded, pinnedUi.rows(), pinnedUi.automaticCount()) :
+                viewport.resize(width, height, preferences.width, preferences.height, preferences.folded, !workspace.equals("anvil"), pinnedUi.rows(), pinnedUi.automaticCount()) :
                 TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
-                        preferences.width, preferences.height, preferences.folded, pinnedUi.rows(), pinnedUi.automaticCount());
+                        preferences.width, preferences.height, preferences.folded, !workspace.equals("anvil"), pinnedUi.rows(), pinnedUi.automaticCount());
         preferences.xPercent = width <= viewport.width() ? 0 : (float) viewport.x() / (width - viewport.width());
         preferences.yPercent = height <= viewport.height() ? 0 : (float) viewport.y() / (height - viewport.height());
         preferences.width = viewport.width();

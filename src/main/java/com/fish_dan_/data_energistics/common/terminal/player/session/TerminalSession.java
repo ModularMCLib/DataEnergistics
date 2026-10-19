@@ -243,6 +243,10 @@ public final class TerminalSession {
         }
         switch (action) {
             case "storage" -> TerminalNetworkStorage.click(player, connection, runtime.state(), key(player, data), data.getInt("button"), data.getBoolean("shift"));
+            case "blank_pattern" -> {
+                if (runtime.state().workspace().supportsEncoding() && (menu.getCarried().isEmpty() || AEItems.BLANK_PATTERN.is(menu.getCarried())))
+                    TerminalNetworkStorage.click(player, connection, runtime.state(), AEItemKey.of(AEItems.BLANK_PATTERN), data.getInt("button"), false);
+            }
             case "inventory_insert" -> {
                 if (visible) TerminalNetworkStorage.insertInventorySlot(player, connection, data.getInt("slot"), key(player, data));
             }
@@ -289,6 +293,7 @@ public final class TerminalSession {
             snapshot.put("encoding_preview", TerminalPatternEncoding.encode(player, state).saveOptional(player.registryAccess()));
             long blanks = connection == null ? 0 : connection.storage().getAvailableStacks().get(AEItemKey.of(AEItems.BLANK_PATTERN));
             snapshot.putLong("blank_patterns", blanks);
+            snapshot.putBoolean("blank_patterns_craftable", connection != null && !connection.grid().getCraftingService().getCraftingFor(AEItemKey.of(AEItems.BLANK_PATTERN)).isEmpty());
         }
         upload.refresh(player, state, connection, false);
         upload.snapshot(snapshot);

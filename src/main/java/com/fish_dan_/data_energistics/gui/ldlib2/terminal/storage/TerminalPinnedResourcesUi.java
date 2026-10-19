@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -40,6 +41,7 @@ public final class TerminalPinnedResourcesUi {
     private final HolderLookup.Provider registries;
     private final BiConsumer<String, CompoundTag> request;
     private final BiConsumer<TerminalResourceCell, UIEvent> storageClick;
+    private final BiConsumer<TerminalResourceCell, UIEvent> storageScroll;
     private final Int2ObjectMap<AEKey> templates = new Int2ObjectLinkedOpenHashMap<>();
     private final ObjectList<TerminalResourceCell> manualCells = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> automaticCells = new ObjectArrayList<>();
@@ -50,11 +52,12 @@ public final class TerminalPinnedResourcesUi {
     private int columns;
 
     public TerminalPinnedResourcesUi(UIElement root, HolderLookup.Provider registries, BiConsumer<String, CompoundTag> request,
-                                     BiConsumer<TerminalResourceCell, UIEvent> storageClick) {
+                                     BiConsumer<TerminalResourceCell, UIEvent> storageClick, BiConsumer<TerminalResourceCell, UIEvent> storageScroll) {
         this.root = root;
         this.registries = registries;
         this.request = request;
         this.storageClick = storageClick;
+        this.storageScroll = storageScroll;
     }
 
     public boolean apply(CompoundTag tag) {
@@ -182,11 +185,12 @@ public final class TerminalPinnedResourcesUi {
         }
     }
 
-    private static TerminalResourceCell cell(String style, String hint) {
+    private TerminalResourceCell cell(String style, String hint) {
         TerminalResourceCell cell = new TerminalResourceCell();
         cell.storageCell(true);
         cell.addClass(style);
         cell.actionHint(Component.translatable("gui.data_energistics.player_terminal." + hint));
+        cell.addEventListener(UIEvents.MOUSE_WHEEL, event -> storageScroll.accept(cell, event));
         return cell;
     }
 

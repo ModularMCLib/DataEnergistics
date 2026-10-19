@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
+import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
@@ -35,6 +36,7 @@ import appeng.api.util.KeyTypeSelection;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiText;
+import appeng.helpers.InventoryAction;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -102,6 +104,7 @@ public final class TerminalOverlayUi {
     private final TerminalMagnetUi magnetUi;
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
+    private final TerminalStorageInput storageInput;
     private boolean pendingEncode;
     private final ObjectList<TerminalStonecuttingRecipeCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
@@ -143,13 +146,14 @@ public final class TerminalOverlayUi {
         this.request = request;
         visible = preferences.open;
         registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
-        pinnedUi = new TerminalPinnedResourcesUi(element(window, "pinned_resources"), registries, request, this::storageClick);
         keyTypeSelection = new KeyTypeSelection(this::keyTypesChanged, ignored -> true);
         ObjectList<AEKeyType> enabledTypes = new ObjectArrayList<>();
         for (var type : AEKeyTypes.getAll())
             if (!preferences.disabledKeyTypes.contains(type.getId().toString())) enabledTypes.add(type);
         if (!enabledTypes.isEmpty()) keyTypeSelection.setEnabledSet(enabledTypes);
         enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
+        storageInput = new TerminalStorageInput(this::storageAction, key -> enabledKeyTypes.contains(key.getType()));
+        pinnedUi = new TerminalPinnedResourcesUi(element(window, "pinned_resources"), registries, request, this::storageClick, this::storageScroll);
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
         refreshSearchTooltip();
         window.setVisible(visible);
@@ -696,7 +700,10 @@ public final class TerminalOverlayUi {
         boolean gridChanged = !positionedStorage.equals(viewport.cells());
         if (storage.size() != cellCount) {
             createCells(element(window, "storage"), storage, cellCount, viewport.columns(), (index, event) -> storageClick(storage.get(index), event));
-            for (TerminalResourceCell cell : storage) cell.storageCell(true);
+            for (TerminalResourceCell cell : storage) {
+                cell.storageCell(true);
+                cell.addEventListener(UIEvents.MOUSE_WHEEL, event -> storageScroll(cell, event));
+            }
             boundCellCount = -1;
             fillStorage();
         }
@@ -988,14 +995,18 @@ public final class TerminalOverlayUi {
     }
 
     private void storageClick(TerminalResourceCell cell, UIEvent event) {
-        GenericStack stack = cell.stack();
-        if (stack == null) return;
-        if (event.button == 2 || cell.craftable() && (UIElement.isCtrlDown() || stack.amount() == 0)) {
-            networkAction("craft_request", key(stack.what()));
-        } else {
-            CompoundTag data = key(stack.what());
-            data.putInt("button", event.button);
-            data.putBoolean("shift", UIElement.isShiftDown());
+        storageInput.click(cell.stack(), cell.craftable(), filter.equals("craftable"), event.button);
+    }
+
+    private void storageScroll(TerminalResourceCell cell, UIEvent event) {
+        if (storageInput.scroll(cell.stack(), event.deltaY)) event.stopPropagation();
+    }
+
+    private void storageAction(InventoryAction action, @Nullable AEKey resource) {
+        if (action == InventoryAction.AUTO_CRAFT) networkAction("craft_request", key(Objects.requireNonNull(resource)));
+        else {
+            CompoundTag data = resource == null ? new CompoundTag() : key(resource);
+            data.putString("interaction", action.name());
             networkAction("storage", data);
         }
     }

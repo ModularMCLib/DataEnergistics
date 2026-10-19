@@ -17,6 +17,7 @@ import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
 import appeng.crafting.pattern.EncodedPatternItem;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -120,7 +121,8 @@ public final class TerminalResourceCell extends Button {
 
     @Override
     protected void onMouseDown(UIEvent event) {
-        if (!isActive() || event.button < 0 || event.button > (storageCell || configurable ? 2 : 1)) return;
+        boolean pick = storageCell && event.button >= 0 && Minecraft.getInstance().options.keyPickItem.matchesMouse(event.button);
+        if (!isActive() || event.button < 0 || !pick && event.button > (storageCell || configurable ? 2 : 1)) return;
         setButtonState(State.PRESSED);
         if (resourceClick != null) resourceClick.handleEvent(event);
     }

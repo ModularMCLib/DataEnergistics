@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkstation;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
+import com.fish_dan_.data_energistics.menu.terminal.TerminalStorageInteractionMenu;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
@@ -24,6 +25,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.core.definitions.AEItems;
+import appeng.helpers.InventoryAction;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -235,10 +237,15 @@ public final class TerminalSession {
             return;
         }
         switch (action) {
-            case "storage" -> TerminalNetworkStorage.click(player, connection, runtime.state(), key(player, data), data.getInt("button"), data.getBoolean("shift"));
+            case "storage" -> TerminalStorageInteractionMenu.interact(player, connection,
+                    data.contains("key", Tag.TAG_COMPOUND) ? key(player, data) : null, InventoryAction.valueOf(data.getString("interaction")));
             case "blank_pattern" -> {
+                int button = data.getInt("button");
+                if (button < 0 || button > 1) throw new IllegalArgumentException("Invalid blank pattern button");
                 if (runtime.state().workspace().supportsEncoding() && (menu.getCarried().isEmpty() || AEItems.BLANK_PATTERN.is(menu.getCarried())))
-                    TerminalNetworkStorage.click(player, connection, runtime.state(), AEItemKey.of(AEItems.BLANK_PATTERN), data.getInt("button"), false);
+                    TerminalStorageInteractionMenu.interact(player, connection, AEItemKey.of(AEItems.BLANK_PATTERN),
+                            button == 0 ? InventoryAction.PICKUP_OR_SET_DOWN : menu.getCarried().isEmpty() ?
+                                    InventoryAction.PICKUP_SINGLE : InventoryAction.SPLIT_OR_PLACE_SINGLE);
             }
             case "inventory_insert" -> {
                 if (visible) TerminalNetworkStorage.insertInventorySlot(player, connection, data.getInt("slot"), key(player, data));

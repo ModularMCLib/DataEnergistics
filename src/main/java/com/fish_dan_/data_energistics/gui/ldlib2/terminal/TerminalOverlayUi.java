@@ -623,8 +623,10 @@ public final class TerminalOverlayUi {
     public void geometry(int width, int height) {
         screenWidth = width;
         screenHeight = height;
-        viewport = TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
-                preferences.width, preferences.height, preferences.folded, pinnedUi.rows(), pinnedUi.automaticCount());
+        viewport = adjusting && resizing ?
+                viewport.resize(width, height, preferences.width, preferences.height, preferences.folded, pinnedUi.rows(), pinnedUi.automaticCount()) :
+                TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
+                        preferences.width, preferences.height, preferences.folded, pinnedUi.rows(), pinnedUi.automaticCount());
         preferences.xPercent = width <= viewport.width() ? 0 : (float) viewport.x() / (width - viewport.width());
         preferences.yPercent = height <= viewport.height() ? 0 : (float) viewport.y() / (height - viewport.height());
         preferences.width = viewport.width();

@@ -49,6 +49,15 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
                 availableScrollHeight - pinnedRows * CELL_SIZE, pinnedRows, new ObjectImmutableList<>(cells));
     }
 
+    /** Keeps the top-left corner fixed while resizing within the remaining screen area. */
+    public TerminalViewportLayout resize(int screenWidth, int screenHeight, int requestedWidth, int requestedHeight,
+                                         boolean folded, int manualPinRows, int automaticPins) {
+        TerminalViewportLayout resized = compute(screenWidth - x, screenHeight - y, 0, 0,
+                requestedWidth, requestedHeight, folded, manualPinRows, automaticPins);
+        return new TerminalViewportLayout(x, y, resized.width, resized.height, resized.columns, resized.rows,
+                resized.scrollHeight, resized.pinnedRows, resized.cells);
+    }
+
     public int maximumPinnedRows() {
         return Math.max(0, (scrollHeight + pinnedRows * CELL_SIZE) / CELL_SIZE - 1);
     }

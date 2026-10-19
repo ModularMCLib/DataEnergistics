@@ -119,8 +119,8 @@
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
 .icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
 .terminal-filter-frame { background: group(#FF9A9FB4, border(-1, #FFF0F0F3)); }
-.icon-filter-list { background: sprite(ae2:textures/guis/states.png, 48, 128, 16, 16); }
-.selected .icon-filter-list { background: sprite(ae2:textures/guis/states.png, 32, 128, 16, 16); }
+.icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/blacklist.png); }
+.selected .icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/whitelist.png); }
 .icon-filter-copy-up { background: sprite(ae2:textures/guis/states.png, 224, 192, 8, 8); }
 .icon-filter-copy-down { background: sprite(ae2:textures/guis/states.png, 232, 192, 8, 8); }
 .icon-filter-swap { background: sprite(ae2:textures/guis/states.png, 232, 200, 8, 8); }

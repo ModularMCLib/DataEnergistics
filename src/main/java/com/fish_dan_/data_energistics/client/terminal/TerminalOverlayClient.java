@@ -392,8 +392,10 @@ public final class TerminalOverlayClient {
         overlay.keyboardOwned = true;
         overlay.pointerOwned = true;
         overlay.pointerButton = event.getButton();
-        if (!target.composition.beginDrag(event.getMouseX(), event.getMouseY(), event.getButton()))
+        if (!target.composition.beginDrag(event.getMouseX(), event.getMouseY(), event.getButton())) {
+            target.modularUi.refreshHoveredElementAtScreen((float) event.getMouseX(), (float) event.getMouseY());
             target.modularUi.getWidget().mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton());
+        }
         event.setCanceled(true);
     }
 

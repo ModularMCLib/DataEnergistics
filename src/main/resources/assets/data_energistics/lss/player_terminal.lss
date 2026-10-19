@@ -156,8 +156,18 @@
 }
 .icon-previous { background: sprite(data_energistics:textures/guis/front.png); }
 .icon-next { background: sprite(data_energistics:textures/guis/back.png); }
-.terminal-amount-popup .terminal-label, .terminal-amount-step .__button_text__ { font-size: 9; }
-.terminal-amount-popup .terminal-field { font-size: 9; }
+.terminal-amount-popup .terminal-label { font-size: 9; }
+.terminal-amount-popup .terminal-amount-unit { text-color: #FFFFFFFF; }
+.terminal-amount-step .__button_text__ { font-size: 9; text-color: #FFE0E0E0; text-shadow: true; }
+.terminal-amount-popup .terminal-field { font-size: 9; background: #00000000; focus-overlay: #00000000; }
+.terminal-amount-popup .terminal-field:focus { background: #00000000; }
+.terminal-amount-input-frame {
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
+}
+.terminal-amount-popup .terminal-amount-resource { background: sprite(ae2:textures/guis/craft_amt.png, 22, 52, 18, 18); }
+.terminal-amount-toolbar-top { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_0.png, 0, 0, 15, 3); }
+.terminal-amount-toolbar-middle { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_1.png, 0, 0, 15, 10); }
+.terminal-amount-toolbar-bottom { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_2.png, 0, 12, 12, 3); }
 .terminal-amount-step {
     base-background: sprite(data_energistics:textures/guis/priority/botton.png);
     hover-background: sprite(data_energistics:textures/guis/priority/button_highlighted.png);

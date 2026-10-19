@@ -690,7 +690,7 @@ public final class TerminalOverlayUi {
             int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(name);
             subWindows.place(name, width, height,
                     new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight),
-                    name.equals("quantity") ? 18 : 0, 0);
+                    name.equals("quantity") ? 12 : 0, 0);
         }
         if (gridChanged && snapshot.contains("enabled")) {
             offset = viewport.clampOffset(offset, storageIndex.projected().size());

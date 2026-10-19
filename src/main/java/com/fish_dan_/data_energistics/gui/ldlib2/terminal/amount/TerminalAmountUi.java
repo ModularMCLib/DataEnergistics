@@ -18,6 +18,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.core.localization.GuiText;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
@@ -45,13 +46,14 @@ public final class TerminalAmountUi {
     private static final int[] DECIMAL_STEPS = { 1, 10, 100, 1000 };
     private static final int[] STACK_STEPS = { 1, 16, 32, 64 };
     private final UIElement root;
+    private final UIElement toolbar = new UIElement();
     private final RegistryAccess registries;
     private final BiConsumer<String, CompoundTag> request;
     private final Runnable close;
     private final TextField value = new TextField();
     private final Label unit = new Label();
     private final TerminalResourceCell resource = new TerminalResourceCell();
-    private final TerminalActionButton confirm = new TerminalActionButton();
+    private final TerminalActionButton confirm = amountButton();
     private final TerminalActionButton match = new TerminalActionButton();
     private final ObjectList<TerminalActionButton> steps = new ObjectArrayList<>();
     private @Nullable GenericStack selected;
@@ -68,7 +70,11 @@ public final class TerminalAmountUi {
         this.close = close;
         root.addClass("terminal-amount-popup");
         root.setOverflowVisible(true);
-        TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 8, 6, 136, 10);
+        TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 8, 6, 136, 10).setText(GuiText.SelectAmount.text());
+        UIElement inputFrame = new UIElement();
+        inputFrame.addClass("terminal-amount-input-frame");
+        inputFrame.setAllowHitTest(false);
+        root.addChild(TerminalUiLayout.at(inputFrame, 46, 53, 70, 16));
         value.addClass("terminal-field");
         value.setText("1", false).setTextRegexValidator(".{0,256}");
         value.setTextResponder(ignored -> validate());
@@ -83,11 +89,11 @@ public final class TerminalAmountUi {
             event.stopPropagation();
         });
         unit.addClass("terminal-label");
+        unit.addClass("terminal-amount-unit");
         unit.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         unit.setAllowHitTest(false);
         resource.setAllowHitTest(false);
-        confirm.addClass("terminal-control");
-        confirm.addClass("terminal-amount-step");
+        resource.addClass("terminal-amount-resource");
         confirm.setText(GuiText.Set.text());
         confirm.setOnClick(event -> {
             if (event.button == 0) submit();
@@ -95,9 +101,7 @@ public final class TerminalAmountUi {
         for (int row = 0; row < 2; row++) for (int column = 0; column < 4; column++) {
             int step = column;
             int direction = row == 0 ? 1 : -1;
-            TerminalActionButton button = new TerminalActionButton();
-            button.addClass("terminal-control");
-            button.addClass("terminal-amount-step");
+            TerminalActionButton button = amountButton();
             button.setOnClick(event -> {
                 if (event.button == 0) adjust(direction * (stackSteps ? STACK_STEPS[step] : DECIMAL_STEPS[step]));
             });
@@ -106,22 +110,30 @@ public final class TerminalAmountUi {
         }
         match.addClass("terminal-control");
         match.noText();
-        UIElement glyph = TerminalUiLayout.at(new UIElement(), 0, 0, 16, 16);
+        UIElement glyph = TerminalUiLayout.at(new UIElement(), 1, 1, 8, 8);
         glyph.addClass("terminal-match-icon");
         glyph.setAllowHitTest(false);
         match.addChild(glyph);
-        match.glyph(glyph, 0);
+        match.glyph(glyph, 1);
         match.setOnClick(event -> {
             if (event.button != 0) return;
+            mode = mode.next();
+            refreshMatching();
             CompoundTag data = target();
-            data.putInt("mode", mode.next().ordinal());
+            data.putInt("mode", mode.ordinal());
             data.put("key", selection().what().toTagGeneric(registries));
             request.accept("processing_match", data);
         });
-        match.setVisible(false);
-        root.addChildren(TerminalUiLayout.at(resource, 23, 53, 18, 18), TerminalUiLayout.at(value, 48, 55, 66, 12),
+        toolbar.addClass("terminal-amount-toolbar");
+        toolbar.setAllowHitTest(false);
+        toolbar.setVisible(false);
+        toolbar.addChildren(toolbarSurface("terminal-amount-toolbar-top", 0, 15, 3),
+                toolbarSurface("terminal-amount-toolbar-middle", 3, 15, 10),
+                toolbarSurface("terminal-amount-toolbar-bottom", 13, 12, 3),
+                TerminalUiLayout.at(match, 3, 3, 10, 10));
+        root.addChildren(TerminalUiLayout.at(resource, 22, 52, 18, 18), TerminalUiLayout.at(value, 48, 55, 66, 12),
                 TerminalUiLayout.at(unit, 102, 55, 12, 12), TerminalUiLayout.at(confirm, 120, 51, 38, 20),
-                TerminalUiLayout.at(match, -18, 0, 16, 16));
+                TerminalUiLayout.at(toolbar, -12, 0, 15, 16));
         root.addEventListener(UIEvents.TICK, event -> {
             boolean next = UIElement.isShiftDown() || UIElement.isCtrlDown();
             if (next != stackSteps) {
@@ -132,6 +144,23 @@ public final class TerminalAmountUi {
         stepLabels();
     }
 
+    private static TerminalActionButton amountButton() {
+        TerminalActionButton button = new TerminalActionButton();
+        button.addClass("terminal-control");
+        button.addClass("terminal-amount-step");
+        button.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
+        button.text.layout(layout -> layout.widthPercent(100).heightPercent(100).marginAll(0));
+        button.glyph(button.text, 0);
+        return button;
+    }
+
+    private static UIElement toolbarSurface(String style, int top, int width, int height) {
+        UIElement surface = new UIElement();
+        surface.addClass(style);
+        surface.setAllowHitTest(false);
+        return TerminalUiLayout.at(surface, 0, top, width, height);
+    }
+
     public void edit(String inventory, int index, GenericStack stack, boolean processing, CompoundTag work) {
         this.inventory = inventory;
         this.index = index;
@@ -140,7 +169,9 @@ public final class TerminalAmountUi {
         resource.entry(stack, false);
         String symbol = stack.what().getUnitSymbol();
         unit.setText(Component.literal(symbol == null ? "" : symbol));
-        value.layout(layout -> layout.width(symbol == null ? 66 : 51));
+        int unitWidth = symbol == null ? 0 : Minecraft.getInstance().font.width(symbol);
+        value.layout(layout -> layout.width(66 - (unitWidth == 0 ? 0 : unitWidth + 3)));
+        TerminalUiLayout.at(unit, 114 - unitWidth, 55, unitWidth, 12);
         value.setText(displayAmount(stack.amount()), false);
         updateMatching(work);
         validate();
@@ -163,10 +194,14 @@ public final class TerminalAmountUi {
 
     private void updateMatching(CompoundTag work) {
         boolean available = processing && selection().what() instanceof AEItemKey;
-        match.setVisible(available);
+        toolbar.setVisible(available);
         if (!available) return;
         String modes = work.getCompound("matching").getString(inventory);
         mode = index < modes.length() ? ProcessingMatchMode.values()[modes.charAt(index) - '0'] : ProcessingMatchMode.EXACT;
+        refreshMatching();
+    }
+
+    private void refreshMatching() {
         match.removeClass("match-id");
         match.removeClass("match-tag");
         if (mode == ProcessingMatchMode.ID) match.addClass("match-id");
@@ -182,7 +217,7 @@ public final class TerminalAmountUi {
     private void validate() {
         boolean valid = amount().isPresent();
         confirm.setActive(valid);
-        value.textFieldStyle(style -> style.textColor(valid ? 0xFF343548 : 0xFFCC3030));
+        value.textFieldStyle(style -> style.textColor(valid ? 0xFFFFFFFF : 0xFFCC3030));
         value.style(style -> style.tooltips(TerminalTooltipLines.split(valid ? Component.empty() : GuiText.InvalidNumber.text())));
     }
 
@@ -229,12 +264,12 @@ public final class TerminalAmountUi {
     }
 
     public boolean contains(double x, double y) {
-        return root.isVisible() && (TerminalOverlayUi.over(root, x, y) || TerminalOverlayUi.over(match, x, y));
+        return root.isVisible() && (TerminalOverlayUi.over(root, x, y) || toolbar.isVisible() && TerminalOverlayUi.over(toolbar, x, y));
     }
 
     public void extraRectangles(ObjectList<Rect2i> rectangles) {
         if (!root.isVisible()) return;
-        if (match.isVisible()) rectangles.add(rect(match));
+        if (toolbar.isVisible()) rectangles.add(rect(toolbar));
     }
 
     private static Rect2i rect(UIElement element) {

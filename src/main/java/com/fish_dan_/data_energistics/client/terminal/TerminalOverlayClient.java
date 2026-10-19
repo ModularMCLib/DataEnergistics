@@ -22,13 +22,16 @@ import appeng.menu.me.crafting.CraftingStatusMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
@@ -62,6 +65,7 @@ public final class TerminalOverlayClient {
     private ObjectList<Rect2i> exclusions = ObjectImmutableList.of();
     private long sequence;
     private long appliedSequence = -1;
+    private long lastStorageRequest;
     private int ticks;
     private int lastRequestTick;
     private long lastGeometryPublication;
@@ -153,9 +157,13 @@ public final class TerminalOverlayClient {
         if (overlay == null || overlay.menu.containerId != payload.containerId() || !overlay.session.equals(payload.sessionId()) ||
                 payload.sequence() < overlay.appliedSequence || payload.sequence() > overlay.sequence || !overlay.valid())
             return;
+        boolean newSequence = payload.sequence() > overlay.appliedSequence;
         overlay.appliedSequence = payload.sequence();
         CompoundTag snapshot = payload.snapshot().copy();
+        if (newSequence && snapshot.contains("carried", Tag.TAG_COMPOUND))
+            overlay.menu.setCarried(ItemStack.parseOptional(Minecraft.getInstance().player.registryAccess(), snapshot.getCompound("carried")));
         snapshot.remove("sequence");
+        snapshot.remove("carried");
         if (snapshot.getString("reason").equals("fault")) {
             CompoundTag retained = overlay.lastSnapshot.copy();
             retained.merge(snapshot);
@@ -200,6 +208,7 @@ public final class TerminalOverlayClient {
                 current.session = UUID.randomUUID();
                 current.sequence = 0;
                 current.appliedSequence = -1;
+                current.lastStorageRequest = 0;
                 current.lastRequestTick = current.ticks;
                 PacketDistributor.sendToServer(new TerminalRequestPayload(current.menu.containerId, current.session, 0, "open", new CompoundTag()));
             } else current.send("refresh", new CompoundTag());
@@ -333,6 +342,13 @@ public final class TerminalOverlayClient {
     private void send(String action, CompoundTag data) {
         if (valid()) {
             lastRequestTick = ticks;
+            if (action.equals("storage") || action.equals("blank_pattern")) {
+                // Creative inventory gestures keep their cursor locally. Do not overwrite a preceding
+                // storage operation whose authoritative result has not reached the client yet.
+                if (screen instanceof CreativeModeInventoryScreen && appliedSequence >= lastStorageRequest)
+                    data.put("creative_carried", menu.getCarried().saveOptional(Minecraft.getInstance().player.registryAccess()));
+                lastStorageRequest = sequence + 1;
+            }
             PacketDistributor.sendToServer(new TerminalRequestPayload(menu.containerId, session, ++sequence, action, data));
         }
     }

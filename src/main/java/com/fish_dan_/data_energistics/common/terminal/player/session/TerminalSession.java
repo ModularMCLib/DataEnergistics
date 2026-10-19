@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalRe
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageActions;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageView;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalContainerTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalIngredientSupply;
@@ -20,7 +21,6 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkstation;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.menu.terminal.TerminalStorageInteractionMenu;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
@@ -35,6 +35,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -240,14 +241,21 @@ public final class TerminalSession {
             message = "offline";
             return;
         }
+        if ((action.equals("storage") || action.equals("blank_pattern")) && data.contains("creative_carried", Tag.TAG_COMPOUND)) {
+            if (!player.isCreative() || menu != player.inventoryMenu) throw new IllegalArgumentException("Creative cursor requires the creative inventory");
+            ItemStack carried = ItemStack.parseOptional(player.registryAccess(), data.getCompound("creative_carried"));
+            if (!carried.isItemEnabled(player.level().enabledFeatures()) || !carried.isEmpty() && carried.getCount() > carried.getMaxStackSize())
+                throw new IllegalArgumentException("Invalid creative terminal cursor");
+            menu.setCarried(carried);
+        }
         switch (action) {
-            case "storage" -> TerminalStorageInteractionMenu.interact(player, connection,
+            case "storage" -> TerminalStorageActions.interact(player, runtime.state(), connection,
                     data.contains("key", Tag.TAG_COMPOUND) ? key(player, data) : null, InventoryAction.valueOf(data.getString("interaction")));
             case "blank_pattern" -> {
                 int button = data.getInt("button");
                 if (button < 0 || button > 1) throw new IllegalArgumentException("Invalid blank pattern button");
                 if (runtime.state().workspace().supportsEncoding() && (menu.getCarried().isEmpty() || AEItems.BLANK_PATTERN.is(menu.getCarried())))
-                    TerminalStorageInteractionMenu.interact(player, connection, AEItemKey.of(AEItems.BLANK_PATTERN),
+                    TerminalStorageActions.interact(player, runtime.state(), connection, AEItemKey.of(AEItems.BLANK_PATTERN),
                             button == 0 ? InventoryAction.PICKUP_OR_SET_DOWN : menu.getCarried().isEmpty() ?
                                     InventoryAction.PICKUP_SINGLE : InventoryAction.SPLIT_OR_PLACE_SINGLE);
             }
@@ -331,6 +339,8 @@ public final class TerminalSession {
         snapshot.putString("reason", connection == null ? "offline" : "online");
         snapshot.putString("message", message);
         snapshot.putString("action", lastAction);
+        if (lastAction.equals("storage") || lastAction.equals("blank_pattern"))
+            snapshot.put("carried", menu.getCarried().saveOptional(player.registryAccess()));
         snapshot.putString("workspace", state.workspace().id());
         snapshot.putBoolean("substitutes", state.work().substitutes());
         snapshot.putBoolean("fluid_substitutes", state.work().fluidSubstitutes());

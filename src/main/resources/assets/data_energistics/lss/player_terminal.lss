@@ -24,6 +24,13 @@
     focus-overlay: border(1, #FF9AD8FF);
 }
 .terminal-field:focus { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
+.terminal-search-field {
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png), border(-1, #FFF2F2F2));
+    focus-overlay: border(-1, #FFF2F2F2);
+}
+.terminal-search-field:focus {
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png), border(-1, #FFF2F2F2));
+}
 .terminal-control {
     background: #00000000;
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
@@ -70,7 +77,7 @@
 .terminal-cell {
     background: sprite(data_energistics:textures/guis/backpack/middle.png);
     base-background: #00000000;
-    hover-background: group(#6693FFDE, border(1, #FF57E0BB));
+    hover-background: group(#6693FFDE, border(-1, #FF57E0BB));
     pressed-background: #8893FFDE;
 }
 .terminal-grid-edge { background: #FFF2F2F2; }

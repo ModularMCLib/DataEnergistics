@@ -257,6 +257,7 @@ public final class TerminalUiLayout {
 
     private static TextField field(String id) {
         TextField field = named(new TextField(), id, "terminal-field");
+        if (id.equals("search")) field.addClass("terminal-search-field");
         field.setText("", false);
         return field;
     }

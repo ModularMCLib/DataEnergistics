@@ -21,6 +21,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     public static final int PROCESSING_WIDTH = 124;
     public static final int STONECUTTING_WIDTH = 116;
     public static final int ENCODING_WIDTH = 24;
+    private static final int COLUMN_FIT_TOLERANCE = 2;
     private static final int FRAME_WIDTH = STORAGE_LEFT + TAB_WIDTH + ENCODING_WIDTH;
     private static final int FRAME_HEIGHT = 20;
     public static final int MIN_WIDTH = STORAGE_LEFT + PROCESSING_WIDTH + ENCODING_WIDTH + TAB_WIDTH;
@@ -30,7 +31,8 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
                                                  int requestedWidth, int requestedHeight, boolean expanded, boolean folded, int operationWidth, int manualPinRows, int automaticPins) {
         int width = Math.clamp(requestedWidth, MIN_WIDTH, Math.clamp(screenWidth, MIN_WIDTH, FRAME_WIDTH + 20 * CELL_SIZE));
         int height = Math.clamp(requestedHeight, MIN_HEIGHT, Math.clamp(screenHeight, MIN_HEIGHT, FRAME_HEIGHT + 20 * CELL_SIZE));
-        int columns = Math.max(6, (width - FRAME_WIDTH) / CELL_SIZE);
+        // The reserved scrollbar gap can absorb a two-pixel shortfall without losing a whole column.
+        int columns = Math.max(6, (width - FRAME_WIDTH + COLUMN_FIT_TOLERANCE) / CELL_SIZE);
         int rows = Math.max(1, (height - FRAME_HEIGHT) / CELL_SIZE);
         int operationLeft = operationLeft(width, operationWidth);
         int operationTop = operationTop(height);

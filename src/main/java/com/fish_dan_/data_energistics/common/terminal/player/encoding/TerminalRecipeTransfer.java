@@ -49,11 +49,7 @@ public final class TerminalRecipeTransfer {
         outputs.load(data.getList("outputs", Tag.TAG_COMPOUND), player.registryAccess());
         TerminalPatternContext context = TerminalPatternContext.load(data.getCompound("context"));
         int selectedRecipe = 0;
-        if (page != TerminalWorkspace.PROCESSING && toNetwork && !work.inputs.isEmpty()) {
-            if (connection == null) return "offline";
-            if (!TerminalNetworkStorage.insertInventory(connection, work.inputs)) return "network_full";
-        }
-        if (page != TerminalWorkspace.PROCESSING && !work.inputs.isEmpty()) {
+        if (page != TerminalWorkspace.PROCESSING) {
             for (int index = 0; index < inputs.size(); index++) {
                 GenericStack stack = inputs.get(index);
                 if (stack != null) {
@@ -72,7 +68,11 @@ public final class TerminalRecipeTransfer {
             for (int index = 0; index < recipes.size(); index++) if (recipes.get(index).id().equals(context.recipeId())) selectedRecipe = index;
             if (selectedRecipe < 0) throw new IllegalArgumentException("Transferred stonecutting recipe does not match its input");
         }
-        if (page != TerminalWorkspace.PROCESSING) {
+        if (page != TerminalWorkspace.PROCESSING && toNetwork && !work.inputs.isEmpty()) {
+            if (connection == null) return "offline";
+            if (!TerminalNetworkStorage.insertInventory(connection, work.inputs)) return "network_full";
+        }
+        if (page != TerminalWorkspace.PROCESSING && !work.inputs.isEmpty()) {
             SimpleContainer capacity = new SimpleContainer(player.getInventory().items.size());
             for (int index = 0; index < capacity.getContainerSize(); index++)
                 capacity.setItem(index, player.getInventory().items.get(index).copy());

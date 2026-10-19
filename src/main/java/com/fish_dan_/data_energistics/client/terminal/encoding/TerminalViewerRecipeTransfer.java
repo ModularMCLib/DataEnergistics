@@ -32,16 +32,11 @@ public final class TerminalViewerRecipeTransfer {
                                                 ObjectList<@Nullable GenericStack> inputs,
                                                 ObjectList<@Nullable GenericStack> outputs,
                                                 ResourceLocation type, @Nullable ResourceLocation recipeId) {
-        TerminalWorkspace workspace = TerminalOverlayClient.encodingWorkspace(menu);
-        if (workspace == null || inputs.size() > workspace.patternInputSlots() || outputs.size() > workspace.patternOutputSlots()) return null;
-        if (workspace != TerminalWorkspace.PROCESSING && (recipe == null ||
-                recipe.getType() != switch (workspace) {
-                    case CRAFTING -> RecipeType.CRAFTING;
-                    case SMITHING -> RecipeType.SMITHING;
-                    case STONECUTTING -> RecipeType.STONECUTTING;
-                    default -> throw new IllegalStateException("Unsupported vanilla encoder");
-                }))
-            return null;
+        if (TerminalOverlayClient.encodingWorkspace(menu) == null) return null;
+        TerminalWorkspace workspace = recipe != null && recipe.getType() == RecipeType.CRAFTING ? TerminalWorkspace.CRAFTING :
+                recipe != null && recipe.getType() == RecipeType.SMITHING ? TerminalWorkspace.SMITHING :
+                        recipe != null && recipe.getType() == RecipeType.STONECUTTING ? TerminalWorkspace.STONECUTTING : TerminalWorkspace.PROCESSING;
+        if (inputs.size() > workspace.patternInputSlots() || outputs.size() > workspace.patternOutputSlots()) return null;
         var registries = Objects.requireNonNull(Minecraft.getInstance().level).registryAccess();
         ListTag inputData = new ListTag();
         for (int index = 0; index < workspace.patternInputSlots(); index++) {

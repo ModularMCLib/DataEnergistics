@@ -264,7 +264,10 @@ public final class TerminalOverlayClient {
 
     public static void transferRecipe(AbstractContainerMenu menu, CompoundTag data) {
         TerminalOverlayClient overlay = current;
-        if (overlay != null && encodingWorkspace(menu) != null) overlay.send("recipe_transfer", data);
+        if (overlay != null && encodingWorkspace(menu) != null) {
+            data.putBoolean("to_network", overlay.preferences.shiftClickToNetwork);
+            overlay.send("recipe_transfer", data);
+        }
     }
 
     /** Redirects only the player's inventory quick move while the expanded terminal targets its connected network. */

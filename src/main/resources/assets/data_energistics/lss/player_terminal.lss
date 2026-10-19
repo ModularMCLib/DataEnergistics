@@ -87,6 +87,9 @@
     pressed-background: group(#669CD3FF, border(-1, #FFDAFFFF));
 }
 .terminal-cell.embedded-cell { background: #00000000; }
+.stonecutting-recipes-frame {
+    background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png, 21, 6, 77, 46, 1, 1, 1, 1) translate(0, -1);
+}
 .terminal-stonecutting-recipe {
     background: #00000000;
     base-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 140, 20, 22);

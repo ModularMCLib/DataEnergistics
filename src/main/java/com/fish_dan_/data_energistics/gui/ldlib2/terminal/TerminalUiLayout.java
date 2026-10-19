@@ -108,9 +108,11 @@ public final class TerminalUiLayout {
             }
             case STONECUTTING -> {
                 pageAt(inputs, 2, 20, 18, 18);
+                UIElement frame = pageAt(element("recipes_frame", "stonecutting-recipes-frame"), 21, 6, 85, 46);
+                frame.setAllowHitTest(false);
                 UIElement recipes = element("recipes", "stonecutting-recipes");
                 recipes.setOverflowVisible(false);
-                root.addChildren(pageAt(recipes, 23, 6, 80, 44), pageAt(stonecuttingScrollbar(), 107, 6, 6, 46));
+                root.addChildren(frame, pageAt(recipes, 23, 6, 80, 44), pageAt(stonecuttingScrollbar(), 107, 6, 6, 46));
             }
             case ANVIL -> {
                 pageAt(inputs, 3, 20, 54, 18);

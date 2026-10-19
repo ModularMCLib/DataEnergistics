@@ -496,7 +496,6 @@ public final class TerminalOverlayUi {
         boolean pinsChanged = pinnedUi.apply(value.getCompound("pins"));
         if (pinnedUi.refreshAutomatic(storageIndex) || pinsChanged) geometry(screenWidth, screenHeight);
         view(false);
-        element(window, "insert").setActive(value.getBoolean("connected"));
         element(window, "tasks").setActive(value.getBoolean("connected"));
         refreshMagnet();
         uploadUi.apply(value);

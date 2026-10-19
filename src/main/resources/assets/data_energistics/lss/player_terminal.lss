@@ -37,6 +37,11 @@
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
     pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
 }
+.terminal-entry {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png, 0, 0, 10, 10, 2, 2, 2, 2);
+}
 .terminal-encode {
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_0.png);
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_1.png);
@@ -136,7 +141,7 @@
 .terminal-toggle.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 40, 22, 12); }
 .terminal-toggle.selected.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 40, 22, 12); }
 
-.icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
+.icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_crafting_terminal.png); }
 .icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }
 .icon-resize { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_zoom.png); }
 .icon-tasks { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_maintain.png); }

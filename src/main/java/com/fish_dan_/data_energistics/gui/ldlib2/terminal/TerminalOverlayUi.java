@@ -906,7 +906,9 @@ public final class TerminalOverlayUi {
     public ObjectList<Rect2i> rectangles() {
         ObjectList<Rect2i> rectangles = new ObjectArrayList<>();
         if (!visible) {
-            rectangles.add(rect(element(ui.rootElement, "entry")));
+            int margin = TerminalViewportLayout.ENTRY_EXCLUSION_MARGIN;
+            int size = TerminalViewportLayout.ENTRY_SIZE + margin * 2;
+            rectangles.add(new Rect2i(viewport.x() - margin, viewport.y() - margin, size, size));
             return rectangles;
         }
         rectangles.add(new Rect2i(viewport.x() + 12, viewport.y(), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12, viewport.height()));

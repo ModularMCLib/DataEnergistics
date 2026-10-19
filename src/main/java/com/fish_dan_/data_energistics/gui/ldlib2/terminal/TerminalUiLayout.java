@@ -369,7 +369,7 @@ public final class TerminalUiLayout {
         button.addClass("terminal-icon");
         int glyphSize = switch (glyph) {
             case "icon-filter-list" -> 16;
-            case "icon-boost-up", "icon-boost-down", "icon-encoding" -> 10;
+            case "icon-entry", "icon-boost-up", "icon-boost-down", "icon-encoding" -> 10;
             default -> style.equals("terminal-tab") ? 9 : Math.min(8, Math.min(width, height));
         };
         int glyphHeight = glyph.equals("icon-close") ? 9 : glyphSize;

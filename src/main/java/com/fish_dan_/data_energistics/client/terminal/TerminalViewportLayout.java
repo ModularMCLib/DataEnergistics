@@ -12,7 +12,8 @@ import org.jspecify.annotations.NullMarked;
 public record TerminalViewportLayout(int x, int y, int width, int height, int columns, int rows, int scrollHeight, int pinnedRows, int operationWidth, ObjectList<Cell> cells) {
 
     public static final int CELL_SIZE = 18;
-    public static final int ENTRY_SIZE = 10;
+    public static final int ENTRY_SIZE = 14;
+    public static final int ENTRY_EXCLUSION_MARGIN = 4;
     public static final int STORAGE_LEFT = 16;
     public static final int STORAGE_TOP = 18;
     public static final int TAB_WIDTH = 12;

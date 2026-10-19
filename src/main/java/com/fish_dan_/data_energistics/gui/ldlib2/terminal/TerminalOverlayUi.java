@@ -547,7 +547,10 @@ public final class TerminalOverlayUi {
             blankPattern = TerminalUiLayout.at(new TerminalBlankPatternCell(this::blankPatternClick), 0, 0, 18, 18);
             blanks.addChild(blankPattern);
             createCells(element(root, "encoded"), encodedPatterns, 1, 1, (index, event) -> slot("encoded", 0, event.button));
-            for (TerminalResourceCell cell : encodedPatterns) cell.actionHint(text("encoded_gestures"));
+            for (TerminalResourceCell cell : encodedPatterns) {
+                cell.encodedPattern();
+                cell.actionHint(text("encoded_gestures"));
+            }
         }
         if (mode != TerminalWorkspace.STONECUTTING && mode != TerminalWorkspace.PROCESSING) {
             ObjectList<TerminalResourceCell> result = new ObjectArrayList<>();

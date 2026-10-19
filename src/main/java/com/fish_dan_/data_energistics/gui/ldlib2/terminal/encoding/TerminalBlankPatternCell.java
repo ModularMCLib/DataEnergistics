@@ -62,7 +62,9 @@ public final class TerminalBlankPatternCell extends Button {
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
         if (amount > 0) {
-            AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, KEY);
+            var display = AEItems.BLANK_PATTERN.stack();
+            context.graphics.renderItem(display, 0, 0);
+            context.graphics.renderItemDecorations(context.mc.font, display, 0, 0, "");
             StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, 0, 0, ReadableNumberConverter.format(amount, 4));
         } else Icon.BACKGROUND_ENCODED_PATTERN.getBlitter().dest(0, 0).blit(context.graphics);
         if (craftable) {

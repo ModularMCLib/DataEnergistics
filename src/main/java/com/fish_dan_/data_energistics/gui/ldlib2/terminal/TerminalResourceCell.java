@@ -14,8 +14,11 @@ import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
+import appeng.client.gui.Icon;
+import appeng.crafting.pattern.EncodedPatternItem;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -32,6 +35,7 @@ public final class TerminalResourceCell extends Button {
     private boolean craftable;
     private boolean configurable;
     private boolean storageCell;
+    private boolean encodedPattern;
     private @Nullable UIEventListener resourceClick;
     private @Nullable Component actionHint;
     private @Nullable UIElement gridOutline;
@@ -51,7 +55,7 @@ public final class TerminalResourceCell extends Button {
                 return;
             }
             ObjectList<Component> lines = new ObjectArrayList<>(AEKeyRendering.getTooltip(stack.what()));
-            lines.add(Component.literal(stack.what().formatAmount(stack.amount(), AmountFormat.FULL)));
+            if (!encodedPattern) lines.add(Component.literal(stack.what().formatAmount(stack.amount(), AmountFormat.FULL)));
             if (craftable) lines.add(Component.translatable("gui.data_energistics.player_terminal.craftable_hint"));
             if (configurable) lines.add(Component.translatable("gui.data_energistics.player_terminal.ghost_hint"));
             if (actionHint != null) lines.add(actionHint);
@@ -75,6 +79,11 @@ public final class TerminalResourceCell extends Button {
 
     public void storageCell(boolean value) {
         storageCell = value;
+    }
+
+    /** Uses the same primary-output display as AE's encoded-pattern slot, retaining the actual pattern for input. */
+    public void encodedPattern() {
+        encodedPattern = true;
     }
 
     /** Updates the exposed grid edges when viewport geometry changes; the middle texture supplies cell separators. */
@@ -124,6 +133,10 @@ public final class TerminalResourceCell extends Button {
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
         super.drawBackgroundAdditional(context);
+        if (encodedPattern) {
+            drawEncodedPattern(context);
+            return;
+        }
         if (stack == null) return;
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
@@ -133,6 +146,23 @@ public final class TerminalResourceCell extends Button {
             context.pose.translate(0, 10, 200);
             context.pose.scale(0.5F, 0.5F, 1);
             context.graphics.drawString(context.mc.font, amount, 32 - context.mc.font.width(amount), 0, 0xFFFFFFFF);
+        }
+        context.pose.popPose();
+    }
+
+    private void drawEncodedPattern(GUIContext context) {
+        context.pose.pushPose();
+        context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
+        if (stack == null) {
+            Icon.BACKGROUND_ENCODED_PATTERN.getBlitter().dest(0, 0).blit(context.graphics);
+        } else if (stack.what() instanceof AEItemKey itemKey) {
+            ItemStack display = itemKey.toStack();
+            if (display.getItem() instanceof EncodedPatternItem<?> pattern) {
+                ItemStack output = pattern.getOutput(display);
+                if (!output.isEmpty()) display = output;
+            }
+            context.graphics.renderItem(display, 0, 0);
+            context.graphics.renderItemDecorations(context.mc.font, display, 0, 0);
         }
         context.pose.popPose();
     }

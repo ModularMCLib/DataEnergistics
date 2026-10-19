@@ -150,6 +150,7 @@ public final class TerminalPatternUpload {
 
     /** Resolves only IDs from the current authorized network snapshot before opening an existing provider menu. */
     public ObjectList<PatternContainer> openTargets(ServerPlayer player, TerminalPlayerState state, TerminalConnection connection, CompoundTag request) {
+        if (!state.workspace().supportsEncoding()) return ObjectList.of();
         refresh(player, state, connection, true);
         long group = request.getLong("group");
         if (request.contains("leaf")) {

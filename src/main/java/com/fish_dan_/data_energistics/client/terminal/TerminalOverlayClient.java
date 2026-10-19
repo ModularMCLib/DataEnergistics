@@ -19,6 +19,7 @@ import appeng.api.stacks.GenericStack;
 import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftErrorScreen;
+import appeng.menu.AEBaseMenu;
 import appeng.menu.me.crafting.CraftAmountMenu;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
@@ -576,7 +577,7 @@ public final class TerminalOverlayClient {
         }
         if (overlay == null || !overlay.suspended || overlay.restoring) return;
         Screen next = event.getNewScreen();
-        if (next instanceof AbstractContainerScreen<?> nativeScreen && (overlay.providerVisit && overlay.nativeMenu == null || TerminalAeMenuLocator.matches(nativeScreen.getMenu(), overlay.session)) &&
+        if (next instanceof AbstractContainerScreen<?> nativeScreen && (overlay.isProviderMenu(nativeScreen.getMenu()) || TerminalAeMenuLocator.matches(nativeScreen.getMenu(), overlay.session)) &&
                 Minecraft.getInstance().player != null && Minecraft.getInstance().player.containerMenu == nativeScreen.getMenu()) {
             overlay.nativeScreen = nativeScreen;
             overlay.nativeMenu = nativeScreen.getMenu();
@@ -638,6 +639,13 @@ public final class TerminalOverlayClient {
         }
         // Existing Trinity and plan-tree screens keep their own popup and return handling.
         return overlay.providerVisit && requestTerminalReturn(screen);
+    }
+
+    private boolean isProviderMenu(AbstractContainerMenu target) {
+        if (!providerVisit) return false;
+        if (nativeMenu == null || nativeMenu == target) return true;
+        return nativeMenu instanceof AEBaseMenu previous && target instanceof AEBaseMenu next && previous.getLocator() != null &&
+                Objects.equals(previous.getLocator(), next.getLocator());
     }
 
     /**

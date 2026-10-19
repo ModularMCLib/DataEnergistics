@@ -14,6 +14,7 @@ import appeng.helpers.ICraftingGridMenu;
 import appeng.helpers.patternprovider.PatternContainer;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.MenuOpener;
+import appeng.menu.locator.MenuHostLocator;
 import appeng.menu.me.crafting.CraftAmountMenu;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
@@ -32,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -62,15 +64,12 @@ public final class TerminalAeNavigation {
         begin(player, session, connection, false, open);
     }
 
-    static void openProvider(ServerPlayer player, TerminalSession session, TerminalConnection connection, ObjectList<PatternContainer> targets) {
-        begin(player, session, connection, true, locator -> {
-            if (!PatternProviderMenuOpenHelper.openProviderMenus(targets, player))
-                throw new IllegalStateException("The selected pattern provider could not open its menu");
-        });
+    static boolean openProvider(ServerPlayer player, TerminalSession session, TerminalConnection connection, ObjectList<PatternContainer> targets) {
+        return begin(player, session, connection, true, locator -> PatternProviderMenuOpenHelper.openProviderMenus(targets, player));
     }
 
-    private static void begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, boolean provider,
-                              Consumer<TerminalAeMenuLocator> open) {
+    private static boolean begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, boolean provider,
+                                 Consumer<TerminalAeMenuLocator> open) {
         if (VISITS.containsKey(player.getUUID())) throw new IllegalStateException("An AE2 menu visit is already active");
         Visit visit = new Visit(player, session, connection, provider);
         VISITS.put(player.getUUID(), visit);
@@ -81,11 +80,18 @@ public final class TerminalAeNavigation {
         try {
             var locator = new TerminalAeMenuLocator(session.id(), connection.frequency());
             open.accept(locator);
-            if (provider && player.containerMenu != player.inventoryMenu) {
+            if (provider && player.containerMenu == player.inventoryMenu) {
+                VISITS.remove(player.getUUID());
+                restoreParent(visit);
+                return false;
+            }
+            if (provider) {
                 visit.nativeMenu = player.containerMenu;
+                visit.providerLocator = player.containerMenu instanceof AEBaseMenu aeMenu ? aeMenu.getLocator() : null;
                 session.nativeOpened(player.containerMenu.containerId);
             }
             if (!suspended(player, session)) throw new IllegalStateException("AE2 could not open the terminal submenu");
+            return true;
         } catch (RuntimeException failure) {
             VISITS.remove(player.getUUID());
             if (player.containerMenu != player.inventoryMenu) player.containerMenu.removed(player);
@@ -192,7 +198,8 @@ public final class TerminalAeNavigation {
     }
 
     private static boolean matches(Visit visit, AbstractContainerMenu menu) {
-        return visit.provider ? menu == visit.nativeMenu : TerminalAeMenuLocator.matches(menu, visit.session.id());
+        return visit.provider ? menu == visit.nativeMenu || visit.providerLocator != null && menu instanceof AEBaseMenu aeMenu &&
+                Objects.equals(visit.providerLocator, aeMenu.getLocator()) : TerminalAeMenuLocator.matches(menu, visit.session.id());
     }
 
     private static void send(Visit visit, String phase) {
@@ -206,6 +213,7 @@ public final class TerminalAeNavigation {
         private final AbstractContainerMenu parent;
         private final TerminalConnection connection;
         private final boolean provider;
+        private @Nullable MenuHostLocator providerLocator;
         private @Nullable AbstractContainerMenu nativeMenu;
 
         private Visit(ServerPlayer player, TerminalSession session, TerminalConnection connection, boolean provider) {

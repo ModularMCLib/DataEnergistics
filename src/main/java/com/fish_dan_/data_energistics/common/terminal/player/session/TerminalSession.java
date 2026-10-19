@@ -278,7 +278,7 @@ public final class TerminalSession {
             case "upload_open" -> {
                 var targets = upload.openTargets(player, runtime.state(), connection, data);
                 if (targets.isEmpty()) message = "upload_unavailable";
-                else TerminalAeNavigation.openProvider(player, this, connection, targets);
+                else if (!TerminalAeNavigation.openProvider(player, this, connection, targets)) message = "upload_unavailable";
             }
             case "upload_refresh", "upload_pattern", "upload_rename", "upload_history" -> message = upload.action(player, runtime.state(), connection, action, data);
             default -> throw new IllegalArgumentException("Unknown player terminal action " + action);

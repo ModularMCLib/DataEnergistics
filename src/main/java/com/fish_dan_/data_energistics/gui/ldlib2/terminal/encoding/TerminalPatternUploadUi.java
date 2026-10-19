@@ -64,6 +64,10 @@ public final class TerminalPatternUploadUi implements PatternUploadActions {
         view.tick();
     }
 
+    public boolean cancelEditing() {
+        return view.cancelEditing();
+    }
+
     @Override
     public void upload(long group, long leaf) {
         if (encoded.isEmpty()) return;

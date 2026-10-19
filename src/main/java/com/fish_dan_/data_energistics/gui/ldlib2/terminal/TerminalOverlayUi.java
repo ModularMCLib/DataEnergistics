@@ -962,6 +962,7 @@ public final class TerminalOverlayUi {
     }
 
     public boolean closePopup() {
+        if (uploadUi.cancelEditing()) return true;
         if (!subWindows.closeTop()) return false;
         geometryDirty = true;
         return true;

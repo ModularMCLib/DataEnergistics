@@ -33,7 +33,9 @@ import appeng.api.stacks.GenericStack;
 import appeng.api.util.KeyTypeSelection;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
+import appeng.core.localization.GuiText;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.RegistryAccess;
@@ -144,7 +146,7 @@ public final class TerminalOverlayUi {
         if (!enabledTypes.isEmpty()) keyTypeSelection.setEnabledSet(enabledTypes);
         enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
         field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
-        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.wrap(SEARCH_TOOLTIP_WIDTH, text("search"))));
+        refreshSearchTooltip();
         window.setVisible(visible);
         element(ui.rootElement, "entry").setVisible(!visible);
         Button entry = TerminalUiLayout.require(ui.rootElement, "entry", Button.class);
@@ -369,8 +371,7 @@ public final class TerminalOverlayUi {
         offset = viewport.clampOffset(offset, projected.size());
         fillStorage();
         updateScrollbar();
-        Component searchTooltip = storageIndex.pending() ? text("storage_loading", storageIndex.loaded(), storageIndex.total()) : text("search");
-        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.wrap(SEARCH_TOOLTIP_WIDTH, searchTooltip)));
+        refreshSearchTooltip();
         tooltip(window, "sort", text("sort." + sort));
         tooltip(window, "direction", text(descending ? "descending" : "ascending"));
         tooltip(window, "display", text("display." + filter));
@@ -383,6 +384,17 @@ public final class TerminalOverlayUi {
         stateClass(element(window, "direction"), "descending", descending);
         stateClass(element(window, "display"), "stored-only", filter.equals("stored"));
         stateClass(element(window, "display"), "craftable-only", filter.equals("craftable"));
+    }
+
+    private void refreshSearchTooltip() {
+        ObjectList<Component> lines = new ObjectArrayList<>(ObjectImmutableList.of(
+                GuiText.SearchTooltip.text(),
+                GuiText.SearchTooltipModId.text().withStyle(ChatFormatting.GRAY),
+                GuiText.SearchTooltipTag.text().withStyle(ChatFormatting.GRAY),
+                GuiText.SearchTooltipToolTips.text().withStyle(ChatFormatting.GRAY),
+                GuiText.SearchTooltipItemId.text().withStyle(ChatFormatting.GRAY)));
+        if (storageIndex.pending()) lines.add(text("storage_loading", storageIndex.loaded(), storageIndex.total()).copy().withStyle(ChatFormatting.GRAY));
+        field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.wrap(SEARCH_TOOLTIP_WIDTH, lines.toArray(Component[]::new))));
     }
 
     public void apply(CompoundTag value) {

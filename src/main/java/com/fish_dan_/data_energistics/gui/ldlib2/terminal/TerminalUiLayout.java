@@ -71,7 +71,7 @@ public final class TerminalUiLayout {
         UIElement tabs = at(element("tabs", "terminal-tabs"), width - TerminalViewportLayout.TAB_WIDTH, 96, TerminalViewportLayout.TAB_WIDTH, 70);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             tabs.addChild(icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14));
-        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - 18, 164, 4, 4));
+        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - 14, 161, 4, 4));
         root.addChild(window);
         return UI.of(root, ObjectImmutableList.of(stylesheet()));
     }
@@ -181,7 +181,7 @@ public final class TerminalUiLayout {
                 viewport.operationWidth(), TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
         atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 72,
                 TerminalViewportLayout.TAB_WIDTH, 70, viewport.width(), viewport.height());
-        atWithin(require(window, "resize", UIElement.class), viewport.width() - 18, viewport.height() - 4, 4, 4, viewport.width(), viewport.height());
+        atWithin(require(window, "resize", UIElement.class), viewport.width() - 14, viewport.height() - 7, 4, 4, viewport.width(), viewport.height());
     }
 
     public static int popupHeight(String name) {

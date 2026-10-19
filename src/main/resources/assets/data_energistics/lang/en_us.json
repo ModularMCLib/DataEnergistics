@@ -1769,6 +1769,8 @@
 	"gui.data_energistics.player_terminal.magnet_attract": "Magnet",
 	"gui.data_energistics.player_terminal.magnet_insert": "Store in ME network",
 	"gui.data_energistics.player_terminal.magnet_restock": "Restock",
+	"gui.data_energistics.player_terminal.magnet_pick_block": "Enable pick block",
+	"gui.data_energistics.player_terminal.magnet_craft_if_missing": "Craft if missing",
 	"gui.data_energistics.player_terminal.magnet_settings": "Magnet settings",
 	"gui.data_energistics.player_terminal.message.calculation_failed": "Crafting calculation failed",
 	"gui.data_energistics.player_terminal.message.craft_failed": "The network could not submit the crafting task",

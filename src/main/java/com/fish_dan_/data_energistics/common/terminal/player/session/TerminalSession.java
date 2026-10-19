@@ -202,6 +202,14 @@ public final class TerminalSession {
                 requireMagnet(player);
                 state.magnet().restock(!state.magnet().restock());
             }
+            case "magnet_pick_block" -> {
+                requireMagnet(player);
+                state.magnet().pickBlock(!state.magnet().pickBlock());
+            }
+            case "magnet_craft_if_missing" -> {
+                requireMagnet(player);
+                state.magnet().craftIfMissing(!state.magnet().craftIfMissing());
+            }
             case "pickup_whitelist" -> {
                 requireMagnet(player);
                 state.magnet().pickupWhitelist(!state.magnet().pickupWhitelist());

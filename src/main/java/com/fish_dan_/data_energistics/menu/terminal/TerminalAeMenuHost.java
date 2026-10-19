@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.menu.terminal;
 
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
-import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalAeNavigation;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.networking.IGridNode;
@@ -14,6 +13,7 @@ import appeng.api.util.IConfigManagerListener;
 import appeng.core.definitions.AEItems;
 import appeng.me.storage.NullInventory;
 import appeng.menu.ISubMenu;
+import appeng.menu.locator.ItemMenuHostLocator;
 import appeng.util.ConfigManager;
 
 import net.minecraft.core.component.DataComponents;
@@ -25,27 +25,32 @@ import net.minecraft.world.item.ItemStack;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+
 /**
  * Adapts the actual connection credential to AE2's native submenus and their parent-menu return contract.
  */
 final class TerminalAeMenuHost extends ItemMenuHost<Item> implements ITerminalHost, IActionHost {
 
     private final @Nullable TerminalConnection connection;
-    private final TerminalAeMenuLocator locator;
+    private final BooleanSupplier validConnection;
+    private final Consumer<ServerPlayer> returnToParent;
     private final IConfigManager settings = new ConfigManager((IConfigManagerListener) null);
 
-    TerminalAeMenuHost(Player player, TerminalAeMenuLocator locator, @Nullable TerminalConnection connection) {
+    TerminalAeMenuHost(Player player, ItemMenuHostLocator locator, @Nullable TerminalConnection connection,
+                       BooleanSupplier validConnection, Consumer<ServerPlayer> returnToParent) {
         super(AEItems.QUANTUM_ENTANGLED_SINGULARITY.asItem(), player, locator);
         this.connection = connection;
-        this.locator = locator;
+        this.validConnection = validConnection;
+        this.returnToParent = returnToParent;
     }
 
     @Override
     public boolean isValid() {
         // Let the overlay session resume its local parent when the credential disappears.
         // Vanilla item-host invalidation would close the native menu before that coordinated return.
-        if (getPlayer() instanceof ServerPlayer player)
-            return TerminalAeNavigation.connection(player, locator.sessionId(), locator.frequency()) != null;
+        if (getPlayer() instanceof ServerPlayer) return validConnection.getAsBoolean();
         return super.isValid();
     }
 
@@ -78,6 +83,6 @@ final class TerminalAeMenuHost extends ItemMenuHost<Item> implements ITerminalHo
 
     @Override
     public void returnToMainMenu(Player player, ISubMenu subMenu) {
-        if (player instanceof ServerPlayer serverPlayer) TerminalAeNavigation.resume(serverPlayer);
+        if (player instanceof ServerPlayer serverPlayer) returnToParent.accept(serverPlayer);
     }
 }

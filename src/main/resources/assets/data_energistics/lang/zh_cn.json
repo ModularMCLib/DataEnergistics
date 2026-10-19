@@ -1769,6 +1769,8 @@
 	"gui.data_energistics.player_terminal.magnet_attract": "磁铁",
 	"gui.data_energistics.player_terminal.magnet_insert": "存储至 ME 网络",
 	"gui.data_energistics.player_terminal.magnet_restock": "补货",
+	"gui.data_energistics.player_terminal.magnet_pick_block": "启用选取方块",
+	"gui.data_energistics.player_terminal.magnet_craft_if_missing": "缺货自动制作",
 	"gui.data_energistics.player_terminal.magnet_settings": "磁铁设置",
 	"gui.data_energistics.player_terminal.message.calculation_failed": "合成计算失败",
 	"gui.data_energistics.player_terminal.message.craft_failed": "网络无法提交合成任务",

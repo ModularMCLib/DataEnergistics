@@ -174,7 +174,7 @@ public final class TerminalUiLayout {
     public static int popupHeight(String name) {
         return switch (name) {
             case "key_types" -> 160;
-            case "magnet" -> 98;
+            case "magnet" -> 122;
             case "filters" -> 166;
             case "quantity" -> 107;
             case "upload" -> 188;
@@ -188,7 +188,8 @@ public final class TerminalUiLayout {
 
     public static int popupWidth(String name) {
         return switch (name) {
-            case "quantity", "magnet", "filters" -> 176;
+            case "magnet" -> 200;
+            case "quantity", "filters" -> 176;
             default -> 190;
         };
     }
@@ -319,7 +320,7 @@ public final class TerminalUiLayout {
     public static TerminalActionButton toggle(String id, Component text, int x, int y, int width) {
         TerminalActionButton row = at(named(new TerminalActionButton(), id, "terminal-toggle"), x, y, width, 14);
         row.noText();
-        UIElement glyph = at(element(id + "_icon", "terminal-toggle-glyph"), 0, 1, 22, 12);
+        UIElement glyph = at(element(id + "_icon", "terminal-toggle-glyph"), 0, 0, 22, 12);
         glyph.setAllowHitTest(false);
         Label name = at(label(id + "_label"), 0, 0, width, 14);
         name.layout(layout -> layout.widthPercent(100).paddingLeft(26).paddingRight(2));
@@ -327,7 +328,6 @@ public final class TerminalUiLayout {
         name.setText(text);
         name.textStyle(style -> style.textWrap(TextWrap.HOVER_ROLL));
         row.addChildren(glyph, name);
-        row.glyph(glyph, 1);
         return row;
     }
 

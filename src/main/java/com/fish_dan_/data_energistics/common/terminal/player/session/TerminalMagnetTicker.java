@@ -7,8 +7,11 @@ import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNet
 import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.StorageHelper;
 
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +24,8 @@ import org.jspecify.annotations.Nullable;
  * Magnet attraction delegates to vanilla pickup so other mods retain their pickup veto and ownership rules.
  */
 final class TerminalMagnetTicker {
+
+    private static final TagKey<Item> NO_RESTOCK = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("ae2wtlib", "no_restock"));
 
     private TerminalMagnetTicker() {}
 
@@ -38,7 +43,7 @@ final class TerminalMagnetTicker {
             for (int index = 0; index < player.getInventory().items.size(); index++) {
                 ItemStack stack = player.getInventory().getItem(index);
                 AEItemKey key = AEItemKey.of(stack);
-                if (key == null || !state.magnet().insertAllows(key) || stack.getCount() >= stack.getMaxStackSize())
+                if (key == null || stack.is(NO_RESTOCK) || stack.getCount() >= stack.getMaxStackSize())
                     continue;
                 int wanted = stack.getMaxStackSize() - stack.getCount();
                 long count = StorageHelper.poweredExtraction(connection.grid().getEnergyService(), connection.storage(), key, wanted, connection.source());
@@ -59,7 +64,7 @@ final class TerminalMagnetTicker {
             return;
         ItemStack stack = entity.getItem();
         AEItemKey key = AEItemKey.of(stack);
-        if (key == null || !state.magnet().pickupAllows(key) || !state.magnet().insertAllows(key)) return;
+        if (key == null || !state.magnet().insertAllows(key)) return;
         TerminalConnection connection = runtime.connection();
         if (connection == null) return;
         int original = stack.getCount();

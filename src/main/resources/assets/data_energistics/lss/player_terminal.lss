@@ -97,6 +97,7 @@
 .terminal-toggle { background: #00000000; base-background: #00000000; hover-background: #00000000; pressed-background: #00000000; }
 .terminal-toggle-name { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; vertical-align: center; }
 .terminal-toggle:disabled .terminal-toggle-name { text-color: #FF858590; }
+.terminal-toggle:disabled .terminal-toggle-glyph { opacity: 0.5; }
 .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 28, 22, 12); }
 .terminal-toggle.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 28, 22, 12); }
 .terminal-toggle.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 40, 22, 12); }

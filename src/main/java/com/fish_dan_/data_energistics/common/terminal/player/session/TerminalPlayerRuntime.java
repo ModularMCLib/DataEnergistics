@@ -6,12 +6,14 @@ import com.fish_dan_.data_energistics.common.terminal.player.connection.Terminal
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
+import com.fish_dan_.data_energistics.network.terminal.TerminalPickBlockStatePayload;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.networking.IGrid;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -29,6 +31,7 @@ public final class TerminalPlayerRuntime {
     private @Nullable TerminalSession session;
     private @Nullable IGrid paidGrid;
     private int paidTick = -1;
+    private @Nullable Boolean sentPickBlock;
     private final ObjectSet<UUID> openedSessions = new ObjectOpenHashSet<>();
 
     public TerminalPlayerRuntime(ServerPlayer player, TerminalPlayerState state) {
@@ -82,8 +85,15 @@ public final class TerminalPlayerRuntime {
             TerminalAeNavigation.restoreClosed(player, session);
             if (!session.valid(player)) close();
         }
-        if (!ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL)) return;
-        boolean magnet = ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET) && state.magnet().active();
+        boolean terminal = ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL);
+        boolean magnetUnlocked = terminal && ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET);
+        boolean pickBlock = magnetUnlocked && state.magnet().pickBlock();
+        if (sentPickBlock == null || sentPickBlock != pickBlock) {
+            PacketDistributor.sendToPlayer(player, new TerminalPickBlockStatePayload(pickBlock));
+            sentPickBlock = pickBlock;
+        }
+        if (!terminal) return;
+        boolean magnet = magnetUnlocked && state.magnet().active();
         boolean wantsNetwork = (session != null && session.visible()) || magnet;
         TerminalConnection connection = wantsNetwork ? connection() : null;
         if (session != null) TerminalAeNavigation.tick(player, session, connection);

@@ -33,6 +33,7 @@ public record TerminalAeMenuLocator(UUID sessionId, long frequency) implements I
     }
 
     public static void register() {
+        TerminalPickBlockMenuLocator.register();
         MenuLocators.register(TerminalAeMenuLocator.class,
                 (locator, buffer) -> {
                     buffer.writeUUID(locator.sessionId());
@@ -46,7 +47,9 @@ public record TerminalAeMenuLocator(UUID sessionId, long frequency) implements I
         if (locateItem(player).isEmpty()) return null;
         var connection = player instanceof ServerPlayer serverPlayer ? TerminalAeNavigation.connection(serverPlayer, sessionId, frequency) : null;
         if (!player.level().isClientSide() && connection == null) return null;
-        TerminalAeMenuHost host = new TerminalAeMenuHost(player, this, connection);
+        TerminalAeMenuHost host = new TerminalAeMenuHost(player, this, connection,
+                () -> player instanceof ServerPlayer serverPlayer && TerminalAeNavigation.connection(serverPlayer, sessionId, frequency) != null,
+                TerminalAeNavigation::resume);
         return hostInterface.isInstance(host) ? hostInterface.cast(host) : null;
     }
 

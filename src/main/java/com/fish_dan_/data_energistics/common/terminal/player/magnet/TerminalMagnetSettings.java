@@ -41,6 +41,8 @@ public final class TerminalMagnetSettings {
     public final TerminalGhostInventory insert;
     private final Runnable changed;
     private Mode mode = Mode.OFF;
+    private boolean pickBlock;
+    private boolean craftIfMissing;
     private boolean restock;
     private boolean pickupWhitelist;
     private boolean insertWhitelist;
@@ -57,6 +59,14 @@ public final class TerminalMagnetSettings {
 
     public boolean restock() {
         return restock;
+    }
+
+    public boolean pickBlock() {
+        return pickBlock;
+    }
+
+    public boolean craftIfMissing() {
+        return craftIfMissing;
     }
 
     public boolean pickupWhitelist() {
@@ -78,6 +88,16 @@ public final class TerminalMagnetSettings {
 
     public void restock(boolean value) {
         restock = value;
+        changed.run();
+    }
+
+    public void pickBlock(boolean value) {
+        pickBlock = value;
+        changed.run();
+    }
+
+    public void craftIfMissing(boolean value) {
+        craftIfMissing = value;
         changed.run();
     }
 
@@ -114,6 +134,8 @@ public final class TerminalMagnetSettings {
     public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
         tag.putString("mode", mode.name());
+        tag.putBoolean("pick_block", pickBlock);
+        tag.putBoolean("craft_if_missing", craftIfMissing);
         tag.putBoolean("restock", restock);
         tag.putBoolean("pickup_whitelist", pickupWhitelist);
         tag.putBoolean("insert_whitelist", insertWhitelist);
@@ -124,6 +146,8 @@ public final class TerminalMagnetSettings {
 
     public void load(CompoundTag tag, HolderLookup.Provider registries) {
         mode = Mode.valueOf(tag.getString("mode"));
+        pickBlock = tag.getBoolean("pick_block");
+        craftIfMissing = tag.getBoolean("craft_if_missing");
         restock = tag.getBoolean("restock");
         pickupWhitelist = tag.getBoolean("pickup_whitelist");
         insertWhitelist = tag.getBoolean("insert_whitelist");

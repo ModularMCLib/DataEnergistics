@@ -24,6 +24,8 @@ public final class TerminalMagnetUi {
     private final TerminalActionButton attract;
     private final TerminalActionButton insert;
     private final TerminalActionButton restock;
+    private final TerminalActionButton pickBlock;
+    private final TerminalActionButton craftIfMissing;
     private final Button pickupMode;
     private final Button insertMode;
     private final Button copyDown;
@@ -33,20 +35,28 @@ public final class TerminalMagnetUi {
 
     public TerminalMagnetUi(UIElement settings, UIElement filters, BiConsumer<String, CompoundTag> request, Runnable openFilters) {
         this.request = request;
-        restock = TerminalUiLayout.toggle("restock", text("magnet_restock"), 8, 22, 160);
-        attract = TerminalUiLayout.toggle("attract", text("magnet_attract"), 8, 58, 160);
-        insert = TerminalUiLayout.toggle("pickup_to_me", text("magnet_insert"), 8, 76, 160);
-        Label heading = TerminalUiLayout.at(new Label(), 8, 43, 132, 10);
+        pickBlock = TerminalUiLayout.toggle("pick_block", text("magnet_pick_block"), 10, 25, 180);
+        craftIfMissing = TerminalUiLayout.toggle("craft_if_missing", text("magnet_craft_if_missing"), 10, 41, 180);
+        restock = TerminalUiLayout.toggle("restock", text("magnet_restock"), 10, 57, 180);
+        attract = TerminalUiLayout.toggle("attract", text("magnet_attract"), 10, 83, 180);
+        insert = TerminalUiLayout.toggle("pickup_to_me", text("magnet_insert"), 10, 98, 180);
+        Label heading = TerminalUiLayout.at(new Label(), 8, 73, 160, 10);
         heading.addClass("terminal-popup-heading");
         heading.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         heading.setText(text("magnet_settings"));
         heading.setAllowHitTest(false);
-        Button gear = TerminalUiLayout.icon("filters", "terminal-small", "icon-settings", 154, 40, 14, 14);
+        Button gear = TerminalUiLayout.icon("filters", "terminal-small", "icon-settings", 176, 70, 14, 14);
         gear.style(style -> style.tooltips(TerminalTooltipLines.split(text("filters"))));
         gear.setOnClick(event -> {
             if (event.button == 0) openFilters.run();
         });
-        settings.addChildren(restock, heading, attract, insert, gear);
+        settings.addChildren(pickBlock, craftIfMissing, restock, heading, attract, insert, gear);
+        pickBlock.setOnClick(event -> {
+            if (event.button == 0) request.accept("magnet_pick_block", new CompoundTag());
+        });
+        craftIfMissing.setOnClick(event -> {
+            if (event.button == 0) request.accept("magnet_craft_if_missing", new CompoundTag());
+        });
         restock.setOnClick(event -> {
             if (event.button == 0) request.accept("magnet_restock", new CompoundTag());
         });
@@ -99,8 +109,11 @@ public final class TerminalMagnetUi {
         selected(attract, mode.attract());
         selected(insert, mode.insert());
         selected(restock, settings.getBoolean("restock"));
-        for (Button button : new Button[] { attract, insert, restock, pickupMode, insertMode, copyDown, swap, copyUp })
+        selected(pickBlock, settings.getBoolean("pick_block"));
+        selected(craftIfMissing, settings.getBoolean("craft_if_missing"));
+        for (Button button : new Button[] { attract, insert, restock, pickBlock, pickupMode, insertMode, copyDown, swap, copyUp })
             button.setActive(unlocked);
+        craftIfMissing.setActive(unlocked && settings.getBoolean("pick_block"));
         filterMode(pickupMode, "pickup", settings.getBoolean("pickup_whitelist"));
         filterMode(insertMode, "insert", settings.getBoolean("insert_whitelist"));
     }

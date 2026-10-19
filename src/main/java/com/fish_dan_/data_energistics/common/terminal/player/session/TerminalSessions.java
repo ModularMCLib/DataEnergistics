@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
+import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalPickBlock;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalSavedData;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
@@ -10,7 +12,9 @@ import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -23,6 +27,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -39,6 +44,38 @@ public final class TerminalSessions {
 
     private static TerminalPlayerRuntime runtime(ServerPlayer player) {
         return PLAYERS.computeIfAbsent(player.getUUID(), unused -> new TerminalPlayerRuntime(player, TerminalSavedData.get(player.server).player(player.getUUID())));
+    }
+
+    /** Server-thread validity check for AE2's pick-block crafting menu; unavailable access returns null. */
+    public static @Nullable TerminalConnection pickBlockConnection(ServerPlayer player, long frequency) {
+        if (!player.isAlive() || player.isSpectator() || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) ||
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET))
+            return null;
+        TerminalPlayerRuntime runtime = runtime(player);
+        if (!runtime.state().magnet().pickBlock()) return null;
+        TerminalConnection connection = runtime.connection();
+        return connection != null && connection.frequency() == frequency ? connection : null;
+    }
+
+    /**
+     * Validates the network request on the server thread and resolves the block's item in the player's current level.
+     */
+    public static void pickBlock(ServerPlayer player, BlockHitResult hit) {
+        if (!player.isAlive() || player.isCreative() || player.isSpectator() || player.containerMenu != player.inventoryMenu ||
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET) ||
+                !player.canInteractWithBlock(hit.getBlockPos(), 1) ||
+                !player.level().getChunkSource().hasChunk(hit.getBlockPos().getX() >> 4, hit.getBlockPos().getZ() >> 4))
+            return;
+        try {
+            TerminalPlayerRuntime runtime = runtime(player);
+            if (!runtime.state().magnet().pickBlock()) return;
+            ItemStack stack = player.level().getBlockState(hit.getBlockPos()).getCloneItemStack(hit, player.level(), hit.getBlockPos(), player);
+            if (stack.isEmpty()) return;
+            TerminalConnection connection = runtime.connection();
+            if (connection != null) TerminalPickBlock.pick(player, connection, stack, runtime.state().magnet().craftIfMissing());
+        } catch (RuntimeException failure) {
+            fail(player, "pick block", failure);
+        }
     }
 
     public static void handle(ServerPlayer player, TerminalRequestPayload request) {

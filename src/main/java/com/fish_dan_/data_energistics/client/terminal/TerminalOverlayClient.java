@@ -410,6 +410,7 @@ public final class TerminalOverlayClient {
         if (composition != null) {
             composition.endDrag();
             composition.cancelStorageInput();
+            composition.cancelSlotInput();
         }
         pointerOwned = false;
         keyboardOwned = false;
@@ -530,7 +531,8 @@ public final class TerminalOverlayClient {
         overlay.keyboardOwned = true;
         overlay.pointerOwned = true;
         overlay.pointerButton = event.getButton();
-        if (!target.composition.beginDrag(event.getMouseX(), event.getMouseY(), event.getButton())) {
+        if (!target.composition.beginDrag(event.getMouseX(), event.getMouseY(), event.getButton()) &&
+                !target.composition.beginSlotInput(event.getMouseX(), event.getMouseY(), event.getButton(), overlay.menu.getCarried())) {
             target.modularUi.refreshHoveredElementAtScreen((float) event.getMouseX(), (float) event.getMouseY());
             target.modularUi.getWidget().mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton());
         }
@@ -542,6 +544,7 @@ public final class TerminalOverlayClient {
         InputTarget target = active(event.getScreen());
         if (target == null) return;
         TerminalOverlayClient overlay = target.overlay;
+        boolean slotsReleased = target.composition.releaseSlots(event.getMouseX(), event.getMouseY(), event.getButton());
         boolean storageReleased = target.composition.releaseStorage(event.getMouseX(), event.getMouseY(), event.getButton());
         if (target.composition.endDrag()) {
             overlay.pointerOwned = false;
@@ -549,7 +552,7 @@ public final class TerminalOverlayClient {
             event.setCanceled(true);
             return;
         }
-        if (storageReleased || overlay.pointerOwned && overlay.pointerButton == event.getButton()) {
+        if (slotsReleased || storageReleased || overlay.pointerOwned && overlay.pointerButton == event.getButton()) {
             target.modularUi.getWidget().mouseReleased(event.getMouseX(), event.getMouseY(), event.getButton());
             overlay.pointerOwned = false;
             event.setCanceled(true);
@@ -565,7 +568,8 @@ public final class TerminalOverlayClient {
             overlay.publishGeometry(false);
             event.setCanceled(true);
         } else if (overlay.pointerOwned) {
-            target.modularUi.getWidget().mouseDragged(event.getMouseX(), event.getMouseY(), event.getMouseButton(), event.getDragX(), event.getDragY());
+            if (!target.composition.dragSlots(event.getMouseX(), event.getMouseY(), event.getMouseButton()))
+                target.modularUi.getWidget().mouseDragged(event.getMouseX(), event.getMouseY(), event.getMouseButton(), event.getDragX(), event.getDragY());
             event.setCanceled(true);
         }
     }

@@ -1760,7 +1760,7 @@
 	"gui.data_energistics.player_terminal.fluid_substitutes_off": "禁止流体替代",
 	"gui.data_energistics.player_terminal.fluid_substitutes_on": "允许流体替代",
 	"gui.data_energistics.player_terminal.fold": "折叠工作区",
-	"gui.data_energistics.player_terminal.ghost_hint": "右键：清除",
+	"gui.data_energistics.player_terminal.ghost_hint": "空手左键：清除",
 	"gui.data_energistics.player_terminal.to_network": "到网络",
 	"gui.data_energistics.player_terminal.to_inventory": "到背包",
 	"gui.data_energistics.player_terminal.insert_blacklist": "入网：黑名单",

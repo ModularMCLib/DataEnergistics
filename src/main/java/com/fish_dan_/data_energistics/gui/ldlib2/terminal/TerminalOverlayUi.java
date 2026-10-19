@@ -2,6 +2,8 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalClientPreferences;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
+import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag;
+import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag.Target;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
@@ -105,6 +107,7 @@ public final class TerminalOverlayUi {
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
     private final TerminalStorageInput storageInput;
+    private final TerminalGhostDrag ghostDrag;
     private int storageReleaseButton = -1;
     private boolean pendingEncode;
     private final ObjectList<TerminalStonecuttingRecipeCell> stonecuttingRecipes = new ObjectArrayList<>();
@@ -145,6 +148,7 @@ public final class TerminalOverlayUi {
     public TerminalOverlayUi(TerminalClientPreferences preferences, BiConsumer<String, CompoundTag> request, Runnable openLargeTerminal) {
         this.preferences = preferences;
         this.request = request;
+        ghostDrag = new TerminalGhostDrag(request);
         sort = preferences.sort;
         filter = preferences.filter;
         descending = preferences.descending;
@@ -421,6 +425,7 @@ public final class TerminalOverlayUi {
         snapshot = value.copy();
         workspace = value.getString("workspace");
         if (rebuild) {
+            cancelSlotInput();
             refreshWorkCells();
             geometry(screenWidth, screenHeight);
         }
@@ -655,8 +660,40 @@ public final class TerminalOverlayUi {
         CompoundTag data = string("inventory", inventory);
         data.putInt("index", index);
         data.putInt("button", button);
-        data.putLong("amount", 1);
+        data.putString("interaction", (button == 0 ? InventoryAction.PICKUP_OR_SET_DOWN : InventoryAction.SPLIT_OR_PLACE_SINGLE).name());
         request.accept("ghost", data);
+    }
+
+    /** Captures carried-item painting before LDLib dispatches the individual configuration-slot click. */
+    public boolean beginSlotInput(double x, double y, int button, ItemStack carried) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (button < 0 || button > 1 || minecraft.options.keyPickItem.matchesMouse(button) || UIElement.isShiftDown() ||
+                carried.isEmpty())
+            return false;
+        Target target = ghostDragTarget(x, y);
+        if (target == null) return false;
+        ghostDrag.begin(target, button);
+        return true;
+    }
+
+    public boolean dragSlots(double x, double y, int button) {
+        return ghostDrag.drag(ghostDragTarget(x, y), button);
+    }
+
+    public boolean releaseSlots(double x, double y, int button) {
+        return ghostDrag.release(ghostDragTarget(x, y), button);
+    }
+
+    public void cancelSlotInput() {
+        ghostDrag.cancel();
+    }
+
+    private @Nullable Target ghostDragTarget(double x, double y) {
+        for (GhostTarget target : ghostTargets()) {
+            if ((workspace.equals("processing") || !target.inventory().equals("inputs")) && target.area().contains((int) x, (int) y))
+                return new Target(target.inventory(), target.index());
+        }
+        return null;
     }
 
     private void refreshMagnet() {
@@ -987,6 +1024,7 @@ public final class TerminalOverlayUi {
         window.setVisible(value);
         element(ui.rootElement, "entry").setVisible(!value);
         if (!value) {
+            cancelSlotInput();
             window.selfAndAllChildren().forEach(element -> {
                 if (element instanceof TerminalActionButton button) button.resetInteraction();
             });

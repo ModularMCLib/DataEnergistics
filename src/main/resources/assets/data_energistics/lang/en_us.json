@@ -1760,7 +1760,7 @@
 	"gui.data_energistics.player_terminal.fluid_substitutes_off": "Fluid substitutions disabled",
 	"gui.data_energistics.player_terminal.fluid_substitutes_on": "Fluid substitutions enabled",
 	"gui.data_energistics.player_terminal.fold": "Fold workspace",
-	"gui.data_energistics.player_terminal.ghost_hint": "Right-click: Clear",
+	"gui.data_energistics.player_terminal.ghost_hint": "Empty Cursor + Left-click: Clear",
 	"gui.data_energistics.player_terminal.to_network": "To network",
 	"gui.data_energistics.player_terminal.to_inventory": "To inventory",
 	"gui.data_energistics.player_terminal.insert_blacklist": "Network insertion: blacklist",

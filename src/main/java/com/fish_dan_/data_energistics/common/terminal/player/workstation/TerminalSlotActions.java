@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.connection.Terminal
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternImport;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostClicks;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 
@@ -12,6 +13,7 @@ import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
+import appeng.helpers.InventoryAction;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -120,7 +122,13 @@ public final class TerminalSlotActions {
             return "";
         @Nullable
         GenericStack resource = null;
-        if (data.getInt("button") != 1 && (!data.contains("amount", Tag.TAG_LONG) || data.getLong("amount") != 0)) {
+        if (data.contains("interaction", Tag.TAG_STRING)) {
+            resource = TerminalGhostClicks.apply(previous, player.containerMenu.getCarried(), InventoryAction.valueOf(data.getString("interaction")));
+            if (resource != null && inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
+                if (!(resource.what() instanceof AEItemKey)) throw new IllegalArgumentException("Vanilla recipes require item ingredients");
+                resource = new GenericStack(resource.what(), 1);
+            }
+        } else if (data.getInt("button") != 1 && (!data.contains("amount", Tag.TAG_LONG) || data.getLong("amount") != 0)) {
             if (data.contains("stack", Tag.TAG_COMPOUND)) resource = GenericStack.readTag(player.registryAccess(), data.getCompound("stack"));
             else {
                 resource = GenericStack.fromItemStack(player.containerMenu.getCarried());

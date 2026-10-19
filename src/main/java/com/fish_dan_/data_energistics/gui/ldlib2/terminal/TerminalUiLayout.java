@@ -70,7 +70,7 @@ public final class TerminalUiLayout {
                 icon("drag", "terminal-drag", "icon-drag", encodingCenter - 5, 3, 10, 10),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
-                at(storageScrollbar(), TerminalViewportLayout.STORAGE_LEFT + 108 + 1, 18, STORAGE_SCROLL_WIDTH, 148),
+                at(storageScrollbar(), storageScrollLeft(width), 18, STORAGE_SCROLL_WIDTH, 148),
                 at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING) + 1, 108,
                         operationWidth(TerminalWorkspace.CRAFTING), 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
@@ -188,7 +188,7 @@ public final class TerminalUiLayout {
         atWithin(require(window, "drag", UIElement.class), encodingCenter - 5, 3, 10, 10, viewport.width(), viewport.height());
         atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "pinned_resources", UIElement.class), 16, 18, viewport.storageWidth(), viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE, viewport.width(), viewport.height());
-        atWithin(require(window, "storage_scroll", UIElement.class), TerminalViewportLayout.STORAGE_LEFT + viewport.storageWidth() + 1,
+        atWithin(require(window, "storage_scroll", UIElement.class), storageScrollLeft(viewport.width()),
                 TerminalViewportLayout.STORAGE_TOP + viewport.pinnedRows() * TerminalViewportLayout.CELL_SIZE,
                 STORAGE_SCROLL_WIDTH, viewport.scrollHeight(), viewport.width(), viewport.height());
         atWithin(require(window, "storage_rail", UIElement.class), 0, 0, STORAGE_SCROLL_WIDTH, viewport.scrollHeight(), STORAGE_SCROLL_WIDTH, viewport.scrollHeight());
@@ -199,6 +199,11 @@ public final class TerminalUiLayout {
         atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 71,
                 TerminalViewportLayout.TAB_WIDTH, 70, viewport.width(), viewport.height());
         atWithin(require(window, "resize", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 5, viewport.height() - 5, 4, 4, viewport.width(), viewport.height());
+    }
+
+    private static int storageScrollLeft(int width) {
+        // Keep the rail centered below the drag handle, independently of the storage column count.
+        return width - TerminalViewportLayout.TAB_WIDTH - (TerminalViewportLayout.ENCODING_WIDTH + STORAGE_SCROLL_WIDTH) / 2;
     }
 
     public static int popupHeight(String name) {

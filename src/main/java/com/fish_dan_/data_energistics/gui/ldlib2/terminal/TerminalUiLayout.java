@@ -50,12 +50,12 @@ public final class TerminalUiLayout {
                 at(element("bottom_edge", "frame-dark"), 0, 167, panelWidth, 1));
         window.addChild(panel);
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
-        UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, 0, 15, 16 + (controls.length - 1) * 12);
+        UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, -1, 15, 16 + (controls.length - 1) * 12);
         // Backing tiles overlap; the cropped bottom cap closes below the final button at the panel edge.
         for (int index = 0; index < controls.length; index++) {
             boolean bottom = index == controls.length - 1;
             String surface = index == 0 ? "sidebar-top" : bottom ? "sidebar-bottom" : "sidebar-middle";
-            UIElement backing = at(element("sidebar_" + index, surface), 0, index * 12 + (bottom ? 1 : 0), bottom ? 12 : 15, 15);
+            UIElement backing = at(element("sidebar_" + index, surface), 0, index * 12 + (bottom ? 1 : 0), bottom ? 13 : 15, 15);
             backing.setAllowHitTest(false);
             sidebar.addChild(backing);
         }
@@ -70,13 +70,13 @@ public final class TerminalUiLayout {
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
                 at(storageScrollbar(), encodingCenter - 3, 18, 6, 148),
-                at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING), 108,
+                at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING) + 1, 108,
                         operationWidth(TerminalWorkspace.CRAFTING), 58));
         // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
-        UIElement tabs = at(element("tabs", "terminal-tabs"), width - TerminalViewportLayout.TAB_WIDTH, 96, TerminalViewportLayout.TAB_WIDTH, 70);
+        UIElement tabs = at(element("tabs", "terminal-tabs"), width - TerminalViewportLayout.TAB_WIDTH, 97, TerminalViewportLayout.TAB_WIDTH, 70);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             tabs.addChild(icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14));
-        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - 16, 162, 4, 4));
+        window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - TerminalViewportLayout.TAB_WIDTH - 5, 163, 4, 4));
         root.addChild(window);
         return UI.of(root, ObjectImmutableList.of(stylesheet()));
     }
@@ -186,9 +186,9 @@ public final class TerminalUiLayout {
         atWithin(require(window, "storage_rail_center", UIElement.class), 2, 2, 2, viewport.scrollHeight() - 4, 6, viewport.scrollHeight());
         atWithin(require(window, "workspaces", UIElement.class), viewport.operationLeft(), viewport.operationTop(),
                 viewport.operationWidth(), TerminalViewportLayout.OPERATION_HEIGHT, viewport.width(), viewport.height());
-        atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 72,
+        atWithin(require(window, "tabs", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH, viewport.height() - 71,
                 TerminalViewportLayout.TAB_WIDTH, 70, viewport.width(), viewport.height());
-        atWithin(require(window, "resize", UIElement.class), viewport.width() - 16, viewport.height() - 6, 4, 4, viewport.width(), viewport.height());
+        atWithin(require(window, "resize", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH - 5, viewport.height() - 5, 4, 4, viewport.width(), viewport.height());
     }
 
     public static int popupHeight(String name) {

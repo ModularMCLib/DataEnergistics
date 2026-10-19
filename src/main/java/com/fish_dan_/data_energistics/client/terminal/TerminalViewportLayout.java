@@ -80,7 +80,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     }
 
     private static int operationLeft(int width, int operationWidth) {
-        return width - TAB_WIDTH - operationWidth;
+        return width - TAB_WIDTH - operationWidth + 1;
     }
 
     private static int operationTop(int height) {

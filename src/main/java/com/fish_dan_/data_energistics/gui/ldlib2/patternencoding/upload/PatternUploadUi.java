@@ -7,13 +7,12 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProvider;
+import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderLeaf;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
@@ -28,43 +27,59 @@ import net.minecraft.world.item.ItemStack;
 import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /** Shared LDLib2 upload view. Menus and the player terminal supply data and retain their own transactions. */
 @NullMarked
 public final class PatternUploadUi {
 
+    private static final int ROW_HEIGHT = 20;
+    private static final int LIST_HEIGHT = 138;
+    private static final int VISIBLE_ROWS = (LIST_HEIGHT + ROW_HEIGHT - 1) / ROW_HEIGHT + 1;
     private final PatternUploadActions actions;
-    private final ScrollerView list = new ScrollerView();
+    private final UIElement viewport = new UIElement();
+    private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
     private final TextField search = new TextField();
     private final TerminalResourceCell encoded = new TerminalResourceCell();
     private final Label status = new Label();
+    private final ObjectList<ProviderRow> rows = new ObjectArrayList<>();
     private SyncedPatternProviderList providers = SyncedPatternProviderList.EMPTY;
     private PatternProviderSearchContext searchContext = PatternProviderSearchContext.resolve(null);
+    private @Nullable GenericStack pattern;
     private @Nullable PatternProviderNameField editing;
     private long expandedGroup;
     private long selectedGroup;
     private long selectedLeaf;
     private boolean connected;
     private boolean rebuildPending;
+    private boolean viewportPending;
 
     public PatternUploadUi(UIElement root, PatternUploadActions actions) {
         this.actions = actions;
+        UIElement list = new UIElement();
         root.addClass("terminal-upload-popup");
         search.addClass("terminal-field");
         search.addClass("terminal-search-field");
         search.setText("", false);
         search.textFieldStyle(style -> style.placeholder(text("search")));
-        search.setTextResponder(value -> rebuild());
-        TerminalUiLayout.verticalScrollbar(list.verticalScroller);
-        list.verticalScroller.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
-        TerminalUiLayout.silentScrollbar(list.horizontalScroller);
+        search.setTextResponder(value -> rebuildPending = true);
+        scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
+        scrollbar.setOnValueChanged(value -> viewportPending = true);
         list.addClass("terminal-upload-list");
-        list.scrollerStyle(style -> style.mode(ScrollerMode.VERTICAL).horizontalScrollDisplay(ScrollDisplay.NEVER));
-        list.viewPort.layout(layout -> layout.paddingAll(0));
-        list.viewContainer.layout(layout -> layout.widthPercent(100).paddingAll(0).gapAll(0));
+        viewport.setOverflowVisible(false);
+        list.addChildren(TerminalUiLayout.at(viewport, 0, 0, 170, LIST_HEIGHT),
+                TerminalUiLayout.at(scrollbar, 174, 0, 6, LIST_HEIGHT));
+        list.addEventListener(UIEvents.MOUSE_WHEEL, event -> {
+            cancelEditing();
+            scrollbar.scrollByWheel(event.deltaY);
+            event.stopPropagation();
+        });
         status.addClass("terminal-label");
+        status.setText(text("message.offline"));
         status.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         status.setAllowHitTest(false);
         encoded.encodedPattern();
@@ -75,20 +90,27 @@ public final class PatternUploadUi {
     }
 
     public void apply(SyncedPatternProviderList providers, @Nullable GenericStack pattern, boolean connected) {
-        encoded.entry(pattern, false);
-        status.setText(text(!connected ? "message.offline" : pattern == null ? "upload_empty" : "upload_hint"));
+        if (!Objects.equals(this.pattern, pattern) || this.connected != connected) {
+            this.pattern = pattern;
+            encoded.entry(pattern, false);
+            status.setText(text(!connected ? "message.offline" : pattern == null ? "upload_empty" : "upload_hint"));
+        }
         var reference = pattern != null && pattern.what() instanceof AEItemKey itemKey ? EncodedPatternRecipeReference.get(itemKey.getReadOnlyStack()) : null;
         boolean contextChanged = !searchContext.current(reference);
         if (contextChanged) searchContext = PatternProviderSearchContext.resolve(reference);
-        boolean changed = this.providers != providers || this.connected != connected || contextChanged;
+        boolean changed = this.providers != providers &&
+                (!this.providers.providers().equals(providers.providers()) || !Objects.equals(this.providers.rankingContext(), providers.rankingContext())) ||
+                this.connected != connected || contextChanged;
         this.providers = providers;
         this.connected = connected;
-        if (changed) rebuild();
+        if (changed) rebuildPending = true;
     }
 
     /** Lets a live provider refresh wait for the active name edit instead of replacing its focused field. */
     public void tick() {
-        if (rebuildPending && (editing == null || !editing.isFocused())) rebuild();
+        if (editing != null && editing.isFocused()) return;
+        if (rebuildPending) rebuild();
+        if (viewportPending) rebuildViewport();
     }
 
     public boolean cancelEditing() {
@@ -98,30 +120,50 @@ public final class PatternUploadUi {
     }
 
     private void rebuild() {
-        if (editing != null && editing.isFocused()) {
-            rebuildPending = true;
-            return;
-        }
-        editing = null;
         rebuildPending = false;
-        list.viewContainer.clearAllChildren();
+        rows.clear();
         var ordered = PatternProviderDisplayOrder.order(providers, search.getValue(), searchContext,
                 id -> BuiltInRegistries.ITEM.get(id).getDescription().getString(), PatternProviderRecipeTypeNames::resolve);
         for (SyncedPatternProvider group : ordered) {
-            row(group, 0, group.displayName(), group.iconItemId(), group.usedPatternSlotCount(), group.patternSlotCount(), group.renameable(),
-                    group.leaves().stream().anyMatch(leaf -> leaf.openable()), null);
+            rows.add(new ProviderRow(group, -1));
             if (expandedGroup == group.id()) {
-                for (var leaf : group.leaves()) {
-                    var location = leaf.location();
-                    Component detail = location.blockPos() == null ? null : Component.literal(location.dimensionId() + " " + location.blockPos().toShortString());
-                    row(group, leaf.id(), leaf.displayName(), leaf.iconItemId(), leaf.usedPatternSlotCount(), leaf.patternSlotCount(), leaf.renameable(), leaf.openable(), detail);
-                }
+                for (int index = 0; index < group.leaves().size(); index++) rows.add(new ProviderRow(group, index));
+            }
+        }
+        int maximum = Math.max(0, rows.size() * ROW_HEIGHT - LIST_HEIGHT);
+        scrollbar.setRange(0, maximum);
+        scrollbar.scrollerStyle(style -> style.scrollDelta(maximum == 0 ? 1 : (float) ROW_HEIGHT / maximum));
+        scrollbar.setActive(maximum > 0);
+        if (maximum == 0) scrollbar.addClass("inactive-scroll");
+        else scrollbar.removeClass("inactive-scroll");
+        viewportPending = true;
+    }
+
+    /** Keeps the LDLib2 element tree bounded even when the network publishes thousands of providers. */
+    private void rebuildViewport() {
+        viewportPending = false;
+        editing = null;
+        viewport.clearAllChildren();
+        int offset = Math.round(scrollbar.getValue());
+        int first = offset / ROW_HEIGHT;
+        for (int index = first; index < Math.min(rows.size(), first + VISIBLE_ROWS); index++) {
+            ProviderRow entry = rows.get(index);
+            SyncedPatternProvider group = entry.group();
+            int top = index * ROW_HEIGHT - offset;
+            if (entry.leafIndex() < 0) {
+                row(group, 0, group.displayName(), group.iconItemId(), group.usedPatternSlotCount(), group.patternSlotCount(), group.renameable(),
+                        group.leaves().stream().anyMatch(SyncedPatternProviderLeaf::openable), null, top);
+            } else {
+                var leaf = group.leaves().get(entry.leafIndex());
+                var location = leaf.location();
+                Component detail = location.blockPos() == null ? null : Component.literal(location.dimensionId() + " " + location.blockPos().toShortString());
+                row(group, leaf.id(), leaf.displayName(), leaf.iconItemId(), leaf.usedPatternSlotCount(), leaf.patternSlotCount(), leaf.renameable(), leaf.openable(), detail, top);
             }
         }
     }
 
     private void row(SyncedPatternProvider group, long leaf, Component name, ResourceLocation iconId, int used, int capacity, boolean renameable,
-                     boolean openable, @Nullable Component detail) {
+                     boolean openable, @Nullable Component detail, int top) {
         TerminalActionButton button = new TerminalActionButton();
         button.addClass("terminal-upload-button");
         button.addClass("terminal-upload-row");
@@ -129,6 +171,7 @@ public final class PatternUploadUi {
         button.noText();
         button.layout(layout -> layout.widthPercent(100).height(20).paddingAll(1).paddingLeft(leaf == 0 ? 2 : 9).paddingRight(4)
                 .gapColumn(3).flexDirection(FlexDirection.ROW).alignItems(AlignItems.CENTER).flexShrink(0));
+        TerminalUiLayout.at(button, 0, top, 170, ROW_HEIGHT);
         TerminalResourceCell icon = new TerminalResourceCell();
         icon.addClass("embedded-cell");
         ItemStack stack = BuiltInRegistries.ITEM.get(iconId).getDefaultInstance();
@@ -156,9 +199,10 @@ public final class PatternUploadUi {
         button.setOnClick(event -> {
             selectedGroup = group.id();
             selectedLeaf = leaf;
+            viewportPending = true;
             if (event.button == 1) {
                 expandedGroup = expandedGroup == group.id() ? 0 : group.id();
-                rebuild();
+                rebuildPending = true;
             } else if (event.button == 0 && connected) actions.upload(group.id(), leaf);
         });
         button.addEventListener(UIEvents.MOUSE_DOWN, event -> {
@@ -167,8 +211,10 @@ public final class PatternUploadUi {
                 event.stopPropagation();
             }
         });
-        list.viewContainer.addChild(button);
+        viewport.addChild(button);
     }
+
+    private record ProviderRow(SyncedPatternProvider group, int leafIndex) {}
 
     private static Component text(String key) {
         return Component.translatable("gui.data_energistics.player_terminal." + key);

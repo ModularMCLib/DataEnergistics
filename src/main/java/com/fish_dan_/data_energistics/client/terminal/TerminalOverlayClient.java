@@ -377,10 +377,6 @@ public final class TerminalOverlayClient {
         TerminalOverlayClient overlay = target.overlay;
         overlay.mouseX = event.getMouseX();
         overlay.mouseY = event.getMouseY();
-        if (target.composition.modal() && !target.composition.inputAllowed(event.getMouseX(), event.getMouseY())) {
-            event.setCanceled(true);
-            return;
-        }
         if (!target.composition.contains(event.getMouseX(), event.getMouseY())) {
             overlay.keyboardOwned = false;
             target.modularUi.clearFocus();
@@ -405,7 +401,7 @@ public final class TerminalOverlayClient {
             event.setCanceled(true);
             return;
         }
-        if (overlay.pointerOwned || target.composition.modal() || target.composition.contains(event.getMouseX(), event.getMouseY())) {
+        if (overlay.pointerOwned || target.composition.contains(event.getMouseX(), event.getMouseY())) {
             target.modularUi.getWidget().mouseReleased(event.getMouseX(), event.getMouseY(), event.getButton());
             overlay.pointerOwned = false;
             event.setCanceled(true);
@@ -420,7 +416,7 @@ public final class TerminalOverlayClient {
         if (target.composition.drag(event.getMouseX(), event.getMouseY())) {
             overlay.publishGeometry(false);
             event.setCanceled(true);
-        } else if (overlay.pointerOwned || target.composition.modal()) {
+        } else if (overlay.pointerOwned) {
             target.modularUi.getWidget().mouseDragged(event.getMouseX(), event.getMouseY(), event.getMouseButton(), event.getDragX(), event.getDragY());
             event.setCanceled(true);
         }
@@ -429,10 +425,9 @@ public final class TerminalOverlayClient {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void scroll(ScreenEvent.MouseScrolled.Pre event) {
         InputTarget target = active(event.getScreen());
-        if (target == null || (!target.composition.modal() && !target.composition.contains(event.getMouseX(), event.getMouseY())))
+        if (target == null || !target.composition.contains(event.getMouseX(), event.getMouseY()))
             return;
-        if (target.composition.inputAllowed(event.getMouseX(), event.getMouseY()))
-            target.modularUi.getWidget().mouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDeltaX(), event.getScrollDeltaY());
+        target.modularUi.getWidget().mouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDeltaX(), event.getScrollDeltaY());
         event.setCanceled(true);
     }
 
@@ -446,14 +441,12 @@ public final class TerminalOverlayClient {
         InputTarget target = active(event.getScreen());
         if (target == null) return;
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE && target.composition.closePopup()) {
-            target.modularUi.clearFocus();
             target.overlay.publishGeometry(true);
             event.setCanceled(true);
             return;
         }
         if (target.overlay.keyboardOwned && target.modularUi.getWidget().keyPressed(event.getKeyCode(), event.getScanCode(), event.getModifiers()))
             event.setCanceled(true);
-        if (target.composition.modal()) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -462,7 +455,6 @@ public final class TerminalOverlayClient {
         if (target == null) return;
         if (target.overlay.keyboardOwned && target.modularUi.getWidget().keyReleased(event.getKeyCode(), event.getScanCode(), event.getModifiers()))
             event.setCanceled(true);
-        if (target.composition.modal()) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -471,7 +463,6 @@ public final class TerminalOverlayClient {
         if (target == null) return;
         if (target.overlay.keyboardOwned && target.modularUi.getWidget().charTyped(event.getCodePoint(), event.getModifiers()))
             event.setCanceled(true);
-        if (target.composition.modal()) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -483,7 +474,7 @@ public final class TerminalOverlayClient {
             overlay.mouseX = minecraft.mouseHandler.xpos() * overlay.screen.width / minecraft.getWindow().getScreenWidth();
             overlay.mouseY = minecraft.mouseHandler.ypos() * overlay.screen.height / minecraft.getWindow().getScreenHeight();
         }
-        if (overlay != null && overlay.composition != null && !overlay.rendering && (overlay.composition.modal() || overlay.composition.contains(overlay.mouseX, overlay.mouseY)))
+        if (overlay != null && overlay.composition != null && !overlay.rendering && overlay.composition.contains(overlay.mouseX, overlay.mouseY))
             event.setCanceled(true);
     }
 

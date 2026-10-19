@@ -11,7 +11,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetU
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.window.TerminalSubWindow;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.window.TerminalWindowStack;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -52,7 +52,6 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -74,9 +73,7 @@ public final class TerminalOverlayUi {
     private final BiConsumer<String, CompoundTag> request;
     private final UIElement window = element(ui.rootElement, "window");
     private final Object2ObjectMap<String, UIElement> workspaces = new Object2ObjectLinkedOpenHashMap<>();
-    private final Object2ObjectMap<String, UIElement> popups = new Object2ObjectLinkedOpenHashMap<>();
-    private final Object2ObjectMap<String, TerminalSubWindow> subWindows = new Object2ObjectLinkedOpenHashMap<>();
-    private final ObjectList<String> popupStack = new ObjectArrayList<>();
+    private final TerminalWindowStack subWindows = new TerminalWindowStack(ui.rootElement);
     private final ObjectList<TerminalResourceCell> storage = new ObjectArrayList<>();
     private final TerminalStorageIndex storageIndex = new TerminalStorageIndex();
     private final TerminalPinnedResourcesUi pinnedUi;
@@ -96,7 +93,6 @@ public final class TerminalOverlayUi {
     private final ObjectList<TerminalResourceCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> insert = new ObjectArrayList<>();
-    private final Reference2BooleanOpenHashMap<UIElement> modalHitStates = new Reference2BooleanOpenHashMap<>();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
     private final Scroller.Vertical processingScrollbar;
     private final Scroller.Vertical stonecuttingScrollbar;
@@ -242,16 +238,12 @@ public final class TerminalOverlayUi {
         }
         for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types" }) {
             UIElement root = TerminalUiLayout.popup(name);
-            popups.put(name, root);
-            root.setVisible(false);
-            ui.rootElement.addChild(root);
+            subWindows.add(name, root);
             label(root, "popup_title").setText(text(name));
-            button(root, "close", this::closePopup);
             element(root, "close").style(style -> style.tooltips(TerminalTooltipLines.split(text("close"), text("hold_to_drag"))));
-            subWindows.put(name, new TerminalSubWindow(root, this::closePopup));
         }
-        uploadUi = new TerminalPatternUploadUi(popups.get("upload"), registries, this::networkAction);
-        keyTypeUi = new TerminalKeyTypeUi(popups.get("key_types"), keyTypeSelection);
+        uploadUi = new TerminalPatternUploadUi(subWindows.root("upload"), registries, this::networkAction);
+        keyTypeUi = new TerminalKeyTypeUi(subWindows.root("key_types"), keyTypeSelection);
         processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
         configureProcessingScrollbar();
         for (String host : new String[] { "inputs", "outputs" })
@@ -265,11 +257,12 @@ public final class TerminalOverlayUi {
             scrollStonecutting(event.deltaY > 0 ? -1 : 1);
             event.stopPropagation();
         });
-        UIElement filters = popups.get("filters");
-        magnetUi = new TerminalMagnetUi(popups.get("magnet"), filters, request, () -> open("filters"));
+        UIElement filters = subWindows.root("filters");
+        magnetUi = new TerminalMagnetUi(subWindows.root("magnet"), filters, request, () -> open("filters", "magnet"));
         createCells(element(filters, "pickup"), pickup, 27, 9, (index, event) -> ghost("pickup", index, event.button));
         createCells(element(filters, "insert"), insert, 27, 9, (index, event) -> ghost("insert", index, event.button));
-        amountUi = new TerminalAmountUi(popups.get("quantity"), registries, request, this::closePopup);
+        amountUi = new TerminalAmountUi(subWindows.root("quantity"), registries, request, () -> closePopup("quantity"));
+        subWindows.extraHitArea("quantity", amountUi::contains);
         refreshWorkCells();
     }
 
@@ -584,7 +577,7 @@ public final class TerminalOverlayUi {
         if (entry != null && (processing || inventory.equals("pickup") || inventory.equals("insert")) &&
                 (button == 2 && processing || button == 0 && UIElement.isShiftDown())) {
             amountUi.edit(inventory, index, entry, processing, snapshot.getCompound("work"));
-            open("quantity");
+            open("quantity", processing ? null : "filters");
             return;
         }
         if (button == 2) return;
@@ -601,7 +594,7 @@ public final class TerminalOverlayUi {
         if (magnet.equals(previousMagnet) && unlocked == previousMagnetUnlocked) return;
         previousMagnet = magnet.copy();
         previousMagnetUnlocked = unlocked;
-        UIElement root = popups.get("magnet");
+        UIElement root = subWindows.root("magnet");
         Component title = unlocked ? text("magnet") : text("magnet").copy().append(" · ").append(text("reason.locked"));
         label(root, "popup_title").setText(title);
         tooltip(window, "magnet", title);
@@ -656,25 +649,24 @@ public final class TerminalOverlayUi {
             positionedStorage = viewport.cells();
         }
         keyTypeUi.resize(width, height);
-        for (var entry : popups.object2ObjectEntrySet()) {
-            boolean keyTypesPopup = entry.getKey().equals("key_types");
-            int popupWidth = keyTypesPopup ? keyTypeUi.width() : TerminalUiLayout.popupWidth(entry.getKey());
-            int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(entry.getKey());
-            subWindows.get(entry.getKey()).place(width, height,
+        for (String name : subWindows.names()) {
+            boolean keyTypesPopup = name.equals("key_types");
+            int popupWidth = keyTypesPopup ? keyTypeUi.width() : TerminalUiLayout.popupWidth(name);
+            int popupHeight = keyTypesPopup ? keyTypeUi.height() : TerminalUiLayout.popupHeight(name);
+            subWindows.place(name, width, height,
                     new Rect2i(viewport.x() + viewport.width() + 3, viewport.y(), popupWidth, popupHeight),
-                    entry.getKey().equals("quantity") ? 18 : 0, 0);
+                    name.equals("quantity") ? 18 : 0, 0);
         }
         if (gridChanged && snapshot.contains("enabled")) {
             offset = viewport.clampOffset(offset, storageIndex.projected().size());
             view(false);
         }
-        if (modal()) captureWindow();
         updateScrollbar();
         geometryDirty = true;
     }
 
     public boolean beginDrag(double x, double y, int button) {
-        if (modal()) return subWindows.get(popupStack.getLast()).beginDrag(x, y, button);
+        if (subWindows.contains(x, y)) return subWindows.beginDrag(x, y, button);
         if (button != 0) return false;
         if (!visible && over(element(ui.rootElement, "entry"), x, y)) {
             entryPressed = true;
@@ -699,10 +691,9 @@ public final class TerminalOverlayUi {
     }
 
     public boolean drag(double x, double y) {
-        if (modal()) {
-            boolean consumed = subWindows.get(popupStack.getLast()).drag(x, y);
-            if (consumed) geometryDirty = true;
-            return consumed;
+        if (subWindows.drag(x, y)) {
+            geometryDirty = true;
+            return true;
         }
         if (entryPressed) {
             if (!entryDragging && Math.hypot(x - dragStartX, y - dragStartY) >= 3) {
@@ -728,7 +719,7 @@ public final class TerminalOverlayUi {
     }
 
     public boolean endDrag() {
-        if (modal() && subWindows.get(popupStack.getLast()).endDrag()) {
+        if (subWindows.endDrag()) {
             geometryDirty = true;
             return true;
         }
@@ -747,7 +738,7 @@ public final class TerminalOverlayUi {
     }
 
     public boolean adjusting() {
-        return adjusting || modal() && subWindows.get(popupStack.getLast()).dragging();
+        return adjusting || subWindows.dragging();
     }
 
     public boolean takeGeometryDirty() {
@@ -758,15 +749,11 @@ public final class TerminalOverlayUi {
 
     public boolean contains(double x, double y) {
         return visible ? over(element(window, "panel"), x, y) || over(element(window, "sidebar"), x, y) || over(element(window, "tabs"), x, y) ||
-                (!popupStack.isEmpty() && popupContains(x, y)) : over(element(ui.rootElement, "entry"), x, y);
-    }
-
-    public boolean modal() {
-        return !popupStack.isEmpty();
+                subWindows.contains(x, y) : over(element(ui.rootElement, "entry"), x, y);
     }
 
     public boolean quickMoveToNetwork() {
-        return visible && !modal() && preferences.shiftClickToNetwork && snapshot.getBoolean("connected");
+        return visible && preferences.shiftClickToNetwork && snapshot.getBoolean("connected");
     }
 
     private void refreshDestination() {
@@ -776,29 +763,7 @@ public final class TerminalOverlayUi {
 
     public @Nullable TerminalWorkspace encodingWorkspace() {
         TerminalWorkspace page = TerminalWorkspace.byId(workspace);
-        return visible && !preferences.folded && page.supportsEncoding() && !modal() ? page : null;
-    }
-
-    public boolean inputAllowed(double x, double y) {
-        return modal() ? popupContains(x, y) : contains(x, y);
-    }
-
-    private boolean popupContains(double x, double y) {
-        return popupStack.getLast().equals("quantity") ? amountUi.contains(x, y) : over(popups.get(popupStack.getLast()), x, y);
-    }
-
-    private void captureWindow() {
-        window.selfAndAllChildren().forEach(element -> {
-            if (element instanceof TerminalActionButton button) button.resetInteraction();
-            if (!modalHitStates.containsKey(element)) modalHitStates.put(element, element.isAllowHitTest());
-            element.setAllowHitTest(false);
-        });
-    }
-
-    private void releaseWindow() {
-        for (var entry : modalHitStates.reference2BooleanEntrySet())
-            entry.getKey().setAllowHitTest(entry.getBooleanValue());
-        modalHitStates.clear();
+        return visible && !preferences.folded && page.supportsEncoding() ? page : null;
     }
 
     private void updateScrollbar() {
@@ -810,10 +775,8 @@ public final class TerminalOverlayUi {
         stateClass(scrollbar, "inactive-scroll", maximumRow == 0);
         scrollbar.selfAndAllChildren().forEach(element -> {
             boolean interactive = maximumRow > 0 && !element.hasClass("scrollbar-decoration");
-            if (modal()) modalHitStates.put(element, interactive);
             element.setAllowHitTest(interactive);
         });
-        if (modal()) captureWindow();
     }
 
     private void fillStorage() {
@@ -846,8 +809,8 @@ public final class TerminalOverlayUi {
         rectangles.add(rect(element(window, "sidebar")));
         rectangles.add(new Rect2i(viewport.x() + viewport.width() - TerminalViewportLayout.TAB_WIDTH,
                 viewport.y() + viewport.height() - 72, TerminalViewportLayout.TAB_WIDTH, 70));
-        if (!popupStack.isEmpty()) rectangles.add(rect(popups.get(popupStack.getLast())));
-        if (!popupStack.isEmpty() && popupStack.getLast().equals("quantity")) amountUi.extraRectangles(rectangles);
+        rectangles.addAll(subWindows.rectangles());
+        amountUi.extraRectangles(rectangles);
         return rectangles;
     }
 
@@ -857,18 +820,16 @@ public final class TerminalOverlayUi {
     public ObjectList<GhostTarget> ghostTargets() {
         ObjectList<GhostTarget> targets = new ObjectArrayList<>();
         if (!visible) return targets;
-        if (!popupStack.isEmpty()) {
-            if (popupStack.getLast().equals("filters")) {
-                collectTargets(targets, pickup, "pickup");
-                collectTargets(targets, insert, "insert");
-            }
-        } else {
-            collectTargets(targets, pinnedUi.manualCells(), "pins");
-            if (!preferences.folded) {
-                if (!workspace.equals("anvil")) collectTargets(targets, inputs, "inputs");
-                if (workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
-            }
+        if (subWindows.root("filters").isVisible()) {
+            collectTargets(targets, pickup, "pickup");
+            collectTargets(targets, insert, "insert");
         }
+        collectTargets(targets, pinnedUi.manualCells(), "pins");
+        if (!preferences.folded) {
+            if (!workspace.equals("anvil")) collectTargets(targets, inputs, "inputs");
+            if (workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
+        }
+        targets.removeIf(target -> subWindows.covers(target.area(), target.inventory().equals("pickup") || target.inventory().equals("insert") ? "filters" : null));
         return targets;
     }
 
@@ -889,24 +850,23 @@ public final class TerminalOverlayUi {
     public record GhostTarget(Rect2i area, String inventory, int index) {}
 
     public void open(String name) {
-        Objects.requireNonNull(window.getModularUI(), "Terminal popups require an attached UI").clearFocus();
-        captureWindow();
-        if (!popupStack.isEmpty()) popups.get(popupStack.getLast()).setVisible(false);
-        popupStack.add(name);
-        popups.get(name).setVisible(true);
+        open(name, null);
+    }
+
+    private void open(String name, @Nullable String parent) {
+        subWindows.open(name, parent);
         geometryDirty = true;
     }
 
     public boolean closePopup() {
-        if (popupStack.isEmpty()) return false;
-        Objects.requireNonNull(window.getModularUI()).clearFocus();
-        String closed = popupStack.removeLast();
-        subWindows.get(closed).cancelDrag();
-        popups.get(closed).setVisible(false);
-        if (!popupStack.isEmpty()) popups.get(popupStack.getLast()).setVisible(true);
-        else releaseWindow();
+        if (!subWindows.closeTop()) return false;
         geometryDirty = true;
         return true;
+    }
+
+    private void closePopup(String name) {
+        subWindows.close(name);
+        geometryDirty = true;
     }
 
     public void visible(boolean value) {
@@ -920,10 +880,7 @@ public final class TerminalOverlayUi {
                 if (element instanceof TerminalActionButton button) button.resetInteraction();
             });
             Objects.requireNonNull(window.getModularUI()).clearFocus();
-            for (UIElement popup : popups.values()) popup.setVisible(false);
-            subWindows.values().forEach(TerminalSubWindow::cancelDrag);
-            popupStack.clear();
-            releaseWindow();
+            subWindows.closeAll();
         }
         CompoundTag data = new CompoundTag();
         data.putBoolean("value", value);

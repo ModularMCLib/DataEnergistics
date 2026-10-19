@@ -7,10 +7,13 @@ import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalNavigationPayload;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
+import appeng.api.networking.security.IActionHost;
 import appeng.api.stacks.AEKey;
+import appeng.helpers.ICraftingGridMenu;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.me.crafting.CraftAmountMenu;
+import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 import appeng.parts.AEBasePart;
 
@@ -24,9 +27,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Keeps the original container alive while AE2 owns its CPU list or existing crafting-request menu chain.
@@ -38,14 +43,20 @@ public final class TerminalAeNavigation {
     private TerminalAeNavigation() {}
 
     static void open(ServerPlayer player, TerminalSession session, TerminalConnection connection) {
-        begin(player, session, connection, null);
+        begin(player, session, connection, locator -> MenuOpener.open(CraftingStatusMenu.TYPE, player, locator));
     }
 
     static void openCrafting(ServerPlayer player, TerminalSession session, TerminalConnection connection, AEKey key) {
-        begin(player, session, connection, key);
+        begin(player, session, connection, locator -> CraftAmountMenu.open(player, locator, key, key.getAmountPerUnit()));
     }
 
-    private static void begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, @Nullable AEKey key) {
+    static void openCraftingList(ServerPlayer player, TerminalSession session, TerminalConnection connection,
+                                 ObjectList<ICraftingGridMenu.AutoCraftEntry> missing) {
+        begin(player, session, connection, locator -> CraftConfirmMenu.openWithCraftingList(
+                locator.locate(player, IActionHost.class), player, locator, missing));
+    }
+
+    private static void begin(ServerPlayer player, TerminalSession session, TerminalConnection connection, Consumer<TerminalAeMenuLocator> open) {
         if (VISITS.containsKey(player.getUUID())) throw new IllegalStateException("An AE2 menu visit is already active");
         Visit visit = new Visit(player, session, connection);
         VISITS.put(player.getUUID(), visit);
@@ -55,8 +66,7 @@ public final class TerminalAeNavigation {
         player.containerMenu = player.inventoryMenu;
         try {
             var locator = new TerminalAeMenuLocator(session.id(), connection.frequency());
-            if (key == null) MenuOpener.open(CraftingStatusMenu.TYPE, player, locator);
-            else CraftAmountMenu.open(player, locator, key, key.getAmountPerUnit());
+            open.accept(locator);
             if (!suspended(player, session)) throw new IllegalStateException("AE2 could not open the terminal submenu");
         } catch (RuntimeException failure) {
             VISITS.remove(player.getUUID());

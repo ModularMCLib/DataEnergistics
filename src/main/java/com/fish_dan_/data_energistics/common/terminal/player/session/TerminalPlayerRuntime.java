@@ -97,6 +97,7 @@ public final class TerminalPlayerRuntime {
         boolean wantsNetwork = (session != null && session.visible()) || background;
         TerminalConnection connection = wantsNetwork ? connection() : null;
         if (session != null) TerminalAeNavigation.tick(player, session, connection);
+        if (session != null) session.tick(player, this, connection);
         if (background) TerminalMagnetTicker.tick(player, state, connection, magnetUnlocked);
         if (session != null && player.tickCount % 5 == 0) session.send(player, this, connection);
     }

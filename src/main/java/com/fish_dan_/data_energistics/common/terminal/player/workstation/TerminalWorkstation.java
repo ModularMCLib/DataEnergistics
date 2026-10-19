@@ -7,9 +7,11 @@ import com.fish_dan_.data_energistics.common.anvil.enchantment.DigitalAnvilOpera
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
+import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalIngredientSupply;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -17,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -69,26 +72,36 @@ public final class TerminalWorkstation {
         return result.isItemEnabled(player.level().enabledFeatures()) ? result : ItemStack.EMPTY;
     }
 
-    public static String take(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean shift) {
+    public static TerminalIngredientSupply.Result take(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean shift) {
         int completed = 0;
         for (int repeat = 0; repeat < (shift ? 64 : 1); repeat++) {
-            ItemStack product = preview(player, state, false);
+            ItemStack product = preview(player, state);
             if (product.isEmpty()) break;
-            if (!fits(player, product, shift)) return completed == 0 ? "inventory_full" : "crafted";
+            if (!fits(player, product, shift)) return result(completed == 0 ? "inventory_full" : "crafted");
             if (state.workspace() == TerminalWorkspace.ANVIL) {
-                if (connection == null) return "offline";
-                if (state.anvilPayment().pending()) return "refund_pending";
+                if (connection == null) return result("offline");
+                if (state.anvilPayment().pending()) return result("refund_pending");
                 var operation = anvil(player, state.work());
                 state.paymentFrequency(connection.frequency());
                 if (!state.anvilPayment().pay(connection.grid(), connection.source(), operation.cost(), state::changed))
-                    return "insufficient";
+                    return result("insufficient");
                 if (!operation.preserveLeft()) state.work().inputs.setItem(0, ItemStack.EMPTY);
                 state.work().inputs.removeItem(1, operation.rightConsumed());
                 deliver(player, product, shift);
                 player.serverLevel().levelEvent(1030, player.blockPosition(), 0);
-            } else if (state.workspace() == TerminalWorkspace.CRAFTING) {
-                consumeCrafting(player, state.work(), product, shift);
             } else {
+                rememberInputs(state);
+                var supply = TerminalIngredientSupply.supply(player, state, connection, materialTargets(state));
+                if (!supply.message().isEmpty()) return supply;
+                product = preview(player, state, false);
+                if (product.isEmpty()) return result("invalid_recipe");
+                if (!fits(player, product, shift)) return result(completed == 0 ? "inventory_full" : "crafted");
+                if (state.workspace() == TerminalWorkspace.CRAFTING) {
+                    consumeCrafting(player, state.work(), product, shift);
+                    state.changed();
+                    completed++;
+                    continue;
+                }
                 ObjectList<ItemStack> relevant = new ObjectArrayList<>();
                 for (int index = 0; index < state.work().inputs.getContainerSize(); index++)
                     relevant.add(state.work().inputs.getItem(index).copy());
@@ -111,7 +124,28 @@ public final class TerminalWorkstation {
             state.changed();
             completed++;
         }
-        return completed == 0 ? "invalid_recipe" : "crafted";
+        return result(completed == 0 ? "invalid_recipe" : "crafted");
+    }
+
+    private static TerminalIngredientSupply.Result result(String message) {
+        return new TerminalIngredientSupply.Result(message, ObjectList.of());
+    }
+
+    private static void rememberInputs(TerminalPlayerState state) {
+        for (int index = 0; index < state.work().inputs.getContainerSize(); index++) {
+            ItemStack stack = state.work().inputs.getItem(index);
+            if (!stack.isEmpty()) state.work().patternInputs.set(index, new GenericStack(AEItemKey.of(stack), 1));
+        }
+    }
+
+    public static ObjectList<TerminalIngredientSupply.Target> materialTargets(TerminalPlayerState state) {
+        var targets = new ObjectArrayList<TerminalIngredientSupply.Target>();
+        for (int index = 0; index < state.work().inputs.getContainerSize(); index++) {
+            ItemStack ingredient = input(state.work(), index, true);
+            targets.add(new TerminalIngredientSupply.Target(new Slot(state.work().inputs, index, 0, 0),
+                    AEItemKey.of(ingredient), ingredient.isEmpty() ? 0 : 1));
+        }
+        return targets;
     }
 
     private static void consumeCrafting(ServerPlayer player, TerminalWorkspaceState work, ItemStack product, boolean shift) {

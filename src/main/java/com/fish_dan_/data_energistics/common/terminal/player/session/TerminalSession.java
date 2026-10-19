@@ -12,6 +12,9 @@ import com.fish_dan_.data_energistics.common.terminal.player.persistence.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageView;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalContainerTransfer;
+import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalIngredientSupply;
+import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalRecipeRefill;
+import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalViewerTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalPatternEncoding;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalSlotActions;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
@@ -36,9 +39,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 /**
  * Server overlay endpoint: host-menu identity, per-open token and an ordered sequence reject stale mutations.
@@ -58,6 +63,7 @@ public final class TerminalSession {
     private String message = "";
     private String lastAction = "";
     private @Nullable CompoundTag previousSnapshot;
+    private @Nullable TerminalRecipeRefill refill;
 
     public TerminalSession(ServerPlayer player, UUID id) {
         this.menu = player.containerMenu;
@@ -185,7 +191,7 @@ public final class TerminalSession {
                         index >= TerminalWorkstation.stonecuttingRecipes(player, state.work(), true).size())
                     return;
                 state.work().recipeIndex(index);
-                if (action.equals("cut")) message = TerminalWorkstation.take(player, state, null, false);
+                if (action.equals("cut")) takeResult(player, runtime, false);
             }
             case "name" -> {
                 String name = StringUtil.filterText(data.getString("value"));
@@ -195,10 +201,7 @@ public final class TerminalSession {
                 if (ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.anvilUpgradeId(DigitalAnvilUpgrade.UNRESTRICTED_LEVELS)))
                     state.work(TerminalWorkspace.ANVIL).boost(data.getInt("value"));
             }
-            case "result" -> {
-                TerminalConnection connection = state.workspace() == TerminalWorkspace.ANVIL ? runtime.connection() : null;
-                message = TerminalWorkstation.take(player, state, connection, data.getBoolean("shift"));
-            }
+            case "result" -> takeResult(player, runtime, data.getBoolean("shift"));
             case "magnet_mode" -> {
                 requireMagnet(player);
                 state.magnet().mode(TerminalMagnetSettings.Mode.valueOf(data.getString("value")));
@@ -255,10 +258,55 @@ public final class TerminalSession {
                 if (runtime.state().workspace() == TerminalWorkspace.PROCESSING)
                     message = TerminalContainerTransfer.transfer(player, connection, runtime.state());
             }
+            case "container_recipe" -> {
+                var targets = TerminalViewerTransfer.targets(player, data);
+                refill = null;
+                var result = TerminalIngredientSupply.supply(player, runtime.state(), connection, targets);
+                message = result.message();
+                requestMaterials(player, connection, result, targets, () -> true);
+            }
             case "craft_request" -> TerminalAeNavigation.openCrafting(player, this, connection, key(player, data));
             case "cpu_list" -> TerminalAeNavigation.open(player, this, connection);
             case "upload_refresh", "upload_pattern", "upload_rename", "upload_history" -> message = upload.action(player, runtime.state(), connection, action, data);
             default -> throw new IllegalArgumentException("Unknown player terminal action " + action);
+        }
+    }
+
+    private void takeResult(ServerPlayer player, TerminalPlayerRuntime runtime, boolean shift) {
+        TerminalPlayerState state = runtime.state();
+        TerminalConnection connection = runtime.connection();
+        refill = null;
+        var result = TerminalWorkstation.take(player, state, connection, shift);
+        message = result.message();
+        if (connection != null && !result.missing().isEmpty()) {
+            var work = state.work();
+            var configuration = work.patternInputs.save(player.registryAccess());
+            int recipe = work.recipeIndex();
+            requestMaterials(player, connection, result, TerminalWorkstation.materialTargets(state),
+                    () -> configuration.equals(work.patternInputs.save(player.registryAccess())) && work.recipeIndex() == recipe);
+        }
+    }
+
+    private void requestMaterials(ServerPlayer player, TerminalConnection connection, TerminalIngredientSupply.Result result,
+                                  ObjectList<TerminalIngredientSupply.Target> targets, BooleanSupplier recipeCurrent) {
+        if (result.missing().isEmpty()) return;
+        refill = new TerminalRecipeRefill(connection.frequency(), targets, recipeCurrent);
+        TerminalAeNavigation.openCraftingList(player, this, connection, result.missing());
+    }
+
+    public void tick(ServerPlayer player, TerminalPlayerRuntime runtime, @Nullable TerminalConnection connection) {
+        if (refill == null || TerminalAeNavigation.suspended(player, this) || player.containerMenu != menu) return;
+        if (!refill.valid()) {
+            refill = null;
+            return;
+        }
+        if (connection == null || connection.frequency() != refill.frequency() || player.tickCount % 5 != 0) return;
+        var result = TerminalIngredientSupply.supply(player, runtime.state(), connection, refill.targets());
+        if (result.message().isEmpty()) {
+            refill = null;
+            message = "transferred";
+            lastAction = "refill";
+            menu.broadcastChanges();
         }
     }
 
@@ -310,6 +358,7 @@ public final class TerminalSession {
     public void close() {
         if (closed) return;
         closed = true;
+        refill = null;
         upload.close();
         TerminalAeNavigation.abandon(owner, id);
     }

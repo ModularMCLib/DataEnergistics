@@ -161,10 +161,12 @@
 		"viewer.emi.ae2.AbstractRecipeHandlerMixin",
 		"viewer.emi.ae2.EmiEncodePatternHandlerMixin",
 		"viewer.emi.PlayerTerminalIngredientMixin",
+		"viewer.emi.PlayerTerminalInputMixin",
 		"viewer.emi.PlayerTerminalRecipeFillerMixin",
 		"viewer.emi.research.ResearchStationEmiScreenMixin",
 		"viewer.jei.BasicRecipeTransferHandlerAccessor",
 		"viewer.jei.PlayerTerminalIngredientMixin",
+		"viewer.jei.PlayerTerminalInputMixin",
 		"viewer.jei.RecipeTransferServiceMixin"
 	],
 	"injectors": {

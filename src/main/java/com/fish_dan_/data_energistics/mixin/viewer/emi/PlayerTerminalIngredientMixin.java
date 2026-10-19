@@ -22,7 +22,11 @@ public abstract class PlayerTerminalIngredientMixin {
     private static void dataEnergistics$resolveTerminalIngredient(Screen screen, int x, int y, boolean notClick,
                                                                   CallbackInfoReturnable<EmiStackInteraction> cir) {
         if (!TerminalOverlayClient.contains(screen, x, y)) return;
+        if (!notClick) {
+            cir.setReturnValue(EmiStackInteraction.EMPTY);
+            return;
+        }
         var stack = TerminalOverlayClient.stackUnderMouse(screen, x, y);
-        cir.setReturnValue(stack == null ? EmiStackInteraction.EMPTY : PatternEncodingGenericStackEmiProvider.createInteraction(stack));
+        cir.setReturnValue(stack == null ? EmiStackInteraction.EMPTY : PatternEncodingGenericStackEmiProvider.createInteraction(stack, false));
     }
 }

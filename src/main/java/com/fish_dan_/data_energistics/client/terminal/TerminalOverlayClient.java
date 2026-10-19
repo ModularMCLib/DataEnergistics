@@ -252,6 +252,16 @@ public final class TerminalOverlayClient {
         return target != null && target.composition.contains(mouseX, mouseY);
     }
 
+    /** Mouse bindings already handled by the foreground terminal take precedence over recipe-viewer bindings. */
+    public static boolean ownsMouseButton(Screen screen, double mouseX, double mouseY, int button) {
+        InputTarget target = active(screen);
+        if (target == null) return false;
+        if (target.overlay.pointerOwned && target.overlay.pointerButton == button) return true;
+        return target.composition.contains(mouseX, mouseY) && (button >= 0 && button <= 2 ||
+                Minecraft.getInstance().options.keyPickItem.matchesMouse(button) ||
+                DEKeyMappings.MOVE_PLAYER_TERMINAL_TO_MOUSE.isActiveAndMatches(InputConstants.Type.MOUSE.getOrCreate(button)));
+    }
+
     /** Client-thread lookup that preserves hover state, popup layering and text-field focus. */
     public static @Nullable StackWithBounds stackUnderMouse(Screen screen, double mouseX, double mouseY) {
         InputTarget target = active(screen);
@@ -459,6 +469,7 @@ public final class TerminalOverlayClient {
             target.modularUi.clearFocus();
             return;
         }
+        if (!ownsMouseButton(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton())) return;
         overlay.keyboardOwned = true;
         overlay.pointerOwned = true;
         overlay.pointerButton = event.getButton();
@@ -481,7 +492,7 @@ public final class TerminalOverlayClient {
             event.setCanceled(true);
             return;
         }
-        if (storageReleased || overlay.pointerOwned || target.composition.contains(event.getMouseX(), event.getMouseY())) {
+        if (storageReleased || overlay.pointerOwned && overlay.pointerButton == event.getButton()) {
             target.modularUi.getWidget().mouseReleased(event.getMouseX(), event.getMouseY(), event.getButton());
             overlay.pointerOwned = false;
             event.setCanceled(true);

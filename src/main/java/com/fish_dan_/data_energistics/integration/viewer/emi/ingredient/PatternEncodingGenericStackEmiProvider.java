@@ -28,7 +28,12 @@ public final class PatternEncodingGenericStackEmiProvider implements EmiStackPro
 
     /** Shares registered AE-key conversion between native screens and the foreground player terminal. */
     public static EmiStackInteraction createInteraction(StackWithBounds hovered) {
+        return createInteraction(hovered, true);
+    }
+
+    /** Hover-only stacks remain available to keyboard lookups without taking inventory mouse clicks. */
+    public static EmiStackInteraction createInteraction(StackWithBounds hovered, boolean clickable) {
         EmiStack emiStack = EmiGenericStackIngredientResolver.resolve(hovered.stack());
-        return new EmiStackInteraction(emiStack, null, true);
+        return new EmiStackInteraction(emiStack, null, clickable);
     }
 }

@@ -4,15 +4,19 @@ import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
+import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftErrorScreen;
 import appeng.menu.me.crafting.CraftAmountMenu;
@@ -237,6 +241,26 @@ public final class TerminalOverlayClient {
 
     public static ObjectList<Rect2i> exclusionAreas(Screen screen) {
         return current != null && !current.suspended && current.screen == screen ? current.exclusions : ObjectImmutableList.of();
+    }
+
+    /** Recipe viewers must resolve foreground overlay ingredients before consulting the host's slots. */
+    public static boolean contains(Screen screen, double mouseX, double mouseY) {
+        InputTarget target = active(screen);
+        return target != null && target.composition.contains(mouseX, mouseY);
+    }
+
+    /** Client-thread lookup that preserves hover state, popup layering and text-field focus. */
+    public static @Nullable StackWithBounds stackUnderMouse(Screen screen, double mouseX, double mouseY) {
+        InputTarget target = active(screen);
+        if (target == null || !target.composition.contains(mouseX, mouseY)) return null;
+        for (UIElement focused = target.modularUi.getFocusedElement(); focused != null; focused = focused.getParent())
+            if (focused instanceof TextField) return null;
+        for (UIElement element = target.modularUi.hitTestAtScreen((float) mouseX, (float) mouseY); element != null; element = element.getParent()) {
+            if (element instanceof TerminalResourceCell cell && cell.stack() != null)
+                return new StackWithBounds(cell.stack(), new Rect2i(Math.round(cell.getPositionX()), Math.round(cell.getPositionY()),
+                        Math.round(cell.getSizeWidth()), Math.round(cell.getSizeHeight())));
+        }
+        return null;
     }
 
     public static ObjectList<TerminalOverlayUi.GhostTarget> ghostTargets(Screen screen) {

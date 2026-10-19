@@ -105,6 +105,7 @@ public final class TerminalOverlayUi {
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
     private final TerminalStorageInput storageInput;
+    private int storageReleaseButton = -1;
     private boolean pendingEncode;
     private final ObjectList<TerminalStonecuttingRecipeCell> stonecuttingRecipes = new ObjectArrayList<>();
     private final ObjectList<TerminalResourceCell> pickup = new ObjectArrayList<>();
@@ -995,7 +996,41 @@ public final class TerminalOverlayUi {
     }
 
     private void storageClick(TerminalResourceCell cell, UIEvent event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if ((event.button == 0 || event.button == 1) && !minecraft.options.keyPickItem.matchesMouse(event.button) &&
+                !UIElement.isShiftDown() && !Objects.requireNonNull(minecraft.player).containerMenu.getCarried().isEmpty()) {
+            storageReleaseButton = event.button;
+            return;
+        }
         storageInput.click(cell.stack(), cell.craftable(), filter.equals("craftable"), event.button);
+    }
+
+    /** Held stacks are placed on release, matching the host screen's virtual-slot gesture. */
+    public boolean releaseStorage(double x, double y, int button) {
+        if (storageReleaseButton != button) return false;
+        storageReleaseButton = -1;
+        TerminalResourceCell cell = storageCellAt(x, y);
+        if (cell != null) storageInput.click(cell.stack(), cell.craftable(), filter.equals("craftable"), button);
+        return true;
+    }
+
+    public void cancelStorageInput() {
+        storageReleaseButton = -1;
+    }
+
+    /** Uses the player's rebound pick-item key while the cursor is over an unobstructed storage slot. */
+    public boolean pickStorage(double x, double y) {
+        TerminalResourceCell cell = storageCellAt(x, y);
+        if (cell == null) return false;
+        storageInput.pick(cell.stack(), cell.craftable());
+        return true;
+    }
+
+    private @Nullable TerminalResourceCell storageCellAt(double x, double y) {
+        if (!visible || subWindows.covers(new Rect2i((int) x, (int) y, 1, 1), null)) return null;
+        for (TerminalResourceCell cell : storage)
+            if (cell.isActive() && over(cell, x, y)) return cell;
+        return pinnedUi.cellAt(x, y);
     }
 
     private void storageScroll(TerminalResourceCell cell, UIEvent event) {

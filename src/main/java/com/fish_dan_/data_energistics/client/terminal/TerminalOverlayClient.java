@@ -209,6 +209,7 @@ public final class TerminalOverlayClient {
         if (!minecraft.isWindowActive() && current.pointerOwned) {
             current.modularUi.getWidget().mouseReleased(current.mouseX, current.mouseY, current.pointerButton);
             current.composition.endDrag();
+            current.composition.cancelStorageInput();
             current.pointerOwned = false;
             current.keyboardOwned = false;
             current.modularUi.clearFocus();
@@ -298,7 +299,10 @@ public final class TerminalOverlayClient {
             if (pointerOwned) modularUi.getWidget().mouseReleased(-1, -1, pointerButton);
             modularUi.clearFocus();
         }
-        if (composition != null) composition.endDrag();
+        if (composition != null) {
+            composition.endDrag();
+            composition.cancelStorageInput();
+        }
         pointerOwned = false;
         keyboardOwned = false;
     }
@@ -404,13 +408,14 @@ public final class TerminalOverlayClient {
         InputTarget target = active(event.getScreen());
         if (target == null) return;
         TerminalOverlayClient overlay = target.overlay;
+        boolean storageReleased = target.composition.releaseStorage(event.getMouseX(), event.getMouseY(), event.getButton());
         if (target.composition.endDrag()) {
             overlay.pointerOwned = false;
             overlay.publishGeometry(true);
             event.setCanceled(true);
             return;
         }
-        if (overlay.pointerOwned || target.composition.contains(event.getMouseX(), event.getMouseY())) {
+        if (storageReleased || overlay.pointerOwned || target.composition.contains(event.getMouseX(), event.getMouseY())) {
             target.modularUi.getWidget().mouseReleased(event.getMouseX(), event.getMouseY(), event.getButton());
             overlay.pointerOwned = false;
             event.setCanceled(true);
@@ -456,6 +461,11 @@ public final class TerminalOverlayClient {
         }
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE && target.composition.closePopup()) {
             target.overlay.publishGeometry(true);
+            event.setCanceled(true);
+            return;
+        }
+        if (target.modularUi.getFocusedElement() == null && Minecraft.getInstance().options.keyPickItem.matches(event.getKeyCode(), event.getScanCode()) &&
+                target.composition.pickStorage(target.overlay.mouseX, target.overlay.mouseY)) {
             event.setCanceled(true);
             return;
         }

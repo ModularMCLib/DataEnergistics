@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage;
 
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 
@@ -28,6 +29,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -174,6 +176,16 @@ public final class TerminalPinnedResourcesUi {
 
     public ObjectList<TerminalResourceCell> manualCells() {
         return manualCells;
+    }
+
+    /** Returns a visible pin for cursor-release and pick-item gestures on the client thread. */
+    public @Nullable TerminalResourceCell cellAt(double x, double y) {
+        if (!root.isVisible()) return null;
+        for (TerminalResourceCell cell : manualCells)
+            if (cell.isActive() && TerminalOverlayUi.over(cell, x, y)) return cell;
+        for (TerminalResourceCell cell : automaticCells)
+            if (cell.isActive() && TerminalOverlayUi.over(cell, x, y)) return cell;
+        return null;
     }
 
     public void removed() {

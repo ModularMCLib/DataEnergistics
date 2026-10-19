@@ -1051,6 +1051,7 @@
 	"key.data_energistics.data_flow": "Data Flow",
 	"key.data_energistics.echo": "Echo",
 	"key.data_energistics.experience": "Experience",
+	"key.data_energistics.move_player_terminal_to_mouse": "Move Mini Terminal to Cursor",
 	"key.data_energistics.next_trinity_cycle": "Next Trinity Ring",
 	"key.data_energistics.open_orbital_control": "Open Orbital Control",
 	"key.data_energistics.open_pattern_provider": "Open Pattern Provider GUI",

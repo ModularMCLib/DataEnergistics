@@ -1051,6 +1051,7 @@
 	"key.data_energistics.data_flow": "数据流",
 	"key.data_energistics.echo": "回响",
 	"key.data_energistics.experience": "经验",
+	"key.data_energistics.move_player_terminal_to_mouse": "将小终端移至鼠标位置",
 	"key.data_energistics.next_trinity_cycle": "下一个 Trinity 环",
 	"key.data_energistics.open_orbital_control": "打开轨道控制",
 	"key.data_energistics.open_pattern_provider": "打开样板供应器界面",

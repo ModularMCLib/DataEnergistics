@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.registry;
 
 import net.minecraft.client.KeyMapping;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
@@ -32,6 +33,12 @@ public final class DEKeyMappings {
             "key.data_energistics.toggle_orbital_control_hud",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H,
+            KEY_CATEGORY);
+    public static final KeyMapping MOVE_PLAYER_TERMINAL_TO_MOUSE = new KeyMapping(
+            "key.data_energistics.move_player_terminal_to_mouse",
+            KeyConflictContext.GUI,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_UNKNOWN,
             KEY_CATEGORY);
     public static final KeyMapping PREVIOUS_TRINITY_CYCLE = new KeyMapping(
             "key.data_energistics.previous_trinity_cycle",

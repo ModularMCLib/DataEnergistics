@@ -776,6 +776,18 @@ public final class TerminalOverlayUi {
         return adjusting || subWindows.dragging();
     }
 
+    /** Moves the shared terminal origin to the cursor on the client thread, preserving its open state and size. */
+    public void moveToMouse(double x, double y) {
+        entryPressed = false;
+        entryDragging = false;
+        adjusting = false;
+        resizing = false;
+        subWindows.cancelDrag();
+        moveWindow((int) Math.round(x) - TerminalViewportLayout.ENTRY_SIZE / 2,
+                (int) Math.round(y) - TerminalViewportLayout.ENTRY_SIZE / 2);
+        preferences.save();
+    }
+
     public boolean takeGeometryDirty() {
         boolean dirty = geometryDirty;
         geometryDirty = false;

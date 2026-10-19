@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
+import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
@@ -34,6 +35,7 @@ import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
@@ -377,6 +379,11 @@ public final class TerminalOverlayClient {
         TerminalOverlayClient overlay = target.overlay;
         overlay.mouseX = event.getMouseX();
         overlay.mouseY = event.getMouseY();
+        if (DEKeyMappings.MOVE_PLAYER_TERMINAL_TO_MOUSE.isActiveAndMatches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+            moveToMouse(target);
+            event.setCanceled(true);
+            return;
+        }
         if (!target.composition.contains(event.getMouseX(), event.getMouseY())) {
             overlay.keyboardOwned = false;
             target.modularUi.clearFocus();
@@ -440,6 +447,11 @@ public final class TerminalOverlayClient {
         }
         InputTarget target = active(event.getScreen());
         if (target == null) return;
+        if (DEKeyMappings.MOVE_PLAYER_TERMINAL_TO_MOUSE.isActiveAndMatches(InputConstants.getKey(event.getKeyCode(), event.getScanCode()))) {
+            moveToMouse(target);
+            event.setCanceled(true);
+            return;
+        }
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE && target.composition.closePopup()) {
             target.overlay.publishGeometry(true);
             event.setCanceled(true);
@@ -520,6 +532,16 @@ public final class TerminalOverlayClient {
         TerminalOverlayClient overlay = current;
         return overlay != null && !overlay.suspended && overlay.screen == screen && overlay.modularUi != null && overlay.composition != null ?
                 new InputTarget(overlay, overlay.composition, overlay.modularUi) : null;
+    }
+
+    private static void moveToMouse(InputTarget target) {
+        Minecraft minecraft = Minecraft.getInstance();
+        TerminalOverlayClient overlay = target.overlay;
+        overlay.mouseX = minecraft.mouseHandler.xpos() * overlay.screen.width / minecraft.getWindow().getScreenWidth();
+        overlay.mouseY = minecraft.mouseHandler.ypos() * overlay.screen.height / minecraft.getWindow().getScreenHeight();
+        target.composition.moveToMouse(overlay.mouseX, overlay.mouseY);
+        overlay.clearInputCapture();
+        overlay.publishGeometry(true);
     }
 
     /**

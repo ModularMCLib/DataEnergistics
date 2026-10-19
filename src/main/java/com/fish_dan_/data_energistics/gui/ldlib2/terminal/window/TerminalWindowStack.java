@@ -82,6 +82,11 @@ public final class TerminalWindowStack {
         return captured != null && captured.endDrag();
     }
 
+    public void cancelDrag() {
+        if (pointerWindow != null) pointerWindow.cancelDrag();
+        pointerWindow = null;
+    }
+
     public boolean dragging() {
         return pointerWindow != null && pointerWindow.dragging();
     }

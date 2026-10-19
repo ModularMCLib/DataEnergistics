@@ -1857,7 +1857,7 @@
 	"gui.data_energistics.player_terminal.message.upload_unavailable": "上传目标不可用",
 	"gui.data_energistics.player_terminal.encoded_gestures": "Shift + 左键：移入背包",
 	"gui.data_energistics.player_terminal.stonecutting_gestures": "左键：切石\n右键：选择",
-	"gui.data_energistics.player_terminal.entry_gestures": "小终端\n左键：展开\n右键：大终端",
+	"gui.data_energistics.player_terminal.entry_gestures": "小终端\n左键：展开\n右键：大终端\n按住左键：拖动",
 	"gui.data_energistics.player_terminal.pins": "置顶行数：%s\nShift + 左键：增加\nShift + 右键：减少",
 	"gui.data_energistics.player_terminal.manual_pin_hint": "持物点击：标记\n空手右键：取消标记",
 	"gui.data_energistics.player_terminal.crafting_pin_hint": "合成标记"

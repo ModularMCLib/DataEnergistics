@@ -12,6 +12,7 @@ import org.jspecify.annotations.NullMarked;
 public record TerminalViewportLayout(int x, int y, int width, int height, int columns, int rows, int scrollHeight, int pinnedRows, int operationWidth, ObjectList<Cell> cells) {
 
     public static final int CELL_SIZE = 18;
+    public static final int ENTRY_SIZE = 10;
     public static final int STORAGE_LEFT = 16;
     public static final int STORAGE_TOP = 18;
     public static final int TAB_WIDTH = 12;
@@ -25,7 +26,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     private static final int MIN_HEIGHT = 100;
 
     public static TerminalViewportLayout compute(int screenWidth, int screenHeight, float xPercent, float yPercent,
-                                                 int requestedWidth, int requestedHeight, boolean folded, int operationWidth, int manualPinRows, int automaticPins) {
+                                                 int requestedWidth, int requestedHeight, boolean expanded, boolean folded, int operationWidth, int manualPinRows, int automaticPins) {
         int width = Math.clamp(requestedWidth, MIN_WIDTH, Math.clamp(screenWidth, MIN_WIDTH, FRAME_WIDTH + 20 * CELL_SIZE));
         int height = Math.clamp(requestedHeight, MIN_HEIGHT, Math.clamp(screenHeight, MIN_HEIGHT, FRAME_HEIGHT + 20 * CELL_SIZE));
         int columns = Math.max(6, (width - FRAME_WIDTH) / CELL_SIZE);
@@ -45,8 +46,8 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
                     cells.add(new Cell(column, row));
             }
         }
-        int x = Math.round(Math.clamp(xPercent, 0, 1) * Math.max(0, screenWidth - width));
-        int y = Math.round(Math.clamp(yPercent, 0, 1) * Math.max(0, screenHeight - height));
+        int x = Math.round(Math.clamp(xPercent, 0, 1) * Math.max(0, screenWidth - (expanded ? width : ENTRY_SIZE)));
+        int y = Math.round(Math.clamp(yPercent, 0, 1) * Math.max(0, screenHeight - (expanded ? height : ENTRY_SIZE)));
         return new TerminalViewportLayout(x, y, width, height, columns, rows,
                 availableScrollHeight - pinnedRows * CELL_SIZE, pinnedRows, operationWidth, new ObjectImmutableList<>(cells));
     }
@@ -55,7 +56,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     public TerminalViewportLayout resize(int screenWidth, int screenHeight, int requestedWidth, int requestedHeight,
                                          boolean folded, int operationWidth, int manualPinRows, int automaticPins) {
         TerminalViewportLayout resized = compute(screenWidth - x, screenHeight - y, 0, 0,
-                requestedWidth, requestedHeight, folded, operationWidth, manualPinRows, automaticPins);
+                requestedWidth, requestedHeight, true, folded, operationWidth, manualPinRows, automaticPins);
         return new TerminalViewportLayout(x, y, resized.width, resized.height, resized.columns, resized.rows,
                 resized.scrollHeight, resized.pinnedRows, resized.operationWidth, resized.cells);
     }

@@ -1857,7 +1857,7 @@
 	"gui.data_energistics.player_terminal.message.upload_unavailable": "Upload target unavailable",
 	"gui.data_energistics.player_terminal.encoded_gestures": "Shift + left-click: Move to Inventory",
 	"gui.data_energistics.player_terminal.stonecutting_gestures": "Left-click: Cut\nRight-click: Select",
-	"gui.data_energistics.player_terminal.entry_gestures": "Mini Terminal\nLeft-click: Expand\nRight-click: Large Terminal",
+	"gui.data_energistics.player_terminal.entry_gestures": "Mini Terminal\nLeft-click: Expand\nRight-click: Large Terminal\nHold left button: Move",
 	"gui.data_energistics.player_terminal.pins": "Pinned rows: %s\nShift + left-click: Increase\nShift + right-click: Decrease",
 	"gui.data_energistics.player_terminal.manual_pin_hint": "Click with Item: Pin\nEmpty Cursor + Right-click: Unpin",
 	"gui.data_energistics.player_terminal.crafting_pin_hint": "Crafting Pin"

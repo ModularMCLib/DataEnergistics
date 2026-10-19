@@ -40,7 +40,7 @@ public final class TerminalUiLayout {
         int encodingCenter = width - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.ENCODING_WIDTH / 2;
         UIElement root = element("terminal_root", "terminal-root");
         root.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).widthPercent(100).heightPercent(100).paddingAll(0));
-        root.addChild(icon("entry", "terminal-entry", "icon-entry", 0, 0, 10, 10));
+        root.addChild(icon("entry", "terminal-entry", "icon-entry", 0, 0, TerminalViewportLayout.ENTRY_SIZE, TerminalViewportLayout.ENTRY_SIZE));
         UIElement window = at(element("window", "terminal-window"), 8, 8, width, 168);
         UIElement panel = at(element("panel", "terminal-panel"), 12, 0, panelWidth, 168);
         panel.addChildren(at(element("top_edge", "frame-light"), 0, 0, panelWidth, 1),

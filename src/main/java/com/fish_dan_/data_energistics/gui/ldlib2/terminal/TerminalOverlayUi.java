@@ -102,7 +102,7 @@ public final class TerminalOverlayUi {
     private final Scroller.Vertical scrollbar = TerminalUiLayout.require(window, "storage_scroll", Scroller.Vertical.class);
     private final Scroller.Vertical processingScrollbar;
     private final Scroller.Vertical stonecuttingScrollbar;
-    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, TerminalViewportLayout.MIN_WIDTH, 168, true,
+    private TerminalViewportLayout viewport = TerminalViewportLayout.compute(320, 240, 0.025F, 0.033333335F, TerminalViewportLayout.MIN_WIDTH, 168, true, true,
             TerminalViewportLayout.OPERATION_WIDTH + TerminalViewportLayout.ENCODING_WIDTH, 0, 0);
     private CompoundTag snapshot = new CompoundTag();
     private String workspace = "crafting";
@@ -649,9 +649,11 @@ public final class TerminalOverlayUi {
         viewport = adjusting && resizing ?
                 viewport.resize(width, height, preferences.width, preferences.height, preferences.folded, operationWidth, pinnedUi.rows(), pinnedUi.automaticCount()) :
                 TerminalViewportLayout.compute(width, height, preferences.xPercent, preferences.yPercent,
-                        preferences.width, preferences.height, preferences.folded, operationWidth, pinnedUi.rows(), pinnedUi.automaticCount());
-        preferences.xPercent = width <= viewport.width() ? 0 : (float) viewport.x() / (width - viewport.width());
-        preferences.yPercent = height <= viewport.height() ? 0 : (float) viewport.y() / (height - viewport.height());
+                        preferences.width, preferences.height, visible, preferences.folded, operationWidth, pinnedUi.rows(), pinnedUi.automaticCount());
+        int positionWidth = visible ? viewport.width() : TerminalViewportLayout.ENTRY_SIZE;
+        int positionHeight = visible ? viewport.height() : TerminalViewportLayout.ENTRY_SIZE;
+        preferences.xPercent = width <= positionWidth ? 0 : (float) viewport.x() / (width - positionWidth);
+        preferences.yPercent = height <= positionHeight ? 0 : (float) viewport.y() / (height - positionHeight);
         preferences.width = viewport.width();
         preferences.height = viewport.height();
         window.layout(style -> style.leftPercent(width == 0 ? 0 : viewport.x() * 100F / width)
@@ -660,7 +662,8 @@ public final class TerminalOverlayUi {
         pinnedUi.layout(viewport);
         element(ui.rootElement, "entry").layout(style -> style.positionType(TaffyPosition.ABSOLUTE)
                 .leftPercent(width == 0 ? 0 : viewport.x() * 100F / width)
-                .topPercent(height == 0 ? 0 : viewport.y() * 100F / height).width(10).height(10).paddingAll(0));
+                .topPercent(height == 0 ? 0 : viewport.y() * 100F / height)
+                .width(TerminalViewportLayout.ENTRY_SIZE).height(TerminalViewportLayout.ENTRY_SIZE).paddingAll(0));
         element(window, "workspaces").setVisible(!preferences.folded);
         for (TerminalWorkspace mode : TerminalWorkspace.values())
             stateClass(element(window, "tab_" + mode.id()), "selected", !preferences.folded && workspace.equals(mode.id()));
@@ -904,7 +907,6 @@ public final class TerminalOverlayUi {
     public void visible(boolean value) {
         visible = value;
         preferences.open = value;
-        preferences.save();
         window.setVisible(value);
         element(ui.rootElement, "entry").setVisible(!value);
         if (!value) {
@@ -914,6 +916,8 @@ public final class TerminalOverlayUi {
             Objects.requireNonNull(window.getModularUI()).clearFocus();
             subWindows.closeAll();
         }
+        moveWindow(viewport.x(), viewport.y());
+        preferences.save();
         CompoundTag data = new CompoundTag();
         data.putBoolean("value", value);
         request.accept("visible", data);
@@ -921,8 +925,8 @@ public final class TerminalOverlayUi {
     }
 
     private void moveWindow(int x, int y) {
-        int availableX = Math.max(0, screenWidth - viewport.width());
-        int availableY = Math.max(0, screenHeight - viewport.height());
+        int availableX = Math.max(0, screenWidth - (visible ? viewport.width() : TerminalViewportLayout.ENTRY_SIZE));
+        int availableY = Math.max(0, screenHeight - (visible ? viewport.height() : TerminalViewportLayout.ENTRY_SIZE));
         preferences.xPercent = availableX == 0 ? 0 : (float) Math.clamp(x, 0, availableX) / availableX;
         preferences.yPercent = availableY == 0 ? 0 : (float) Math.clamp(y, 0, availableY) / availableY;
         geometry(screenWidth, screenHeight);

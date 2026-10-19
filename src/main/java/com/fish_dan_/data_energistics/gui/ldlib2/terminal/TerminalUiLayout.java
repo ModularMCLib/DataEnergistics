@@ -125,12 +125,11 @@ public final class TerminalUiLayout {
         root.addChildren(inputs, pageAt(outputs, 84, 2, 18, 54));
         if (mode == TerminalWorkspace.PROCESSING) pageAt(outputs, 96, 2, 18, 54);
         if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) root.addChild(result);
+        UIElement actions = at(element("page_actions", "terminal-page-actions"), width, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
         if (mode.supportsEncoding()) {
-            UIElement encoding = at(element("pattern_encoding", "terminal-encoding"), width, 0, TerminalViewportLayout.ENCODING_WIDTH, 58);
-            encoding.addChildren(at(element("blank_pattern", "blank-pattern"), 3, 2, 18, 18),
+            actions.addChildren(at(element("blank_pattern", "blank-pattern"), 3, 2, 18, 18),
                     icon("encoding", "terminal-encode", "icon-encoding", 5, 22, 14, 14),
                     at(element("encoded", "encoded-pattern"), 3, 38, 18, 18));
-            root.addChild(encoding);
             if (mode == TerminalWorkspace.CRAFTING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 60, 2, 8, 8),
                         pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 70, 2, 8, 8),
@@ -144,9 +143,9 @@ public final class TerminalUiLayout {
                         pageAt(processingScrollbar(), 2, 2, 6, 54), TerminalProcessingControlsUi.create());
             }
         } else {
-            root.addChildren(pageAt(field("name"), 3, 5, 96, 10),
-                    pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 97, 18, 10, 10),
-                    pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 97, 30, 10, 10));
+            root.addChild(pageAt(field("name"), 3, 5, 96, 10));
+            actions.addChildren(pageIcon("boost_up", "anvil-boost-step", "icon-boost-up", 7, 18, 10, 10),
+                    pageIcon("boost_down", "anvil-boost-step", "icon-boost-down", 7, 30, 10, 10));
             Label status = pageAt(label("anvil_status"), 3, 43, 96, 10);
             status.addClass("anvil-status");
             status.setText(Component.translatable("gui.data_energistics.me_digital_anvil.invalid"));
@@ -154,6 +153,7 @@ public final class TerminalUiLayout {
             status.setAllowHitTest(true);
             root.addChild(status);
         }
+        root.addChild(actions);
         return root;
     }
 
@@ -166,8 +166,7 @@ public final class TerminalUiLayout {
     }
 
     public static int operationWidth(TerminalWorkspace mode) {
-        int width = pageWidth(mode);
-        return width + (mode.supportsEncoding() ? TerminalViewportLayout.ENCODING_WIDTH : 0);
+        return pageWidth(mode) + TerminalViewportLayout.ENCODING_WIDTH;
     }
 
     private static int pageWidth(TerminalWorkspace mode) {

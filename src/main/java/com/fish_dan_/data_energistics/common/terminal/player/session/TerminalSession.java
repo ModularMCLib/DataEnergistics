@@ -21,6 +21,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalSlotActions;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkstation;
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.crafting.TerminalCraftingRecipes;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
@@ -33,6 +34,7 @@ import appeng.helpers.InventoryAction;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -203,6 +205,11 @@ public final class TerminalSession {
                 state.work().recipeIndex(index);
                 if (action.equals("cut")) takeResult(player, runtime, false);
             }
+            case "crafting_recipe" -> {
+                if (state.workspace() == TerminalWorkspace.CRAFTING &&
+                        TerminalCraftingRecipes.resolve(player, state.work(), true).select(state.work(), ResourceLocation.parse(data.getString("id"))))
+                    refill = null;
+            }
             case "name" -> {
                 String name = StringUtil.filterText(data.getString("value"));
                 if (name.length() <= 50) state.work(TerminalWorkspace.ANVIL).name(name);
@@ -297,8 +304,9 @@ public final class TerminalSession {
             var work = state.work();
             var configuration = work.patternInputs.save(player.registryAccess());
             int recipe = work.recipeIndex();
+            var context = work.context();
             requestMaterials(player, connection, result, TerminalWorkstation.materialTargets(state),
-                    () -> configuration.equals(work.patternInputs.save(player.registryAccess())) && work.recipeIndex() == recipe, true);
+                    () -> configuration.equals(work.patternInputs.save(player.registryAccess())) && work.recipeIndex() == recipe && work.context().equals(context), true);
         }
     }
 

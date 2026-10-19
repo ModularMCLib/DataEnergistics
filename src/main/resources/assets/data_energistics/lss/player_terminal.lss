@@ -71,7 +71,7 @@
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
     pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
 }
-.terminal-pattern-scroll .__scroller_scroll_container__, .terminal-stonecutting-scroll .__scroller_scroll_container__ { background: #00000000; }
+.terminal-pattern-scroll .__scroller_scroll_container__, .terminal-recipe-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-cell {
     background: sprite(data_energistics:textures/guis/backpack/middle.png);
     base-background: #00000000;
@@ -85,6 +85,10 @@
     pressed-background: group(#669CD3FF, border(-1, #FFDAFFFF));
 }
 .terminal-cell.embedded-cell { background: #00000000; }
+.terminal-crafting-choice {
+    background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 81, 17, 24, 24, 1, 1, 1, 1);
+}
+.terminal-crafting-choice.selected-recipe { base-background: group(#5593FFDE, border(-1, #FF57E0BB)); }
 .stonecutting-recipes-frame {
     background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png, 21, 6, 77, 46, 1, 1, 1, 1) translate(0, -1);
 }

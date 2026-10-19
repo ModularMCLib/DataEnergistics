@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.crafting.TerminalCraftingRecipesUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
@@ -107,6 +108,7 @@ public final class TerminalUiLayout {
                 pageAt(inputs, 3, 1, 54, 54);
                 pageAt(result, 79, 19, 18, 18);
                 root.addChild(recipeArrow(57));
+                root.addChild(TerminalCraftingRecipesUi.create());
             }
             case PROCESSING -> {
                 UIElement surface = at(element("processing_surface", "terminal-processing-surface"), 1, 1, 82, 56);
@@ -128,7 +130,7 @@ public final class TerminalUiLayout {
                 UIElement recipes = element("recipes", "stonecutting-recipes");
                 recipes.setOverflowVisible(false);
                 root.addChildren(frame, pageAt(recipes, 23, 6, recipesWidth, TerminalStonecuttingRecipeCell.ROWS * TerminalStonecuttingRecipeCell.HEIGHT),
-                        pageAt(stonecuttingScrollbar(), 27 + recipesWidth, 6, 6, 46));
+                        pageAt(recipeScrollbar("recipe_scroll"), 27 + recipesWidth, 6, 6, 46));
             }
             case ANVIL -> {
                 pageAt(inputs, 3, 19, 54, 18);
@@ -342,9 +344,9 @@ public final class TerminalUiLayout {
         return scrollbar;
     }
 
-    private static Scroller.Vertical stonecuttingScrollbar() {
-        Scroller.Vertical scrollbar = named(processingScrollbar(), "recipe_scroll", "terminal-stonecutting-scroll");
-        scrollbar.scrollContainer.addChildAt(scrollbarRail("recipe_rail"), 0);
+    public static Scroller.Vertical recipeScrollbar(String id) {
+        Scroller.Vertical scrollbar = named(processingScrollbar(), id, "terminal-recipe-scroll");
+        scrollbar.scrollContainer.addChildAt(scrollbarRail(id + "_rail"), 0);
         return scrollbar;
     }
 

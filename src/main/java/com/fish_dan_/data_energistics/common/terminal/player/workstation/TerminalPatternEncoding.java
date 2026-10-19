@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternReci
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.crafting.TerminalCraftingRecipes;
 
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
@@ -46,12 +47,12 @@ public final class TerminalPatternEncoding {
                 yield !hasInput || outputs.getFirst() == null ? ItemStack.EMPTY : PatternDetailsHelper.encodeProcessingPattern(inputs, outputs);
             }
             case CRAFTING -> {
-                var input = TerminalWorkstation.craftingInput(work, true).input();
-                var recipe = player.serverLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, player.level());
+                var recipes = TerminalCraftingRecipes.resolve(player, work, true);
+                var recipe = recipes.selected(work);
                 if (recipe.isEmpty()) yield ItemStack.EMPTY;
                 ItemStack[] items = new ItemStack[9];
                 for (int index = 0; index < 9; index++) items[index] = TerminalWorkstation.input(work, index, true).copyWithCount(1);
-                yield PatternDetailsHelper.encodeCraftingPattern(recipe.get(), items, recipe.get().value().assemble(input, player.registryAccess()), work.substitutes(), work.fluidSubstitutes());
+                yield PatternDetailsHelper.encodeCraftingPattern(recipe.get(), items, recipes.output(player, work), work.substitutes(), work.fluidSubstitutes());
             }
             case SMITHING -> {
                 var input = TerminalWorkstation.smithingInput(work, true);

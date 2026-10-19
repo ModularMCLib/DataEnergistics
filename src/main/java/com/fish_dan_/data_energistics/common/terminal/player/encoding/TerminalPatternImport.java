@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.connection.Terminal
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 
+import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.helpers.IPatternTerminalLogicHost;
@@ -55,8 +56,9 @@ public final class TerminalPatternImport implements IPatternTerminalLogicHost {
         data.put("inputs", inputs);
         data.put("outputs", outputs);
         var reference = EncodedPatternRecipeReference.get(pattern);
+        var crafting = pattern.get(AEComponents.ENCODED_CRAFTING_PATTERN);
         data.put("context", new TerminalPatternContext(reference == null ? null : reference.recipeTypeId(),
-                reader.logic.getStonecuttingRecipeId() != null ? reader.logic.getStonecuttingRecipeId() :
+                crafting != null ? crafting.recipeId() : reader.logic.getStonecuttingRecipeId() != null ? reader.logic.getStonecuttingRecipeId() :
                         EncodedPatternRecipeReference.getProcessingRecipeId(pattern))
                 .save());
         String result = TerminalRecipeTransfer.apply(player, state, data, connection, toNetwork);

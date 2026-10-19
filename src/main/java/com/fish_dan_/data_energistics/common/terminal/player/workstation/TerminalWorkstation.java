@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.connection.Terminal
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.transfer.TerminalIngredientSupply;
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.crafting.TerminalCraftingRecipes;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 
 import appeng.api.stacks.AEItemKey;
@@ -27,7 +28,6 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
-import net.minecraft.world.level.GameRules;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.EventHooks;
 
@@ -50,12 +50,7 @@ public final class TerminalWorkstation {
 
     private static ItemStack preview(ServerPlayer player, TerminalPlayerState state, boolean configured) {
         ItemStack result = switch (state.workspace()) {
-            case CRAFTING -> {
-                CraftingInput input = craftingInput(state.work(), configured).input();
-                var recipe = player.serverLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, player.level());
-                yield recipe.filter(value -> value.value().isSpecial() || !player.level().getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(value))
-                        .map(value -> value.value().assemble(input, player.registryAccess())).orElse(ItemStack.EMPTY);
-            }
+            case CRAFTING -> TerminalCraftingRecipes.resolve(player, state.work(), configured).output(player, state.work());
             case PROCESSING -> ItemStack.EMPTY;
             case SMITHING -> {
                 SmithingRecipeInput input = smithingInput(state.work(), configured);
@@ -151,7 +146,7 @@ public final class TerminalWorkstation {
     private static void consumeCrafting(ServerPlayer player, TerminalWorkspaceState work, ItemStack product, boolean shift) {
         var positioned = craftingInput(work, false);
         var input = positioned.input();
-        var recipe = player.serverLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, player.level()).orElseThrow();
+        var recipe = TerminalCraftingRecipes.resolve(player, work, false).selected(work).orElseThrow();
         NonNullList<ItemStack> remainders;
         CommonHooks.setCraftingPlayer(player);
         try {
@@ -246,7 +241,9 @@ public final class TerminalWorkstation {
     }
 
     public static void snapshot(ServerPlayer player, TerminalPlayerState state, CompoundTag tag) {
-        tag.put("result", preview(player, state).saveOptional(player.registryAccess()));
+        if (state.workspace() == TerminalWorkspace.CRAFTING)
+            TerminalCraftingRecipes.resolve(player, state.work(), true).snapshot(player, state.work(), tag);
+        else tag.put("result", preview(player, state).saveOptional(player.registryAccess()));
         tag.putInt("recipe_count", state.workspace() == TerminalWorkspace.STONECUTTING ? stonecuttingRecipes(player, state.work(), true).size() : 0);
         tag.putInt("anvil_upgrades", upgrades(player));
         if (state.workspace() == TerminalWorkspace.ANVIL) {

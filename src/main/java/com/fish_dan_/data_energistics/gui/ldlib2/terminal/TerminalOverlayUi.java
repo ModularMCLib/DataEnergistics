@@ -12,6 +12,7 @@ import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.amount.TerminalAmountUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.crafting.TerminalCraftingRecipesUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlankPatternCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
@@ -106,6 +107,7 @@ public final class TerminalOverlayUi {
     private @Nullable TerminalBlankPatternCell blankPattern;
     private final TerminalPatternUploadUi uploadUi;
     private final TerminalProcessingControlsUi processingUi;
+    private final TerminalCraftingRecipesUi craftingRecipesUi;
     private final TerminalAmountUi amountUi;
     private final TerminalKeyTypeUi keyTypeUi;
     private final TerminalMagnetUi magnetUi;
@@ -281,6 +283,7 @@ public final class TerminalOverlayUi {
             }
         }
         processingUi = new TerminalProcessingControlsUi(element(workspaces.get("processing"), "processing_amounts"), request);
+        craftingRecipesUi = new TerminalCraftingRecipesUi(element(workspaces.get("crafting"), "crafting_choices"), registries, request);
         for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types" }) {
             UIElement root = TerminalUiLayout.popup(name);
             subWindows.add(name, root);
@@ -472,6 +475,7 @@ public final class TerminalOverlayUi {
         } else if (!workspace.equals("processing")) {
             TerminalResourceCell result = (TerminalResourceCell) element(active, "result").getChildren().getFirst();
             result.entry(physical(value.getCompound("result")), false);
+            if (workspace.equals("crafting")) craftingRecipesUi.apply(value);
             if (workspace.equals("anvil")) {
                 if (!field(active, "name").isFocused()) field(active, "name").setText(work.getString("name"), false);
                 label(active, "anvil_status").setText(Component.translatable("gui.data_energistics.me_digital_anvil." +

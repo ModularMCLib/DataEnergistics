@@ -82,7 +82,8 @@
 .terminal-cell.embedded-cell { background: #00000000; }
 .terminal-cell.selected-recipe { base-background: #6693FFDE; }
 .terminal-cell.manual-pin, .terminal-cell.crafting-pin {
-    background: sprite(ae2:textures/guis/terminal.png, 0, 204, 18, 18);
+    /* Keep the supplied 16px pin background inside the 18px slot frame. */
+    background: group(sprite(data_energistics:textures/guis/backpack/middle.png), sprite(data_energistics:textures/guis/states/background/toppin_background.png) scale(0.8888889));
 }
 .terminal-page.page-crafting { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png) translate(0, -1); }
 .terminal-page.page-processing { background: group(#FF9A9FB4, border(-1, #FF696D88)) translate(0, -1); }

@@ -165,6 +165,7 @@
 		"viewer.emi.PlayerTerminalRecipeFillerMixin",
 		"viewer.emi.research.ResearchStationEmiScreenMixin",
 		"viewer.jei.BasicRecipeTransferHandlerAccessor",
+		"viewer.jei.PlayerTerminalGhostPreviewMixin",
 		"viewer.jei.PlayerTerminalIngredientMixin",
 		"viewer.jei.PlayerTerminalInputMixin",
 		"viewer.jei.RecipeTransferServiceMixin"

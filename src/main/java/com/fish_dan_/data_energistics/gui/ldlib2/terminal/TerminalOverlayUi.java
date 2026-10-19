@@ -936,9 +936,10 @@ public final class TerminalOverlayUi {
         return targets;
     }
 
-    private static void collectTargets(ObjectList<GhostTarget> targets, ObjectList<TerminalResourceCell> cells, String inventory) {
+    private void collectTargets(ObjectList<GhostTarget> targets, ObjectList<TerminalResourceCell> cells, String inventory) {
+        boolean itemsOnly = inventory.equals("inputs") && !workspace.equals("processing");
         for (int index = 0; index < cells.size(); index++)
-            if (cells.get(index).isVisible() && cells.get(index).isActive()) targets.add(new GhostTarget(rect(cells.get(index)), inventory, index));
+            if (cells.get(index).isVisible() && cells.get(index).isActive()) targets.add(new GhostTarget(rect(cells.get(index)), inventory, index, itemsOnly));
     }
 
     public void drop(GhostTarget target, GenericStack stack) {
@@ -950,7 +951,12 @@ public final class TerminalOverlayUi {
         request.accept(target.inventory().equals("pins") ? "pin" : "ghost", data);
     }
 
-    public record GhostTarget(Rect2i area, String inventory, int index) {}
+    public record GhostTarget(Rect2i area, String inventory, int index, boolean itemsOnly) {
+
+        public boolean accepts(GenericStack stack) {
+            return !itemsOnly || stack.what() instanceof AEItemKey;
+        }
+    }
 
     public void open(String name) {
         open(name, null);

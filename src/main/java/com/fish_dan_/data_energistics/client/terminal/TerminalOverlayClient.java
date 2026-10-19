@@ -25,6 +25,7 @@ import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
@@ -52,6 +53,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Independent screen overlay. It never replaces a host menu, its modular UI, or its carried stack.
@@ -68,6 +70,8 @@ public final class TerminalOverlayClient {
     private @Nullable ModularUI modularUi;
     private CompoundTag lastSnapshot = new CompoundTag();
     private ObjectList<Rect2i> exclusions = ObjectImmutableList.of();
+    private @Nullable Consumer<GuiGraphics> viewerGhostHighlights;
+    private @Nullable Consumer<GuiGraphics> viewerDragCursor;
     private long sequence;
     private long appliedSequence = -1;
     private long lastStorageRequest;
@@ -286,6 +290,17 @@ public final class TerminalOverlayClient {
         if (active != null) active.composition.drop(target, stack);
     }
 
+    /**
+     * Client-thread viewer callbacks draw above the floating UI for this frame; active drags take priority over hover
+     * previews.
+     */
+    public static void previewGhostDrag(Screen screen, Consumer<GuiGraphics> highlights, @Nullable Consumer<GuiGraphics> cursor) {
+        InputTarget target = active(screen);
+        if (target == null || target.overlay.viewerDragCursor != null && cursor == null) return;
+        target.overlay.viewerGhostHighlights = highlights;
+        target.overlay.viewerDragCursor = cursor;
+    }
+
     public static void clear() {
         if (current != null) {
             current.releaseUi();
@@ -404,6 +419,8 @@ public final class TerminalOverlayClient {
         modularUi = null;
         composition = null;
         exclusions = ObjectImmutableList.of();
+        viewerGhostHighlights = null;
+        viewerDragCursor = null;
         keyboardOwned = false;
         pointerOwned = false;
         suspended = false;
@@ -423,6 +440,14 @@ public final class TerminalOverlayClient {
         pendingGeometry = false;
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void beginRender(ScreenEvent.Render.Pre event) {
+        TerminalOverlayClient overlay = current;
+        if (overlay == null || event.getScreen() != overlay.screen) return;
+        overlay.viewerGhostHighlights = null;
+        overlay.viewerDragCursor = null;
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void render(ScreenEvent.Render.Post event) {
         TerminalOverlayClient overlay = current;
@@ -440,6 +465,14 @@ public final class TerminalOverlayClient {
             if (overlay.composition.contains(event.getMouseX(), event.getMouseY()) && !overlay.menu.getCarried().isEmpty()) {
                 event.getGuiGraphics().renderItem(overlay.menu.getCarried(), event.getMouseX() - 8, event.getMouseY() - 8);
                 event.getGuiGraphics().renderItemDecorations(Minecraft.getInstance().font, overlay.menu.getCarried(), event.getMouseX() - 8, event.getMouseY() - 8);
+            }
+            if (overlay.viewerGhostHighlights != null) {
+                event.getGuiGraphics().flush();
+                pose.translate(0, 0, 1000);
+                overlay.viewerGhostHighlights.accept(event.getGuiGraphics());
+                event.getGuiGraphics().flush();
+                if (overlay.viewerDragCursor != null && overlay.composition.contains(event.getMouseX(), event.getMouseY()))
+                    overlay.viewerDragCursor.accept(event.getGuiGraphics());
             }
         } finally {
             pose.popPose();

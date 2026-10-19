@@ -1,11 +1,14 @@
 package com.fish_dan_.data_energistics.common.terminal.player.workstation;
 
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternImport;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 
+import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -25,13 +28,13 @@ public final class TerminalSlotActions {
 
     private TerminalSlotActions() {}
 
-    public static void physical(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
+    public static String physical(ServerPlayer player, TerminalPlayerState state, CompoundTag data, @Nullable TerminalConnection connection) {
         String group = data.getString("inventory");
         boolean patterns = group.equals("encoded");
         if (!patterns && !group.equals("inputs"))
             throw new IllegalArgumentException("Unknown terminal physical inventory");
         if (patterns ? !state.workspace().supportsEncoding() : state.workspace() == TerminalWorkspace.PROCESSING)
-            return;
+            return "";
         SimpleContainer inventory = patterns ? state.work().patterns : state.work().inputs;
         int index = data.getInt("index");
         int button = data.getInt("button");
@@ -51,15 +54,24 @@ public final class TerminalSlotActions {
             if (cursor.isEmpty()) {
                 int count = button == 1 ? (stack.getCount() + 1) / 2 : stack.getCount();
                 if (count > 0) player.containerMenu.setCarried(inventory.removeItem(index, count));
-            } else if (!patterns) {
-                int maximum = state.workspace() == TerminalWorkspace.ANVIL && index == 0 ? 1 : cursor.getMaxStackSize();
+            } else if (!patterns || PatternDetailsHelper.isEncodedPattern(cursor)) {
+                int maximum = patterns || state.workspace() == TerminalWorkspace.ANVIL && index == 0 ? 1 : cursor.getMaxStackSize();
+                boolean placing = stack.isEmpty() || !ItemStack.isSameItemSameComponents(stack, cursor) && cursor.getCount() <= maximum;
+                if (patterns && placing) {
+                    String result = TerminalPatternImport.apply(player, state, cursor, connection, data.getBoolean("to_network"));
+                    if (!result.isEmpty()) return result;
+                    if (inventory != state.work().patterns) {
+                        inventory.setItem(index, ItemStack.EMPTY);
+                        inventory = state.work().patterns;
+                    }
+                }
                 if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, cursor)) {
                     int moved = Math.min(button == 1 ? 1 : cursor.getCount(), maximum - stack.getCount());
                     if (moved > 0) {
                         inventory.setItem(index, cursor.copyWithCount(stack.getCount() + moved));
                         cursor.shrink(moved);
                     }
-                } else if (button == 0 && cursor.getCount() <= maximum) {
+                } else if ((button == 0 || patterns) && cursor.getCount() <= maximum) {
                     inventory.setItem(index, cursor);
                     player.containerMenu.setCarried(stack);
                     cursor = stack;
@@ -84,6 +96,7 @@ public final class TerminalSlotActions {
                 state.work().boost(0);
             }
         }
+        return "";
     }
 
     public static String ghost(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {

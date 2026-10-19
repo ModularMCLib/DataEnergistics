@@ -631,6 +631,7 @@ public final class TerminalOverlayUi {
         data.putInt("index", index);
         data.putInt("button", button);
         data.putBoolean("shift", UIElement.isShiftDown());
+        data.putBoolean("to_network", preferences.shiftClickToNetwork);
         request.accept("slot", data);
     }
 

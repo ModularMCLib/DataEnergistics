@@ -154,7 +154,7 @@ public final class TerminalSession {
                 if (state.workspace() == TerminalWorkspace.PROCESSING)
                     state.work().recordRecipeType(!state.work().recordRecipeType());
             }
-            case "recipe_transfer" -> message = TerminalRecipeTransfer.apply(player, state, data);
+            case "recipe_transfer" -> message = TerminalRecipeTransfer.apply(player, state, data, runtime.connection(), data.getBoolean("to_network"));
             case "clear" -> message = TerminalRecipeTransfer.clear(player, state, runtime.connection(), data.getBoolean("to_network"));
             case "processing_amount" -> message = TerminalProcessingAmounts.apply(state, TerminalProcessingAmounts.Operation.valueOf(data.getString("operation")));
             case "processing_match" -> {
@@ -172,7 +172,8 @@ public final class TerminalSession {
                 if (stack != null && stack.what() instanceof AEItemKey && stack.what().equals(key(player, data)))
                     state.work().matching.set(output, index, ProcessingMatchMode.values()[mode]);
             }
-            case "slot" -> TerminalSlotActions.physical(player, state, data);
+            case "slot" -> message = TerminalSlotActions.physical(player, state, data,
+                    data.getString("inventory").equals("encoded") ? runtime.connection() : null);
             case "ghost" -> {
                 if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))
                     requireMagnet(player);

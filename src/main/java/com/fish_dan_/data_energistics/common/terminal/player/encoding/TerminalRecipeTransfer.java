@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.persistence.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
+import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspaceState;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -32,26 +33,27 @@ public final class TerminalRecipeTransfer {
     /** Returns real inputs to the selected destination before clearing the active page's configuration. */
     public static String clear(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean toNetwork) {
         if (!state.workspace().supportsEncoding()) throw new IllegalArgumentException("The active page is not a recipe encoder");
-        if (toNetwork && !state.work().inputs.isEmpty()) {
-            if (connection == null) return "offline";
-            if (!TerminalNetworkStorage.insertInventory(connection, state.work().inputs)) return "network_full";
-        }
         CompoundTag data = new CompoundTag();
         data.putString("workspace", state.workspace().id());
-        return apply(player, state, data);
+        return apply(player, state, data, connection, toNetwork);
     }
 
-    public static String apply(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
+    public static String apply(ServerPlayer player, TerminalPlayerState state, CompoundTag data,
+                               @Nullable TerminalConnection connection, boolean toNetwork) {
         TerminalWorkspace page = TerminalWorkspace.byId(data.getString("workspace"));
-        if (page != state.workspace() || !page.supportsEncoding())
-            throw new IllegalArgumentException("Recipe transfer no longer targets the active encoder");
+        if (!page.supportsEncoding()) throw new IllegalArgumentException("Recipe transfer requires an encoder");
+        TerminalWorkspaceState work = state.work(page);
         TerminalGhostInventory inputs = new TerminalGhostInventory(page.patternInputSlots(), () -> {});
         TerminalGhostInventory outputs = new TerminalGhostInventory(page.patternOutputSlots(), () -> {});
         inputs.load(data.getList("inputs", Tag.TAG_COMPOUND), player.registryAccess());
         outputs.load(data.getList("outputs", Tag.TAG_COMPOUND), player.registryAccess());
         TerminalPatternContext context = TerminalPatternContext.load(data.getCompound("context"));
         int selectedRecipe = 0;
-        if (page != TerminalWorkspace.PROCESSING) {
+        if (page != TerminalWorkspace.PROCESSING && toNetwork && !work.inputs.isEmpty()) {
+            if (connection == null) return "offline";
+            if (!TerminalNetworkStorage.insertInventory(connection, work.inputs)) return "network_full";
+        }
+        if (page != TerminalWorkspace.PROCESSING && !work.inputs.isEmpty()) {
             for (int index = 0; index < inputs.size(); index++) {
                 GenericStack stack = inputs.get(index);
                 if (stack != null) {
@@ -74,19 +76,20 @@ public final class TerminalRecipeTransfer {
             SimpleContainer capacity = new SimpleContainer(player.getInventory().items.size());
             for (int index = 0; index < capacity.getContainerSize(); index++)
                 capacity.setItem(index, player.getInventory().items.get(index).copy());
-            for (int index = 0; index < state.work().inputs.getContainerSize(); index++)
-                if (!capacity.addItem(state.work().inputs.getItem(index).copy()).isEmpty()) return "inventory_full";
-            for (int index = 0; index < state.work().inputs.getContainerSize(); index++) {
-                ItemStack returned = state.work().inputs.removeItemNoUpdate(index);
+            for (int index = 0; index < work.inputs.getContainerSize(); index++)
+                if (!capacity.addItem(work.inputs.getItem(index).copy()).isEmpty()) return "inventory_full";
+            for (int index = 0; index < work.inputs.getContainerSize(); index++) {
+                ItemStack returned = work.inputs.removeItemNoUpdate(index);
                 player.getInventory().add(returned);
                 if (!returned.isEmpty()) throw new IllegalStateException("Recipe transfer lost reserved return capacity");
             }
         }
-        state.work().patternInputs.copyFrom(inputs);
-        state.work().patternOutputs.copyFrom(outputs);
-        state.work().matching.clear();
-        state.work().context(context);
-        state.work().recipeIndex(selectedRecipe);
+        work.patternInputs.copyFrom(inputs);
+        work.patternOutputs.copyFrom(outputs);
+        work.matching.clear();
+        work.context(context);
+        work.recipeIndex(selectedRecipe);
+        state.workspace(page);
         return "";
     }
 }

@@ -69,7 +69,7 @@ public final class TerminalUiLayout {
             sidebar.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
         }
         window.addChild(sidebar);
-        window.addChildren(at(field("search"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING),
+        window.addChildren(at(field("search"), searchLeft(width),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12),
                 icon("drag", "terminal-drag", "icon-drag", encodingCenter - ACTION_BUTTON_SIZE / 2, 2, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
@@ -88,15 +88,14 @@ public final class TerminalUiLayout {
 
     public static UIElement page(TerminalWorkspace mode) {
         int width = pageWidth(mode);
-        UIElement root = at(element(mode.id(), "terminal-page"), mode == TerminalWorkspace.PROCESSING ? 0 : 1, 0, width, 58);
+        UIElement root = at(element(mode.id(), "terminal-page"), mode == TerminalWorkspace.ANVIL ? 1 : 0, 0, width, 58);
         root.setOverflowVisible(true);
         root.addClass("page-" + mode.id());
         UIElement background = at(element("page_surface", "terminal-page-surface"), -1, 0, width + 2, 58);
         background.setAllowHitTest(false);
         root.addChild(background);
-        if (mode != TerminalWorkspace.PROCESSING && mode != TerminalWorkspace.STONECUTTING) {
-            // Preserve the supplied slot and arrow pixels while extending only the outer frame.
-            UIElement art = at(element("page_art", "terminal-page-art"), 1, 1, width - 2, 56);
+        if (mode == TerminalWorkspace.ANVIL) {
+            UIElement art = at(element("page_art", "terminal-page-art"), 1, 1, 106, 56);
             art.setAllowHitTest(false);
             root.addChild(art);
         }
@@ -106,7 +105,8 @@ public final class TerminalUiLayout {
         switch (mode) {
             case CRAFTING -> {
                 pageAt(inputs, 3, 1, 54, 54);
-                pageAt(result, 84, 19, 18, 18);
+                pageAt(result, 79, 19, 18, 18);
+                root.addChild(recipeArrow(57));
             }
             case PROCESSING -> {
                 UIElement surface = at(element("processing_surface", "terminal-processing-surface"), 1, 1, 82, 56);
@@ -116,8 +116,9 @@ public final class TerminalUiLayout {
                 pageAt(result, 64, 19, 18, 18);
             }
             case SMITHING -> {
-                pageAt(inputs, 3, 19, 54, 18);
-                pageAt(result, 84, 19, 18, 18);
+                pageAt(inputs, 9, 19, 54, 18);
+                pageAt(result, 96, 19, 18, 18);
+                root.addChild(recipeArrow(69));
             }
             case STONECUTTING -> {
                 int recipesWidth = TerminalStonecuttingRecipeCell.COLUMNS * TerminalStonecuttingRecipeCell.WIDTH;
@@ -150,8 +151,8 @@ public final class TerminalUiLayout {
                         pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 70, 2, 8, 8),
                         pageIcon("fluid_substitutes", "terminal-pattern-option", "icon-fluid-substitutes", 80, 2, 8, 8));
             } else if (mode == TerminalWorkspace.SMITHING) {
-                root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 3, 8, 8, 8),
-                        pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 13, 8, 8, 8));
+                root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 9, 8, 8, 8),
+                        pageIcon("substitutes", "terminal-pattern-option", "icon-substitutes", 19, 8, 8, 8));
             } else if (mode == TerminalWorkspace.PROCESSING) {
                 root.addChildren(pageIcon("clear", "terminal-pattern-option", "icon-clear-pattern", 64, 2, 8, 8),
                         pageIcon("record_type", "terminal-pattern-option", "icon-record-type", 64, 12, 8, 8),
@@ -172,6 +173,12 @@ public final class TerminalUiLayout {
         return root;
     }
 
+    private static UIElement recipeArrow(int x) {
+        UIElement arrow = pageAt(element("recipe_arrow", "terminal-recipe-arrow"), x, 19, 22, 18);
+        arrow.setAllowHitTest(false);
+        return arrow;
+    }
+
     public static UIElement popup(String name) {
         UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, popupWidth(name), popupHeight(name));
         Label title = at(label("popup_title"), 7, 5, popupWidth(name) - 31, 10);
@@ -186,7 +193,7 @@ public final class TerminalUiLayout {
 
     private static int pageWidth(TerminalWorkspace mode) {
         return switch (mode) {
-            case PROCESSING -> TerminalViewportLayout.PROCESSING_WIDTH;
+            case CRAFTING, PROCESSING, SMITHING -> TerminalViewportLayout.PROCESSING_WIDTH;
             case STONECUTTING -> TerminalViewportLayout.STONECUTTING_WIDTH;
             default -> TerminalViewportLayout.OPERATION_WIDTH;
         };
@@ -199,7 +206,7 @@ public final class TerminalUiLayout {
         atWithin(require(window, "top_edge", UIElement.class), 0, 0, panelWidth, 1, viewport.width(), viewport.height());
         atWithin(require(window, "left_edge", UIElement.class), 0, 0, 1, viewport.height(), viewport.width(), viewport.height());
         atWithin(require(window, "bottom_edge", UIElement.class), 0, viewport.height() - 1, panelWidth, 1, viewport.width(), viewport.height());
-        atWithin(require(window, "search", UIElement.class), viewport.width() - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING),
+        atWithin(require(window, "search", UIElement.class), searchLeft(viewport.width()),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12, viewport.width(), viewport.height());
         atWithin(require(window, "drag", UIElement.class), encodingCenter - ACTION_BUTTON_SIZE / 2, 2,
                 ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE, viewport.width(), viewport.height());
@@ -221,6 +228,10 @@ public final class TerminalUiLayout {
     private static int storageScrollLeft(int width) {
         // Keep the rail centered below the drag handle, independently of the storage column count.
         return width - TerminalViewportLayout.TAB_WIDTH - (TerminalViewportLayout.ENCODING_WIDTH + STORAGE_SCROLL_WIDTH) / 2;
+    }
+
+    private static int searchLeft(int width) {
+        return width - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.OPERATION_WIDTH - TerminalViewportLayout.ENCODING_WIDTH;
     }
 
     public static int popupHeight(String name) {

@@ -104,11 +104,15 @@
     background: group(sprite(data_energistics:textures/guis/backpack/middle.png), sprite(data_energistics:textures/guis/states/background/toppin_background.png) scale(0.8888889));
 }
 .terminal-page-surface { background: group(#FF9A9FB4, border(-1, #FF696D88)) translate(0, -1); }
-.page-crafting .terminal-page-art { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 1, 1, 106, 56) translate(0, -1); }
+.page-crafting .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 3, 2, 54, 54); }
+.terminal-recipe-arrow { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 58, 20, 22, 18); }
+.page-crafting .page-result, .page-smithing .page-result {
+    background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 81, 17, 24, 24, 1, 1, 1, 1);
+}
 .terminal-processing-surface { background: sprite(data_energistics:textures/guis/states/background/small_handle.png, 1, 1, 82, 56) translate(0, -1); }
 .page-processing .page-outputs { background: sprite(data_energistics:textures/guis/states/background/small_handle.png, 84, 2, 18, 54); }
 .terminal-processing-step .__button_text__ { font-size: 6; }
-.page-smithing .terminal-page-art { background: sprite(data_energistics:textures/guis/states/background/small_forging.png, 1, 1, 106, 56) translate(0, -1); }
+.page-smithing .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_forging.png, 3, 20, 54, 18); }
 .page-stonecutting .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png, 2, 20, 18, 18); }
 .page-anvil .terminal-page-art { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 1, 1, 106, 56) translate(0, -1); }
 .anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }

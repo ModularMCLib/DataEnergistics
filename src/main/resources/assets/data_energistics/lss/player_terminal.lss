@@ -76,8 +76,8 @@
 .terminal-cell {
     background: sprite(data_energistics:textures/guis/backpack/middle.png);
     base-background: #00000000;
-    hover-background: group(#669CD3FF scale(0.8888889), border(-1, #FFDAFFFF));
-    pressed-background: group(#669CD3FF scale(0.8888889), border(-1, #FFDAFFFF));
+    hover-background: group(#6693FFDE, border(-1, #FF57E0BB));
+    pressed-background: group(#6693FFDE, border(-1, #FF57E0BB));
 }
 /* Color overlays ignore depth: draw the hovered cell after neighboring cells and their shared edges. */
 .terminal-cell:hover { z-index: 1; }

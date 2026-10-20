@@ -30,6 +30,7 @@ import com.fish_dan_.data_energistics.common.network.packets.patternencoding.Pat
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchMaterialFavoritesPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchSnapshotPayload;
+import com.fish_dan_.data_energistics.common.network.packets.sanctifier.SanctifierCarryPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalNavigationPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
@@ -53,7 +54,6 @@ import com.fish_dan_.data_energistics.common.network.packets.ui.HostUiResponsePa
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalCyclePayload;
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalSelectPayload;
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalStateSyncPayload;
-import com.fish_dan_.data_energistics.network.sanctifier.SanctifierCarryPayload;
 
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;

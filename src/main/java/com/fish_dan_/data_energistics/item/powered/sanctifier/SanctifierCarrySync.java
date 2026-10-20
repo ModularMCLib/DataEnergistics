@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.item.powered.sanctifier;
 
-import com.fish_dan_.data_energistics.network.sanctifier.SanctifierCarryPayload;
+import com.fish_dan_.data_energistics.common.network.packets.sanctifier.SanctifierCarryPayload;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;

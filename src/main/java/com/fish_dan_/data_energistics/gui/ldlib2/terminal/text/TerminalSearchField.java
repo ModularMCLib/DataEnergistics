@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.utils.TextUtilities;
 
 import net.minecraft.Util;
+import net.minecraft.network.chat.Component;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.jspecify.annotations.NullMarked;
@@ -14,11 +15,16 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class TerminalSearchField extends TextField {
 
+    private static final int PLACEHOLDER_COLOR = 0xFFF2F2F2;
     private long focusedTime;
 
     public TerminalSearchField() {
         textFieldStyle(style -> style.cursorColor(0));
         addEventListener(UIEvents.FOCUS, event -> focusedTime = Util.getMillis());
+    }
+
+    public static Component placeholder(Component value) {
+        return value.copy().withStyle(style -> style.withColor(PLACEHOLDER_COLOR));
     }
 
     @Override

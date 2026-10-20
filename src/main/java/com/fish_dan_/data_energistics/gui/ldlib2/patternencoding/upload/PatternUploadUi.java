@@ -73,7 +73,7 @@ public final class PatternUploadUi {
         search.addClass("terminal-field");
         search.addClass("terminal-search-field");
         search.setText("", false);
-        search.textFieldStyle(style -> style.placeholder(text("search")));
+        search.textFieldStyle(style -> style.placeholder(TerminalSearchField.placeholder(text("search"))));
         search.setTextResponder(value -> rebuildPending = true);
         search.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 1) {

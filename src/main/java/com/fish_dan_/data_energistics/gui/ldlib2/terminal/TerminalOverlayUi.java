@@ -23,6 +23,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.settings.TerminalSetti
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.window.TerminalWindowStack;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
@@ -177,7 +178,7 @@ public final class TerminalOverlayUi {
         enabledKeyTypes = new ObjectOpenHashSet<>(keyTypeSelection.enabledSet());
         storageInput = new TerminalStorageInput(this::storageAction, key -> enabledKeyTypes.contains(key.getType()));
         pinnedUi = new TerminalPinnedResourcesUi(element(window, "pinned_resources"), registries, request, this::storageClick, this::storageScroll);
-        field(window, "search").textFieldStyle(style -> style.placeholder(text("search")));
+        field(window, "search").textFieldStyle(style -> style.placeholder(TerminalSearchField.placeholder(text("search"))));
         refreshSearchTooltip();
         window.setVisible(visible);
         element(ui.rootElement, "entry").setVisible(!visible);

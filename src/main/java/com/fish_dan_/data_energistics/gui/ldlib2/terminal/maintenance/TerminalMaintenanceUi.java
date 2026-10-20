@@ -73,7 +73,7 @@ public final class TerminalMaintenanceUi {
         search.addClass("terminal-search-field");
         search.addClass("terminal-maintenance-search");
         search.setText("", false);
-        search.textFieldStyle(style -> style.placeholder(text("search")));
+        search.textFieldStyle(style -> style.placeholder(TerminalSearchField.placeholder(text("search"))));
         search.setTextResponder(value -> applyFilter(true));
         search.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 1) {

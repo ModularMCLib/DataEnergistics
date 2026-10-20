@@ -42,6 +42,9 @@ public final class TerminalUiLayout {
     private static final ResourceLocation STYLES = Data_Energistics.id("lss/player_terminal.lss");
     private static final int STORAGE_SCROLL_WIDTH = 10;
     private static final int ACTION_BUTTON_SIZE = 14;
+    private static final int SEARCH_TITLE_WIDTH = 64;
+    private static final int SEARCH_TITLE_GAP = 4;
+    private static final int SEARCH_TITLE_LEFT = 16;
 
     private TerminalUiLayout() {}
 
@@ -55,6 +58,10 @@ public final class TerminalUiLayout {
         UIElement window = at(element("window", "terminal-window"), 8, 8, width, 168);
         UIElement panel = at(element("panel", "terminal-panel"), 12, 0, panelWidth, 168);
         window.addChild(panel);
+        Label searchTitle = label("player_terminal_title");
+        searchTitle.addClass("terminal-search-title");
+        searchTitle.setText(Component.translatable("gui.data_energistics.player_terminal.search_title"));
+        searchTitle.setVisible(canShowSearchTitle(width));
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "maintenance", "settings", "destination" };
         UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, -1, 15, 16 + (controls.length - 1) * 12);
         // Backing tiles overlap; the cropped bottom cap closes below the final button at the panel edge.
@@ -72,6 +79,7 @@ public final class TerminalUiLayout {
         window.addChild(sidebar);
         window.addChildren(at(field("search"), searchLeft(width),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12),
+                at(searchTitle, Math.max(0, searchTitleLeft(width)), 3, SEARCH_TITLE_WIDTH, 12),
                 icon("drag", "terminal-drag", "icon-drag", encodingCenter - ACTION_BUTTON_SIZE / 2, 2, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
                 at(element("storage", "terminal-storage"), 16, 18, 108, 144),
                 at(element("pinned_resources", "terminal-pins"), 16, 18, 108, 0),
@@ -204,6 +212,10 @@ public final class TerminalUiLayout {
         atWithin(require(window, "panel", UIElement.class), 12, 0, panelWidth, viewport.height(), viewport.width(), viewport.height());
         atWithin(require(window, "search", UIElement.class), searchLeft(viewport.width()),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12, viewport.width(), viewport.height());
+        Label searchTitle = require(window, "player_terminal_title", Label.class);
+        searchTitle.setVisible(canShowSearchTitle(viewport.width()));
+        atWithin(searchTitle, Math.max(0, searchTitleLeft(viewport.width())), 3,
+                SEARCH_TITLE_WIDTH, 12, viewport.width(), viewport.height());
         atWithin(require(window, "drag", UIElement.class), encodingCenter - ACTION_BUTTON_SIZE / 2, 2,
                 ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE, viewport.width(), viewport.height());
         atWithin(require(window, "storage", UIElement.class), 16, 18, viewport.storageWidth(), viewport.storageHeight(), viewport.width(), viewport.height());
@@ -228,6 +240,14 @@ public final class TerminalUiLayout {
 
     private static int searchLeft(int width) {
         return width - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.OPERATION_WIDTH - TerminalViewportLayout.ENCODING_WIDTH;
+    }
+
+    private static boolean canShowSearchTitle(int width) {
+        return searchLeft(width) >= SEARCH_TITLE_LEFT + SEARCH_TITLE_WIDTH + SEARCH_TITLE_GAP;
+    }
+
+    private static int searchTitleLeft(int width) {
+        return searchLeft(width) - SEARCH_TITLE_WIDTH - SEARCH_TITLE_GAP;
     }
 
     public static int popupHeight(String name) {
@@ -343,9 +363,7 @@ public final class TerminalUiLayout {
     }
 
     public static Scroller.Vertical recipeScrollbar(String id) {
-        Scroller.Vertical scrollbar = named(processingScrollbar(), id, "terminal-recipe-scroll");
-        scrollbar.scrollContainer.addChildAt(scrollbarRail(id + "_rail"), 0);
-        return scrollbar;
+        return named(processingScrollbar(), id, "terminal-recipe-scroll");
     }
 
     /**

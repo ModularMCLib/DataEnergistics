@@ -137,7 +137,7 @@
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
 .icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
-.terminal-maintenance-frame { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-frame { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
 .terminal-maintenance-row { background: #00000000; }
 .terminal-maintenance-add-row { background: #00000000; }
 .terminal-maintenance-key { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }

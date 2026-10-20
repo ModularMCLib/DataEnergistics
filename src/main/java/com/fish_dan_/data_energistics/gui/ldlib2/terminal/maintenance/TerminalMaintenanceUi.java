@@ -47,7 +47,11 @@ public final class TerminalMaintenanceUi {
     private static final int ROW_HEIGHT = 22;
     private static final int VIEW_TOP = 22;
     private static final int VIEW_HEIGHT = 176;
-    private static final int VIEW_WIDTH = 208;
+    private static final int VIEW_WIDTH = 180;
+    private static final int FRAME_HEIGHT = VIEW_HEIGHT + 4;
+    private static final int AMOUNT_WIDTH = 36;
+    private static final int AMOUNT_STEP = AMOUNT_WIDTH + 3;
+    public static final int WIDTH = VIEW_WIDTH + 26;
     private final UIElement content = new UIElement();
     private final UIElement frame = new UIElement();
     private final UIElement viewport = new UIElement();
@@ -90,7 +94,11 @@ public final class TerminalMaintenanceUi {
         });
         scrollbar.addClass("terminal-maintenance-scroll");
         scrollbar.setRange(0, 1);
-        scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("maintenance_rail"), 0);
+        scrollbar.scrollBar.layout(layout -> layout.left(0));
+        UIElement rail = TerminalUiLayout.scrollbarRail("maintenance_rail");
+        // The rail's white rim is inset by one pixel; align its caps with the list's visible frame.
+        rail.layout(layout -> layout.top(-1).bottom(-1));
+        scrollbar.scrollContainer.addChildAt(rail, 0);
         scrollbar.setOnValueChanged(value -> content.layout(layout -> layout.top(-Math.round(value * maximumScroll))));
         addRow.addClass("terminal-maintenance-row");
         addRow.addClass("terminal-maintenance-add-row");
@@ -103,10 +111,10 @@ public final class TerminalMaintenanceUi {
         addButton.setOnClick(event -> {
             if (event.button == 0) request.accept("maintenance_add", new CompoundTag());
         });
-        TerminalUiLayout.at(frame, 5, VIEW_TOP - 2, VIEW_WIDTH + 2, VIEW_HEIGHT + 4);
-        TerminalUiLayout.searchFieldAt(search, 56, 4, 155, 14);
+        TerminalUiLayout.at(frame, 5, VIEW_TOP - 2, VIEW_WIDTH + 2, FRAME_HEIGHT);
+        TerminalUiLayout.searchFieldAt(search, 56, 4, VIEW_WIDTH - 53, 14);
         TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
-        TerminalUiLayout.at(scrollbar, 219, VIEW_TOP - 2, 6, VIEW_HEIGHT + 4);
+        TerminalUiLayout.at(scrollbar, VIEW_WIDTH + 11, VIEW_TOP - 2, 10, FRAME_HEIGHT);
         root.addChildren(frame, search, viewport, scrollbar);
     }
 
@@ -189,7 +197,7 @@ public final class TerminalMaintenanceUi {
         scrollbar.setActive(maximumScroll > 0);
         if (maximumScroll == 0) scrollbar.addClass("inactive-scroll");
         else scrollbar.removeClass("inactive-scroll");
-        scrollbar.setScrollBarSize(Math.min(100, 1500F / (VIEW_HEIGHT + 4)));
+        scrollbar.setScrollBarSize(Math.min(100, 1500F / FRAME_HEIGHT));
         scrollbar.scrollerStyle(style -> style.scrollDelta(maximumScroll == 0 ? 1F : (float) ROW_HEIGHT / maximumScroll));
         scrollbar.setNormalizedValue(value, false);
     }
@@ -324,8 +332,8 @@ public final class TerminalMaintenanceUi {
         private Row(int index) {
             this.index = index;
             lower = amountField(index + "_lower", 31);
-            upper = amountField(index + "_upper", 80);
-            batch = amountField(index + "_batch", 129);
+            upper = amountField(index + "_upper", 31 + AMOUNT_STEP);
+            batch = amountField(index + "_batch", 31 + 2 * AMOUNT_STEP);
             enabled = new TerminalActionButton();
             enabled.setId(index + "_enabled");
             enabled.noText().addClass("terminal-maintenance-toggle");
@@ -335,7 +343,7 @@ public final class TerminalMaintenanceUi {
             enabledGlyph.setAllowHitTest(false);
             enabled.addChild(enabledGlyph);
             enabled.glyph(enabledGlyph, 0);
-            remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", 193, 4, 14, 14);
+            remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", VIEW_WIDTH - 15, 4, 14, 14);
             root.addClass("terminal-maintenance-row");
             status.addClass("terminal-maintenance-status");
             status.addClass("status-free");
@@ -366,8 +374,7 @@ public final class TerminalMaintenanceUi {
             });
             TerminalUiLayout.at(status, 3, 2, 6, 18);
             TerminalUiLayout.at(resource, 10, 2, 18, 18);
-            TerminalUiLayout.at(enabled, 177, 4, 14, 14);
-            TerminalUiLayout.at(remove, 193, 4, 14, 14);
+            TerminalUiLayout.at(enabled, VIEW_WIDTH - 31, 4, 14, 14);
             root.addChildren(status, resource, lower, upper, batch, enabled, remove);
         }
 
@@ -390,7 +397,7 @@ public final class TerminalMaintenanceUi {
         }
 
         private TextField amountField(String id, int left) {
-            TextField field = TerminalUiLayout.at(new TextField(), left, 4, 44, 14);
+            TextField field = TerminalUiLayout.at(new TextField(), left, 4, AMOUNT_WIDTH, 14);
             field.layout(layout -> layout.paddingLeft(2).paddingRight(2));
             field.setId(id);
             field.addClass("terminal-field");

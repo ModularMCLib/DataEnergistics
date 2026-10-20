@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.crafting.TerminalCraftingRecipesUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.maintenance.TerminalMaintenanceUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.settings.TerminalSettingsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
@@ -272,7 +273,7 @@ public final class TerminalUiLayout {
     public static int popupWidth(String name) {
         return switch (name) {
             case "magnet" -> 200;
-            case "maintenance" -> 230;
+            case "maintenance" -> TerminalMaintenanceUi.WIDTH;
             case "settings" -> TerminalSettingsUi.WIDTH;
             case "upload" -> PatternUploadUi.MIN_WIDTH;
             case "quantity", "filters" -> 176;

@@ -44,7 +44,7 @@ import java.util.function.BiConsumer;
 @NullMarked
 public final class TerminalMaintenanceUi {
 
-    private static final int ROW_HEIGHT = 22;
+    private static final int ROW_HEIGHT = 19;
     private static final int VIEW_TOP = 22;
     private static final int VIEW_HEIGHT = 176;
     private static final int VIEW_WIDTH = 180;
@@ -102,7 +102,7 @@ public final class TerminalMaintenanceUi {
         scrollbar.setOnValueChanged(value -> content.layout(layout -> layout.top(-Math.round(value * maximumScroll))));
         addRow.addClass("terminal-maintenance-row");
         addRow.addClass("terminal-maintenance-add-row");
-        TerminalUiLayout.at(addButton, 0, 2, VIEW_WIDTH, 18);
+        TerminalUiLayout.at(addButton, 0, 0, VIEW_WIDTH, 18);
         TerminalUiLayout.at(addRow, 0, 0, VIEW_WIDTH, ROW_HEIGHT);
         addRow.addChild(addButton);
         TerminalUiLayout.at(content, 0, 0, VIEW_WIDTH, ROW_HEIGHT);
@@ -320,7 +320,7 @@ public final class TerminalMaintenanceUi {
         private final int index;
         private final UIElement root = TerminalUiLayout.at(new UIElement(), 0, 0, VIEW_WIDTH, ROW_HEIGHT);
         private final UIElement status = TerminalUiLayout.at(new UIElement(), 0, 0, 6, 18);
-        private final TerminalResourceCell resource = TerminalUiLayout.at(new TerminalResourceCell(), 10, 2, 18, 18);
+        private final TerminalResourceCell resource = TerminalUiLayout.at(new TerminalResourceCell(), 10, 0, 18, 18);
         private final TextField lower;
         private final TextField upper;
         private final TextField batch;
@@ -343,7 +343,7 @@ public final class TerminalMaintenanceUi {
             enabledGlyph.setAllowHitTest(false);
             enabled.addChild(enabledGlyph);
             enabled.glyph(enabledGlyph, 0);
-            remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", VIEW_WIDTH - 15, 4, 14, 14);
+            remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", VIEW_WIDTH - 15, 2, 14, 14);
             root.addClass("terminal-maintenance-row");
             status.addClass("terminal-maintenance-status");
             status.addClass("status-free");
@@ -372,9 +372,9 @@ public final class TerminalMaintenanceUi {
             remove.setOnClick(event -> {
                 if (event.button == 0) request.accept("maintenance_delete", index(index));
             });
-            TerminalUiLayout.at(status, 3, 2, 6, 18);
-            TerminalUiLayout.at(resource, 10, 2, 18, 18);
-            TerminalUiLayout.at(enabled, VIEW_WIDTH - 31, 4, 14, 14);
+            TerminalUiLayout.at(status, 3, 0, 6, 18);
+            TerminalUiLayout.at(resource, 10, 0, 18, 18);
+            TerminalUiLayout.at(enabled, VIEW_WIDTH - 31, 2, 14, 14);
             root.addChildren(status, resource, lower, upper, batch, enabled, remove);
         }
 
@@ -397,7 +397,7 @@ public final class TerminalMaintenanceUi {
         }
 
         private TextField amountField(String id, int left) {
-            TextField field = TerminalUiLayout.at(new TextField(), left, 4, AMOUNT_WIDTH, 14);
+            TextField field = TerminalUiLayout.at(new TextField(), left, 2, AMOUNT_WIDTH, 14);
             field.layout(layout -> layout.paddingLeft(2).paddingRight(2));
             field.setId(id);
             field.addClass("terminal-field");

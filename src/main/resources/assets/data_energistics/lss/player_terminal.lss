@@ -1,5 +1,5 @@
 /* Java owns pixel geometry; this sheet owns the supplied surfaces, glyphs and states. */
-.terminal-root, .terminal-window, .terminal-sidebar, .terminal-glyph { background: #00000000; }
+.terminal-root, .terminal-window, .terminal-sidebar, .terminal-glyph, .terminal-tab-join { background: #00000000; }
 .terminal-panel { background: group(#FFCBCCD4, border(1, #FF413F54), border(-1, #FFF0F0F3)); }
 .sidebar-top { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_0.png); }
 .sidebar-middle { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_1.png); }
@@ -50,6 +50,9 @@
 }
 .terminal-tab.selected {
     base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+}
+.terminal-tab.selected .terminal-tab-join {
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 0, 0, 2, 14);
 }
 .terminal-storage-scroll .__scroller_scroll_container__ { background: #00000000; }
 .scroll-rail { background: #FFCBCCD4; }

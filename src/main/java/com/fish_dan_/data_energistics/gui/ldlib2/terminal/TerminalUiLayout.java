@@ -76,10 +76,17 @@ public final class TerminalUiLayout {
                 at(storageScrollbar(), storageScrollLeft(width), 18, STORAGE_SCROLL_WIDTH, 148),
                 at(element("workspaces", "terminal-pages"), width - TerminalViewportLayout.TAB_WIDTH - operationWidth(TerminalWorkspace.CRAFTING) + 1, 108,
                         operationWidth(TerminalWorkspace.CRAFTING), 58));
-        // The texture's first two columns belong to the adjoining frame; LSS crops that shared edge.
+        // Selected tabs restore the texture's shared edge to open a connection through the panel outline.
         UIElement tabs = at(element("tabs", "terminal-tabs"), width - TerminalViewportLayout.TAB_WIDTH, 97, TerminalViewportLayout.TAB_WIDTH, 70);
-        for (TerminalWorkspace mode : TerminalWorkspace.values())
-            tabs.addChild(icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14));
+        tabs.setOverflowVisible(true);
+        for (TerminalWorkspace mode : TerminalWorkspace.values()) {
+            Button tab = icon("tab_" + mode.id(), "terminal-tab", "icon-" + mode.id(), 0, mode.ordinal() * 14, TerminalViewportLayout.TAB_WIDTH, 14);
+            tab.setOverflowVisible(true);
+            UIElement join = at(element("tab_" + mode.id() + "_join", "terminal-tab-join"), -2, 0, 2, 14);
+            join.setAllowHitTest(false);
+            tab.addChild(join);
+            tabs.addChild(tab);
+        }
         window.addChildren(tabs, icon("resize", "terminal-resize", "icon-resize", width - TerminalViewportLayout.TAB_WIDTH - 5, 163, 4, 4));
         root.addChild(window);
         return UI.of(root, ObjectImmutableList.of(stylesheet()));

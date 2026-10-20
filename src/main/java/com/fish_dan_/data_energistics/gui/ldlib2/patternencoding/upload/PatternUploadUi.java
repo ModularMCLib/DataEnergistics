@@ -118,7 +118,7 @@ public final class PatternUploadUi {
         boolean showHint = width >= 160;
         int searchWidth = showHint ? width - 92 : width - 33;
         status.setDisplay(showHint);
-        TerminalUiLayout.at(search, 28, 22, searchWidth, 14);
+        TerminalUiLayout.searchFieldAt(search, 28, 22, searchWidth, 14);
         TerminalUiLayout.at(status, searchWidth + 31, 20, 56, 18);
         TerminalUiLayout.at(list, 5, 42, rowWidth + 10, listHeight);
         TerminalUiLayout.at(viewport, 0, 0, rowWidth, listHeight);

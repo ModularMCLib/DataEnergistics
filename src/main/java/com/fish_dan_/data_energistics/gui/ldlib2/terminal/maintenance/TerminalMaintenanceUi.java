@@ -102,7 +102,7 @@ public final class TerminalMaintenanceUi {
             if (event.button == 0) request.accept("maintenance_add", new CompoundTag());
         });
         TerminalUiLayout.at(frame, 5, 20, 220, 180);
-        TerminalUiLayout.at(search, 56, 4, 155, 14);
+        TerminalUiLayout.searchFieldAt(search, 56, 4, 155, 14);
         TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
         TerminalUiLayout.at(scrollbar, 216, VIEW_TOP, 6, VIEW_HEIGHT);
         root.addChildren(frame, search, viewport, scrollbar);

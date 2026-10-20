@@ -77,7 +77,7 @@ public final class TerminalUiLayout {
             sidebar.addChild(icon(id, "terminal-small", "icon-" + id, 3, 3 + index * 12, 10, 10));
         }
         window.addChild(sidebar);
-        window.addChildren(at(field("search"), searchLeft(width),
+        window.addChildren(searchFieldAt(field("search"), searchLeft(width),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12),
                 at(searchTitle, Math.max(0, searchTitleLeft(width)), 3, SEARCH_TITLE_WIDTH, 12),
                 icon("drag", "terminal-drag", "icon-drag", encodingCenter - ACTION_BUTTON_SIZE / 2, 2, ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE),
@@ -210,8 +210,10 @@ public final class TerminalUiLayout {
         int panelWidth = viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12;
         int encodingCenter = viewport.width() - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.ENCODING_WIDTH / 2;
         atWithin(require(window, "panel", UIElement.class), 12, 0, panelWidth, viewport.height(), viewport.width(), viewport.height());
-        atWithin(require(window, "search", UIElement.class), searchLeft(viewport.width()),
+        TextField search = require(window, "search", TextField.class);
+        atWithin(search, searchLeft(viewport.width()),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12, viewport.width(), viewport.height());
+        searchFieldInsets(search);
         Label searchTitle = require(window, "player_terminal_title", Label.class);
         searchTitle.setVisible(canShowSearchTitle(viewport.width()));
         atWithin(searchTitle, Math.max(0, searchTitleLeft(viewport.width())), 3,
@@ -281,6 +283,17 @@ public final class TerminalUiLayout {
     public static <T extends UIElement> T at(T element, int x, int y, int width, int height) {
         element.layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE).left(x).top(y).width(width).height(height).paddingAll(0).flexShrink(0));
         return element;
+    }
+
+    public static <T extends TextField> T searchFieldAt(T element, int x, int y, int width, int height) {
+        at(element, x, y, width, height);
+        searchFieldInsets(element);
+        return element;
+    }
+
+    private static void searchFieldInsets(TextField element) {
+        // Keep the white border clear and reserve room for the scaled underscore caret.
+        element.layout(layout -> layout.paddingLeft(2).paddingRight(7).paddingTop(2).paddingBottom(2));
     }
 
     private static <T extends UIElement> T atWithin(T element, int x, int y, int width, int height, int parentWidth, int parentHeight) {

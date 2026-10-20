@@ -7,6 +7,8 @@ import com.lowdragmc.lowdraglib2.utils.TextUtilities;
 
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Tuple;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.jspecify.annotations.NullMarked;
@@ -16,6 +18,7 @@ import org.jspecify.annotations.NullMarked;
 public final class TerminalSearchField extends TextField {
 
     private static final int PLACEHOLDER_COLOR = 0xFFF2F2F2;
+    private static final Tuple<FormattedCharSequence, Float> EMPTY_LINE = new Tuple<>(FormattedCharSequence.EMPTY, 0F);
     private long focusedTime;
 
     public TerminalSearchField() {
@@ -28,14 +31,24 @@ public final class TerminalSearchField extends TextField {
     }
 
     @Override
+    public Tuple<FormattedCharSequence, Float> getFormattedLine() {
+        // LDLib2 caches the placeholder with the text; focus must hide it without changing the search value.
+        return isFocused() && getRawText().isEmpty() ? EMPTY_LINE : super.getFormattedLine();
+    }
+
+    @Override
     public void drawBackgroundAdditional(GUIContext context) {
-        super.drawBackgroundAdditional(context);
-        if (!isFocused() || (Util.getMillis() - focusedTime) / 300 % 2 != 0) return;
         var font = getFont();
         var style = getTextFieldStyle();
+        float textY = getContentY() + (getContentHeight() - style.fontSize()) / 2;
+        float lineY = Math.round(textY);
+        context.pose.pushPose();
+        context.pose.translate(0, lineY - textY, 0);
+        super.drawBackgroundAdditional(context);
+        context.pose.popPose();
+        if (!isFocused() || (Util.getMillis() - focusedTime) / 300 % 2 != 0) return;
         float scale = style.fontSize() / font.lineHeight;
         float cursorX = getContentX() + font.getSplitter().stringWidth(TextUtilities.truncateStyled(getStyledLine(), getCursorPos())) * scale - getDisplayOffset();
-        float lineY = getContentY() + (getContentHeight() - style.fontSize()) / 2;
         context.graphics.flush();
         RenderSystem.depthMask(false);
         context.pose.pushPose();

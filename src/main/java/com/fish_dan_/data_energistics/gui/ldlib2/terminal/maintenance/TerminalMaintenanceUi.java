@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.terminal.maintenance;
 
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
@@ -29,6 +30,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 
 /**
@@ -38,14 +40,22 @@ import java.util.function.BiConsumer;
 public final class TerminalMaintenanceUi {
 
     private static final int ROW_HEIGHT = 22;
-    private static final int VIEW_TOP = 23;
-    private static final int VIEW_HEIGHT = 104;
-    private static final int VIEW_WIDTH = 207;
+    private static final int VIEW_TOP = 46;
+    private static final int VIEW_HEIGHT = 90;
+    private static final int VIEW_WIDTH = 210;
+    private static final int[] COLUMN_DIVIDERS = { 14, 35, 80, 125, 170, 192 };
     private final UIElement content = new UIElement();
+    private final UIElement frame = new UIElement();
+    private final UIElement columns = new UIElement();
+    private final UIElement viewport = new UIElement();
+    private final UIElement addRow = new UIElement();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
+    private final TextField search = new TerminalSearchField();
+    private final Button addButton = TerminalUiLayout.icon("maintenance_add", "terminal-maintenance-add", "icon-maintenance-add", 0, 0, 14, 14);
     private final HolderLookup.Provider registries;
     private final BiConsumer<String, CompoundTag> request;
     private final ObjectList<Row> rows = new ObjectArrayList<>();
+    private final ObjectList<Row> visibleRows = new ObjectArrayList<>();
     private CompoundTag previous = new CompoundTag();
     private int selectedDelete = -1;
     private int maximumScroll;
@@ -53,10 +63,25 @@ public final class TerminalMaintenanceUi {
     public TerminalMaintenanceUi(UIElement root, HolderLookup.Provider registries, BiConsumer<String, CompoundTag> request) {
         this.registries = registries;
         this.request = request;
-        UIElement viewport = new UIElement();
-        Button add = TerminalUiLayout.icon("maintenance_add", "terminal-maintenance-add", "icon-maintenance-add", 106, 136, 14, 14);
+        frame.addClass("terminal-maintenance-frame");
+        frame.setAllowHitTest(false);
+        columns.addClass("terminal-maintenance-columns");
+        columns.setAllowHitTest(false);
         viewport.setOverflowVisible(false);
         viewport.addChild(content);
+        search.addClass("terminal-field");
+        search.addClass("terminal-search-field");
+        search.addClass("terminal-maintenance-search");
+        search.setText("", false);
+        search.textFieldStyle(style -> style.placeholder(text("search")));
+        search.setTextResponder(value -> applyFilter(true));
+        search.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            if (event.button == 1) {
+                search.setText("");
+                search.focus();
+                event.stopPropagation();
+            }
+        });
         viewport.addEventListener(UIEvents.MOUSE_WHEEL, event -> {
             if (maximumScroll > 0)
                 scrollbar.setNormalizedValue(scrollbar.getNormalizedValue() + (event.deltaY > 0 ? -1F : 1F) * ROW_HEIGHT / maximumScroll);
@@ -66,14 +91,27 @@ public final class TerminalMaintenanceUi {
         scrollbar.setRange(0, 1);
         scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("maintenance_rail"), 0);
         scrollbar.setOnValueChanged(value -> content.layout(layout -> layout.top(-Math.round(value * maximumScroll))));
-        root.addChildren(header("maintenance_lower", 37), header("maintenance_upper", 82), header("maintenance_batch", 127));
-        TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
-        TerminalUiLayout.at(scrollbar, 216, VIEW_TOP, 6, VIEW_HEIGHT);
-        root.addChildren(viewport, scrollbar, add);
-        add.style(style -> style.tooltips(TerminalTooltipLines.split(text("maintenance_add"))));
-        add.setOnClick(event -> {
+        addRow.addClass("terminal-maintenance-row");
+        addRow.addClass("terminal-maintenance-add-row");
+        TerminalUiLayout.at(addButton, 98, 4, 14, 14);
+        TerminalUiLayout.at(addRow, 0, 0, VIEW_WIDTH, ROW_HEIGHT);
+        addRow.addChild(addButton);
+        TerminalUiLayout.at(content, 0, 0, VIEW_WIDTH, ROW_HEIGHT);
+        content.addChild(addRow);
+        addButton.style(style -> style.tooltips(TerminalTooltipLines.split(text("maintenance_add"))));
+        addButton.setOnClick(event -> {
             if (event.button == 0) request.accept("maintenance_add", new CompoundTag());
         });
+        columns.addChildren(header("maintenance_col_status", 1, 13), header("maintenance_col_resource", 15, 18),
+                header("maintenance_col_lower", 37, 43), header("maintenance_col_upper", 82, 43),
+                header("maintenance_col_batch", 127, 43), header("maintenance_col_enabled", 171, 21),
+                header("maintenance_col_delete", 193, 17));
+        TerminalUiLayout.at(frame, 5, 45, 220, 92);
+        TerminalUiLayout.at(columns, 5, 34, 220, 11);
+        TerminalUiLayout.at(search, 6, 18, 216, 14);
+        TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
+        TerminalUiLayout.at(scrollbar, 216, VIEW_TOP, 6, VIEW_HEIGHT);
+        root.addChildren(frame, columns, search, viewport, scrollbar);
     }
 
     public void refresh(CompoundTag value, int deleteSelection) {
@@ -82,13 +120,6 @@ public final class TerminalMaintenanceUi {
         previous = value.copy();
         selectedDelete = deleteSelection;
         if (rows.size() != values.size()) rebuild(values.size());
-        int contentHeight = rows.size() * ROW_HEIGHT;
-        maximumScroll = Math.max(0, contentHeight - VIEW_HEIGHT);
-        TerminalUiLayout.at(content, 0, -Math.round(scrollbar.getNormalizedValue() * maximumScroll), VIEW_WIDTH, contentHeight);
-        scrollbar.setDisplay(maximumScroll > 0);
-        scrollbar.setScrollBarSize(Math.min(100, 1500F / VIEW_HEIGHT));
-        scrollbar.scrollerStyle(style -> style.scrollDelta(maximumScroll == 0 ? 1F : (float) ROW_HEIGHT / maximumScroll));
-        scrollbar.setNormalizedValue(scrollbar.getNormalizedValue(), false);
 
         for (int index = 0; index < rows.size(); index++) {
             CompoundTag entry = values.getCompound(index);
@@ -123,23 +154,57 @@ public final class TerminalMaintenanceUi {
             String deleteTooltip = index == selectedDelete ? "maintenance_delete_confirm" : "maintenance_delete";
             row.remove.style(style -> style.tooltips(TerminalTooltipLines.split(text(deleteTooltip))));
         }
+        applyFilter(false);
     }
 
     public ObjectList<TerminalResourceCell> resourceCells() {
-        ObjectList<TerminalResourceCell> cells = new ObjectArrayList<>(rows.size());
-        for (Row row : rows) cells.add(row.resource);
+        ObjectList<TerminalResourceCell> cells = new ObjectArrayList<>(visibleRows.size());
+        for (Row row : visibleRows) cells.add(row.resource);
         return cells;
     }
 
     private void rebuild(int size) {
         content.clearAllChildren();
         rows.clear();
+        visibleRows.clear();
         for (int index = 0; index < size; index++) {
             Row row = new Row(index);
             TerminalUiLayout.at(row.root, 0, index * ROW_HEIGHT, VIEW_WIDTH, ROW_HEIGHT);
             rows.add(row);
             content.addChild(row.root);
         }
+        content.addChild(addRow);
+    }
+
+    private void applyFilter(boolean resetScroll) {
+        visibleRows.clear();
+        String query = search.getValue().trim().toLowerCase(Locale.ROOT);
+        for (Row row : rows) {
+            boolean visible = matches(row.key, query);
+            row.root.setVisible(visible);
+            if (visible) visibleRows.add(row);
+        }
+        int contentHeight = (visibleRows.size() + 1) * ROW_HEIGHT;
+        for (int index = 0; index < visibleRows.size(); index++)
+            TerminalUiLayout.at(visibleRows.get(index).root, 0, index * ROW_HEIGHT, VIEW_WIDTH, ROW_HEIGHT);
+        TerminalUiLayout.at(addRow, 0, visibleRows.size() * ROW_HEIGHT, VIEW_WIDTH, ROW_HEIGHT);
+        maximumScroll = Math.max(0, contentHeight - VIEW_HEIGHT);
+        float value = maximumScroll == 0 || resetScroll ? 0 : scrollbar.getNormalizedValue();
+        TerminalUiLayout.at(content, 0, -Math.round(value * maximumScroll), VIEW_WIDTH, contentHeight);
+        scrollbar.setDisplay(true);
+        scrollbar.setActive(maximumScroll > 0);
+        if (maximumScroll == 0) scrollbar.addClass("inactive-scroll");
+        else scrollbar.removeClass("inactive-scroll");
+        scrollbar.setScrollBarSize(Math.min(100, 1500F / VIEW_HEIGHT));
+        scrollbar.scrollerStyle(style -> style.scrollDelta(maximumScroll == 0 ? 1F : (float) ROW_HEIGHT / maximumScroll));
+        scrollbar.setNormalizedValue(value, false);
+    }
+
+    private static boolean matches(@Nullable AEKey key, String query) {
+        if (query.isEmpty()) return true;
+        if (key == null) return false;
+        return key.getDisplayName().getString().toLowerCase(Locale.ROOT).contains(query) ||
+                key.toString().toLowerCase(Locale.ROOT).contains(query);
     }
 
     private void set(TextField field, long amount, @Nullable AEKey key) {
@@ -188,13 +253,13 @@ public final class TerminalMaintenanceUi {
         return Component.translatable("gui.data_energistics.player_terminal." + key, arguments);
     }
 
-    private static Label header(String key, int left) {
+    private static Label header(String key, int left, int width) {
         Label label = new Label();
         label.addClass("terminal-maintenance-header");
         label.setText(text(key));
         label.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
         label.setAllowHitTest(false);
-        return TerminalUiLayout.at(label, left, 17, 43, 7);
+        return TerminalUiLayout.at(label, left, 0, width, 11);
     }
 
     private static CompoundTag index(int index) {
@@ -255,6 +320,13 @@ public final class TerminalMaintenanceUi {
             TerminalUiLayout.at(resource, 15, 1, 18, 18);
             TerminalUiLayout.at(enabled, 174, 3, 14, 14);
             TerminalUiLayout.at(remove, 195, 3, 14, 14);
+            for (int boundary : COLUMN_DIVIDERS) {
+                UIElement divider = new UIElement();
+                divider.addClass("terminal-maintenance-divider");
+                divider.setAllowHitTest(false);
+                TerminalUiLayout.at(divider, boundary, 1, 1, ROW_HEIGHT - 2);
+                root.addChild(divider);
+            }
             root.addChildren(status, resource, lower, upper, batch, enabled, remove);
         }
 

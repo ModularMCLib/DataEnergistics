@@ -252,6 +252,12 @@ public final class TerminalOverlayClient {
         return current != null && !current.suspended && current.screen == screen ? current.exclusions : ObjectImmutableList.of();
     }
 
+    /** Keeps native host previews intact while applying the terminal's own drag distribution, on the render thread. */
+    public static ItemStack carriedPreview(Screen screen, ItemStack carried) {
+        InputTarget target = active(screen);
+        return target == null ? carried : target.composition.carriedPreview(carried);
+    }
+
     /** Recipe viewers must resolve foreground overlay ingredients before consulting the host's slots. */
     public static boolean contains(Screen screen, double mouseX, double mouseY) {
         InputTarget target = active(screen);
@@ -488,17 +494,12 @@ public final class TerminalOverlayClient {
         try {
             overlay.modularUi.getWidget().mouseMoved(event.getMouseX(), event.getMouseY());
             overlay.modularUi.getWidget().render(event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick());
-            if (overlay.composition.contains(event.getMouseX(), event.getMouseY()) && !overlay.menu.getCarried().isEmpty()) {
-                ItemStack carried = overlay.composition.carriedPreview(overlay.menu.getCarried());
-                event.getGuiGraphics().renderItem(carried, event.getMouseX() - 8, event.getMouseY() - 8);
-                event.getGuiGraphics().renderItemDecorations(Minecraft.getInstance().font, carried, event.getMouseX() - 8, event.getMouseY() - 8);
-            }
             if (overlay.viewerGhostHighlights != null) {
                 event.getGuiGraphics().flush();
                 pose.translate(0, 0, 1000);
                 overlay.viewerGhostHighlights.accept(event.getGuiGraphics());
                 event.getGuiGraphics().flush();
-                if (overlay.viewerDragCursor != null && overlay.composition.contains(event.getMouseX(), event.getMouseY()))
+                if (overlay.viewerDragCursor != null)
                     overlay.viewerDragCursor.accept(event.getGuiGraphics());
             }
         } finally {

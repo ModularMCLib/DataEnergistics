@@ -124,16 +124,6 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         if (upload == null || upload.window == null || !upload.window.visible()) return;
         var graphics = event.getGuiGraphics();
         upload.window.render(graphics, event.getMouseX(), event.getMouseY(), event.getPartialTick());
-        if (upload.window.contains(event.getMouseX(), event.getMouseY()) && !upload.menu.getCarried().isEmpty()) {
-            graphics.pose().pushPose();
-            try {
-                graphics.pose().translate(0, 0, 1000);
-                graphics.renderItem(upload.menu.getCarried(), event.getMouseX() - 8, event.getMouseY() - 8);
-                graphics.renderItemDecorations(Minecraft.getInstance().font, upload.menu.getCarried(), event.getMouseX() - 8, event.getMouseY() - 8);
-            } finally {
-                graphics.pose().popPose();
-            }
-        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.client.render.orbital.OrbitalWorldProjecti
 import com.fish_dan_.data_energistics.client.research.ResearchClientEvents;
 import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingUploadClient;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 
@@ -25,6 +26,7 @@ final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.register(new ResearchClientEvents());
         NeoForge.EVENT_BUS.register(TerminalOverlayClient.class);
         NeoForge.EVENT_BUS.register(PatternEncodingUploadClient.class);
+        NeoForge.EVENT_BUS.register(TerminalCarriedItemRenderer.class);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMovementInputUpdate);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onInteractionKeyTriggered);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseButtonPre);

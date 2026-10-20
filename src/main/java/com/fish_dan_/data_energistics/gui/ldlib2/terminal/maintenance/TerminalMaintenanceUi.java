@@ -47,7 +47,7 @@ public final class TerminalMaintenanceUi {
     private static final int ROW_HEIGHT = 22;
     private static final int VIEW_TOP = 22;
     private static final int VIEW_HEIGHT = 176;
-    private static final int VIEW_WIDTH = 210;
+    private static final int VIEW_WIDTH = 208;
     private final UIElement content = new UIElement();
     private final UIElement frame = new UIElement();
     private final UIElement viewport = new UIElement();
@@ -103,10 +103,10 @@ public final class TerminalMaintenanceUi {
         addButton.setOnClick(event -> {
             if (event.button == 0) request.accept("maintenance_add", new CompoundTag());
         });
-        TerminalUiLayout.at(frame, 5, 20, VIEW_WIDTH + 2, 180);
+        TerminalUiLayout.at(frame, 5, VIEW_TOP - 2, VIEW_WIDTH + 2, VIEW_HEIGHT + 4);
         TerminalUiLayout.searchFieldAt(search, 56, 4, 155, 14);
         TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
-        TerminalUiLayout.at(scrollbar, 219, VIEW_TOP, 6, VIEW_HEIGHT);
+        TerminalUiLayout.at(scrollbar, 219, VIEW_TOP - 2, 6, VIEW_HEIGHT + 4);
         root.addChildren(frame, search, viewport, scrollbar);
     }
 
@@ -189,7 +189,7 @@ public final class TerminalMaintenanceUi {
         scrollbar.setActive(maximumScroll > 0);
         if (maximumScroll == 0) scrollbar.addClass("inactive-scroll");
         else scrollbar.removeClass("inactive-scroll");
-        scrollbar.setScrollBarSize(Math.min(100, 1500F / VIEW_HEIGHT));
+        scrollbar.setScrollBarSize(Math.min(100, 1500F / (VIEW_HEIGHT + 4)));
         scrollbar.scrollerStyle(style -> style.scrollDelta(maximumScroll == 0 ? 1F : (float) ROW_HEIGHT / maximumScroll));
         scrollbar.setNormalizedValue(value, false);
     }

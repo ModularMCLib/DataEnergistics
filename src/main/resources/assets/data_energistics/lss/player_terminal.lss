@@ -79,6 +79,8 @@
     hover-background: group(#669CD3FF scale(0.8888889), border(-1, #FFDAFFFF));
     pressed-background: group(#669CD3FF scale(0.8888889), border(-1, #FFDAFFFF));
 }
+/* Color overlays ignore depth: draw the hovered cell after neighboring cells and their shared edges. */
+.terminal-cell:hover { z-index: 1; }
 .terminal-grid-edge { background: #FFF2F2F2; }
 .blank-pattern .terminal-cell, .encoded-pattern .terminal-cell, .terminal-upload-pattern {
     background: sprite(ae2:textures/guis/pattern.png, 146, 85, 18, 18);

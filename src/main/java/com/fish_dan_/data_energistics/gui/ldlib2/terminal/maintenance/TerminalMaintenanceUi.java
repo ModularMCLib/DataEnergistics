@@ -259,7 +259,7 @@ public final class TerminalMaintenanceUi {
                 lines.add(text("maintenance_status_desc." + status).copy().withStyle(ChatFormatting.GRAY));
             }
         } else {
-            lines.add(text("maintenance_status." + row.statusId));
+            lines.add(text("maintenance_status." + row.statusId).copy().withStyle(statusColor(row.statusId)));
             lines.add(text("maintenance_status_desc." + row.statusId).copy().withStyle(ChatFormatting.GRAY));
         }
         event.hoverTooltips = new HoverTooltips(ObjectList.of(TerminalTooltipLines.wrap(260, lines.toArray(Component[]::new))), null, null, null);
@@ -267,8 +267,8 @@ public final class TerminalMaintenanceUi {
 
     private static ChatFormatting statusColor(String status) {
         return switch (status) {
-            case "free" -> ChatFormatting.GREEN;
-            case "idle" -> ChatFormatting.DARK_GREEN;
+            case "free" -> ChatFormatting.DARK_GRAY;
+            case "idle" -> ChatFormatting.GREEN;
             case "lacking" -> ChatFormatting.RED;
             case "no_cpu" -> ChatFormatting.GOLD;
             case "synthesizing" -> ChatFormatting.YELLOW;

@@ -162,8 +162,8 @@
 .selected.terminal-maintenance-delete { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
 .icon-maintenance-add { background: sprite(data_energistics:textures/guis/states/top_surface/add.png); }
 .icon-maintenance-delete { background: sprite(data_energistics:textures/guis/states/top_surface/delete.png); }
-.status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/free.png); }
-.status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/idle.png); }
+.status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/idle.png); }
+.status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/free.png); }
 .status-lacking .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/lacking.png); }
 .status-no_cpu .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/no_cpu.png); }
 .status-synthesizing .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/synthesizing.png); }

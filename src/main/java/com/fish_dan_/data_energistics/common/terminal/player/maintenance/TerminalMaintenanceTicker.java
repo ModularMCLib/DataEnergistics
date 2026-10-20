@@ -44,7 +44,8 @@ public final class TerminalMaintenanceTicker {
         if (connection == null || !player.isAlive()) {
             for (Pending pending : calculations.values()) pending.calculation.cancel(true);
             calculations.clear();
-            for (TerminalMaintenanceEntry entry : entries) statuses.put(entry.id(), Status.FREE);
+            for (TerminalMaintenanceEntry entry : entries)
+                statuses.put(entry.id(), entry.enabled() && entry.resource() != null ? Status.LACKING : Status.FREE);
             return;
         }
         ObjectList<Pending> completed = new ObjectArrayList<>();
@@ -68,26 +69,29 @@ public final class TerminalMaintenanceTicker {
 
         var crafting = connection.grid().getCraftingService();
         var cpus = crafting.getCpus();
-        boolean idleCpu = cpus.stream().anyMatch(cpu -> !cpu.isBusy());
         for (TerminalMaintenanceEntry entry : entries) {
             UUID id = entry.id();
             AEKey key = entry.resource();
-            if (!entry.enabled() || key == null || entry.upper() == 0 || entry.lower() > entry.upper()) {
+            if (!entry.enabled() || key == null) {
                 statuses.put(id, Status.FREE);
                 continue;
             }
+            if (entry.upper() == 0) {
+                statuses.put(id, Status.IDLE);
+                continue;
+            }
+            if (entry.lower() > entry.upper()) {
+                statuses.put(id, Status.LACKING);
+                continue;
+            }
             if (calculating(key)) {
-                statuses.put(id, Status.SYNTHESIZING);
+                statuses.put(id, Status.IDLE);
                 continue;
             }
 
             long stored = connection.storage().getAvailableStacks().get(key);
             long inProgress = Math.max(crafting.getRequestedAmount(key), craftingAmount(cpus, key));
             long total = add(stored, inProgress);
-            if (crafting.isRequesting(key)) {
-                statuses.put(id, Status.EXPORTING);
-                continue;
-            }
             if (inProgress > 0) {
                 statuses.put(id, Status.SYNTHESIZING);
                 continue;
@@ -96,17 +100,12 @@ public final class TerminalMaintenanceTicker {
                 statuses.put(id, Status.IDLE);
                 continue;
             }
-            if (retryAt.getInt(id) > player.tickCount) continue;
             if (!crafting.isCraftable(key)) {
                 statuses.put(id, Status.LACKING);
                 retryAt.put(id, player.tickCount + RETRY_DELAY);
                 continue;
             }
-            if (!idleCpu) {
-                statuses.put(id, Status.NO_CPU);
-                retryAt.put(id, player.tickCount + RETRY_DELAY);
-                continue;
-            }
+            if (retryAt.getInt(id) > player.tickCount) continue;
 
             long amount = Math.min(entry.batch(), entry.upper() - total);
             if (amount <= 0) {
@@ -115,9 +114,9 @@ public final class TerminalMaintenanceTicker {
             }
             try {
                 Future<ICraftingPlan> calculation = crafting.beginCraftingCalculation(player.level(),
-                        connection::source, key, amount, CalculationStrategy.CRAFT_LESS);
+                        connection::source, key, amount, CalculationStrategy.REPORT_MISSING_ITEMS);
                 calculations.put(id, new Pending(entry, connection.grid(), connection.frequency(), amount, calculation));
-                statuses.put(id, Status.SYNTHESIZING);
+                statuses.put(id, Status.IDLE);
             } catch (RuntimeException failure) {
                 Data_Energistics.LOGGER.error("Cannot plan terminal stock maintenance for player {}, resource {}",
                         player.getUUID(), key, failure);
@@ -132,7 +131,9 @@ public final class TerminalMaintenanceTicker {
         ListTag entries = tag.getList("entries", Tag.TAG_COMPOUND);
         ObjectList<TerminalMaintenanceEntry> source = state.entries();
         for (int index = 0; index < entries.size(); index++) {
-            entries.getCompound(index).putString("status", statuses.getOrDefault(source.get(index).id(), Status.FREE).id);
+            TerminalMaintenanceEntry entry = source.get(index);
+            Status status = entry.enabled() && entry.resource() != null ? statuses.getOrDefault(entry.id(), Status.IDLE) : Status.FREE;
+            entries.getCompound(index).putString("status", status.id);
         }
         return tag;
     }
@@ -160,23 +161,28 @@ public final class TerminalMaintenanceTicker {
             return;
         }
         if (inProgress > 0) {
-            statuses.put(current.id(), crafting.isRequesting(key) ? Status.EXPORTING : Status.SYNTHESIZING);
+            statuses.put(current.id(), Status.SYNTHESIZING);
             return;
         }
         try {
             ICraftingPlan plan = pending.calculation.get();
-            if (plan.simulation()) {
-                statuses.put(current.id(), hasMissingItems(plan) ? Status.LACKING : Status.NO_CPU);
+            if (plan.simulation() || !plan.missingItems().isEmpty()) {
+                statuses.put(current.id(), Status.LACKING);
                 retryAt.put(current.id(), player.tickCount + RETRY_DELAY);
                 return;
             }
             var result = crafting.submitJob(plan, null, null, true, connection.source());
-            if (!result.successful()) {
-                statuses.put(current.id(), Status.NO_CPU);
-                retryAt.put(current.id(), player.tickCount + RETRY_DELAY);
-            } else {
-                statuses.put(current.id(), Status.SYNTHESIZING);
+            var error = result.errorCode();
+            Status status = switch (error) {
+                case null -> Status.SYNTHESIZING;
+                case NO_CPU_FOUND, NO_SUITABLE_CPU_FOUND, CPU_BUSY, CPU_OFFLINE, CPU_TOO_SMALL -> Status.NO_CPU;
+                case INCOMPLETE_PLAN, MISSING_INGREDIENT -> Status.LACKING;
+            };
+            statuses.put(current.id(), status);
+            if (error == null) {
                 retryAt.removeInt(current.id());
+            } else {
+                retryAt.put(current.id(), player.tickCount + RETRY_DELAY);
             }
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
@@ -206,10 +212,6 @@ public final class TerminalMaintenanceTicker {
                 amount = add(amount, status.crafting().amount());
         }
         return amount;
-    }
-
-    private static boolean hasMissingItems(ICraftingPlan plan) {
-        return !plan.missingItems().isEmpty();
     }
 
     private static long add(long first, long second) {

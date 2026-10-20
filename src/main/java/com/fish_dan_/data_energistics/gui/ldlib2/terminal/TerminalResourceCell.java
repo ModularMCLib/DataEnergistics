@@ -39,6 +39,7 @@ public final class TerminalResourceCell extends Button {
     private boolean craftable;
     private boolean configurable;
     private boolean storageCell;
+    private boolean craftableBadge;
     private boolean craftableOnly;
     private boolean encodedPattern;
     private @Nullable UIEventListener resourceClick;
@@ -88,6 +89,10 @@ public final class TerminalResourceCell extends Button {
 
     public void storageCell(boolean value) {
         storageCell = value;
+    }
+
+    public void craftableBadge(boolean value) {
+        craftableBadge = value;
     }
 
     public void craftableOnly(boolean value) {
@@ -167,8 +172,7 @@ public final class TerminalResourceCell extends Button {
             context.graphics.drawString(context.mc.font, amount, 32 - context.mc.font.width(amount), 0, 0xFFFFFFFF);
             context.pose.popPose();
         }
-        if (storageCell && craftable && !craftingLabel) {
-            context.pose.translate(0, 0, 200);
+        if ((storageCell || craftableBadge) && craftable && !craftingLabel) {
             StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -12, -12, "+", false);
         }
         context.pose.popPose();

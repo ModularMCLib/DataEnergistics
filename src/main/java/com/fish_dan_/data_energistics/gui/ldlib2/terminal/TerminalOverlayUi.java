@@ -527,6 +527,13 @@ public final class TerminalOverlayUi {
             element(active, "clear").style(style -> style.tooltips(TerminalTooltipLines.split(clearTooltip).toArray(Component[]::new)));
         }
         storageIndex.apply(value, registries);
+        if (workspace.equals("processing")) {
+            for (TerminalResourceCell cell : inputs) {
+                GenericStack stack = cell.stack();
+                TerminalStorageIndex.Entry entry = stack == null ? null : storageIndex.entry(stack.what());
+                cell.entry(stack, entry != null && entry.craftable());
+            }
+        }
         boolean pinsChanged = pinnedUi.apply(value.getCompound("pins"));
         if (pinnedUi.refreshAutomatic(storageIndex) || pinsChanged) geometry(screenWidth, screenHeight);
         view(false);
@@ -573,7 +580,10 @@ public final class TerminalOverlayUi {
                         ghost("inputs", index, event.button);
                     else slot("inputs", index, event.button);
                 });
-        for (TerminalResourceCell cell : inputs) cell.addClass("embedded-cell");
+        for (TerminalResourceCell cell : inputs) {
+            cell.addClass("embedded-cell");
+            cell.craftableBadge(mode == TerminalWorkspace.PROCESSING);
+        }
         if (mode == TerminalWorkspace.ANVIL) TerminalUiLayout.at(inputs.get(1), 36, 0, 18, 18);
         createCells(element(root, "outputs"), outputs,
                 mode == TerminalWorkspace.PROCESSING ? mode.patternOutputSlots() : 0, 1,

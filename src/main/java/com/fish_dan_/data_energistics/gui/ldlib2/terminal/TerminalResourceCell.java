@@ -39,7 +39,6 @@ public final class TerminalResourceCell extends Button {
     private boolean craftable;
     private boolean configurable;
     private boolean storageCell;
-    private boolean craftableBadge;
     private boolean craftableOnly;
     private boolean encodedPattern;
     private @Nullable UIEventListener resourceClick;
@@ -89,10 +88,6 @@ public final class TerminalResourceCell extends Button {
 
     public void storageCell(boolean value) {
         storageCell = value;
-    }
-
-    public void craftableBadge(boolean value) {
-        craftableBadge = value;
     }
 
     public void craftableOnly(boolean value) {
@@ -160,9 +155,12 @@ public final class TerminalResourceCell extends Button {
         if (display == null) return;
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
+        context.pose.pushPose();
         TerminalResourceDepth.flatten(context);
         if (dragPreview != null) context.graphics.fill(0, 0, 16, 16, 0x80FFFFFF);
         AEKeyRendering.drawInGui(context.mc, context.graphics, 0, 0, display.what());
+        context.pose.popPose();
+        TerminalResourceDepth.decorations(context);
         boolean craftingLabel = craftable && (craftableOnly || display.amount() <= 0);
         if (display.amount() != 1 || craftable) {
             String amount = craftingLabel ? "+" : display.what().formatAmount(display.amount(), AmountFormat.SLOT);
@@ -172,9 +170,8 @@ public final class TerminalResourceCell extends Button {
             context.graphics.drawString(context.mc.font, amount, 32 - context.mc.font.width(amount), 0, 0xFFFFFFFF);
             context.pose.popPose();
         }
-        if ((storageCell || craftableBadge) && craftable && !craftingLabel) {
-            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -12, -12, "+", false);
-        }
+        if (craftable && !craftingLabel)
+            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -11, -11, "+", false);
         context.pose.popPose();
     }
 

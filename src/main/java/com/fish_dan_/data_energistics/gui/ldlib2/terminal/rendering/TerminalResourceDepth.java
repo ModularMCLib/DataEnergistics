@@ -17,4 +17,10 @@ public final class TerminalResourceDepth {
         context.pose.scale(1, 1, 0.001F);
         context.graphics.pose().last().normal().set(normal);
     }
+
+    /** Lifts labels above native item geometry, retaining the four-unit spacing between floating windows. */
+    public static void decorations(GUIContext context) {
+        context.pose.translate(0, 0, 1);
+        flatten(context);
+    }
 }

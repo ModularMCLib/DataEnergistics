@@ -452,12 +452,15 @@ public final class TerminalOverlayUi {
             UIElement tab = element(window, "tab_" + entry.getKey());
             stateClass(tab, "selected", !preferences.folded && entry.getKey().equals(workspace));
         }
+        storageIndex.apply(value, registries);
         CompoundTag work = value.getCompound("work");
         ListTag realInputs = work.getList("items", Tag.TAG_COMPOUND);
         ListTag configuredInputs = work.getList("ghost_inputs", Tag.TAG_COMPOUND);
         for (int index = 0; index < inputs.size(); index++) {
             GenericStack actual = physical(realInputs.getCompound(index));
-            inputs.get(index).entry(actual != null ? actual : generic(configuredInputs.getCompound(index)), false);
+            GenericStack stack = actual != null ? actual : generic(configuredInputs.getCompound(index));
+            TerminalStorageIndex.Entry entry = stack == null ? null : storageIndex.entry(stack.what());
+            inputs.get(index).entry(stack, entry != null && entry.craftable());
             inputs.get(index).configurable(!workspace.equals("anvil") && actual == null);
         }
         setCells(outputs, work.getList("ghost_outputs", Tag.TAG_COMPOUND), true);
@@ -526,14 +529,6 @@ public final class TerminalOverlayUi {
             }
             element(active, "clear").style(style -> style.tooltips(TerminalTooltipLines.split(clearTooltip).toArray(Component[]::new)));
         }
-        storageIndex.apply(value, registries);
-        if (workspace.equals("processing")) {
-            for (TerminalResourceCell cell : inputs) {
-                GenericStack stack = cell.stack();
-                TerminalStorageIndex.Entry entry = stack == null ? null : storageIndex.entry(stack.what());
-                cell.entry(stack, entry != null && entry.craftable());
-            }
-        }
         boolean pinsChanged = pinnedUi.apply(value.getCompound("pins"));
         if (pinnedUi.refreshAutomatic(storageIndex) || pinsChanged) geometry(screenWidth, screenHeight);
         view(false);
@@ -580,10 +575,7 @@ public final class TerminalOverlayUi {
                         ghost("inputs", index, event.button);
                     else slot("inputs", index, event.button);
                 });
-        for (TerminalResourceCell cell : inputs) {
-            cell.addClass("embedded-cell");
-            cell.craftableBadge(mode == TerminalWorkspace.PROCESSING);
-        }
+        for (TerminalResourceCell cell : inputs) cell.addClass("embedded-cell");
         if (mode == TerminalWorkspace.ANVIL) TerminalUiLayout.at(inputs.get(1), 36, 0, 18, 18);
         createCells(element(root, "outputs"), outputs,
                 mode == TerminalWorkspace.PROCESSING ? mode.patternOutputSlots() : 0, 1,

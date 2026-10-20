@@ -71,17 +71,19 @@ public final class TerminalBlankPatternCell extends Button {
         super.drawBackgroundAdditional(context);
         context.pose.pushPose();
         context.pose.translate(getContentX() + 1, getContentY() + 1, 0);
-        TerminalResourceDepth.flatten(context);
         if (amount > 0) {
             var display = AEItems.BLANK_PATTERN.stack();
+            context.pose.pushPose();
+            TerminalResourceDepth.flatten(context);
             context.graphics.renderItem(display, 0, 0);
             context.graphics.renderItemDecorations(context.mc.font, display, 0, 0, "");
-            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, 0, 0, ReadableNumberConverter.format(amount, 4));
+            context.pose.popPose();
         } else Icon.BACKGROUND_ENCODED_PATTERN.getBlitter().dest(0, 0).blit(context.graphics);
-        if (craftable) {
-            context.pose.translate(0, 0, 200);
+        TerminalResourceDepth.decorations(context);
+        if (amount > 0)
+            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, 0, 0, ReadableNumberConverter.format(amount, 4));
+        if (craftable)
             StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -11, -11, "+", false);
-        }
         context.pose.popPose();
     }
 }

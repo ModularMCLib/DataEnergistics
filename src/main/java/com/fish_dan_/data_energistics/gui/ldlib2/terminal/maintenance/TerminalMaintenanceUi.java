@@ -68,7 +68,6 @@ public final class TerminalMaintenanceUi {
         viewport.addChild(content);
         search.addClass("terminal-field");
         search.addClass("terminal-search-field");
-        search.addClass("terminal-maintenance-search");
         search.setText("", false);
         search.textFieldStyle(style -> style.placeholder(TerminalSearchField.placeholder(text("search"))));
         search.setTextResponder(value -> applyFilter(true));

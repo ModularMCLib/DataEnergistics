@@ -73,14 +73,12 @@
 .terminal-cell {
     background: sprite(data_energistics:textures/guis/backpack/middle.png);
     base-background: #00000000;
-    hover-background: group(#6693FFDE, border(-1, #FF57E0BB));
-    pressed-background: #8893FFDE;
+    hover-background: group(#669CD3FF scale(0.8888889), border(-1, #FFDAFFFF));
+    pressed-background: group(#669CD3FF scale(0.8888889), border(-1, #FFDAFFFF));
 }
 .terminal-grid-edge { background: #FFF2F2F2; }
 .blank-pattern .terminal-cell, .encoded-pattern .terminal-cell, .terminal-upload-pattern {
     background: sprite(ae2:textures/guis/pattern.png, 146, 85, 18, 18);
-    hover-background: group(#669CD3FF, border(-1, #FFDAFFFF));
-    pressed-background: group(#669CD3FF, border(-1, #FFDAFFFF));
 }
 .terminal-cell.embedded-cell { background: #00000000; }
 .terminal-crafting-choice {

@@ -146,7 +146,7 @@ public final class TerminalResourceCell extends Button {
 
     @Override
     public void drawBackgroundAdditional(GUIContext context) {
-        super.drawBackgroundAdditional(context);
+        context.drawTexture(getButtonStyle().baseTexture(), getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
         if (encodedPattern) {
             drawEncodedPattern(context);
             return;
@@ -172,6 +172,20 @@ public final class TerminalResourceCell extends Button {
         }
         if (craftable && !craftingLabel)
             StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -11, -11, "+", false);
+        context.pose.popPose();
+    }
+
+    @Override
+    public void drawBackgroundOverlay(GUIContext context) {
+        super.drawBackgroundOverlay(context);
+        if (!isActive() || getState() == State.DEFAULT) return;
+        var texture = getState() == State.PRESSED ? getButtonStyle().pressedTexture() : getButtonStyle().hoverTexture();
+        context.graphics.flush();
+        context.pose.pushPose();
+        // Keep the highlight above slot contents and grid edges, within this floating window's depth range.
+        context.pose.translate(0, 0, 2);
+        context.drawTexture(texture, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
+        context.graphics.flush();
         context.pose.popPose();
     }
 

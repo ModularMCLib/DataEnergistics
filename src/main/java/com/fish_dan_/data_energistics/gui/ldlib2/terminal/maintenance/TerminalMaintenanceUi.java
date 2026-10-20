@@ -54,7 +54,7 @@ public final class TerminalMaintenanceUi {
     private final UIElement addRow = new UIElement();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
     private final TextField search = new TerminalSearchField();
-    private final Button addButton = TerminalUiLayout.icon("maintenance_add", "terminal-maintenance-add", "icon-maintenance-add", 0, 0, 14, 14);
+    private final Button addButton = TerminalUiLayout.icon("maintenance_add", "terminal-maintenance-add", "icon-maintenance-add", 0, 0, VIEW_WIDTH, 18);
     private final HolderLookup.Provider registries;
     private final BiConsumer<String, CompoundTag> request;
     private final ObjectList<Row> rows = new ObjectArrayList<>();
@@ -94,7 +94,7 @@ public final class TerminalMaintenanceUi {
         scrollbar.setOnValueChanged(value -> content.layout(layout -> layout.top(-Math.round(value * maximumScroll))));
         addRow.addClass("terminal-maintenance-row");
         addRow.addClass("terminal-maintenance-add-row");
-        TerminalUiLayout.at(addButton, 98, 4, 14, 14);
+        TerminalUiLayout.at(addButton, 0, 2, VIEW_WIDTH, 18);
         TerminalUiLayout.at(addRow, 0, 0, VIEW_WIDTH, ROW_HEIGHT);
         addRow.addChild(addButton);
         TerminalUiLayout.at(content, 0, 0, VIEW_WIDTH, ROW_HEIGHT);
@@ -103,10 +103,10 @@ public final class TerminalMaintenanceUi {
         addButton.setOnClick(event -> {
             if (event.button == 0) request.accept("maintenance_add", new CompoundTag());
         });
-        TerminalUiLayout.at(frame, 5, 20, 220, 180);
+        TerminalUiLayout.at(frame, 5, 20, VIEW_WIDTH + 2, 180);
         TerminalUiLayout.searchFieldAt(search, 56, 4, 155, 14);
         TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
-        TerminalUiLayout.at(scrollbar, 216, VIEW_TOP, 6, VIEW_HEIGHT);
+        TerminalUiLayout.at(scrollbar, 219, VIEW_TOP, 6, VIEW_HEIGHT);
         root.addChildren(frame, search, viewport, scrollbar);
     }
 
@@ -316,7 +316,7 @@ public final class TerminalMaintenanceUi {
         private final TextField lower;
         private final TextField upper;
         private final TextField batch;
-        private final Button enabled;
+        private final TerminalActionButton enabled;
         private final Button remove;
         private @Nullable AEKey key;
         private String statusId = "free";
@@ -329,6 +329,12 @@ public final class TerminalMaintenanceUi {
             enabled = new TerminalActionButton();
             enabled.setId(index + "_enabled");
             enabled.noText().addClass("terminal-maintenance-toggle");
+            UIElement enabledGlyph = TerminalUiLayout.at(new UIElement(), 0, 0, 14, 14);
+            enabledGlyph.addClass("terminal-glyph");
+            enabledGlyph.addClass("icon-maintenance-enabled");
+            enabledGlyph.setAllowHitTest(false);
+            enabled.addChild(enabledGlyph);
+            enabled.glyph(enabledGlyph, 0);
             remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", 193, 4, 14, 14);
             root.addClass("terminal-maintenance-row");
             status.addClass("terminal-maintenance-status");

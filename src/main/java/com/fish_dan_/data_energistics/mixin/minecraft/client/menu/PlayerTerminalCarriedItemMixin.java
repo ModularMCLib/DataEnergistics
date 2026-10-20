@@ -18,11 +18,12 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(AbstractContainerScreen.class)
 public abstract class PlayerTerminalCarriedItemMixin {
 
-    @WrapOperation(method = "render", at = @At(value = "INVOKE",
-                                             target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderFloatingItem(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
-                                             ordinal = 0))
+    @WrapOperation(method = "render",
+                   at = @At(value = "INVOKE",
+                            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderFloatingItem(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
+                            ordinal = 0))
     private void dataEnergistics$deferCarriedItem(AbstractContainerScreen<?> screen, GuiGraphics graphics, ItemStack stack, int x, int y,
-                                               @Nullable String text, Operation<Void> original) {
+                                                  @Nullable String text, Operation<Void> original) {
         if (!TerminalCarriedItemRenderer.defer(screen, graphics, stack, cursor -> original.call(screen, graphics, cursor, x, y, text)))
             original.call(screen, graphics, stack, x, y, text);
     }

@@ -191,7 +191,7 @@ public final class TerminalUiLayout {
         UIElement root = at(element(name + "_popup", "terminal-popup"), 0, 0, popupWidth(name), popupHeight(name));
         Label title = at(label("popup_title"), 7, 5, popupWidth(name) - 31, 10);
         title.addClass("terminal-popup-title");
-        root.addChildren(title, icon("close", "terminal-window-handle", "icon-close", popupWidth(name) - 17, 3, 14, 14));
+        root.addChildren(title, icon("close", "terminal-drag", "icon-drag", popupWidth(name) - 17, 3, 14, 14));
         return root;
     }
 

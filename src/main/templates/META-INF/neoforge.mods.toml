@@ -150,9 +150,9 @@ side = "BOTH"
 
 [[dependencies.${ mod_id }]]
 modId = "ae2wtlib"
-type = "optional"
+type = "required"
 versionRange = "[0,)"
-ordering = "NONE"
+ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]

@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.network.patternencoding;
+package com.fish_dan_.data_energistics.common.network.packets.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;

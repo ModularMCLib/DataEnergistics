@@ -22,6 +22,7 @@ import com.fish_dan_.data_energistics.blockentity.storage.MePatternBufferBlockEn
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
+import com.fish_dan_.data_energistics.common.network.packets.trinity.TrinityAutoBuildDefinitionBundleCodec;
 import com.fish_dan_.data_energistics.item.order.OrderPackageMenuHost;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.CannonCellMenuHost;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumMenuHost;
@@ -60,7 +61,6 @@ import com.fish_dan_.data_energistics.menu.universal.UniversalCraftingTermMenu;
 import com.fish_dan_.data_energistics.menu.universal.UniversalMEStorageMenu;
 import com.fish_dan_.data_energistics.menu.universal.UniversalPatternAccessTermMenu;
 import com.fish_dan_.data_energistics.menu.universal.UniversalPatternEncodingTermMenu;
-import com.fish_dan_.data_energistics.network.trinity.TrinityAutoBuildDefinitionBundleCodec;
 import com.fish_dan_.data_energistics.part.DataRipperPart;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
 

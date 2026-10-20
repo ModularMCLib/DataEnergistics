@@ -16,7 +16,8 @@
     width: 18px;
     height: 18px;
     padding-all: 1px;
-    hover-overlay: #6633FF99;
+    /* ItemSlot draws a 16px center; the outside 1px border completes the 18px cell. */
+    hover-overlay: group(#6693FFDE, border(1, #FF57E0BB));
 }
 
 .shared-backpack-top-left { background: sprite(data_energistics:textures/guis/backpack/top_left.png); }

@@ -1,0 +1,296 @@
+/* Java owns pixel geometry; this sheet owns the supplied surfaces, glyphs and states. */
+.terminal-root, .terminal-window, .terminal-sidebar, .terminal-glyph, .terminal-tab-join { background: #00000000; }
+.terminal-panel { background: group(#FFCBCCD4, border(1, #FF413F54), border(-1, #FFF0F0F3)); }
+.sidebar-top { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_0.png); }
+.sidebar-middle { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_1.png); }
+.sidebar-bottom { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_2.png, 0, 0, 13, 15); }
+
+.terminal-label, .terminal-control .__button_text__, .terminal-upload-button .__button_text__ {
+    font-size: 7;
+    text-color: #FF343548;
+    text-shadow: false;
+    adaptive-width: false;
+    adaptive-height: false;
+    horizontal-align: center;
+    vertical-align: center;
+}
+.terminal-field {
+    font-size: 7;
+    text-color: #FF343548;
+    text-shadow: false;
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png);
+    focus-overlay: border(1, #FF9AD8FF);
+}
+.terminal-field:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
+.terminal-search-field {
+    background: sprite(data_energistics:textures/guis/states/top_surface/text_box_0.png, 0, 0, 110, 16, 1, 1, 1, 1);
+    focus-overlay: #00000000;
+}
+.terminal-search-field:focused {
+    background: sprite(data_energistics:textures/guis/states/top_surface/text_box.png, 0, 0, 110, 16, 1, 1, 1, 1);
+    focus-overlay: #00000000;
+}
+.terminal-search-title { font-size: 7; text-color: #FF343548; text-shadow: false; horizontal-align: left; vertical-align: center; }
+.terminal-control {
+    background: #00000000;
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
+}
+.terminal-entry {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png, 0, 0, 10, 10, 2, 2, 2, 2);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png, 0, 0, 10, 10, 2, 2, 2, 2);
+}
+.terminal-encode, .terminal-drag, .anvil-boost-step {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_2.png);
+}
+.terminal-resize {
+    base-background: #00000000;
+    hover-background: #339AD8FF;
+    pressed-background: #559AD8FF;
+}
+.terminal-tab {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab.png, 2, 0, 12, 14);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+}
+.terminal-tab.selected {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 2, 0, 12, 14);
+}
+.terminal-tab.selected .terminal-tab-join {
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_horizontal_tab_selected.png, 0, 0, 2, 14);
+}
+.terminal-storage-scroll .__scroller_scroll_container__ { background: #00000000; }
+.scroll-rail { background: #FFCBCCD4; }
+.scroll-rail-rim { background: #FFF2F2F2; }
+.scroll-rail-center { background: #FF9A9FB4; }
+.scroll-rail-shadow { background: #FF696D88; }
+.terminal-scrollbar .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/slider_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/slider_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/slider_1.png);
+}
+.terminal-scrollbar.inactive-scroll .__scroller_scroll_bar__, .terminal-scrollbar .__scroller_scroll_bar__:disabled {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/slider_2.png);
+}
+.terminal-pattern-scroll .__scroller_scroll_bar__ {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_slider_1.png);
+}
+.terminal-pattern-scroll .__scroller_scroll_container__, .terminal-recipe-scroll .__scroller_scroll_container__ { background: #00000000; }
+.terminal-cell {
+    background: sprite(data_energistics:textures/guis/backpack/middle.png);
+    base-background: #00000000;
+    hover-background: group(#6693FFDE, border(-1, #FF57E0BB));
+    pressed-background: group(#6693FFDE, border(-1, #FF57E0BB));
+}
+/* Color overlays ignore depth: draw the hovered cell after neighboring cells and their shared edges. */
+.terminal-cell:hover { z-index: 1; }
+.terminal-grid-edge { background: #FFF2F2F2; }
+.blank-pattern .terminal-cell, .encoded-pattern .terminal-cell, .terminal-upload-pattern {
+    background: sprite(ae2:textures/guis/pattern.png, 146, 85, 18, 18);
+}
+.terminal-cell.embedded-cell { background: #00000000; }
+.terminal-crafting-choice {
+    background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 81, 17, 24, 24, 1, 1, 1, 1);
+}
+.terminal-crafting-choice.selected-recipe { base-background: group(#5593FFDE, border(-1, #FF57E0BB)); }
+.stonecutting-recipes-frame {
+    background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png, 21, 6, 77, 46, 1, 1, 1, 1) translate(0, -1);
+}
+.terminal-stonecutting-recipe {
+    background: #00000000;
+    base-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 140, 20, 22, 1, 1, 1, 1);
+    hover-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 184, 20, 22, 1, 1, 1, 1);
+    pressed-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 184, 20, 22, 1, 1, 1, 1);
+}
+.terminal-stonecutting-recipe.selected-recipe {
+    base-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 162, 20, 22, 1, 1, 1, 1);
+    hover-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 162, 20, 22, 1, 1, 1, 1);
+    pressed-background: sprite(ae2:textures/guis/pattern_modes.png, 124, 162, 20, 22, 1, 1, 1, 1);
+}
+.terminal-cell.manual-pin, .terminal-cell.crafting-pin {
+    /* Keep the supplied 16px pin background inside the 18px slot frame. */
+    background: group(sprite(data_energistics:textures/guis/backpack/middle.png), sprite(data_energistics:textures/guis/states/background/toppin_background.png) scale(0.8888889));
+}
+.terminal-page-surface { background: group(#FF9A9FB4, border(-1, #FF696D88)) translate(0, -1); }
+.page-crafting .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 3, 2, 54, 54); }
+.terminal-recipe-arrow { background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 58, 20, 22, 18); }
+.page-crafting .page-result, .page-smithing .page-result {
+    background: sprite(data_energistics:textures/guis/states/background/small_synthesize.png, 81, 17, 24, 24, 1, 1, 1, 1);
+}
+.terminal-processing-surface { background: sprite(data_energistics:textures/guis/states/background/small_handle.png, 1, 1, 82, 56) translate(0, -1); }
+.page-processing .page-outputs { background: sprite(data_energistics:textures/guis/states/background/small_handle.png, 84, 2, 18, 54); }
+.terminal-processing-step .__button_text__ { font-size: 6; }
+.page-smithing .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_forging.png, 3, 20, 54, 18); }
+.page-stonecutting .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_stone_cutting.png, 2, 20, 18, 18); }
+.page-anvil .page-inputs { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 3, 20, 54, 18); }
+.page-anvil .page-result { background: sprite(data_energistics:textures/guis/states/background/small_anvil.png, 78, 20, 18, 18); }
+.anvil-status { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_1.png); }
+.anvil-boost-step:disabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_write_2.png); }
+.anvil-boost-step:disabled .terminal-glyph { opacity: 0.5; }
+.terminal-popup { background: sprite(data_energistics:textures/guis/digital_panel.png, 0, 0, 256, 256, 2, 2, 2, 2); }
+.terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
+.terminal-popup-title { font-size: 9; horizontal-align: left; }
+.icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
+.terminal-maintenance-frame, .terminal-upload-frame { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
+.terminal-maintenance-row { background: #00000000; }
+.terminal-maintenance-add-row { background: #00000000; }
+.terminal-maintenance-key { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
+.terminal-maintenance-amount {
+    font-size: 7;
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
+    cursor-color: #FFF2F2F2;
+    focus-overlay: #00000000;
+}
+.terminal-maintenance-amount:focused { background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2)); }
+.terminal-maintenance-scroll .__scroller_scroll_container__ { background: #00000000; }
+.terminal-maintenance-add {
+    background: #00000000;
+    base-background: group(#FF9A9FB4, border(1, #FFF0F0F3));
+    hover-background: group(#FFADB0C4, border(1, #FFF0F0F3));
+    pressed-background: group(#FF9A9FB4, border(1, #FFF0F0F3));
+}
+.terminal-maintenance-delete, .terminal-maintenance-toggle {
+    background: #00000000;
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
+}
+.terminal-maintenance-toggle.maintenance-enabled {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+}
+.selected.terminal-maintenance-delete { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
+.icon-maintenance-add { background: sprite(data_energistics:textures/guis/states/top_surface/add.png); }
+.icon-maintenance-delete { background: sprite(data_energistics:textures/guis/states/top_surface/delete.png); }
+.maintenance-enabled .icon-maintenance-enabled { background: sprite(data_energistics:textures/guis/states/request_maintain/enabled_overlay.png); }
+.status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/idle.png); }
+.status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/free.png); }
+.status-lacking .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/lacking.png); }
+.status-no_cpu .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/no_cpu.png); }
+.status-synthesizing .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/synthesizing.png); }
+.status-exporting .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/exporting.png); }
+.terminal-filter-frame { background: group(#FF9A9FB4, border(-1, #FFF0F0F3)); }
+.icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/blacklist.png); }
+.selected .icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/whitelist.png); }
+.icon-filter-copy-up { background: sprite(ae2:textures/guis/states.png, 224, 192, 8, 8); }
+.icon-filter-copy-down { background: sprite(ae2:textures/guis/states.png, 232, 192, 8, 8); }
+.icon-filter-swap { background: sprite(ae2:textures/guis/states.png, 232, 200, 8, 8); }
+.terminal-toggle { background: #00000000; base-background: #00000000; hover-background: #00000000; pressed-background: #00000000; }
+.terminal-toggle-name { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; vertical-align: center; }
+.terminal-toggle:disabled .terminal-toggle-name { text-color: #FF858590; }
+.terminal-toggle:disabled .terminal-toggle-glyph { opacity: 0.5; }
+.terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 28, 22, 12); }
+.terminal-toggle.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 28, 22, 12); }
+.terminal-toggle.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 40, 22, 12); }
+.terminal-toggle.selected.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 40, 22, 12); }
+.terminal-settings-option .terminal-toggle-name { vertical-align: top; }
+.terminal-search-radio .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 28, 0, 14, 14); }
+.terminal-search-radio.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 42, 0, 14, 14); }
+.terminal-search-radio.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 28, 14, 14, 14); }
+.terminal-search-radio.selected.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 42, 14, 14, 14); }
+
+.icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_crafting_terminal.png); }
+.icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }
+.icon-resize { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_zoom.png); }
+.icon-tasks { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
+.icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); }
+.sort-amount .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); }
+.sort-mod .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_mod_id.png); }
+.icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_0.png); }
+.descending .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
+.icon-boost-up { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_0.png); }
+.icon-boost-down { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
+.icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage_synthesis.png); }
+.stored-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
+.craftable-only .icon-display { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
+.icon-type { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
+.icon-pins { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
+.icon-magnet { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
+.icon-maintenance { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_pattern_access_part.png); }
+.icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_to_network.png); }
+.option-enabled .icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_to_inventory.png); }
+.icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }
+.icon-processing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_handle.png); }
+.icon-smithing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); }
+.icon-stonecutting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_stone_cutting.png); }
+.icon-anvil { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_anvil.png); }
+.icon-settings { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_cog.png); }
+.icon-encoding { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
+.icon-clear-pattern { background: sprite(ae2:textures/guis/states.png, 224, 200, 8, 8); }
+.icon-cycle-outputs { background: sprite(ae2:textures/guis/states.png, 232, 200, 8, 8); }
+.icon-scale-add { background: sprite(ae2:textures/guis/states.png, 224, 192, 8, 8); }
+.icon-scale-subtract { background: sprite(ae2:textures/guis/states.png, 232, 192, 8, 8); }
+.icon-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 208, 8, 8); }
+.option-enabled .icon-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 208, 8, 8); }
+.icon-fluid-substitutes { background: sprite(ae2:textures/guis/states.png, 232, 216, 8, 8); }
+.option-enabled .icon-fluid-substitutes { background: sprite(ae2:textures/guis/states.png, 224, 216, 8, 8); }
+.icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_1.png); }
+.option-enabled .icon-record-type { background: sprite(data_energistics:textures/guis/states/top_surface/recipe_record_0.png); }
+.terminal-control.option-enabled { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
+.terminal-pattern-option, .terminal-pattern-option.option-enabled {
+    base-background: #00000000;
+    hover-background: #00000000;
+    pressed-background: #00000000;
+}
+.icon-previous { background: sprite(data_energistics:textures/guis/front.png); }
+.icon-next { background: sprite(data_energistics:textures/guis/back.png); }
+.terminal-amount-popup .terminal-label { font-size: 9; }
+.terminal-amount-popup .terminal-amount-unit { text-color: #FFFFFFFF; }
+.terminal-amount-step .__button_text__ { font-size: 9; text-color: #FFE0E0E0; text-shadow: true; }
+.terminal-amount-popup .terminal-field { font-size: 9; background: #00000000; focus-overlay: #00000000; }
+.terminal-amount-popup .terminal-field:focused { background: #00000000; }
+.terminal-amount-input-frame {
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
+}
+.terminal-amount-popup .terminal-amount-resource { background: sprite(ae2:textures/guis/craft_amt.png, 22, 52, 18, 18); }
+.terminal-amount-toolbar-top { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_0.png, 0, 0, 15, 3, 3, 0, 0, 0); }
+.terminal-amount-toolbar-middle { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_1.png, 0, 0, 15, 10, 3, 0, 0, 0); }
+.terminal-amount-toolbar-bottom { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sidebar_2.png, 0, 12, 12, 3, 3, 0, 0, 0); }
+.terminal-amount-match {
+    base-background: sprite(ae2:textures/guis/states.png, 176, 128, 18, 20);
+    hover-background: sprite(ae2:textures/guis/states.png, 212, 128, 18, 20);
+    pressed-background: sprite(ae2:textures/guis/states.png, 212, 128, 18, 20);
+}
+.terminal-amount-step {
+    base-background: sprite(data_energistics:textures/guis/priority/botton.png);
+    hover-background: sprite(data_energistics:textures/guis/priority/button_highlighted.png);
+    pressed-background: sprite(data_energistics:textures/guis/priority/button_highlighted.png);
+}
+.terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 64, 96, 16, 16); }
+.match-id .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 48, 96, 16, 16); }
+.match-tag .terminal-match-icon { background: sprite(ae2:textures/guis/states.png, 32, 96, 16, 16); }
+
+.terminal-upload-button {
+    background: #00000000;
+    base-background: sprite(data_energistics:textures/guis/craftingreport/button.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    hover-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+    pressed-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+}
+.terminal-upload-row.selected {
+    base-background: sprite(data_energistics:textures/guis/craftingreport/button_highlighted.png, 0, 0, 160, 20, 1, 1, 1, 1);
+}
+.terminal-upload-popup .terminal-label { background: #00000000; }
+.terminal-upload-popup.standalone-upload-popup { z-index: 0; }
+.terminal-upload-name { horizontal-align: left; }
+.terminal-upload-count { horizontal-align: right; adaptive-width: false; }
+.terminal-upload-count.capacity-available { text-color: #FF168A16; }
+.terminal-upload-count.capacity-warning { text-color: #FFE0B000; }
+.terminal-upload-count.capacity-critical { text-color: #FFD52C2C; }
+.terminal-upload-popup .terminal-upload-name {
+    background: #00000000;
+    focus-overlay: border(-1, #FFF2F2F2);
+    horizontal-align: left;
+}
+.terminal-upload-popup .terminal-upload-name:focused {
+    background: #00000000;
+    focus-overlay: border(-1, #FFF2F2F2);
+}
+.terminal-upload-list, .terminal-upload-list .__scroller_scroll_container__ { background: #00000000; }
+
+.terminal-key-type-scroll .__scroller_scroll_container__ { background: #00000000; }

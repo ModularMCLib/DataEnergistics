@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.api.production.rule.OutputFamily;
 import com.fish_dan_.data_energistics.api.production.rule.OutputKeyKind;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.DataType;
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable.Slot;
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -311,11 +312,7 @@ public final class DataProductionRuleConfigurationAdapter {
         String[] values = splitArray(value);
         long[] result = new long[values.length];
         for (int index = 0; index < values.length; index++) {
-            try {
-                result[index] = Long.parseLong(values[index]);
-            } catch (NumberFormatException ignored) {
-                result[index] = 0L;
-            }
+            result[index] = AmountExpressionParser.parseLong(values[index], Long.MIN_VALUE, Long.MAX_VALUE).orElse(0L);
         }
         return result;
     }
@@ -341,19 +338,11 @@ public final class DataProductionRuleConfigurationAdapter {
     }
 
     private static long number(String[] fields, int index) {
-        try {
-            return Long.parseLong(field(fields, index));
-        } catch (NumberFormatException ignored) {
-            return 0L;
-        }
+        return AmountExpressionParser.parseLong(field(fields, index), Long.MIN_VALUE, Long.MAX_VALUE).orElse(0L);
     }
 
     private static float decimal(String[] fields, int index) {
-        try {
-            return Float.parseFloat(field(fields, index));
-        } catch (NumberFormatException ignored) {
-            return 0.0F;
-        }
+        return AmountExpressionParser.parseFloat(field(fields, index)).orElse(0.0F);
     }
 
     /** Describes one record type without introducing a second column-oriented schema. */

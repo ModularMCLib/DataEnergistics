@@ -70,6 +70,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
     private ResourceLocation lastWorkstation;
     @Nullable
     private PreviewPanelPosition previewPanelPosition;
+    private @Nullable PreviewPanelSize previewPanelSize;
     private boolean providerDetailPanelPresent;
     private int providerDetailPanelRelativeX;
     private int providerDetailPanelRelativeY;
@@ -151,6 +152,21 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         ensureLoaded();
         validatePanelPercentage(xPercent, yPercent);
         this.previewPanelPosition = new PreviewPanelPosition(xPercent, yPercent);
+        save();
+    }
+
+    @Override
+    public Optional<PreviewPanelSize> previewPanelSize() {
+        ensureLoaded();
+        return Optional.ofNullable(this.previewPanelSize);
+    }
+
+    @Override
+    public void setPreviewPanelGeometry(double xPercent, double yPercent, int width, int height) {
+        ensureLoaded();
+        validatePanelPercentage(xPercent, yPercent);
+        this.previewPanelPosition = new PreviewPanelPosition(xPercent, yPercent);
+        this.previewPanelSize = new PreviewPanelSize(width, height);
         save();
     }
 
@@ -294,6 +310,10 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             }
             if (preferences.has("previewPanel")) {
                 JsonObject previewPanel = readRequiredObject(preferences, "previewPanel");
+                if (previewPanel.has("size")) {
+                    JsonObject size = readRequiredObject(previewPanel, "size");
+                    this.previewPanelSize = new PreviewPanelSize(readRequiredInt(size, "width"), readRequiredInt(size, "height"));
+                }
                 if (previewPanel.has("position")) {
                     JsonObject position = readRequiredObject(previewPanel, "position");
                     if (position.has("xPercent") && position.has("yPercent")) {
@@ -409,6 +429,7 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
         this.lastWorkstation = null;
         this.previewPanelPosition = null;
         this.providerDetailPanelRelativeX = 0;
+        this.previewPanelSize = null;
         this.providerDetailPanelRelativeY = 0;
         this.providerDetailPanelPresent = false;
         this.serverProfiles.clear();
@@ -473,6 +494,12 @@ public final class JsonPatternEncodingClientPreferences implements PatternEncodi
             preferences.addProperty("lastWorkstation", this.lastWorkstation.toString());
         }
         JsonObject previewPanel = new JsonObject();
+        if (this.previewPanelSize != null) {
+            JsonObject size = new JsonObject();
+            size.addProperty("width", this.previewPanelSize.width());
+            size.addProperty("height", this.previewPanelSize.height());
+            previewPanel.add("size", size);
+        }
         if (this.previewPanelPosition != null) {
             JsonObject position = new JsonObject();
             position.addProperty("xPercent", this.previewPanelPosition.xPercent());

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.map.orbital;
 
+import com.fish_dan_.data_energistics.common.network.packets.orbital.map.OrbitalTacticalMapResponsePayload;
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalMapTile;
-import com.fish_dan_.data_energistics.network.orbital.map.OrbitalTacticalMapResponsePayload;
 
 import com.lowdragmc.lowdraglib2.syncdata.ISubscription;
 

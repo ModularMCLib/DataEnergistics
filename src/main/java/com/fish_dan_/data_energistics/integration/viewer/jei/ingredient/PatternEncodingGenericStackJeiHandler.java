@@ -2,7 +2,6 @@ package com.fish_dan_.data_energistics.integration.viewer.jei.ingredient;
 
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
 
-import appeng.api.stacks.GenericStack;
 import appeng.client.gui.StackWithBounds;
 
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -28,18 +27,22 @@ public final class PatternEncodingGenericStackJeiHandler<T extends AbstractConta
             return Optional.empty();
         }
 
-        GenericStack stack = hovered.stack();
+        return createClickableIngredient(builder, hovered);
+    }
+
+    /** Uses the same registered AE-key converters for native screens and the foreground player terminal. */
+    public static Optional<IClickableIngredient<?>> createClickableIngredient(IClickableIngredientFactory builder, StackWithBounds hovered) {
         return createClickableIngredient(
                 builder,
-                JeiGenericStackIngredientResolver.resolve(stack),
+                JeiGenericStackIngredientResolver.resolve(hovered.stack()),
                 hovered);
     }
 
-    private static <I> Optional<? extends IClickableIngredient<?>> createClickableIngredient(
-                                                                                             IClickableIngredientFactory builder,
-                                                                                             JeiGenericStackIngredientResolver.ResolvedIngredient<I> ingredient,
-                                                                                             StackWithBounds hovered) {
+    private static <I> Optional<IClickableIngredient<?>> createClickableIngredient(
+                                                                                   IClickableIngredientFactory builder,
+                                                                                   JeiGenericStackIngredientResolver.ResolvedIngredient<I> ingredient,
+                                                                                   StackWithBounds hovered) {
         return builder.createBuilder(ingredient.type(), ingredient.ingredient())
-                .buildWithArea(hovered.bounds());
+                .buildWithArea(hovered.bounds()).map(clickable -> clickable);
     }
 }

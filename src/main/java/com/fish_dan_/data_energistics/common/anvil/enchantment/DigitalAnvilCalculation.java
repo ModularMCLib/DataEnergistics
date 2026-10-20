@@ -21,7 +21,8 @@ public final class DigitalAnvilCalculation {
     private DigitalAnvilCalculation() {}
 
     public static DigitalAnvilOperation calculate(ItemStack left, ItemStack right, String name, int upgrades, int requestedBoost) {
-        if (left.isEmpty() || left.getCount() != 1) return DigitalAnvilOperation.EMPTY;
+        if (left.isEmpty()) return DigitalAnvilOperation.EMPTY;
+        left = left.copyWithCount(1);
         boolean unrestrictedTypes = DigitalAnvilUpgrade.UNRESTRICTED_TYPES.enabled(upgrades);
         boolean unrestrictedLevels = DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(upgrades);
         boolean fixedPenalty = DigitalAnvilUpgrade.FIXED_PENALTY.enabled(upgrades);

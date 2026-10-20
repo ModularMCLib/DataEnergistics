@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternUploadRecorder;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncHelper;
-import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSource;
 
 import appeng.helpers.patternprovider.PatternContainer;
 import appeng.menu.me.items.PatternEncodingTermMenu;

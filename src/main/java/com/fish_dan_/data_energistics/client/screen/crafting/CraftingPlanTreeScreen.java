@@ -20,9 +20,9 @@ import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGra
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph.Material;
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView;
 import com.fish_dan_.data_energistics.common.crafting.tree.view.CraftingPlanGraphView.Expansion;
+import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
 import com.fish_dan_.data_energistics.gui.ldlib2.crafting.tree.CraftingPlanTreeUi;
 import com.fish_dan_.data_energistics.menu.crafting.tree.CraftingPlanTreeMenu;
-import com.fish_dan_.data_energistics.network.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;

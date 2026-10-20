@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.util;
 
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
@@ -35,8 +37,9 @@ public final class ConfigParsingUtils {
             if (patternText.isEmpty()) {
                 throw new IllegalArgumentException("Data Ripper multiplier regex must not be blank: " + entry);
             }
-            double value = Double.parseDouble(valueText);
-            if (!Double.isFinite(value) || value <= 0.0D) {
+            double value = AmountExpressionParser.parseDouble(valueText)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid Data Ripper multiplier: " + entry));
+            if (value <= 0.0D) {
                 throw new IllegalArgumentException("Data Ripper multiplier must be finite and positive: " + entry);
             }
             entries.add(new MultiplierEntry(Pattern.compile(patternText), value));

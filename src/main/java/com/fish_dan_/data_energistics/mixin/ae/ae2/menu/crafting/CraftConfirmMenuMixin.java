@@ -14,6 +14,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityCraftingRequestContext;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningProgressContext;
+import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.progress.TrinityCraftConfirmPlanningProgressPayload;
+import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftConfirmCyclePayload;
 import com.fish_dan_.data_energistics.common.terminal.UniversalTerminalHostAccessor;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState;
@@ -26,8 +28,6 @@ import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanSes
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeRequest;
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeResult;
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeSession;
-import com.fish_dan_.data_energistics.network.trinity.crafting.progress.TrinityCraftConfirmPlanningProgressPayload;
-import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftConfirmCyclePayload;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
 
 import appeng.api.networking.IGrid;

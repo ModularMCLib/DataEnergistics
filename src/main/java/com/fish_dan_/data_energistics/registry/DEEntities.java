@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.registry;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.entity.anvil.FallingDigitalAnvilEntity;
 import com.fish_dan_.data_energistics.entity.explosive.DataNukePrimedEntity;
 import com.fish_dan_.data_energistics.entity.explosive.TntConfigurablePrimedEntity;
 import com.fish_dan_.data_energistics.entity.projectile.LightBladeChargeEntity;
@@ -19,6 +20,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class DEEntities {
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Data_Energistics.MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<FallingDigitalAnvilEntity>> FALLING_DIGITAL_ANVIL = ENTITY_TYPES.register("falling_digital_anvil", () -> EntityType.Builder
+            .<FallingDigitalAnvilEntity>of(FallingDigitalAnvilEntity::new, MobCategory.MISC)
+            .sized(0.98F, 0.98F)
+            .clientTrackingRange(10)
+            .updateInterval(20)
+            .build("falling_digital_anvil"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<DispersingDataEntity>> DISPERSING_DATA = ENTITY_TYPES.register("dispersing_data", () -> EntityType.Builder
             .<DispersingDataEntity>of(DispersingDataEntity::new, MobCategory.MISC)

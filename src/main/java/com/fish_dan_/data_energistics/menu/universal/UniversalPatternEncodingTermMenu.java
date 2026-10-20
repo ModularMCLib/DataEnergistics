@@ -4,6 +4,8 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
+import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalCyclePayload;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingInheritedState;
@@ -18,8 +20,6 @@ import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderLeafAc
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderMenuOpenHelper;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncHelper;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncTracker;
-import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSource;
-import com.fish_dan_.data_energistics.network.ui.UniversalTerminalCyclePayload;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 

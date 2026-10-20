@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.effect;
 
-import com.fish_dan_.data_energistics.network.action.ChromaticGlowPayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.ChromaticGlowPayload;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;

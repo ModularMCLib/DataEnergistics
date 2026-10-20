@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.input.cannon;
 
+import com.fish_dan_.data_energistics.common.network.packets.action.CannonChargePayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.CannonChargePayload.Action;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.network.action.CannonChargePayload;
-import com.fish_dan_.data_energistics.network.action.CannonChargePayload.Action;
 import com.fish_dan_.data_energistics.registry.DEMobEffects;
 
 import net.minecraft.client.Minecraft;

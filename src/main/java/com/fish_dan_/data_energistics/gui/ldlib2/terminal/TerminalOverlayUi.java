@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalViewportLayout;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalGhostDrag.Target;
 import com.fish_dan_.data_energistics.client.terminal.input.TerminalItemDrag;
+import com.fish_dan_.data_energistics.client.terminal.search.TerminalSearchState;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageIndex;
 import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStorageInput;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
@@ -96,6 +97,7 @@ public final class TerminalOverlayUi {
     private final TerminalWindowStack subWindows = new TerminalWindowStack(ui.rootElement, window, this::mainContains, this::mainRectangles);
     private final ObjectList<TerminalResourceCell> storage = new ObjectArrayList<>();
     private final TerminalStorageIndex storageIndex = new TerminalStorageIndex();
+    private final TerminalSearchState search;
     private final TerminalPinnedResourcesUi pinnedUi;
     private ObjectList<TerminalStorageIndex.Entry> boundStorage = ObjectImmutableList.of();
     private boolean boundConnected;
@@ -187,7 +189,7 @@ public final class TerminalOverlayUi {
             if (event.button == 1) visible(false);
         });
         tooltip(window, "resize", text("resize"));
-        field(window, "search").setTextResponder(value -> view(true));
+        search = new TerminalSearchState(field(window, "search"), () -> view(true));
         scrollbar.setRange(0, 1);
         scrollbar.setOnValueChanged(value -> {
             int next = Math.round(value * viewport.maximumFirstRow(storageIndex.projected().size())) * viewport.columns();
@@ -398,7 +400,7 @@ public final class TerminalOverlayUi {
         ObjectList<TerminalStorageIndex.Entry> previous = storageIndex.projected();
         AEKey anchor = !reset && offset < previous.size() ? previous.get(offset).key() : null;
         pinnedUi.bind(storageIndex, snapshot.getBoolean("connected"), filter.equals("craftable"));
-        storageIndex.project(field(window, "search").getValue(), sort, descending, filter, enabledKeyTypes, pinnedUi.visibleKeys());
+        storageIndex.project(search.query(), sort, descending, filter, enabledKeyTypes, pinnedUi.visibleKeys());
         ObjectList<TerminalStorageIndex.Entry> projected = storageIndex.projected();
         if (reset) offset = 0;
         else if (previous != projected && anchor != null) {
@@ -548,7 +550,12 @@ public final class TerminalOverlayUi {
         }
     }
 
+    public void searchOpened() {
+        search.open(visible);
+    }
+
     public void tick() {
+        if (visible) search.tick();
         uploadUi.tick();
         if (pinnedUi.refreshAutomatic(storageIndex)) {
             geometry(screenWidth, screenHeight);
@@ -557,6 +564,7 @@ public final class TerminalOverlayUi {
     }
 
     public void removed() {
+        search.remember();
         pinnedUi.removed();
     }
 
@@ -1113,7 +1121,7 @@ public final class TerminalOverlayUi {
             });
             Objects.requireNonNull(window.getModularUI()).clearFocus();
             subWindows.closeAll();
-        }
+        } else search.open(true);
         moveWindow(viewport.x(), viewport.y());
         preferences.save();
         CompoundTag data = new CompoundTag();

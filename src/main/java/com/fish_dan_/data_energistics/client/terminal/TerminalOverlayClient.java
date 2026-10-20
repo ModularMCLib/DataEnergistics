@@ -196,6 +196,8 @@ public final class TerminalOverlayClient {
             overlay.width = overlay.screen.width;
             overlay.height = overlay.screen.height;
             overlay.composition.apply(snapshot);
+            overlay.composition.searchOpened();
+            overlay.keyboardOwned = textInputFocused(overlay.modularUi);
             overlay.publishGeometry(true);
         } else if (!snapshot.equals(overlay.lastSnapshot)) {
             overlay.composition.apply(snapshot);

@@ -1243,6 +1243,18 @@ public final class TerminalOverlayUi {
             if (hotbar < 0) return false;
             shortcut = "swap";
         }
+        slotShortcut(x, y, shortcut, hotbar);
+        return true;
+    }
+
+    /** A stow gesture consumes foreground hover ownership even when the hovered cell is only a recipe marker. */
+    public boolean stowSlot(double x, double y) {
+        if (!contains(x, y)) return false;
+        slotShortcut(x, y, "stow", -1);
+        return true;
+    }
+
+    private void slotShortcut(double x, double y, String shortcut, int hotbar) {
         int index = physicalInputAt(x, y);
         String inventory = "inputs";
         if (index < 0 && visible && !preferences.folded && !subWindows.contains(x, y)) {
@@ -1254,17 +1266,21 @@ public final class TerminalOverlayUi {
                 }
         }
         if (index >= 0) {
-            cancelSlotInput();
             CompoundTag data = string("inventory", inventory);
+            if (shortcut.equals("stow")) {
+                GenericStack stack = inventory.equals("inputs") ? GenericStack.fromItemStack(inputStack(index)) : encodedPatterns.get(index).stack();
+                if (stack == null) return;
+                data.put("key", stack.what().toTagGeneric(registries));
+            }
+            cancelSlotInput();
             data.putString("workspace", workspace);
             data.putInt("index", index);
             data.putString("shortcut", shortcut);
             data.putInt("hotbar", hotbar);
             data.putBoolean("all", UIElement.isCtrlDown());
             data.putBoolean("to_network", preferences.shiftClickToNetwork);
-            request.accept("slot", data);
+            request.accept(shortcut.equals("stow") ? "stow" : "slot", data);
         }
-        return true;
     }
 
     private @Nullable TerminalResourceCell storageCellAt(double x, double y) {

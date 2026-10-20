@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.storage;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 
+import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -61,6 +62,31 @@ public final class TerminalNetworkStorage {
         ItemStack transferred = stack.copyWithCount((int) inserted);
         slot.setByPlayer(stack.copyWithCount(requested - (int) inserted));
         slot.onTake(player, transferred);
+    }
+
+    /** Server-thread stow of a real host slot, honoring native take callbacks and preserving any rejected remainder. */
+    public static void stowSlot(ServerPlayer player, TerminalPlayerState state, TerminalConnection connection, int slotId, AEKey expected) {
+        var menu = player.containerMenu;
+        if (slotId < 0 || slotId >= menu.slots.size()) throw new IllegalArgumentException("Invalid terminal stow slot");
+        Slot slot = menu.getSlot(slotId);
+        if (!slot.isActive() || slot.isFake() || !slot.mayPickup(player)) return;
+        ItemStack stack = slot.getItem();
+        if (!(expected instanceof AEItemKey item) || !item.matches(stack) || GenericStack.isWrapped(stack)) return;
+        long allowed = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(), item, stack.getCount(), connection.source(), Actionable.SIMULATE);
+        checkAmount(allowed, stack.getCount());
+        if (allowed == 0) return;
+        ItemStack taken = slot.safeTake((int) allowed, (int) allowed, player);
+        if (taken.isEmpty()) return;
+        int requested = taken.getCount();
+        state.returns().extracted(connection.frequency(), item, requested);
+        long inserted = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(), item, requested, connection.source());
+        checkAmount(inserted, requested);
+        state.returns().delivered(connection.frequency(), item, inserted);
+        if (inserted < requested) {
+            ItemStack remaining = slot.safeInsert(taken.copyWithCount(requested - (int) inserted));
+            if (!remaining.isEmpty()) player.getInventory().add(remaining);
+            state.returns().delivered(connection.frequency(), item, requested - inserted - remaining.getCount());
+        }
     }
 
     public static int inventoryCapacity(ServerPlayer player, ItemStack stack) {

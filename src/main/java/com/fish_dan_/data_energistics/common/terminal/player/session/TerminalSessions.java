@@ -7,11 +7,15 @@ import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSn
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalPickBlock;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalSavedData;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 
+import appeng.api.stacks.AEItemKey;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.phys.BlockHitResult;
@@ -44,6 +48,29 @@ public final class TerminalSessions {
 
     private static TerminalPlayerRuntime runtime(ServerPlayer player) {
         return PLAYERS.computeIfAbsent(player.getUUID(), unused -> new TerminalPlayerRuntime(player, TerminalSavedData.get(player.server).player(player.getUUID())));
+    }
+
+    /** Server-thread AE hotkey action; unavailable terminal access leaves the original wireless action available. */
+    public static boolean stowMainHand(Player actor) {
+        if (!(actor instanceof ServerPlayer player) || !player.isAlive() || player.isSpectator() ||
+                player.containerMenu != player.inventoryMenu || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
+            return false;
+        ItemStack stack = player.getMainHandItem();
+        AEItemKey key = AEItemKey.of(stack);
+        if (key == null || stack.isNotReplaceableByPickAction(player, player.getInventory().selected)) return false;
+        try {
+            TerminalPlayerRuntime runtime = runtime(player);
+            TerminalConnection connection = runtime.connection();
+            if (connection == null) return false;
+            int slot = player.inventoryMenu.findSlot(player.getInventory(), player.getInventory().selected).orElseThrow();
+            TerminalNetworkStorage.stowSlot(player, runtime.state(), connection, slot, key);
+            player.inventoryMenu.broadcastChanges();
+            // A connected terminal owns the gesture even when ME accepts only part of the stack.
+            return true;
+        } catch (RuntimeException failure) {
+            fail(player, "stow main hand", failure);
+            return true;
+        }
     }
 
     /**

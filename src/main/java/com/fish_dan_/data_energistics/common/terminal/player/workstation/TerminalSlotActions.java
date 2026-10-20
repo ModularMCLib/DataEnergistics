@@ -13,6 +13,7 @@ import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
+import appeng.api.storage.StorageHelper;
 import appeng.helpers.InventoryAction;
 
 import net.minecraft.nbt.CompoundTag;
@@ -101,6 +102,15 @@ public final class TerminalSlotActions {
         if (!player.containerMenu.getCarried().isEmpty()) return "";
         ItemStack before = inventory.getItem(index).copy();
         switch (data.getString("shortcut")) {
+            case "stow" -> {
+                if (connection == null) return "offline";
+                AEKey expected = AEKey.fromTagGeneric(player.registryAccess(), data.getCompound("key"));
+                if (!(expected instanceof AEItemKey item)) throw new IllegalArgumentException("Invalid terminal stow resource");
+                if (!item.matches(before) || GenericStack.isWrapped(before)) return "";
+                long inserted = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(), item, before.getCount(), connection.source());
+                TerminalNetworkStorage.checkAmount(inserted, before.getCount());
+                if (inserted > 0) inventory.removeItem(index, (int) inserted);
+            }
             case "drop" -> {
                 if (!before.isEmpty()) player.drop(inventory.removeItem(index, data.getBoolean("all") ? before.getCount() : 1), true);
             }

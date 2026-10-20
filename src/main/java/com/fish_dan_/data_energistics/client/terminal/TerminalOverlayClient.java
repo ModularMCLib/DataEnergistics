@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.client.terminal.storage.TerminalStowInput;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalCursorActions;
@@ -527,6 +528,11 @@ public final class TerminalOverlayClient {
             event.setCanceled(true);
             return;
         }
+        if (TerminalStowInput.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton())) &&
+                TerminalStowInput.stow(overlay.screen, target.composition, target.modularUi, event.getMouseX(), event.getMouseY(), overlay::send)) {
+            event.setCanceled(true);
+            return;
+        }
         if (!target.composition.contains(event.getMouseX(), event.getMouseY())) {
             overlay.keyboardOwned = false;
             target.modularUi.clearFocus();
@@ -604,6 +610,11 @@ public final class TerminalOverlayClient {
         }
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE && target.composition.closePopup()) {
             target.overlay.publishGeometry(true);
+            event.setCanceled(true);
+            return;
+        }
+        if (TerminalStowInput.matches(InputConstants.getKey(event.getKeyCode(), event.getScanCode())) &&
+                TerminalStowInput.stow(target.overlay.screen, target.composition, target.modularUi, target.overlay.mouseX, target.overlay.mouseY, target.overlay::send)) {
             event.setCanceled(true);
             return;
         }

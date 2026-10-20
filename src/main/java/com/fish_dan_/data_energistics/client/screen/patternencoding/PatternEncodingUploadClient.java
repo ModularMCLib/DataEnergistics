@@ -94,6 +94,12 @@ public final class PatternEncodingUploadClient implements PatternUploadActions {
         return upload != null && upload.window != null && upload.window.contains(x, y);
     }
 
+    /** Client-thread focus guard for inventory shortcuts outside the independently dragged upload window. */
+    public static boolean textInputFocused(Screen screen) {
+        PatternEncodingUploadClient upload = active(screen);
+        return upload != null && upload.window != null && upload.window.textInputFocused();
+    }
+
     public static ObjectList<Rect2i> exclusions(Screen screen) {
         PatternEncodingUploadClient upload = active(screen);
         return upload != null && upload.window != null ? upload.window.exclusions() : ObjectImmutableList.of();

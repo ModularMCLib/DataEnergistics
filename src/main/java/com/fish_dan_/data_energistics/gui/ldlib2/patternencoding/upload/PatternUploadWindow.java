@@ -9,6 +9,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
 import appeng.api.stacks.GenericStack;
 
@@ -105,6 +106,13 @@ public final class PatternUploadWindow {
 
     public boolean contains(double x, double y) {
         return visible && bounds.contains((int) x, (int) y);
+    }
+
+    public boolean textInputFocused() {
+        if (!visible) return false;
+        for (UIElement focused = ui.getFocusedElement(); focused != null; focused = focused.getParent())
+            if (focused instanceof TextField) return true;
+        return false;
     }
 
     public boolean overHandle(double x, double y) {

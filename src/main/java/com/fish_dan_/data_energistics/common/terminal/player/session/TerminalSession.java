@@ -290,6 +290,14 @@ public final class TerminalSession {
                 if (visible)
                     TerminalNetworkStorage.insertInventorySlot(player, connection, data.getInt("slot"), key(player, data));
             }
+            case "stow" -> {
+                if (!menu.getCarried().isEmpty())
+                    TerminalStorageActions.interact(player, runtime.state(), connection, null, InventoryAction.PICKUP_OR_SET_DOWN);
+                else if (data.contains("slot", Tag.TAG_INT))
+                    TerminalNetworkStorage.stowSlot(player, runtime.state(), connection, data.getInt("slot"), key(player, data));
+                else if (data.contains("inventory", Tag.TAG_STRING))
+                    message = TerminalSlotActions.physical(player, runtime.state(), data, connection);
+            }
             case "transfer_processing" -> {
                 if (runtime.state().workspace() == TerminalWorkspace.PROCESSING)
                     message = TerminalContainerTransfer.transfer(player, connection, runtime.state());

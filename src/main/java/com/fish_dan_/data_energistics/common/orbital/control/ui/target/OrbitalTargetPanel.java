@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.orbital.control.OrbitalTargetYMode;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFireControlDraft;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUiTheme;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
@@ -111,7 +112,7 @@ public final class OrbitalTargetPanel {
 
     private static TextField integer(String id, int initial, int minimum, int maximum, int x, int y, int width) {
         TextField field = OrbitalControlUiTheme.textInput(id, Integer.toString(initial), x, y, width);
-        field.setNumbersOnlyInt(minimum, maximum);
+        field.setAnyString().setTextValidator(text -> AmountExpressionParser.parseInt(text, minimum, maximum).isPresent());
         return field;
     }
 

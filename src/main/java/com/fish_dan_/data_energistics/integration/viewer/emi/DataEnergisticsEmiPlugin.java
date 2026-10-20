@@ -21,6 +21,8 @@ import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.condenser.Co
 import com.fish_dan_.data_energistics.integration.viewer.emi.transfer.EmiMultiblockPatternTransferHandler;
 import com.fish_dan_.data_energistics.integration.viewer.emi.transfer.EmiPatternTransferContextBridge;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ui.OrderPackageEmiDragDropHandler;
+import com.fish_dan_.data_energistics.integration.viewer.emi.ui.PlayerTerminalEmiDragHandler;
+import com.fish_dan_.data_energistics.integration.viewer.emi.ui.PlayerTerminalEmiExclusionArea;
 import com.fish_dan_.data_energistics.integration.viewer.emi.ui.UniversalTerminalEmiExclusionArea;
 import com.fish_dan_.data_energistics.integration.viewer.xei.ingredient.DataResourceKey;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataChargePressRecipeView;
@@ -124,6 +126,8 @@ public final class DataEnergisticsEmiPlugin implements EmiPlugin {
         });
         registry.addDragDropHandler(OrderPackageScreen.class, new OrderPackageEmiDragDropHandler());
         registry.addGenericExclusionArea(new UniversalTerminalEmiExclusionArea());
+        registry.addGenericExclusionArea(new PlayerTerminalEmiExclusionArea());
+        registry.addGenericDragDropHandler(new PlayerTerminalEmiDragHandler());
         registry.removeRecipes(PoweredRepairRecipeFilter::shouldHideEmiRepairRecipe);
 
         registry.addRecipeHandler(

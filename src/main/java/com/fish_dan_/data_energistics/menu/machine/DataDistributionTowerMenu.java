@@ -10,11 +10,11 @@ import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlo
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferMode;
 import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerRuntimeKey;
 import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerDeviceKey;
+import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetEntry;
+import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetsPayload;
+import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetsReceiver;
+import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetsSnapshot;
 import com.fish_dan_.data_energistics.menu.patternencoding.MenuClientRefresh;
-import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetEntry;
-import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetsPayload;
-import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetsReceiver;
-import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetsSnapshot;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.core.localization.ButtonToolTips;

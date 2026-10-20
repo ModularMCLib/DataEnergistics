@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.entity.projectile.cannon;
 
+import com.fish_dan_.data_energistics.common.network.packets.action.RailChainPayload;
 import com.fish_dan_.data_energistics.effect.RadixLossEffectLogic;
 import com.fish_dan_.data_energistics.effect.WeaponBurn;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
-import com.fish_dan_.data_energistics.network.action.RailChainPayload;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;

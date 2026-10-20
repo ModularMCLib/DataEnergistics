@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.menu.patternencoding;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSucceededPayload;
 import com.fish_dan_.data_energistics.menu.patternencoding.source.PatternEncodingSourceHelper;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncHelper;
-import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSource;
-import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSucceededPayload;
 
 import appeng.parts.encoding.EncodingMode;
 

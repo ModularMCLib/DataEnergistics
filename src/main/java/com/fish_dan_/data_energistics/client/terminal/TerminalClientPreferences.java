@@ -1,0 +1,115 @@
+package com.fish_dan_.data_energistics.client.terminal;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+
+import net.neoforged.fml.loading.FMLPaths;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/** Local geometry and display preferences; inventories, ownership and network settings remain server-authoritative. */
+@NullMarked
+public final class TerminalClientPreferences {
+
+    private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("data_energistics/player_terminal.json");
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private final String screenId;
+    private JsonObject screens = new JsonObject();
+    public float xPercent = 0.047058824F;
+    public float yPercent = 0.11111111F;
+    public int width = TerminalViewportLayout.MIN_WIDTH;
+    public int height = 168;
+    public boolean folded = true;
+    public boolean open = true;
+    public @Nullable UploadPanel uploadPanel;
+    public boolean shiftClickToNetwork;
+    public String sort = "name";
+    public String filter = "all";
+    public boolean descending;
+    public final ObjectOpenHashSet<String> disabledKeyTypes = new ObjectOpenHashSet<>();
+
+    private TerminalClientPreferences(String screenId) {
+        this.screenId = screenId;
+    }
+
+    public static TerminalClientPreferences load(String screenId) {
+        TerminalClientPreferences value = new TerminalClientPreferences(screenId);
+        if (!Files.exists(FILE)) return value;
+        try {
+            JsonObject json = JsonParser.parseString(Files.readString(FILE, StandardCharsets.UTF_8)).getAsJsonObject();
+            if (json.has("screens")) value.screens = json.getAsJsonObject("screens");
+            JsonObject window = value.screens.getAsJsonObject(screenId);
+            if (window != null) {
+                value.xPercent = Math.clamp(window.get("x_percent").getAsFloat(), 0, 1);
+                value.yPercent = Math.clamp(window.get("y_percent").getAsFloat(), 0, 1);
+                value.width = window.get("width").getAsInt();
+                value.height = window.get("height").getAsInt();
+                value.folded = window.get("folded").getAsBoolean();
+                value.open = window.get("open").getAsBoolean();
+                if (window.has("upload")) {
+                    JsonObject upload = window.getAsJsonObject("upload");
+                    value.uploadPanel = new UploadPanel(Math.clamp(upload.get("x_percent").getAsFloat(), 0, 1),
+                            Math.clamp(upload.get("y_percent").getAsFloat(), 0, 1), upload.get("width").getAsInt(), upload.get("height").getAsInt());
+                }
+            }
+            if (json.has("shift_click_to_network")) value.shiftClickToNetwork = json.get("shift_click_to_network").getAsBoolean();
+            if (json.has("sort")) value.sort = json.get("sort").getAsString();
+            if (json.has("filter")) value.filter = json.get("filter").getAsString();
+            if (json.has("descending")) value.descending = json.get("descending").getAsBoolean();
+            if (json.has("disabled_key_types")) {
+                for (var type : json.getAsJsonArray("disabled_key_types")) value.disabledKeyTypes.add(type.getAsString());
+            }
+        } catch (IOException | RuntimeException failure) {
+            Data_Energistics.LOGGER.warn("Cannot load player terminal preferences from {}", FILE, failure);
+        }
+        return value;
+    }
+
+    public void save() {
+        JsonObject window = new JsonObject();
+        window.addProperty("x_percent", xPercent);
+        window.addProperty("y_percent", yPercent);
+        window.addProperty("width", width);
+        window.addProperty("height", height);
+        window.addProperty("folded", folded);
+        window.addProperty("open", open);
+        if (uploadPanel != null) {
+            JsonObject upload = new JsonObject();
+            upload.addProperty("x_percent", uploadPanel.xPercent());
+            upload.addProperty("y_percent", uploadPanel.yPercent());
+            upload.addProperty("width", uploadPanel.width());
+            upload.addProperty("height", uploadPanel.height());
+            window.add("upload", upload);
+        }
+        screens.add(screenId, window);
+        JsonObject json = new JsonObject();
+        json.addProperty("shift_click_to_network", shiftClickToNetwork);
+        json.addProperty("sort", sort);
+        json.addProperty("filter", filter);
+        json.addProperty("descending", descending);
+        JsonArray disabledTypes = new JsonArray();
+        disabledKeyTypes.stream().sorted().forEach(disabledTypes::add);
+        json.add("disabled_key_types", disabledTypes);
+        json.add("screens", screens);
+        try {
+            Files.createDirectories(FILE.getParent());
+            Files.writeString(FILE, GSON.toJson(json) + System.lineSeparator(), StandardCharsets.UTF_8);
+        } catch (IOException failure) {
+            Data_Energistics.LOGGER.warn("Cannot save player terminal preferences to {}", FILE, failure);
+        }
+    }
+
+    /** Upload geometry belongs to this host screen; opening the upload panel remains an explicit action. */
+    public record UploadPanel(float xPercent, float yPercent, int width, int height) {}
+}

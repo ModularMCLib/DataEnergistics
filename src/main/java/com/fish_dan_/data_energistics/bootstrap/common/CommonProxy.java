@@ -17,6 +17,7 @@ import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPl
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalClaimHints;
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchRegistrationEvents;
+import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAccessors;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
@@ -44,6 +45,8 @@ import com.fish_dan_.data_energistics.registry.DEStructures;
 import com.fish_dan_.data_energistics.registry.DEUpgrades;
 import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.registry.UniversalTerminalAdapters;
+
+import appeng.api.features.HotkeyAction;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
@@ -113,6 +116,7 @@ public class CommonProxy {
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
             OrbitalControlPlayerMenu.register();
+            HotkeyAction.register(TerminalSessions::stowMainHand, "ae2wtlib_stow");
             if (MOD.isCuriosLoaded()) {
                 CuriosDataDistributionConnectorAccess.register();
                 CuriosOrbitalControlTerminalAccess.register();

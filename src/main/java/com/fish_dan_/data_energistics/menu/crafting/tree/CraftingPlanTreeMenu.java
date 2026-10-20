@@ -3,6 +3,11 @@ package com.fish_dan_.data_energistics.menu.crafting.tree;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityCraftingRequestContext;
+import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload;
+import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
+import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.assembly.CraftingPlanGraphAssembler;
+import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphPayload;
+import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.protocol.CraftingPlanGraphReceiver;
 import com.fish_dan_.data_energistics.common.terminal.UniversalTerminalHostAccessor;
 import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState;
 import com.fish_dan_.data_energistics.menu.crafting.tree.selection.CraftingPlanCpuSelection;
@@ -10,11 +15,6 @@ import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanSes
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeRequest;
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeResult;
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeSession;
-import com.fish_dan_.data_energistics.network.crafting.tree.action.CraftingPlanTreeActionPayload;
-import com.fish_dan_.data_energistics.network.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
-import com.fish_dan_.data_energistics.network.crafting.tree.assembly.CraftingPlanGraphAssembler;
-import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphPayload;
-import com.fish_dan_.data_energistics.network.crafting.tree.protocol.CraftingPlanGraphReceiver;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 

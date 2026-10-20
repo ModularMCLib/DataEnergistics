@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal.maintenance;
 
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalActionButton;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
@@ -124,7 +125,6 @@ public final class TerminalMaintenanceUi {
             row.resource.setActive(true);
             String status = entry.getString("status");
             if (!STATUS_IDS.contains(status)) status = "free";
-            String statusId = status;
             row.status.removeClass("status-free");
             row.status.removeClass("status-idle");
             row.status.removeClass("status-lacking");
@@ -132,8 +132,7 @@ public final class TerminalMaintenanceUi {
             row.status.removeClass("status-synthesizing");
             row.status.removeClass("status-exporting");
             row.status.addClass("status-" + status);
-            row.status.style(style -> style.tooltips(TerminalTooltipLines.split(text("maintenance_status." + statusId),
-                    text("maintenance_status_desc." + statusId))));
+            row.statusId = status;
             set(row.lower, entry.getLong("lower"), key);
             set(row.upper, entry.getLong("upper"), key);
             set(row.batch, entry.getLong("batch"), key);
@@ -248,6 +247,34 @@ public final class TerminalMaintenanceUi {
         event.hoverTooltips = new HoverTooltips(TerminalTooltipLines.split(lines), null, null, null);
     }
 
+    private void statusTooltip(Row row, UIEvent event) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
+        if (event.isShiftDown()) {
+            lines.add(text("maintenance_status_details"));
+            for (String status : STATUS_IDS) {
+                lines.add(Component.empty());
+                lines.add(text("maintenance_status." + status).copy().withStyle(statusColor(status)));
+                lines.add(text("maintenance_status_desc." + status).copy().withStyle(ChatFormatting.GRAY));
+            }
+        } else {
+            lines.add(text("maintenance_status." + row.statusId));
+            lines.add(text("maintenance_status_desc." + row.statusId).copy().withStyle(ChatFormatting.GRAY));
+        }
+        event.hoverTooltips = new HoverTooltips(ObjectList.of(TerminalTooltipLines.wrap(260, lines.toArray(Component[]::new))), null, null, null);
+    }
+
+    private static ChatFormatting statusColor(String status) {
+        return switch (status) {
+            case "free" -> ChatFormatting.GREEN;
+            case "idle" -> ChatFormatting.DARK_GREEN;
+            case "lacking" -> ChatFormatting.RED;
+            case "no_cpu" -> ChatFormatting.GOLD;
+            case "synthesizing" -> ChatFormatting.YELLOW;
+            case "exporting" -> ChatFormatting.LIGHT_PURPLE;
+            default -> throw new IllegalArgumentException("Unknown maintenance status " + status);
+        };
+    }
+
     private void commit(int index, String id, TextField field, @Nullable AEKey key) {
         var parsed = AmountExpressionParser.parseStockAmount(field.getValue(), key == null ? 1 : key.getAmountPerUnit());
         if (parsed.isEmpty() || id.equals("batch") && parsed.getAsLong() <= 0) return;
@@ -290,18 +317,21 @@ public final class TerminalMaintenanceUi {
         private final Button enabled;
         private final Button remove;
         private @Nullable AEKey key;
+        private String statusId = "free";
 
         private Row(int index) {
             this.index = index;
             lower = amountField(index + "_lower", 31);
             upper = amountField(index + "_upper", 80);
             batch = amountField(index + "_batch", 129);
-            enabled = TerminalUiLayout.icon(index + "_enabled", "terminal-maintenance-toggle", "icon-maintenance-enabled", 177, 4, 14, 14);
+            enabled = new TerminalActionButton();
+            enabled.setId(index + "_enabled");
+            enabled.noText().addClass("terminal-maintenance-toggle");
             remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", 193, 4, 14, 14);
-            TerminalUiLayout.at(TerminalUiLayout.require(enabled, index + "_enabled_icon", UIElement.class), 0, 0, 14, 14);
             root.addClass("terminal-maintenance-row");
             status.addClass("terminal-maintenance-status");
             status.addClass("status-free");
+            status.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> statusTooltip(this, event));
             UIElement glyph = TerminalUiLayout.at(new UIElement(), 0, 0, 6, 18);
             glyph.addClass("terminal-maintenance-status-icon");
             glyph.setAllowHitTest(false);
@@ -316,7 +346,6 @@ public final class TerminalMaintenanceUi {
                         InventoryAction.SPLIT_OR_PLACE_SINGLE).name());
                 request.accept("ghost", data);
             });
-            enabled.style(style -> style.tooltips(TerminalTooltipLines.split(text("maintenance_disabled"))));
             enabled.setOnClick(event -> {
                 if (event.button == 0) {
                     CompoundTag data = index(index);

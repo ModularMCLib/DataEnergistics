@@ -291,7 +291,6 @@ public final class DataEnergisticsTextureEditorResources {
         provider.addResource("states_small_top_surface_small_type_filter_all", guiSprite("states/small_top_surface/small_type_filter_all.png"));
         provider.addResource("states_small_top_surface_small_zoom", guiSprite("states/small_top_surface/small_zoom.png"));
         provider.addResource("states_small_top_surface_mode_button", guiSprite("states/small_top_surface/mode_button.png"));
-        provider.addResource("states_request_maintain_enable", guiSprite("states/request_maintain/enable.png"));
         provider.addResource("states_request_maintain_exporting", guiSprite("states/request_maintain/exporting.png"));
         provider.addResource("states_request_maintain_free", guiSprite("states/request_maintain/free.png"));
         provider.addResource("states_request_maintain_idle", guiSprite("states/request_maintain/idle.png"));

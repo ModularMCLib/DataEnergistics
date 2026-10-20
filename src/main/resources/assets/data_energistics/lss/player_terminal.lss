@@ -154,10 +154,14 @@
     hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
     pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
 }
+.terminal-maintenance-toggle { hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png); }
+.terminal-maintenance-toggle.maintenance-enabled {
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+}
 .selected.terminal-maintenance-delete { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
 .icon-maintenance-add { background: sprite(data_energistics:textures/guis/states/top_surface/add.png); }
 .icon-maintenance-delete { background: sprite(data_energistics:textures/guis/states/top_surface/delete.png); }
-.maintenance-enabled .icon-maintenance-enabled { background: sprite(data_energistics:textures/guis/states/request_maintain/enable.png); }
 .status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/free.png); }
 .status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/idle.png); }
 .status-lacking .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/lacking.png); }

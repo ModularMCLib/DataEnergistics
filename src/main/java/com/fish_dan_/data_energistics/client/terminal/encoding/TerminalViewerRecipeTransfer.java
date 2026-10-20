@@ -19,6 +19,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -85,26 +86,46 @@ public final class TerminalViewerRecipeTransfer {
         TerminalWorkspace workspace = recipe != null && recipe.getType() == RecipeType.CRAFTING ? TerminalWorkspace.CRAFTING :
                 recipe != null && recipe.getType() == RecipeType.SMITHING ? TerminalWorkspace.SMITHING :
                         recipe != null && recipe.getType() == RecipeType.STONECUTTING ? TerminalWorkspace.STONECUTTING : TerminalWorkspace.PROCESSING;
-        if (inputs.size() > workspace.patternInputSlots() || outputs.size() > workspace.patternOutputSlots()) return null;
+        var patternInputs = workspace == TerminalWorkspace.PROCESSING ? mergeProcessingStacks(inputs) : inputs;
+        var patternOutputs = workspace == TerminalWorkspace.PROCESSING ? mergeProcessingStacks(outputs) : outputs;
+        if (patternInputs.size() > workspace.patternInputSlots() || patternOutputs.size() > workspace.patternOutputSlots()) return null;
         var registries = Minecraft.getInstance().level.registryAccess();
         ListTag inputData = new ListTag();
         for (int index = 0; index < workspace.patternInputSlots(); index++) {
             int source = index;
-            if (workspace == TerminalWorkspace.CRAFTING && recipe instanceof ShapedRecipe shaped && inputs.size() != 9) {
+            if (workspace == TerminalWorkspace.CRAFTING && recipe instanceof ShapedRecipe shaped && patternInputs.size() != 9) {
                 int row = index / 3;
                 int column = index % 3;
                 source = row < shaped.getHeight() && column < shaped.getWidth() ? row * shaped.getWidth() + column : -1;
             }
-            inputData.add(GenericStack.writeTag(registries, source >= 0 && source < inputs.size() ? inputs.get(source) : null));
+            inputData.add(GenericStack.writeTag(registries, source >= 0 && source < patternInputs.size() ? patternInputs.get(source) : null));
         }
         ListTag outputData = new ListTag();
         for (int index = 0; index < workspace.patternOutputSlots(); index++)
-            outputData.add(GenericStack.writeTag(registries, index < outputs.size() ? outputs.get(index) : null));
+            outputData.add(GenericStack.writeTag(registries, index < patternOutputs.size() ? patternOutputs.get(index) : null));
         CompoundTag data = new CompoundTag();
         data.putString("workspace", workspace.id());
         data.put("inputs", inputData);
         data.put("outputs", outputData);
         data.put("context", new TerminalPatternContext(type, recipeId).save());
         return data;
+    }
+
+    private static ObjectList<GenericStack> mergeProcessingStacks(ObjectList<@Nullable GenericStack> stacks) {
+        ObjectList<GenericStack> merged = new ObjectArrayList<>();
+        for (var stack : stacks) {
+            if (stack == null) continue;
+            for (int index = 0; index < merged.size(); index++) {
+                var previous = merged.get(index);
+                if (!previous.what().equals(stack.what())) continue;
+                long amount = Math.min(stack.amount(), Long.MAX_VALUE - previous.amount());
+                merged.set(index, new GenericStack(previous.what(), previous.amount() + amount));
+                // Match AE's transfer behavior: keep any amount exceeding one long in a separate entry.
+                stack = amount < stack.amount() ? new GenericStack(stack.what(), stack.amount() - amount) : null;
+                break;
+            }
+            if (stack != null) merged.add(stack);
+        }
+        return merged;
     }
 }

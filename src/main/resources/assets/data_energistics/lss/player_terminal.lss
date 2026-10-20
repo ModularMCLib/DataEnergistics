@@ -137,16 +137,16 @@
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
 .icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
-.terminal-maintenance-frame { background: group(#FFCBCCD4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-frame { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
 .terminal-maintenance-row { background: #00000000; }
 .terminal-maintenance-add-row { background: group(#FFCBCCD4, border(1, #FFF0F0F3)); }
 .terminal-maintenance-key { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
 .terminal-maintenance-amount {
     font-size: 7;
-    background: group(#FF9A9FB4, border(1, #FFF0F0F3));
+    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1);
     focus-overlay: #00000000;
 }
-.terminal-maintenance-amount:focused { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-amount:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1); }
 .terminal-maintenance-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-maintenance-add, .terminal-maintenance-delete, .terminal-maintenance-toggle {
     background: #00000000;

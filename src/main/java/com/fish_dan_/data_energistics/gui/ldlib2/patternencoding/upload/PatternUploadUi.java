@@ -43,6 +43,7 @@ public final class PatternUploadUi {
     public static final int MIN_HEIGHT = 140;
     private final UIElement root;
     private final UIElement list = new UIElement();
+    private final UIElement frame = new UIElement();
     private final Button resize = TerminalUiLayout.icon("resize", "terminal-resize", "icon-resize", 0, 0, 4, 4);
     private final PatternUploadActions actions;
     private final UIElement viewport = new UIElement();
@@ -85,8 +86,10 @@ public final class PatternUploadUi {
         scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
         scrollbar.setOnValueChanged(value -> viewportPending = true);
         list.addClass("terminal-upload-list");
+        frame.addClass("terminal-upload-frame");
+        frame.setAllowHitTest(false);
         viewport.setOverflowVisible(false);
-        list.addChildren(viewport, scrollbar);
+        list.addChildren(frame, viewport, scrollbar);
         list.addEventListener(UIEvents.MOUSE_WHEEL, event -> {
             cancelEditing();
             scrollbar.scrollByWheel(event.deltaY);
@@ -120,9 +123,10 @@ public final class PatternUploadUi {
         status.setDisplay(showHint);
         TerminalUiLayout.searchFieldAt(search, 28, 22, searchWidth, 14);
         TerminalUiLayout.at(status, searchWidth + 31, 20, 56, 18);
-        TerminalUiLayout.at(list, 5, 42, rowWidth + 10, listHeight);
+        TerminalUiLayout.at(list, 5, 42, rowWidth + 12, listHeight);
+        TerminalUiLayout.at(frame, -1, -2, rowWidth + 2, listHeight + 4);
         TerminalUiLayout.at(viewport, 0, 0, rowWidth, listHeight);
-        TerminalUiLayout.at(scrollbar, rowWidth + 4, 0, 6, listHeight);
+        TerminalUiLayout.at(scrollbar, rowWidth + 6, 0, 6, listHeight);
         TerminalUiLayout.at(resize, width - 6, height - 6, 4, 4);
         updateScrollRange();
         rebuildViewport();

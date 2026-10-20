@@ -51,9 +51,6 @@ public final class TerminalUiLayout {
         root.addChild(icon("entry", "terminal-entry", "icon-entry", 0, 0, TerminalViewportLayout.ENTRY_SIZE, TerminalViewportLayout.ENTRY_SIZE));
         UIElement window = at(element("window", "terminal-window"), 8, 8, width, 168);
         UIElement panel = at(element("panel", "terminal-panel"), 12, 0, panelWidth, 168);
-        panel.addChildren(at(element("top_edge", "frame-light"), 0, 0, panelWidth, 1),
-                at(element("left_edge", "frame-light"), 0, 0, 1, 168),
-                at(element("bottom_edge", "frame-dark"), 0, 167, panelWidth, 1));
         window.addChild(panel);
         String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
         UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, -1, 15, 16 + (controls.length - 1) * 12);
@@ -195,9 +192,6 @@ public final class TerminalUiLayout {
         int panelWidth = viewport.width() - TerminalViewportLayout.TAB_WIDTH - 12;
         int encodingCenter = viewport.width() - TerminalViewportLayout.TAB_WIDTH - TerminalViewportLayout.ENCODING_WIDTH / 2;
         atWithin(require(window, "panel", UIElement.class), 12, 0, panelWidth, viewport.height(), viewport.width(), viewport.height());
-        atWithin(require(window, "top_edge", UIElement.class), 0, 0, panelWidth, 1, viewport.width(), viewport.height());
-        atWithin(require(window, "left_edge", UIElement.class), 0, 0, 1, viewport.height(), viewport.width(), viewport.height());
-        atWithin(require(window, "bottom_edge", UIElement.class), 0, viewport.height() - 1, panelWidth, 1, viewport.width(), viewport.height());
         atWithin(require(window, "search", UIElement.class), searchLeft(viewport.width()),
                 3, TerminalViewportLayout.OPERATION_WIDTH, 12, viewport.width(), viewport.height());
         atWithin(require(window, "drag", UIElement.class), encodingCenter - ACTION_BUTTON_SIZE / 2, 2,

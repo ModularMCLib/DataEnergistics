@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlank
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.settings.TerminalSettingsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalPinnedResourcesUi;
@@ -113,6 +114,7 @@ public final class TerminalOverlayUi {
     private final TerminalAmountUi amountUi;
     private final TerminalKeyTypeUi keyTypeUi;
     private final TerminalMagnetUi magnetUi;
+    private final TerminalSettingsUi settingsUi;
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
     private final TerminalStorageInput storageInput;
@@ -240,6 +242,8 @@ public final class TerminalOverlayUi {
             }
         });
         button(window, "magnet", () -> open("magnet"));
+        button(window, "settings", () -> open("settings"));
+        tooltip(window, "settings", GuiText.TerminalSettingsTitle.text());
         button(window, "tasks", () -> networkAction("cpu_list", new CompoundTag()));
         TerminalUiLayout.require(window, "destination", Button.class).setOnClick(event -> {
             preferences.shiftClickToNetwork = !preferences.shiftClickToNetwork;
@@ -286,7 +290,7 @@ public final class TerminalOverlayUi {
         }
         processingUi = new TerminalProcessingControlsUi(element(workspaces.get("processing"), "processing_amounts"), request);
         craftingRecipesUi = new TerminalCraftingRecipesUi(element(workspaces.get("crafting"), "crafting_choices"), registries, request);
-        for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types" }) {
+        for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types", "settings" }) {
             UIElement root = TerminalUiLayout.popup(name);
             subWindows.add(name, root);
             label(root, "popup_title").setText(text(name));
@@ -302,6 +306,7 @@ public final class TerminalOverlayUi {
             preferences.save();
         });
         keyTypeUi = new TerminalKeyTypeUi(subWindows.root("key_types"), keyTypeSelection);
+        settingsUi = new TerminalSettingsUi(subWindows.root("settings"), search::tick);
         processingScrollbar = TerminalUiLayout.require(workspaces.get("processing"), "pattern_scroll", Scroller.Vertical.class);
         configureProcessingScrollbar();
         for (String host : new String[] { "inputs", "outputs" })
@@ -1091,6 +1096,7 @@ public final class TerminalOverlayUi {
     }
 
     private void open(String name, @Nullable String parent) {
+        if (name.equals("settings")) settingsUi.refresh();
         subWindows.open(name, parent);
         geometryDirty = true;
     }

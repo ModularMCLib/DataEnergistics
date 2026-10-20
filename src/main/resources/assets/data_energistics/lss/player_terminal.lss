@@ -139,6 +139,11 @@
 .terminal-toggle.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 28, 22, 12); }
 .terminal-toggle.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 0, 40, 22, 12); }
 .terminal-toggle.selected.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 22, 40, 22, 12); }
+.terminal-settings-option .terminal-toggle-name { vertical-align: top; }
+.terminal-search-radio .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 28, 0, 14, 14); }
+.terminal-search-radio.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 42, 0, 14, 14); }
+.terminal-search-radio.selected .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 28, 14, 14, 14); }
+.terminal-search-radio.selected.hovered .terminal-toggle-glyph { background: sprite(ae2:textures/guis/checkbox.png, 42, 14, 14, 14); }
 
 .icon-entry { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_crafting_terminal.png); }
 .icon-drag { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_close_drag.png); }

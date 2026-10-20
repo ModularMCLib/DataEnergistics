@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.crafting.TerminalCraftingRecipesUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.settings.TerminalSettingsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 
@@ -52,7 +53,7 @@ public final class TerminalUiLayout {
         UIElement window = at(element("window", "terminal-window"), 8, 8, width, 168);
         UIElement panel = at(element("panel", "terminal-panel"), 12, 0, panelWidth, 168);
         window.addChild(panel);
-        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "destination" };
+        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "settings", "destination" };
         UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, -1, 15, 16 + (controls.length - 1) * 12);
         // Backing tiles overlap; the cropped bottom cap closes below the final button at the panel edge.
         for (int index = 0; index < controls.length; index++) {
@@ -226,6 +227,7 @@ public final class TerminalUiLayout {
             case "magnet" -> 122;
             case "filters" -> 166;
             case "quantity" -> 107;
+            case "settings" -> TerminalSettingsUi.HEIGHT;
             case "upload" -> PatternUploadUi.MIN_HEIGHT;
             default -> throw new IllegalArgumentException("Unknown terminal popup " + name);
         };
@@ -238,6 +240,7 @@ public final class TerminalUiLayout {
     public static int popupWidth(String name) {
         return switch (name) {
             case "magnet" -> 200;
+            case "settings" -> TerminalSettingsUi.WIDTH;
             case "upload" -> PatternUploadUi.MIN_WIDTH;
             case "quantity", "filters" -> 176;
             default -> 190;

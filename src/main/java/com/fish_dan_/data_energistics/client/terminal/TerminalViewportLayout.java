@@ -26,7 +26,7 @@ public record TerminalViewportLayout(int x, int y, int width, int height, int co
     private static final int FRAME_WIDTH = STORAGE_LEFT + TAB_WIDTH + ENCODING_WIDTH;
     private static final int FRAME_HEIGHT = 20;
     public static final int MIN_WIDTH = STORAGE_LEFT + PROCESSING_WIDTH + ENCODING_WIDTH + TAB_WIDTH;
-    private static final int MIN_HEIGHT = 100;
+    private static final int MIN_HEIGHT = 112;
 
     public static TerminalViewportLayout compute(int screenWidth, int screenHeight, float xPercent, float yPercent,
                                                  int requestedWidth, int requestedHeight, boolean expanded, boolean folded, int operationWidth, int manualPinRows, int automaticPins) {

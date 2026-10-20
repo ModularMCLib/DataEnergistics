@@ -167,8 +167,10 @@ public final class TerminalResourceCell extends Button {
             context.graphics.drawString(context.mc.font, amount, 32 - context.mc.font.width(amount), 0, 0xFFFFFFFF);
             context.pose.popPose();
         }
-        if (storageCell && craftable && !craftingLabel)
-            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -11, -11, "+", false);
+        if (storageCell && craftable && !craftingLabel) {
+            context.pose.translate(0, 0, 200);
+            StackSizeRenderer.renderSizeLabel(context.graphics, context.mc.font, -12, -12, "+", false);
+        }
         context.pose.popPose();
     }
 

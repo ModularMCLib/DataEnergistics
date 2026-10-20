@@ -369,7 +369,8 @@ public final class TerminalSession {
         if (data.contains("stack", Tag.TAG_COMPOUND)) {
             markMaintenanceResource(state, index, GenericStack.readTag(player.registryAccess(), data.getCompound("stack")));
         } else if (data.contains("interaction", Tag.TAG_STRING)) {
-            markMaintenanceResource(state, index, TerminalGhostClicks.apply(
+            if (menu.getCarried().isEmpty()) state.maintenance().resource(index, null);
+            else markMaintenanceResource(state, index, TerminalGhostClicks.apply(
                     previous == null ? null : new GenericStack(previous, 1), menu.getCarried(),
                     InventoryAction.valueOf(data.getString("interaction"))));
         } else markMaintenanceResource(state, index, GenericStack.fromItemStack(menu.getCarried()));

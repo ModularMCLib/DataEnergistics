@@ -7,8 +7,10 @@ import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNet
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspaceState;
 
+import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
+import appeng.api.storage.StorageHelper;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -18,7 +20,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -30,13 +35,101 @@ public final class TerminalRecipeTransfer {
 
     private TerminalRecipeTransfer() {}
 
-    /** Returns real inputs to the selected destination before clearing the active page's configuration. */
+    /** Sends marked item keys to inventory when requested; the network destination only removes their marks. */
     public static String clear(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean toNetwork) {
         if (!state.workspace().supportsEncoding()) throw new IllegalArgumentException("The active page is not a recipe encoder");
+        TerminalWorkspace page = state.workspace();
+        TerminalWorkspaceState work = state.work(page);
+        if (toNetwork) {
+            clearConfiguration(page, work);
+            return "";
+        }
+
+        ObjectList<Extraction> extractions = new ObjectArrayList<>();
+        String failure = planMarkedInputs(player, page, work, connection, extractions);
+        if (!failure.isEmpty()) return failure;
+
         CompoundTag data = new CompoundTag();
-        data.putString("workspace", state.workspace().id());
-        return apply(player, state, data, connection, toNetwork);
+        data.putString("workspace", page.id());
+        failure = apply(player, state, data, connection, false);
+        if (!failure.isEmpty()) return failure;
+        if (!extractions.isEmpty()) {
+            if (connection == null) throw new IllegalStateException("Planned ME extraction lost its connection");
+            extractMarkedInputs(player, connection, extractions);
+        }
+        return "";
     }
+
+    private static String planMarkedInputs(ServerPlayer player, TerminalWorkspace page, TerminalWorkspaceState work,
+                                           @Nullable TerminalConnection connection, ObjectList<Extraction> extractions) {
+        Object2LongMap<AEItemKey> requested = new Object2LongLinkedOpenHashMap<>();
+        for (int index = 0; index < work.patternInputs.size(); index++) {
+            GenericStack stack = work.patternInputs.get(index);
+            if (stack == null || !(stack.what() instanceof AEItemKey key)) continue;
+            long previous = requested.getLong(key);
+            if (Long.MAX_VALUE - previous < stack.amount()) return "amount_overflow";
+            requested.put(key, previous + stack.amount());
+        }
+        if (requested.isEmpty()) return "";
+        if (connection == null) return "offline";
+
+        SimpleContainer capacity = new SimpleContainer(player.getInventory().items.size());
+        for (int index = 0; index < capacity.getContainerSize(); index++)
+            capacity.setItem(index, player.getInventory().items.get(index).copy());
+        if (page != TerminalWorkspace.PROCESSING) {
+            for (int index = 0; index < work.inputs.getContainerSize(); index++) {
+                ItemStack input = work.inputs.getItem(index);
+                if (!input.isEmpty() && !capacity.addItem(input.copy()).isEmpty()) return "inventory_full";
+            }
+        }
+
+        for (Object2LongMap.Entry<AEItemKey> entry : requested.object2LongEntrySet()) {
+            long available = connection.storage().extract(entry.getKey(), entry.getLongValue(), Actionable.SIMULATE,
+                    connection.source());
+            TerminalNetworkStorage.checkAmount(available, entry.getLongValue());
+            if (available == 0) continue;
+            if (!simulateInsert(capacity, entry.getKey(), available)) return "inventory_full";
+            extractions.add(new Extraction(entry.getKey(), available));
+        }
+        return "";
+    }
+
+    private static boolean simulateInsert(SimpleContainer inventory, AEItemKey key, long amount) {
+        long remaining = amount;
+        while (remaining > 0) {
+            int count = (int) Math.min(remaining, key.getMaxStackSize());
+            if (!inventory.addItem(key.toStack(count)).isEmpty()) return false;
+            remaining -= count;
+        }
+        return true;
+    }
+
+    private static void extractMarkedInputs(ServerPlayer player, TerminalConnection connection,
+                                            ObjectList<Extraction> extractions) {
+        for (Extraction extraction : extractions) {
+            long amount = StorageHelper.poweredExtraction(connection.grid().getEnergyService(), connection.storage(),
+                    extraction.key(), extraction.amount(), connection.source());
+            TerminalNetworkStorage.checkAmount(amount, extraction.amount());
+            long remaining = amount;
+            while (remaining > 0) {
+                int count = (int) Math.min(remaining, extraction.key().getMaxStackSize());
+                ItemStack stack = extraction.key().toStack(count);
+                if (!player.getInventory().add(stack) && !stack.isEmpty())
+                    throw new IllegalStateException("Reserved terminal extraction capacity was lost");
+                remaining -= count;
+            }
+        }
+    }
+
+    private static void clearConfiguration(TerminalWorkspace page, TerminalWorkspaceState work) {
+        work.patternInputs.copyFrom(new TerminalGhostInventory(page.patternInputSlots(), () -> {}));
+        work.patternOutputs.copyFrom(new TerminalGhostInventory(page.patternOutputSlots(), () -> {}));
+        work.matching.clear();
+        work.context(TerminalPatternContext.EMPTY);
+        work.recipeIndex(0);
+    }
+
+    private record Extraction(AEItemKey key, long amount) {}
 
     public static String apply(ServerPlayer player, TerminalPlayerState state, CompoundTag data,
                                @Nullable TerminalConnection connection, boolean toNetwork) {

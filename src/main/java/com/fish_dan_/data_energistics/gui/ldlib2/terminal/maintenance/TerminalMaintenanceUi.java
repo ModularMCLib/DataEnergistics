@@ -40,13 +40,11 @@ import java.util.function.BiConsumer;
 public final class TerminalMaintenanceUi {
 
     private static final int ROW_HEIGHT = 22;
-    private static final int VIEW_TOP = 46;
-    private static final int VIEW_HEIGHT = 90;
+    private static final int VIEW_TOP = 22;
+    private static final int VIEW_HEIGHT = 176;
     private static final int VIEW_WIDTH = 210;
-    private static final int[] COLUMN_DIVIDERS = { 14, 35, 80, 125, 170, 192 };
     private final UIElement content = new UIElement();
     private final UIElement frame = new UIElement();
-    private final UIElement columns = new UIElement();
     private final UIElement viewport = new UIElement();
     private final UIElement addRow = new UIElement();
     private final Scroller.Vertical scrollbar = TerminalUiLayout.verticalScrollbar(new Scroller.Vertical());
@@ -65,8 +63,7 @@ public final class TerminalMaintenanceUi {
         this.request = request;
         frame.addClass("terminal-maintenance-frame");
         frame.setAllowHitTest(false);
-        columns.addClass("terminal-maintenance-columns");
-        columns.setAllowHitTest(false);
+        TerminalUiLayout.require(root, "popup_title", Label.class).layout(layout -> layout.width(44));
         viewport.setOverflowVisible(false);
         viewport.addChild(content);
         search.addClass("terminal-field");
@@ -102,16 +99,11 @@ public final class TerminalMaintenanceUi {
         addButton.setOnClick(event -> {
             if (event.button == 0) request.accept("maintenance_add", new CompoundTag());
         });
-        columns.addChildren(header("maintenance_col_status", 1, 13), header("maintenance_col_resource", 15, 18),
-                header("maintenance_col_lower", 37, 43), header("maintenance_col_upper", 82, 43),
-                header("maintenance_col_batch", 127, 43), header("maintenance_col_enabled", 171, 21),
-                header("maintenance_col_delete", 193, 17));
-        TerminalUiLayout.at(frame, 5, 45, 220, 92);
-        TerminalUiLayout.at(columns, 5, 34, 220, 11);
-        TerminalUiLayout.at(search, 6, 18, 216, 14);
+        TerminalUiLayout.at(frame, 5, 20, 220, 180);
+        TerminalUiLayout.at(search, 56, 4, 155, 14);
         TerminalUiLayout.at(viewport, 6, VIEW_TOP, VIEW_WIDTH, VIEW_HEIGHT);
         TerminalUiLayout.at(scrollbar, 216, VIEW_TOP, 6, VIEW_HEIGHT);
-        root.addChildren(frame, columns, search, viewport, scrollbar);
+        root.addChildren(frame, search, viewport, scrollbar);
     }
 
     public void refresh(CompoundTag value, int deleteSelection) {
@@ -253,15 +245,6 @@ public final class TerminalMaintenanceUi {
         return Component.translatable("gui.data_energistics.player_terminal." + key, arguments);
     }
 
-    private static Label header(String key, int left, int width) {
-        Label label = new Label();
-        label.addClass("terminal-maintenance-header");
-        label.setText(text(key));
-        label.textStyle(style -> style.adaptiveWidth(false).adaptiveHeight(false));
-        label.setAllowHitTest(false);
-        return TerminalUiLayout.at(label, left, 0, width, 11);
-    }
-
     private static CompoundTag index(int index) {
         CompoundTag data = new CompoundTag();
         data.putInt("index", index);
@@ -272,8 +255,8 @@ public final class TerminalMaintenanceUi {
 
         private final int index;
         private final UIElement root = TerminalUiLayout.at(new UIElement(), 0, 0, VIEW_WIDTH, ROW_HEIGHT);
-        private final UIElement status = TerminalUiLayout.at(new UIElement(), 0, 5, 12, 12);
-        private final TerminalResourceCell resource = TerminalUiLayout.at(new TerminalResourceCell(), 15, 2, 18, 18);
+        private final UIElement status = TerminalUiLayout.at(new UIElement(), 0, 0, 6, 18);
+        private final TerminalResourceCell resource = TerminalUiLayout.at(new TerminalResourceCell(), 10, 2, 18, 18);
         private final TextField lower;
         private final TextField upper;
         private final TextField batch;
@@ -283,15 +266,16 @@ public final class TerminalMaintenanceUi {
 
         private Row(int index) {
             this.index = index;
-            lower = amountField(index + "_lower", 37);
-            upper = amountField(index + "_upper", 82);
-            batch = amountField(index + "_batch", 127);
-            enabled = TerminalUiLayout.icon(index + "_enabled", "terminal-maintenance-toggle", "icon-maintenance-enabled", 174, 4, 14, 14);
-            remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", 195, 4, 14, 14);
+            lower = amountField(index + "_lower", 31);
+            upper = amountField(index + "_upper", 80);
+            batch = amountField(index + "_batch", 129);
+            enabled = TerminalUiLayout.icon(index + "_enabled", "terminal-maintenance-toggle", "icon-maintenance-enabled", 177, 4, 14, 14);
+            remove = TerminalUiLayout.icon(index + "_delete", "terminal-maintenance-delete", "icon-maintenance-delete", 193, 4, 14, 14);
+            TerminalUiLayout.at(TerminalUiLayout.require(enabled, index + "_enabled_icon", UIElement.class), 0, 0, 14, 14);
             root.addClass("terminal-maintenance-row");
             status.addClass("terminal-maintenance-status");
             status.addClass("status-free");
-            UIElement glyph = TerminalUiLayout.at(new UIElement(), 0, 0, 12, 12);
+            UIElement glyph = TerminalUiLayout.at(new UIElement(), 0, 0, 6, 18);
             glyph.addClass("terminal-maintenance-status-icon");
             glyph.setAllowHitTest(false);
             status.addChild(glyph);
@@ -316,22 +300,15 @@ public final class TerminalMaintenanceUi {
             remove.setOnClick(event -> {
                 if (event.button == 0) request.accept("maintenance_delete", index(index));
             });
-            TerminalUiLayout.at(status, 0, 4, 12, 12);
-            TerminalUiLayout.at(resource, 15, 1, 18, 18);
-            TerminalUiLayout.at(enabled, 174, 3, 14, 14);
-            TerminalUiLayout.at(remove, 195, 3, 14, 14);
-            for (int boundary : COLUMN_DIVIDERS) {
-                UIElement divider = new UIElement();
-                divider.addClass("terminal-maintenance-divider");
-                divider.setAllowHitTest(false);
-                TerminalUiLayout.at(divider, boundary, 1, 1, ROW_HEIGHT - 2);
-                root.addChild(divider);
-            }
+            TerminalUiLayout.at(status, 3, 2, 6, 18);
+            TerminalUiLayout.at(resource, 10, 2, 18, 18);
+            TerminalUiLayout.at(enabled, 177, 4, 14, 14);
+            TerminalUiLayout.at(remove, 193, 4, 14, 14);
             root.addChildren(status, resource, lower, upper, batch, enabled, remove);
         }
 
         private TextField amountField(String id, int left) {
-            TextField field = TerminalUiLayout.at(new TextField(), left, 4, 43, 14);
+            TextField field = TerminalUiLayout.at(new TextField(), left, 4, 47, 14);
             field.setId(id);
             field.addClass("terminal-field");
             field.addClass("terminal-maintenance-amount");

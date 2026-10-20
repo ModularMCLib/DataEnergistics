@@ -142,20 +142,16 @@
     focus-overlay: #00000000;
 }
 .terminal-maintenance-search:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); focus-overlay: #00000000; }
-.terminal-maintenance-frame { background: group(#FFCBCCD4, border(1, #FF413F54), border(-1, #FFF0F0F3)); }
-.terminal-maintenance-header {
-    font-size: 6;
-    text-color: #FF343548;
-    text-shadow: false;
-    horizontal-align: center;
-    vertical-align: center;
-    background: group(#FF9A9FB4, border(1, #FF413F54), border(-1, #FFF0F0F3));
+.terminal-maintenance-frame { background: group(#FFCBCCD4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-row { background: #00000000; }
+.terminal-maintenance-add-row { background: group(#FFCBCCD4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-key { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-amount {
+    font-size: 7;
+    background: group(#FF9A9FB4, border(1, #FFF0F0F3));
+    focus-overlay: #00000000;
 }
-.terminal-maintenance-row { background: group(#FFCBCCD4, border(1, #FF9A9FB4), border(-1, #FFF0F0F3)); }
-.terminal-maintenance-add-row { background: group(#FFCBCCD4, border(1, #FF9A9FB4), border(-1, #FFF0F0F3)); }
-.terminal-maintenance-divider { background: #FF9A9FB4; }
-.terminal-maintenance-amount { font-size: 7; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png); focus-overlay: border(1, #FF9AD8FF); }
-.terminal-maintenance-amount:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
+.terminal-maintenance-amount:focused { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
 .terminal-maintenance-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-maintenance-add, .terminal-maintenance-delete, .terminal-maintenance-toggle {
     background: #00000000;

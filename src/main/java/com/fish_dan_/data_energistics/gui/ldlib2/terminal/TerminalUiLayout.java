@@ -255,7 +255,7 @@ public final class TerminalUiLayout {
             case "key_types" -> 160;
             case "magnet" -> 122;
             case "filters" -> 166;
-            case "maintenance" -> 158;
+            case "maintenance" -> 216;
             case "quantity" -> 107;
             case "settings" -> TerminalSettingsUi.HEIGHT;
             case "upload" -> PatternUploadUi.MIN_HEIGHT;

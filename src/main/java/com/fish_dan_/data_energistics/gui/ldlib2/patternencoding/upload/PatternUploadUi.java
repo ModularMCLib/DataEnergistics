@@ -39,7 +39,7 @@ import java.util.Objects;
 public final class PatternUploadUi {
 
     private static final int ROW_HEIGHT = 20;
-    public static final int MIN_WIDTH = 100;
+    public static final int MIN_WIDTH = 104;
     public static final int MIN_HEIGHT = 140;
     private final UIElement root;
     private final UIElement list = new UIElement();
@@ -83,7 +83,9 @@ public final class PatternUploadUi {
                 event.stopPropagation();
             }
         });
-        scrollbar.scrollContainer.addChildAt(TerminalUiLayout.scrollbarRail("upload_rail"), 0);
+        UIElement rail = TerminalUiLayout.scrollbarRail("upload_rail");
+        rail.layout(layout -> layout.top(-1).bottom(-1));
+        scrollbar.scrollContainer.addChildAt(rail, 0);
         scrollbar.setOnValueChanged(value -> viewportPending = true);
         list.addClass("terminal-upload-list");
         frame.addClass("terminal-upload-frame");
@@ -113,20 +115,19 @@ public final class PatternUploadUi {
         cancelEditing();
         this.width = width;
         this.height = height;
-        rowWidth = width - 20;
+        rowWidth = width - 24;
         listHeight = height - 50;
         root.layout(layout -> layout.width(width).height(height));
-        TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 7, 5, width - 31, 10);
-        TerminalUiLayout.at(TerminalUiLayout.require(root, "close", UIElement.class), width - 17, 3, 14, 14);
         boolean showHint = width >= 160;
-        int searchWidth = showHint ? width - 92 : width - 33;
+        TerminalUiLayout.at(TerminalUiLayout.require(root, "popup_title", Label.class), 7, 5, width - (showHint ? 90 : 31), 10);
+        TerminalUiLayout.at(TerminalUiLayout.require(root, "close", UIElement.class), width - 17, 3, 14, 14);
         status.setDisplay(showHint);
-        TerminalUiLayout.searchFieldAt(search, 28, 22, searchWidth, 14);
-        TerminalUiLayout.at(status, searchWidth + 31, 20, 56, 18);
-        TerminalUiLayout.at(list, 5, 42, rowWidth + 12, listHeight);
+        TerminalUiLayout.searchFieldAt(search, 28, 22, rowWidth - 23, 14);
+        TerminalUiLayout.at(status, width - 78, 1, 56, 18);
+        TerminalUiLayout.at(list, 5, 42, rowWidth + 14, listHeight);
         TerminalUiLayout.at(frame, -1, -2, rowWidth + 2, listHeight + 4);
         TerminalUiLayout.at(viewport, 0, 0, rowWidth, listHeight);
-        TerminalUiLayout.at(scrollbar, rowWidth + 6, 0, 6, listHeight);
+        TerminalUiLayout.at(scrollbar, rowWidth + 6, -2, 6, listHeight + 4);
         TerminalUiLayout.at(resize, width - 6, height - 6, 4, 4);
         updateScrollRange();
         rebuildViewport();

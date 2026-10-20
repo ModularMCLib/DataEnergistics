@@ -41,8 +41,9 @@ public final class TerminalRecipeTransfer {
         TerminalWorkspace page = state.workspace();
         TerminalWorkspaceState work = state.work(page);
         if (toNetwork) {
-            clearConfiguration(page, work);
-            return "";
+            CompoundTag data = new CompoundTag();
+            data.putString("workspace", page.id());
+            return apply(player, state, data, connection, true);
         }
 
         ObjectList<Extraction> extractions = new ObjectArrayList<>();
@@ -119,14 +120,6 @@ public final class TerminalRecipeTransfer {
                 remaining -= count;
             }
         }
-    }
-
-    private static void clearConfiguration(TerminalWorkspace page, TerminalWorkspaceState work) {
-        work.patternInputs.copyFrom(new TerminalGhostInventory(page.patternInputSlots(), () -> {}));
-        work.patternOutputs.copyFrom(new TerminalGhostInventory(page.patternOutputSlots(), () -> {}));
-        work.matching.clear();
-        work.context(TerminalPatternContext.EMPTY);
-        work.recipeIndex(0);
     }
 
     private record Extraction(AEItemKey key, long amount) {}

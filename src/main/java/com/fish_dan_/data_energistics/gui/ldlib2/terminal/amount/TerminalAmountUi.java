@@ -12,12 +12,15 @@ import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.core.localization.GuiText;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.RegistryAccess;
@@ -78,6 +81,7 @@ public final class TerminalAmountUi {
         value.addClass("terminal-field");
         value.setText("1", false).setTextRegexValidator(".{0,256}");
         value.setTextResponder(ignored -> validate());
+        value.addEventListener(UIEvents.HOVER_TOOLTIPS, this::amountTooltip);
         value.addEventListener(UIEvents.KEY_DOWN, event -> {
             if (event.keyCode == 257 || event.keyCode == 335) {
                 submit();
@@ -219,7 +223,20 @@ public final class TerminalAmountUi {
         boolean valid = amount().isPresent();
         confirm.setActive(valid);
         value.textFieldStyle(style -> style.textColor(valid ? 0xFFFFFFFF : 0xFFCC3030));
-        value.style(style -> style.tooltips(TerminalTooltipLines.split(valid ? Component.empty() : GuiText.InvalidNumber.text())));
+    }
+
+    private void amountTooltip(UIEvent event) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
+        lines.add(Component.translatable("gui.data_energistics.player_terminal.quantity"));
+        lines.add(Component.translatable("gui.data_energistics.player_terminal.quantity_hint").withStyle(ChatFormatting.GRAY));
+        var parsed = amount();
+        lines.add(parsed.isPresent() ? Component.literal("= " + displayAmount(parsed.getAsLong())).withStyle(ChatFormatting.GRAY) :
+                GuiText.InvalidNumber.text().copy().withStyle(ChatFormatting.RED));
+        if (event.isShiftDown()) {
+            lines.add(Component.translatable("gui.data_energistics.player_terminal.quantity_expression").withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable("gui.data_energistics.player_terminal.quantity_shortcuts").withStyle(ChatFormatting.GRAY));
+        }
+        event.hoverTooltips = new HoverTooltips(ObjectList.of(TerminalTooltipLines.wrap(260, lines.toArray(Component[]::new))), null, null, null);
     }
 
     private void adjust(int delta) {

@@ -109,8 +109,9 @@ public final class TerminalAmountUi {
             root.addChild(TerminalUiLayout.at(button, STEP_LEFT[column], 30 + row * 42, STEP_WIDTH[column], 20));
         }
         match.addClass("terminal-control");
+        match.addClass("terminal-amount-match");
         match.noText();
-        UIElement glyph = TerminalUiLayout.at(new UIElement(), 1, 1, 8, 8);
+        UIElement glyph = TerminalUiLayout.at(new UIElement(), 1, 1, 16, 16);
         glyph.addClass("terminal-match-icon");
         glyph.setAllowHitTest(false);
         match.addChild(glyph);
@@ -127,13 +128,13 @@ public final class TerminalAmountUi {
         toolbar.addClass("terminal-amount-toolbar");
         toolbar.setAllowHitTest(false);
         toolbar.setVisible(false);
-        toolbar.addChildren(toolbarSurface("terminal-amount-toolbar-top", 0, 15, 3),
-                toolbarSurface("terminal-amount-toolbar-middle", 3, 15, 10),
-                toolbarSurface("terminal-amount-toolbar-bottom", 13, 12, 3),
-                TerminalUiLayout.at(match, 3, 3, 10, 10));
+        toolbar.addChildren(toolbarSurface("terminal-amount-toolbar-top", 0, 25, 3),
+                toolbarSurface("terminal-amount-toolbar-middle", 3, 25, 20),
+                toolbarSurface("terminal-amount-toolbar-bottom", 23, 22, 3),
+                TerminalUiLayout.at(match, 3, 3, 18, 20));
         root.addChildren(TerminalUiLayout.at(resource, 22, 51, 18, 18), TerminalUiLayout.at(value, 48, 55, 66, 12),
                 TerminalUiLayout.at(unit, 102, 55, 12, 12), TerminalUiLayout.at(confirm, 120, 51, 38, 20),
-                TerminalUiLayout.at(toolbar, -12, 0, 15, 16));
+                TerminalUiLayout.at(toolbar, -22, 0, 25, 26));
         root.addEventListener(UIEvents.TICK, event -> {
             boolean next = UIElement.isShiftDown() || UIElement.isCtrlDown();
             if (next != stackSteps) {

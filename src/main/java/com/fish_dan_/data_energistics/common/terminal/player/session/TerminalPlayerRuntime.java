@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.terminal.player.session;
 
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.network.terminal.TerminalPickBlockStatePayload;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

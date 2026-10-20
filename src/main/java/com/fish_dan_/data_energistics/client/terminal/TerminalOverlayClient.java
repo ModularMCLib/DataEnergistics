@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.client.terminal;
 
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalCursorActions;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
@@ -9,8 +11,6 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlankPatternCell;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.TerminalViewerScreens;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
-import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
-import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;

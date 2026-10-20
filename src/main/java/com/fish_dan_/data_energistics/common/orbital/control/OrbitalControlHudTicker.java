@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.control;
 
+import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlHudSnapshotPayload;
 import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalHudSnapshot;
-import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlHudSnapshotPayload;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;

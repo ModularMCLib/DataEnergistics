@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.common.terminal.player.encoding;
 
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPatternProviderCodec;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
@@ -9,8 +11,6 @@ import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankin
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternUploadRecorder;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncHelper;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncTracker;
-import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSource;
-import com.fish_dan_.data_energistics.network.terminal.TerminalPatternProviderCodec;
 
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.IGrid;

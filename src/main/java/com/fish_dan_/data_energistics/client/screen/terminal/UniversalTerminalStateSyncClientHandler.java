@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.terminal;
 
-import com.fish_dan_.data_energistics.network.ui.UniversalTerminalStateSyncPayload;
+import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalStateSyncPayload;
 
 public final class UniversalTerminalStateSyncClientHandler {
 

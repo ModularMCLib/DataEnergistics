@@ -2,13 +2,13 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalPickBlock;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalSavedData;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
-import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
-import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;

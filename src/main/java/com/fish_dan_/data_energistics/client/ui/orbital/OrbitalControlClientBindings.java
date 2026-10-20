@@ -6,6 +6,9 @@ import com.fish_dan_.data_energistics.client.map.orbital.OrbitalTacticalMapClien
 import com.fish_dan_.data_energistics.client.map.orbital.compatibility.TacticalMapAdapter;
 import com.fish_dan_.data_energistics.client.map.orbital.compatibility.TacticalMapAdapters;
 import com.fish_dan_.data_energistics.client.ui.orbital.state.OrbitalTerminalFormState;
+import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlConsoleOpenPayload;
+import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlOpenPayload;
+import com.fish_dan_.data_energistics.common.network.packets.orbital.map.OrbitalTacticalMapRequestPayload;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackMode;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalDirectedEnergyDepth;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlTerminalSnapshot.WeaponEntry;
@@ -22,9 +25,6 @@ import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlUi
 import com.fish_dan_.data_energistics.common.orbital.control.ui.map.OrbitalTacticalMapPanel.MapProviderOption;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.weapon.StellarErasureDeviceStatusPanel.ModeRow;
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalMapTile;
-import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlConsoleOpenPayload;
-import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
-import com.fish_dan_.data_energistics.network.orbital.map.OrbitalTacticalMapRequestPayload;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.sync.rpc.RPCEmitter;

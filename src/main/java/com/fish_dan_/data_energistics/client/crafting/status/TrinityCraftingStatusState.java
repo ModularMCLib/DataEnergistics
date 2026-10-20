@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.crafting.status;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
-import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftingStatusPayload;
-import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftingStatusPayload.Header;
+import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftingStatusPayload;
+import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftingStatusPayload.Header;
 
 import appeng.api.stacks.AEKey;
 import appeng.menu.me.crafting.CraftingStatus;

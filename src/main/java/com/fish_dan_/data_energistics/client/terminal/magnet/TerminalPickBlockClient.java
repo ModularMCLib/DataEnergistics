@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal.magnet;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.network.terminal.TerminalPickBlockPayload;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockPayload;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;

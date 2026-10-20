@@ -3,6 +3,8 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternUpload;
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalProcessingAmounts;
@@ -23,8 +25,6 @@ import com.fish_dan_.data_energistics.common.terminal.player.workstation.Termina
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkstation;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.crafting.TerminalCraftingRecipes;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.network.terminal.TerminalRequestPayload;
-import com.fish_dan_.data_energistics.network.terminal.TerminalSnapshotPayload;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;

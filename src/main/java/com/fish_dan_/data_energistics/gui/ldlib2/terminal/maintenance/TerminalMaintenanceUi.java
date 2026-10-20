@@ -11,12 +11,15 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.helpers.InventoryAction;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -205,10 +208,9 @@ public final class TerminalMaintenanceUi {
 
     private void validate(TextField field, @Nullable AEKey key) {
         long unit = key == null ? 1 : key.getAmountPerUnit();
-        var parsed = AmountExpressionParser.parseStockAmount(field.getValue(), unit);
-        boolean valid = parsed.isPresent() && (!field.getId().endsWith("_batch") || parsed.orElse(0) > 0);
+        var amount = AmountExpressionParser.parseStockAmount(field.getValue(), unit);
+        boolean valid = amount.isPresent() && (!field.getId().endsWith("_batch") || amount.getAsLong() > 0);
         field.textFieldStyle(style -> style.textColor(valid ? 0xFFFFFFFF : 0xFFCC3030));
-        field.style(style -> style.tooltips(TerminalTooltipLines.split(valid ? Component.empty() : text("maintenance_invalid_amount"))));
     }
 
     private void validateThresholds(Row row) {
@@ -218,6 +220,32 @@ public final class TerminalMaintenanceUi {
         boolean valid = lower.isPresent() && upper.isPresent() && lower.getAsLong() <= upper.getAsLong();
         if (!row.lower.isFocused()) row.lower.textFieldStyle(style -> style.textColor(valid ? 0xFFFFFFFF : 0xFFCC3030));
         if (!row.upper.isFocused()) row.upper.textFieldStyle(style -> style.textColor(valid ? 0xFFFFFFFF : 0xFFCC3030));
+    }
+
+    private @Nullable String amountError(Row row, TextField field) {
+        long unit = row.key == null ? 1 : row.key.getAmountPerUnit();
+        var amount = AmountExpressionParser.parseStockAmount(field.getValue(), unit);
+        boolean batch = field.getId().endsWith("_batch");
+        if (amount.isEmpty()) return "maintenance_invalid_amount";
+        if (batch && amount.getAsLong() <= 0) return "maintenance_invalid_batch";
+        if (field.getId().endsWith("_lower")) {
+            var upper = AmountExpressionParser.parseStockAmount(row.upper.getValue(), unit);
+            if (upper.isPresent() && amount.getAsLong() > upper.getAsLong()) return "maintenance_threshold_order";
+        } else if (field.getId().endsWith("_upper")) {
+            var lower = AmountExpressionParser.parseStockAmount(row.lower.getValue(), unit);
+            if (lower.isPresent() && amount.getAsLong() < lower.getAsLong()) return "maintenance_threshold_order";
+        }
+        return null;
+    }
+
+    private void amountTooltip(Row row, TextField field, String type, UIEvent event) {
+        ObjectList<Component> lines = new ObjectArrayList<>();
+        lines.add(text(type + "_title"));
+        lines.add(text(type).copy().withStyle(ChatFormatting.GRAY));
+        if (UIElement.isShiftDown()) lines.add(text("maintenance_amount_expression").copy().withStyle(ChatFormatting.GRAY));
+        String error = amountError(row, field);
+        if (error != null) lines.add(text(error).copy().withStyle(ChatFormatting.RED));
+        event.hoverTooltips = new HoverTooltips(TerminalTooltipLines.split(lines), null, null, null);
     }
 
     private void commit(int index, String id, TextField field, @Nullable AEKey key) {
@@ -312,9 +340,12 @@ public final class TerminalMaintenanceUi {
             field.addClass("terminal-field");
             field.addClass("terminal-maintenance-amount");
             field.setText("0", false).setTextRegexValidator(".{0,256}");
-            field.setTextResponder(value -> validate(field, key));
+            field.setTextResponder(value -> {
+                validate(field, key);
+                validateThresholds(this);
+            });
             String amountType = id.endsWith("_lower") ? "maintenance_lower" : id.endsWith("_upper") ? "maintenance_upper" : "maintenance_batch";
-            field.style(style -> style.tooltips(TerminalTooltipLines.split(text(amountType))));
+            field.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> amountTooltip(this, field, amountType, event));
             field.addEventListener(UIEvents.KEY_DOWN, event -> {
                 if (event.keyCode == 257 || event.keyCode == 335) {
                     commit(this.index, id.substring(id.lastIndexOf('_') + 1), field, key);

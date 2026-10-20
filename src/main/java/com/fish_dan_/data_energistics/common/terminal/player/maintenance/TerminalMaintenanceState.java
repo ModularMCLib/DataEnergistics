@@ -51,7 +51,7 @@ public final class TerminalMaintenanceState {
     public void add() {
         if (entries.size() >= MAX_ENTRIES)
             throw new IllegalArgumentException("Terminal maintenance entry limit reached");
-        entries.add(new TerminalMaintenanceEntry(UUID.randomUUID(), null, 0, 64, 64, false));
+        entries.add(new TerminalMaintenanceEntry(UUID.randomUUID(), null, 0, 64, 64, true));
         changed.run();
     }
 

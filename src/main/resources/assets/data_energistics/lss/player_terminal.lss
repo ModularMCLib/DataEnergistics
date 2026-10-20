@@ -140,13 +140,14 @@
 .terminal-maintenance-frame { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
 .terminal-maintenance-row { background: #00000000; }
 .terminal-maintenance-add-row { background: #00000000; }
-.terminal-maintenance-key { background: group(#FF9A9FB4, border(1, #FFF0F0F3)); }
+.terminal-maintenance-key { background: group(#FF9A9FB4, border(-1, #FFF2F2F2)); }
 .terminal-maintenance-amount {
     font-size: 7;
-    background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1);
+    background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2));
+    cursor-color: #FFF2F2F2;
     focus-overlay: #00000000;
 }
-.terminal-maintenance-amount:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1); }
+.terminal-maintenance-amount:focused { background: group(sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png, 0, 0, 96, 10, 1, 1, 1, 1), border(-1, #FFF2F2F2)); }
 .terminal-maintenance-scroll .__scroller_scroll_container__ { background: #00000000; }
 .terminal-maintenance-add {
     background: #00000000;

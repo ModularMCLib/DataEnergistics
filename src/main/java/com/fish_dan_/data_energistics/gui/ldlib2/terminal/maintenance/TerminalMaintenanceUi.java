@@ -390,7 +390,7 @@ public final class TerminalMaintenanceUi {
         }
 
         private TextField amountField(String id, int left) {
-            TextField field = TerminalUiLayout.at(new TextField(), left, 4, 47, 14);
+            TextField field = TerminalUiLayout.at(new TextField(), left, 4, 44, 14);
             field.layout(layout -> layout.paddingLeft(2).paddingRight(2));
             field.setId(id);
             field.addClass("terminal-field");

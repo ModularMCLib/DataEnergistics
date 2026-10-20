@@ -422,6 +422,7 @@ public final class TerminalOverlayUi {
         tooltip(window, "pins", text("pins", pinnedUi.rows()));
         tooltip(window, "tasks", text("tasks").copy().append("\n").append(connectionStatus()));
         stateClass(element(window, "sort"), "sort-amount", sort.equals("amount"));
+        stateClass(element(window, "sort"), "sort-mod", sort.equals("mod"));
         stateClass(element(window, "direction"), "descending", descending);
         stateClass(element(window, "display"), "stored-only", filter.equals("stored"));
         stateClass(element(window, "display"), "craftable-only", filter.equals("craftable"));

@@ -146,6 +146,7 @@
 .icon-tasks { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesis.png); }
 .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_name.png); }
 .sort-amount .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_amount.png); }
+.sort-mod .icon-sort { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_sort_by_mod_id.png); }
 .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_0.png); }
 .descending .icon-direction { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_down_0.png); }
 .icon-boost-up { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_arrow_up_0.png); }
@@ -156,7 +157,8 @@
 .icon-type { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
 .icon-pins { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
 .icon-magnet { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
-.icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_storage.png); }
+.icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_to_inventory.png); }
+.option-enabled .icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_to_network.png); }
 .icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }
 .icon-processing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_handle.png); }
 .icon-smithing { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_forging.png); }

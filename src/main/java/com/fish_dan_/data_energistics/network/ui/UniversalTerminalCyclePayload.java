@@ -19,15 +19,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record UniversalTerminalCyclePayload(boolean reverse) implements CustomPacketPayload {
 
     public static final Type<UniversalTerminalCyclePayload> TYPE = new Type<>(Data_Energistics.id("universal_terminal_cycle"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, UniversalTerminalCyclePayload> STREAM_CODEC = CustomPacketPayload.codec(UniversalTerminalCyclePayload::write, UniversalTerminalCyclePayload::new);
-
-    private UniversalTerminalCyclePayload(RegistryFriendlyByteBuf buf) {
-        this(ByteBufCodecs.BOOL.decode(buf));
-    }
-
-    private void write(RegistryFriendlyByteBuf buf) {
-        ByteBufCodecs.BOOL.encode(buf, this.reverse);
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, UniversalTerminalCyclePayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.BOOL, UniversalTerminalCyclePayload::reverse, UniversalTerminalCyclePayload::new);
 
     @Override
     public Type<UniversalTerminalCyclePayload> type() {

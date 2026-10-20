@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.menu.machine.anvil.MeDigitalAnvilMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,12 +14,11 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record DigitalAnvilActionPayload(int containerId, String action, String value) implements CustomPacketPayload {
 
     public static final Type<DigitalAnvilActionPayload> TYPE = new Type<>(Data_Energistics.id("digital_anvil_action"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, DigitalAnvilActionPayload> STREAM_CODEC = StreamCodec.of(
-            (buffer, payload) -> {
-                buffer.writeVarInt(payload.containerId);
-                buffer.writeUtf(payload.action, 16);
-                buffer.writeUtf(payload.value, 50);
-            }, buffer -> new DigitalAnvilActionPayload(buffer.readVarInt(), buffer.readUtf(16), buffer.readUtf(50)));
+    public static final StreamCodec<RegistryFriendlyByteBuf, DigitalAnvilActionPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, DigitalAnvilActionPayload::containerId,
+            ByteBufCodecs.stringUtf8(16), DigitalAnvilActionPayload::action,
+            ByteBufCodecs.stringUtf8(50), DigitalAnvilActionPayload::value,
+            DigitalAnvilActionPayload::new);
 
     public DigitalAnvilActionPayload {
         if (containerId < 0 || action.length() > 16 || value.length() > 50) throw new IllegalArgumentException("Invalid digital anvil action");

@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -18,15 +19,13 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record ResearchActionPayload(int containerId, long revision, long definitionsRevision, String action, String argument) implements CustomPacketPayload {
 
     public static final Type<ResearchActionPayload> TYPE = new Type<>(Data_Energistics.id("research_action"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, ResearchActionPayload> STREAM_CODEC = StreamCodec.of(
-            (buffer, value) -> {
-                buffer.writeVarInt(value.containerId);
-                buffer.writeLong(value.revision);
-                buffer.writeLong(value.definitionsRevision);
-                buffer.writeUtf(value.action, 64);
-                buffer.writeUtf(value.argument, 256);
-            },
-            buffer -> new ResearchActionPayload(buffer.readVarInt(), buffer.readLong(), buffer.readLong(), buffer.readUtf(64), buffer.readUtf(256)));
+    public static final StreamCodec<RegistryFriendlyByteBuf, ResearchActionPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, ResearchActionPayload::containerId,
+            ByteBufCodecs.VAR_LONG, ResearchActionPayload::revision,
+            ByteBufCodecs.VAR_LONG, ResearchActionPayload::definitionsRevision,
+            ByteBufCodecs.stringUtf8(64), ResearchActionPayload::action,
+            ByteBufCodecs.stringUtf8(256), ResearchActionPayload::argument,
+            ResearchActionPayload::new);
 
     public ResearchActionPayload {
         if (containerId < 0 || action.length() > 64 || argument.length() > 256) throw new IllegalArgumentException("Invalid research action envelope");

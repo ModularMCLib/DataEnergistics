@@ -62,7 +62,7 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("26.10.17");
+        PayloadRegistrar registrar = event.registrar("26.10.20");
         registrar.playToServer(TerminalRequestPayload.TYPE, TerminalRequestPayload.STREAM_CODEC, TerminalRequestPayload::handle);
         registrar.playToServer(TerminalPickBlockPayload.TYPE, TerminalPickBlockPayload.STREAM_CODEC, TerminalPickBlockPayload::handle);
         registrar.playToClient(TerminalPickBlockStatePayload.TYPE, TerminalPickBlockStatePayload.STREAM_CODEC, TerminalPickBlockStatePayload::handle);

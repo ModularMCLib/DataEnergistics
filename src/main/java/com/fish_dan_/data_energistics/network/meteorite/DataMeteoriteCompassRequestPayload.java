@@ -18,18 +18,9 @@ import java.util.Optional;
 public record DataMeteoriteCompassRequestPayload(ChunkPos requestedPos) implements CustomPacketPayload {
 
     public static final Type<DataMeteoriteCompassRequestPayload> TYPE = new Type<>(Data_Energistics.id("data_meteorite_compass_request"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, DataMeteoriteCompassRequestPayload> STREAM_CODEC = CustomPacketPayload.codec(
-            DataMeteoriteCompassRequestPayload::write,
+    public static final StreamCodec<RegistryFriendlyByteBuf, DataMeteoriteCompassRequestPayload> STREAM_CODEC = StreamCodec.composite(
+            DataMeteoritePayloadCodecs.CHUNK_POSITION, DataMeteoriteCompassRequestPayload::requestedPos,
             DataMeteoriteCompassRequestPayload::new);
-
-    private DataMeteoriteCompassRequestPayload(RegistryFriendlyByteBuf buf) {
-        this(new ChunkPos(buf.readVarInt(), buf.readVarInt()));
-    }
-
-    private void write(RegistryFriendlyByteBuf buf) {
-        buf.writeVarInt(this.requestedPos.x);
-        buf.writeVarInt(this.requestedPos.z);
-    }
 
     @Override
     public Type<DataMeteoriteCompassRequestPayload> type() {

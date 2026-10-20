@@ -17,20 +17,10 @@ public record DataMeteoriteCompassResponsePayload(ChunkPos requestedPos,
         implements CustomPacketPayload {
 
     public static final Type<DataMeteoriteCompassResponsePayload> TYPE = new Type<>(Data_Energistics.id("data_meteorite_compass_response"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, DataMeteoriteCompassResponsePayload> STREAM_CODEC = CustomPacketPayload.codec(
-            DataMeteoriteCompassResponsePayload::write,
+    public static final StreamCodec<RegistryFriendlyByteBuf, DataMeteoriteCompassResponsePayload> STREAM_CODEC = StreamCodec.composite(
+            DataMeteoritePayloadCodecs.CHUNK_POSITION, DataMeteoriteCompassResponsePayload::requestedPos,
+            ByteBufCodecs.optional(BlockPos.STREAM_CODEC), DataMeteoriteCompassResponsePayload::closestMeteorite,
             DataMeteoriteCompassResponsePayload::new);
-
-    private DataMeteoriteCompassResponsePayload(RegistryFriendlyByteBuf buf) {
-        this(new ChunkPos(buf.readVarInt(), buf.readVarInt()),
-                ByteBufCodecs.optional(BlockPos.STREAM_CODEC).decode(buf));
-    }
-
-    private void write(RegistryFriendlyByteBuf buf) {
-        buf.writeVarInt(this.requestedPos.x);
-        buf.writeVarInt(this.requestedPos.z);
-        ByteBufCodecs.optional(BlockPos.STREAM_CODEC).encode(buf, this.closestMeteorite);
-    }
 
     @Override
     public Type<DataMeteoriteCompassResponsePayload> type() {

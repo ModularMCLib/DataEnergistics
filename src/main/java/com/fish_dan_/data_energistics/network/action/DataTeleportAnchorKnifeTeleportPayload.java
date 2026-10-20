@@ -7,6 +7,7 @@ import com.fish_dan_.data_energistics.item.powered.PoweredCuttingKnifeItem;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.InteractionHand;
@@ -18,16 +19,10 @@ public record DataTeleportAnchorKnifeTeleportPayload(BlockPos anchorPos, boolean
         implements CustomPacketPayload {
 
     public static final Type<DataTeleportAnchorKnifeTeleportPayload> TYPE = new Type<>(Data_Energistics.id("data_teleport_anchor_knife_teleport"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, DataTeleportAnchorKnifeTeleportPayload> STREAM_CODEC = CustomPacketPayload.codec(DataTeleportAnchorKnifeTeleportPayload::write, DataTeleportAnchorKnifeTeleportPayload::new);
-
-    private DataTeleportAnchorKnifeTeleportPayload(RegistryFriendlyByteBuf buf) {
-        this(buf.readBlockPos(), buf.readBoolean());
-    }
-
-    private void write(RegistryFriendlyByteBuf buf) {
-        buf.writeBlockPos(this.anchorPos);
-        buf.writeBoolean(this.offHand);
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, DataTeleportAnchorKnifeTeleportPayload> STREAM_CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, DataTeleportAnchorKnifeTeleportPayload::anchorPos,
+            ByteBufCodecs.BOOL, DataTeleportAnchorKnifeTeleportPayload::offHand,
+            DataTeleportAnchorKnifeTeleportPayload::new);
 
     @Override
     public Type<DataTeleportAnchorKnifeTeleportPayload> type() {

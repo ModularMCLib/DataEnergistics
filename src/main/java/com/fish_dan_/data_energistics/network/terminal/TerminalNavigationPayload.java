@@ -3,7 +3,9 @@ package com.fish_dan_.data_energistics.network.terminal;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -18,13 +20,11 @@ public record TerminalNavigationPayload(int hostContainerId, UUID sessionId,
         implements CustomPacketPayload {
 
     public static final Type<TerminalNavigationPayload> TYPE = new Type<>(Data_Energistics.id("terminal_navigation"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, TerminalNavigationPayload> STREAM_CODEC = StreamCodec.of(
-            (buffer, value) -> {
-                buffer.writeVarInt(value.hostContainerId());
-                buffer.writeUUID(value.sessionId());
-                buffer.writeUtf(value.phase(), 16);
-            },
-            buffer -> new TerminalNavigationPayload(buffer.readVarInt(), buffer.readUUID(), buffer.readUtf(16)));
+    public static final StreamCodec<RegistryFriendlyByteBuf, TerminalNavigationPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, TerminalNavigationPayload::hostContainerId,
+            UUIDUtil.STREAM_CODEC, TerminalNavigationPayload::sessionId,
+            ByteBufCodecs.stringUtf8(16), TerminalNavigationPayload::phase,
+            TerminalNavigationPayload::new);
 
     public TerminalNavigationPayload {
         if (hostContainerId < 0 || !(phase.equals("suspend") || phase.equals("suspend_provider") || phase.equals("resume") || phase.equals("abort")))

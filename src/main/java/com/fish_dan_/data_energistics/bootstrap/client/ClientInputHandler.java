@@ -4,19 +4,19 @@ import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClient
 import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
+import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardAction;
+import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardPayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorScrollPayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.DigitalStorageDepotBucketModePayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.DigitalStorageDepotScrollPayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.MatterConvergingCrossbowModePayload;
+import com.fish_dan_.data_energistics.common.network.packets.action.MeVacuumLaunchPayload;
+import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlOpenPayload;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
-import com.fish_dan_.data_energistics.network.action.ConnectorClipboardAction;
-import com.fish_dan_.data_energistics.network.action.ConnectorClipboardPayload;
-import com.fish_dan_.data_energistics.network.action.ConnectorScrollPayload;
-import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotBucketModePayload;
-import com.fish_dan_.data_energistics.network.action.DigitalStorageDepotScrollPayload;
-import com.fish_dan_.data_energistics.network.action.MatterConvergingCrossbowModePayload;
-import com.fish_dan_.data_energistics.network.action.MeVacuumLaunchPayload;
-import com.fish_dan_.data_energistics.network.orbital.control.OrbitalControlOpenPayload;
 import com.fish_dan_.data_energistics.registry.DEMobEffects;
 
 import net.minecraft.client.Minecraft;

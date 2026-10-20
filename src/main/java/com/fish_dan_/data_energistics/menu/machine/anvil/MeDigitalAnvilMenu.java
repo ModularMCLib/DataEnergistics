@@ -4,10 +4,10 @@ import com.fish_dan_.data_energistics.blockentity.machine.anvil.MeDigitalAnvilBl
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
 import com.fish_dan_.data_energistics.common.anvil.enchantment.DigitalAnvilCalculation;
 import com.fish_dan_.data_energistics.common.anvil.enchantment.DigitalAnvilOperation;
+import com.fish_dan_.data_energistics.common.network.packets.anvil.DigitalAnvilActionPayload;
+import com.fish_dan_.data_energistics.common.network.packets.anvil.DigitalAnvilSnapshotPayload;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
 import com.fish_dan_.data_energistics.gui.ldlib2.anvil.MeDigitalAnvilUi;
-import com.fish_dan_.data_energistics.network.anvil.DigitalAnvilActionPayload;
-import com.fish_dan_.data_energistics.network.anvil.DigitalAnvilSnapshotPayload;
 import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.registry.DEMenus;
 
@@ -131,7 +131,14 @@ public final class MeDigitalAnvilMenu extends AbstractContainerMenu {
             }
             case "boost_up", "boost_down" -> {
                 if (!DigitalAnvilUpgrade.UNRESTRICTED_LEVELS.enabled(upgrades)) return;
-                requestedBoost = Math.clamp(requestedBoost + (action.equals("boost_up") ? 1 : -1), 0, 254);
+                int amount = switch (value) {
+                    case "", "1" -> 1;
+                    case "10" -> 10;
+                    case "100" -> 100;
+                    default -> 0;
+                };
+                if (amount == 0) return;
+                requestedBoost = Math.clamp(requestedBoost + (action.equals("boost_up") ? amount : -amount), 0, 254);
             }
             default -> {
                 return;

@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.common.research.lifecycle;
 import com.fish_dan_.data_energistics.api.research.RegisterResearchNodesEvent;
 import com.fish_dan_.data_energistics.data.research.DigitizedWeaponModeResearch;
 import com.fish_dan_.data_energistics.data.research.MeDigitalAnvilResearch;
+import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModLoader;
@@ -15,6 +16,7 @@ public final class ResearchRegistrationEvents {
     public void registerNodes(RegisterResearchNodesEvent event) {
         DigitizedWeaponModeResearch.register(event);
         MeDigitalAnvilResearch.register(event);
+        PlayerTerminalResearch.register(event);
     }
 
     @SubscribeEvent

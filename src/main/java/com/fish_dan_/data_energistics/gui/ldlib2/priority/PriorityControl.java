@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.priority;
 
+import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
+
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -53,7 +55,8 @@ public final class PriorityControl {
         this.layout.title().setText(title);
         this.layout.insertHint().setText(insertHint);
         this.layout.extractHint().setText(extractHint);
-        this.layout.value().setNumbersOnlyInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        this.layout.value().setAnyString().setTextValidator(
+                text -> AmountExpressionParser.parseInt(text, Integer.MIN_VALUE, Integer.MAX_VALUE).isPresent());
         bindStepButtons();
         bindValueField();
         this.layout.close().setOnClick(event -> close.run());
@@ -106,13 +109,12 @@ public final class PriorityControl {
             restoreAuthoritativeValue();
             return;
         }
-        int requested;
-        try {
-            requested = Integer.parseInt(this.layout.value().getRawText());
-        } catch (NumberFormatException ignored) {
+        var parsed = AmountExpressionParser.parseInt(this.layout.value().getRawText(), Integer.MIN_VALUE, Integer.MAX_VALUE);
+        if (parsed.isEmpty()) {
             restoreAuthoritativeValue();
             return;
         }
+        int requested = parsed.getAsInt();
         if (requested == this.priority.getAsInt()) {
             restoreAuthoritativeValue();
             return;

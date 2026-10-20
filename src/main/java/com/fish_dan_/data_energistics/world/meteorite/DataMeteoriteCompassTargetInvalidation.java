@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.world.meteorite;
 
-import com.fish_dan_.data_energistics.network.meteorite.DataMeteoriteCompassResponsePayload;
+import com.fish_dan_.data_energistics.common.network.packets.meteorite.DataMeteoriteCompassResponsePayload;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.registry.DEItems;
 

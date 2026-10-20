@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.bootstrap.common;
 
-import com.fish_dan_.data_energistics.network.DEPayloads;
+import com.fish_dan_.data_energistics.common.network.DEPayloads;
 
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 

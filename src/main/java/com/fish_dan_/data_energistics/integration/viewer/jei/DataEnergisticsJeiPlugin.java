@@ -26,6 +26,8 @@ import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.Ae2JeiTran
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.JeiPatternTransferContextBridge;
 import com.fish_dan_.data_energistics.integration.viewer.jei.transfer.MultiblockPatternJeiTransferHandler;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ui.OrderPackageJeiGhostIngredientHandler;
+import com.fish_dan_.data_energistics.integration.viewer.jei.ui.PlayerTerminalJeiGhostHandler;
+import com.fish_dan_.data_energistics.integration.viewer.jei.ui.PlayerTerminalJeiGuiHandler;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
 import com.fish_dan_.data_energistics.integration.viewer.xei.multiblock.MultiblockXeiComposition;
 import com.fish_dan_.data_energistics.integration.viewer.xei.multiblock.MultiblockXeiRecipe;
@@ -48,6 +50,7 @@ import appeng.recipes.handlers.ChargerRecipe;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
@@ -178,6 +181,8 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
         if (!shouldRegisterJei()) {
             return;
         }
+        registration.addGuiContainerHandler(AbstractContainerScreen.class, new PlayerTerminalJeiGuiHandler<>());
+        registration.addGhostIngredientHandler(AbstractContainerScreen.class, new PlayerTerminalJeiGhostHandler<>());
         registration.addGuiContainerHandler(
                 CraftingPlanTreeScreen.class,
                 new PatternEncodingGenericStackJeiHandler<>());

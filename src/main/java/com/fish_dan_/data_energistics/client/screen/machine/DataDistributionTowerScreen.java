@@ -11,8 +11,8 @@ import com.fish_dan_.data_energistics.client.screen.base.AETextFieldInteraction;
 import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerConnectionModeButton;
 import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerTextureToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
+import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetEntry;
 import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
-import com.fish_dan_.data_energistics.network.tower.DataDistributionTowerTargetEntry;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 import com.fish_dan_.data_energistics.util.TextSearch;
 

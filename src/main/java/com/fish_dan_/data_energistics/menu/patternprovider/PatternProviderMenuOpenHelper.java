@@ -41,6 +41,14 @@ public final class PatternProviderMenuOpenHelper {
             return false;
         }
 
+        return openProviderMenus(providers, serverPlayer) &&
+                PatternProviderMenuReturnTracker.completeOpenAttempt(serverPlayer, sourceMenu, returnDestination);
+    }
+
+    /** Opens a provider when the caller already owns the parent-menu lifecycle and return route. */
+    public static boolean openProviderMenus(ObjectList<PatternContainer> providers, ServerPlayer serverPlayer) {
+        AbstractContainerMenu sourceMenu = serverPlayer.containerMenu;
+
         PatternProviderRegistration registration = null;
         for (PatternContainer provider : providers) {
             Optional<ResolvedProviderBinding> resolved;
@@ -72,16 +80,14 @@ public final class PatternProviderMenuOpenHelper {
                             new PatternProviderMenuOpenContext(serverPlayer, providers));
                     switch (result) {
                         case OPENED -> {
-                            return PatternProviderMenuReturnTracker.completeOpenAttempt(
-                                    serverPlayer, sourceMenu, returnDestination);
+                            return true;
                         }
                         case DENIED -> {
                             if (serverPlayer.containerMenu != sourceMenu) {
                                 Data_Energistics.LOGGER.warn(
                                         "Pattern provider menu adapter '{}' opened a menu but returned DENIED",
                                         registration.metadata().registrationId());
-                                return PatternProviderMenuReturnTracker.completeOpenAttempt(
-                                        serverPlayer, sourceMenu, returnDestination);
+                                return true;
                             }
                             return false;
                         }
@@ -90,8 +96,7 @@ public final class PatternProviderMenuOpenHelper {
                                 Data_Energistics.LOGGER.warn(
                                         "Pattern provider menu adapter '{}' opened a menu but returned PASS",
                                         registration.metadata().registrationId());
-                                return PatternProviderMenuReturnTracker.completeOpenAttempt(
-                                        serverPlayer, sourceMenu, returnDestination);
+                                return true;
                             }
                         }
                     }
@@ -102,8 +107,7 @@ public final class PatternProviderMenuOpenHelper {
                             providers.size(),
                             exception);
                     if (serverPlayer.containerMenu != sourceMenu) {
-                        return PatternProviderMenuReturnTracker.completeOpenAttempt(
-                                serverPlayer, sourceMenu, returnDestination);
+                        return true;
                     }
                     return false;
                 }
@@ -113,8 +117,7 @@ public final class PatternProviderMenuOpenHelper {
         for (PatternContainer provider : providers) {
             boolean handled = openCoreProvider(provider, serverPlayer);
             if (handled || serverPlayer.containerMenu != sourceMenu) {
-                return PatternProviderMenuReturnTracker.completeOpenAttempt(
-                        serverPlayer, sourceMenu, returnDestination);
+                return true;
             }
         }
         return false;

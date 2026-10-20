@@ -1,4 +1,5 @@
 {
 	"gui.ae2.Suspend": "暂停",
-	"gui.ae2.Resume": "恢复"
+	"gui.ae2.Resume": "恢复",
+	"gui.ae2.SearchTooltipToolTips": "用 $ 按提示信息搜索 ($抢夺)"
 }

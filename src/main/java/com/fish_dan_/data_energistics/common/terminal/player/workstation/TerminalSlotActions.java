@@ -1,0 +1,225 @@
+package com.fish_dan_.data_energistics.common.terminal.player.workstation;
+
+import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
+import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternContext;
+import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPatternImport;
+import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostClicks;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostInventory;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
+
+import appeng.api.crafting.PatternDetailsHelper;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
+import appeng.api.storage.StorageHelper;
+import appeng.helpers.InventoryAction;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Physical cursor clicks and ghost configuration use separate paths and never borrow host slot indices.
+ */
+public final class TerminalSlotActions {
+
+    private TerminalSlotActions() {}
+
+    public static String physical(ServerPlayer player, TerminalPlayerState state, CompoundTag data, @Nullable TerminalConnection connection) {
+        if (!state.workspace().id().equals(data.getString("workspace"))) return "";
+        String group = data.getString("inventory");
+        boolean patterns = group.equals("encoded");
+        if (!patterns && !group.equals("inputs"))
+            throw new IllegalArgumentException("Unknown terminal physical inventory");
+        if (patterns ? !state.workspace().supportsEncoding() : state.workspace() == TerminalWorkspace.PROCESSING)
+            return "";
+        SimpleContainer inventory = patterns ? state.work().patterns : state.work().inputs;
+        int index = data.getInt("index");
+        if (index < 0 || index >= inventory.getContainerSize()) throw new IllegalArgumentException("Invalid terminal slot index");
+        if (data.contains("shortcut", Tag.TAG_STRING)) return shortcut(player, state, inventory, patterns, index, data, connection);
+        int button = data.getInt("button");
+        if (button < 0 || button > 1)
+            throw new IllegalArgumentException("Invalid terminal slot click");
+        ItemStack before = inventory.getItem(index).copy();
+        ItemStack stack = inventory.getItem(index);
+        if (data.getBoolean("shift")) {
+            int moved = Math.min(stack.getCount(), TerminalNetworkStorage.inventoryCapacity(player, stack));
+            if (moved > 0) {
+                ItemStack output = inventory.removeItem(index, moved);
+                player.getInventory().add(output);
+                if (!output.isEmpty()) throw new IllegalStateException("Terminal slot lost reserved player capacity");
+            }
+        } else {
+            ItemStack cursor = player.containerMenu.getCarried();
+            if (cursor.isEmpty()) {
+                int count = button == 1 ? (stack.getCount() + 1) / 2 : stack.getCount();
+                if (count > 0) player.containerMenu.setCarried(inventory.removeItem(index, count));
+            } else if (!patterns || PatternDetailsHelper.isEncodedPattern(cursor)) {
+                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(cursor);
+                boolean placing = stack.isEmpty() || !ItemStack.isSameItemSameComponents(stack, cursor) && cursor.getCount() <= maximum;
+                if (patterns && placing) {
+                    String result = TerminalPatternImport.apply(player, state, cursor, connection, data.getBoolean("to_network"));
+                    if (!result.isEmpty()) return result;
+                    if (inventory != state.work().patterns) {
+                        inventory.setItem(index, ItemStack.EMPTY);
+                        inventory = state.work().patterns;
+                    }
+                }
+                if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, cursor)) {
+                    int moved = Math.min(button == 1 ? 1 : cursor.getCount(), maximum - stack.getCount());
+                    if (moved > 0) {
+                        inventory.setItem(index, cursor.copyWithCount(stack.getCount() + moved));
+                        cursor.shrink(moved);
+                    }
+                } else if ((button == 0 || patterns) && cursor.getCount() <= maximum) {
+                    inventory.setItem(index, cursor);
+                    player.containerMenu.setCarried(stack);
+                    cursor = stack;
+                }
+                if (cursor.isEmpty()) player.containerMenu.setCarried(ItemStack.EMPTY);
+            } else if (ItemStack.isSameItemSameComponents(stack, cursor)) {
+                int moved = Math.min(button == 1 ? 1 : stack.getCount(), cursor.getMaxStackSize() - cursor.getCount());
+                if (moved > 0) {
+                    cursor.grow(moved);
+                    inventory.removeItem(index, moved);
+                }
+            }
+        }
+        inventory.setChanged();
+        if (!patterns) inputChanged(state, index, before);
+        return "";
+    }
+
+    private static String shortcut(ServerPlayer player, TerminalPlayerState state, SimpleContainer inventory, boolean patterns,
+                                   int index, CompoundTag data, @Nullable TerminalConnection connection) {
+        if (!player.containerMenu.getCarried().isEmpty()) return "";
+        ItemStack before = inventory.getItem(index).copy();
+        switch (data.getString("shortcut")) {
+            case "stow" -> {
+                if (connection == null) return "offline";
+                AEKey expected = AEKey.fromTagGeneric(player.registryAccess(), data.getCompound("key"));
+                if (!(expected instanceof AEItemKey item)) throw new IllegalArgumentException("Invalid terminal stow resource");
+                if (!item.matches(before) || GenericStack.isWrapped(before)) return "";
+                long inserted = StorageHelper.poweredInsert(connection.grid().getEnergyService(), connection.storage(), item, before.getCount(), connection.source());
+                TerminalNetworkStorage.checkAmount(inserted, before.getCount());
+                if (inserted > 0) inventory.removeItem(index, (int) inserted);
+            }
+            case "drop" -> {
+                if (!before.isEmpty()) player.drop(inventory.removeItem(index, data.getBoolean("all") ? before.getCount() : 1), true);
+            }
+            case "clone" -> {
+                if (player.getAbilities().instabuild && !before.isEmpty()) player.containerMenu.setCarried(before.copyWithCount(before.getMaxStackSize()));
+            }
+            case "swap" -> {
+                int hotbar = data.getInt("hotbar");
+                if (hotbar < 0 || hotbar > 8 && hotbar != Inventory.SLOT_OFFHAND)
+                    throw new IllegalArgumentException("Invalid terminal hotbar slot");
+                ItemStack replacement = player.getInventory().getItem(hotbar);
+                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(replacement);
+                if (!replacement.isEmpty()) {
+                    if (patterns && !PatternDetailsHelper.isEncodedPattern(replacement)) return "";
+                    if (patterns) {
+                        String result = TerminalPatternImport.apply(player, state, replacement, connection, data.getBoolean("to_network"));
+                        if (!result.isEmpty()) return result;
+                        if (inventory != state.work().patterns) {
+                            inventory.setItem(index, ItemStack.EMPTY);
+                            inventory = state.work().patterns;
+                        }
+                    }
+                }
+                if (replacement.getCount() > maximum) {
+                    inventory.setItem(index, replacement.split(maximum));
+                    ItemStack returned = before.copy();
+                    if (!player.getInventory().add(returned) && !returned.isEmpty()) player.drop(returned, true);
+                } else {
+                    inventory.setItem(index, replacement);
+                    player.getInventory().setItem(hotbar, before);
+                }
+                player.getInventory().setChanged();
+            }
+            default -> throw new IllegalArgumentException("Unknown terminal slot shortcut");
+        }
+        if (!patterns) inputChanged(state, index, before);
+        return "";
+    }
+
+    static void inputChanged(TerminalPlayerState state, int index, ItemStack before) {
+        if (!ItemStack.isSameItemSameComponents(before, state.work().inputs.getItem(index))) {
+            state.work().patternInputs.set(index, null);
+            state.work().context(TerminalPatternContext.EMPTY);
+            state.work().recipeIndex(0);
+            if (index == 0 && state.workspace() == TerminalWorkspace.ANVIL) {
+                ItemStack left = state.work().inputs.getItem(0);
+                state.work().name(left.isEmpty() ? "" : left.getHoverName().getString());
+                state.work().boost(0);
+            }
+        }
+    }
+
+    public static String ghost(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
+        String group = data.getString("inventory");
+        boolean inputs = group.equals("inputs");
+        boolean outputs = group.equals("outputs");
+        if (inputs && !state.workspace().supportsEncoding() || outputs && state.workspace() != TerminalWorkspace.PROCESSING)
+            throw new IllegalArgumentException("The active page does not support this configuration inventory");
+        TerminalGhostInventory inventory = switch (group) {
+            case "inputs" -> state.work().patternInputs;
+            case "outputs" -> state.work().patternOutputs;
+            case "pickup" -> state.magnet().pickup;
+            case "insert" -> state.magnet().insert;
+            default -> throw new IllegalArgumentException("Unknown terminal ghost inventory");
+        };
+        int index = data.getInt("index");
+        if (index < 0 || index >= inventory.size()) throw new IllegalArgumentException("Invalid terminal ghost index");
+        GenericStack previous = inventory.get(index);
+        if (data.contains("expected", Tag.TAG_COMPOUND) && (previous == null ||
+                !previous.what().equals(AEKey.fromTagGeneric(player.registryAccess(), data.getCompound("expected")))))
+            return "";
+        GenericStack resource = null;
+        if (data.contains("interaction", Tag.TAG_STRING)) {
+            resource = TerminalGhostClicks.apply(previous, player.containerMenu.getCarried(), InventoryAction.valueOf(data.getString("interaction")));
+            if (resource != null && inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
+                if (!(resource.what() instanceof AEItemKey)) throw new IllegalArgumentException("Vanilla recipes require item ingredients");
+                resource = new GenericStack(resource.what(), 1);
+            }
+        } else if (data.getInt("button") != 1 && (!data.contains("amount", Tag.TAG_LONG) || data.getLong("amount") != 0)) {
+            if (data.contains("stack", Tag.TAG_COMPOUND)) resource = GenericStack.readTag(player.registryAccess(), data.getCompound("stack"));
+            else {
+                resource = GenericStack.fromItemStack(player.containerMenu.getCarried());
+                if (resource == null) resource = previous;
+            }
+            if (resource == null) return "";
+            long amount = data.contains("amount", Tag.TAG_LONG) ? data.getLong("amount") : resource.amount();
+            if (amount <= 0) throw new IllegalArgumentException("Invalid ghost amount");
+            if (inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
+                if (!(resource.what() instanceof AEItemKey)) throw new IllegalArgumentException("Vanilla recipes require item ingredients");
+                amount = 1;
+            }
+            resource = new GenericStack(resource.what(), amount);
+        }
+        if (inputs && state.workspace() != TerminalWorkspace.PROCESSING) {
+            ItemStack physical = state.work().inputs.getItem(index);
+            if (!physical.isEmpty()) {
+                if (TerminalNetworkStorage.inventoryCapacity(player, physical) < physical.getCount()) return "inventory_full";
+                ItemStack returned = state.work().inputs.removeItemNoUpdate(index);
+                player.getInventory().add(returned);
+                if (!returned.isEmpty()) throw new IllegalStateException("Terminal configuration lost reserved return capacity");
+            }
+        }
+        inventory.set(index, resource);
+        boolean sameResource = previous != null && resource != null && previous.what().equals(resource.what());
+        if ((inputs || outputs) && !sameResource) {
+            state.work().context(TerminalPatternContext.EMPTY);
+            if (state.workspace() == TerminalWorkspace.PROCESSING) state.work().matching.set(outputs, index, ProcessingMatchMode.EXACT);
+            if (inputs) state.work().recipeIndex(0);
+        }
+        return "";
+    }
+}

@@ -6,6 +6,8 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPa
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.MultiblockPatternTransferPayload;
+import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
 import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingInheritedState;
@@ -25,8 +27,6 @@ import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncHe
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncTracker;
 import com.fish_dan_.data_energistics.mixin.configuration.DataEnergisticsEarlyConfig;
 import com.fish_dan_.data_energistics.mixin.configuration.DataEnergisticsEarlyConfig.Option;
-import com.fish_dan_.data_energistics.network.patternencoding.MultiblockPatternTransferPayload;
-import com.fish_dan_.data_energistics.network.patternencoding.PatternUploadSource;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.PatternDetailsHelper;

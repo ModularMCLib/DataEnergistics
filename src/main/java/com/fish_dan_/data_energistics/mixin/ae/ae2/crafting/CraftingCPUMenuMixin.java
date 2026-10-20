@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.crafting;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCraftingStatusEntry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityReusableStatus;
-import com.fish_dan_.data_energistics.network.trinity.crafting.protocol.TrinityCraftingStatusPayload;
+import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftingStatusPayload;
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.networking.crafting.ICraftingCPU;

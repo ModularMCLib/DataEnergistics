@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.orbital;
 
+import com.fish_dan_.data_energistics.common.network.packets.orbital.projection.OrbitalProjectionVisualsPayload;
 import com.fish_dan_.data_energistics.common.orbital.projection.OrbitalProjectionVisualSnapshot;
-import com.fish_dan_.data_energistics.network.orbital.projection.OrbitalProjectionVisualsPayload;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;

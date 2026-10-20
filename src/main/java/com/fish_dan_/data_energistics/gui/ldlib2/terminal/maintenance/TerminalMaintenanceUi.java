@@ -5,6 +5,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalResourceCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalUiLayout;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalSearchField;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.text.TerminalTooltipLines;
+import com.fish_dan_.data_energistics.util.AmountMath;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -241,6 +242,7 @@ public final class TerminalMaintenanceUi {
         ObjectList<Component> lines = new ObjectArrayList<>();
         lines.add(text(type + "_title"));
         lines.add(text(type).copy().withStyle(ChatFormatting.GRAY));
+        lines.add(text("maintenance_amount_scroll").copy().withStyle(ChatFormatting.GRAY));
         if (UIElement.isShiftDown()) lines.add(text("maintenance_amount_expression").copy().withStyle(ChatFormatting.GRAY));
         String error = amountError(row, field);
         if (error != null) lines.add(text(error).copy().withStyle(ChatFormatting.RED));
@@ -363,6 +365,24 @@ public final class TerminalMaintenanceUi {
             root.addChildren(status, resource, lower, upper, batch, enabled, remove);
         }
 
+        private void scrollAmount(String setting, TextField field, int direction) {
+            long unit = key == null ? 1 : key.getAmountPerUnit();
+            var current = AmountExpressionParser.parseStockAmount(field.getValue(), unit);
+            if (current.isEmpty()) return;
+            long minimum = setting.equals("batch") ? 1 : 0;
+            long next = direction > 0 ? AmountMath.addNonNegative(current.getAsLong(), unit) : Math.max(minimum, current.getAsLong() - unit);
+            if (!setting.equals("batch")) {
+                TextField other = setting.equals("lower") ? upper : lower;
+                var bound = AmountExpressionParser.parseStockAmount(other.getValue(), unit);
+                if (bound.isEmpty()) return;
+                next = setting.equals("lower") ? Math.min(next, bound.getAsLong()) : Math.max(next, bound.getAsLong());
+            }
+            if (next == current.getAsLong()) return;
+            field.focus();
+            field.setText(format(next, unit), true);
+            commit(index, setting, field, key);
+        }
+
         private TextField amountField(String id, int left) {
             TextField field = TerminalUiLayout.at(new TextField(), left, 4, 47, 14);
             field.setId(id);
@@ -375,9 +395,14 @@ public final class TerminalMaintenanceUi {
             });
             String amountType = id.endsWith("_lower") ? "maintenance_lower" : id.endsWith("_upper") ? "maintenance_upper" : "maintenance_batch";
             field.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> amountTooltip(this, field, amountType, event));
+            String setting = id.substring(id.lastIndexOf('_') + 1);
+            field.addEventListener(UIEvents.MOUSE_WHEEL, event -> {
+                if (event.deltaY != 0) scrollAmount(setting, field, event.deltaY > 0 ? 1 : -1);
+                event.stopPropagation();
+            });
             field.addEventListener(UIEvents.KEY_DOWN, event -> {
                 if (event.keyCode == 257 || event.keyCode == 335) {
-                    commit(this.index, id.substring(id.lastIndexOf('_') + 1), field, key);
+                    commit(this.index, setting, field, key);
                     event.stopPropagation();
                 }
             });

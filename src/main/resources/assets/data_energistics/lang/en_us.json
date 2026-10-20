@@ -1785,6 +1785,7 @@
 	"gui.data_energistics.player_terminal.maintenance_batch_title": "Amount per request",
 	"gui.data_energistics.player_terminal.maintenance_threshold_order": "Minimum cannot exceed maximum",
 	"gui.data_energistics.player_terminal.maintenance_amount_expression": "Supports arithmetic expressions and k, m, g, t, p, e suffixes",
+	"gui.data_energistics.player_terminal.maintenance_amount_scroll": "Scroll: Adjust and save amount",
 	"gui.data_energistics.player_terminal.maintenance_resource_hint": "Marked resource",
 	"gui.data_energistics.player_terminal.maintenance_status.free": "Free",
 	"gui.data_energistics.player_terminal.maintenance_status.idle": "Waiting for stock changes",

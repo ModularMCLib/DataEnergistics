@@ -1785,6 +1785,7 @@
 	"gui.data_energistics.player_terminal.maintenance_batch_title": "每次请求",
 	"gui.data_energistics.player_terminal.maintenance_threshold_order": "下限不能高于上限",
 	"gui.data_energistics.player_terminal.maintenance_amount_expression": "支持算术表达式与 k、m、g、t、p、e 数量后缀",
+	"gui.data_energistics.player_terminal.maintenance_amount_scroll": "滚轮：调整并保存数量",
 	"gui.data_energistics.player_terminal.maintenance_resource_hint": "标记资源",
 	"gui.data_energistics.player_terminal.maintenance_status.free": "空闲",
 	"gui.data_energistics.player_terminal.maintenance_status.idle": "等待库存变化",

@@ -61,7 +61,7 @@ public final class TerminalSlotActions {
                 int count = button == 1 ? (stack.getCount() + 1) / 2 : stack.getCount();
                 if (count > 0) player.containerMenu.setCarried(inventory.removeItem(index, count));
             } else if (!patterns || PatternDetailsHelper.isEncodedPattern(cursor)) {
-                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(state.workspace(), index, cursor);
+                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(cursor);
                 boolean placing = stack.isEmpty() || !ItemStack.isSameItemSameComponents(stack, cursor) && cursor.getCount() <= maximum;
                 if (patterns && placing) {
                     String result = TerminalPatternImport.apply(player, state, cursor, connection, data.getBoolean("to_network"));
@@ -112,7 +112,7 @@ public final class TerminalSlotActions {
                 if (hotbar < 0 || hotbar > 8 && hotbar != Inventory.SLOT_OFFHAND)
                     throw new IllegalArgumentException("Invalid terminal hotbar slot");
                 ItemStack replacement = player.getInventory().getItem(hotbar);
-                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(state.workspace(), index, replacement);
+                int maximum = patterns ? 1 : TerminalInputDistribution.maximum(replacement);
                 if (!replacement.isEmpty()) {
                     if (patterns && !PatternDetailsHelper.isEncodedPattern(replacement)) return "";
                     if (patterns) {

@@ -33,7 +33,7 @@ public final class TerminalInputDistribution {
         for (int index : indices) {
             ItemStack before = state.work().inputs.getItem(index);
             if (!before.isEmpty() && !ItemStack.isSameItemSameComponents(before, carried)) continue;
-            int maximum = maximum(state.workspace(), index, carried);
+            int maximum = maximum(carried);
             int moved = Math.min(Math.min(amount, maximum - before.getCount()), carried.getCount());
             if (moved <= 0) continue;
             state.work().inputs.setItem(index, carried.copyWithCount(before.getCount() + moved));
@@ -43,7 +43,7 @@ public final class TerminalInputDistribution {
         if (carried.isEmpty()) player.containerMenu.setCarried(ItemStack.EMPTY);
     }
 
-    public static int maximum(TerminalWorkspace workspace, int index, ItemStack stack) {
-        return workspace == TerminalWorkspace.ANVIL && index == 0 ? 1 : stack.getMaxStackSize();
+    public static int maximum(ItemStack stack) {
+        return stack.getMaxStackSize();
     }
 }

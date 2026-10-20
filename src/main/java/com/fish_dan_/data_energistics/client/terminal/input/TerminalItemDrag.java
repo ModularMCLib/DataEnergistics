@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.client.terminal.input;
 
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalInputDistribution;
-import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -42,7 +41,7 @@ public final class TerminalItemDrag {
 
     public boolean drag(int index, ItemStack current, int button) {
         if (this.button != button) return false;
-        int maximum = TerminalInputDistribution.maximum(TerminalWorkspace.byId(workspace), index, carried);
+        int maximum = TerminalInputDistribution.maximum(carried);
         if (index >= 0 && selected.size() < carried.getCount() && current.getCount() < maximum &&
                 (current.isEmpty() || ItemStack.isSameItemSameComponents(current, carried)))
             selected.putIfAbsent(index, new Placement(current.getCount(), maximum));

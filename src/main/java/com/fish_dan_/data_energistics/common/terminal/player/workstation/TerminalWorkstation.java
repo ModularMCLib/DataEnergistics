@@ -80,7 +80,13 @@ public final class TerminalWorkstation {
                 state.paymentFrequency(connection.frequency());
                 if (!state.anvilPayment().pay(connection.grid(), connection.source(), operation.cost(), state::changed))
                     return result("insufficient");
-                if (!operation.preserveLeft()) state.work().inputs.setItem(0, ItemStack.EMPTY);
+                if (!operation.preserveLeft()) {
+                    state.work().inputs.removeItem(0, 1);
+                    if (state.work().inputs.getItem(0).isEmpty()) {
+                        state.work().name("");
+                        state.work().boost(0);
+                    }
+                }
                 state.work().inputs.removeItem(1, operation.rightConsumed());
                 deliver(player, product, shift);
                 player.serverLevel().levelEvent(1030, player.blockPosition(), 0);

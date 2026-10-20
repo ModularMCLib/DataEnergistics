@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
+import com.fish_dan_.data_energistics.common.terminal.player.maintenance.TerminalMaintenanceTicker;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
@@ -28,6 +29,7 @@ public final class TerminalPlayerRuntime {
 
     private final ServerPlayer player;
     private final TerminalPlayerState state;
+    private final TerminalMaintenanceTicker maintenance = new TerminalMaintenanceTicker();
     private @Nullable TerminalSession session;
     private @Nullable IGrid paidGrid;
     private int paidTick = -1;
@@ -92,14 +94,28 @@ public final class TerminalPlayerRuntime {
             PacketDistributor.sendToPlayer(player, new TerminalPickBlockStatePayload(pickBlock));
             sentPickBlock = pickBlock;
         }
-        if (!terminal) return;
+        if (!terminal || !player.isAlive()) {
+            maintenance.tick(player, state.maintenance(), null);
+            return;
+        }
         boolean background = state.magnet().active(magnetUnlocked);
-        boolean wantsNetwork = (session != null && session.visible()) || background;
+        boolean maintain = state.maintenance().active();
+        boolean wantsNetwork = (session != null && session.visible()) || background || maintain;
         TerminalConnection connection = wantsNetwork ? connection() : null;
+        maintenance.tick(player, state.maintenance(), connection);
         if (session != null) TerminalAeNavigation.tick(player, session, connection);
         if (session != null) session.tick(player, this, connection);
         if (background) TerminalMagnetTicker.tick(player, state, connection, magnetUnlocked);
         if (session != null && player.tickCount % 5 == 0) session.send(player, this, connection);
+    }
+
+    public TerminalMaintenanceTicker maintenance() {
+        return maintenance;
+    }
+
+    public void shutdown() {
+        close();
+        maintenance.close();
     }
 
     private void settleReturns() {

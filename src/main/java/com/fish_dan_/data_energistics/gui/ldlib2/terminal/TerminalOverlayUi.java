@@ -18,6 +18,7 @@ import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalBlank
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalPatternUploadUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding.TerminalProcessingControlsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.magnet.TerminalMagnetUi;
+import com.fish_dan_.data_energistics.gui.ldlib2.terminal.maintenance.TerminalMaintenanceUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.settings.TerminalSettingsUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.stonecutting.TerminalStonecuttingRecipeCell;
 import com.fish_dan_.data_energistics.gui.ldlib2.terminal.storage.TerminalKeyTypeUi;
@@ -114,6 +115,7 @@ public final class TerminalOverlayUi {
     private final TerminalAmountUi amountUi;
     private final TerminalKeyTypeUi keyTypeUi;
     private final TerminalMagnetUi magnetUi;
+    private final TerminalMaintenanceUi maintenanceUi;
     private final TerminalSettingsUi settingsUi;
     private final KeyTypeSelection keyTypeSelection;
     private ObjectSet<AEKeyType> enabledKeyTypes;
@@ -242,6 +244,7 @@ public final class TerminalOverlayUi {
             }
         });
         button(window, "magnet", () -> open("magnet"));
+        button(window, "maintenance", () -> open("maintenance"));
         button(window, "settings", () -> open("settings"));
         tooltip(window, "settings", GuiText.TerminalSettingsTitle.text());
         button(window, "tasks", () -> networkAction("cpu_list", new CompoundTag()));
@@ -259,14 +262,16 @@ public final class TerminalOverlayUi {
             tab.style(style -> style.tooltips(TerminalTooltipLines.split(text("page_gestures", text("workspace." + mode.id())))));
             tab.setOnClick(event -> {
                 preferences.folded = event.button == 1;
-                if (event.button == 0 && !workspace.equals(mode.id())) request.accept("workspace", string("id", mode.id()));
+                if (event.button == 0 && !workspace.equals(mode.id()))
+                    request.accept("workspace", string("id", mode.id()));
                 geometry(screenWidth, screenHeight);
                 preferences.save();
             });
             if (mode.supportsEncoding()) {
                 if (mode != TerminalWorkspace.STONECUTTING) {
                     TerminalUiLayout.require(root, "clear", Button.class).setOnClick(event -> {
-                        if (event.button == 0) request.accept("clear", booleanValue("to_network", preferences.shiftClickToNetwork));
+                        if (event.button == 0)
+                            request.accept("clear", booleanValue("to_network", preferences.shiftClickToNetwork));
                     });
                     element(root, "clear").style(style -> style.tooltips(TerminalTooltipLines.split(ButtonToolTips.Clear.text(), ButtonToolTips.ClearSettings.text())));
                 }
@@ -290,7 +295,7 @@ public final class TerminalOverlayUi {
         }
         processingUi = new TerminalProcessingControlsUi(element(workspaces.get("processing"), "processing_amounts"), request);
         craftingRecipesUi = new TerminalCraftingRecipesUi(element(workspaces.get("crafting"), "crafting_choices"), registries, request);
-        for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types", "settings" }) {
+        for (String name : new String[] { "magnet", "filters", "quantity", "upload", "key_types", "settings", "maintenance" }) {
             UIElement root = TerminalUiLayout.popup(name);
             subWindows.add(name, root);
             label(root, "popup_title").setText(text(name));
@@ -322,6 +327,7 @@ public final class TerminalOverlayUi {
         });
         UIElement filters = subWindows.root("filters");
         magnetUi = new TerminalMagnetUi(subWindows.root("magnet"), filters, request, () -> open("filters", "magnet"));
+        maintenanceUi = new TerminalMaintenanceUi(subWindows.root("maintenance"), registries, request);
         createCells(element(filters, "pickup"), pickup, 27, 9, (index, event) -> ghost("pickup", index, event.button));
         createCells(element(filters, "insert"), insert, 27, 9, (index, event) -> ghost("insert", index, event.button));
         amountUi = new TerminalAmountUi(subWindows.root("quantity"), registries, request, () -> closePopup("quantity"));
@@ -378,7 +384,8 @@ public final class TerminalOverlayUi {
         stateClass(stonecuttingScrollbar, "inactive-scroll", maximumRow == 0);
         stonecuttingScrollbar.setScrollBarSize(1500F / 46);
         stonecuttingScrollbar.scrollerStyle(style -> style.scrollDelta(maximumRow == 0 ? 1F : 1F / maximumRow));
-        if (updateScrollbar) stonecuttingScrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) stonecuttingScrollRow / maximumRow, false);
+        if (updateScrollbar)
+            stonecuttingScrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) stonecuttingScrollRow / maximumRow, false);
         stonecuttingScrollbar.selfAndAllChildren().forEach(element -> element.setAllowHitTest(maximumRow > 0));
     }
 
@@ -442,7 +449,8 @@ public final class TerminalOverlayUi {
                 GuiText.SearchTooltipTag.text().withStyle(ChatFormatting.GRAY),
                 GuiText.SearchTooltipToolTips.text().withStyle(ChatFormatting.GRAY),
                 GuiText.SearchTooltipItemId.text().withStyle(ChatFormatting.GRAY)));
-        if (storageIndex.pending()) lines.add(text("storage_loading", storageIndex.loaded(), storageIndex.total()).copy().withStyle(ChatFormatting.GRAY));
+        if (storageIndex.pending())
+            lines.add(text("storage_loading", storageIndex.loaded(), storageIndex.total()).copy().withStyle(ChatFormatting.GRAY));
         field(window, "search").style(style -> style.tooltips(TerminalTooltipLines.wrap(SEARCH_TOOLTIP_WIDTH, lines.toArray(Component[]::new))));
     }
 
@@ -455,6 +463,7 @@ public final class TerminalOverlayUi {
             refreshWorkCells();
             geometry(screenWidth, screenHeight);
         }
+        maintenanceUi.refresh(value.getCompound("maintenance"), value.getInt("maintenance_delete_selection"));
         for (var entry : workspaces.object2ObjectEntrySet()) {
             entry.getValue().setVisible(entry.getKey().equals(workspace));
             UIElement tab = element(window, "tab_" + entry.getKey());
@@ -472,7 +481,8 @@ public final class TerminalOverlayUi {
             inputs.get(index).configurable(!workspace.equals("anvil") && actual == null);
         }
         setCells(outputs, work.getList("ghost_outputs", Tag.TAG_COMPOUND), true);
-        if (!encodedPatterns.isEmpty()) encodedPatterns.getFirst().entry(physical(work.getList("patterns", Tag.TAG_COMPOUND).getCompound(0)), false);
+        if (!encodedPatterns.isEmpty())
+            encodedPatterns.getFirst().entry(physical(work.getList("patterns", Tag.TAG_COMPOUND).getCompound(0)), false);
         if (blankPattern != null) {
             blankPattern.entry(value.getLong("blank_patterns"), value.getBoolean("blank_patterns_craftable"));
             blankPattern.setActive(value.getBoolean("connected"));
@@ -687,6 +697,7 @@ public final class TerminalOverlayUi {
             case "pickup" -> pickup;
             case "insert" -> insert;
             case "outputs" -> outputs;
+            case "maintenance" -> maintenanceUi.resourceCells();
             default -> inputs;
         };
         GenericStack entry = cells.get(index).stack();
@@ -706,7 +717,9 @@ public final class TerminalOverlayUi {
         request.accept("ghost", data);
     }
 
-    /** Captures carried-item painting before LDLib dispatches the individual configuration-slot click. */
+    /**
+     * Captures carried-item painting before LDLib dispatches the individual configuration-slot click.
+     */
     public boolean beginSlotInput(double x, double y, int button, ItemStack carried) {
         cancelSlotInput();
         Minecraft minecraft = Minecraft.getInstance();
@@ -838,7 +851,8 @@ public final class TerminalOverlayUi {
         if (gridChanged) {
             int columns = viewport.columns();
             IntSet occupied = new IntOpenHashSet(viewport.cellCount());
-            for (TerminalViewportLayout.Cell cell : viewport.cells()) occupied.add(cell.row() * columns + cell.column());
+            for (TerminalViewportLayout.Cell cell : viewport.cells())
+                occupied.add(cell.row() * columns + cell.column());
             for (int index = 0; index < storage.size(); index++) {
                 TerminalViewportLayout.Cell cell = viewport.cells().get(index);
                 TerminalUiLayout.at(storage.get(index), cell.column() * TerminalViewportLayout.CELL_SIZE,
@@ -949,7 +963,9 @@ public final class TerminalOverlayUi {
         return adjusting || subWindows.dragging();
     }
 
-    /** Moves the shared terminal origin to the cursor on the client thread, preserving its open state and size. */
+    /**
+     * Moves the shared terminal origin to the cursor on the client thread, preserving its open state and size.
+     */
     public void moveToMouse(double x, double y) {
         entryPressed = false;
         entryDragging = false;
@@ -1019,7 +1035,8 @@ public final class TerminalOverlayUi {
         boolean connected = snapshot.getBoolean("connected");
         boolean craftableOnly = filter.equals("craftable");
         boolean force = boundCellCount != storage.size();
-        if (!force && boundConnected == connected && boundCraftableOnly == craftableOnly && next.equals(boundStorage)) return;
+        if (!force && boundConnected == connected && boundCraftableOnly == craftableOnly && next.equals(boundStorage))
+            return;
         for (int index = 0; index < storage.size(); index++) {
             TerminalStorageIndex.Entry entry = index < next.size() ? next.get(index) : null;
             TerminalStorageIndex.Entry previous = index < boundStorage.size() ? boundStorage.get(index) : null;
@@ -1060,19 +1077,26 @@ public final class TerminalOverlayUi {
             collectTargets(targets, pickup, "pickup");
             collectTargets(targets, insert, "insert");
         }
+        if (subWindows.root("maintenance").isVisible())
+            collectTargets(targets, maintenanceUi.resourceCells(), "maintenance");
         collectTargets(targets, pinnedUi.manualCells(), "pins");
         if (!preferences.folded) {
             if (!workspace.equals("anvil")) collectTargets(targets, inputs, "inputs");
             if (workspace.equals("processing")) collectTargets(targets, outputs, "outputs");
         }
-        targets.removeIf(target -> subWindows.covers(target.area(), target.inventory().equals("pickup") || target.inventory().equals("insert") ? "filters" : null));
+        targets.removeIf(target -> subWindows.covers(target.area(), switch (target.inventory()) {
+            case "pickup", "insert" -> "filters";
+            case "maintenance" -> "maintenance";
+            default -> null;
+        }));
         return targets;
     }
 
     private void collectTargets(ObjectList<GhostTarget> targets, ObjectList<TerminalResourceCell> cells, String inventory) {
         boolean itemsOnly = inventory.equals("inputs") && !workspace.equals("processing");
         for (int index = 0; index < cells.size(); index++)
-            if (cells.get(index).isVisible() && cells.get(index).isActive()) targets.add(new GhostTarget(rect(cells.get(index)), inventory, index, itemsOnly));
+            if (cells.get(index).isVisible() && cells.get(index).isActive())
+                targets.add(new GhostTarget(rect(cells.get(index)), inventory, index, itemsOnly));
     }
 
     public void drop(GhostTarget target, GenericStack stack) {
@@ -1164,7 +1188,9 @@ public final class TerminalOverlayUi {
         storageInput.click(cell.stack(), cell.craftable(), filter.equals("craftable"), event.button);
     }
 
-    /** Held stacks are placed on release, matching the host screen's virtual-slot gesture. */
+    /**
+     * Held stacks are placed on release, matching the host screen's virtual-slot gesture.
+     */
     public boolean releaseStorage(double x, double y, int button) {
         if (storageReleaseButton != button) return false;
         storageReleaseButton = -1;
@@ -1177,7 +1203,9 @@ public final class TerminalOverlayUi {
         storageReleaseButton = -1;
     }
 
-    /** Uses the player's rebound pick-item key while the cursor is over an unobstructed storage slot. */
+    /**
+     * Uses the player's rebound pick-item key while the cursor is over an unobstructed storage slot.
+     */
     public boolean pickStorage(double x, double y) {
         Target target = ghostDragTarget(x, y);
         if (target != null && workspace.equals("processing") && (target.inventory().equals("inputs") || target.inventory().equals("outputs"))) {
@@ -1194,7 +1222,9 @@ public final class TerminalOverlayUi {
         return true;
     }
 
-    /** Slot-bound keyboard actions use the foreground target and never reach an obscured host slot. */
+    /**
+     * Slot-bound keyboard actions use the foreground target and never reach an obscured host slot.
+     */
     public boolean slotShortcut(double x, double y, int keyCode, int scanCode) {
         if (!contains(x, y)) return false;
         var options = Minecraft.getInstance().options;

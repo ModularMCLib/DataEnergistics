@@ -11,6 +11,7 @@ import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalPr
 import com.fish_dan_.data_energistics.common.terminal.player.encoding.TerminalRecipeTransfer;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
+import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalGhostClicks;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageActions;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalStorageView;
@@ -68,6 +69,7 @@ public final class TerminalSession {
     private String lastAction = "";
     private @Nullable CompoundTag previousSnapshot;
     private @Nullable TerminalRecipeRefill refill;
+    private int maintenanceDeleteSelection = -1;
 
     public TerminalSession(ServerPlayer player, UUID id) {
         this.menu = player.containerMenu;
@@ -136,7 +138,8 @@ public final class TerminalSession {
         message = "";
         lastAction = action;
         if (TerminalCursorActions.usesCursor(action) && data.contains("creative_carried", Tag.TAG_COMPOUND)) {
-            if (!player.isCreative() || menu != player.inventoryMenu) throw new IllegalArgumentException("Creative cursor requires the creative inventory");
+            if (!player.isCreative() || menu != player.inventoryMenu)
+                throw new IllegalArgumentException("Creative cursor requires the creative inventory");
             ItemStack carried = ItemStack.parseOptional(player.registryAccess(), data.getCompound("creative_carried"));
             if (!carried.isItemEnabled(player.level().enabledFeatures()) || !carried.isEmpty() && carried.getCount() > carried.getMaxStackSize())
                 throw new IllegalArgumentException("Invalid creative terminal cursor");
@@ -157,7 +160,8 @@ public final class TerminalSession {
                 else if (button == 1 && menu.getCarried().isEmpty()) state.pins().set(data.getInt("index"), null);
             }
             case "encode" -> {
-                if (state.workspace().supportsEncoding()) message = TerminalPatternEncoding.commit(player, state, runtime.connection());
+                if (state.workspace().supportsEncoding())
+                    message = TerminalPatternEncoding.commit(player, state, runtime.connection());
             }
             case "substitutes" -> {
                 if (state.workspace() == TerminalWorkspace.CRAFTING || state.workspace() == TerminalWorkspace.SMITHING)
@@ -178,7 +182,8 @@ public final class TerminalSession {
                 if (state.workspace() != TerminalWorkspace.PROCESSING)
                     throw new IllegalArgumentException("Matching is only configurable for processing patterns");
                 String group = data.getString("inventory");
-                if (!group.equals("inputs") && !group.equals("outputs")) throw new IllegalArgumentException("Invalid processing match inventory");
+                if (!group.equals("inputs") && !group.equals("outputs"))
+                    throw new IllegalArgumentException("Invalid processing match inventory");
                 boolean output = group.equals("outputs");
                 var inventory = output ? state.work().patternOutputs : state.work().patternInputs;
                 int index = data.getInt("index");
@@ -193,9 +198,22 @@ public final class TerminalSession {
                     data.getString("inventory").equals("encoded") ? runtime.connection() : null);
             case "slot_drag" -> TerminalInputDistribution.apply(player, state, data);
             case "ghost" -> {
-                if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))
-                    requireMagnet(player);
-                message = TerminalSlotActions.ghost(player, state, data);
+                if (data.getString("inventory").equals("maintenance")) maintenanceGhost(player, state, data);
+                else {
+                    if (data.getString("inventory").equals("pickup") || data.getString("inventory").equals("insert"))
+                        requireMagnet(player);
+                    message = TerminalSlotActions.ghost(player, state, data);
+                }
+            }
+            case "maintenance_add" -> state.maintenance().add();
+            case "maintenance_value" -> maintenanceValue(state, data);
+            case "maintenance_enabled" -> state.maintenance().enabled(maintenanceIndex(state, data), data.getBoolean("value"));
+            case "maintenance_delete" -> {
+                int index = maintenanceIndex(state, data);
+                if (maintenanceDeleteSelection == index) {
+                    state.maintenance().remove(index);
+                    maintenanceDeleteSelection = -1;
+                } else maintenanceDeleteSelection = index;
             }
             case "recipe", "cut" -> {
                 int index = data.getInt("index");
@@ -269,7 +287,8 @@ public final class TerminalSession {
                                     InventoryAction.PICKUP_SINGLE : InventoryAction.SPLIT_OR_PLACE_SINGLE);
             }
             case "inventory_insert" -> {
-                if (visible) TerminalNetworkStorage.insertInventorySlot(player, connection, data.getInt("slot"), key(player, data));
+                if (visible)
+                    TerminalNetworkStorage.insertInventorySlot(player, connection, data.getInt("slot"), key(player, data));
             }
             case "transfer_processing" -> {
                 if (runtime.state().workspace() == TerminalWorkspace.PROCESSING)
@@ -287,7 +306,8 @@ public final class TerminalSession {
             case "upload_open" -> {
                 var targets = upload.openTargets(player, runtime.state(), connection, data);
                 if (targets.isEmpty()) message = "upload_unavailable";
-                else if (!TerminalAeNavigation.openProvider(player, this, connection, targets)) message = "upload_unavailable";
+                else if (!TerminalAeNavigation.openProvider(player, this, connection, targets))
+                    message = "upload_unavailable";
             }
             case "upload_refresh", "upload_pattern", "upload_rename", "upload_history" -> message = upload.action(player, runtime.state(), connection, action, data);
             default -> throw new IllegalArgumentException("Unknown player terminal action " + action);
@@ -340,6 +360,43 @@ public final class TerminalSession {
         return key;
     }
 
+    private void maintenanceGhost(ServerPlayer player, TerminalPlayerState state, CompoundTag data) {
+        int index = maintenanceIndex(state, data);
+        AEKey previous = state.maintenance().entry(index).resource();
+        if (data.contains("expected", Tag.TAG_COMPOUND) &&
+                (previous == null || !previous.equals(AEKey.fromTagGeneric(player.registryAccess(), data.getCompound("expected")))))
+            return;
+        if (data.contains("stack", Tag.TAG_COMPOUND)) {
+            markMaintenanceResource(state, index, GenericStack.readTag(player.registryAccess(), data.getCompound("stack")));
+        } else if (data.contains("interaction", Tag.TAG_STRING)) {
+            markMaintenanceResource(state, index, TerminalGhostClicks.apply(
+                    previous == null ? null : new GenericStack(previous, 1), menu.getCarried(),
+                    InventoryAction.valueOf(data.getString("interaction"))));
+        } else markMaintenanceResource(state, index, GenericStack.fromItemStack(menu.getCarried()));
+    }
+
+    private static void markMaintenanceResource(TerminalPlayerState state, int index, @Nullable GenericStack selected) {
+        state.maintenance().resource(index, selected == null ? null : selected.what());
+    }
+
+    private static int maintenanceIndex(TerminalPlayerState state, CompoundTag data) {
+        int index = data.getInt("index");
+        if (index < 0 || index >= state.maintenance().size())
+            throw new IllegalArgumentException("Invalid terminal maintenance entry");
+        return index;
+    }
+
+    private static void maintenanceValue(TerminalPlayerState state, CompoundTag data) {
+        int index = maintenanceIndex(state, data);
+        long value = data.getLong("value");
+        switch (data.getString("field")) {
+            case "lower" -> state.maintenance().lower(index, value);
+            case "upper" -> state.maintenance().upper(index, value);
+            case "batch" -> state.maintenance().batch(index, value);
+            default -> throw new IllegalArgumentException("Unknown terminal maintenance amount field");
+        }
+    }
+
     private static void requireMagnet(ServerPlayer player) {
         if (!ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET))
             throw new IllegalArgumentException("Player magnet research is locked");
@@ -362,6 +419,8 @@ public final class TerminalSession {
         snapshot.putBoolean("record_recipe_type", state.work().recordRecipeType());
         snapshot.putBoolean("magnet_unlocked", ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.MAGNET));
         snapshot.put("magnet", state.magnet().save(player.registryAccess()));
+        snapshot.put("maintenance", runtime.maintenance().snapshot(state.maintenance(), player.registryAccess()));
+        snapshot.putInt("maintenance_delete_selection", maintenanceDeleteSelection);
         snapshot.put("pins", state.pins().save(player.registryAccess()));
         snapshot.put("work", state.work().save(player.registryAccess()));
         if (state.workspace().supportsEncoding()) {

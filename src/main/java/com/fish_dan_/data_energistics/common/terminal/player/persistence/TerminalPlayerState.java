@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.persistence;
 
 import com.fish_dan_.data_energistics.common.anvil.payment.DigitalAnvilPayment;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalMagnetSettings;
+import com.fish_dan_.data_energistics.common.terminal.player.maintenance.TerminalMaintenanceState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalPinnedResources;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspace;
 import com.fish_dan_.data_energistics.common.terminal.player.workstation.TerminalWorkspaceState;
@@ -23,6 +24,7 @@ public final class TerminalPlayerState {
     private final Runnable changed;
     private TerminalWorkspace workspace = TerminalWorkspace.CRAFTING;
     private final TerminalMagnetSettings magnet;
+    private final TerminalMaintenanceState maintenance;
     private final TerminalPinnedResources pins;
     private final DigitalAnvilPayment anvilPayment = new DigitalAnvilPayment();
     private long paymentFrequency;
@@ -32,6 +34,7 @@ public final class TerminalPlayerState {
         this.changed = changed;
         returns = new TerminalReturnLedger(changed);
         magnet = new TerminalMagnetSettings(changed);
+        maintenance = new TerminalMaintenanceState(changed);
         pins = new TerminalPinnedResources(changed);
         for (TerminalWorkspace page : TerminalWorkspace.values())
             workspaces.put(page, new TerminalWorkspaceState(page, changed));
@@ -51,6 +54,10 @@ public final class TerminalPlayerState {
 
     public TerminalMagnetSettings magnet() {
         return magnet;
+    }
+
+    public TerminalMaintenanceState maintenance() {
+        return maintenance;
     }
 
     public TerminalPinnedResources pins() {
@@ -107,6 +114,7 @@ public final class TerminalPlayerState {
         for (var entry : workspaces.entrySet()) pages.put(entry.getKey().id(), entry.getValue().save(registries));
         tag.put("workspaces", pages);
         tag.put("magnet", magnet.save(registries));
+        tag.put("maintenance", maintenance.save(registries));
         tag.put("pins", pins.save(registries));
         anvilPayment.save(tag, registries);
         tag.putLong("payment_frequency", paymentFrequency);
@@ -121,6 +129,7 @@ public final class TerminalPlayerState {
         for (var entry : state.workspaces.entrySet())
             entry.getValue().load(pages.getCompound(entry.getKey().id()), registries);
         state.magnet.load(tag.getCompound("magnet"), registries);
+        state.maintenance.load(tag.getCompound("maintenance"), registries);
         state.pins.load(tag.getCompound("pins"), registries);
         state.anvilPayment.load(tag, registries);
         state.paymentFrequency = tag.getLong("payment_frequency");

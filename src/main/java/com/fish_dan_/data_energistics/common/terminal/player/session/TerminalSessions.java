@@ -46,7 +46,9 @@ public final class TerminalSessions {
         return PLAYERS.computeIfAbsent(player.getUUID(), unused -> new TerminalPlayerRuntime(player, TerminalSavedData.get(player.server).player(player.getUUID())));
     }
 
-    /** Server-thread validity check for AE2's pick-block crafting menu; unavailable access returns null. */
+    /**
+     * Server-thread validity check for AE2's pick-block crafting menu; unavailable access returns null.
+     */
     public static @Nullable TerminalConnection pickBlockConnection(ServerPlayer player, long frequency) {
         if (!player.isAlive() || player.isSpectator() || !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL))
             return null;
@@ -71,7 +73,8 @@ public final class TerminalSessions {
             ItemStack stack = player.level().getBlockState(hit.getBlockPos()).getCloneItemStack(hit, player.level(), hit.getBlockPos(), player);
             if (stack.isEmpty()) return;
             TerminalConnection connection = runtime.connection();
-            if (connection != null) TerminalPickBlock.pick(player, connection, stack, runtime.state().magnet().craftIfMissing());
+            if (connection != null)
+                TerminalPickBlock.pick(player, connection, stack, runtime.state().magnet().craftIfMissing());
         } catch (RuntimeException failure) {
             fail(player, "pick block", failure);
         }
@@ -188,12 +191,12 @@ public final class TerminalSessions {
 
     @SubscribeEvent
     public void stopped(ServerStoppedEvent event) {
-        PLAYERS.values().forEach(TerminalPlayerRuntime::close);
+        PLAYERS.values().forEach(TerminalPlayerRuntime::shutdown);
         PLAYERS.clear();
     }
 
     private static void remove(UUID player) {
-        if (PLAYERS.containsKey(player)) PLAYERS.remove(player).close();
+        if (PLAYERS.containsKey(player)) PLAYERS.remove(player).shutdown();
     }
 
     private static void fail(ServerPlayer player, String operation, RuntimeException failure) {

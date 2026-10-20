@@ -33,7 +33,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-/** Fixed pixel structure from the terminal design; LSS supplies its surfaces and interaction states. */
+/**
+ * Fixed pixel structure from the terminal design; LSS supplies its surfaces and interaction states.
+ */
 @NullMarked
 public final class TerminalUiLayout {
 
@@ -53,7 +55,7 @@ public final class TerminalUiLayout {
         UIElement window = at(element("window", "terminal-window"), 8, 8, width, 168);
         UIElement panel = at(element("panel", "terminal-panel"), 12, 0, panelWidth, 168);
         window.addChild(panel);
-        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "settings", "destination" };
+        String[] controls = { "tasks", "sort", "direction", "display", "type", "pins", "magnet", "maintenance", "settings", "destination" };
         UIElement sidebar = at(element("sidebar", "terminal-sidebar"), 0, -1, 15, 16 + (controls.length - 1) * 12);
         // Backing tiles overlap; the cropped bottom cap closes below the final button at the panel edge.
         for (int index = 0; index < controls.length; index++) {
@@ -233,6 +235,7 @@ public final class TerminalUiLayout {
             case "key_types" -> 160;
             case "magnet" -> 122;
             case "filters" -> 166;
+            case "maintenance" -> 158;
             case "quantity" -> 107;
             case "settings" -> TerminalSettingsUi.HEIGHT;
             case "upload" -> PatternUploadUi.MIN_HEIGHT;
@@ -247,6 +250,7 @@ public final class TerminalUiLayout {
     public static int popupWidth(String name) {
         return switch (name) {
             case "magnet" -> 200;
+            case "maintenance" -> 230;
             case "settings" -> TerminalSettingsUi.WIDTH;
             case "upload" -> PatternUploadUi.MIN_WIDTH;
             case "quantity", "filters" -> 176;
@@ -344,7 +348,9 @@ public final class TerminalUiLayout {
         return scrollbar;
     }
 
-    /** Keeps the supplied 10-by-15 thumb at native size, centered on the six-pixel rail. */
+    /**
+     * Keeps the supplied 10-by-15 thumb at native size, centered on the six-pixel rail.
+     */
     public static <T extends Scroller> T verticalScrollbar(T scrollbar) {
         silentScrollbar(scrollbar);
         scrollbar.addClass("terminal-scrollbar");
@@ -364,7 +370,9 @@ public final class TerminalUiLayout {
         return scrollbar;
     }
 
-    /** Configure a newly constructed scroller once: AE scroll thumbs do not play button sounds. */
+    /**
+     * Configure a newly constructed scroller once: AE scroll thumbs do not play button sounds.
+     */
     public static void silentScrollbar(Scroller scrollbar) {
         // LDLib2 prepends listeners: the original Button press handler follows the scroller's drag handler.
         var thumb = scrollbar.scrollBar;
@@ -405,7 +413,9 @@ public final class TerminalUiLayout {
         return button;
     }
 
-    /** AE-style checkbox row: the label is separate from the fixed-size switch glyph. */
+    /**
+     * AE-style checkbox row: the label is separate from the fixed-size switch glyph.
+     */
     public static TerminalActionButton toggle(String id, Component text, int x, int y, int width) {
         TerminalActionButton row = at(named(new TerminalActionButton(), id, "terminal-toggle"), x, y, width, 14);
         row.noText();

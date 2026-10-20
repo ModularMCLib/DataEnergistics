@@ -128,6 +128,27 @@
 .terminal-popup-heading { font-size: 9; text-color: #FF343548; text-shadow: false; horizontal-align: left; }
 .terminal-popup-title { font-size: 9; horizontal-align: left; }
 .icon-close { background: sprite(data_energistics:textures/guis/close.png, 4, 4, 8, 9); }
+.terminal-maintenance-header { font-size: 6; text-color: #FF343548; text-shadow: false; horizontal-align: center; }
+.terminal-maintenance-row { background: group(#339A9FB4, border(-1, #FFF0F0F3)); }
+.terminal-maintenance-amount { font-size: 7; background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box_0.png); focus-overlay: border(1, #FF9AD8FF); }
+.terminal-maintenance-amount:focused { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_text_box.png); }
+.terminal-maintenance-scroll .__scroller_scroll_container__ { background: #00000000; }
+.terminal-maintenance-add, .terminal-maintenance-delete, .terminal-maintenance-toggle {
+    background: #00000000;
+    base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_0.png);
+    hover-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png);
+    pressed-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_2.png);
+}
+.selected.terminal-maintenance-delete { base-background: sprite(data_energistics:textures/guis/states/small_top_surface/small_button_1.png); }
+.icon-maintenance-add { background: sprite(data_energistics:textures/guis/states/top_surface/add.png); }
+.icon-maintenance-delete { background: sprite(data_energistics:textures/guis/states/top_surface/delete.png); }
+.maintenance-enabled .icon-maintenance-enabled { background: sprite(data_energistics:textures/guis/states/request_maintain/enable.png); }
+.status-free .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/free.png); }
+.status-idle .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/idle.png); }
+.status-lacking .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/lacking.png); }
+.status-no_cpu .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/no_cpu.png); }
+.status-synthesizing .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/synthesizing.png); }
+.status-exporting .terminal-maintenance-status-icon { background: sprite(data_energistics:textures/guis/states/request_maintain/exporting.png); }
 .terminal-filter-frame { background: group(#FF9A9FB4, border(-1, #FFF0F0F3)); }
 .icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/blacklist.png); }
 .selected .icon-filter-list { background: sprite(data_energistics:textures/guis/states/top_surface/whitelist.png); }
@@ -165,6 +186,7 @@
 .icon-type { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_type_filter_all.png); }
 .icon-pins { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_toppin.png); }
 .icon-magnet { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_magnet.png); }
+.icon-maintenance { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_pattern_access_part.png); }
 .icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_to_inventory.png); }
 .option-enabled .icon-destination { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_to_network.png); }
 .icon-crafting { background: sprite(data_energistics:textures/guis/states/small_top_surface/small_synthesize.png); }

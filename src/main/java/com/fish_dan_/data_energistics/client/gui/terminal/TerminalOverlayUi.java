@@ -387,7 +387,7 @@ public final class TerminalOverlayUi {
         stonecuttingScrollbar.scrollerStyle(style -> style.scrollDelta(maximumRow == 0 ? 1F : 1F / maximumRow));
         if (updateScrollbar)
             stonecuttingScrollbar.setNormalizedValue(maximumRow == 0 ? 0 : (float) stonecuttingScrollRow / maximumRow, false);
-        stonecuttingScrollbar.selfAndAllChildren().forEach(element -> element.setAllowHitTest(maximumRow > 0));
+        stonecuttingScrollbar.selfAndAllChildren().forEach(element -> element.setAllowHitTest(maximumRow > 0 && !element.hasClass("scrollbar-decoration")));
     }
 
     private int maximumStonecuttingScrollRow() {

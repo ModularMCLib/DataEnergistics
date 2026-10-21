@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.worldgen.meteorite.MeteoriteStructure;
-import com.fish_dan_.data_energistics.worldgen.meteorite.MeteoriteStructurePiece;
+import com.fish_dan_.data_energistics.common.worldgen.meteorite.MeteoriteStructure;
+import com.fish_dan_.data_energistics.common.worldgen.meteorite.MeteoriteStructurePiece;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.structure.StructureType;

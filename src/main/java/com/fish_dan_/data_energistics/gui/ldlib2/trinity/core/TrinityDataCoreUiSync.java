@@ -2,15 +2,15 @@ package com.fish_dan_.data_energistics.gui.ldlib2.trinity.core;
 
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuStatus;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreCraftingStatus;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenu;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenuHost;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreHostStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreHostStatus.StructureStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreStorageView;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternCatalogView;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternMaintenanceSnapshot;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreCraftingStatus;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenuHost;
 
 import com.lowdragmc.lowdraglib2.gui.sync.SyncValue;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;

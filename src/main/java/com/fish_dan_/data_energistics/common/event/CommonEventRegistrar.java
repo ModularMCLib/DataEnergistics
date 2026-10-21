@@ -1,8 +1,13 @@
 package com.fish_dan_.data_energistics.common.event;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataMimeticFieldBlockEntity;
 import com.fish_dan_.data_energistics.common.command.DataEnergisticsCommands;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor.TrinityServerTickMetrics;
+import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
+import com.fish_dan_.data_energistics.common.effect.RadixLossControlLogic;
+import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
+import com.fish_dan_.data_energistics.common.item.powered.DataCrystalSwordAiStripLogic;
+import com.fish_dan_.data_energistics.common.item.powered.PersistentFarmlandLogic;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackTicker;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualTicker;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlHudTicker;
@@ -16,14 +21,9 @@ import com.fish_dan_.data_energistics.common.recipe.timeshift.TimeShiftTransform
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchEvents;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
-import com.fish_dan_.data_energistics.effect.ChromaticGlow;
-import com.fish_dan_.data_energistics.effect.RadixLossControlLogic;
-import com.fish_dan_.data_energistics.effect.WeaponBurn;
-import com.fish_dan_.data_energistics.item.powered.DataCrystalSwordAiStripLogic;
-import com.fish_dan_.data_energistics.item.powered.PersistentFarmlandLogic;
-import com.fish_dan_.data_energistics.world.meteorite.DataMeteoriteCompassTargetInvalidation;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryTicker;
-import com.fish_dan_.data_energistics.world.sanctum.DataSanctumPortalLogic;
+import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteCompassTargetInvalidation;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryTicker;
+import com.fish_dan_.data_energistics.common.world.sanctum.DataSanctumPortalLogic;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;

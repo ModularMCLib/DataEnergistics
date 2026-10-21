@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.model;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.decor.DollVariant;
+import com.fish_dan_.data_energistics.common.block.decor.DollVariant;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
-import com.fish_dan_.data_energistics.item.powered.LightSaberColorData;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
-import com.fish_dan_.data_energistics.item.powered.PoweredEnergyItem;
+import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
+import com.fish_dan_.data_energistics.common.item.powered.LightSaberColorData;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.core.component.DataComponents;

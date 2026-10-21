@@ -7,8 +7,8 @@ import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalCon
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistration;
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistry;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.menu.universal.UniversalTerminalMenuLocator;
 import com.fish_dan_.data_energistics.common.terminal.UniversalTerminalData;
-import com.fish_dan_.data_energistics.menu.universal.UniversalTerminalMenuLocator;
 
 import appeng.api.config.Settings;
 import appeng.api.config.ShowPatternProviders;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.astronomy;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.orbital.astronomy.InterferenceArrayCoreBlock;
+import com.fish_dan_.data_energistics.common.block.orbital.astronomy.InterferenceArrayCoreBlock;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 

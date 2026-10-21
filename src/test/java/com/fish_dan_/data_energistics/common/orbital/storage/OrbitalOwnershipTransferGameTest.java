@@ -1,16 +1,16 @@
 package com.fish_dan_.data_energistics.common.orbital.storage;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
-import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalControlConsoleBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.orbital.OrbitalControlConsoleBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackCost;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackPhase;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackRecord;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.entity.projectile.OrbitalAnnihilatorProjectileEntity;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;

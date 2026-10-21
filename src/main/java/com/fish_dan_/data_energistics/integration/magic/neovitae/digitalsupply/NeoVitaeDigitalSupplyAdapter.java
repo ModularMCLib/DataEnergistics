@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.magic.neovitae.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.BloodKey;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.BloodKey;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

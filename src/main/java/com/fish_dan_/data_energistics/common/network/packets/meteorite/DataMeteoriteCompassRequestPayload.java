@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.meteorite;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.world.meteorite.DataMeteoriteSavedData;
+import com.fish_dan_.data_energistics.common.world.meteorite.DataMeteoriteSavedData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

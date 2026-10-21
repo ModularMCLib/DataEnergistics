@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.mixin.ae.dataenergistics.client.render;
 
 import com.fish_dan_.data_energistics.client.render.beam.BeamGeometryRenderer;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
-import com.fish_dan_.data_energistics.part.beam.BeamFormerPart;
+import com.fish_dan_.data_energistics.common.part.beam.BeamFormerPart;
 
 import appeng.api.parts.IPartItem;
 import appeng.parts.automation.UpgradeablePart;

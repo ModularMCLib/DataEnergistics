@@ -2,17 +2,17 @@ package com.fish_dan_.data_energistics.gui.ldlib2.compartment;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
+import com.fish_dan_.data_energistics.common.menu.storage.CompartmentMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.CompositeWarehouseMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.MeCompositeInputWarehouseMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.MeCompositeOutputWarehouseMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.MePatternBufferMenu;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeMenuBridge;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.inventory.AePlayerInventoryLayout;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.inventory.AePlayerInventoryPanel;
 import com.fish_dan_.data_energistics.gui.ldlib2.compartment.slot.MeInputCompartmentPanel;
 import com.fish_dan_.data_energistics.gui.ldlib2.compartment.slot.MeOutputCompartmentPanel;
 import com.fish_dan_.data_energistics.gui.ldlib2.compartment.slot.PatternBufferCompartmentPanel;
-import com.fish_dan_.data_energistics.menu.storage.CompartmentMenu;
-import com.fish_dan_.data_energistics.menu.storage.CompositeWarehouseMenu;
-import com.fish_dan_.data_energistics.menu.storage.MeCompositeInputWarehouseMenu;
-import com.fish_dan_.data_energistics.menu.storage.MeCompositeOutputWarehouseMenu;
-import com.fish_dan_.data_energistics.menu.storage.MePatternBufferMenu;
 
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.impl.SupplierDataSource;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;

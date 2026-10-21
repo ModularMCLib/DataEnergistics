@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.technology.mekanism.energy;
 
-import com.fish_dan_.data_energistics.blockentity.tower.energy.TowerEnergyDirection;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedEnergyAccess.EnergySnapshot;
-import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointId;
-import com.fish_dan_.data_energistics.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.TowerEnergyDirection;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.UnlimitedEnergyAccess.EnergySnapshot;
+import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergyEndpointId;
+import com.fish_dan_.data_energistics.common.blockentity.tower.equalization.TowerEnergyEndpointSnapshot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.technology.mekanismmore.appmek;
 
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;

@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.integration.viewer.jei.ui;
 
 import com.fish_dan_.data_energistics.client.gui.OrderPackageGhostIngredient;
 import com.fish_dan_.data_energistics.client.screen.machine.OrderPackageScreen;
+import com.fish_dan_.data_energistics.common.menu.storage.OrderPackageMenu;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.DataResourceJeiIngredient;
-import com.fish_dan_.data_energistics.menu.storage.OrderPackageMenu;
 
 import appeng.api.stacks.GenericStack;
 import appeng.menu.slot.FakeSlot;

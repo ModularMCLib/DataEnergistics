@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.worldgen.meteorite.MeteoriteClusterChunkGenerator;
+import com.fish_dan_.data_energistics.common.worldgen.meteorite.MeteoriteClusterChunkGenerator;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.ChunkGenerator;

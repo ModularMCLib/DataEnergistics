@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.technology.modernindustrialization.energy;
 
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedEnergyAccess.EnergySnapshot;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.UnlimitedEnergyAccess.EnergySnapshot;
 
 import net.neoforged.neoforge.energy.IEnergyStorage;
 

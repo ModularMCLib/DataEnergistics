@@ -1,11 +1,5 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.patternprovider;
 
-import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchAccess;
-import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderBatchBridge;
-import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderLogicAccessor;
-import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
-import com.fish_dan_.data_energistics.ae2.patternprovider.PatternProviderBatching;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
@@ -18,6 +12,12 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.Dis
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderCapacitySnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.ProviderRoutingMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.provider.BoundPatternInputProvider;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchAccess;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderBatchBridge;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderLogicAccessor;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.RedstoneTuningAwareHost;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.PatternProviderBatching;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 import com.fish_dan_.data_energistics.util.RedstoneTuningUtils;
 
 import appeng.api.config.LockCraftingMode;

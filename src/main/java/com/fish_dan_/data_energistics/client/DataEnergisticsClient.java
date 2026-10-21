@@ -21,12 +21,12 @@ import com.fish_dan_.data_energistics.client.screen.ClientScreenRegistrar;
 import com.fish_dan_.data_energistics.common.data.DEFluids;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotTooltipComponent;
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotTooltipComponent;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;

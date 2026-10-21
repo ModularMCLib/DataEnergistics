@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.recipe.chargepress.DataChargePressRecipe;
 import com.fish_dan_.data_energistics.api.recipe.charger.DataChargerRecipe;
 import com.fish_dan_.data_energistics.api.recipe.charger.DataIntegratedChargerRecipe;
-import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerBlockEntity.MachineMode;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataIntegratedChargerBlockEntity.MachineMode;
 import com.fish_dan_.data_energistics.common.recipe.chargepress.DataChargePressRecipeSupport;
 import com.fish_dan_.data_energistics.common.recipe.charger.DataChargerRecipeRegistry;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.catalog.EaeCircuitCutterRecipeCatalog;

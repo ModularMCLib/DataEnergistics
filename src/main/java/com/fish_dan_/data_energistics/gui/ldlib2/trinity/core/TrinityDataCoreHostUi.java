@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.gui.ldlib2.trinity.core;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenu;
 import com.fish_dan_.data_energistics.common.trinity.drive.TrinityInfiniteDriveInventory;
 import com.fish_dan_.data_energistics.gui.ldlib2.host.protocol.HostUiKey;
 import com.fish_dan_.data_energistics.gui.ldlib2.host.window.HostModularUI;
@@ -15,7 +16,6 @@ import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiXmlLayo
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.pattern.aggregate.TrinityAggregatePatternProvider;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.priority.TrinityPriorityProvider;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.storage.TrinityDataCoreStorageProvider;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;

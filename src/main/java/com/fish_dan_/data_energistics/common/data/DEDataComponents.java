@@ -1,16 +1,16 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.item.carrier.CropDataCarrierItemData;
+import com.fish_dan_.data_energistics.common.item.carrier.MobDataCarrierItemData;
+import com.fish_dan_.data_energistics.common.item.carrier.OreDataCarrierItemData;
+import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorData;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotItemData;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotMemoryCardData;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonCharge;
+import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchExclusions;
 import com.fish_dan_.data_energistics.common.research.item.ItemResearchUpgrades;
-import com.fish_dan_.data_energistics.item.carrier.CropDataCarrierItemData;
-import com.fish_dan_.data_energistics.item.carrier.MobDataCarrierItemData;
-import com.fish_dan_.data_energistics.item.carrier.OreDataCarrierItemData;
-import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotItemData;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotMemoryCardData;
-import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
-import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
 
 import appeng.api.stacks.AEKey;
 

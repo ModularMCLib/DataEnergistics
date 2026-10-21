@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.client.screen.crafting.confirm;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressMeasure;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressSnapshot;
-import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
+import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import appeng.menu.me.crafting.CraftingPlanSummary;

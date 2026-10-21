@@ -1,14 +1,14 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.exchange;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity.StorageMode;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity.StorageMode;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityInformationExchangeDepotMenu;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternMaintenanceSnapshot.Operation;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternMaintenanceSnapshot.Stage;
 import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeMenuBridge;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayouts;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.progress.TrinityPatternProgressAppearance;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.progress.TrinityPatternProgressBar;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityInformationExchangeDepotMenu;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

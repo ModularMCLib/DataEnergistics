@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.technology.embers;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 import com.fish_dan_.data_energistics.integration.technology.embers.packaged.AlchemyTableAdapter;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;

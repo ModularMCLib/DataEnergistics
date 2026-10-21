@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.gui.ldlib2.anvil;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
+import com.fish_dan_.data_energistics.common.menu.machine.anvil.MeDigitalAnvilMenu;
 import com.fish_dan_.data_energistics.gui.ldlib2.style.SharedBackpackStyles;
 import com.fish_dan_.data_energistics.gui.ldlib2.style.StateTextureButton;
-import com.fish_dan_.data_energistics.menu.machine.anvil.MeDigitalAnvilMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture;

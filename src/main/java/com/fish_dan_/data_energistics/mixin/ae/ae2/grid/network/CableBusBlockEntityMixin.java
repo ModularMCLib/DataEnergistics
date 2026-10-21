@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.network;
 
-import com.fish_dan_.data_energistics.ae2.grid.TowerMountedGridNodeHost;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.TowerMountedGridNodeHost;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.parts.IPart;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.client.patternencoding;
 
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingSourceAware;
 
 import appeng.client.gui.AESubScreen;
 import appeng.client.gui.me.common.MEStorageScreen;

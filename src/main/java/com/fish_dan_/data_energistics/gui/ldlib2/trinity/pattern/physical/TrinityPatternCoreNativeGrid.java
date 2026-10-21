@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.trinity.pattern.physical;
 
-import com.fish_dan_.data_energistics.blockentity.trinity.TrinityPatternCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityPatternCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternCatalogView;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;

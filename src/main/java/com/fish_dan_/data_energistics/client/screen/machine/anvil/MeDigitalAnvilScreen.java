@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine.anvil;
 
-import com.fish_dan_.data_energistics.menu.machine.anvil.MeDigitalAnvilMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.anvil.MeDigitalAnvilMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

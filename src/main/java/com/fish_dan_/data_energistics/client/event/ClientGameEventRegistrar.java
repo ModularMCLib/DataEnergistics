@@ -12,7 +12,7 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalCarriedItemRenderer;
 import com.fish_dan_.data_energistics.client.terminal.rendering.TerminalTooltipRenderer;
 import com.fish_dan_.data_energistics.client.ui.orbital.OrbitalControlClientBindings;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
 
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;

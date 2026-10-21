@@ -1,7 +1,5 @@
 package com.fish_dan_.data_energistics.common.entrypoint;
 
-import com.fish_dan_.data_energistics.ae2.key.BloodKey;
-import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.VirtualCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dynamic.DynamicCraftingOutputAdapter;
 import com.fish_dan_.data_energistics.api.crafting.matching.RecipeMatchingRuleAdapter;
@@ -37,7 +35,9 @@ import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalReg
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistry;
 import com.fish_dan_.data_energistics.api.registry.tower.energy.TowerEnergyIntegrationRegistry;
 import com.fish_dan_.data_energistics.api.registry.virtual.VirtualCraftingRegistry;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.BloodKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
 
 import net.minecraft.resources.ResourceLocation;
 

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.magic.neovitae;
 
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

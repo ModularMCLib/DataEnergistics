@@ -10,6 +10,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.common.menu.universal.UniversalPatternEncodingTermMenu;
 import com.fish_dan_.data_energistics.common.recipe.reassembler.RadixContainmentSphereCraftingRemainderHelper;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.viewer.jei.entrypoint.DataEnergisticsJeiEntrypointLoader;
@@ -42,7 +43,6 @@ import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.PoweredRepai
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.UniversalTerminalCombineRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.condenser.CondenserOutputRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
-import com.fish_dan_.data_energistics.menu.universal.UniversalPatternEncodingTermMenu;
 
 import appeng.core.definitions.AEBlocks;
 import appeng.menu.me.items.PatternEncodingTermMenu;

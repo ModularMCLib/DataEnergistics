@@ -1,15 +1,15 @@
 package com.fish_dan_.data_energistics.common.data;
 
-import com.fish_dan_.data_energistics.ae2.cell.InfiniteDataCellHandler;
-import com.fish_dan_.data_energistics.ae2.dataflow.DataFlowBusStrategies;
-import com.fish_dan_.data_energistics.ae2.dataflow.DigitalStorageCellHandler;
-import com.fish_dan_.data_energistics.block.patternprovider.AdaptivePatternProviderBlock;
-import com.fish_dan_.data_energistics.part.AdaptivePatternProviderPart;
-import com.fish_dan_.data_energistics.part.DataRipperPart;
-import com.fish_dan_.data_energistics.part.DataSanctumInterfacePart;
-import com.fish_dan_.data_energistics.part.MeSolarPanelPart;
-import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
-import com.fish_dan_.data_energistics.part.beam.BeamFormerPart;
+import com.fish_dan_.data_energistics.common.block.patternprovider.AdaptivePatternProviderBlock;
+import com.fish_dan_.data_energistics.common.part.beam.BeamFormerPart;
+import com.fish_dan_.data_energistics.common.part.dataripper.DataRipperPart;
+import com.fish_dan_.data_energistics.common.part.patternprovider.AdaptivePatternProviderPart;
+import com.fish_dan_.data_energistics.common.part.sanctum.DataSanctumInterfacePart;
+import com.fish_dan_.data_energistics.common.part.solar.MeSolarPanelPart;
+import com.fish_dan_.data_energistics.common.part.terminal.UniversalTerminalPart;
+import com.fish_dan_.data_energistics.integration.ae.ae2.cell.InfiniteDataCellHandler;
+import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.DataFlowBusStrategies;
+import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.DigitalStorageCellHandler;
 
 import appeng.api.parts.PartModels;
 import appeng.api.storage.StorageCells;

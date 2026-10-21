@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.widget.OutputSideDisplayButton;
-import com.fish_dan_.data_energistics.menu.machine.DataExtractorMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.DataExtractorMenu;
 
 import appeng.api.config.ActionItems;
 import appeng.api.orientation.RelativeSide;

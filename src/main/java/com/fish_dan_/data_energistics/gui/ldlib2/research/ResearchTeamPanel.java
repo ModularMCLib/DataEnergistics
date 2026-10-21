@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
-import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
+import com.fish_dan_.data_energistics.common.menu.research.ResearchStationMenu;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;

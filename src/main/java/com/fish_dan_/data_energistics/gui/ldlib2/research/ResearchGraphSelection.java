@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.research;
 
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
-import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
+import com.fish_dan_.data_energistics.common.menu.research.ResearchStationMenu;
 
 import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;

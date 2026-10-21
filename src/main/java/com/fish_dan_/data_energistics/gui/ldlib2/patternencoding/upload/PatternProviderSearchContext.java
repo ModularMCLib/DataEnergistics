@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload;
 
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderViewerWorkstations;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;

@@ -1,21 +1,21 @@
 package com.fish_dan_.data_energistics.common.capability.registration;
 
-import com.fish_dan_.data_energistics.block.sanctum.DataSanctumBlock;
-import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
-import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.common.block.sanctum.DataSanctumBlock;
+import com.fish_dan_.data_energistics.common.block.tower.DataDistributionTowerBlock;
+import com.fish_dan_.data_energistics.common.blockentity.ioport.DataIoPortBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.sanctum.DataSanctumBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotFluidHandlerItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredItemEnergyStorage;
+import com.fish_dan_.data_energistics.common.part.patternprovider.AdaptivePatternProviderPart;
+import com.fish_dan_.data_energistics.common.part.sanctum.DataSanctumInterfacePart;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryRegistration;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotFluidHandlerItem;
-import com.fish_dan_.data_energistics.item.powered.PoweredItemEnergyStorage;
-import com.fish_dan_.data_energistics.part.AdaptivePatternProviderPart;
-import com.fish_dan_.data_energistics.part.DataSanctumInterfacePart;
 
 import appeng.api.AECapabilities;
 import appeng.api.implementations.items.IAEItemPowerStorage;

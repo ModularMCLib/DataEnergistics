@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.screen.base;
 
-import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.client.widget.DigitalStorageDepotOutputTypeCycleButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideDisplayButton;
+import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
 
 import appeng.api.config.ActionItems;
 import appeng.api.orientation.RelativeSide;

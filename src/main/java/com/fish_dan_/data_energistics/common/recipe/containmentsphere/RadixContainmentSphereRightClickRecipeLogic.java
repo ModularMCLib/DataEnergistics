@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.recipe.containmentsphere;
 
 import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipeInput;
 import com.fish_dan_.data_energistics.common.data.DERecipes;
-import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
+import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
 
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;

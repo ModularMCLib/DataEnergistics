@@ -3,8 +3,8 @@ package com.fish_dan_.data_energistics.common.network.packets.action;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
-import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.rail.RailLauncher;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

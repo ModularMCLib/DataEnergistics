@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.library.curios.equipment.client;
 
-import com.fish_dan_.data_energistics.block.decor.DollBlock;
-import com.fish_dan_.data_energistics.block.decor.DollVariant;
+import com.fish_dan_.data_energistics.common.block.decor.DollBlock;
+import com.fish_dan_.data_energistics.common.block.decor.DollVariant;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 

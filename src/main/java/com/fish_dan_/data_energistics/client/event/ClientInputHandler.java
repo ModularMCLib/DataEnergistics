@@ -5,6 +5,11 @@ import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
+import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.vacuum.MeVacuumItem;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardAction;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorClipboardPayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.ConnectorScrollPayload;
@@ -13,11 +18,6 @@ import com.fish_dan_.data_energistics.common.network.packets.action.DigitalStora
 import com.fish_dan_.data_energistics.common.network.packets.action.MatterConvergingCrossbowModePayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.MeVacuumLaunchPayload;
 import com.fish_dan_.data_energistics.common.network.packets.orbital.control.OrbitalControlOpenPayload;
-import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.item.vacuum.MeVacuumItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;

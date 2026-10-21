@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainm
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
 import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
+import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.action;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotBlockItem;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;

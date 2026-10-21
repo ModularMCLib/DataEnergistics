@@ -1,13 +1,11 @@
 package com.fish_dan_.data_energistics.common;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
-import com.fish_dan_.data_energistics.ae2.dataflow.GenericKeyItemExportStrategy;
-import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
-import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerGridServices;
+import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerGridServices;
 import com.fish_dan_.data_energistics.common.capability.registration.CommonCapabilityRegistrar;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputAdapters;
+import com.fish_dan_.data_energistics.common.data.DEAE2Keys;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEChunkGenerators;
@@ -32,6 +30,7 @@ import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWor
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTerminalAdapters;
 import com.fish_dan_.data_energistics.common.event.CommonEventRegistrar;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 import com.fish_dan_.data_energistics.common.network.DEPayloads;
 import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
@@ -44,6 +43,8 @@ import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration
 import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.upgrades.AdvancedAeUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.GenericKeyItemExportStrategy;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive.AdaptivePatternProviderResolver;
 import com.fish_dan_.data_energistics.integration.ae.ae2cs.upgrades.Ae2CrystalScienceUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.appflux.upgrades.AppliedFluxUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.ae.appliedcreate.upgrades.AppliedCreateUpgradeRegistration;
@@ -53,7 +54,6 @@ import com.fish_dan_.data_energistics.integration.library.curios.equipment.Curio
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
 
 import appeng.api.features.HotkeyAction;
 

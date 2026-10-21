@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.common.multiblock.preview.catalog;
 
+import com.fish_dan_.data_energistics.common.item.order.OrderPackageTarget;
 import com.fish_dan_.data_energistics.common.multiblock.json.definition.JsonMultiBlockStructureKey;
 import com.fish_dan_.data_energistics.common.multiblock.preview.material.PreviewMaterial;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.StructurePreviewSnapshot;
-import com.fish_dan_.data_energistics.item.order.OrderPackageTarget;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;

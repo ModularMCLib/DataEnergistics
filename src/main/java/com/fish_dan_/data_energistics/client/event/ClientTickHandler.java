@@ -8,8 +8,8 @@ import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 import com.fish_dan_.data_energistics.common.data.DEParticles;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 
 import appeng.core.definitions.AEItems;
 import appeng.items.misc.PaintBallItem;

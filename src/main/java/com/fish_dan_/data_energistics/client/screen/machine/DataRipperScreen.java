@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
 import com.fish_dan_.data_energistics.client.widget.DataRipperSettingToggleButton;
-import com.fish_dan_.data_energistics.menu.machine.DataRipperMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.DataRipperMenu;
+import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DataRipperSettings;
 import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 
 import appeng.api.config.YesNo;

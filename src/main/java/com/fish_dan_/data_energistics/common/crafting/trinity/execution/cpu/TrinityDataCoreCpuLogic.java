@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.BigIntegerCraftingAdmission;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.BigIntegerCraftingProviderAdapter;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingAdmission;
@@ -90,6 +89,7 @@ import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOut
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.TrinityCraftingSchema;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 

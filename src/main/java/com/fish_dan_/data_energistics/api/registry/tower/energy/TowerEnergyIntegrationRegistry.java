@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.api.registry.tower.energy;
 
-import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
 
 /**
  * Stages energy adapters in the owning annotation plugin's common-setup transaction.

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.packaged;
 
-import com.fish_dan_.data_energistics.ae2.patternprovider.packaged.PackagedReturnInventory;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.packaged.PackagedReturnInventory;
 
 import appeng.api.stacks.GenericStack;
 import appeng.helpers.externalstorage.GenericStackInv;

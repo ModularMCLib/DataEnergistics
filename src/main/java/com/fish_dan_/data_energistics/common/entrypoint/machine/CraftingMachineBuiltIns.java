@@ -12,8 +12,8 @@ import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadW
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationInspectionContext;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationPreparation;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationRegistration;
-import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataIntegratedChargerBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.VanillaRetainedInputRules;
 
 import java.util.Optional;

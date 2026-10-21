@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.client.render.entity;
 
 import com.fish_dan_.data_energistics.client.render.entity.cannon.ElementalGrenadeRenderer;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.RailAmmunitionRenderer;
-import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingBoltEntity;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;

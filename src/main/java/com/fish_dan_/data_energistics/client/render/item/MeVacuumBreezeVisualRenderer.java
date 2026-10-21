@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.client.render.item;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.data.DEItems;
-import com.fish_dan_.data_energistics.item.powered.PoweredEnergyItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.BreezeModel;

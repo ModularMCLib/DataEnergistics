@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.recipe.reassembler;
 
-import com.fish_dan_.data_energistics.ae2.key.DataKey;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

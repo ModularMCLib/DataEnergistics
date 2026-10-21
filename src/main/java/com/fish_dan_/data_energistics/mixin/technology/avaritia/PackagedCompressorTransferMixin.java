@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.technology.avaritia;
 
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;

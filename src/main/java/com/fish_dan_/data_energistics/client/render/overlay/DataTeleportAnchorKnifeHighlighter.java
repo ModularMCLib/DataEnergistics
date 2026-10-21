@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.render.overlay;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.machine.DataTeleportAnchorBlock;
-import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBlockEntity;
+import com.fish_dan_.data_energistics.common.block.machine.DataTeleportAnchorBlock;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataTeleportAnchorBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredCuttingKnifeItem;
 import com.fish_dan_.data_energistics.common.network.packets.action.DataTeleportAnchorKnifeTeleportPayload;
-import com.fish_dan_.data_energistics.item.powered.PoweredCuttingKnifeItem;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;

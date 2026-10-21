@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.gui.ldlib2.terminal.encoding;
 
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderClickStatistic;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPatternProviderCodec;
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadActions;
 import com.fish_dan_.data_energistics.gui.ldlib2.patternencoding.upload.PatternUploadUi;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu.SyncedPatternProviderList;
-import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderClickStatistic;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 

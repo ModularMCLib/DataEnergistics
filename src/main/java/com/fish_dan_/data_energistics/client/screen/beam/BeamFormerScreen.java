@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.beam;
 
-import com.fish_dan_.data_energistics.menu.beam.BeamFormerMenu;
+import com.fish_dan_.data_energistics.common.menu.beam.BeamFormerMenu;
 
 import appeng.client.gui.implementations.UpgradeableScreen;
 import appeng.client.gui.style.ScreenStyle;

@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOpera
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedPatternInputCompletion;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedEntityCapture;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedOutputMatching;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralLiquidSupplyTransaction;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEFluidKey;

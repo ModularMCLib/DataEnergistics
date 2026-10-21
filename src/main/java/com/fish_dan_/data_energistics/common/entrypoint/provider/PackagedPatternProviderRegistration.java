@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.entrypoint.provider;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.patternprovider.packaged.PackagedAdaptiveRoute;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderProfile;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderRegistration;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.packaged.PackagedAdaptiveRoute;
 
 import appeng.api.stacks.AEItemKey;
 

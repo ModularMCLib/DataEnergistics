@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataSanctumModeButton;
-import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumStatusMenu;
+import com.fish_dan_.data_energistics.common.menu.sanctum.DataSanctumStatusMenu;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;

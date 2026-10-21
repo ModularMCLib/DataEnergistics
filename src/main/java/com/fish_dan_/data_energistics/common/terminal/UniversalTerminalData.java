@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalReg
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMenus;
-import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
-import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
+import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalItemData;
+import com.fish_dan_.data_energistics.common.part.terminal.UniversalTerminalPart;
 
 import appeng.api.util.IConfigManager;
 

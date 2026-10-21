@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.crafting;
 
-import com.fish_dan_.data_energistics.accessor.crafting.CraftingPlanTiming;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.crafting.CraftingPlanTiming;
 
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.crafting.CraftingCalculation;

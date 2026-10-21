@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.client.screen.crafting.confirm;
 
 import com.fish_dan_.data_energistics.client.crafting.confirm.presentation.TrinityCraftConfirmMaterialPresentation;
 import com.fish_dan_.data_energistics.client.crafting.confirm.table.TrinityCraftConfirmCycleBarRenderer;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;

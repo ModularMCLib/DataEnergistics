@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.planning.sameitem;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.runtime.TrinityInitialInputExtractor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.TrinityPlanExecution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.state.inventory.TrinityExactWorkingInventory;
@@ -15,6 +14,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.inventory
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanPatternFiring;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityPlanStage;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.FiniteNetworkStorageAccess;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 
 import appeng.api.config.Actionable;

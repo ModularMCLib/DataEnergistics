@@ -1,14 +1,14 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.entity.anvil.FallingDigitalAnvilEntity;
-import com.fish_dan_.data_energistics.entity.explosive.DataNukePrimedEntity;
-import com.fish_dan_.data_energistics.entity.explosive.TntConfigurablePrimedEntity;
-import com.fish_dan_.data_energistics.entity.projectile.LightBladeChargeEntity;
-import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
-import com.fish_dan_.data_energistics.entity.projectile.OrbitalAnnihilatorProjectileEntity;
-import com.fish_dan_.data_energistics.entity.projectile.ThrownLightSaberEntity;
-import com.fish_dan_.data_energistics.entity.resource.DispersingDataEntity;
+import com.fish_dan_.data_energistics.common.entity.anvil.FallingDigitalAnvilEntity;
+import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
+import com.fish_dan_.data_energistics.common.entity.explosive.TntConfigurablePrimedEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.LightBladeChargeEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingBoltEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.ThrownLightSaberEntity;
+import com.fish_dan_.data_energistics.common.entity.resource.DispersingDataEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;

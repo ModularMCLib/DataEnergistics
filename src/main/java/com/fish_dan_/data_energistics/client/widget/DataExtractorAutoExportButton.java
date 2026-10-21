@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.widget;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorAutoExportMode;
 
 import appeng.client.gui.Icon;
 import appeng.client.gui.widgets.IconButton;

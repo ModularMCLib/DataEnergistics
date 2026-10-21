@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
 import com.fish_dan_.data_energistics.common.network.packets.action.ChromaticGlowPayload;
 import com.fish_dan_.data_energistics.common.network.packets.action.RailChainPayload;
-import com.fish_dan_.data_energistics.effect.ChromaticGlow;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

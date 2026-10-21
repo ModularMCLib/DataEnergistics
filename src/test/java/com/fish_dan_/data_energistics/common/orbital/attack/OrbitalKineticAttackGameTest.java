@@ -1,8 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
-import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalControlConsoleBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.orbital.OrbitalControlConsoleBlockEntity;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry.KineticCraterProfile;
@@ -13,6 +12,7 @@ import com.fish_dan_.data_energistics.common.orbital.control.protocol.OrbitalFir
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalEnergyReserve;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;

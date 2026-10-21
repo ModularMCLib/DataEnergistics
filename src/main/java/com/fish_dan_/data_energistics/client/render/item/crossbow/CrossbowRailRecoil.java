@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
-import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailRecovery;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.rail.RailRecovery;
 
 /** A fast half-stroke retraction and a controlled return without overshooting. */
 public final class CrossbowRailRecoil {

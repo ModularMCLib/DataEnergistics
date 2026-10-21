@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.storage;
 
 import com.fish_dan_.data_energistics.client.screen.base.CompartmentScreen;
-import com.fish_dan_.data_energistics.menu.storage.CompositeWarehouseMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.CompositeWarehouseMenu;
 
 import appeng.client.gui.style.ScreenStyle;
 

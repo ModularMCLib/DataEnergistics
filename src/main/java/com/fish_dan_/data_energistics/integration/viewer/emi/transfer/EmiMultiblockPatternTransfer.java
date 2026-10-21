@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.transfer;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeViewSource;
 import com.fish_dan_.data_energistics.common.multiblock.preview.material.PreviewMaterial;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.EmiMultiblockRecipeId;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingMultiblockTransferTarget;
 
 import appeng.util.ConfigInventory;
 

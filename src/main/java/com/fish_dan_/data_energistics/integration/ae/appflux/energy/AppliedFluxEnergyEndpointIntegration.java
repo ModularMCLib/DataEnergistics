@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.ae.appflux.energy;
 
-import com.fish_dan_.data_energistics.blockentity.tower.energy.TowerEnergyDirection;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.UnlimitedEnergyAccess.EnergySnapshot;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.TowerEnergyDirection;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.UnlimitedEnergyAccess.EnergySnapshot;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointContext;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.registry.TowerEnergyEndpointIntegration;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.screen.sanctum.InterfaceSlotSettingsScreen;
-import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
+import com.fish_dan_.data_energistics.common.menu.sanctum.DataSanctumLargeInterfaceMenu;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;

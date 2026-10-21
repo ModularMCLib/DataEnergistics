@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.world;
 
-import com.fish_dan_.data_energistics.entity.projectile.LightBladeChargeEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.LightBladeChargeEntity;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;

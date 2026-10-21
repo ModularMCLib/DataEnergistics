@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.progress;
 
-import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
+import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;

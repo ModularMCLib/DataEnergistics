@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.effect.RadixLossMobEffect;
+import com.fish_dan_.data_energistics.common.effect.RadixLossMobEffect;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;

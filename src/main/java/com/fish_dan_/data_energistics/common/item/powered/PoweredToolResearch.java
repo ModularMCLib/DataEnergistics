@@ -19,7 +19,6 @@ public final class PoweredToolResearch {
     public static final String DAMAGE = "damage";
     public static final String STORAGE = "data_flow";
     public static final String MINING_SPEED = "mining_speed";
-    public static final String EMITTER = "light_blade";
     public static final String ORBIT = "orbit";
     public static final ResourceLocation CRYSTAL_SWORD = id("data_crystal_sword", "digitization");
     public static final ResourceLocation CRYSTAL_AXE = id("data_crystal_axe", "chain_mining");

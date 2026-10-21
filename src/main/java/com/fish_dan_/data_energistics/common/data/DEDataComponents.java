@@ -161,6 +161,9 @@ public final class DEDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> LIGHT_SABER_COOLDOWN_END = DATA_COMPONENT_TYPES.register(
             "light_saber_cooldown_end", () -> DataComponentType.<Long>builder()
                     .persistent(Codec.LONG).networkSynchronized(ByteBufCodecs.VAR_LONG).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> SANCTIFIER_BLADE = DATA_COMPONENT_TYPES.register(
+            "sanctifier_blade", () -> DataComponentType.<UUID>builder()
+                    .persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC).build());
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> TRIDENT_ATTRACTION = DATA_COMPONENT_TYPES.register(
             "trident_attraction", () -> DataComponentType.<Boolean>builder()
                     .persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());

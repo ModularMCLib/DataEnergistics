@@ -40,9 +40,7 @@ public final class DigitizedToolUpgradeResearch {
         ability(event, PoweredToolResearch.CRYSTAL_SHOVEL, 18, 10, true);
         ability(event, PoweredToolResearch.CRYSTAL_CUTTING_KNIFE, 16, 8, false);
         ability(event, PoweredToolResearch.TRIDENT_FIELD, 24, 16, false);
-        register(event, "data_light_saber", PoweredToolResearch.EMITTER, 24, 16, DEItems.CARD_SABER_ENERGY.get());
         register(event, "data_light_saber", "digitization", 24, 16, DEItems.CARD_SABER_ENERGY.get());
-        register(event, "data_sanctifier", PoweredToolResearch.EMITTER, 32, 20, DEItems.CARD_SABER_ENERGY.get());
         levels(event, "data_light_saber", PoweredToolResearch.ORBIT, 4, 16, 8, DEItems.CARD_SABER_ENERGY.get());
     }
 

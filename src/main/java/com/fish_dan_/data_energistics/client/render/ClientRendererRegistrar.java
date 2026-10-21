@@ -9,7 +9,6 @@ import com.fish_dan_.data_energistics.client.render.blockentity.DataSanctumRende
 import com.fish_dan_.data_energistics.client.render.blockentity.DataSanctumReturnPortalRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.DataNukeRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.DispersingDataRenderer;
-import com.fish_dan_.data_energistics.client.render.entity.LightBladeChargeRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.MatterConvergingBoltRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.OrbitalAnnihilatorRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.ThrownLightSaberRenderer;
@@ -54,7 +53,6 @@ public final class ClientRendererRegistrar {
         event.registerBlockEntityRenderer(DEBlockEntities.DATA_CHARGER_BLOCK_ENTITY.get(), DataChargerRenderer::new);
         event.registerEntityRenderer(DEEntities.DISPERSING_DATA.get(), DispersingDataRenderer::new);
         event.registerEntityRenderer(DEEntities.FALLING_DIGITAL_ANVIL.get(), FallingBlockRenderer::new);
-        event.registerEntityRenderer(DEEntities.LIGHT_BLADE_CHARGE.get(), LightBladeChargeRenderer::new);
         event.registerEntityRenderer(DEEntities.MATTER_CONVERGING_BOLT.get(), MatterConvergingBoltRenderer::new);
         event.registerEntityRenderer(DEEntities.THROWN_LIGHT_SABER.get(), ThrownLightSaberRenderer::new);
         event.registerEntityRenderer(DEEntities.ORBITING_LIGHT_SABER.get(), OrbitingLightSaberRenderer::new);

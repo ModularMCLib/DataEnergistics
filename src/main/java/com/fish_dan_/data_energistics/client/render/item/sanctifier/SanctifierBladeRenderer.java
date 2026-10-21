@@ -34,19 +34,20 @@ public final class SanctifierBladeRenderer extends EntityRenderer<SanctifierBlad
         SanctifierBakedModel model = SanctifierBakedModel.current();
         if (model == null) return;
         Entity caster = entity.level().getEntity(entity.getCasterId());
-        Entity target = entity.level().getEntity(entity.getTargetId());
-        if (caster == null || target == null) return;
         float tick = entity.getPhaseTicks() + partialTick;
         Vec3 origin = entity.getPosition(partialTick);
-        Vec3 casterPosition = caster.getPosition(partialTick);
-        Vec3 targetPosition = target.getPosition(partialTick).add(0, target.getBbHeight() * 0.58, 0);
-        Vec3 direction = targetPosition.subtract(casterPosition.add(0, caster.getEyeHeight(), 0)).normalize();
-        Matrix4f secondary = new Matrix4f().rotationY((float) Math.atan2(direction.x, direction.z))
-                .rotateX((float) (Math.PI / 2 - Math.asin(direction.y))).scale(0.72F);
+        float bladeYaw = Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+        float bladePitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        // Blend the grip anchor into the impact anchor so the throw starts at the left hand and ends tip-first.
+        float tipOffset = 2.12F * Mth.clamp(tick / 8, 0, 1);
+        Matrix4f secondary = new Matrix4f().rotationY((float) Math.toRadians(bladeYaw))
+                .rotateX((float) Math.toRadians(90 + bladePitch)).scale(0.72F).translate(0, -tipOffset, 0);
         model.renderSecondary(this.sword, poses, buffers, light, secondary, entity.getBladeColor(), true);
         Minecraft minecraft = Minecraft.getInstance();
         boolean firstPerson = caster == minecraft.player && minecraft.options.getCameraType().isFirstPerson();
-        if (tick >= 18 && tick < 30 && !firstPerson) {
+        if (caster != null && entity.isExecutionActive() && !firstPerson) {
+            Vec3 casterPosition = caster.getPosition(partialTick);
+            Vec3 direction = origin.subtract(casterPosition).normalize();
             Vec3 anchor = casterPosition.add(0, caster.getEyeHeight() - 0.3, 0).subtract(origin);
             float stroke = Mth.clamp((tick - 18) / 8, 0, 1);
             float rotation = -125 + 250 * stroke;

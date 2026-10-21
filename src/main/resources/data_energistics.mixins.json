@@ -110,7 +110,6 @@
 		"minecraft.world.BlockRedstonePulseMixin",
 		"minecraft.world.ChunkUnloadOwnershipMixin",
 		"minecraft.world.FarmBlockMixin",
-		"minecraft.world.ProjectileUtilMixin",
 		"minecraft.world.SonicBoomMixin",
 		"minecraft.world.VibrationSystemListenerMixin",
 		"neoforge.ServerScoreboardResearchMixin",

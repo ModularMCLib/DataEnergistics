@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.common.item.powered;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
-import com.fish_dan_.data_energistics.common.entity.projectile.LightBladeChargeEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitingLightSaberEntity;
 import com.fish_dan_.data_energistics.common.item.powered.lightsaber.LightSaberOrbitEnergy;
+import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierBladeRecovery;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCombat;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 
@@ -53,7 +53,6 @@ import java.util.Optional;
 
 public class PoweredSwordItem extends AbstractPoweredTieredItem implements ConditionalDataFlowCellItem {
 
-    private static final float LIGHT_BLADE_DAMAGE_RATIO = 5.0F / 6.0F;
     private static final long SWORD_RADIX_LOSS_DATA_FLOW_COST = 20L;
 
     public PoweredSwordItem(Tier tier, Properties properties) {
@@ -98,7 +97,7 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return stack.is(DEItems.DATA_SANCTIFIER.get()) ? UseAnim.SPEAR : UseAnim.NONE;
+        return UseAnim.NONE;
     }
 
     @Override
@@ -116,22 +115,9 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
         if (!hasSufficientEnergy(stack)) return false;
         if (!attacker.level().isClientSide) {
             tryApplyRadixLoss(stack, target, attacker);
-            if (canFireLightBlade(stack)) {
-                fireLightBlade(attacker.level(), attacker, stack);
-                consumeActionEnergy(stack);
-            }
             consumeActionEnergy(stack);
         }
         return true;
-    }
-
-    @Override
-    public boolean onEntitySwing(ItemStack stack, LivingEntity entity, InteractionHand hand) {
-        if (hand != InteractionHand.MAIN_HAND || entity.level().isClientSide || !(entity instanceof Player player) || !canFireLightBlade(stack) || player.getAttackStrengthScale(0.5F) < 1.0F) return false;
-        fireLightBlade(entity.level(), entity, stack);
-        consumeActionEnergy(stack);
-        player.resetAttackStrengthTicker();
-        return false;
     }
 
     @Override
@@ -177,7 +163,10 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
             return InteractionResultHolder.consume(stack);
         }
         if (stack.is(DEItems.DATA_SANCTIFIER.get())) {
-            if (getAECurrentPower(stack) < 12 || player instanceof ServerPlayer serverPlayer && SanctifierCombat.isExecuting(serverPlayer)) {
+            if (getAECurrentPower(stack) < 12) return InteractionResultHolder.fail(stack);
+            boolean available = player instanceof ServerPlayer serverPlayer ? SanctifierBladeRecovery.get(serverPlayer.server).canCharge(serverPlayer, stack) : !stack.has(DEDataComponents.SANCTIFIER_BLADE.get());
+            if (!available) {
+                if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.data_energistics.sanctifier_blade_missing"), true);
                 return InteractionResultHolder.fail(stack);
             }
             player.startUsingItem(hand);
@@ -205,28 +194,12 @@ public class PoweredSwordItem extends AbstractPoweredTieredItem implements Condi
             double power = getAECurrentPower(stack);
             if (LightSaberOrbitEnergy.find(stack) != null) stack.set(AEComponents.STORED_ENERGY, power);
         }
-    }
-
-    private void fireLightBlade(Level level, LivingEntity attacker, ItemStack stack) {
-        int color = stack.is(DEItems.DATA_SANCTIFIER.get()) ? LightSaberColorData.getSanctifierAnimatedColor(level.getGameTime()) : LightSaberColorData.getBladeColor(stack);
-        LightBladeChargeEntity blade = new LightBladeChargeEntity(level, attacker, color, getLightBladeDamage(stack));
-        blade.setWeaponStack(stack);
-        blade.setPos(attacker.getX(), attacker.getEyeY() - 0.15, attacker.getZ());
-        blade.shootFromRotation(attacker, attacker.getXRot(), attacker.getYRot(), 0, 2.8F, 0);
-        level.addFreshEntity(blade);
-    }
-
-    private boolean canFireLightBlade(ItemStack stack) {
-        return (stack.is(DEItems.DATA_LIGHT_SABER.get()) || stack.is(DEItems.DATA_SANCTIFIER.get())) && PoweredToolResearch.has(stack, PoweredToolResearch.EMITTER) && getAECurrentPower(stack) >= getActionEnergyCost(stack) * 2;
+        if (!level.isClientSide && stack.is(DEItems.DATA_SANCTIFIER.get()) && level.getServer() != null) SanctifierBladeRecovery.get(level.getServer()).synchronize(stack);
     }
 
     @Override
     public boolean hasDataFlowCellSupport(ItemStack stack) {
         return stack.is(DEItems.DATA_CRYSTAL_SWORD.get()) && ConditionalDataFlowCellItem.super.hasDataFlowCellSupport(stack);
-    }
-
-    public static float getLightBladeDamage(ItemStack stack) {
-        return (float) (getPanelAttackDamage(stack) * LIGHT_BLADE_DAMAGE_RATIO);
     }
 
     public static double getPanelAttackDamage(ItemStack stack) {

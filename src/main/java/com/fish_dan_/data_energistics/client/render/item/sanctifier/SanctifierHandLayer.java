@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierBakedModel;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.powered.LightSaberColorData;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
@@ -18,8 +19,9 @@ import net.minecraft.world.item.ItemStack;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import org.joml.Matrix4f;
 
-/** Holds the primary and secondary blades in opposite hands and releases the secondary during an execution. */
+/** Keeps the secondary on the physical left hip until charging lifts it into the left hand. */
 public final class SanctifierHandLayer extends PlayerItemInHandLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
     public SanctifierHandLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent,
@@ -35,24 +37,44 @@ public final class SanctifierHandLayer extends PlayerItemInHandLayer<AbstractCli
             super.renderArmWithItem(entity, stack, context, arm, poses, buffers, light);
             return;
         }
-        var execution = SanctifierHandPresentation.execution(entity);
-        if (arm != entity.getMainArm()) {
-            if (execution != null) return;
-            SanctifierBakedModel model = SanctifierBakedModel.current();
-            if (model == null) return;
-            poses.pushPose();
-            this.getParentModel().translateToHand(arm, poses);
-            poses.mulPose(Axis.XP.rotationDegrees(-90));
-            poses.mulPose(Axis.YP.rotationDegrees(180));
-            boolean leftHand = arm == HumanoidArm.LEFT;
-            poses.translate((leftHand ? -1 : 1) / 16.0, 0.125, -0.625);
-            model.renderHeldSecondary(weapon, context, leftHand, poses, buffers, light,
-                    LightSaberColorData.getSanctifierAnimatedColor(entity.level().getGameTime()),
-                    ((PoweredSwordItem) weapon.getItem()).getAECurrentPower(weapon) > 0);
-            poses.popPose();
+        if (arm == HumanoidArm.LEFT) {
+            if (!SanctifierSecondaryPose.isCharging(entity)) super.renderArmWithItem(entity, entity.getOffhandItem(), context, arm, poses, buffers, light);
             return;
         }
-        if (arm == entity.getMainArm() && stack.is(DEItems.DATA_SANCTIFIER.get()) && execution != null && execution.getPhaseTicks() >= 18) return;
-        super.renderArmWithItem(entity, stack, context, arm, poses, buffers, light);
+        var execution = SanctifierHandPresentation.execution(entity);
+        if (execution != null) return;
+        super.renderArmWithItem(entity, weapon, context, arm, poses, buffers, light);
+    }
+
+    @Override
+    public void render(PoseStack poses, MultiBufferSource buffers, int light, AbstractClientPlayer player,
+                       float limbSwing, float limbAmount, float partialTick, float age, float headYaw, float headPitch) {
+        super.render(poses, buffers, light, player, limbSwing, limbAmount, partialTick, age, headYaw, headPitch);
+        ItemStack weapon = player.getMainHandItem();
+        if (!weapon.is(DEItems.DATA_SANCTIFIER.get()) || weapon.has(DEDataComponents.SANCTIFIER_BLADE.get())) return;
+        SanctifierBakedModel model = SanctifierBakedModel.current();
+        if (model == null) return;
+        PoseStack body = new PoseStack();
+        this.getParentModel().body.translateAndRotate(body);
+        Matrix4f mount = SanctifierSecondaryPose.mounted(body.last().pose());
+        Matrix4f transform = mount;
+        if (SanctifierSecondaryPose.isCharging(player)) {
+            PoseStack hand = new PoseStack();
+            this.getParentModel().translateToHand(HumanoidArm.LEFT, hand);
+            hand.mulPose(Axis.XP.rotationDegrees(-90));
+            hand.mulPose(Axis.YP.rotationDegrees(180));
+            hand.translate(-1 / 16.0, 0.125, -0.625);
+            Matrix4f held = new Matrix4f(hand.last().pose()).mul(model.secondaryHandTransform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, true));
+            transform = SanctifierSecondaryPose.pickup(mount, held, SanctifierSecondaryPose.pickupProgress(player, partialTick));
+        }
+        poses.pushPose();
+        if (this.getParentModel().young) {
+            poses.translate(0, 0.75, 0);
+            poses.scale(0.5F, 0.5F, 0.5F);
+        }
+        model.renderSecondary(weapon, poses, buffers, light, transform,
+                LightSaberColorData.getSanctifierAnimatedColor(player.level().getGameTime()),
+                ((PoweredSwordItem) weapon.getItem()).getAECurrentPower(weapon) > 0);
+        poses.popPose();
     }
 }

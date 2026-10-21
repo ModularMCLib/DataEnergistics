@@ -11,11 +11,14 @@ import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -32,7 +35,6 @@ import java.util.Comparator;
 public final class SanctifierCombat {
 
     private static final String CHARGE = "data_energistics:sanctifier_charge";
-    private static final String EXECUTION = "data_energistics:sanctifier_execution";
     private static final String STRIKING = "data_energistics:sanctifier_striking";
     private static final String BUFF_END = "data_energistics:sanctifier_buff_end";
     private static final String STREAK = "data_energistics:sanctifier_streak";
@@ -41,6 +43,11 @@ public final class SanctifierCombat {
     private static final String ORIGINAL_MODE = "data_energistics:sanctifier_original_mode";
 
     public static void chargeTick(ServerPlayer player, ItemStack stack) {
+        if (!SanctifierBladeRecovery.get(player.server).canCharge(player, stack)) {
+            finishCharge(player);
+            player.stopUsingItem();
+            return;
+        }
         CompoundTag data = player.getPersistentData();
         int previous = data.getInt(CHARGE);
         if (previous < 200) {
@@ -78,28 +85,22 @@ public final class SanctifierCombat {
         return ticks >= 200;
     }
 
-    public static boolean isExecuting(ServerPlayer player) {
-        CompoundTag data = player.getPersistentData();
-        return data.hasUUID(EXECUTION) && player.serverLevel().getEntity(data.getUUID(EXECUTION)) instanceof SanctifierBladeEntity;
-    }
-
     public static void release(ServerPlayer player, ItemStack stack, int elapsed) {
-        if (!finishCharge(player) || elapsed < 200 || isExecuting(player)) return;
+        if (!finishCharge(player) || elapsed < 200 || !SanctifierBladeRecovery.get(player.server).canCharge(player, stack)) return;
         Vec3 origin = player.getEyePosition();
         Vec3 facing = player.getLookAngle();
         LivingEntity target = player.level().getEntitiesOfClass(LivingEntity.class,
                 player.getBoundingBox().inflate(8), candidate -> {
                     if (candidate == player || !candidate.isAlive() || candidate.isSpectator()) return false;
+                    if (!(candidate instanceof Player) && !(candidate instanceof Enemy)) return false;
                     if (candidate instanceof Player other && (other.isCreative() || !player.canHarmPlayer(other))) return false;
                     Vec3 offset = candidate.getBoundingBox().getCenter().subtract(origin);
                     return offset.lengthSqr() <= 64 && offset.normalize().dot(facing) >= 0.5 && player.hasLineOfSight(candidate);
                 }).stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
-        if (target == null) return;
-        if (target instanceof ServerPlayer other) {
-            SanctifierBladeEntity blade = new SanctifierBladeEntity(player, other, stack);
-            if (player.level().addFreshEntity(blade)) player.getPersistentData().putUUID(EXECUTION, blade.getUUID());
-        } else {
-            target.hurt(player.damageSources().playerAttack(player), (float) (PoweredSwordItem.getPanelAttackDamage(stack) * 0.5));
+        SanctifierBladeEntity blade = new SanctifierBladeEntity(player, target, stack);
+        if (player.level().addFreshEntity(blade)) {
+            SanctifierBladeRecovery.get(player.server).launch(player, stack, blade.getUUID());
+            player.swing(player.getMainArm() == HumanoidArm.RIGHT ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, true);
         }
     }
 

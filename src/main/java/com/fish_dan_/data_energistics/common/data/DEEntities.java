@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.entity.anvil.FallingDigitalAnvilEntity;
 import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
 import com.fish_dan_.data_energistics.common.entity.explosive.TntConfigurablePrimedEntity;
-import com.fish_dan_.data_energistics.common.entity.projectile.LightBladeChargeEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingBoltEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.entity.projectile.OrbitingLightSaberEntity;
@@ -44,12 +43,6 @@ public final class DEEntities {
             .updateInterval(1)
             .setShouldReceiveVelocityUpdates(false)
             .build("matter_converging_bolt"));
-    public static final DeferredHolder<EntityType<?>, EntityType<LightBladeChargeEntity>> LIGHT_BLADE_CHARGE = ENTITY_TYPES.register("light_blade_charge", () -> EntityType.Builder
-            .<LightBladeChargeEntity>of(LightBladeChargeEntity::new, MobCategory.MISC)
-            .sized(0.5F, 0.5F)
-            .clientTrackingRange(8)
-            .updateInterval(1)
-            .build("light_blade_charge"));
     public static final DeferredHolder<EntityType<?>, EntityType<ThrownLightSaberEntity>> THROWN_LIGHT_SABER = ENTITY_TYPES.register("thrown_light_saber", () -> EntityType.Builder
             .<ThrownLightSaberEntity>of(ThrownLightSaberEntity::new, MobCategory.MISC)
             .sized(0.5F, 0.5F)

@@ -19,7 +19,6 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingSessionView.AppendReceipt;
 import com.fish_dan_.data_energistics.block.storage.CompartmentBlock;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity.CraftingAdmissionToken;
-import com.fish_dan_.data_energistics.bootstrap.common.ServerLifecycleEventHandler;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentBindingHandle;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentHost;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentPart;
@@ -46,6 +45,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.custody.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableSlot;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.event.ServerLifecycleEventHandler;
 import com.fish_dan_.data_energistics.common.multiblock.vertical.VerticalMultiBlockContext;
 import com.fish_dan_.data_energistics.common.multiblock.vertical.VerticalMultiBlockController;
 import com.fish_dan_.data_energistics.common.multiblock.vertical.VerticalMultiBlockPos;

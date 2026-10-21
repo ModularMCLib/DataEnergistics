@@ -1,0 +1,15 @@
+{
+	"neoforge:conditions": [
+		{
+			"type": "neoforge:mod_loaded",
+			"modid": "extendedae"
+		},
+		{
+			"type": "neoforge:mod_loaded",
+			"modid": "appliede"
+		}
+	],
+	"type": "minecraft:block",
+	"pools": [],
+	"random_sequence": "extendedae:blocks/ex_emc_interface"
+}

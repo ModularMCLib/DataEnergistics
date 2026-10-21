@@ -3,7 +3,6 @@ package com.fish_dan_.data_energistics.blockentity.trinity;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingAdmission;
 import com.fish_dan_.data_energistics.block.machine.DataRipperReassemblerBlock;
-import com.fish_dan_.data_energistics.bootstrap.common.ServerLifecycleEventHandler;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentHost;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentHostState;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentPart;
@@ -20,6 +19,7 @@ import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
+import com.fish_dan_.data_energistics.common.event.ServerLifecycleEventHandler;
 import com.fish_dan_.data_energistics.common.multiblock.MultiBlockStatusProvider;
 import com.fish_dan_.data_energistics.common.multiblock.autobuild.MultiBlockAutoBuild;
 import com.fish_dan_.data_energistics.common.multiblock.autobuild.MultiBlockAutoBuild.Context;
@@ -3612,47 +3612,18 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
 
     /**
      * Resolves AE2 part host sides from the exact predicate selected for each expanded pattern coordinate.
+     *
+     * @param world         World view used to evaluate direction suppliers against the current pattern position.
+     * @param origin        Controller origin supplied to MDLib direction callbacks.
+     * @param structureName Stable name supplied to MDLib diagnostics and direction callbacks.
+     * @param front         Actual main-structure front selected for this build.
+     * @param flipped       Actual mirror state selected for this build.
+     * @param predicates    Exact expanded pattern predicate at every buildable world position.
      */
-    private static final class AutoBuildPartResolver implements PartSideResolver {
-
-        /**
-         * World view used to evaluate direction suppliers against the current pattern position.
-         */
-        private final StructureWorldView world;
-        /**
-         * Controller origin supplied to MDLib direction callbacks.
-         */
-        private final BlockPos origin;
-        /**
-         * Stable name supplied to MDLib diagnostics and direction callbacks.
-         */
-        private final String structureName;
-        /**
-         * Actual main-structure front selected for this build.
-         */
-        private final Direction front;
-        /**
-         * Actual mirror state selected for this build.
-         */
-        private final boolean flipped;
-        /**
-         * Exact expanded pattern predicate at every buildable world position.
-         */
-        private final Long2ObjectMap<TraceabilityPredicate> predicates;
-
-        private AutoBuildPartResolver(StructureWorldView world,
-                                      BlockPos origin,
-                                      String structureName,
-                                      Direction front,
-                                      boolean flipped,
-                                      Long2ObjectMap<TraceabilityPredicate> predicates) {
-            this.world = world;
-            this.origin = origin;
-            this.structureName = structureName;
-            this.front = front;
-            this.flipped = flipped;
-            this.predicates = predicates;
-        }
+    private record AutoBuildPartResolver(StructureWorldView world, BlockPos origin, String structureName,
+                                         Direction front, boolean flipped,
+                                         Long2ObjectMap<TraceabilityPredicate> predicates)
+            implements PartSideResolver {
 
         /**
          * Returns the predicate-declared side, or the explicit AE2 center-cable sentinel side.

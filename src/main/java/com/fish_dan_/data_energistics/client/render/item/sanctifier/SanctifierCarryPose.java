@@ -10,9 +10,9 @@ public final class SanctifierCarryPose {
     private SanctifierCarryPose() {}
 
     public static Matrix4f mounted(Matrix4f body) {
-        // Model coordinates: +Y down, +Z toward the player's back, physical right is -X.
+        // Body +Y points down. Keep the blade's +Y diagonal and its +Z cutting edge downward, not into the back.
         return new Matrix4f(body).translate(-0.22F, 0.12F, 0.20F)
-                .rotateZ((float) Math.toRadians(-48)).rotateY((float) Math.PI).rotateX((float) Math.toRadians(7))
+                .rotateZ((float) Math.toRadians(-48)).rotateX((float) Math.toRadians(-7)).rotateY((float) Math.toRadians(-90))
                 .scale(0.72F);
     }
 

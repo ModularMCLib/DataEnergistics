@@ -15,24 +15,20 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 
-import org.jspecify.annotations.Nullable;
-
 /**
- * Magnet attraction delegates to vanilla pickup so other mods retain their pickup veto and ownership rules.
+ * Each server tick attempts nearby vanilla pickups independently of ME access; pickup routing checks the connection.
+ * Vanilla pickup retains other mods' veto, pickup delay and ownership rules.
  */
 final class TerminalMagnetTicker {
 
     private TerminalMagnetTicker() {}
 
-    static void tick(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean magnetUnlocked) {
-        if (player.isShiftKeyDown() || player.isSpectator() || !player.isAlive()) return;
-        if (magnetUnlocked && state.magnet().mode().attract() && (!state.magnet().mode().insert() || connection != null) && player.tickCount % 5 == 0) {
-            for (ItemEntity entity : player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(16), ItemEntity::isAlive)) {
-                if (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID()) || entity.getPersistentData().contains("PreventRemoteMovement"))
-                    continue;
-                AEItemKey key = AEItemKey.of(entity.getItem());
-                if (key != null && state.magnet().pickupAllows(key)) entity.playerTouch(player);
-            }
+    static void tick(ServerPlayer player, TerminalPlayerState state, boolean magnetUnlocked) {
+        if (!magnetUnlocked || !state.magnet().mode().attract() || player.isShiftKeyDown() || player.isSpectator() || !player.isAlive()) return;
+        for (ItemEntity entity : player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(16), ItemEntity::isAlive)) {
+            if (entity.getPersistentData().contains("PreventRemoteMovement")) continue;
+            AEItemKey key = AEItemKey.of(entity.getItem());
+            if (key != null && state.magnet().pickupAllows(key)) entity.playerTouch(player);
         }
     }
 

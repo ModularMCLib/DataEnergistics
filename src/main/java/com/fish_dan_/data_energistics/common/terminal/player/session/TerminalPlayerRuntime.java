@@ -116,7 +116,7 @@ public final class TerminalPlayerRuntime {
         maintenance.tick(player, state.maintenance(), connection);
         if (session != null) TerminalAeNavigation.tick(player, session, connection);
         if (session != null) session.tick(player, this, connection);
-        if (background) TerminalMagnetTicker.tick(player, state, connection, magnetUnlocked);
+        if (background) TerminalMagnetTicker.tick(player, state, magnetUnlocked);
         syncRestock(connection);
         if (session != null && player.tickCount % 5 == 0) session.send(player, this, connection);
     }

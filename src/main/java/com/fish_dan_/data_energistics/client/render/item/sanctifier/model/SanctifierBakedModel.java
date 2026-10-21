@@ -97,6 +97,17 @@ public final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
         poses.popPose();
     }
 
+    /** Uses the same grip and hand transform as the primary blade without centering the grip-based OBJ twice. */
+    public void renderHeldSecondary(ItemStack stack, ItemDisplayContext context, boolean leftHand,
+                                    PoseStack poses, MultiBufferSource buffers, int light, int color, boolean powered) {
+        poses.pushPose();
+        this.originalModel.applyTransform(context, poses, leftHand);
+        // Both blades use the primary grip pivot; the secondary grip is 0.0644 model units farther forward.
+        poses.translate(0, 0, -0.0644);
+        renderSecondary(stack, poses, buffers, light, new Matrix4f(), color, powered);
+        poses.popPose();
+    }
+
     @Override
     public ItemOverrides getOverrides() {
         return this.overrides;

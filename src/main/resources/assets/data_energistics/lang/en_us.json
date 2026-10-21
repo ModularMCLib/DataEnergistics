@@ -2051,7 +2051,7 @@
 	"tooltip.data_energistics.light_saber.skill": "Use: Toggle orbiting sabers; 45s cooldown after ending",
 	"tooltip.data_energistics.order_package.target": "Target: %s",
 	"tooltip.data_energistics.research.upgrade": "Research upgrade: %s",
-	"tooltip.data_energistics.sanctifier.skill": "Hold use for 10s, then release to execute; early release cancels",
+	"tooltip.data_energistics.sanctifier.skill": "Dual-wielded by default; hold use for 10s, then release to execute; early release cancels",
 	"tooltip.data_energistics.tool.research": "Research upgrades at a Modification Station",
 	"tooltip.data_energistics.trinity_data_core.pattern.capacity": "Installed patterns: %s / %s",
 	"tooltip.data_energistics.trinity_data_core.pattern.maintenance_progress": "%s · %s: %s / %s",

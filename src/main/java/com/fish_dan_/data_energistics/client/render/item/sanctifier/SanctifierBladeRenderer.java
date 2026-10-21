@@ -51,7 +51,7 @@ public final class SanctifierBladeRenderer extends EntityRenderer<SanctifierBlad
             float stroke = Mth.clamp((tick - 18) / 8, 0, 1);
             float rotation = -125 + 250 * stroke;
             Matrix4f primary = new Matrix4f().translation((float) anchor.x, (float) anchor.y, (float) anchor.z)
-                    .rotateY((float) Math.atan2(direction.x, direction.z))
+                    .rotateY((float) (Math.atan2(direction.x, direction.z) + Math.PI))
                     .rotateZ((float) Math.toRadians(rotation)).rotateX(0.85F).scale(0.72F);
             model.renderPrimary(this.sword, poses, buffers, light, primary);
         }

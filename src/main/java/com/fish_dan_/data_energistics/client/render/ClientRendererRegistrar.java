@@ -15,7 +15,7 @@ import com.fish_dan_.data_energistics.client.render.entity.OrbitalAnnihilatorRen
 import com.fish_dan_.data_energistics.client.render.entity.ThrownLightSaberRenderer;
 import com.fish_dan_.data_energistics.client.render.item.lightsaber.OrbitingLightSaberRenderer;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierBladeRenderer;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierExecutionHandLayer;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierHandLayer;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
@@ -37,7 +37,7 @@ public final class ClientRendererRegistrar {
         for (var skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
-                renderer.layers.replaceAll(layer -> layer.getClass() == PlayerItemInHandLayer.class ? new SanctifierExecutionHandLayer(renderer, event.getContext().getItemInHandRenderer()) : layer);
+                renderer.layers.replaceAll(layer -> layer.getClass() == PlayerItemInHandLayer.class ? new SanctifierHandLayer(renderer, event.getContext().getItemInHandRenderer()) : layer);
             }
         }
     }

@@ -2051,7 +2051,7 @@
 	"tooltip.data_energistics.light_saber.skill": "右键：召唤/关闭环绕光剑；结束后冷却45秒",
 	"tooltip.data_energistics.order_package.target": "目标：%s",
 	"tooltip.data_energistics.research.upgrade": "研究升级：%s",
-	"tooltip.data_energistics.sanctifier.skill": "按住右键蓄力10秒，松开处决；不足10秒取消",
+	"tooltip.data_energistics.sanctifier.skill": "默认双持；按住右键蓄力10秒，松开处决；不足10秒取消",
 	"tooltip.data_energistics.tool.research": "在改造站研究升级",
 	"tooltip.data_energistics.trinity_data_core.pattern.capacity": "已安装样板：%s / %s",
 	"tooltip.data_energistics.trinity_data_core.pattern.maintenance_progress": "%s · %s：%s / %s",

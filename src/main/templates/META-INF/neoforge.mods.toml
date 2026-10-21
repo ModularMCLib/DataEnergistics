@@ -11,6 +11,7 @@ authors = "fish_dan, QiuYe, TedXenon"
 logoFile = "logo.png"
 description = "${mod_description}"
 displayURL = "${mod_url}"
+enumExtensions = "META-INF/enum_extensions.json"
 
 [[mixins]]
 config = "${mod_id}.mixins.json"

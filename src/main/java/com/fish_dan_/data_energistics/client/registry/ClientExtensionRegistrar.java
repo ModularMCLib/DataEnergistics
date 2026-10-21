@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.registry;
 
+import com.fish_dan_.data_energistics.client.registry.item.CrossbowClientExtensions;
+import com.fish_dan_.data_energistics.client.registry.item.SanctifierClientExtensions;
 import com.fish_dan_.data_energistics.client.render.item.MeVacuumItemRenderer;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
 import com.fish_dan_.data_energistics.client.render.item.trident.DataTridentItemRenderer;
@@ -18,6 +20,8 @@ public final class ClientExtensionRegistrar {
 
     public static void register(RegisterClientExtensionsEvent event) {
         DEFluidClientExtensions.register(event);
+        event.registerItem(new SanctifierClientExtensions(), DEItems.DATA_SANCTIFIER.get());
+        event.registerItem(new CrossbowClientExtensions(), DEItems.MATTER_CONVERGING_CROSSBOW.get());
         event.registerItem(new IClientItemExtensions() {
 
             private BlockEntityWithoutLevelRenderer renderer;

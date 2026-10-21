@@ -162,7 +162,6 @@
 		"minecraft.client.menu.PlayerTerminalTransferMixin",
 		"minecraft.client.render.crossbow.ChromaticGlowMixin",
 		"minecraft.client.render.crossbow.CrossbowFirstPersonAnimationMixin",
-		"minecraft.client.render.crossbow.CrossbowHumanoidHoldMixin",
 		"minecraft.client.render.crossbow.CrossbowThirdPersonAnimationMixin",
 		"minecraft.client.render.terminal.TerminalHotbarCountMixin",
 		"minecraft.client.render.tooltip.PlayerTerminalTooltipMixin",

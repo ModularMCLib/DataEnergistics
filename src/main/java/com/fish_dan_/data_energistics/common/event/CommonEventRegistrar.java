@@ -8,6 +8,7 @@ import com.fish_dan_.data_energistics.common.effect.RadixLossControlLogic;
 import com.fish_dan_.data_energistics.common.effect.WeaponBurn;
 import com.fish_dan_.data_energistics.common.item.powered.DataCrystalSwordAiStripLogic;
 import com.fish_dan_.data_energistics.common.item.powered.PersistentFarmlandLogic;
+import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarrySync;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackTicker;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackVisualTicker;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlHudTicker;
@@ -53,6 +54,7 @@ public final class CommonEventRegistrar {
         NeoForge.EVENT_BUS.register(new WeaponBurn());
         NeoForge.EVENT_BUS.register(new ChromaticGlow());
         NeoForge.EVENT_BUS.register(new PersistentFarmlandLogic());
+        NeoForge.EVENT_BUS.register(new SanctifierCarrySync());
         NeoForge.EVENT_BUS.register(new RecipeReloadEventHandler());
         NeoForge.EVENT_BUS.register(new DataMeteoriteCompassTargetInvalidation());
         NeoForge.EVENT_BUS.register(new DataSanctumPortalLogic());

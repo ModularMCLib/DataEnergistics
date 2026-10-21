@@ -26,6 +26,7 @@ import com.fish_dan_.data_energistics.common.item.powered.PoweredShovelItem;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredSwordItem;
 import com.fish_dan_.data_energistics.common.item.resonance.TuningForkBlockItem;
 import com.fish_dan_.data_energistics.common.item.terminal.UniversalTerminalPartItem;
+import com.fish_dan_.data_energistics.common.item.trident.DataTridentItem;
 import com.fish_dan_.data_energistics.common.item.upgrade.AdaptivePatternProviderUpgradeItem;
 import com.fish_dan_.data_energistics.common.item.upgrade.DataSanctumInterfaceUpgradeItem;
 import com.fish_dan_.data_energistics.common.item.vacuum.MeVacuumItem;
@@ -267,6 +268,8 @@ public final class DEItems {
             () -> new PoweredSwordItem(DATA_CRYSTAL_SWORD_TIER,
                     handheldProperties(0, PoweredSwordItem.createAttributes(DATA_CRYSTAL_SWORD_TIER, 32.0F, -2.0F))
                             .fireResistant()));
+    public static final DeferredItem<DataTridentItem> DATA_TRIDENT = ITEMS.register(
+            "data_trident", () -> new DataTridentItem(new Item.Properties()));
     public static final DeferredItem<Item> CARD_SABER_ENERGY = ITEMS.register(
             "card_saber_energy",
             () -> Upgrades.createUpgradeCardItem(new Item.Properties()));

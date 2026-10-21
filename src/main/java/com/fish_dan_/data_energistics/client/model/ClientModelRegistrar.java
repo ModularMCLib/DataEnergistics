@@ -6,6 +6,7 @@ import com.fish_dan_.data_energistics.client.render.item.DataMeteoriteCompassBak
 import com.fish_dan_.data_energistics.client.render.item.MeVacuumBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
+import com.fish_dan_.data_energistics.client.render.item.trident.DataTridentModel;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelPart;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.common.data.DEStorageCells;
@@ -25,6 +26,7 @@ public final class ClientModelRegistrar {
     private ClientModelRegistrar() {}
 
     public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
+        event.register(DataTridentModel.GEOMETRY);
         StorageCellModels.models().values()
                 .forEach(model -> event.register(ModelResourceLocation.standalone(model)));
         event.register(ResearchStationRenderer.HEAD_OFF);

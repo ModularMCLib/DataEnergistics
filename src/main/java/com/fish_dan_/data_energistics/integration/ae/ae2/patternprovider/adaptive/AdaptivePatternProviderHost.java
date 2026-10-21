@@ -1,0 +1,58 @@
+package com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.adaptive;
+
+import appeng.api.implementations.blockentities.PatternContainerGroup;
+import appeng.api.upgrades.IUpgradeableObject;
+import appeng.helpers.patternprovider.PatternProviderLogicHost;
+import appeng.util.inv.AppEngInternalInventory;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
+import org.jspecify.annotations.Nullable;
+
+public interface AdaptivePatternProviderHost extends PatternProviderLogicHost, IUpgradeableObject {
+
+    /**
+     * Returns the installed provider stack used to resolve its registration.
+     */
+    ItemStack getProviderStack();
+
+    AppEngInternalInventory getProviderInventory();
+
+    int getProviderSlotLimit();
+
+    ItemStack extractProviderOverflow();
+
+    int getPatternSlotCountForMenu();
+
+    Component getProviderDisplayName();
+
+    Component getGuiDisplayName();
+
+    Component getTerminalDisplayName();
+
+    boolean isMeteoriteProviderSelected();
+
+    boolean isAdvancedAeProviderSelected();
+
+    boolean isResonatingProviderSelected();
+
+    boolean isAppliedCreateMechanicalProviderSelected();
+
+    boolean supportsFilteredImportToggle();
+
+    boolean isAdvancedAeFilteredImportEnabled();
+
+    void setAdvancedAeFilteredImportEnabled(boolean enabled);
+
+    boolean isResonatingPullEnabled();
+
+    void setResonatingPullEnabled(boolean enabled);
+
+    void markForClientUpdate();
+
+    ItemStack getProviderMainMenuIcon();
+
+    @Nullable
+    PatternContainerGroup getPrimaryAttachedMachineGroup();
+}

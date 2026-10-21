@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
-import com.fish_dan_.data_energistics.item.powered.sanctifier.SanctifierCarryState;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;

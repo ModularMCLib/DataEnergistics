@@ -922,6 +922,6 @@ provider 类不得实现或引用这些类型。这样 DataEnergistics 缺失时
 - `src/main/java/com/fish_dan_/data_energistics/common/crafting/trinity/dispatch/provider/CountedCraftingProvider.java`
 - `src/main/java/com/fish_dan_/data_energistics/api/crafting/dispatch/CountedCraftingAdmission.java`
 - `src/main/java/com/fish_dan_/data_energistics/api/registry/provider/PatternProviderRegistry.java`
-- `src/main/java/com/fish_dan_/data_energistics/ae2/PatternProviderBatching.java`
+- `src/main/java/com/fish_dan_/data_energistics/integration/ae/ae2/patternprovider/PatternProviderBatching.java`
 - `src/main/java/com/fish_dan_/data_energistics/mixin/core/PatternProviderLogicMixin.java`
 - `docs/crafting-dispatch/trinity-cpu-planning-and-cycle-architecture.md`

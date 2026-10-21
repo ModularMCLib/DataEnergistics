@@ -1,0 +1,13 @@
+package com.fish_dan_.data_energistics.common.gui.trinity.pattern.aggregate;
+
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
+
+/** Sends one ordered batch of aggregate pattern slots selected by a Shift-drag gesture. */
+@ApiStatus.Internal
+@FunctionalInterface
+public interface TrinityPatternQuickMoveSender {
+
+    /** Submits the stable layout slots captured by one complete client gesture. */
+    boolean send(long generation, long layoutRevision, IntList globalSlots);
+}

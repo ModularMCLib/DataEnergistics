@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.screen.base.CompartmentScreen;
-import com.fish_dan_.data_energistics.menu.storage.MePatternBufferMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.MePatternBufferMenu;
 
 import appeng.client.gui.style.ScreenStyle;
 

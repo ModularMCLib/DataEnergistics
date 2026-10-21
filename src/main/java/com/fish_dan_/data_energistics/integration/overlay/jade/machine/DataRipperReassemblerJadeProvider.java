@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.overlay.jade.machine;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.machine.DataRipperReassemblerBlock;
-import com.fish_dan_.data_energistics.blockentity.machine.DataRipperReassemblerBlockEntity;
+import com.fish_dan_.data_energistics.common.block.machine.DataRipperReassemblerBlock;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataRipperReassemblerBlockEntity;
 
 import appeng.core.localization.InGameTooltip;
 import appeng.util.Platform;

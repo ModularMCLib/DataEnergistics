@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.crafting.pattern;
 
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.ids.AEComponents;
 import appeng.parts.encoding.EncodingMode;

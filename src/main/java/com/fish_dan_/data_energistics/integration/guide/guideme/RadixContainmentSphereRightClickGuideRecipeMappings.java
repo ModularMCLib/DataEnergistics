@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme;
 
-import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
-import com.fish_dan_.data_energistics.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
-import com.fish_dan_.data_energistics.registry.DERecipes;
+import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;

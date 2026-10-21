@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.overlay.jade.sanctum;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.sanctum.DataSanctumBlock;
-import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
+import com.fish_dan_.data_energistics.common.block.sanctum.DataSanctumBlock;
+import com.fish_dan_.data_energistics.common.blockentity.sanctum.DataSanctumBlockEntity;
 
 import appeng.core.localization.InGameTooltip;
 import appeng.util.Platform;

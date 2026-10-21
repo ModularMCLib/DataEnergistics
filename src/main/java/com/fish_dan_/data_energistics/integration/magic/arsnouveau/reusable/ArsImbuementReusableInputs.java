@@ -5,7 +5,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputContext
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRule;
 import com.fish_dan_.data_energistics.api.crafting.reusable.ReusableInputRuleAdapter;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedIngredientAssignment;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;

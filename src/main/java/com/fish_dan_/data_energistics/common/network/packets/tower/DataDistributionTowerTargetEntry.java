@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.common.network.packets.tower;
 
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.BoundTargetSummary;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetKind;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferInfo;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferMode;
-import com.fish_dan_.data_energistics.blockentity.tower.network.binding.TowerRuntimeKey;
-import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerDeviceKey;
-import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerVirtualDeviceState;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.BoundTargetSummary;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.TargetKind;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferInfo;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferMode;
+import com.fish_dan_.data_energistics.common.blockentity.tower.network.binding.TowerRuntimeKey;
+import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerDeviceKey;
+import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerVirtualDeviceState;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.client;
 
+import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.assembly.TrinityCraftConfirmCycleAssembler;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol.TrinityCraftConfirmCyclePayload;
-import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;

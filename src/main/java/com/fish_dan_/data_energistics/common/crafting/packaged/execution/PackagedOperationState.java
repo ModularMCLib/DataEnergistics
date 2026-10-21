@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.common.crafting.packaged.execution;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineAdapter;
 import com.fish_dan_.data_energistics.api.crafting.packaged.PackagedMachineOperation;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryJournal;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryJournal;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

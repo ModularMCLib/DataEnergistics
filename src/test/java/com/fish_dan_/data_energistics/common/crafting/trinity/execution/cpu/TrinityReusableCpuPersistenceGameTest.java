@@ -3,13 +3,13 @@ package com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingTarget;
 import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCraftingRequest.Target;
-import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.capacity.TrinityCpuStorageCapacity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuPartitionProfile;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.ReusableCpuSessionLedger;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.ReusableCpuSessionLedgerNbtCodec;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.stacks.AEItemKey;

@@ -1,13 +1,13 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
-import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityDataCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreCraftingRuntime;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.route.TrinityCraftingExecutionRoute;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityCraftingStatusSelection;
-import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityCraftingStatusSelection;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenu;
 
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;

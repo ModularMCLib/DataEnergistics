@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.sanctifier;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.item.powered.sanctifier.SanctifierCarryState;
+import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;

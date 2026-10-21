@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.network;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorBlockEntity;
 
 import appeng.api.networking.IGridNode;
 import appeng.menu.me.networktool.NetworkStatus;

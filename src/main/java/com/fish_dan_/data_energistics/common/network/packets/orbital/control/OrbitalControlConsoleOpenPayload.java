@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.orbital.control;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.orbital.OrbitalControlConsoleBlock;
+import com.fish_dan_.data_energistics.common.block.orbital.OrbitalControlConsoleBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

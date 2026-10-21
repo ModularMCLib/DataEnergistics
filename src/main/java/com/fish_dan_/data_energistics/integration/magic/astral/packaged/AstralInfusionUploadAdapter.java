@@ -7,7 +7,7 @@ import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadW
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationInspectionContext;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationPreparation;
 import com.fish_dan_.data_energistics.api.registry.machine.upload.PatternUploadWorkstationVariant;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 

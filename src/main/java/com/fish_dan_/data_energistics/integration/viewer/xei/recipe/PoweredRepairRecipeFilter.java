@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.recipe;
 
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

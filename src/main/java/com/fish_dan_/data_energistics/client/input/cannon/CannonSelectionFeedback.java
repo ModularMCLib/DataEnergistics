@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.input.cannon;
 
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.storage.MountedAmmoCells;
 
 import appeng.api.stacks.AEKey;
 

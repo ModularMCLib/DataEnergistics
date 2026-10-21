@@ -4,8 +4,8 @@ import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
 import com.fish_dan_.data_energistics.api.registry.adaptive.AdaptivePatternProviderCapabilities;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.AdaptivePatternProviderRegistrationFactory;
 import com.fish_dan_.data_energistics.integration.ae.appliedcreate.patternprovider.AppliedCreateAdaptiveRoute;
-import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
 
 /** Registers Applied Create mechanical pattern provider variants. */
 @DataEnergisticsEntrypoint(requiredMods = "appliedcreate")

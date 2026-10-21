@@ -11,7 +11,7 @@
 ### 1. 多入口装配
 
 - common 入口：`com.fish_dan_.data_energistics.Data_Energistics`
-- client 入口：`com.fish_dan_.data_energistics.bootstrap.client.DataEnergisticsClient`
+- client 入口：`com.fish_dan_.data_energistics.client.DataEnergisticsClient`
 - client 事件注册改为手动 `modEventBus.register(ClientModEvents.class)`，避免 dedicated server 自动扫描客户端订阅类。
 
 ### 2. Pattern Encoding 界面链路

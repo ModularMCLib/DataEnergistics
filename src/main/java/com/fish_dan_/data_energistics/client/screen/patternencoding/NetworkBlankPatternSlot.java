@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.patternencoding;
 
-import com.fish_dan_.data_energistics.menu.patternencoding.BlankPatternProxyMenu;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.BlankPatternProxyMenu;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.client.gui.Icon;

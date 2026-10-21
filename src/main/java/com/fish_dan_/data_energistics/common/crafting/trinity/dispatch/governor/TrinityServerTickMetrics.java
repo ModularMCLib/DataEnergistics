@@ -11,12 +11,12 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
- * Captures the last complete logical-server tick from Minecraft's monotonic tick ring.
+ * Captures complete Minecraft server ticks, including all Post handlers and Trinity dispatch.
  *
  * <p>
- * Minecraft records the current complete sample immediately before {@link ServerTickEvent.Post}. The LOWEST Post
- * handler captures that sample, runs the central Grid rotation, and then completes the shared server budget. The
- * sample is diagnostic input only and is never a correctness deadline.
+ * The Minecraft tick method opens and completes this clock at its actual method boundaries. The LOWEST Post handler
+ * runs the central Grid rotation within that interval. Grid diagnostics use the previous completed sample because
+ * the current tick is still running while its participants finish.
  * </p>
  */
 public final class TrinityServerTickMetrics {
@@ -30,28 +30,33 @@ public final class TrinityServerTickMetrics {
     private static final TrinityServerDispatchScheduler SERVER_DISPATCH_SCHEDULER = TrinityServerDispatchScheduler.create();
     private static volatile MinecraftServer sampledServer;
     private static volatile long lastCompletedNanos;
+    private static long tickStartedAtNanos;
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onServerTickPre(ServerTickEvent.Pre event) {
-        sampledServer = event.getServer();
+    /** Opens the shared window at MinecraftServer.tickServer HEAD, on the server thread. */
+    public static void beginServerTick(MinecraftServer server) {
+        sampledServer = server;
+        tickStartedAtNanos = System.nanoTime();
         SERVER_DISPATCH_BUDGET.beginTick();
         SERVER_DISPATCH_SCHEDULER.beginTick();
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onServerTickPost(ServerTickEvent.Post event) {
-        MinecraftServer server = event.getServer();
-        long[] tickTimes = server.getTickTimesNanos();
-        if (tickTimes.length == 0) {
-            throw new IllegalStateException("Minecraft server tick ring is empty");
-        }
-        sampledServer = server;
-        lastCompletedNanos = tickTimes[Math.floorMod(server.getTickCount(), tickTimes.length)];
+        SERVER_DISPATCH_BUDGET.beginDispatchPass();
         try {
             SERVER_DISPATCH_SCHEDULER.dispatchTick();
         } finally {
-            SERVER_DISPATCH_BUDGET.completeTick(lastCompletedNanos);
+            SERVER_DISPATCH_BUDGET.completeDispatchPass();
         }
+    }
+
+    /** Completes the sample at MinecraftServer.tickServer RETURN, after every Post handler. */
+    public static void completeServerTick(MinecraftServer server) {
+        if (sampledServer != server) {
+            throw new IllegalStateException("Completed Trinity tick belongs to an inactive logical server");
+        }
+        lastCompletedNanos = System.nanoTime() - tickStartedAtNanos;
+        SERVER_DISPATCH_BUDGET.completeTick(lastCompletedNanos);
     }
 
     @SubscribeEvent
@@ -59,6 +64,7 @@ public final class TrinityServerTickMetrics {
         if (sampledServer == event.getServer()) {
             sampledServer = null;
             lastCompletedNanos = 0L;
+            tickStartedAtNanos = 0L;
             SERVER_DISPATCH_SCHEDULER.reset();
             SERVER_DISPATCH_BUDGET.reset();
         }

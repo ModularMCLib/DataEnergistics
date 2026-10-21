@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
-import com.fish_dan_.data_energistics.menu.machine.DataTeleportAnchorMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.DataTeleportAnchorMenu;
 
 import appeng.client.Point;
 import appeng.client.gui.AEBaseScreen;

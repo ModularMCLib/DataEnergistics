@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.library.ldlib2.ae2;
 
 import com.fish_dan_.data_energistics.client.screen.Ldlib2AeProtocolScreen;
-import com.fish_dan_.data_energistics.gui.ldlib2.ae.bridge.AeItemSlot;
+import com.fish_dan_.data_energistics.integration.ae.ae2.gui.bridge.AeItemSlot;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;

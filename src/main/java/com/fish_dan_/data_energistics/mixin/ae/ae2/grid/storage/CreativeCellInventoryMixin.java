@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.storage;
 
-import com.fish_dan_.data_energistics.ae2.grid.UnlimitedExtractableStorage;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.UnlimitedExtractableStorage;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

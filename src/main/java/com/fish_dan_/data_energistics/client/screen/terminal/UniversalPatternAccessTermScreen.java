@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.terminal;
 
 import com.fish_dan_.data_energistics.client.screen.Ae2NativeSlotHighlight;
-import com.fish_dan_.data_energistics.menu.universal.UniversalPatternAccessTermMenu;
+import com.fish_dan_.data_energistics.common.menu.universal.UniversalPatternAccessTermMenu;
 
 import appeng.client.gui.me.patternaccess.PatternAccessTermScreen;
 import appeng.client.gui.style.ScreenStyle;

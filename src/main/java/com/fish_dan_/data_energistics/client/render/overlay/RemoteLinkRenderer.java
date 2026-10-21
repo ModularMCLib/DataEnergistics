@@ -5,9 +5,9 @@ import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
 import com.fish_dan_.data_energistics.client.render.overlay.connector.ConnectorLinkGeometry;
-import com.fish_dan_.data_energistics.item.connector.ConnectorHostType;
-import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
-import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
+import com.fish_dan_.data_energistics.common.item.connector.ConnectorHostType;
+import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorData;
+import com.fish_dan_.data_energistics.common.item.connector.RemoteLinkConnectorItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.menu.base;
 
-import com.fish_dan_.data_energistics.item.powered.PoweredEnergyItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AnvilMenu;

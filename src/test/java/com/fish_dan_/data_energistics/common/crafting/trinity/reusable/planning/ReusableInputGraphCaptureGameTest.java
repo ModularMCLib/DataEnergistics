@@ -19,8 +19,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityCraftingGraphSnapshot;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityPatternIdentity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityPlanningLimits;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.ids.AEComponents;

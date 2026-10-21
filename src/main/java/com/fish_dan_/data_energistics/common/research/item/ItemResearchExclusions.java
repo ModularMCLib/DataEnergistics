@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.research.item;
 
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

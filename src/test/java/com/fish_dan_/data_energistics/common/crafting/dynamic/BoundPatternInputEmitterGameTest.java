@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.dynamic;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;

@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme.client;
 
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerIngredient;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
 import com.fish_dan_.data_energistics.common.dataripper.DataReassemblerGuideLayout;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerIngredient;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 
 import appeng.core.AppEng;
 

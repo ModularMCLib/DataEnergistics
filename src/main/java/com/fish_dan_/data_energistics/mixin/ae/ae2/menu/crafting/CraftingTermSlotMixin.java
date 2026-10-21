@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.menu.crafting;
 
-import com.fish_dan_.data_energistics.item.powered.PoweredCraftingEnergyHelper;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredCraftingEnergyHelper;
 
 import appeng.menu.slot.CraftingTermSlot;
 

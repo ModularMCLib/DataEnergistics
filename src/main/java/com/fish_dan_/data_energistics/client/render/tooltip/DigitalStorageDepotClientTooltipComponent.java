@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.tooltip;
 
-import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotTooltipComponent;
+import com.fish_dan_.data_energistics.common.item.depot.DigitalStorageDepotTooltipComponent;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AmountFormat;

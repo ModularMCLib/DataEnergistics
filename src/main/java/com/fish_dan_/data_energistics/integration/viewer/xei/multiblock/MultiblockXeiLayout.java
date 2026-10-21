@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.multiblock;
 
-import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.autobuild.AutoBuildComposition;
+import com.fish_dan_.data_energistics.common.gui.multiblock.autobuild.AutoBuildComposition;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;

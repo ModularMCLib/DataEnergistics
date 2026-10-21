@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.widget;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataIntegratedChargerBlockEntity.MachineMode;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataIntegratedChargerBlockEntity.MachineMode;
 
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.Blitter;

@@ -62,7 +62,7 @@ public final class TextSearch {
      * @return whether JECh matches the candidate, or {@code false} when JECh is not loaded
      */
     public static boolean matchesJech(String text, String normalizedFilter) {
-        if (!MOD.isJechLoaded() || text.isEmpty() || normalizedFilter.isEmpty()) {
+        if (!MOD.JECHARACTERS.isLoaded() || text.isEmpty() || normalizedFilter.isEmpty()) {
             return false;
         }
         return JechMatcher.contains(text, normalizedFilter);

@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity.crafting.protocol;
 
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingExactPlanAmounts;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingExactShortage;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.diagnostic.TrinityCraftingUnresolvedDemand;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleHeader;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleMaterialContribution;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingExactPlanAmounts;
 
 import appeng.api.stacks.AEKey;
 

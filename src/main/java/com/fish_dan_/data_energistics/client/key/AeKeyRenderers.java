@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.key;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.DataKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResourceKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResourceKeyType;
-import com.fish_dan_.data_energistics.ae2.key.DigitalizationKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalizationKeyType;
-import com.fish_dan_.data_energistics.ae2.key.ManifestBinaryKeyType;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalBiologicalResourceKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalBiologicalResourceKeyType;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalizationKeyType;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.ManifestBinaryKeyType;
 
 import appeng.api.client.AEKeyRendering;
 

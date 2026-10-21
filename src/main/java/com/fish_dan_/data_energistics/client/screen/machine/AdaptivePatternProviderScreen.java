@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatte
 import com.fish_dan_.data_energistics.api.registry.adaptive.client.AdaptivePatternProviderToolbarContext;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternProviderToolbarFactories;
-import com.fish_dan_.data_energistics.menu.patternprovider.AdaptivePatternProviderMenu;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.AdaptivePatternProviderMenu;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.LockCraftingMode;

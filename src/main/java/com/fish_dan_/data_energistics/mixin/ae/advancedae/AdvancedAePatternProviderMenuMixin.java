@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.ae.advancedae;
 
-import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderHostAccessor;
-import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderMenuAccessor;
-import com.fish_dan_.data_energistics.ae2.patternprovider.RedstoneTuningMode;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderHostAccessor;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
+import com.fish_dan_.data_energistics.integration.ae.ae2.patternprovider.RedstoneTuningMode;
 
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;

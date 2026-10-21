@@ -2,14 +2,14 @@ package com.fish_dan_.data_energistics.client.preferences;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceMenu;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceSession;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreviewMenu;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingSourceAware;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.source.PatternEncodingSourceHelper;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.PatternProviderClickStatistic;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternEncodingPreferencesSyncPayload;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
-import com.fish_dan_.data_energistics.menu.patternencoding.source.PatternEncodingSourceHelper;
-import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderClickStatistic;
 
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.parts.encoding.EncodingMode;

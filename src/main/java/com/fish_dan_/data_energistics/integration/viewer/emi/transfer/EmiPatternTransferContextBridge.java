@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.transfer;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataChargePressEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.emi.recipe.DataRipperReassemblerEmiRecipe;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternEncodingViewerContext;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderViewerWorkstations;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
 
 import appeng.menu.me.items.PatternEncodingTermMenu;
 

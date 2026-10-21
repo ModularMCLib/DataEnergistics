@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.api.production;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorBlockEntity;
 
 import appeng.api.stacks.AEKey;
 

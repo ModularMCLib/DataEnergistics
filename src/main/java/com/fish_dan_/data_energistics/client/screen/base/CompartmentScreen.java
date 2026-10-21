@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.base;
 
 import com.fish_dan_.data_energistics.client.screen.Ldlib2AeProtocolScreen;
-import com.fish_dan_.data_energistics.menu.storage.CompartmentMenu;
+import com.fish_dan_.data_energistics.common.menu.storage.CompartmentMenu;
 
 import appeng.client.gui.style.ScreenStyle;
 

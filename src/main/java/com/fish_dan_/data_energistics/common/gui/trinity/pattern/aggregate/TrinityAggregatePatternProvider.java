@@ -1,0 +1,135 @@
+package com.fish_dan_.data_energistics.common.gui.trinity.pattern.aggregate;
+
+import com.fish_dan_.data_energistics.api.gui.host.protocol.HostUiKey;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostSubUi;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostSubUiContext;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostSubUiProvider;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostSubUiRoot;
+import com.fish_dan_.data_energistics.common.gui.trinity.core.TrinityDataCoreHostUiKeys;
+import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiNbtLayouts;
+import com.fish_dan_.data_energistics.common.trinity.host.TrinityPatternCatalogView;
+import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternMaintenanceSnapshot;
+
+import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;
+import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
+
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
+
+/**
+ * Hosts the Data Core's aggregate installed-pattern catalog window.
+ */
+public final class TrinityAggregatePatternProvider implements HostSubUiProvider {
+
+    private final IDataProvider<TrinityPatternCatalogView> catalogView;
+    private final IDataProvider<TrinityPatternMaintenanceSnapshot> maintenance;
+    private final IntConsumer pageRequest;
+    private final Level level;
+    private final TrinityPatternSlotActionSender slotActionSender;
+    private final TrinityPatternQuickMoveSender quickMoveSender;
+    private final LongConsumer migratePatterns;
+    private final Runnable openPriority;
+    private final Runnable refundPatterns;
+    private final Runnable refundRetained;
+
+    public TrinityAggregatePatternProvider(IDataProvider<TrinityPatternCatalogView> catalogView,
+                                           IDataProvider<TrinityPatternMaintenanceSnapshot> maintenance,
+                                           IntConsumer pageRequest,
+                                           Level level,
+                                           TrinityPatternSlotActionSender slotActionSender,
+                                           TrinityPatternQuickMoveSender quickMoveSender,
+                                           LongConsumer migratePatterns,
+                                           Runnable openPriority,
+                                           Runnable refundPatterns,
+                                           Runnable refundRetained) {
+        this.catalogView = catalogView;
+        this.maintenance = maintenance;
+        this.pageRequest = pageRequest;
+        this.level = level;
+        this.slotActionSender = slotActionSender;
+        this.quickMoveSender = quickMoveSender;
+        this.migratePatterns = migratePatterns;
+        this.openPriority = openPriority;
+        this.refundPatterns = refundPatterns;
+        this.refundRetained = refundRetained;
+    }
+
+    @Override
+    public HostUiKey key() {
+        return TrinityDataCoreHostUiKeys.PATTERN;
+    }
+
+    @Override
+    public HostSubUi create(HostSubUiContext context) {
+        if (!key().equals(context.key())) {
+            throw new IllegalArgumentException("Trinity aggregate pattern provider received the wrong host context");
+        }
+        HostSubUiRoot root = context.createRoot();
+        TrinityUiNbtLayouts.init("pattern", root);
+        TrinityAggregatePatternLayout.Controls controls = TrinityAggregatePatternLayout.bind(
+                root,
+                this.level.isClientSide());
+        controls.title().setText(Component.translatable("screen.data_energistics.trinity_data_core.pattern.title"));
+        controls.title().setAllowHitTest(false);
+
+        TrinityAggregatePatternSlots patterns = new TrinityAggregatePatternSlots(
+                TrinityAggregatePatternLayout.WINDOW_ID + "_slots",
+                context.generation(),
+                this.level,
+                this.pageRequest,
+                this.slotActionSender,
+                this.quickMoveSender);
+        patterns.bindDataSource(this.catalogView);
+        controls.content().addChildAt(patterns, 0);
+        patterns.bindControls(controls.scrollbar(), controls.search(), controls.searchMode());
+
+        TrinityPatternMaintenanceBar maintenanceBar = new TrinityPatternMaintenanceBar(
+                TrinityAggregatePatternLayout.MAINTENANCE_ID,
+                active -> setMaintenanceActive(controls, patterns, active));
+        maintenanceBar.bindDataSource(this.maintenance);
+        controls.maintenanceHost().style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+        controls.maintenanceHost().addChild(maintenanceBar);
+
+        bindButton(controls.close(), Component.translatable("text.data_energistics.off"), context::requestClose);
+        bindButton(
+                controls.priority(),
+                Component.translatable("button.data_energistics.trinity_data_core.pattern.priority"),
+                this.openPriority);
+        bindButton(
+                controls.refundPatterns(),
+                Component.translatable("button.data_energistics.trinity_data_core.refund_patterns"),
+                this.refundPatterns);
+        bindButton(
+                controls.refundRetained(),
+                Component.translatable("button.data_energistics.trinity_data_core.refund_retained_items"),
+                this.refundRetained);
+
+        bindButton(
+                controls.migrate(),
+                Component.translatable("button.data_energistics.trinity_data_core.pattern_migrate"),
+                () -> this.migratePatterns.accept(context.generation()));
+        return new HostSubUi(root, root);
+    }
+
+    private static void bindButton(Button button, Component tooltip, Runnable action) {
+        button.setOnClick(event -> action.run());
+        button.text.style(style -> style.tooltips(tooltip));
+        button.style(style -> style.tooltips(tooltip));
+    }
+
+    private static void setMaintenanceActive(TrinityAggregatePatternLayout.Controls controls,
+                                             TrinityAggregatePatternSlots patterns,
+                                             boolean active) {
+        controls.refundPatterns().setActive(!active);
+        controls.refundPatterns().setAllowHitTest(!active);
+        controls.migrate().setActive(!active);
+        controls.migrate().setAllowHitTest(!active);
+        controls.refundRetained().setActive(!active);
+        controls.refundRetained().setAllowHitTest(!active);
+        patterns.setMaintenanceActive(active);
+    }
+}

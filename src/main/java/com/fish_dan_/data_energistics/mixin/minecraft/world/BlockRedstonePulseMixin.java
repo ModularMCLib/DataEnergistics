@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.world;
 
-import com.fish_dan_.data_energistics.accessor.patternprovider.RedstoneTuningAwareHost;
-import com.fish_dan_.data_energistics.block.patternprovider.AdaptivePatternProviderBlock;
+import com.fish_dan_.data_energistics.common.block.patternprovider.AdaptivePatternProviderBlock;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.RedstoneTuningAwareHost;
 
 import appeng.api.parts.IPart;
 import appeng.block.crafting.PatternProviderBlock;

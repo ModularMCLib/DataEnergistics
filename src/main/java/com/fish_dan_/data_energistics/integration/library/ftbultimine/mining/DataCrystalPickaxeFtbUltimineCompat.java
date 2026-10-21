@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.library.ftbultimine.mining;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.item.powered.PoweredPickaxeItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredPickaxeItem;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
 
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockElement;

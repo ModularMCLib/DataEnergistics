@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.ingredient;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
+import com.fish_dan_.data_energistics.common.data.DEAE2Keys;
 import com.fish_dan_.data_energistics.integration.viewer.xei.ingredient.DataResourceKey;
 
 import appeng.api.integrations.emi.EmiStackConverter;

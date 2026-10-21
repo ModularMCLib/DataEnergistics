@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.research;
 
-import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
+import com.fish_dan_.data_energistics.common.menu.research.ResearchStationMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

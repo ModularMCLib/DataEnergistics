@@ -10,9 +10,9 @@ import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRe
 import com.fish_dan_.data_energistics.common.crafting.packaged.reusable.PackagedReusableState;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.AdaptiveLinkAllocationPlanner;
-import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
-import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryStore;
+import com.fish_dan_.data_energistics.common.item.patternprovider.PackagedRecoveryItem;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedRecoveryStore;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.security.IActionSource;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.orbital.endpoint;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalEndpointBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.orbital.OrbitalEndpointBlockEntity;
 import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;

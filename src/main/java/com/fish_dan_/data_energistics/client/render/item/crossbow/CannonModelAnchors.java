@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
-import com.fish_dan_.data_energistics.registry.DEParticles;
+import com.fish_dan_.data_energistics.common.data.DEParticles;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;

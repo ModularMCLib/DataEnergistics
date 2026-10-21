@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.client.crafting;
 
 import com.fish_dan_.data_energistics.client.crafting.NumberEntryWidgetValidationRegistry;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
-import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState;
+import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftAmountMenuState;
 import com.fish_dan_.data_energistics.util.amount.AmountExpressionParser;
 
 import appeng.client.gui.AEBaseScreen;

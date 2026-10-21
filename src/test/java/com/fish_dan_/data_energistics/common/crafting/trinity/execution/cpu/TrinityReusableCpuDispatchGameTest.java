@@ -15,7 +15,7 @@ import com.fish_dan_.data_energistics.api.crafting.reusable.dispatch.ReusableCra
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.route.TrinityCraftingExecutionRoute;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.TrinityBoundPatternInput;
@@ -32,9 +32,9 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.rules.Fix
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Identity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.Operation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.session.ReusableInputSession.ToolOutcome;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternPublicationSignature;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.util.FastUtilCollections;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 

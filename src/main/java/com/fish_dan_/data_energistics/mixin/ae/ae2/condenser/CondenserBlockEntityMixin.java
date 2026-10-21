@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.condenser;
 
-import com.fish_dan_.data_energistics.accessor.condenser.CondenserBlockEntityAccessor;
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipe;
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipeCatalog;
+import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipe;
+import com.fish_dan_.data_energistics.common.recipe.condenser.CondenserOutputRecipeCatalog;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.condenser.CondenserBlockEntityAccessor;
 
 import appeng.blockentity.misc.CondenserBlockEntity;
 import appeng.util.inv.AppEngInternalInventory;

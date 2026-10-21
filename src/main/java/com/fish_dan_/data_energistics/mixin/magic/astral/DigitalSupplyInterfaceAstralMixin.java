@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.magic.astral;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.digitalsupply.DigitalSupplyInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralDigitalSupplyReceiver;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryDigitalSupplyAdapter;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralStarlightNodeLifecycle;

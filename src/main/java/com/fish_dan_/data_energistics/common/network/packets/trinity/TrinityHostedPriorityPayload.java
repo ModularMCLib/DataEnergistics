@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.gui.host.protocol.HostUiKey;
+import com.fish_dan_.data_energistics.api.gui.priority.PriorityControl;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionTicket;
-import com.fish_dan_.data_energistics.gui.ldlib2.host.protocol.HostUiKey;
-import com.fish_dan_.data_energistics.gui.ldlib2.priority.PriorityControl;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

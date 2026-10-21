@@ -1,6 +1,5 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.client.patternencoding;
 
-import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingPreferencesClient;
 import com.fish_dan_.data_energistics.client.screen.Ae2NativeSlotHighlight;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
@@ -9,9 +8,10 @@ import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncod
 import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingUploadClient;
 import com.fish_dan_.data_energistics.client.screen.patternencoding.ProcessingPatternAmountContext;
 import com.fish_dan_.data_energistics.client.widget.PatternRecipeTypeToggleButton;
+import com.fish_dan_.data_energistics.common.data.DEAE2Keys;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingPreferenceMenu;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingSourceAware;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.Point;

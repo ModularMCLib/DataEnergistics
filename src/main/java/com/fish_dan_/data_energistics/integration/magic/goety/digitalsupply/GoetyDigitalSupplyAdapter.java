@@ -1,14 +1,14 @@
 package com.fish_dan_.data_energistics.integration.magic.goety.digitalsupply;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.ExperienceKey;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceAdapter;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyInterfaceTarget;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyResourceDefinition;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferContext;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyTransferDirection;
 import com.fish_dan_.data_energistics.api.registry.digitalsupply.DigitalSupplyUnitConversion;
-import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.common.world.packaged.PackagedMachineClaims;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;

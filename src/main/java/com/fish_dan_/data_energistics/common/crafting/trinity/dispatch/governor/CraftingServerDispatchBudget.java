@@ -1,13 +1,15 @@
 package com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.governor;
 
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.budget.CraftingDispatchLimits;
+
 import java.util.function.LongSupplier;
 
 /**
  * Server-wide current-tick admission boundary shared by every Trinity grid.
  *
  * <p>
- * It limits measured server-thread capacity capture and provider submission together. A provider call that already
- * owns the server thread cannot be interrupted, but no later physical call may begin after this boundary is reached.
+ * Production admission uses a physical-call quota planned from the previous complete Minecraft tick. Current
+ * capture, submission and recovery durations are observations for the next tick, never a current-tick deadline.
  * </p>
  */
 public interface CraftingServerDispatchBudget {
@@ -37,8 +39,9 @@ public interface CraftingServerDispatchBudget {
     /**
      * Checks whether another irreversible provider call may begin.
      *
-     * @param activeDispatchNanos elapsed work in the currently open capture or submission scope
-     * @return whether the shared current-tick allowance remains positive
+     * @param activeDispatchNanos non-negative elapsed work retained for compatibility; production quota admission
+     *                            does not use current elapsed time
+     * @return whether the quota computed before this tick still has a physical call available
      */
     boolean canStart(long activeDispatchNanos);
 
@@ -64,4 +67,32 @@ public interface CraftingServerDispatchBudget {
      * @param elapsedNanos non-negative measured duration
      */
     void record(long elapsedNanos);
+
+    /**
+     * Records completed capacity work separately so its configured time ceiling can become a next-tick physical quota.
+     *
+     * @param elapsedNanos non-negative duration; must be called exactly once per completed capture on the server thread
+     */
+    default void recordCapacityCapture(long elapsedNanos) {
+        record(elapsedNanos);
+    }
+
+    /**
+     * @return whether current work is controlled by the precomputed quota rather than live elapsed time; stable for
+     *         the lifetime of this server-thread boundary
+     */
+    default boolean usesHistoricalQuota() {
+        return false;
+    }
+
+    /**
+     * Converts configured Grid time ceilings to physical-call limits using only completed history, without consuming
+     * quota.
+     *
+     * @param limits non-null configured ceilings captured before the Grid starts dispatching
+     * @return immutable positive physical limits for that Grid window; never exceeds configured call ceilings
+     */
+    default CraftingDispatchLimits planLimits(CraftingDispatchLimits limits) {
+        return limits;
+    }
 }

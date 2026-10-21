@@ -1,6 +1,9 @@
 package com.fish_dan_.data_energistics.common.orbital.attack;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.entity.explosive.DataNukePrimedEntity;
+import com.fish_dan_.data_energistics.common.entity.explosive.DigitalAnnihilationWork;
+import com.fish_dan_.data_energistics.common.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackGeometry.KineticCraterProfile;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamPath;
 import com.fish_dan_.data_energistics.common.orbital.attack.beam.OrbitalBeamSweep;
@@ -12,9 +15,6 @@ import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceA
 import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
 import com.fish_dan_.data_energistics.common.orbital.storage.StellarErasureDeviceSavedData;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.entity.explosive.DataNukePrimedEntity;
-import com.fish_dan_.data_energistics.entity.explosive.DigitalAnnihilationWork;
-import com.fish_dan_.data_energistics.entity.projectile.OrbitalAnnihilatorProjectileEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;

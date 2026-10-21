@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.menu.machine.DataAsynchronousProcessingFactoryMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.DataAsynchronousProcessingFactoryMenu;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.style.ScreenStyle;

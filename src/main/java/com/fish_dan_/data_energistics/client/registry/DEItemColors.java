@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.registry;
 
-import com.fish_dan_.data_energistics.registry.DEFluids;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEFluids;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.items.storage.BasicStorageCell;
 import appeng.items.tools.powered.AbstractPortableCell;

@@ -6,10 +6,10 @@ import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.CraftingQuantityMode;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.progress.TrinityPlanningProgressPhase;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayouts;
-import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftConfirmMenuState;
-import com.fish_dan_.data_energistics.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
-import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanSessionTransfer;
+import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiNbtLayouts;
+import com.fish_dan_.data_energistics.common.menu.crafting.TrinityCraftConfirmMenuState;
+import com.fish_dan_.data_energistics.common.menu.crafting.projection.cycle.model.TrinityCraftingCycleSummary;
+import com.fish_dan_.data_energistics.common.menu.crafting.tree.session.CraftingPlanSessionTransfer;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

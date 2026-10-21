@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.client.screen.machine;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.widget.DataIntegratedChargerModeButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
-import com.fish_dan_.data_energistics.menu.machine.DataIntegratedChargerMenu;
+import com.fish_dan_.data_energistics.common.menu.machine.DataIntegratedChargerMenu;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.Settings;

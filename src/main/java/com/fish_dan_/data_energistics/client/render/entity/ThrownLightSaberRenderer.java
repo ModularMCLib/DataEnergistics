@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.entity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.entity.projectile.ThrownLightSaberEntity;
-import com.fish_dan_.data_energistics.item.powered.PoweredEnergyItem;
+import com.fish_dan_.data_energistics.common.entity.projectile.ThrownLightSaberEntity;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

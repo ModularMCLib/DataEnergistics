@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.network.packets.patternencoding;
 
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;

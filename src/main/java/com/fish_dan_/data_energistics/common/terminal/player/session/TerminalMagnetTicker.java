@@ -60,11 +60,14 @@ final class TerminalMagnetTicker {
         var state = runtime.state();
         if (!state.magnet().mode().insert()) return;
         ItemEntity entity = event.getItemEntity();
-        if (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID()) || entity.getPersistentData().contains("PreventRemoteMovement"))
+        if (event.canPickup() == TriState.DEFAULT && (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID())))
             return;
         ItemStack stack = entity.getItem();
         AEItemKey key = AEItemKey.of(stack);
         if (key == null || !state.magnet().insertAllows(key)) return;
+        // An enabled network route owns this pickup even while the bridge is unavailable.
+        // Falling through here would put the drop in the backpack instead of keeping it for ME.
+        event.setCanPickup(TriState.FALSE);
         TerminalConnection connection = runtime.connection();
         if (connection == null) return;
         int original = stack.getCount();
@@ -80,7 +83,5 @@ final class TerminalMagnetTicker {
         if (stack.isEmpty()) {
             entity.discard();
         }
-        // Network modes leave any amount the network could not accept in the item entity.
-        event.setCanPickup(TriState.FALSE);
     }
 }

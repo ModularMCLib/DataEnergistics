@@ -21,7 +21,6 @@ import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration
 import com.fish_dan_.data_energistics.configuration.rules.DataExtractorRuleTable;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.integration.ae.ae2.key.ExperienceKey;
-import com.fish_dan_.data_energistics.mixin.minecraft.accessor.ExperienceOrbAccessor;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
 import appeng.api.config.Actionable;
@@ -1453,7 +1452,7 @@ public class DataExtractorBlockEntity extends AENetworkedPoweredBlockEntity
                 getDropCollectionAabb(),
                 entity -> entity.isAlive())) {
             int value = orb.getValue();
-            int count = ((ExperienceOrbAccessor) orb).dataEnergistics$getCount();
+            int count = orb.count;
             if (value <= 0 || count <= 0) {
                 continue;
             }

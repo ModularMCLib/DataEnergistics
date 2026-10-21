@@ -38,11 +38,16 @@ public final class TerminalMaintenanceTicker {
     private static final int CHECK_INTERVAL = 10;
     private static final int RETRY_DELAY = 40;
     private final Object2ObjectOpenHashMap<UUID, Pending> calculations = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<UUID, @Nullable Refill> refills = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<UUID, Status> statuses = new Object2ObjectOpenHashMap<>();
     private final Object2IntOpenHashMap<UUID> retryAt = new Object2IntOpenHashMap<>();
 
     public void tick(ServerPlayer player, TerminalMaintenanceState state, @Nullable TerminalConnection connection) {
         ObjectList<TerminalMaintenanceEntry> entries = state.entries();
+        refills.keySet().removeIf(id -> {
+            TerminalMaintenanceEntry entry = find(entries, id);
+            return entry == null || !entry.enabled() || entry.resource() == null || entry.upper() == 0 || entry.lower() > entry.upper();
+        });
         if (connection == null || !player.isAlive()) {
             for (Pending pending : calculations.values()) pending.calculation.cancel(true);
             calculations.clear();
@@ -86,19 +91,20 @@ public final class TerminalMaintenanceTicker {
                 statuses.put(id, Status.LACKING);
                 continue;
             }
+            long stored = connection.storage().getAvailableStacks().get(key);
+            boolean refill = refilling(entry, connection, key, stored);
             if (calculating(key)) {
                 statuses.put(id, Status.IDLE);
                 continue;
             }
 
-            long stored = connection.storage().getAvailableStacks().get(key);
             long inProgress = Math.max(crafting.getRequestedAmount(key), craftingAmount(cpus, key));
             long total = add(stored, inProgress);
             if (inProgress > 0) {
                 statuses.put(id, Status.SYNTHESIZING);
                 continue;
             }
-            if (stored >= entry.upper() || stored > entry.lower()) {
+            if (!refill) {
                 statuses.put(id, Status.IDLE);
                 continue;
             }
@@ -143,6 +149,7 @@ public final class TerminalMaintenanceTicker {
     public void close() {
         for (Pending pending : calculations.values()) pending.calculation.cancel(true);
         calculations.clear();
+        refills.clear();
         statuses.clear();
         retryAt.clear();
     }
@@ -158,7 +165,7 @@ public final class TerminalMaintenanceTicker {
         long stored = connection.storage().getAvailableStacks().get(key);
         long inProgress = Math.max(crafting.getRequestedAmount(key), craftingAmount(crafting.getCpus(), key));
         long capacity = Math.max(0, current.upper() - add(stored, inProgress));
-        if (stored > current.lower() || pending.amount > capacity) {
+        if (!refilling(current, connection, key, stored) || pending.amount > capacity) {
             statuses.put(current.id(), Status.IDLE);
             return;
         }
@@ -198,6 +205,22 @@ public final class TerminalMaintenanceTicker {
             statuses.put(current.id(), Status.LACKING);
             retryAt.put(current.id(), player.tickCount + RETRY_DELAY);
         }
+    }
+
+    private boolean refilling(TerminalMaintenanceEntry entry, TerminalConnection connection, AEKey key, long stored) {
+        UUID id = entry.id();
+        if (stored >= entry.upper()) {
+            refills.remove(id);
+            return false;
+        }
+        Refill refill = refills.get(id);
+        if (refill != null && key.equals(refill.resource) && connection.grid() == refill.grid && connection.frequency() == refill.frequency)
+            return true;
+        refills.remove(id);
+        if (stored > entry.lower()) return false;
+        // Crossing the lower threshold starts a cycle; only actual network stock ends it at the upper threshold.
+        refills.put(id, new Refill(key, connection.grid(), connection.frequency()));
+        return true;
     }
 
     private boolean calculating(AEKey key) {
@@ -245,4 +268,6 @@ public final class TerminalMaintenanceTicker {
 
     private record Pending(TerminalMaintenanceEntry entry, IGrid grid, long frequency, long amount,
                            Future<ICraftingPlan> calculation) {}
+
+    private record Refill(AEKey resource, IGrid grid, long frequency) {}
 }

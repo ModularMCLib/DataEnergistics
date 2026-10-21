@@ -7,6 +7,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.crafting.ICraftingPlan;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 
 import net.minecraft.core.HolderLookup;
@@ -29,6 +30,7 @@ import java.util.concurrent.Future;
 
 /**
  * Polls AE2 plans on the server thread and keeps per-entry requests below their configured ceiling.
+ * Machine sources keep background requests in automation CPU selection and out of player crafting pins.
  */
 @NullMarked
 public final class TerminalMaintenanceTicker {
@@ -114,7 +116,7 @@ public final class TerminalMaintenanceTicker {
             }
             try {
                 Future<ICraftingPlan> calculation = crafting.beginCraftingCalculation(player.level(),
-                        connection::source, key, amount, CalculationStrategy.REPORT_MISSING_ITEMS);
+                        () -> IActionSource.ofMachine(connection.host()), key, amount, CalculationStrategy.REPORT_MISSING_ITEMS);
                 calculations.put(id, new Pending(entry, connection.grid(), connection.frequency(), amount, calculation));
                 statuses.put(id, Status.IDLE);
             } catch (RuntimeException failure) {
@@ -171,7 +173,7 @@ public final class TerminalMaintenanceTicker {
                 retryAt.put(current.id(), player.tickCount + RETRY_DELAY);
                 return;
             }
-            var result = crafting.submitJob(plan, null, null, true, connection.source());
+            var result = crafting.submitJob(plan, null, null, true, IActionSource.ofMachine(connection.host()));
             var error = result.errorCode();
             Status status = switch (error) {
                 case null -> Status.SYNTHESIZING;

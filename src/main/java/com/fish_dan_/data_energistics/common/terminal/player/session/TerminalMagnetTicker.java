@@ -7,50 +7,28 @@ import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNet
 import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.StorageHelper;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 
-import org.jspecify.annotations.Nullable;
-
 /**
- * Magnet attraction delegates to vanilla pickup so other mods retain their pickup veto and ownership rules.
+ * Each server tick attempts nearby vanilla pickups independently of ME access; pickup routing checks the connection.
+ * Vanilla pickup retains other mods' veto, pickup delay and ownership rules.
  */
 final class TerminalMagnetTicker {
 
-    private static final TagKey<Item> NO_RESTOCK = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("ae2wtlib", "no_restock"));
-
     private TerminalMagnetTicker() {}
 
-    static void tick(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean magnetUnlocked) {
-        if (player.isShiftKeyDown() || player.isSpectator() || !player.isAlive()) return;
-        if (magnetUnlocked && state.magnet().mode().attract() && (!state.magnet().mode().insert() || connection != null) && player.tickCount % 5 == 0) {
-            for (ItemEntity entity : player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(16), ItemEntity::isAlive)) {
-                if (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID()) || entity.getPersistentData().contains("PreventRemoteMovement"))
-                    continue;
-                AEItemKey key = AEItemKey.of(entity.getItem());
-                if (key != null && state.magnet().pickupAllows(key)) entity.playerTouch(player);
-            }
-        }
-        if (state.magnet().restock() && connection != null && player.tickCount % 10 == 0) {
-            for (int index = 0; index < player.getInventory().items.size(); index++) {
-                ItemStack stack = player.getInventory().getItem(index);
-                AEItemKey key = AEItemKey.of(stack);
-                if (key == null || stack.is(NO_RESTOCK) || stack.getCount() >= stack.getMaxStackSize())
-                    continue;
-                int wanted = stack.getMaxStackSize() - stack.getCount();
-                long count = StorageHelper.poweredExtraction(connection.grid().getEnergyService(), connection.storage(), key, wanted, connection.source());
-                TerminalNetworkStorage.checkAmount(count, wanted);
-                stack.grow((int) count);
-                if (count > 0) player.getInventory().setChanged();
-            }
+    static void tick(ServerPlayer player, TerminalPlayerState state, boolean magnetUnlocked) {
+        if (!magnetUnlocked || !state.magnet().mode().attract() || player.isShiftKeyDown() || player.isSpectator() || !player.isAlive()) return;
+        for (ItemEntity entity : player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(16), ItemEntity::isAlive)) {
+            if (entity.getPersistentData().contains("PreventRemoteMovement")) continue;
+            AEItemKey key = AEItemKey.of(entity.getItem());
+            if (key != null && state.magnet().pickupAllows(key)) entity.playerTouch(player);
         }
     }
 
@@ -60,11 +38,14 @@ final class TerminalMagnetTicker {
         var state = runtime.state();
         if (!state.magnet().mode().insert()) return;
         ItemEntity entity = event.getItemEntity();
-        if (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID()) || entity.getPersistentData().contains("PreventRemoteMovement"))
+        if (event.canPickup() == TriState.DEFAULT && (entity.hasPickUpDelay() || entity.getTarget() != null && !entity.getTarget().equals(player.getUUID())))
             return;
         ItemStack stack = entity.getItem();
         AEItemKey key = AEItemKey.of(stack);
         if (key == null || !state.magnet().insertAllows(key)) return;
+        // An enabled network route owns this pickup even while the bridge is unavailable.
+        // Falling through here would put the drop in the backpack instead of keeping it for ME.
+        event.setCanPickup(TriState.FALSE);
         TerminalConnection connection = runtime.connection();
         if (connection == null) return;
         int original = stack.getCount();
@@ -80,7 +61,5 @@ final class TerminalMagnetTicker {
         if (stack.isEmpty()) {
             entity.discard();
         }
-        // Network modes leave any amount the network could not accept in the item entity.
-        event.setCanPickup(TriState.FALSE);
     }
 }

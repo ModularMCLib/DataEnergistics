@@ -140,8 +140,10 @@ public final class TerminalUiLayout {
                 frame.setAllowHitTest(false);
                 UIElement recipes = element("recipes", "stonecutting-recipes");
                 recipes.setOverflowVisible(false);
+                Scroller.Vertical scrollbar = recipeScrollbar("recipe_scroll");
+                scrollbar.scrollContainer.addChildAt(scrollbarRail("stonecutting_rail"), 0);
                 root.addChildren(frame, pageAt(recipes, 23, 6, recipesWidth, TerminalStonecuttingRecipeCell.ROWS * TerminalStonecuttingRecipeCell.HEIGHT),
-                        pageAt(recipeScrollbar("recipe_scroll"), 27 + recipesWidth, 6, 6, 46));
+                        pageAt(scrollbar, 27 + recipesWidth, 6, 6, 46));
             }
         }
         UIElement outputs = element("outputs", "page-outputs");

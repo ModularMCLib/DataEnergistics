@@ -19,11 +19,9 @@ import java.util.function.Function;
 public final class SanctifierGeometry implements IUnbakedGeometry<SanctifierGeometry> {
 
     private final EnumMap<Part, ObjModel> parts;
-    private final float staticDraw;
 
-    SanctifierGeometry(EnumMap<Part, ObjModel> parts, float staticDraw) {
+    SanctifierGeometry(EnumMap<Part, ObjModel> parts) {
         this.parts = new EnumMap<>(parts);
-        this.staticDraw = staticDraw;
     }
 
     @Override
@@ -32,36 +30,23 @@ public final class SanctifierGeometry implements IUnbakedGeometry<SanctifierGeom
         var baked = new EnumMap<Part, BakedModel>(Part.class);
         this.parts.forEach((part, model) -> baked.put(part,
                 model.bake(context, baker, sprites, state, ItemOverrides.EMPTY)));
-        return new SanctifierBakedModel(baked, overrides, this.staticDraw);
+        return new SanctifierBakedModel(baked, overrides);
     }
 
     enum Part {
 
-        SWORD("sword", false),
-        BLADE_EDGE("blade_edge", true),
-        SCABBARD("scabbard", false),
-        SCABBARD_LATCH("scabbard_latch", false),
-        SWORD_LIGHTS("sword_lights", true),
-        SCABBARD_LIGHTS("scabbard_lights", true);
+        SWORD("sword"),
+        SECONDARY_SWORD("secondary_sword"),
+        SECONDARY_BLADE("secondary_blade");
 
         private final String fileName;
-        private final boolean emissive;
 
-        Part(String fileName, boolean emissive) {
+        Part(String fileName) {
             this.fileName = fileName;
-            this.emissive = emissive;
         }
 
         String fileName() {
             return this.fileName;
-        }
-
-        boolean emissive() {
-            return this.emissive;
-        }
-
-        boolean scabbard() {
-            return this == SCABBARD || this == SCABBARD_LATCH || this == SCABBARD_LIGHTS;
         }
     }
 }

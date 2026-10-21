@@ -1,7 +1,6 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowThirdPersonPose;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierThirdPersonPose;
 
 import net.minecraft.client.model.HumanoidModel.ArmPose;
 import net.neoforged.api.distmarker.Dist;
@@ -13,8 +12,6 @@ import net.neoforged.neoforge.client.IArmPoseTransformer;
 @OnlyIn(Dist.CLIENT)
 public final class DEEnumProxies {
 
-    public static final EnumProxy<ArmPose> SANCTIFIER_DRAW = new EnumProxy<>(ArmPose.class,
-            true, (IArmPoseTransformer) SanctifierThirdPersonPose::apply);
     public static final EnumProxy<ArmPose> CROSSBOW_HOLD = new EnumProxy<>(ArmPose.class,
             true, (IArmPoseTransformer) CrossbowThirdPersonPose::apply);
     public static final EnumProxy<ArmPose> CROSSBOW_HOLD_SINGLE = new EnumProxy<>(ArmPose.class,

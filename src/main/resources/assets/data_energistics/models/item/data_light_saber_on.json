@@ -9,9 +9,9 @@
 	"emissive_ambient": true,
 	"render_type": "cutout",
 	"textures": {
-		"particle": "data_energistics:item/tool_weapon/light_saber/reference_hilt",
-		"base": "data_energistics:item/tool_weapon/light_saber/reference_hilt",
-		"light": "data_energistics:item/tool_weapon/light_saber/blade/cyan"
+		"particle": "data_energistics:item/tool_weapon/light_saber/saber_atlas",
+		"base": "data_energistics:item/tool_weapon/light_saber/saber_atlas",
+		"light": "data_energistics:item/tool_weapon/light_saber/saber_atlas"
 	},
 	"display": {
 		"thirdperson_righthand": {

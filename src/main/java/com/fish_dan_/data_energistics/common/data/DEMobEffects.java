@@ -1,6 +1,8 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.effect.DataOverloadMobEffect;
+import com.fish_dan_.data_energistics.common.effect.LifeReductionMobEffect;
 import com.fish_dan_.data_energistics.common.effect.RadixLossMobEffect;
 
 import net.minecraft.core.registries.Registries;
@@ -16,6 +18,11 @@ public final class DEMobEffects {
     public static final DeferredHolder<MobEffect, RadixLossMobEffect> RADIX_LOSS = MOB_EFFECTS.register(
             "radix_loss",
             RadixLossMobEffect::new);
+
+    public static final DeferredHolder<MobEffect, LifeReductionMobEffect> LIFE_REDUCTION = MOB_EFFECTS.register(
+            "life_reduction", LifeReductionMobEffect::new);
+    public static final DeferredHolder<MobEffect, DataOverloadMobEffect> DATA_OVERLOAD = MOB_EFFECTS.register(
+            "data_overload", DataOverloadMobEffect::new);
 
     private DEMobEffects() {}
 

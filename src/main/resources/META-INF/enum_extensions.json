@@ -2,15 +2,6 @@
 	"entries": [
 		{
 			"enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
-			"name": "DATA_ENERGISTICS_SANCTIFIER_DRAW",
-			"constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
-			"parameters": {
-				"class": "com/fish_dan_/data_energistics/common/data/DEEnumProxies",
-				"field": "SANCTIFIER_DRAW"
-			}
-		},
-		{
-			"enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
 			"name": "DATA_ENERGISTICS_CROSSBOW_HOLD",
 			"constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
 			"parameters": {

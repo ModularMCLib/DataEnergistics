@@ -30,7 +30,6 @@ import com.fish_dan_.data_energistics.common.network.packets.patternencoding.Pat
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchMaterialFavoritesPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchSnapshotPayload;
-import com.fish_dan_.data_energistics.common.network.packets.sanctifier.SanctifierCarryPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalNavigationPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
@@ -79,7 +78,6 @@ public final class DEPayloads {
         registrar.playToServer(CannonChargePayload.TYPE, CannonChargePayload.STREAM_CODEC, CannonChargePayload::handle);
         registrar.playToClient(RailChainPayload.TYPE, RailChainPayload.STREAM_CODEC, RailChainPayload::handle);
         registrar.playToClient(ChromaticGlowPayload.TYPE, ChromaticGlowPayload.STREAM_CODEC, ChromaticGlowPayload::handle);
-        registrar.playToClient(SanctifierCarryPayload.TYPE, SanctifierCarryPayload.STREAM_CODEC, SanctifierCarryPayload::handle);
         registrar.playToClient(TrinityCraftingStatusPayload.TYPE, TrinityCraftingStatusPayload.STREAM_CODEC, TrinityCraftingStatusPayload::handle);
         registrar.playToClient(CraftingPlanGraphPayload.TYPE, CraftingPlanGraphPayload.STREAM_CODEC, CraftingPlanGraphPayload::handle);
         registrar.playToServer(CraftingPlanTreeActionPayload.TYPE, CraftingPlanTreeActionPayload.STREAM_CODEC, CraftingPlanTreeActionPayload::handle);

@@ -13,8 +13,9 @@ import com.fish_dan_.data_energistics.client.render.entity.LightBladeChargeRende
 import com.fish_dan_.data_energistics.client.render.entity.MatterConvergingBoltRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.OrbitalAnnihilatorRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.ThrownLightSaberRenderer;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierCarryLayer;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierItemInHandLayer;
+import com.fish_dan_.data_energistics.client.render.item.lightsaber.OrbitingLightSaberRenderer;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierBladeRenderer;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierExecutionHandLayer;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
 import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
@@ -36,8 +37,7 @@ public final class ClientRendererRegistrar {
         for (var skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
-                renderer.layers.replaceAll(layer -> layer.getClass() == PlayerItemInHandLayer.class ? new SanctifierItemInHandLayer(renderer, event.getContext().getItemInHandRenderer()) : layer);
-                renderer.addLayer(new SanctifierCarryLayer(renderer));
+                renderer.layers.replaceAll(layer -> layer.getClass() == PlayerItemInHandLayer.class ? new SanctifierExecutionHandLayer(renderer, event.getContext().getItemInHandRenderer()) : layer);
             }
         }
     }
@@ -57,6 +57,8 @@ public final class ClientRendererRegistrar {
         event.registerEntityRenderer(DEEntities.LIGHT_BLADE_CHARGE.get(), LightBladeChargeRenderer::new);
         event.registerEntityRenderer(DEEntities.MATTER_CONVERGING_BOLT.get(), MatterConvergingBoltRenderer::new);
         event.registerEntityRenderer(DEEntities.THROWN_LIGHT_SABER.get(), ThrownLightSaberRenderer::new);
+        event.registerEntityRenderer(DEEntities.ORBITING_LIGHT_SABER.get(), OrbitingLightSaberRenderer::new);
+        event.registerEntityRenderer(DEEntities.SANCTIFIER_BLADE.get(), SanctifierBladeRenderer::new);
         event.registerEntityRenderer(DEEntities.TNT_CONFIGURABLE_PRIMED.get(), TntRenderer::new);
         event.registerEntityRenderer(DEEntities.DATA_NUKE_PRIMED.get(), DataNukeRenderer::new);
         event.registerEntityRenderer(DEEntities.ORBITAL_ANNIHILATOR_PROJECTILE.get(), OrbitalAnnihilatorRenderer::new);

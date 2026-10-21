@@ -5,41 +5,41 @@
 	"ambientocclusion": false,
 	"gui_light": "front",
 	"textures": {
-		"particle": "data_energistics:item/tool_weapon/data_sanctifier/alloy",
-		"alloy": "data_energistics:item/tool_weapon/data_sanctifier/alloy"
+		"particle": "data_energistics:item/tool_weapon/data_sanctifier/katana_atlas",
+		"katana": "data_energistics:item/tool_weapon/data_sanctifier/katana_atlas",
+		"secondary": "data_energistics:item/tool_weapon/data_sanctifier/secondary_atlas",
+		"secondary_glow": "data_energistics:item/tool_weapon/data_sanctifier/secondary_glow_atlas"
 	},
 	"parts": {
 		"sword": "data_energistics:models/item/data_sanctifier/sword.obj",
-		"blade_edge": "data_energistics:models/item/data_sanctifier/blade_edge.obj",
-		"scabbard": "data_energistics:models/item/data_sanctifier/scabbard.obj",
-		"scabbard_latch": "data_energistics:models/item/data_sanctifier/scabbard_latch.obj",
-		"sword_lights": "data_energistics:models/item/data_sanctifier/sword_lights.obj",
-		"scabbard_lights": "data_energistics:models/item/data_sanctifier/scabbard_lights.obj"
+		"secondary_sword": "data_energistics:models/item/data_sanctifier/secondary_sword.obj",
+		"secondary_blade": "data_energistics:models/item/data_sanctifier/secondary_blade.obj"
 	},
 	"display": {
 		"thirdperson_righthand": {
 			"rotation": [0, -90, 0],
 			"translation": [0, 1.0, 0],
-			"scale": [0.52, 0.52, 0.52]
+			"scale": [0.72, 0.72, 0.72]
 		},
 		"thirdperson_lefthand": {
 			"rotation": [0, 90, 0],
 			"translation": [0, 1.0, 0],
-			"scale": [0.52, 0.52, 0.52]
+			"scale": [0.72, 0.72, 0.72]
 		},
 		"firstperson_righthand": {
 			"rotation": [0, -75, -16],
 			"translation": [0.5, 1.0, -2.5],
-			"scale": [0.44, 0.44, 0.44]
+			"scale": [0.65, 0.65, 0.65]
 		},
 		"firstperson_lefthand": {
 			"rotation": [0, 75, 16],
 			"translation": [0.5, 1.0, -2.5],
-			"scale": [0.44, 0.44, 0.44]
+			"scale": [0.65, 0.65, 0.65]
 		},
 		"gui": {
 			"rotation": [0, 20, -40],
-			"scale": [0.27, 0.27, 0.27]
+			"scale": [0.4, 0.4, 0.4],
+			"translation": [0, -7.5, 0]
 		},
 		"ground": {
 			"rotation": [0, 0, 90],
@@ -48,12 +48,12 @@
 		},
 		"fixed": {
 			"rotation": [0, 0, -40],
-			"scale": [0.3, 0.3, 0.3]
+			"scale": [0.4, 0.4, 0.4],
+			"translation": [0, -7.5, 0]
 		},
 		"head": {
 			"rotation": [0, 0, 90],
 			"scale": [0.35, 0.35, 0.35]
 		}
-	},
-	"static_draw": 0
+	}
 }

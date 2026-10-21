@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -15,18 +15,19 @@ import net.minecraft.world.item.ItemStack;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
-/** Defers the newly selected main-hand item visually while the old blade is being sheathed. */
-public final class SanctifierItemInHandLayer extends PlayerItemInHandLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+/** Prevents the ordinary held sword duplicating the entity renderer's execution stroke. */
+public final class SanctifierExecutionHandLayer extends PlayerItemInHandLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
-    public SanctifierItemInHandLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent,
-                                     ItemInHandRenderer itemRenderer) {
+    public SanctifierExecutionHandLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent,
+                                        ItemInHandRenderer itemRenderer) {
         super(parent, itemRenderer);
     }
 
     @Override
     protected void renderArmWithItem(LivingEntity entity, ItemStack stack, ItemDisplayContext context,
                                      HumanoidArm arm, PoseStack poses, MultiBufferSource buffers, int light) {
-        if (arm == entity.getMainArm() && SanctifierAnimationStates.isSheathing(entity)) return;
+        var execution = SanctifierExecutionPresentation.execution(entity);
+        if (arm == entity.getMainArm() && stack.is(DEItems.DATA_SANCTIFIER.get()) && execution != null && execution.getPhaseTicks() >= 18) return;
         super.renderArmWithItem(entity, stack, context, arm, poses, buffers, light);
     }
 }

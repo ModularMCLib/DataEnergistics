@@ -155,6 +155,16 @@ public final class DEDataComponents {
                     .cacheEncoding()
                     .build());
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> LIGHT_SABER_INSTANCE = DATA_COMPONENT_TYPES.register(
+            "light_saber_instance", () -> DataComponentType.<UUID>builder()
+                    .persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> LIGHT_SABER_COOLDOWN_END = DATA_COMPONENT_TYPES.register(
+            "light_saber_cooldown_end", () -> DataComponentType.<Long>builder()
+                    .persistent(Codec.LONG).networkSynchronized(ByteBufCodecs.VAR_LONG).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> TRIDENT_ATTRACTION = DATA_COMPONENT_TYPES.register(
+            "trident_attraction", () -> DataComponentType.<Boolean>builder()
+                    .persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> TRINITY_DATA_CORE_STORAGE_ID = DATA_COMPONENT_TYPES.register(
             "trinity_data_core_storage_id",
             () -> DataComponentType.<UUID>builder()

@@ -1,10 +1,9 @@
-# Reference lightsaber - exported from the Generic Blockbench source
-newmtl m_6ece5793-25d0-b817-c183-b033936df152
+newmtl base
 Ka 0 0 0
 Kd 1 1 1
 map_Kd #base
 
-newmtl m_5b50b1f1-65b7-0eb1-fa5b-b48a69215529
+newmtl light
 Ka 1 1 1
 Kd 1 1 1
 map_Kd #light

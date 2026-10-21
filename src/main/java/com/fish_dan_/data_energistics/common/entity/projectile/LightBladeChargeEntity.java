@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.entity.projectile;
 import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.effect.RadixLossEffectLogic;
-import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredToolResearch;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -189,7 +189,7 @@ public class LightBladeChargeEntity extends ThrowableItemProjectile {
 
     private boolean canApplyRadixLoss() {
         ItemStack weaponStack = this.getWeaponStack();
-        return weaponStack.is(DEItems.DATA_LIGHT_SABER.get()) && weaponStack.getItem() instanceof PoweredEnergyItem poweredEnergyItem && poweredEnergyItem.getSaberEnergyCardCount(weaponStack) > 0;
+        return weaponStack.is(DEItems.DATA_LIGHT_SABER.get()) && PoweredToolResearch.has(weaponStack, "digitization");
     }
 
     private void resetTargetInvulnerability(Entity target) {

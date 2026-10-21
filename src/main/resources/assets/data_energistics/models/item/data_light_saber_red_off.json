@@ -1,8 +1,6 @@
 {
 	"parent": "data_energistics:item/data_light_saber_off",
-	"textures": {
-		"2": "data_energistics:item/tool_weapon/light_saber/light_red"
-	},
+	"textures": {},
 	"overrides": [
 		{
 			"predicate": {

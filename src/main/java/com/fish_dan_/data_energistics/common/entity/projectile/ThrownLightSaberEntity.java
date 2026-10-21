@@ -4,9 +4,8 @@ import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.powered.PoweredToolResearch;
 import com.fish_dan_.data_energistics.common.item.powered.cannon.CannonBallistics;
-
-import appeng.api.upgrades.UpgradeInventories;
 
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
@@ -417,8 +416,7 @@ public class ThrownLightSaberEntity extends AbstractArrow implements ItemSupplie
     }
 
     private int getSaberEnergyCardCount(ItemStack stack) {
-        return stack.isEmpty() ? 0 : Math.max(0, UpgradeInventories.forItem(stack, 6)
-                .getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()));
+        return PoweredToolResearch.has(stack, PoweredToolResearch.DAMAGE) ? 1 : 0;
     }
 
     private boolean shouldUseExpandedDimensions() {

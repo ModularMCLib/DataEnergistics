@@ -25,10 +25,6 @@ public final class PoweredToolSaberEnergyHelper {
 
     private PoweredToolSaberEnergyHelper() {}
 
-    public static boolean hasSaberEnergy(ItemStack stack, PoweredEnergyItem item) {
-        return item.getSaberEnergyCardCount(stack) > 0;
-    }
-
     public static boolean consumeDataFlow(ItemStack stack) {
         var cellInventory = StorageCells.getCellInventory(stack, null);
         if (cellInventory == null) {

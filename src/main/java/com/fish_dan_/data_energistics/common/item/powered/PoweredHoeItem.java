@@ -159,7 +159,7 @@ public class PoweredHoeItem extends AbstractPoweredTieredItem implements Conditi
 
     private void tryMarkPersistentFarmland(UseOnContext context) {
         ItemStack stack = context.getItemInHand();
-        if (!stack.is(DEItems.DATA_CRYSTAL_HOE.get()) || !PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) || !(context.getLevel() instanceof ServerLevel serverLevel) || !PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
+        if (!stack.is(DEItems.DATA_CRYSTAL_HOE.get()) || !PoweredToolResearch.has(stack, PoweredToolResearch.CRYSTAL_HOE) || !(context.getLevel() instanceof ServerLevel serverLevel) || !PoweredToolSaberEnergyHelper.consumeDataFlow(stack)) {
             return;
         }
 
@@ -201,6 +201,6 @@ public class PoweredHoeItem extends AbstractPoweredTieredItem implements Conditi
     }
 
     private float getSaberEnergyDestroySpeedBonus(ItemStack stack) {
-        return PoweredToolSaberEnergyHelper.hasSaberEnergy(stack, this) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
+        return PoweredToolResearch.has(stack, PoweredToolResearch.MINING_SPEED) ? SABER_ENERGY_DESTROY_SPEED_BONUS : 0.0F;
     }
 }

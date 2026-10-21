@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.mixin.minecraft.entity;
 
 import com.fish_dan_.data_energistics.common.entity.projectile.DataTridentAppearance;
 import com.fish_dan_.data_energistics.common.item.trident.DataTridentItem;
+import com.fish_dan_.data_energistics.common.item.trident.TridentMobField;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -41,6 +42,11 @@ public abstract class ThrownTridentMixin implements DataTridentAppearance {
     @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
     private void dataEnergistics$restoreTextureIdentity(CompoundTag tag, CallbackInfo callback) {
         this.dataEnergistics$syncTextureIdentity();
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void dataEnergistics$tickMobField(CallbackInfo callback) {
+        TridentMobField.tick((ThrownTrident) (Object) this);
     }
 
     @Unique

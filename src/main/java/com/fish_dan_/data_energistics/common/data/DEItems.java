@@ -238,8 +238,7 @@ public final class DEItems {
             "data_crystal_sword",
             () -> new PoweredSwordItem(DATA_CRYSTAL_SWORD_TIER,
                     handheldProperties(0, PoweredSwordItem.createAttributes(DATA_CRYSTAL_SWORD_TIER, 6.0F, -2.0F)),
-                    NO_MINING_SWORD_TOOL,
-                    false));
+                    NO_MINING_SWORD_TOOL));
     public static final DeferredItem<PoweredAxeItem> DATA_CRYSTAL_AXE = ITEMS.register(
             "data_crystal_axe",
             () -> new PoweredAxeItem(DATA_CRYSTAL_TOOL_TIER,

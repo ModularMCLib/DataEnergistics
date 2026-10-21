@@ -4,7 +4,6 @@ import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedback;
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.data.DEMobEffects;
@@ -45,7 +44,6 @@ final class ClientTickHandler {
         OrbitalMapSelectionClientSession.tick();
         CannonChargeInput.tick(minecraft);
         CrossbowAnimationStates.tick(minecraft);
-        SanctifierAnimationStates.tick(minecraft);
         ClientInputHandler.handleCrossbowModeKeys(minecraft);
         CannonSelectionFeedback.tick(minecraft);
         ClientLevel level = minecraft.level;

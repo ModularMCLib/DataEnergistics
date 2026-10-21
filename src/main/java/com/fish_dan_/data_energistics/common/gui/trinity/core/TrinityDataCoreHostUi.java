@@ -1,0 +1,374 @@
+package com.fish_dan_.data_energistics.common.gui.trinity.core;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.api.gui.host.protocol.HostUiKey;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostModularUI;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostUiCoordinator;
+import com.fish_dan_.data_energistics.api.gui.host.window.HostUiExtension;
+import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
+import com.fish_dan_.data_energistics.common.gui.trinity.autobuild.TrinityDataCoreStructureProviders;
+import com.fish_dan_.data_energistics.common.gui.trinity.cpu.TrinityCpuStatusList;
+import com.fish_dan_.data_energistics.common.gui.trinity.drive.TrinityInfiniteDriveGrid;
+import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiNbtLayouts;
+import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiXmlLayouts;
+import com.fish_dan_.data_energistics.common.gui.trinity.pattern.aggregate.TrinityAggregatePatternProvider;
+import com.fish_dan_.data_energistics.common.gui.trinity.priority.TrinityPriorityProvider;
+import com.fish_dan_.data_energistics.common.gui.trinity.storage.TrinityDataCoreStorageProvider;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityDataCoreMenu;
+import com.fish_dan_.data_energistics.common.trinity.drive.TrinityInfiniteDriveInventory;
+
+import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
+import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Scroller;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
+
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+
+import dev.vfyjxf.taffy.style.TaffyPosition;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntSupplier;
+
+/**
+ * Mounts the double-sided LDLib2 host tree during Trinity Data Core menu construction.
+ */
+public final class TrinityDataCoreHostUi {
+
+    public static final String ROOT_ID = "trinity_data_core_root";
+    static final String PLAYER_INVENTORY_ID = "trinity_data_core_player_inventory";
+    static final String CPU_PANEL_ID = "trinity_data_core_cpu_panel";
+    static final String INFINITE_DRIVE_PANEL_ID = "trinity_data_core_infinite_drive_panel";
+    static final String CLOSE_ID = "trinity_data_core_close";
+
+    private TrinityDataCoreHostUi() {}
+
+    /**
+     * Builds the complete root and lets LDLib2 create and register the native drive and player inventory slots during
+     * mount.
+     *
+     * @param menu               menu whose server and client instances must construct an identical root tree
+     * @param coordinatorFactory side-specific endpoint factory bound before ModularUI registration begins
+     * @return coordinator owned by the mounted ModularUI lifetime
+     */
+    public static HostUiCoordinator mount(TrinityDataCoreMenu menu,
+                                          Function<HostUiExtension, HostUiCoordinator> coordinatorFactory) {
+        if (menu == null) {
+            Data_Energistics.LOGGER.error("Cannot mount the Trinity Data Core LDLib2 UI without a menu");
+            throw new IllegalArgumentException("Trinity Data Core menu must not be null");
+        }
+        if (coordinatorFactory == null) {
+            Data_Energistics.LOGGER.error("Cannot mount the Trinity Data Core LDLib2 UI without a coordinator factory");
+            throw new IllegalArgumentException("Trinity Data Core coordinator factory must not be null");
+        }
+
+        IModularUIHolderMenu holder = requireUnmountedMenu(menu);
+        TrinityDataCoreUiSync sync = TrinityDataCoreUiSync.create(menu);
+        UI ui = TrinityUiNbtLayouts.load("data_core");
+        UIElement root = ui.rootElement;
+        HostUiExtension hostUi = HostUiExtension.create(root);
+        HostModularUI modularUI = null;
+        try {
+            registerProviders(menu, hostUi, sync);
+            sync.setStorageWindowOpen(() -> hostUi.isOpen(TrinityDataCoreHostUiKeys.STORAGE));
+            sync.setPatternWindowOpen(() -> hostUi.isOpen(TrinityDataCoreHostUiKeys.PATTERN));
+            InventorySlots playerInventorySlots = playerInventorySlots(root);
+            TrinityDataCoreStatusPanel.bindExisting(
+                    TrinityUiXmlLayouts.require(root, TrinityDataCoreStatusPanel.PANEL_ID, UIElement.class),
+                    sync.hostStatusProvider(),
+                    sync.storageStatusProvider(),
+                    sync.cpuListStatusProvider(),
+                    sync.coreTickNanosProvider());
+            mountCpuList(
+                    root,
+                    cpuList(menu, sync.cpuListStatusProvider()));
+            TrinityInfiniteDriveGrid infiniteDriveGrid = mountInfiniteDriveGrid(root, menu);
+            TrinityDataCoreHostLauncherPanel.bindExisting(root, hostUi);
+            bindClose(root, menu);
+            HostUiCoordinator coordinator = coordinatorFactory.apply(hostUi);
+            if (coordinator == null || coordinator.hostUi() != hostUi) {
+                throw new IllegalStateException("Trinity Data Core coordinator must own the mounted host extension");
+            }
+            modularUI = hostUi.createModularUI(ui, menu.getPlayer());
+            sync.register(modularUI);
+            mountNativeSlots(menu, holder, modularUI, infiniteDriveGrid, playerInventorySlots);
+            return coordinator;
+        } catch (RuntimeException | Error failure) {
+            Data_Energistics.LOGGER.error(
+                    "Failed to create the Trinity Data Core LDLib2 host UI; discard this menu and UI instance",
+                    failure);
+            try {
+                if (modularUI == null) {
+                    HostUiExtension.discardUnmounted(hostUi);
+                } else {
+                    modularUI.onRemoved();
+                }
+            } catch (RuntimeException | Error cleanupFailure) {
+                Data_Energistics.LOGGER.error("Failed to dispose an incomplete Trinity Data Core host UI", cleanupFailure);
+                if (cleanupFailure != failure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
+            throw failure;
+        }
+    }
+
+    private static InventorySlots playerInventorySlots(UIElement root) {
+        return TrinityUiXmlLayouts.require(root, PLAYER_INVENTORY_ID, InventorySlots.class);
+    }
+
+    private static void mountCpuList(UIElement root, TrinityCpuStatusList cpuList) {
+        UIElement panel = TrinityUiXmlLayouts.require(root, CPU_PANEL_ID, UIElement.class);
+        Scroller.Vertical scrollbar = TrinityUiXmlLayouts.require(
+                root,
+                TrinityCpuStatusList.SCROLLER_ID,
+                Scroller.Vertical.class);
+        if (scrollbar.getParent() != panel) {
+            throw mountViolation("editor-authored CPU scrollbar is not attached to the CPU panel");
+        }
+        int scrollbarIndex = panel.getChildren().indexOf(scrollbar);
+        if (scrollbarIndex < 0) {
+            throw mountViolation("editor-authored CPU scrollbar is missing from the CPU panel children");
+        }
+
+        cpuList.bindScrollbar(scrollbar);
+        cpuList.layout(layout -> layout
+                .positionType(TaffyPosition.ABSOLUTE)
+                .left(-1)
+                .top(0)
+                .width(TrinityCpuStatusList.DEFAULT_WIDTH)
+                .height(TrinityCpuStatusList.DEFAULT_HEIGHT));
+        panel.addChildAt(cpuList, scrollbarIndex);
+        if (cpuList.getParent() != panel) {
+            throw mountViolation("CPU list content was not attached to the expected panel");
+        }
+    }
+
+    /**
+     * Mounts the fixed native infinite-drive grid before LDLib2 registers any menu slots.
+     */
+    private static TrinityInfiniteDriveGrid mountInfiniteDriveGrid(UIElement root, TrinityDataCoreMenu menu) {
+        UIElement panel = TrinityUiXmlLayouts.require(root, INFINITE_DRIVE_PANEL_ID, UIElement.class);
+        Scroller.Vertical scrollbar = TrinityUiXmlLayouts.require(
+                root,
+                TrinityInfiniteDriveGrid.SCROLLER_ID,
+                Scroller.Vertical.class);
+        if (scrollbar.getParent() != panel) {
+            throw mountViolation("editor-authored infinite-drive scrollbar is not attached to the drive panel");
+        }
+        int scrollbarIndex = panel.getChildren().indexOf(scrollbar);
+        if (scrollbarIndex < 0) {
+            throw mountViolation("editor-authored infinite-drive scrollbar is missing from the drive panel children");
+        }
+
+        TrinityInfiniteDriveGrid driveGrid = TrinityInfiniteDriveGrid.create(
+                menu.getInfiniteDriveInventory(),
+                menu::getInfiniteDriveSlotCount,
+                scrollbar);
+        panel.addChildAt(driveGrid, scrollbarIndex);
+        if (driveGrid.getParent() != panel) {
+            throw mountViolation("infinite-drive grid was not attached to the expected drive panel");
+        }
+        return driveGrid;
+    }
+
+    private static void bindClose(UIElement root, TrinityDataCoreMenu menu) {
+        Button close = TrinityUiXmlLayouts.require(root, CLOSE_ID, Button.class);
+        Component tooltip = Component.translatable("text.data_energistics.off");
+        close.setOnServerClick(event -> menu.getPlayer().closeContainer());
+        close.text.style(style -> style.tooltips(tooltip));
+        close.style(style -> style.tooltips(tooltip));
+    }
+
+    /**
+     * Validates every invariant that can be checked before LDLib2 mutates the menu.
+     */
+    private static IModularUIHolderMenu requireUnmountedMenu(TrinityDataCoreMenu menu) {
+        IModularUIHolderMenu holder = (IModularUIHolderMenu) menu;
+        if (holder.getModularUI() != null) {
+            throw mountViolation("menu already has a ModularUI: " + menu.getClass().getName());
+        }
+        if (!menu.slots.isEmpty()) {
+            throw mountViolation("menu must not pre-create slots before InventorySlots mounts; found " +
+                    menu.slots.size());
+        }
+        return holder;
+    }
+
+    /**
+     * Mounts once, then proves the native slot order and both sides of LDLib2's slot mapping.
+     */
+    private static void mountNativeSlots(TrinityDataCoreMenu menu,
+                                         IModularUIHolderMenu holder,
+                                         HostModularUI modularUI,
+                                         TrinityInfiniteDriveGrid infiniteDriveGrid,
+                                         InventorySlots inventorySlots) {
+        if (modularUI.getMenu() != null) {
+            throw mountViolation("ModularUI is already attached to a menu");
+        }
+        if (modularUI.player != menu.getPlayer()) {
+            throw mountViolation("ModularUI player does not own the Trinity Data Core menu");
+        }
+        List<ItemSlot> expectedDriveSlots = infiniteDriveGrid.itemSlots();
+        if (expectedDriveSlots.size() != TrinityInfiniteDriveInventory.MAXIMUM_SLOT_COUNT) {
+            throw mountViolation("Trinity Data Core UI must contain exactly eighty native infinite-drive ItemSlots");
+        }
+        List<ItemSlot> expectedPlayerSlots = orderedPlayerSlots(inventorySlots);
+        if (expectedPlayerSlots.size() != 36) {
+            throw mountViolation("Trinity Data Core UI must contain exactly 36 native player ItemSlots");
+        }
+        holder.setModularUI(modularUI);
+
+        if (holder.getModularUI() != modularUI || modularUI.getMenu() != menu) {
+            throw mountViolation("LDLib2 did not establish the expected menu/UI references");
+        }
+        int expectedSlotCount = expectedDriveSlots.size() + expectedPlayerSlots.size();
+        if (menu.slots.size() != expectedSlotCount) {
+            throw mountViolation("LDLib2 mounted " + menu.slots.size() + " menu slots instead of " +
+                    expectedSlotCount);
+        }
+        List<InventorySlots> inventories = modularUI.getElementsByType(InventorySlots.class);
+        if (inventories.size() != 1 || inventories.getFirst() != inventorySlots) {
+            throw mountViolation("Trinity Data Core UI must contain its exact single InventorySlots instance");
+        }
+        Inventory playerInventory = menu.getPlayer().getInventory();
+        for (int menuIndex = 0; menuIndex < expectedDriveSlots.size(); menuIndex++) {
+            ItemSlot itemSlot = expectedDriveSlots.get(menuIndex);
+            Slot slot = itemSlot.getSlot();
+            if (menu.slots.get(menuIndex) != slot || slot.index != menuIndex) {
+                throw mountViolation("native infinite-drive slot order diverged at menu index " + menuIndex);
+            }
+            if (slot.container != menu.getInfiniteDriveInventory() || slot.getContainerSlot() != menuIndex) {
+                throw mountViolation("menu slot " + menuIndex + " is not bound to its infinite-drive inventory index");
+            }
+            if (holder.getItemSlot(slot) != itemSlot || itemSlot.getSlot() != slot) {
+                throw mountViolation("LDLib2 did not retain the infinite-drive ItemSlot mapping at menu index " + menuIndex);
+            }
+        }
+        for (int playerSlotIndex = 0; playerSlotIndex < expectedPlayerSlots.size(); playerSlotIndex++) {
+            int menuIndex = expectedDriveSlots.size() + playerSlotIndex;
+            ItemSlot itemSlot = expectedPlayerSlots.get(playerSlotIndex);
+            Slot slot = itemSlot.getSlot();
+            int inventoryIndex = playerSlotIndex < 27 ? playerSlotIndex + 9 : playerSlotIndex - 27;
+            if (menu.slots.get(menuIndex) != slot || slot.index != menuIndex) {
+                throw mountViolation("native player slot order diverged at menu index " + menuIndex);
+            }
+            if (slot.container != playerInventory || slot.getContainerSlot() != inventoryIndex) {
+                throw mountViolation("menu slot " + menuIndex + " is not bound to player inventory index " +
+                        inventoryIndex);
+            }
+            if (holder.getItemSlot(slot) != itemSlot || itemSlot.getSlot() != slot) {
+                throw mountViolation("LDLib2 did not retain the native ItemSlot mapping at menu index " +
+                        menuIndex);
+            }
+        }
+    }
+
+    private static List<ItemSlot> orderedPlayerSlots(InventorySlots inventorySlots) {
+        List<ItemSlot> slots = new ObjectArrayList<>(36);
+        for (InventorySlots.Row row : inventorySlots.rows) {
+            slots.addAll(List.of(row.slots));
+        }
+        slots.addAll(List.of(inventorySlots.hotbar.slots));
+        return slots;
+    }
+
+    private static IllegalStateException mountViolation(String message) {
+        Data_Energistics.LOGGER.error("Trinity Data Core native LDLib2 mount invariant failed: {}", message);
+        return new IllegalStateException(message);
+    }
+
+    private static TrinityCpuStatusList cpuList(TrinityDataCoreMenu menu,
+                                                IDataProvider<TrinityCpuListStatus> statusProvider) {
+        TrinityCpuStatusList cpuList = new TrinityCpuStatusList();
+        cpuList.setOnCpuSelected(cpuNumber -> menu.sendOpenCpuStatus(menu.getHostId(), cpuNumber));
+        cpuList.bindDataSource(statusProvider);
+        return cpuList;
+    }
+
+    private static int priorityModifierMask() {
+        int mask = 0;
+        if (Screen.hasShiftDown()) {
+            mask |= 1;
+        }
+        if (Screen.hasControlDown()) {
+            mask |= 2;
+        }
+        return mask;
+    }
+
+    private static void registerProviders(TrinityDataCoreMenu menu,
+                                          HostUiExtension hostUi,
+                                          TrinityDataCoreUiSync sync) {
+        IntSupplier modifierMask = menu.getPlayer().level().isClientSide() ?
+                TrinityDataCoreHostUi::priorityModifierMask : () -> 0;
+        hostUi.register(TrinityDataCoreStructureProviders.autoBuild(
+                menu,
+                menu::sendHostedAutoBuild,
+                generation -> menu.isHostedActionPending(TrinityDataCoreHostUiKeys.AUTO_BUILD, generation)));
+        hostUi.register(new TrinityDataCoreStorageProvider(
+                sync.storageViewProvider(),
+                sync::requestStoragePage,
+                () -> hostUi.requestToggle(TrinityDataCoreHostUiKeys.STORAGE_PRIORITY)));
+        hostUi.register(new TrinityAggregatePatternProvider(
+                sync.patternViewProvider(),
+                sync.patternMaintenanceProvider(),
+                sync::requestPatternPage,
+                menu.getPlayer().level(),
+                menu::sendHostedPatternSlot,
+                menu::sendHostedPatternQuickMove,
+                menu::sendHostedPatternMigration,
+                () -> hostUi.requestToggle(TrinityDataCoreHostUiKeys.PATTERN_PRIORITY),
+                menu::sendRefundPatterns,
+                menu::sendRefundRetainedItems));
+        hostUi.register(priorityProvider(
+                menu,
+                TrinityDataCoreHostUiKeys.STORAGE_PRIORITY,
+                "trinity_storage_priority_window",
+                "screen.data_energistics.trinity_data_core.storage.priority.title",
+                "screen.data_energistics.trinity_data_core.storage.priority.insert_hint",
+                "screen.data_energistics.trinity_data_core.storage.priority.extract_hint",
+                sync.storagePriorityProvider(),
+                modifierMask));
+        hostUi.register(priorityProvider(
+                menu,
+                TrinityDataCoreHostUiKeys.PATTERN_PRIORITY,
+                "trinity_pattern_priority_window",
+                "screen.data_energistics.trinity_data_core.pattern.priority.title",
+                "screen.data_energistics.trinity_data_core.pattern.priority.selection_hint",
+                "screen.data_energistics.trinity_data_core.pattern.priority.scope_hint",
+                sync.patternPriorityProvider(),
+                modifierMask));
+        if (!hostUi.registeredKeys().equals(TrinityDataCoreHostUiKeys.registrationOrder())) {
+            throw new IllegalStateException("Trinity Data Core hosted providers were registered out of order");
+        }
+    }
+
+    private static TrinityPriorityProvider priorityProvider(TrinityDataCoreMenu menu,
+                                                            HostUiKey key,
+                                                            String windowId,
+                                                            String titleKey,
+                                                            String firstHintKey,
+                                                            String secondHintKey,
+                                                            IDataProvider<Integer> priority,
+                                                            IntSupplier modifierMask) {
+        return new TrinityPriorityProvider(
+                key,
+                windowId,
+                Component.translatable(titleKey),
+                Component.translatable(firstHintKey),
+                Component.translatable(secondHintKey),
+                priority,
+                modifierMask,
+                (generation, operation) -> menu.sendHostedPriority(key, generation, operation),
+                generation -> menu.isHostedActionPending(key, generation));
+    }
+}

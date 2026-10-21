@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.trinity;
 
-import com.fish_dan_.data_energistics.menu.trinity.TrinityInformationExchangeDepotMenu;
+import com.fish_dan_.data_energistics.common.menu.trinity.TrinityInformationExchangeDepotMenu;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

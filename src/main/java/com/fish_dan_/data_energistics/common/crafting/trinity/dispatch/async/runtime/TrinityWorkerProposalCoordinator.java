@@ -201,7 +201,7 @@ public final class TrinityWorkerProposalCoordinator {
         return switch (submission) {
             case DispatchProposalScheduler.Accepted accepted -> {
                 this.slots.put(workIdentity, new ProposalSlot(accepted.ticket()));
-                yield Pending.INSTANCE;
+                yield poll(request.lease(), workIdentity);
             }
             case DispatchProposalScheduler.Rejected rejected -> rejectionDecision(rejected.reason());
         };

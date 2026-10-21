@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.ioport;
 
-import com.fish_dan_.data_energistics.menu.ioport.DataIoPortMenu;
+import com.fish_dan_.data_energistics.common.menu.ioport.DataIoPortMenu;
 
 import appeng.api.config.FullnessMode;
 import appeng.api.config.OperationMode;

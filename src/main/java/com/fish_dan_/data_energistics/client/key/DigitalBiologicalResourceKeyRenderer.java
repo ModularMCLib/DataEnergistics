@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.key;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.ae2.key.BloodKey;
-import com.fish_dan_.data_energistics.ae2.key.DigitalBiologicalResourceKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.BloodKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DigitalBiologicalResourceKey;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

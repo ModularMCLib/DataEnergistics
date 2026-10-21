@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorDropRoutingMode;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataMimeticFieldOutputRoutingButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
-import com.fish_dan_.data_energistics.menu.machine.DataMimeticFieldMenu;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorDropRoutingMode;
+import com.fish_dan_.data_energistics.common.menu.machine.DataMimeticFieldMenu;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.GenericStack;

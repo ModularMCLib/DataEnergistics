@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.common.orbital.reserve;
 
-import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
-import com.fish_dan_.data_energistics.blockentity.orbital.OrbitalEndpointBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.orbital.OrbitalEndpointBlockEntity;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointAvailability;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointRecord;
 import com.fish_dan_.data_energistics.common.orbital.model.StellarErasureDeviceRecord;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

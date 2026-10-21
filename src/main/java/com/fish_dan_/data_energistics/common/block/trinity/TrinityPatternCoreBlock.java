@@ -1,0 +1,160 @@
+package com.fish_dan_.data_energistics.common.block.trinity;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.blockentity.trinity.TrinityPatternCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.gui.trinity.pattern.physical.TrinityPatternCoreUi;
+import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreKind;
+import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreMetadata;
+
+import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+
+import appeng.hooks.WrenchHook;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
+
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+
+/**
+ * Entity-backed variant used exclusively by the three Trinity pattern processing core blocks.
+ */
+public final class TrinityPatternCoreBlock extends TrinityCoreBlock implements EntityBlock, BlockUIMenuType.BlockUI {
+
+    /**
+     * Creates a P-core block whose fixed capacity is exposed through its inherited component metadata.
+     *
+     * @param properties block properties
+     * @param metadata   pattern-processing metadata
+     */
+    public TrinityPatternCoreBlock(Properties properties, TrinityCoreMetadata metadata) {
+        super(properties, metadata);
+        if (metadata.kind() != TrinityCoreKind.PATTERN_PROCESSING) {
+            throw new IllegalArgumentException("TrinityPatternCoreBlock requires pattern processing metadata");
+        }
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TrinityPatternCoreBlockEntity(pos, state);
+    }
+
+    @Override
+    public ModularUI createUI(BlockUIMenuType.BlockUIHolder holder) {
+        BlockEntity blockEntity = holder.player.level().getBlockEntity(holder.pos);
+        if (!(blockEntity instanceof TrinityPatternCoreBlockEntity patternCore) || !patternCore.isCoreStateReady()) {
+            throw new IllegalStateException("Native Trinity pattern core UI requires a ready pattern core at " + holder.pos);
+        }
+        return TrinityPatternCoreUi.create(patternCore, holder.player);
+    }
+
+    @Override
+    public boolean stillValid(BlockUIMenuType.BlockUIHolder holder) {
+        if (!BlockUIMenuType.BlockUI.super.stillValid(holder) ||
+                !(holder.player.level().getBlockEntity(holder.pos) instanceof TrinityPatternCoreBlockEntity patternCore) ||
+                !patternCore.isCoreStateReady()) {
+            return false;
+        }
+        return holder.player.distanceToSqr(
+                holder.pos.getX() + 0.5D,
+                holder.pos.getY() + 0.5D,
+                holder.pos.getZ() + 0.5D) <= 64.0D;
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                               BlockHitResult hitResult) {
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer &&
+                level.getBlockEntity(pos) instanceof TrinityPatternCoreBlockEntity patternCore &&
+                patternCore.isCoreStateReady()) {
+            BlockUIMenuType.openUI(serverPlayer, pos);
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        BlockEntity blockEntity = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        return createMiningDrops(blockEntity);
+    }
+
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof TrinityPatternCoreBlockEntity patternCore) {
+            if (!patternCore.hasMiningDropSnapshot()) {
+                patternCore.freezeMiningDropSnapshot();
+            }
+            if (patternCore.hasMiningDropSnapshot() && player.getAbilities().instabuild &&
+                    !WrenchHook.isDisassembling()) {
+                for (ItemStack drop : patternCore.getMiningDrops()) {
+                    Block.popResource(level, pos, drop);
+                }
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
+                                       boolean willHarvest, FluidState fluid) {
+        if (level.isClientSide()) {
+            return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        }
+        if (!(level.getBlockEntity(pos) instanceof TrinityPatternCoreBlockEntity patternCore)) {
+            Data_Energistics.LOGGER.error(
+                    "Refused to remove Trinity pattern core at {} because its mining-drop snapshot has no block entity",
+                    pos);
+            return false;
+        }
+        if (!patternCore.hasMiningDropSnapshot()) {
+            Data_Energistics.LOGGER.error(
+                    "Refused to remove Trinity pattern core at {} because its mining-drop snapshot was not frozen",
+                    pos);
+            return false;
+        }
+        boolean removed = super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        if (!removed) {
+            patternCore.discardMiningDropSnapshot();
+        }
+        return removed;
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                  BlockEntityType<T> blockEntityType) {
+        if (level.isClientSide() || blockEntityType != DEBlockEntities.TRINITY_PATTERN_CORE_BLOCK_ENTITY.get()) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) -> {
+            if (blockEntity instanceof TrinityPatternCoreBlockEntity patternCore) {
+                patternCore.serverTick();
+            }
+        };
+    }
+
+    private List<ItemStack> createMiningDrops(@Nullable BlockEntity blockEntity) {
+        if (blockEntity instanceof TrinityPatternCoreBlockEntity patternCore) {
+            return patternCore.getMiningDrops();
+        }
+        Data_Energistics.LOGGER.error("Cannot create Trinity pattern core drops without its block entity");
+        return List.of();
+    }
+}

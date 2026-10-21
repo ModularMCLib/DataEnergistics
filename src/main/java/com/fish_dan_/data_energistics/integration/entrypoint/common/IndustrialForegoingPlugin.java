@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.integration.entrypoint.common;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.blockentity.tower.energy.access.VerifiedUnlimitedEnergyAccess;
+import com.fish_dan_.data_energistics.common.blockentity.tower.energy.access.VerifiedUnlimitedEnergyAccess;
 import com.fish_dan_.data_energistics.integration.technology.industrialforegoing.energy.IndustrialForegoingEnergyEndpointIntegration;
 
 @DataEnergisticsEntrypoint(requiredMods = "industrialforegoing")

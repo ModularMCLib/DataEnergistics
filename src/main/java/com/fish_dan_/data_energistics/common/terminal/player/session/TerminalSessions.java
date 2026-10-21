@@ -2,6 +2,7 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.common.menu.terminal.TerminalAeMenuLocator;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
@@ -9,7 +10,6 @@ import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalPick
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalSavedData;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
-import com.fish_dan_.data_energistics.menu.terminal.TerminalAeMenuLocator;
 
 import appeng.api.stacks.AEItemKey;
 

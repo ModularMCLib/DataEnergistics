@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.blockentity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.tower.DataDistributionTowerBlock;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.common.block.tower.DataDistributionTowerBlock;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;

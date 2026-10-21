@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.orbital.astronomy;
 
-import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

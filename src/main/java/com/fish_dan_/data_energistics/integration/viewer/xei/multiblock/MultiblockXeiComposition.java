@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.multiblock;
 
+import com.fish_dan_.data_energistics.common.gui.multiblock.autobuild.AutoBuildComposition;
+import com.fish_dan_.data_energistics.common.gui.multiblock.preview.StructurePreviewUi;
+import com.fish_dan_.data_energistics.common.gui.multiblock.preview.StructurePreviewUiFactory;
+import com.fish_dan_.data_energistics.common.gui.trinity.layout.TrinityUiNbtLayouts;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalog;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewCatalogSnapshot;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
@@ -10,10 +14,6 @@ import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSel
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewTierDomain;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.SubstructurePreviewSpec;
-import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.autobuild.AutoBuildComposition;
-import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUi;
-import com.fish_dan_.data_energistics.gui.ldlib2.multiblock.preview.StructurePreviewUiFactory;
-import com.fish_dan_.data_energistics.gui.ldlib2.trinity.layout.TrinityUiNbtLayouts;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

@@ -138,7 +138,21 @@ side = "BOTH"
 modId = "ae2cs"
 type = "optional"
 versionRange = "[0,)"
-ordering = "NONE"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
+modId = "extendedae"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
+modId = "megacells"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.entity.cannon;
 
-import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
+import com.fish_dan_.data_energistics.common.entity.projectile.MatterConvergingBoltEntity;
 
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;

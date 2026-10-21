@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.patternprovider;
 
-import com.fish_dan_.data_energistics.accessor.patternprovider.PatternProviderMenuAccessor;
 import com.fish_dan_.data_energistics.client.screen.AePatternProviderSlotStylePatch;
 import com.fish_dan_.data_energistics.client.screen.ScreenSlotStylePatch;
 import com.fish_dan_.data_energistics.client.widget.PatternProviderRedstoneTuningButton;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.patternprovider.PatternProviderMenuAccessor;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.implementations.PatternProviderScreen;

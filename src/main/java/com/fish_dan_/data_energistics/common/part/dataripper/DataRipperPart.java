@@ -1,0 +1,514 @@
+package com.fish_dan_.data_energistics.common.part.dataripper;
+
+import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
+import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataRipperSchema;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.settings.DataRipperSettings;
+import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
+import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
+
+import appeng.api.config.Actionable;
+import appeng.api.config.Setting;
+import appeng.api.config.YesNo;
+import appeng.api.networking.GridFlags;
+import appeng.api.networking.IGridNode;
+import appeng.api.networking.security.IActionHost;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.ticking.IGridTickable;
+import appeng.api.networking.ticking.TickRateModulation;
+import appeng.api.networking.ticking.TickingRequest;
+import appeng.api.parts.IPartCollisionHelper;
+import appeng.api.parts.IPartItem;
+import appeng.api.parts.IPartModel;
+import appeng.api.util.IConfigManager;
+import appeng.api.util.IConfigManagerBuilder;
+import appeng.core.definitions.AEItems;
+import appeng.items.parts.PartModels;
+import appeng.me.helpers.IGridConnectedBlockEntity;
+import appeng.menu.MenuOpener;
+import appeng.menu.locator.MenuLocators;
+import appeng.parts.PartModel;
+import appeng.parts.automation.UpgradeablePart;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+
+import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Arrays;
+
+public class DataRipperPart extends UpgradeablePart implements IGridTickable {
+
+    private static final Logger LOGGER = Data_Energistics.LOGGER;
+    private static final ResourceLocation MODEL_BASE = ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_base");
+
+    @PartModels
+    private static final PartModel MODELS_OFF;
+    @PartModels
+    private static final PartModel MODELS_ON;
+    @PartModels
+    private static final PartModel MODELS_HAS_CHANNEL;
+
+    static {
+        MODELS_OFF = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_off"));
+        MODELS_ON = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_on"));
+        MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, ResourceLocation.fromNamespaceAndPath(Data_Energistics.MODID, "part/data_ripper_has_channel"));
+    }
+
+    private YesNo networkEnergySufficient = YesNo.YES;
+    private int cachedAeSpeedCards = -1;
+    private int cachedSaberSpeedCards = -1;
+    private int cachedSpeedProduct = -1;
+    private int cachedEnergyCards = -1;
+
+    public DataRipperPart(IPartItem<?> partItem) {
+        super(partItem);
+        this.getMainNode()
+                .setFlags(GridFlags.REQUIRE_CHANNEL)
+                .setIdlePowerUsage(2.0)
+                .addService(IGridTickable.class, this);
+    }
+
+    @Override
+    protected void registerSettings(IConfigManagerBuilder builder) {
+        super.registerSettings(builder);
+        builder.registerSetting(DataRipperSettings.ACCELERATE, YesNo.YES);
+        builder.registerSetting(DataRipperSettings.REDSTONE_CONTROL, YesNo.NO);
+    }
+
+    @Override
+    protected int getUpgradeSlots() {
+        return 18;
+    }
+
+    @Override
+    protected boolean isSleeping() {
+        if (this.getConfigManager().getSetting(DataRipperSettings.ACCELERATE) != YesNo.YES) {
+            return true;
+        }
+
+        if (this.getConfigManager().getSetting(DataRipperSettings.REDSTONE_CONTROL) != YesNo.YES) {
+            return false;
+        }
+
+        return !this.getHost().hasRedstone();
+    }
+
+    @Override
+    protected void onSettingChanged(IConfigManager manager, Setting<?> setting) {
+        var mainNode = this.getMainNode();
+        if (mainNode == null || mainNode.getGrid() == null || mainNode.getNode() == null) {
+            return;
+        }
+
+        if (this.isSleeping()) {
+            mainNode.getGrid().getTickManager().sleepDevice(mainNode.getNode());
+        } else {
+            mainNode.getGrid().getTickManager().wakeDevice(mainNode.getNode());
+        }
+    }
+
+    @Override
+    public void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
+        if (this.getConfigManager().getSetting(DataRipperSettings.REDSTONE_CONTROL) != YesNo.YES) {
+            return;
+        }
+
+        var mainNode = this.getMainNode();
+        if (mainNode == null || mainNode.getGrid() == null || mainNode.getNode() == null) {
+            return;
+        }
+
+        if (this.getHost().hasRedstone()) {
+            mainNode.getGrid().getTickManager().wakeDevice(mainNode.getNode());
+        } else {
+            mainNode.getGrid().getTickManager().sleepDevice(mainNode.getNode());
+        }
+    }
+
+    @Override
+    public boolean onUseWithoutItem(Player player, Vec3 pos) {
+        if (!this.isClientSide()) {
+            MenuOpener.open(DEMenus.DATA_RIPPER.get(), player, MenuLocators.forPart(this));
+        }
+        return true;
+    }
+
+    @Override
+    public IPartModel getStaticModels() {
+        if (this.isActive() && this.isPowered()) {
+            return MODELS_HAS_CHANNEL;
+        } else if (this.isPowered()) {
+            return MODELS_ON;
+        } else {
+            return MODELS_OFF;
+        }
+    }
+
+    @Override
+    public void getBoxes(IPartCollisionHelper bch) {
+        bch.addBox(3, 3, 14, 13, 13, 16);
+        bch.addBox(5, 5, 11, 11, 11, 14);
+    }
+
+    public boolean isNetworkEnergySufficient() {
+        return this.networkEnergySufficient == YesNo.YES;
+    }
+
+    @Override
+    public TickingRequest getTickingRequest(IGridNode node) {
+        return new TickingRequest(1, 1, this.isSleeping());
+    }
+
+    @Override
+    public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
+        if (!this.isAccelerating()) {
+            return TickRateModulation.IDLE;
+        }
+
+        if (this.isSleeping()) {
+            return TickRateModulation.SLEEP;
+        }
+
+        if (!this.isActive()) {
+            return TickRateModulation.IDLE;
+        }
+
+        int speed = this.calculateSpeed();
+        if (speed <= 0) {
+            return TickRateModulation.IDLE;
+        }
+
+        var level = this.getLevel();
+        var hostBlockEntity = this.getBlockEntity();
+        if (level == null || hostBlockEntity == null) {
+            return TickRateModulation.IDLE;
+        }
+
+        BlockPos targetPos = hostBlockEntity.getBlockPos().relative(this.getSide());
+        BlockState targetState = level.getBlockState(targetPos);
+        BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);
+
+        this.ticker(level, targetPos, targetState, targetBlockEntity, speed);
+        return TickRateModulation.IDLE;
+    }
+
+    public void saveChanges() {
+        this.getHost().markForSave();
+    }
+
+    private boolean isAccelerating() {
+        return this.getConfigManager().getSetting(DataRipperSettings.ACCELERATE) == YesNo.YES;
+    }
+
+    private void setNetworkEnergySufficient(boolean sufficient) {
+        YesNo next = sufficient ? YesNo.YES : YesNo.NO;
+        if (this.networkEnergySufficient != next) {
+            this.networkEnergySufficient = next;
+            this.saveChanges();
+        }
+    }
+
+    private void ticker(Level level, BlockPos targetPos, BlockState targetState, @Nullable BlockEntity targetBlockEntity, int speed) {
+        if (!this.isValidForTicking()) {
+            return;
+        }
+
+        TickContext tickContext = this.getTickContext(level, targetPos, targetState, targetBlockEntity);
+        if (tickContext.blacklisted()) {
+            return;
+        }
+
+        RandomTickTarget randomTickTarget = tickContext.randomTickTarget();
+        BlockEntityTicker<BlockEntity> ticker = tickContext.ticker();
+        GridTickTarget gridTickTarget = tickContext.gridTickTarget();
+        if (ticker == null && gridTickTarget == null && randomTickTarget == null) {
+            return;
+        }
+
+        double requiredPower = this.calculateRequiredPower(speed, tickContext.powerMultiplier());
+        if (!this.extractPower(requiredPower)) {
+            return;
+        }
+
+        if (ticker != null) {
+            this.performBlockEntityTicks(targetBlockEntity, ticker, speed);
+        }
+
+        if (gridTickTarget != null) {
+            this.performGridTicks(targetBlockEntity, gridTickTarget, speed);
+        }
+
+        if (randomTickTarget != null) {
+            this.performRandomTicks(randomTickTarget, speed);
+        }
+    }
+
+    private TickContext getTickContext(Level level, BlockPos targetPos, BlockState targetState, @Nullable BlockEntity targetBlockEntity) {
+        String blockId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock()).toString();
+        DataRipperSchema settings = DataEnergisticsConfiguration.INSTANCE.machines.dataRipper;
+        boolean blacklisted = ConfigParsingUtils.isBlockBlacklisted(
+                blockId,
+                ConfigParsingUtils.precompilePatterns(Arrays.asList(settings.blacklist)));
+        double powerMultiplier = ConfigParsingUtils.getMultiplierForBlock(
+                blockId,
+                ConfigParsingUtils.precompileMultipliers(
+                        settings.multipliers.patterns,
+                        settings.multipliers.values));
+        RandomTickTarget randomTickTarget = this.getRandomTickTarget(level, targetPos, targetState);
+        BlockEntityTicker<BlockEntity> ticker = targetBlockEntity != null ? this.getTicker(level, targetState, targetBlockEntity) : null;
+        GridTickTarget gridTickTarget = targetBlockEntity != null ? this.getGridTickTarget(targetBlockEntity) : null;
+        return new TickContext(
+                level,
+                targetPos,
+                targetState,
+                targetBlockEntity,
+                blacklisted,
+                powerMultiplier,
+                ticker,
+                gridTickTarget,
+                randomTickTarget);
+    }
+
+    private boolean isValidForTicking() {
+        var mainNode = this.getMainNode();
+        return mainNode != null && mainNode.getGrid() != null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, T blockEntity) {
+        return blockState.getTicker(level, (BlockEntityType<T>) blockEntity.getType());
+    }
+
+    @Nullable
+    private GridTickTarget getGridTickTarget(BlockEntity blockEntity) {
+        IGridNode node = this.getGridNode(blockEntity);
+        if (node == null || node.getGrid() == null) {
+            return null;
+        }
+
+        IGridTickable tickable = node.getService(IGridTickable.class);
+        if (tickable == null) {
+            return null;
+        }
+
+        return new GridTickTarget(node, tickable);
+    }
+
+    @Nullable
+    private IGridNode getGridNode(BlockEntity blockEntity) {
+        if (blockEntity instanceof IActionHost actionHost) {
+            IGridNode node = actionHost.getActionableNode();
+            if (node != null) {
+                return node;
+            }
+        }
+
+        if (blockEntity instanceof IGridConnectedBlockEntity gridConnectedBlockEntity) {
+            return gridConnectedBlockEntity.getMainNode().getNode();
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private RandomTickTarget getRandomTickTarget(Level level, BlockPos targetPos, BlockState targetState) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+
+        if (!targetState.isRandomlyTicking()) {
+            return null;
+        }
+
+        return new RandomTickTarget(serverLevel, targetPos);
+    }
+
+    private int calculateSpeed() {
+        int aeSpeedCardCount = this.getUpgrades().getInstalledUpgrades(AEItems.SPEED_CARD);
+        int saberCardCount = this.getUpgrades().getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get());
+        if (aeSpeedCardCount <= 0 && saberCardCount <= 0) {
+            this.cachedAeSpeedCards = 0;
+            this.cachedSaberSpeedCards = 0;
+            this.cachedSpeedProduct = 0;
+            return 0;
+        }
+
+        if (aeSpeedCardCount != this.cachedAeSpeedCards || saberCardCount != this.cachedSaberSpeedCards) {
+            this.cachedAeSpeedCards = aeSpeedCardCount;
+            this.cachedSaberSpeedCards = saberCardCount;
+            this.cachedSpeedProduct = PowerCalculationUtils.computeDataRipperProductWithCap(this.getUpgrades());
+        }
+        return this.cachedSpeedProduct;
+    }
+
+    private double calculateRequiredPower(int speed, double multiplier) {
+        int energyCardCount = this.getUpgrades().getInstalledUpgrades(AEItems.ENERGY_CARD);
+        int inverterCardCount = this.getUpgrades().getInstalledUpgrades(AEItems.INVERTER_CARD);
+        if (energyCardCount != this.cachedEnergyCards) {
+            this.cachedEnergyCards = energyCardCount;
+        }
+        double adjustedMultiplier = PowerCalculationUtils.adjustedExtraPowerMultiplier(multiplier, inverterCardCount);
+        return PowerCalculationUtils.computeDataRipperPower(speed, energyCardCount) * adjustedMultiplier;
+    }
+
+    private <T extends BlockEntity> void performBlockEntityTicks(T blockEntity, BlockEntityTicker<T> ticker, int speed) {
+        int additionalTicks = speed - 1;
+        if (additionalTicks <= 0) {
+            return;
+        }
+        if (blockEntity instanceof DataRipperBatchTickable batchTickable) {
+            invokeBlockEntityTickSafely(blockEntity, () -> batchTickable.advanceAdditionalTicks(additionalTicks));
+            return;
+        }
+
+        for (int i = 0; i < additionalTicks; i++) {
+            if (!invokeBlockEntityTickSafely(
+                    blockEntity,
+                    () -> ticker.tick(
+                            blockEntity.getLevel(),
+                            blockEntity.getBlockPos(),
+                            blockEntity.getBlockState(),
+                            blockEntity))) {
+                break;
+            }
+        }
+    }
+
+    private boolean invokeBlockEntityTickSafely(BlockEntity blockEntity, Runnable tick) {
+        try {
+            tick.run();
+            return true;
+        } catch (IllegalStateException e) {
+            if (e.getMessage() != null && e.getMessage().contains("LegacyRandomSource")) {
+                LOGGER.warn(
+                        "Detected random access conflict while accelerating block entity {} at {}. Stopping this acceleration pass.",
+                        blockEntity.getType(),
+                        blockEntity.getBlockPos());
+                return false;
+            }
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Failed while accelerating block entity {} at {}",
+                    blockEntity.getType(),
+                    blockEntity.getBlockPos(),
+                    e);
+            return false;
+        }
+    }
+
+    private void performGridTicks(BlockEntity blockEntity, GridTickTarget gridTickTarget, int speed) {
+        if (gridTickTarget.tickable().getTickingRequest(gridTickTarget.node()).isSleeping()) {
+            var grid = gridTickTarget.node().getGrid();
+            if (grid != null) {
+                grid.getTickManager().sleepDevice(gridTickTarget.node());
+            }
+            return;
+        }
+
+        for (int i = 0; i < speed - 1; i++) {
+            try {
+                TickRateModulation modulation = gridTickTarget.tickable().tickingRequest(gridTickTarget.node(), 1);
+                if (modulation == TickRateModulation.SLEEP) {
+                    var grid = gridTickTarget.node().getGrid();
+                    if (grid != null) {
+                        grid.getTickManager().sleepDevice(gridTickTarget.node());
+                    }
+                    break;
+                }
+            } catch (Exception e) {
+                LOGGER.error(
+                        "Failed while accelerating AE grid tick for block entity {} at {}",
+                        blockEntity.getType(),
+                        blockEntity.getBlockPos(),
+                        e);
+                break;
+            }
+        }
+    }
+
+    private void performRandomTicks(RandomTickTarget randomTickTarget, int speed) {
+        BlockState currentState = randomTickTarget.level().getBlockState(randomTickTarget.pos());
+        for (int i = 0; i < speed - 1; i++) {
+            try {
+                if (!currentState.isRandomlyTicking()) {
+                    break;
+                }
+
+                currentState.randomTick(randomTickTarget.level(), randomTickTarget.pos(), randomTickTarget.level().getRandom());
+            } catch (Exception e) {
+                LOGGER.error(
+                        "Failed while accelerating random tick block at {}",
+                        randomTickTarget.pos(),
+                        e);
+                break;
+            }
+        }
+    }
+
+    private boolean extractPower(double requiredPower) {
+        long requiredDataFlow = PowerCalculationUtils.toDataFlowCost(requiredPower);
+        if (requiredDataFlow <= 0L) {
+            return true;
+        }
+
+        try {
+            var mainNode = this.getMainNode();
+            if (mainNode == null || mainNode.getGrid() == null) {
+                this.setNetworkEnergySufficient(false);
+                return false;
+            }
+
+            var inventory = mainNode.getGrid().getStorageService().getInventory();
+            long simulated = inventory.extract(DataFlowKey.of(), requiredDataFlow, Actionable.SIMULATE, IActionSource.ofMachine(this));
+            if (simulated < requiredDataFlow) {
+                this.setNetworkEnergySufficient(false);
+                return false;
+            }
+
+            inventory.extract(DataFlowKey.of(), requiredDataFlow, Actionable.MODULATE, IActionSource.ofMachine(this));
+            this.setNetworkEnergySufficient(true);
+            return true;
+        } catch (RuntimeException exception) {
+            LOGGER.error(
+                    "Failed to extract {} Data Flow for accelerated ticks",
+                    requiredDataFlow,
+                    exception);
+            this.setNetworkEnergySufficient(false);
+            return false;
+        }
+    }
+
+    private record GridTickTarget(IGridNode node, IGridTickable tickable) {}
+
+    private record RandomTickTarget(ServerLevel level, BlockPos pos) {}
+
+    private record TickContext(
+                               Level level,
+                               BlockPos pos,
+                               BlockState state,
+                               @Nullable BlockEntity blockEntity,
+                               boolean blacklisted,
+                               double powerMultiplier,
+                               @Nullable BlockEntityTicker<BlockEntity> ticker,
+                               @Nullable GridTickTarget gridTickTarget,
+                               @Nullable RandomTickTarget randomTickTarget) {
+
+    }
+}

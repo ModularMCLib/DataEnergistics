@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.emi.recipe;
 
-import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
-import com.fish_dan_.data_energistics.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.common.item.carrier.RadixContainmentSphereItem;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;

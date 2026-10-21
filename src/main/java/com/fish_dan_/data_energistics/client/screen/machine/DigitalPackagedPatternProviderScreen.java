@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.menu.patternprovider.DigitalPackagedPatternProviderMenu;
+import com.fish_dan_.data_energistics.common.menu.patternprovider.DigitalPackagedPatternProviderMenu;
 
 import appeng.client.gui.implementations.PatternProviderScreen;
 import appeng.client.gui.style.ScreenStyle;

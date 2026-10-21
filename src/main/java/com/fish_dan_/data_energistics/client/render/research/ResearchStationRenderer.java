@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.research;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.research.ResearchStationBlock;
-import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
+import com.fish_dan_.data_energistics.common.block.research.ResearchStationBlock;
+import com.fish_dan_.data_energistics.common.blockentity.research.ResearchStationBlockEntity;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;

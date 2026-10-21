@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.common.crafting.pattern.matching;
 
 import com.fish_dan_.data_energistics.api.crafting.matching.ItemMatchingRule;
 import com.fish_dan_.data_energistics.api.crafting.matching.ProcessingMatchMode;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;

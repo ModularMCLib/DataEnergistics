@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.transfer;
 
-import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankingContext;
+import com.fish_dan_.data_energistics.common.menu.patternencoding.PatternEncodingRankingContext;
 
 import appeng.integration.modules.itemlists.EncodingHelper;
 import appeng.parts.encoding.EncodingMode;

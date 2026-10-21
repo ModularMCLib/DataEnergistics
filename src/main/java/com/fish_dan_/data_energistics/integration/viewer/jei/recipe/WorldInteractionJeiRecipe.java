@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
-import com.fish_dan_.data_energistics.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftRecipe;
+import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;

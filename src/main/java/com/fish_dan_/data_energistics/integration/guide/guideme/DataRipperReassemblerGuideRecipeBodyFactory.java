@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme;
 
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
 import com.fish_dan_.data_energistics.integration.guide.guideme.client.DataRipperReassemblerGuideRecipeBody;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
 
 import net.neoforged.fml.loading.FMLEnvironment;
 

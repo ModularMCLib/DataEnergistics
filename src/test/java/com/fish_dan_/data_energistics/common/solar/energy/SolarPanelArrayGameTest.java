@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.solar.energy;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.blockentity.machine.DataSolarPanelBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataSolarPanelBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.crafting.tree;
 
-import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanSessionTransfer;
+import com.fish_dan_.data_energistics.common.menu.crafting.tree.session.CraftingPlanSessionTransfer;
 
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.style.WidgetStyle;

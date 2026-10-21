@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.screen.powered;
 
 import com.fish_dan_.data_energistics.client.registry.DEKeyMappings;
-import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.item.powered.cannon.presentation.DigitizedWeaponName;
-import com.fish_dan_.data_energistics.menu.powered.MatterConvergingCrossbowConfigMenu;
+import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowMode;
+import com.fish_dan_.data_energistics.common.item.powered.cannon.presentation.DigitizedWeaponName;
+import com.fish_dan_.data_energistics.common.menu.powered.MatterConvergingCrossbowConfigMenu;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;

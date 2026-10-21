@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.storage;
 
-import com.fish_dan_.data_energistics.ae2.dataflow.DigitalStorageCellHandler;
+import com.fish_dan_.data_energistics.integration.ae.ae2.dataflow.DigitalStorageCellHandler;
 
 import appeng.api.storage.cells.ISaveProvider;
 import appeng.me.cells.BasicCellHandler;

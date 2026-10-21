@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.terminal.storage;
 
+import com.fish_dan_.data_energistics.client.gui.terminal.TerminalOverlayUi;
 import com.fish_dan_.data_energistics.client.screen.patternencoding.PatternEncodingUploadClient;
-import com.fish_dan_.data_energistics.gui.ldlib2.terminal.TerminalOverlayUi;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolder;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

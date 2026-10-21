@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.client.screen.terminal;
 
 import com.fish_dan_.data_energistics.client.screen.Ae2NativeSlotHighlight;
-import com.fish_dan_.data_energistics.menu.universal.UniversalCraftingTermMenu;
+import com.fish_dan_.data_energistics.common.menu.universal.UniversalCraftingTermMenu;
 
 import appeng.client.gui.me.items.CraftingTermScreen;
 import appeng.client.gui.style.ScreenStyle;

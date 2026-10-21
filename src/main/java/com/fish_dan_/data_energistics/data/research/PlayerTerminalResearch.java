@@ -1,14 +1,14 @@
 package com.fish_dan_.data_energistics.data.research;
 
-import com.fish_dan_.data_energistics.ae2.key.DataKey;
-import com.fish_dan_.data_energistics.ae2.key.EchoKey;
-import com.fish_dan_.data_energistics.ae2.key.StellarFluxKey;
 import com.fish_dan_.data_energistics.api.research.RegisterResearchNodesEvent;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.DataKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.EchoKey;
+import com.fish_dan_.data_energistics.integration.ae.ae2.key.StellarFluxKey;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.core.definitions.AEItems;

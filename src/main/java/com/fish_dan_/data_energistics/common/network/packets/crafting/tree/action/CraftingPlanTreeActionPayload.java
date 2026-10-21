@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.menu.crafting.tree.CraftingPlanTreeMenu;
+import com.fish_dan_.data_energistics.common.menu.crafting.tree.CraftingPlanTreeMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

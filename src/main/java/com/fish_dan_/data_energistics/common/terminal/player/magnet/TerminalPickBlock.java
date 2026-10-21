@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.common.terminal.player.magnet;
 
+import com.fish_dan_.data_energistics.common.menu.terminal.TerminalPickBlockMenuLocator;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
-import com.fish_dan_.data_energistics.menu.terminal.TerminalPickBlockMenuLocator;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;

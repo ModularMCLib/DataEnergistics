@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.gui.GenericStackDisplayHelper;
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
-import com.fish_dan_.data_energistics.menu.machine.DataRipperReassemblerMenu;
+import com.fish_dan_.data_energistics.common.blockentity.storage.DigitalStorageDepotOutputType;
+import com.fish_dan_.data_energistics.common.menu.machine.DataRipperReassemblerMenu;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.Settings;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.resonance;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.block.TuningForkBlock;
+import com.fish_dan_.data_energistics.common.block.resonance.TuningForkBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;

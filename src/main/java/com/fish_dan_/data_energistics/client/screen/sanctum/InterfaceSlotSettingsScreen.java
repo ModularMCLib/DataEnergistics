@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.client.screen.sanctum;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorPolicy;
 import com.fish_dan_.data_energistics.client.crafting.NumberEntryWidgetValidationRegistry;
 import com.fish_dan_.data_energistics.client.screen.machine.DataSanctumLargeInterfaceScreen;
-import com.fish_dan_.data_energistics.menu.sanctum.DataSanctumLargeInterfaceMenu;
+import com.fish_dan_.data_energistics.common.menu.sanctum.DataSanctumLargeInterfaceMenu;
 import com.fish_dan_.data_energistics.mixin.ae.ae2.client.crafting.NumberEntryWidgetAccessor;
 
 import appeng.api.stacks.AEKey;

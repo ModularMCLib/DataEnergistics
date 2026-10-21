@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics;
 
-import com.fish_dan_.data_energistics.bootstrap.common.CommonProxy;
+import com.fish_dan_.data_energistics.common.CommonProxy;
 import com.fish_dan_.data_energistics.util.LogPairs;
 
 import net.minecraft.client.Minecraft;

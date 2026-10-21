@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.common.research.crafting;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.research.ResearchInput;
 import com.fish_dan_.data_energistics.api.research.ResearchNode;
-import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
+import com.fish_dan_.data_energistics.common.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchMaterialFavoritesPayload;
 
 import appeng.api.config.Actionable;

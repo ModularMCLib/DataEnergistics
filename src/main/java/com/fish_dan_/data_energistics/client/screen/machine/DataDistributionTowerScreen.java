@@ -1,18 +1,18 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.ConnectionMode;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.RangeAdjustmentMode;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetKind;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferInfo;
-import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferMode;
-import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerVirtualDeviceState;
 import com.fish_dan_.data_energistics.client.render.overlay.DataDistributionTowerSelectionHighlighter;
 import com.fish_dan_.data_energistics.client.screen.base.AETextFieldInteraction;
 import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerConnectionModeButton;
 import com.fish_dan_.data_energistics.client.widget.DataDistributionTowerTextureToggleButton;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.ConnectionMode;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.RangeAdjustmentMode;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.TargetKind;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferInfo;
+import com.fish_dan_.data_energistics.common.blockentity.tower.DataDistributionTowerBlockEntity.TargetTransferMode;
+import com.fish_dan_.data_energistics.common.blockentity.tower.network.domain.TowerVirtualDeviceState;
+import com.fish_dan_.data_energistics.common.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetEntry;
-import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
 import com.fish_dan_.data_energistics.util.FormattingUtils;
 import com.fish_dan_.data_energistics.util.TextSearch;
 

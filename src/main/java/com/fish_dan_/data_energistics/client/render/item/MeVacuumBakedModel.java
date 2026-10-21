@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.client.render.item;
 
-import com.fish_dan_.data_energistics.item.vacuum.MeVacuumMenuHost;
+import com.fish_dan_.data_energistics.common.item.vacuum.MeVacuumMenuHost;
 
 import appeng.api.client.StorageCellModels;
 

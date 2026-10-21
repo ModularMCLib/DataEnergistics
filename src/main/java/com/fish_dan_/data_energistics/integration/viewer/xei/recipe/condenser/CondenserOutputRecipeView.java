@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.recipe.condenser;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipe;
+import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipe;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.condenser;
 
-import com.fish_dan_.data_energistics.accessor.condenser.CondenserMenuAccessor;
 import com.fish_dan_.data_energistics.client.widget.CondenserOutputModeButton;
+import com.fish_dan_.data_energistics.integration.ae.ae2.accessor.condenser.CondenserMenuAccessor;
 import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.WidgetContainerAccessor;
 
 import appeng.client.gui.AEBaseScreen;

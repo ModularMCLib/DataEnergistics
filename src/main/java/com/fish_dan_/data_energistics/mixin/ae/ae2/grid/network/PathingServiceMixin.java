@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.mixin.ae.ae2.grid.network;
 
-import com.fish_dan_.data_energistics.ae2.grid.PathingTopologyRevision;
-import com.fish_dan_.data_energistics.ae2.grid.VirtualGridBridge;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.PathingTopologyRevision;
+import com.fish_dan_.data_energistics.integration.ae.ae2.grid.VirtualGridBridge;
 
 import appeng.me.Grid;
 import appeng.me.service.PathingService;

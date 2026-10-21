@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
-import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorAutoExportButton;
 import com.fish_dan_.data_energistics.client.widget.DataExtractorToggleButton;
 import com.fish_dan_.data_energistics.client.widget.OutputSideActionButton;
-import com.fish_dan_.data_energistics.menu.machine.DataExtractorMenu;
+import com.fish_dan_.data_energistics.common.blockentity.machine.DataExtractorAutoExportMode;
+import com.fish_dan_.data_energistics.common.menu.machine.DataExtractorMenu;
 
 import appeng.client.gui.Icon;
 import appeng.client.gui.implementations.UpgradeableScreen;

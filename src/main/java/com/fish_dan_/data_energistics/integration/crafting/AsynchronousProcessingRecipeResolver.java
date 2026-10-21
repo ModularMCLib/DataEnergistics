@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.integration.crafting;
 
+import com.fish_dan_.data_energistics.api.recipe.ProcessingRecipeResolver;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipeInput;
+import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.ae.advancedae.reassembler.AdvancedAeReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.integration.ae.extendedae.reassembler.ExtendedAeReassemblerRecipeResolver;
-import com.fish_dan_.data_energistics.recipe.ProcessingRecipeResolver;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataReassemblerRecipeResolver;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipeInput;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -42,14 +42,14 @@ public final class AsynchronousProcessingRecipeResolver implements ProcessingRec
         }
 
         RecipeManager recipeManager = level.getRecipeManager();
-        if (MOD.isExtendedAeLoaded()) {
+        if (MOD.EXTENDED_AE.isLoaded()) {
             RecipeHolder<DataRipperReassemblerRecipe> recipe = ExtendedAeReassemblerRecipeResolver.findRecipe(
                     recipeManager, input, level, excludedRecipeIds);
             if (recipe != null) {
                 return recipe;
             }
         }
-        if (MOD.isAdvancedAeLoaded()) {
+        if (MOD.ADVANCED_AE.isLoaded()) {
             return AdvancedAeReassemblerRecipeResolver.findRecipe(
                     recipeManager, input, level, excludedRecipeIds);
         }
@@ -68,14 +68,14 @@ public final class AsynchronousProcessingRecipeResolver implements ProcessingRec
         }
 
         RecipeManager recipeManager = level.getRecipeManager();
-        if (MOD.isExtendedAeLoaded()) {
+        if (MOD.EXTENDED_AE.isLoaded()) {
             RecipeHolder<DataRipperReassemblerRecipe> recipe = ExtendedAeReassemblerRecipeResolver.findById(
                     recipeManager, recipeId, input, level);
             if (recipe != null) {
                 return recipe;
             }
         }
-        if (MOD.isAdvancedAeLoaded()) {
+        if (MOD.ADVANCED_AE.isLoaded()) {
             return AdvancedAeReassemblerRecipeResolver.findById(
                     recipeManager, recipeId, input, level);
         }

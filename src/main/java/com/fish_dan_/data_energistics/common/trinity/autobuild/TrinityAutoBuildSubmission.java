@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.trinity.autobuild;
 
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.preview.projection.ProjectionFingerprint;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 /**
  * Revision-bound automatic-build choice emitted by the Trinity UI before transport validation.

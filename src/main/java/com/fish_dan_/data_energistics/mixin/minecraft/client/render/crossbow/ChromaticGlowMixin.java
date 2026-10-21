@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.mixin.minecraft.client.render.crossbow;
 
-import com.fish_dan_.data_energistics.effect.ChromaticGlow;
+import com.fish_dan_.data_energistics.common.effect.ChromaticGlow;
 
 import net.minecraft.world.entity.Entity;
 

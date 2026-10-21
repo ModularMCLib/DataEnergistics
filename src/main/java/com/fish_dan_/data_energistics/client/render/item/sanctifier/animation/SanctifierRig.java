@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.render.item.sanctifier.animation;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.world.entity.HumanoidArm;
@@ -11,7 +11,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /** Rigid grip anchors shared by the visible hands, blade and scabbard. Coordinates are blocks. */
-final class SanctifierRig {
+public final class SanctifierRig {
 
     // The usable hilt is 11.35 model units: a four-pixel hand covers about 46% at this scale.
     static final float SCALE = 0.76F;
@@ -39,22 +39,25 @@ final class SanctifierRig {
     }
 
     /** Short latch clearance followed by a lever motion through the open rear spine. */
-    static Matrix4f unhinged(Matrix4f scabbard, float draw) {
+    public static Matrix4f unhinged(Matrix4f scabbard, float draw) {
         return new Matrix4f(scabbard).translate(-3.2F * ramp(draw, 0.50F, 0.62F) / 16,
                 -1.2F * ramp(draw, 0.18F, 0.27F) / 16, 0)
                 .translate(RELEASE_PIVOT).rotateZ(radians(40 * opening(draw)))
                 .translate(-RELEASE_PIVOT.x, -RELEASE_PIVOT.y, -RELEASE_PIVOT.z);
     }
 
-    static float ready(float draw) {
+    /** Blends a finite draw fraction in [0, 1] from hinge release into the normal sword grip. */
+    public static float ready(float draw) {
         return ramp(draw, 0.64F, 0.79F);
     }
 
-    static float latch(float draw) {
+    /** Returns the latch rotation in degrees for a finite draw fraction in [0, 1]. */
+    public static float latch(float draw) {
         return ramp(draw, 0.18F, 0.28F) * 38;
     }
 
-    static float ignition(float draw) {
+    /** Returns the illuminated blade length fraction for a finite draw fraction in [0, 1]. */
+    public static float ignition(float draw) {
         return ramp(draw, 0.57F, 0.92F);
     }
 
@@ -92,7 +95,8 @@ final class SanctifierRig {
                 -90 + 15 * sign);
     }
 
-    static Frame thirdPerson(HumanoidModel<?> model, LivingEntity entity, float draw) {
+    /** Samples the current player model on the render thread; returned matrices belong to this frame. */
+    public static Frame thirdPerson(HumanoidModel<?> model, LivingEntity entity, float draw) {
         Matrix4f holster = holster(model);
         if (!entity.getOffhandItem().isEmpty()) {
             Matrix4f sword = unhinged(holster, draw);
@@ -110,7 +114,8 @@ final class SanctifierRig {
                 .rotateY(radians(sign * 24)).scale(SCALE).translate(-SWORD_GRIP.x, -SWORD_GRIP.y, -SWORD_GRIP.z);
     }
 
-    static FirstPersonFrame firstPerson(HumanoidArm mainArm, SanctifierAnimationStates.Input input) {
+    /** Builds owned hand and weapon matrices from a client animation sample without advancing its clocks. */
+    public static FirstPersonFrame firstPerson(HumanoidArm mainArm, SanctifierAnimationStates.Input input) {
         float draw = input.draw();
         var combat = SanctifierAnimation.sample(draw, 0, input.charge(), input.age());
         float sign = mainArm == HumanoidArm.RIGHT ? 1 : -1;
@@ -156,7 +161,7 @@ final class SanctifierRig {
     }
 
     /** Quaternion interpolation keeps the rigid scabbard intact throughout the lift. */
-    static Matrix4f blend(Matrix4f from, Matrix4f to, float fraction) {
+    public static Matrix4f blend(Matrix4f from, Matrix4f to, float fraction) {
         Vector3f position = from.getTranslation(new Vector3f()).lerp(to.getTranslation(new Vector3f()), fraction);
         Vector3f scale = from.getScale(new Vector3f()).lerp(to.getScale(new Vector3f()), fraction);
         Quaternionf rotation = from.getUnnormalizedRotation(new Quaternionf())
@@ -187,7 +192,9 @@ final class SanctifierRig {
         return (float) Math.toRadians(value);
     }
 
-    record Frame(Matrix4f sword, Matrix4f scabbard) {}
+    /** Frame-owned block-space transforms consumed by the model and trail renderers. */
+    public record Frame(Matrix4f sword, Matrix4f scabbard) {}
 
-    record FirstPersonFrame(Frame assembly, Matrix4f mainHand, Matrix4f supportHand) {}
+    /** Adds matching player hand transforms to one first-person weapon frame. */
+    public record FirstPersonFrame(Frame assembly, Matrix4f mainHand, Matrix4f supportHand) {}
 }

@@ -1,5 +1,5 @@
 /**
- * Rigid OBJ parts and client-side presentation of the data sanctifier.
+ * Player rendering entry points and blade-trail presentation of the data sanctifier.
  */
 @NullMarked
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;

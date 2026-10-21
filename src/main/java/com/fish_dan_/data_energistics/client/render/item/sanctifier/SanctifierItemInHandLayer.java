@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
+
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;

@@ -1,5 +1,7 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
+
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.entity.HumanoidArm;

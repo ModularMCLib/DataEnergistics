@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierRig;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierBakedModel;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;

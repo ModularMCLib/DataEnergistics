@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.render.item.sanctifier.model;
 
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;

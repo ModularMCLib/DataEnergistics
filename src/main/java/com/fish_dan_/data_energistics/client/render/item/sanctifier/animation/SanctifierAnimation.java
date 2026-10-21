@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.render.item.sanctifier.animation;
 
 /**
  * A cosmetic draw sequence. One instance belongs to one rendered hand and is advanced

@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.render.item.crossbow;
+package com.fish_dan_.data_energistics.client.registry.item;
 
 import com.fish_dan_.data_energistics.common.data.DEEnumProxies;
 import com.fish_dan_.data_energistics.common.item.powered.MatterConvergingCrossbowItem;

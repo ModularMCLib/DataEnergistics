@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;
 
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierRig;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierBakedModel;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.powered.sanctifier.SanctifierCarryState;
 

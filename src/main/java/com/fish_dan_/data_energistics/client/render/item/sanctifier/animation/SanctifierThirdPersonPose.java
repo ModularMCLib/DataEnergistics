@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.render.item.sanctifier.animation;
 
 import com.fish_dan_.data_energistics.common.data.DEEnumProxies;
 

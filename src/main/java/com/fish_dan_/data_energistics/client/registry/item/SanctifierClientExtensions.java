@@ -1,5 +1,6 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.registry.item;
 
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
 import com.fish_dan_.data_energistics.common.data.DEEnumProxies;
 
 import net.minecraft.client.Minecraft;

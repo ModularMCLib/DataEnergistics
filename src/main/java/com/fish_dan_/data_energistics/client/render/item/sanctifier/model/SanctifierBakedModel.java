@@ -1,7 +1,10 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.render.item.sanctifier.model;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierGeometry.Part;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimation;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierAnimationStates;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierRig;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierGeometry.Part;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -44,7 +47,7 @@ import java.util.EnumMap;
 /**
  * Per-render models keep entity/hand poses separate, including both hands and inventory previews.
  */
-final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
+public final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
 
     private final EnumMap<Part, ObjectList<BakedQuad>> parts;
     private final ItemOverrides overrides;
@@ -77,14 +80,15 @@ final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     /** Resolve on each render so a resource reload cannot leave stale sprites in the carry layer. */
-    static @Nullable SanctifierBakedModel current() {
+    public static @Nullable SanctifierBakedModel current() {
         BakedModel model = Minecraft.getInstance().getModelManager()
                 .getModel(ModelResourceLocation.inventory(Data_Energistics.id("data_sanctifier")));
         return model instanceof SanctifierBakedModel sanctifier ? sanctifier : null;
     }
 
-    void renderAssembly(ItemStack stack, PoseStack poses, MultiBufferSource buffers, int light,
-                        SanctifierRig.Frame frame, float draw, boolean powered, boolean includeScabbard) {
+    /** Draws a render-thread frame with this resource generation's quads; pose-stack changes are restored. */
+    public void renderAssembly(ItemStack stack, PoseStack poses, MultiBufferSource buffers, int light,
+                               SanctifierRig.Frame frame, float draw, boolean powered, boolean includeScabbard) {
         VertexConsumer vertices = ItemRenderer.getFoilBufferDirect(buffers, Sheets.cutoutBlockSheet(), false, stack.hasFoil());
         float ignition = SanctifierRig.ignition(draw);
         Matrix4f edge = new Matrix4f(frame.sword()).translate(0, 8.0F / 16, 0)

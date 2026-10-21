@@ -16,7 +16,7 @@ import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternPr
 import com.fish_dan_.data_energistics.client.render.ClientRendererRegistrar;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierModelLoader;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.model.SanctifierModelLoader;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
 import com.fish_dan_.data_energistics.client.screen.ClientScreenRegistrar;
 import com.fish_dan_.data_energistics.common.data.DEFluids;

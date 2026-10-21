@@ -1,4 +1,4 @@
-package com.fish_dan_.data_energistics.client.render.item.sanctifier;
+package com.fish_dan_.data_energistics.client.render.item.sanctifier.animation;
 
 import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.item.powered.PoweredEnergyItem;
@@ -23,27 +23,29 @@ public final class SanctifierAnimationStates {
     private SanctifierAnimationStates() {}
 
     /** Main-hand selection drives drawing independently of the item's energy. */
-    static float draw(LivingEntity entity, float partialTick) {
+    public static float draw(LivingEntity entity, float partialTick) {
         HandAnimation tracked = animation(entity, InteractionHand.MAIN_HAND);
         return tracked == null ? 0 : tracked.animation().draw(partialTick);
     }
 
     /** The old stack remains visual-only until sheathing finishes; inventory selection is never delayed. */
-    static ItemStack renderStack(LivingEntity entity) {
+    public static ItemStack renderStack(LivingEntity entity) {
         HandAnimation tracked = animation(entity, InteractionHand.MAIN_HAND);
         return tracked == null ? ItemStack.EMPTY : tracked.stack();
     }
 
-    static boolean isSheathing(LivingEntity entity) {
+    /** Client-thread query; a retained main-hand snapshot indicates an unfinished return to the sheath. */
+    public static boolean isSheathing(LivingEntity entity) {
         return !isSanctifier(entity.getMainHandItem()) && !renderStack(entity).isEmpty();
     }
 
-    static boolean usesSupportHand(LivingEntity entity, float partialTick) {
+    /** Client-thread query for an empty support hand during the sampled draw or sheath transition. */
+    public static boolean usesSupportHand(LivingEntity entity, float partialTick) {
         return entity.getOffhandItem().isEmpty() && SanctifierRig.support(draw(entity, partialTick)) > 0;
     }
 
     /** Samples the item's mechanical and vanilla attack clocks without advancing either. */
-    static Input input(LivingEntity entity, InteractionHand hand, float partialTick) {
+    public static Input input(LivingEntity entity, InteractionHand hand, float partialTick) {
         HandAnimation tracked = animation(entity, hand);
         boolean held = isSanctifier(entity.getItemInHand(hand));
         float swing = held && entity.swingingArm == hand ? entity.getAttackAnim(partialTick) : 0;
@@ -86,7 +88,8 @@ public final class SanctifierAnimationStates {
         HANDS.values().removeIf(EnumMap::isEmpty);
     }
 
-    static boolean isPowered(ItemStack stack) {
+    /** Reads the current energy without changing the stack; empty and non-powered items return false. */
+    public static boolean isPowered(ItemStack stack) {
         return stack.getItem() instanceof PoweredEnergyItem powered && powered.getAECurrentPower(stack) > 0;
     }
 
@@ -112,5 +115,5 @@ public final class SanctifierAnimationStates {
     private record HandAnimation(ItemStack stack, SanctifierAnimation animation) {}
 
     /** A render sample keeps the vanilla swing clock separate from the mechanical release. */
-    record Input(float draw, float swing, float charge, float age, boolean drawing) {}
+    public record Input(float draw, float swing, float charge, float age, boolean drawing) {}
 }

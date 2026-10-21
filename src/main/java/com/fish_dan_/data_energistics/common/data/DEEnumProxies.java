@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.data;
 
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowThirdPersonPose;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierThirdPersonPose;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierThirdPersonPose;
 
 import net.minecraft.client.model.HumanoidModel.ArmPose;
 import net.neoforged.api.distmarker.Dist;

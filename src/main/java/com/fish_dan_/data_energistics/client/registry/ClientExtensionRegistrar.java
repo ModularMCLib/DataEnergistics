@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.registry;
 
+import com.fish_dan_.data_energistics.client.registry.item.CrossbowClientExtensions;
+import com.fish_dan_.data_energistics.client.registry.item.SanctifierClientExtensions;
 import com.fish_dan_.data_energistics.client.render.item.MeVacuumItemRenderer;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
-import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowClientExtensions;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierClientExtensions;
 import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;

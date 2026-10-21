@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClient
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierFirstPersonRenderer;
-import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierThirdPersonPose;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.animation.SanctifierThirdPersonPose;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalProjectionVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalWorldProjectionRenderer;

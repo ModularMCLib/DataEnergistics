@@ -9,7 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.graph.Tri
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuPartitionProfile;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.ReusableCpuSessionLedger;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.cpu.ReusableCpuSessionLedgerNbtCodec;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.util.NbtCodecs;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData.RecoveryKey;

@@ -7,11 +7,29 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatte
 import com.fish_dan_.data_energistics.blockentity.tower.network.domain.TowerGridServices;
 import com.fish_dan_.data_energistics.common.crafting.dynamic.DynamicCraftingOutputAdapters;
 import com.fish_dan_.data_energistics.common.crafting.virtual.VirtualCraftingOutputAdapters;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEChunkGenerators;
+import com.fish_dan_.data_energistics.common.data.DECreativeTabs;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEEntities;
+import com.fish_dan_.data_energistics.common.data.DEFluids;
+import com.fish_dan_.data_energistics.common.data.DEGameEvents;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEMobEffects;
+import com.fish_dan_.data_energistics.common.data.DEParticles;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.common.data.DESounds;
+import com.fish_dan_.data_energistics.common.data.DEStructures;
+import com.fish_dan_.data_energistics.common.data.DEUpgrades;
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsRegistrySnapshot;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.CraftingMachineCapacityAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.machine.PatternUploadWorkstationAdapters;
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
+import com.fish_dan_.data_energistics.common.entrypoint.terminal.UniversalTerminalAdapters;
 import com.fish_dan_.data_energistics.common.orbital.attack.entity.lifecycle.OrbitalErasureAttachments;
 import com.fish_dan_.data_energistics.common.orbital.control.ui.OrbitalControlPlayerMenu;
 import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChunkTickets;
@@ -22,29 +40,17 @@ import com.fish_dan_.data_energistics.common.trinity.host.TrinityDataCoreSyncAcc
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataExtractorRulesConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
+import com.fish_dan_.data_energistics.integration.ae.advancedae.upgrades.AdvancedAeUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.ae2cs.upgrades.Ae2CrystalScienceUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.appflux.upgrades.AppliedFluxUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.appliedcreate.upgrades.AppliedCreateUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.extendedae.upgrades.ExtendedAeUpgradeRegistration;
+import com.fish_dan_.data_energistics.integration.ae.megacells.upgrades.MegaCellsUpgradeRegistration;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosOrbitalControlTerminalAccess;
 import com.fish_dan_.data_energistics.integration.library.ftbultimine.mining.DataCrystalPickaxeFtbUltimineCompat;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.FtbChunksOrbitalClaimHints;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotKeyContainerItemStrategy;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEChunkGenerators;
-import com.fish_dan_.data_energistics.registry.DECreativeTabs;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEEntities;
-import com.fish_dan_.data_energistics.registry.DEFluids;
-import com.fish_dan_.data_energistics.registry.DEGameEvents;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
-import com.fish_dan_.data_energistics.registry.DEMobEffects;
-import com.fish_dan_.data_energistics.registry.DEParticles;
-import com.fish_dan_.data_energistics.registry.DERecipes;
-import com.fish_dan_.data_energistics.registry.DESounds;
-import com.fish_dan_.data_energistics.registry.DEStructures;
-import com.fish_dan_.data_energistics.registry.DEUpgrades;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
-import com.fish_dan_.data_energistics.registry.UniversalTerminalAdapters;
 
 import appeng.api.features.HotkeyAction;
 
@@ -115,13 +121,31 @@ public class CommonProxy {
                     snapshot.patternProviderWorkstationSourceRegistrations());
             AdaptivePatternProviderResolver.install(snapshot.adaptivePatternProviderRegistrations());
             DEUpgrades.init();
+            if (MOD.ADVANCED_AE.isLoaded()) {
+                AdvancedAeUpgradeRegistration.register();
+            }
+            if (MOD.AE2CS.isLoaded()) {
+                Ae2CrystalScienceUpgradeRegistration.register();
+            }
+            if (MOD.APPFLUX.isLoaded()) {
+                AppliedFluxUpgradeRegistration.register();
+            }
+            if (MOD.APPLIED_CREATE.isLoaded()) {
+                AppliedCreateUpgradeRegistration.register();
+            }
+            if (MOD.EXTENDED_AE.isLoaded()) {
+                ExtendedAeUpgradeRegistration.register();
+            }
+            if (MOD.MEGA_CELLS.isLoaded()) {
+                MegaCellsUpgradeRegistration.register();
+            }
             OrbitalControlPlayerMenu.register();
             HotkeyAction.register(TerminalSessions::stowMainHand, "ae2wtlib_stow");
-            if (MOD.isCuriosLoaded()) {
+            if (MOD.CURIOS.isLoaded()) {
                 CuriosDataDistributionConnectorAccess.register();
                 CuriosOrbitalControlTerminalAccess.register();
             }
-            if (MOD.isFtbChunksLoaded()) {
+            if (MOD.FTB_CHUNKS.isLoaded()) {
                 OrbitalClaimHints.install(FtbChunksOrbitalClaimHints::isClaimed);
                 Data_Energistics.LOGGER.info("Registered FTB Chunks orbital tactical-map claim hints");
             }

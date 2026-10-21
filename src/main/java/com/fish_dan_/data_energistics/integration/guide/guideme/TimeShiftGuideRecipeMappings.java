@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.integration.guide.guideme;
 
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftIngredient;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftRecipe;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftTimeCondition;
-import com.fish_dan_.data_energistics.registry.DERecipes;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftIngredient;
+import com.fish_dan_.data_energistics.api.recipe.timeshift.TimeShiftRecipe;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.common.recipe.condition.TimeShiftTimeCondition;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;

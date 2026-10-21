@@ -399,22 +399,21 @@ final class TrinityDataCoreCpuLogic {
     }
 
     private void prepareTick(long currentTick, CraftingDispatchBudget dispatchBudget) {
-        if (this.preparedServerTick == currentTick) {
-            return;
-        }
         if (this.preparedServerTick > currentTick) {
             throw new IllegalStateException(
                     "Trinity worker tick moved backwards from " + this.preparedServerTick + " to " + currentTick);
         }
-        this.preparedServerTick = currentTick;
         if (!this.cpu.isOnline()) {
             cancelPendingDispatch();
             return;
         }
-        this.cantStoreItems = false;
-        IGrid reusableGrid = this.cpu.grid();
-        if (reusableGrid != null) {
-            this.reusableDispatch.synchronize(craftingProviderPublications((CraftingService) reusableGrid.getCraftingService()), currentTick);
+        if (this.preparedServerTick != currentTick) {
+            this.preparedServerTick = currentTick;
+            this.cantStoreItems = false;
+            IGrid reusableGrid = this.cpu.grid();
+            if (reusableGrid != null) {
+                this.reusableDispatch.synchronize(craftingProviderPublications((CraftingService) reusableGrid.getCraftingService()), currentTick);
+            }
         }
         if (this.job == null) {
             recoverVirtualCompletions();
@@ -607,6 +606,13 @@ final class TrinityDataCoreCpuLogic {
         int passes = 0;
         IntSet inspectedStages = new IntOpenHashSet();
         while (passes < maxPatterns && !dispatchWindow.isExhausted() && this.job == currentJob) {
+            if (!drainVirtualCompletions(currentJob)) {
+                finishJob(false);
+                break;
+            }
+            if (this.job != currentJob) {
+                break;
+            }
             CraftingExecutionOutcome outcome = executeTrinityCraftingOne(
                     currentJob,
                     craftingService,
@@ -1351,9 +1357,8 @@ final class TrinityDataCoreCpuLogic {
             proposalDecision = TrinityWorkerProposalCoordinator.Empty.INSTANCE;
             synchronousFallback = true;
         }
-        CraftingDispatchProposal selectedProposal = proposalDecision instanceof TrinityWorkerProposalCoordinator.Ready(CraftingDispatchProposal proposal) ?
+        CraftingDispatchProposal previousProposal = proposalDecision instanceof TrinityWorkerProposalCoordinator.Ready(CraftingDispatchProposal proposal) ?
                 proposal : null;
-        boolean asynchronousSelection = selectedProposal != null;
 
         ExtractedPatternInputs prototype;
         long maximumCount;
@@ -1362,12 +1367,12 @@ final class TrinityDataCoreCpuLogic {
         ObjectList<ProviderCapacitySnapshot> snapshots;
         var capacityScope = dispatchWindow.tryBeginProviderCapacityCapture();
         if (capacityScope == null) {
-            return settleProposal(workIdentity, asynchronousSelection, ProviderDispatchOutcome.NONE);
+            return settleProposal(workIdentity, previousProposal != null, ProviderDispatchOutcome.NONE);
         }
         try (capacityScope) {
             prototype = capturePatternInputPrototype(extractionDetails, level);
             if (prototype == null || dispatchWindow.isExhausted()) {
-                return settleProposal(workIdentity, asynchronousSelection, ProviderDispatchOutcome.NONE);
+                return settleProposal(workIdentity, previousProposal != null, ProviderDispatchOutcome.NONE);
             }
 
             double prototypePower = CraftingCpuHelper.calculatePatternPower(prototype.inputHolder());
@@ -1375,7 +1380,7 @@ final class TrinityDataCoreCpuLogic {
             maximumCount = limitByOutputChunkSize(currentJob, prototype.waitingPerCraft(), maximumCount);
             maximumCount = limitByEnergy(prototypePower, maximumCount, energyService);
             if (maximumCount <= 0L || dispatchWindow.isExhausted()) {
-                return settleProposal(workIdentity, asynchronousSelection, ProviderDispatchOutcome.NONE);
+                return settleProposal(workIdentity, previousProposal != null, ProviderDispatchOutcome.NONE);
             }
 
             currentTick = TickHandler.instance().getCurrentTick();
@@ -1396,8 +1401,8 @@ final class TrinityDataCoreCpuLogic {
                 }
             }
         }
-        if (snapshots.isEmpty() && selectedProposal == null) {
-            return settleProposal(workIdentity, asynchronousSelection, ProviderDispatchOutcome.NONE);
+        if (snapshots.isEmpty() && previousProposal == null) {
+            return settleProposal(workIdentity, false, ProviderDispatchOutcome.NONE);
         }
         if (proposalDecision instanceof TrinityWorkerProposalCoordinator.Empty &&
                 !synchronousFallback &&
@@ -1432,6 +1437,12 @@ final class TrinityDataCoreCpuLogic {
         if (proposalDecision instanceof TrinityWorkerProposalCoordinator.Pending) {
             return ProviderDispatchOutcome.AWAITING_PROPOSAL;
         }
+        if (proposalDecision instanceof TrinityWorkerProposalCoordinator.NoCapacity) {
+            return ProviderDispatchOutcome.NONE;
+        }
+        CraftingDispatchProposal selectedProposal = proposalDecision instanceof TrinityWorkerProposalCoordinator.Ready(CraftingDispatchProposal proposal) ?
+                proposal : null;
+        boolean asynchronousSelection = selectedProposal != null;
         int physicalAttempts = 0;
         int inspectedSnapshots = 0;
         CraftingDispatchCursor searchCursor = this.capacitySliceCursor;
@@ -1913,14 +1924,20 @@ final class TrinityDataCoreCpuLogic {
             return ProviderDispatchOutcome.NONE;
         }
         switch (replacement) {
-            case TrinityWorkerProposalCoordinator.Pending pending -> {
+            case TrinityWorkerProposalCoordinator.Pending ignored -> {
                 return ProviderDispatchOutcome.AWAITING_PROPOSAL;
             }
-            case TrinityWorkerProposalCoordinator.Deferred deferred -> {
+            case TrinityWorkerProposalCoordinator.Ready ignored -> {
+                return ProviderDispatchOutcome.AWAITING_PROPOSAL;
+            }
+            case TrinityWorkerProposalCoordinator.NoCapacity ignored -> {
+                return ProviderDispatchOutcome.NONE;
+            }
+            case TrinityWorkerProposalCoordinator.Deferred ignored -> {
                 this.proposalRetryAt = Math.addExact(currentTick, dispatchBudget.retryBackoffTicks());
                 return ProviderDispatchOutcome.DEFERRED;
             }
-            case TrinityWorkerProposalCoordinator.Fallback fallback -> {
+            case TrinityWorkerProposalCoordinator.Fallback ignored -> {
                 return ProviderDispatchOutcome.NONE;
             }
             default -> {}
@@ -3575,6 +3592,9 @@ final class TrinityDataCoreCpuLogic {
                     this.pendingNoOutputCompletions.isEmpty() ?
                             TrinityWorkerSchedulingHint.idle() :
                             TrinityWorkerSchedulingHint.ready();
+        }
+        if (!this.pendingVirtualCompletions.isEmpty() || !this.pendingNoOutputCompletions.isEmpty()) {
+            return TrinityWorkerSchedulingHint.ready();
         }
         if (currentJob.suspended) {
             return TrinityWorkerSchedulingHint.waitingEvent();

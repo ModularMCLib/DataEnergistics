@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.block.patternprovider;
 
 import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import appeng.block.AEBaseEntityBlock;
 import appeng.block.crafting.PatternProviderBlock;

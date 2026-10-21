@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.blockentity.decor;
 
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;

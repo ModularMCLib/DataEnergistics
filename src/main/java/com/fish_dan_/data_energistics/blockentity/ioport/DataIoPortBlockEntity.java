@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.blockentity.ioport;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.ioport.DataIoPortTransfer;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.config.FullnessMode;
 import appeng.api.config.OperationMode;
@@ -143,10 +143,12 @@ public final class DataIoPortBlockEntity extends AENetworkedInvBlockEntity
         transferring = true;
         pulsePending = false;
         try {
+            int totalCards = 0;
+            for (ItemStack upgrade : upgrades) totalCards += upgrade.getCount();
             boolean changed = transfer.transfer(grid.getStorageService().getInventory(),
                     config.getSetting(Settings.OPERATION_MODE), config.getSetting(Settings.FULLNESS_MODE),
                     upgrades.getInstalledUpgrades(AEItems.SPEED_CARD),
-                    upgrades.getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()));
+                    upgrades.getInstalledUpgrades(DEItems.CARD_SABER_ENERGY.get()), totalCards);
             return !hasWork() ? TickRateModulation.SLEEP : changed ? TickRateModulation.URGENT : TickRateModulation.IDLE;
         } catch (RuntimeException exception) {
             failed = true;

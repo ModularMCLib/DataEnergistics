@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.block.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataTeleportAnchorBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.item.powered.CuttingKnifeTeleportData;
 import com.fish_dan_.data_energistics.item.powered.PoweredCuttingKnifeItem;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.Actionable;
 import appeng.api.util.AEColor;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.resonance;
 
 import com.fish_dan_.data_energistics.block.ResonanceCrystalClusterBlock;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;

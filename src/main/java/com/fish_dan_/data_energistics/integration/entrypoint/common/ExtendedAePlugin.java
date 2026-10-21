@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.integration.entrypoint.common;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsEntrypoint;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsPlugin;
 import com.fish_dan_.data_energistics.api.entrypoint.DataEnergisticsRegistry;
-import com.fish_dan_.data_energistics.registry.AdaptivePatternProviderRegistrationFactory;
+import com.fish_dan_.data_energistics.common.entrypoint.provider.AdaptivePatternProviderRegistrationFactory;
 
 /** Registers ExtendedAE pattern provider variants. */
 @DataEnergisticsEntrypoint(requiredMods = "extendedae")

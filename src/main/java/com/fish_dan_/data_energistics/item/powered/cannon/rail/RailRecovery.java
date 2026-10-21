@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.item.powered.cannon.rail;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.world.item.ItemStack;
 

@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.blockentity;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.EchoKey;
 import com.fish_dan_.data_energistics.block.TuningForkBaseBlock;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.resonance.TuningForkVariant;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.GridFlags;

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataAsynchronousProcessingFactoryBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.menu.SlotSemantic;

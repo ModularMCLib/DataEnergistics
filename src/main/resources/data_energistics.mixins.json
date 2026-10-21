@@ -106,6 +106,7 @@
 		"minecraft.packaged.PackagedBlockEntityTickMixin",
 		"minecraft.packaged.PackagedItemMergeMixin",
 		"minecraft.packaged.PackagedMachineRemovalMixin",
+		"minecraft.server.MinecraftServerTickMixin",
 		"minecraft.world.BlockRedstonePulseMixin",
 		"minecraft.world.ChunkUnloadOwnershipMixin",
 		"minecraft.world.FarmBlockMixin",

@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.block.ioport;
 
 import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.api.orientation.IOrientationStrategy;
 import appeng.api.orientation.OrientationStrategies;

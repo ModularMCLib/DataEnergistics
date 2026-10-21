@@ -11,9 +11,9 @@ import com.fish_dan_.data_energistics.blockentity.digitalsupply.DigitalSupplyInt
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumInterfaceBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.part.AdaptivePatternProviderPart;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.AECapabilities;
 import appeng.blockentity.networking.CableBusBlockEntity;

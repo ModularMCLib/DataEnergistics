@@ -21,7 +21,8 @@ import java.math.BigInteger;
 import java.util.function.LongSupplier;
 
 /**
- * Bounds physical crafting submissions for one AE grid tick while sharing provider state across Trinity runtimes.
+ * Bounds physical crafting submissions for one Minecraft server tick while sharing provider state across Trinity
+ * runtimes.
  *
  * <p>
  * Accounting is based on provider and pattern object identity. A {@link SubmissionScope} measures the complete
@@ -216,7 +217,7 @@ public final class CraftingDispatchWindow {
         if (serverBudget == null) {
             throw new IllegalArgumentException("Server crafting dispatch budget must not be null");
         }
-        this.limits = limits;
+        this.limits = serverBudget.planLimits(limits);
         this.nanoClock = nanoClock;
         this.serverBudget = serverBudget;
     }
@@ -337,7 +338,7 @@ public final class CraftingDispatchWindow {
     }
 
     private boolean hasProviderCapacityBudget() {
-        return this.capacityCaptureNanos < this.limits.maxCapacityCaptureNanos() &&
+        return (this.serverBudget.usesHistoricalQuota() || this.capacityCaptureNanos < this.limits.maxCapacityCaptureNanos()) &&
                 hasCompletedGlobalCapacity() &&
                 this.serverBudget.canStart(0L);
     }
@@ -450,11 +451,10 @@ public final class CraftingDispatchWindow {
         if (canCompleteFirstAttempt()) {
             return CraftingDispatchExhaustion.NONE;
         }
-        long activeDispatchNanos = activeDispatchNanos();
-        if (currentServerWorkNanos() >= this.limits.maxServerSubmissionNanos()) {
+        if (!this.serverBudget.usesHistoricalQuota() && currentServerWorkNanos() >= this.limits.maxServerSubmissionNanos()) {
             return CraftingDispatchExhaustion.SERVER_TIME_BUDGET;
         }
-        if (!this.serverBudget.canStart(activeDispatchNanos)) {
+        if (!this.serverBudget.canStart(0L)) {
             return CraftingDispatchExhaustion.SERVER_TICK_BUDGET;
         }
         return CraftingDispatchExhaustion.NONE;
@@ -497,11 +497,11 @@ public final class CraftingDispatchWindow {
     }
 
     /**
-     * Checks global budgets using only completed work so an active preparation can still filter exact targets.
+     * Checks the planned physical quota; standalone compatibility windows retain their explicit elapsed-time ceiling.
      */
     private boolean hasCompletedGlobalCapacity() {
         return this.attemptCount < this.limits.maxAttemptsPerGrid() &&
-                completedServerWorkNanos() < this.limits.maxServerSubmissionNanos();
+                (this.serverBudget.usesHistoricalQuota() || completedServerWorkNanos() < this.limits.maxServerSubmissionNanos());
     }
 
     private boolean hasSubmissionCapacity() {
@@ -532,9 +532,13 @@ public final class CraftingDispatchWindow {
     }
 
     /**
-     * Verifies an active scope still has time before acquiring another irreversible physical call.
+     * Checks admission immediately before ownership transfer. Production windows only consume their predicted quota;
+     * standalone compatibility windows retain their elapsed-time boundary.
      */
     private boolean hasServerSubmissionTime(MeasuredSubmissionScope submission) {
+        if (this.serverBudget.usesHistoricalQuota()) {
+            return this.serverBudget.canStart(0L);
+        }
         if (canCompleteFirstAttempt()) {
             return true;
         }
@@ -692,7 +696,7 @@ public final class CraftingDispatchWindow {
                 int completedCount = Math.incrementExact(capacityCaptureCount);
                 capacityCaptureNanos = completedNanos;
                 capacityCaptureCount = completedCount;
-                serverBudget.record(elapsedNanos);
+                serverBudget.recordCapacityCapture(elapsedNanos);
             } finally {
                 activeCapacityCapture = null;
             }

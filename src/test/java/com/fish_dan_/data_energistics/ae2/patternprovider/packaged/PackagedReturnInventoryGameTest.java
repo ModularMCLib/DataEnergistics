@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.ae2.patternprovider.packaged;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackagedPatternProviderBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.menu.patternprovider.DigitalPackagedPatternProviderMenu;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.worldgen.meteorite;
 
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import appeng.core.definitions.AEBlocks;
 

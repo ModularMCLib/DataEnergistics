@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.mixin.minecraft.client.render.crossbow;
 
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowFirstPersonPose;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;

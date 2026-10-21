@@ -1,5 +1,8 @@
 package com.fish_dan_.data_energistics.entity.projectile;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEEntities;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.effect.ChromaticGlow;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.ElementalGrenade;
@@ -10,9 +13,6 @@ import com.fish_dan_.data_energistics.entity.projectile.cannon.WeaponDamage;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonBallistics;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.AmmunitionRules;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEEntities;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.upgrades.UpgradeInventories;
 import appeng.core.definitions.AEItems;

@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.beam.BeamDeviceKind;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpointState;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNode;

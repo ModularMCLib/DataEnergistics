@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.menu.ioport;
 
 import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.api.config.FullnessMode;
 import appeng.api.config.OperationMode;

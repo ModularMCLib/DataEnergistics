@@ -10,7 +10,7 @@ import com.fish_dan_.data_energistics.api.research.ResearchNode;
 import com.fish_dan_.data_energistics.api.research.ResearchScope;
 import com.fish_dan_.data_energistics.api.research.ResearchTarget;
 import com.fish_dan_.data_energistics.common.anvil.DigitalAnvilUpgrade;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.core.definitions.AEItems;

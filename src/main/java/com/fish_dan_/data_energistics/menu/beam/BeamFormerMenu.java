@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.menu.beam;
 
 import com.fish_dan_.data_energistics.common.beam.BeamDeviceKind;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.api.util.IConfigManager;
 import appeng.menu.guisync.GuiSync;

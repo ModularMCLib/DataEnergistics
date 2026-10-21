@@ -28,6 +28,7 @@ import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
 import com.fish_dan_.data_energistics.common.compartment.UnavailableCompartmentStorage;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.capacity.TargetedCountedCraftingProvider;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CountedCraftingPreparation;
+import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.commit.CraftingDispatchOutputRecovery;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchRejection;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchStatus;
 import com.fish_dan_.data_energistics.common.crafting.trinity.dispatch.model.CraftingDispatchTarget;
@@ -43,6 +44,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.route.Tr
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.route.TrinityCraftingRouteResolver;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.custody.ReusableCustodyAggregation;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableSlot;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.vertical.VerticalMultiBlockContext;
 import com.fish_dan_.data_energistics.common.multiblock.vertical.VerticalMultiBlockController;
 import com.fish_dan_.data_energistics.common.multiblock.vertical.VerticalMultiBlockPos;
@@ -55,8 +58,6 @@ import com.fish_dan_.data_energistics.menu.trinity.TrinityCraftingStatusSelectio
 import com.fish_dan_.data_energistics.menu.trinity.TrinityCraftingStatusSelection.TargetState;
 import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
 import com.fish_dan_.data_energistics.menu.trinity.TrinityInformationExchangeDepotMenuHost;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData;
 
 import appeng.api.config.Actionable;
@@ -1947,7 +1948,7 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
     /**
      * Commits the full logical batch to the exact Trinity catalog selected during admission.
      */
-    private static final class HatchCraftingAdmission implements BigIntegerCraftingAdmission {
+    private static final class HatchCraftingAdmission implements BigIntegerCraftingAdmission, CraftingDispatchOutputRecovery {
 
         private final TrinityDataCoreBlockEntity host;
         private final CraftingAdmissionToken token;
@@ -1982,6 +1983,11 @@ public class TrinityInformationExchangeDepotBlockEntity extends AENetworkedBlock
             }
             this.attempted = true;
             return this.host.commitCraftingAdmission(this.token, prototype);
+        }
+
+        @Override
+        public void recoverOutputs() {
+            this.host.recoverCraftingOutputs();
         }
     }
 

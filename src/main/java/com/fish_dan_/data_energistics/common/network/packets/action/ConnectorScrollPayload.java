@@ -3,9 +3,9 @@ package com.fish_dan_.data_energistics.common.network.packets.action;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorEndpoint;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorData;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;

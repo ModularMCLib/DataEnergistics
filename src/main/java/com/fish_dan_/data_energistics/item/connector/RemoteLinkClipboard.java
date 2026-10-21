@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.item.connector;
 
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorLink;
 import com.fish_dan_.data_energistics.api.registry.connector.ConnectorMode;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

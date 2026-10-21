@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.blockentity.storage;
 import com.fish_dan_.data_energistics.block.storage.CompartmentBlock;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentInventory;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;

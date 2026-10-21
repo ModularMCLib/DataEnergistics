@@ -4,7 +4,7 @@ import com.fish_dan_.data_energistics.block.beam.BeamFormerBlock;
 import com.fish_dan_.data_energistics.common.beam.BeamDeviceKind;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpointState;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import appeng.api.implementations.blockentities.IColorableBlockEntity;
 import appeng.api.inventories.ISegmentedInventory;

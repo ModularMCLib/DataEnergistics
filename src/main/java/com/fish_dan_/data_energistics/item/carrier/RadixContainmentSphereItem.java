@@ -2,9 +2,9 @@ package com.fish_dan_.data_energistics.item.carrier;
 
 import com.fish_dan_.data_energistics.ae2.key.DataKey;
 import com.fish_dan_.data_energistics.ae2.key.ManifestBinaryKeyType;
+import com.fish_dan_.data_energistics.api.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.entity.resource.DispersingDataEntity;
-import com.fish_dan_.data_energistics.recipe.containmentsphere.RadixContainmentSphereRightClickRecipe;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;

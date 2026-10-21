@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.screen.machine;
 
 import com.fish_dan_.data_energistics.client.screen.GenericStackLookupScreen;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.menu.storage.OrderPackageMenu;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;

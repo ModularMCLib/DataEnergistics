@@ -6,6 +6,11 @@ import com.fish_dan_.data_energistics.client.screen.crafting.CraftingPlanTreeScr
 import com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.DataRipperReassemblerScreen;
 import com.fish_dan_.data_energistics.client.screen.machine.OrderPackageScreen;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
+import com.fish_dan_.data_energistics.common.recipe.reassembler.RadixContainmentSphereCraftingRemainderHelper;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.viewer.jei.entrypoint.DataEnergisticsJeiEntrypointLoader;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.Ae2JeiIngredientRegistration;
@@ -38,11 +43,6 @@ import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.UniversalTer
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.condenser.CondenserOutputRecipeView;
 import com.fish_dan_.data_energistics.integration.viewer.xei.transfer.PatternProviderRecipeTypeNames;
 import com.fish_dan_.data_energistics.menu.universal.UniversalPatternEncodingTermMenu;
-import com.fish_dan_.data_energistics.recipe.reassembler.RadixContainmentSphereCraftingRemainderHelper;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
-import com.fish_dan_.data_energistics.registry.DERecipes;
 
 import appeng.core.definitions.AEBlocks;
 import appeng.menu.me.items.PatternEncodingTermMenu;
@@ -364,7 +364,7 @@ public final class DataEnergisticsJeiPlugin implements IModPlugin {
      * JEI is the fallback integration; EMI owns the viewer registrations when both mods are installed.
      */
     private static boolean shouldRegisterJei() {
-        return !MOD.isEmiLoaded();
+        return !MOD.EMI.isLoaded();
     }
 
     private static List<Component> resolveRecipeTypeName(IRecipeManager recipeManager,

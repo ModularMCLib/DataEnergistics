@@ -9,6 +9,7 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.custody.R
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.PersistentReusableCraftingEndpoint.Host;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableCraftingHost;
 import com.fish_dan_.data_energistics.common.crafting.trinity.reusable.endpoint.TrinityReusableSlot;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreComponent;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreKind;
@@ -26,7 +27,6 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternCoreR
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternOutputRouter.PendingOutputCursor;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternSlot;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityRefundDelivery;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;

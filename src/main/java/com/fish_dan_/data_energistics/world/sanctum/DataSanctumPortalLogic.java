@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.world.sanctum;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.sanctum.DataSanctumBlock;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;

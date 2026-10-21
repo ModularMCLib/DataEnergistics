@@ -8,7 +8,7 @@ import com.fish_dan_.data_energistics.client.render.item.OrderPackageBakedModel;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
 import com.fish_dan_.data_energistics.client.render.orbital.model.OrbitalModelPart;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
-import com.fish_dan_.data_energistics.registry.DEStorageCells;
+import com.fish_dan_.data_energistics.common.data.DEStorageCells;
 
 import appeng.api.client.StorageCellModels;
 import appeng.client.render.model.MeteoriteCompassBakedModel;

@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.integration.viewer.xei.multiblock;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeView;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockRecipeViewSource;
 import com.fish_dan_.data_energistics.common.multiblock.preview.model.PreviewSelection;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import net.minecraft.resources.ResourceLocation;
 

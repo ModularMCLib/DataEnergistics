@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.item.cell;
 
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
 import com.fish_dan_.data_energistics.ae2.cell.InfiniteDataCellInventory;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.stacks.GenericStack;

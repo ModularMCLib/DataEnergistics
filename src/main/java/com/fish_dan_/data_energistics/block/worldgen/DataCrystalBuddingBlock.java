@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.block.worldgen;
 
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

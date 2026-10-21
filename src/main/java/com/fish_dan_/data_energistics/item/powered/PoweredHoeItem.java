@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.item.powered;
 
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.world.farmland.PersistentFarmlandSavedData;
 
 import net.minecraft.core.BlockPos;

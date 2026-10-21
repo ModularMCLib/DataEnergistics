@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.bootstrap.client;
 import com.fish_dan_.data_energistics.client.registry.DEFluidClientExtensions;
 import com.fish_dan_.data_energistics.client.render.item.MeVacuumItemRenderer;
 import com.fish_dan_.data_energistics.client.render.item.OrderPackageItemRenderer;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;

@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.item.cell;
 
 import com.fish_dan_.data_energistics.ae2.dataflow.DigitalStorageCellTooltip;
 import com.fish_dan_.data_energistics.ae2.key.DigitalizationKeyType;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.CellState;

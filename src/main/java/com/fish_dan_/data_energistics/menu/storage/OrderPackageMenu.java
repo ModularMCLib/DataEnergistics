@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.menu.storage;
 
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.item.order.OrderPackageMenuHost;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantic;

@@ -2,6 +2,9 @@ package com.fish_dan_.data_energistics.menu.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.TrinityAutoBuildDefinitionBundleCodec;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.TrinityHostedAutoBuildPayload;
@@ -30,9 +33,6 @@ import com.fish_dan_.data_energistics.gui.ldlib2.host.window.HostUiExtension;
 import com.fish_dan_.data_energistics.gui.ldlib2.priority.PriorityControl;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUi;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.core.TrinityDataCoreHostUiKeys;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEMenus;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import com.lowdragmc.lowdraglib2.gui.holder.IModularUIHolderMenu;
 

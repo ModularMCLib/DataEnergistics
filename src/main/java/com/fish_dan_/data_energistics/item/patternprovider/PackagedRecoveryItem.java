@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.item.patternprovider;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.patternprovider.adaptive.AdaptivePatternProviderLogic;
 import com.fish_dan_.data_energistics.ae2.patternprovider.packaged.DigitalPackagedPatternProviderLogic;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.parts.IPartHost;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;

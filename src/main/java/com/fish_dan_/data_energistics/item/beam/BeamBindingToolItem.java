@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.item.beam;
 
 import com.fish_dan_.data_energistics.common.beam.BeamDeviceKind;
 import com.fish_dan_.data_energistics.common.beam.BeamEndpoint;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;

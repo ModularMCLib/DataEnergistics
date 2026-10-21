@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.entity.projectile;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.common.orbital.attack.OrbitalAttackSavedData;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.entity.explosive.DataNukePrimedEntity;
 import com.fish_dan_.data_energistics.entity.explosive.DigitalAnnihilationWork;
-import com.fish_dan_.data_energistics.registry.DEEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

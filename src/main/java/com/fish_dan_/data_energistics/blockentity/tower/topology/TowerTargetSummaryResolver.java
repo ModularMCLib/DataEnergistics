@@ -163,7 +163,7 @@ public final class TowerTargetSummaryResolver {
      * @return true when the target is noise or a non-preferred subsystem component
      */
     public boolean shouldHideFromBoundTargetDisplay(@Nullable BlockEntity blockEntity) {
-        if (MOD.isNeoEcoAeLoaded() && this.neoEcoAeBridge.isSubsystemComponent(blockEntity)) {
+        if (MOD.NEO_ECO_AE.isLoaded() && this.neoEcoAeBridge.isSubsystemComponent(blockEntity)) {
             return !this.neoEcoAeBridge.isPreferredSubsystemHost(blockEntity);
         }
         return isAeCraftingNoiseTarget(blockEntity);

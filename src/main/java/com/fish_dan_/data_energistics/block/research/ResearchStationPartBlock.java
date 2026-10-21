@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.block.research;
 
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.research.ResearchStationPartBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.menu.research.ResearchStationMenu;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.block.AEBaseEntityBlock;
 

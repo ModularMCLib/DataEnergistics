@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.menu.universal;
 
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalCyclePayload;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.menu.guisync.GuiSync;
 import appeng.menu.me.items.CraftingTermMenu;

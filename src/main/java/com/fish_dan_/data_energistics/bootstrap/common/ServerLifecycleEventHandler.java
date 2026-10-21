@@ -6,8 +6,8 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.planning.gateway.T
 import com.fish_dan_.data_energistics.common.entrypoint.provider.PatternProviderRuntimeBindings;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalControlActionDispatcher;
 import com.fish_dan_.data_energistics.common.orbital.control.OrbitalOwnershipActionDispatcher;
+import com.fish_dan_.data_energistics.common.recipe.charger.DataIntegratedChargerPatternModeResolver;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
-import com.fish_dan_.data_energistics.recipe.charger.DataIntegratedChargerPatternModeResolver;
 
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;

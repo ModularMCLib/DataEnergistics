@@ -7,9 +7,9 @@ import com.fish_dan_.data_energistics.blockentity.patternprovider.DigitalPackage
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedDispatchState;
 import com.fish_dan_.data_energistics.common.crafting.packaged.execution.PackagedOperationState;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.item.patternprovider.PackagedRecoveryItem;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
 import com.fish_dan_.data_energistics.world.packaged.PackagedMachineClaims;
 
 import appeng.api.config.Actionable;

@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.client.render.item.crossbow;
 
 import com.fish_dan_.data_energistics.client.sound.crossbow.CrossbowSounds;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailRecovery;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;

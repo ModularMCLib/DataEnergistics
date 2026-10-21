@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.common.crafting.pattern.matching;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.stacks.AEItemKey;

@@ -2,10 +2,10 @@ package com.fish_dan_.data_energistics.item.powered;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.effect.RadixLossEffectLogic;
 import com.fish_dan_.data_energistics.entity.projectile.LightBladeChargeEntity;
 import com.fish_dan_.data_energistics.entity.projectile.ThrownLightSaberEntity;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

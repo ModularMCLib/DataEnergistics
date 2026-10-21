@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.storage;
 
 import com.fish_dan_.data_energistics.common.compartment.CompartmentOutputStorage;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;

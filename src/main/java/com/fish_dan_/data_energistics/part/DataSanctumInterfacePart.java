@@ -6,9 +6,9 @@ import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumLargeInterfaceHost;
 import com.fish_dan_.data_energistics.ae2.sanctum.DataSanctumReturnInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.FixedSizeMachineUpgradeInventory;
 import com.fish_dan_.data_energistics.ae2.sanctum.InterfaceStockLogic;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicTickAccessor;
 import com.fish_dan_.data_energistics.mixin.ae.ae2.accessor.InterfaceLogicUpgradesAccessor;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;

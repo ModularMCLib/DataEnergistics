@@ -5,11 +5,11 @@ import com.fish_dan_.data_energistics.client.input.cannon.CannonSelectionFeedbac
 import com.fish_dan_.data_energistics.client.map.orbital.OrbitalMapSelectionClientSession;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimationStates;
 import com.fish_dan_.data_energistics.client.terminal.TerminalOverlayClient;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMobEffects;
+import com.fish_dan_.data_energistics.common.data.DEParticles;
 import com.fish_dan_.data_energistics.integration.viewer.xei.XeiLayoutRefreshQueue;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMobEffects;
-import com.fish_dan_.data_energistics.registry.DEParticles;
 
 import appeng.core.definitions.AEItems;
 import appeng.items.misc.PaintBallItem;

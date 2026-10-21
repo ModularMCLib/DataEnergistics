@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.blockentity.beam;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.block.beam.BeamFormerBlock;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;

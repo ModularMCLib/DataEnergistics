@@ -2,10 +2,10 @@ package com.fish_dan_.data_energistics.block.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityPatternCoreBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreKind;
 import com.fish_dan_.data_energistics.common.trinity.core.TrinityCoreMetadata;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.pattern.physical.TrinityPatternCoreUi;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
 
 import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

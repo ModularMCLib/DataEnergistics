@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.datagen;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
-import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressIngredient;
-import com.fish_dan_.data_energistics.recipe.chargepress.DataChargePressRecipe;
+import com.fish_dan_.data_energistics.api.recipe.chargepress.DataChargePressIngredient;
+import com.fish_dan_.data_energistics.api.recipe.chargepress.DataChargePressRecipe;
 
 import appeng.core.definitions.AEItems;
 

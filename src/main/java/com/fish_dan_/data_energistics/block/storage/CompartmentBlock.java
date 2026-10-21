@@ -7,8 +7,8 @@ import com.fish_dan_.data_energistics.blockentity.storage.MeCompositeOutputWareh
 import com.fish_dan_.data_energistics.blockentity.storage.MePatternBufferBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentType;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.block.AEBaseBlock;
 import appeng.menu.MenuOpener;

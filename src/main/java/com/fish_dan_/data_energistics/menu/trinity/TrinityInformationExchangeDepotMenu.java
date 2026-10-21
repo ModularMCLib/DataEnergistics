@@ -2,10 +2,10 @@ package com.fish_dan_.data_energistics.menu.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity.StorageMode;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityInformationExchangeDepotStatus;
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternMaintenanceSnapshot;
 import com.fish_dan_.data_energistics.gui.ldlib2.trinity.exchange.TrinityInformationExchangeDepotUi;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.menu.AEBaseMenu;
 import appeng.menu.guisync.GuiSync;

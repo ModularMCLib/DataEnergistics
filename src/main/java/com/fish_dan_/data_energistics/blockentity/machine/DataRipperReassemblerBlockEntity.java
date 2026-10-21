@@ -1,19 +1,19 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
+import com.fish_dan_.data_energistics.api.recipe.ProcessingRecipeResolver;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipeInput;
 import com.fish_dan_.data_energistics.block.machine.DataRipperReassemblerBlock;
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotOutputType;
 import com.fish_dan_.data_energistics.common.acceleration.BatchTickProgression;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEpoch;
-import com.fish_dan_.data_energistics.recipe.ProcessingRecipeResolver;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataReassemblerRecipeResolver;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipeInput;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.recipe.reassembler.DataReassemblerRecipeResolver;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 
 import appeng.api.AECapabilities;

@@ -2,7 +2,7 @@ package com.fish_dan_.data_energistics.item.powered;
 
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.ae2.key.DigitalizationKeyType;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.stacks.AEKey;

@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.block.beam;
 
 import com.fish_dan_.data_energistics.blockentity.beam.BeamFormerBlockEntity;
 import com.fish_dan_.data_energistics.common.beam.BeamDeviceKind;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.item.beam.BeamBindingToolItem;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.block.AEBaseEntityBlock;
 import appeng.menu.MenuOpener;

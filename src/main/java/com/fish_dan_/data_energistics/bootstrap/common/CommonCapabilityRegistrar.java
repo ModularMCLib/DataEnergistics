@@ -6,6 +6,9 @@ import com.fish_dan_.data_energistics.blockentity.ioport.DataIoPortBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.patternprovider.AdaptivePatternProviderBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.sanctum.DataSanctumBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.magic.astral.AstralSorceryRegistration;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotBlockItem;
@@ -13,9 +16,6 @@ import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotFluidHandler
 import com.fish_dan_.data_energistics.item.powered.PoweredItemEnergyStorage;
 import com.fish_dan_.data_energistics.part.AdaptivePatternProviderPart;
 import com.fish_dan_.data_energistics.part.DataSanctumInterfacePart;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.AECapabilities;
 import appeng.api.implementations.items.IAEItemPowerStorage;
@@ -375,7 +375,7 @@ final class CommonCapabilityRegistrar {
                     return tower.getEnergyStorageForQuery(pos, context);
                 },
                 DEBlocks.DATA_DISTRIBUTION_TOWER.get());
-        if (MOD.isAstralSorceryLoaded()) {
+        if (MOD.ASTRAL_SORCERY.isLoaded()) {
             AstralSorceryRegistration.registerCapabilities(event);
         }
     }

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.ae2.patternprovider.adaptive;
 
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.upgrades.IUpgradeInventory;

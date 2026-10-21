@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.menu.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorDropRoutingMode;
 import com.fish_dan_.data_energistics.blockentity.machine.DataMimeticFieldBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.util.IConfigManager;

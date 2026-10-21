@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.client.sound.crossbow;
 
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowAnimation;
+import com.fish_dan_.data_energistics.common.data.DESounds;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
-import com.fish_dan_.data_energistics.registry.DESounds;
 
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;

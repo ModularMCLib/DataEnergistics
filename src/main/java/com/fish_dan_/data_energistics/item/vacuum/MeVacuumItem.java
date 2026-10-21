@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.item.vacuum;
 
 import com.fish_dan_.data_energistics.ae2.key.DataKey;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.entity.resource.DispersingDataEntity;
 import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
 import com.fish_dan_.data_energistics.item.powered.PoweredEnergyItem;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.Actionable;
 import appeng.api.implementations.menuobjects.IMenuItem;

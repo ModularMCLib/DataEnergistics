@@ -1,6 +1,10 @@
 package com.fish_dan_.data_energistics.item.powered;
 
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DESounds;
 import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.ElementalGrenade;
@@ -13,10 +17,6 @@ import com.fish_dan_.data_energistics.item.powered.cannon.presentation.Digitized
 import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.CannonCellMenuHost;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
-import com.fish_dan_.data_energistics.registry.DESounds;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;

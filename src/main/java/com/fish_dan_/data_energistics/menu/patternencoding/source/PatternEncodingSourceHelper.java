@@ -2,7 +2,10 @@ package com.fish_dan_.data_energistics.menu.patternencoding.source;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.DEAE2Keys;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipe;
+import com.fish_dan_.data_energistics.api.recipe.reassembler.DataRipperReassemblerRecipeInput;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedRecipeCatalog;
+import com.fish_dan_.data_energistics.common.data.DERecipes;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceMenu;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreferenceSession;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingPreviewMenu;
@@ -10,9 +13,6 @@ import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingRankin
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingSourceAware;
 import com.fish_dan_.data_energistics.menu.patternencoding.PatternEncodingTransferKeyAware;
 import com.fish_dan_.data_energistics.menu.patternencoding.source.PatternEncodingSessionState.DataRipperTransferMetadata;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipe;
-import com.fish_dan_.data_energistics.recipe.reassembler.DataRipperReassemblerRecipeInput;
-import com.fish_dan_.data_energistics.registry.DERecipes;
 
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEFluidKey;

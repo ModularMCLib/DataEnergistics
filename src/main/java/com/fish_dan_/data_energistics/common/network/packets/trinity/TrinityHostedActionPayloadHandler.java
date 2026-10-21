@@ -1,6 +1,7 @@
 package com.fish_dan_.data_energistics.common.network.packets.trinity;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.preview.catalog.MultiblockPreviewSpec;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildRequest;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildSubmissionResolver;
@@ -8,7 +9,6 @@ import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionRes
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionStatus;
 import com.fish_dan_.data_energistics.common.trinity.host.TrinityHostedActionTicket;
 import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenu;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;

@@ -37,7 +37,7 @@ public final class TerminalQuantumAccess {
 
     private static LongSet accessoryFrequencies(Player player) {
         LongSet values = new LongLinkedOpenHashSet();
-        if (MOD.isCuriosLoaded()) CuriosTerminalSingularities.collect(player, values);
+        if (MOD.CURIOS.isLoaded()) CuriosTerminalSingularities.collect(player, values);
         return values;
     }
 

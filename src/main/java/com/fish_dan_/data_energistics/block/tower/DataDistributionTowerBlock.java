@@ -2,13 +2,13 @@ package com.fish_dan_.data_energistics.block.tower;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.tower.DataDistributionTowerBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
 import com.fish_dan_.data_energistics.menu.machine.DataDistributionTowerMenu;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 import com.fish_dan_.data_energistics.util.MemoryCardInteractionUtils;
 
 import appeng.block.AEBaseBlock;
@@ -430,7 +430,7 @@ public class DataDistributionTowerBlock extends AEBaseBlock implements EntityBlo
      *         empty
      */
     private static Optional<ItemStack> findEquippedConnector(Player player) {
-        if (!MOD.isCuriosLoaded()) {
+        if (!MOD.CURIOS.isLoaded()) {
             return Optional.empty();
         }
         return CuriosDataDistributionConnectorAccess.find(player);

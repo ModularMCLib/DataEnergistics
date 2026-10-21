@@ -57,7 +57,7 @@ public enum RailAmmunition {
             return null;
         }
         if (key.equals(DataFlowKey.of())) return DATA;
-        if (MOD.isAppFluxLoaded() && key.equals(FluxAmmunition.key())) return FE;
+        if (MOD.APPFLUX.isLoaded() && key.equals(FluxAmmunition.key())) return FE;
         return null;
     }
 }

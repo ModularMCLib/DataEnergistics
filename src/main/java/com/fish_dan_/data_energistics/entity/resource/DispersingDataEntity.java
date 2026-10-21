@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.entity.resource;
 
+import com.fish_dan_.data_energistics.common.data.DEEntities;
 import com.fish_dan_.data_energistics.item.carrier.RadixContainmentSphereItem;
-import com.fish_dan_.data_energistics.registry.DEEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

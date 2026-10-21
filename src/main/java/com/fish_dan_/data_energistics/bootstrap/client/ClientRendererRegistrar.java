@@ -14,8 +14,8 @@ import com.fish_dan_.data_energistics.client.render.entity.MatterConvergingBoltR
 import com.fish_dan_.data_energistics.client.render.entity.OrbitalAnnihilatorRenderer;
 import com.fish_dan_.data_energistics.client.render.entity.ThrownLightSaberRenderer;
 import com.fish_dan_.data_energistics.client.render.research.ResearchStationRenderer;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEEntities;
 
 import net.minecraft.client.renderer.entity.FallingBlockRenderer;
 import net.minecraft.client.renderer.entity.TntRenderer;

@@ -1,12 +1,12 @@
 package com.fish_dan_.data_energistics.menu.powered;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.CannonCellMenuHost;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.GenericStack;

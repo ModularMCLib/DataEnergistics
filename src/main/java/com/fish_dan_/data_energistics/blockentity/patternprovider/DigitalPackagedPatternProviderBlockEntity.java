@@ -4,10 +4,10 @@ import com.fish_dan_.data_energistics.ae2.patternprovider.packaged.DigitalPackag
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadata;
 import com.fish_dan_.data_energistics.api.registry.provider.runtime.PatternProviderMatchingMetadataSource;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedProviderMatchingMetadataResolver;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.entrypoint.DataEnergisticsEntrypointLoader;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.crafting.PatternProviderBlockEntity;

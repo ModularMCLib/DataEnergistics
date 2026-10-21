@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.client.widget;
 
 import com.fish_dan_.data_energistics.accessor.condenser.CondenserMenuAccessor;
 import com.fish_dan_.data_energistics.ae2.settings.CondenserOutputMode;
+import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipe;
 import com.fish_dan_.data_energistics.client.gui.DataEnergisticsIcon;
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipe;
 
 import appeng.api.config.CondenserOutput;
 import appeng.client.gui.Icon;

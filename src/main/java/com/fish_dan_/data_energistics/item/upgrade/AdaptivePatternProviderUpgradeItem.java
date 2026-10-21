@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.item.upgrade;
 
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.blockentity.crafting.PatternProviderBlockEntity;
 import appeng.parts.crafting.PatternProviderPart;

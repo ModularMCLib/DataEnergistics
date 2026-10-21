@@ -542,7 +542,7 @@ public final class TrinityPatternSlot {
             return null;
         }
         TrinityCraftingBatch head = this.queue.first();
-        if (head.queuedTick() >= currentTick || this.decodedPattern == null ||
+        if (head.queuedTick() > currentTick || this.decodedPattern == null ||
                 this.installedDefinition == null || !head.matchesDefinition(this.installedDefinition)) {
             return null;
         }

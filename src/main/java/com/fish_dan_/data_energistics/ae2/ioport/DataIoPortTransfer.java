@@ -41,11 +41,15 @@ public final class DataIoPortTransfer {
         this.keyCursors = new int[input.size()];
     }
 
-    /** Runs on the owning server thread; the caller persists inventory and cursor changes after each call. */
+    /**
+     * Runs on the owning server thread; the caller persists inventory and cursor changes after each call.
+     * Includes every installed upgrade card in the concentration exponent, including redstone cards.
+     */
     public boolean transfer(MEStorage network, OperationMode operation, FullnessMode fullness,
-                            int speedCards, int energyCards) {
+                            int speedCards, int energyCards, int totalCards) {
         long quota = quota(speedCards);
-        int rounds = rounds(energyCards);
+        int rounds = rounds(energyCards, totalCards);
+        if (totalCards < speedCards + energyCards) throw new IllegalArgumentException("Total card count excludes installed speed or energy cards");
         boolean changed = false;
         for (int round = 0; round < rounds; round++) {
             long recovered = recoverPending(network, quota);
@@ -210,8 +214,12 @@ public final class DataIoPortTransfer {
         return speedCards == 0 ? 256L : (Long.MAX_VALUE / 4L) * speedCards + (Long.MAX_VALUE % 4L) * speedCards / 4L;
     }
 
-    public static int rounds(int energyCards) {
+    public static int rounds(int energyCards, int totalCards) {
         if (energyCards < 0 || energyCards > 4) throw new IllegalArgumentException("Invalid energy card count: " + energyCards);
-        return 1 << energyCards;
+        if (totalCards < energyCards || totalCards > 8) throw new IllegalArgumentException("Invalid total card count: " + totalCards);
+        if (energyCards == 0) return 1;
+        int rounds = 1;
+        for (int card = 0; card < totalCards; card++) rounds = Math.multiplyExact(rounds, energyCards);
+        return rounds;
     }
 }

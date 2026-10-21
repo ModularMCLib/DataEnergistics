@@ -1,14 +1,14 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
 import com.fish_dan_.data_energistics.block.machine.DataSolarPanelBlock;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarEnergyPool;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarPanelArray;
 import com.fish_dan_.data_energistics.common.solar.energy.SolarPanelArrayPort;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.SolarPanelSchema;
 import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenuHost;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.config.Actionable;
 import appeng.api.inventories.ISegmentedInventory;

@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.worldgen.meteorite.fallout;
 
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.worldgen.meteorite.MeteoriteBlockPutter;
 
 import net.minecraft.core.BlockPos;

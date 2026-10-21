@@ -1,64 +1,61 @@
 package com.fish_dan_.data_energistics.integration;
 
-import com.fish_dan_.data_energistics.Data_Energistics;
+import net.neoforged.fml.ModList;
 
-public final class MOD {
+import org.jspecify.annotations.NullMarked;
 
-    private MOD() {}
+/** Optional integrations, queried after mod discovery and cached for the lifetime of the loaded mod list. */
+@NullMarked
+public enum MOD {
 
-    public static boolean isJechLoaded() {
-        return isLoaded("jecharacters");
+    JECHARACTERS("jecharacters"),
+    EMI("emi"),
+    AE2WTLIB("ae2wtlib"),
+    CURIOS("curios"),
+    XAERO_WORLD_MAP("xaeroworldmap", "xaerolib"),
+    FTB_CHUNKS("ftbchunks"),
+    APPFLUX("appflux"),
+    DRACONIC_EVOLUTION("draconicevolution"),
+    NEO_ECO_AE("neoecoae"),
+    EXTENDED_AE("extendedae"),
+    ADVANCED_AE("advanced_ae"),
+    AE2CS("ae2cs"),
+    APPLIED_CREATE("appliedcreate"),
+    MEGA_CELLS("megacells"),
+    ASTRAL_SORCERY("astralsorcery");
+
+    private static final byte UNKNOWN = 0;
+    private static final byte LOADED = 1;
+    private static final byte ABSENT = 2;
+
+    private final String[] modIds;
+    private volatile byte loadedState;
+
+    MOD(String... modIds) {
+        this.modIds = modIds;
     }
 
     /**
-     * Reports whether EMI is present and therefore owns Data Energistics's recipe-viewer integration.
+     * Checks all required mod IDs on the first call after mod discovery. The immutable result is shared safely
+     * between threads; subsequent calls only read the cached state.
      */
-    public static boolean isEmiLoaded() {
-        return isLoaded("emi");
-    }
-
-    public static boolean isAe2WtLibLoaded() {
-        return isLoaded("ae2wtlib");
-    }
-
-    public static boolean isCuriosLoaded() {
-        return isLoaded("curios");
-    }
-
-    public static boolean isXaeroWorldMapLoaded() {
-        return isLoaded("xaeroworldmap") && isLoaded("xaerolib");
-    }
-
-    public static boolean isFtbChunksLoaded() {
-        return isLoaded("ftbchunks");
-    }
-
-    public static boolean isAppFluxLoaded() {
-        return isLoaded("appflux");
-    }
-
-    public static boolean isDraconicEvolutionLoaded() {
-        return isLoaded("draconicevolution");
-    }
-
-    public static boolean isNeoEcoAeLoaded() {
-        return isLoaded("neoecoae");
-    }
-
-    public static boolean isExtendedAeLoaded() {
-        return isLoaded("extendedae");
-    }
-
-    public static boolean isAdvancedAeLoaded() {
-        return isLoaded("advanced_ae");
-    }
-
-    /** Returns whether Astral Sorcery's optional integration classes may be loaded. */
-    public static boolean isAstralSorceryLoaded() {
-        return isLoaded("astralsorcery");
-    }
-
-    private static boolean isLoaded(String modId) {
-        return Data_Energistics.isModLoaded(modId);
+    public boolean isLoaded() {
+        byte state = loadedState;
+        if (state == UNKNOWN) {
+            synchronized (this) {
+                state = loadedState;
+                if (state == UNKNOWN) {
+                    state = LOADED;
+                    for (String modId : modIds) {
+                        if (!ModList.get().isLoaded(modId)) {
+                            state = ABSENT;
+                            break;
+                        }
+                    }
+                    loadedState = state;
+                }
+            }
+        }
+        return state == LOADED;
     }
 }

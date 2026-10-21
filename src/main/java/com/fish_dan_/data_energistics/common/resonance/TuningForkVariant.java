@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.common.resonance;
 
-import com.fish_dan_.data_energistics.registry.DEGameEvents;
+import com.fish_dan_.data_energistics.common.data.DEGameEvents;
 
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.gameevent.GameEvent;

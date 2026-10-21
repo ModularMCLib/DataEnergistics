@@ -5,11 +5,11 @@ import com.fish_dan_.data_energistics.client.input.cannon.CannonChargeInput;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CannonModelAnchors;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowGeometry;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowTrajectorySpace;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonBallistics;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;

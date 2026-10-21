@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.client.render.item;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.item.order.OrderPackageTarget;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEItemKey;

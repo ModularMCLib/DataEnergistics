@@ -493,7 +493,7 @@ public final class AeGridTowerNetworkDomain implements TowerNetworkDomain, IGrid
             }
         }
 
-        if (MOD.isAppFluxLoaded()) {
+        if (MOD.APPFLUX.isLoaded()) {
             for (TowerWork towerWork : towerWorks) {
                 TowerNetworkParticipant participant = towerWork.participant();
                 if (!participant.isTowerNetworkActive() || !participant.towerAllowsFe()) {

@@ -41,6 +41,6 @@ public final class GrenadePayload {
     }
 
     private static boolean isReactorCore(ItemStack ammunition) {
-        return MOD.isDraconicEvolutionLoaded() && DraconicReactorPayload.isReactorCore(ammunition);
+        return MOD.DRACONIC_EVOLUTION.isLoaded() && DraconicReactorPayload.isReactorCore(ammunition);
     }
 }

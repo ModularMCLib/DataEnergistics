@@ -16,6 +16,10 @@ import com.fish_dan_.data_energistics.common.crafting.trinity.execution.route.Tr
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuContribution;
 import com.fish_dan_.data_energistics.common.crafting.trinity.profile.TrinityDataCoreCpuProfile;
 import com.fish_dan_.data_energistics.common.crafting.trinity.status.TrinityCpuListStatus;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.common.multiblock.MultiBlockStatusProvider;
 import com.fish_dan_.data_energistics.common.multiblock.autobuild.MultiBlockAutoBuild;
 import com.fish_dan_.data_energistics.common.multiblock.autobuild.MultiBlockAutoBuild.Context;
@@ -71,10 +75,6 @@ import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternOutpu
 import com.fish_dan_.data_energistics.common.trinity.pattern.TrinityPatternSlot;
 import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreCraftingStatus;
 import com.fish_dan_.data_energistics.menu.trinity.TrinityDataCoreMenuHost;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData.RecoveryKey;
 import com.fish_dan_.data_energistics.world.trinity.TrinityDataCoreStorageSavedData.RecoveryStatus;
@@ -2248,6 +2248,11 @@ public class TrinityDataCoreBlockEntity extends AENetworkedBlockEntity
             }
         }
         return null;
+    }
+
+    /** Returns synchronous substructure outputs after the CPU has registered its accepted batch. */
+    void recoverCraftingOutputs() {
+        tickOwnedPatternCores();
     }
 
     private void tickOwnedPatternCores() {

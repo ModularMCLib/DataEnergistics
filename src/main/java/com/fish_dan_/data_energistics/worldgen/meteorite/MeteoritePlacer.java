@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.worldgen.meteorite;
 
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEFluids;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEFluids;
 import com.fish_dan_.data_energistics.worldgen.meteorite.FixedMeteoriteMotherRockDistribution.MotherRock;
 import com.fish_dan_.data_energistics.worldgen.meteorite.fallout.Fallout;
 import com.fish_dan_.data_energistics.worldgen.meteorite.fallout.FalloutCopy;

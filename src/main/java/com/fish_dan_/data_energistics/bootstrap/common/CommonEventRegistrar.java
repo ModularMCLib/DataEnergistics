@@ -11,6 +11,8 @@ import com.fish_dan_.data_energistics.common.orbital.endpoint.OrbitalEndpointChu
 import com.fish_dan_.data_energistics.common.orbital.map.OrbitalTacticalMapCoordinator;
 import com.fish_dan_.data_energistics.common.orbital.reserve.OrbitalReserveTicker;
 import com.fish_dan_.data_energistics.common.recipe.RecipeReloadEventHandler;
+import com.fish_dan_.data_energistics.common.recipe.containmentsphere.RadixContainmentSphereRightClickRecipeLogic;
+import com.fish_dan_.data_energistics.common.recipe.timeshift.TimeShiftTransformLogic;
 import com.fish_dan_.data_energistics.common.research.lifecycle.ResearchEvents;
 import com.fish_dan_.data_energistics.common.terminal.player.session.TerminalSessions;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
@@ -19,8 +21,6 @@ import com.fish_dan_.data_energistics.effect.RadixLossControlLogic;
 import com.fish_dan_.data_energistics.effect.WeaponBurn;
 import com.fish_dan_.data_energistics.item.powered.DataCrystalSwordAiStripLogic;
 import com.fish_dan_.data_energistics.item.powered.PersistentFarmlandLogic;
-import com.fish_dan_.data_energistics.recipe.containmentsphere.RadixContainmentSphereRightClickRecipeLogic;
-import com.fish_dan_.data_energistics.recipe.timeshift.TimeShiftTransformLogic;
 import com.fish_dan_.data_energistics.world.meteorite.DataMeteoriteCompassTargetInvalidation;
 import com.fish_dan_.data_energistics.world.packaged.PackagedRecoveryTicker;
 import com.fish_dan_.data_energistics.world.sanctum.DataSanctumPortalLogic;

@@ -2,8 +2,8 @@ package com.fish_dan_.data_energistics.blockentity.machine.anvil;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.anvil.payment.DigitalAnvilPayment;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNodeListener;

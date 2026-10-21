@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.blockentity.machine;
 
 import com.fish_dan_.data_energistics.api.crafting.dispatch.CountedCraftingMachine;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.integration.crafting.AsynchronousProcessingRecipeResolver;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.KeyCounter;

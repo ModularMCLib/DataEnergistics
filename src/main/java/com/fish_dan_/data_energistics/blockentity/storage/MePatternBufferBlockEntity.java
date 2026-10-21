@@ -6,7 +6,7 @@ import com.fish_dan_.data_energistics.common.compartment.CompartmentStorage;
 import com.fish_dan_.data_energistics.common.compartment.CompartmentStorageGroup;
 import com.fish_dan_.data_energistics.common.compartment.MapBackedCompartmentStorage;
 import com.fish_dan_.data_energistics.common.compartment.PatternBufferCompartmentPart;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import appeng.api.stacks.AEKey;
 

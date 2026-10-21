@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.ae2.settings;
 
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipe;
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipeCatalog;
+import com.fish_dan_.data_energistics.api.recipe.condenser.CondenserOutputRecipe;
+import com.fish_dan_.data_energistics.common.recipe.condenser.CondenserOutputRecipeCatalog;
 
 import appeng.api.config.CondenserOutput;
 

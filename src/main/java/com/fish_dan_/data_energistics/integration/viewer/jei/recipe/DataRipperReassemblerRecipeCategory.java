@@ -1,11 +1,11 @@
 package com.fish_dan_.data_energistics.integration.viewer.jei.recipe;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 import com.fish_dan_.data_energistics.integration.viewer.jei.ingredient.JeiDataReassemblerIngredientAdapter;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataReassemblerLayout;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeUiProvider;
 import com.fish_dan_.data_energistics.integration.viewer.xei.recipe.DataRipperReassemblerRecipeView;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
 
 import com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory;
 

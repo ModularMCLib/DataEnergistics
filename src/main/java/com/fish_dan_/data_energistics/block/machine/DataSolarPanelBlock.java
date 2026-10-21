@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.block.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataSolarPanelBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEMenus;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 
 import appeng.block.AEBaseBlock;
 import appeng.menu.MenuOpener;

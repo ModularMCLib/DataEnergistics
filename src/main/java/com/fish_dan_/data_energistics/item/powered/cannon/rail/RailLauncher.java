@@ -1,5 +1,9 @@
 package com.fish_dan_.data_energistics.item.powered.cannon.rail;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMobEffects;
+import com.fish_dan_.data_energistics.common.data.DESounds;
 import com.fish_dan_.data_energistics.entity.projectile.MatterConvergingBoltEntity;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.CannonShot;
 import com.fish_dan_.data_energistics.entity.projectile.cannon.RailShot;
@@ -9,10 +13,6 @@ import com.fish_dan_.data_energistics.item.powered.cannon.CannonBallistics;
 import com.fish_dan_.data_energistics.item.powered.cannon.CannonCharge;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
 import com.fish_dan_.data_energistics.item.powered.cannon.storage.MountedAmmoCells;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMobEffects;
-import com.fish_dan_.data_energistics.registry.DESounds;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;

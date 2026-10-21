@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.integration.ae.extendedae.naming;
 
-import com.fish_dan_.data_energistics.registry.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 
 import appeng.blockentity.AEBaseBlockEntity;
 import appeng.blockentity.networking.CableBusBlockEntity;

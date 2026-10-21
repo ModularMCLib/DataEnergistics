@@ -2,11 +2,11 @@ package com.fish_dan_.data_energistics.part;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.blockentity.machine.DataSolarPanelBlockEntity;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.SolarPanelSchema;
 import com.fish_dan_.data_energistics.menu.machine.DataSolarPanelMenuHost;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.GridFlags;

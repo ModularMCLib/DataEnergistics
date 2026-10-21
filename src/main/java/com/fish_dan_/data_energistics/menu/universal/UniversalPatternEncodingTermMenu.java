@@ -4,6 +4,7 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.packaged.recipe.PackagedPatternEncoding;
 import com.fish_dan_.data_energistics.common.crafting.pattern.EncodedPatternRecipeReference;
 import com.fish_dan_.data_energistics.common.crafting.pattern.matching.EncodedPatternMatching;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.network.packets.patternencoding.PatternUploadSource;
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalCyclePayload;
 import com.fish_dan_.data_energistics.integration.ae.extendedaeplus.patternencoding.EaepPatternEncodingHandoff;
@@ -21,7 +22,6 @@ import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderMenuOp
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncHelper;
 import com.fish_dan_.data_energistics.menu.patternprovider.PatternProviderSyncTracker;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.PatternDetailsHelper;

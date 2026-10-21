@@ -34,6 +34,9 @@ import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateG
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerLinkStateGraph.TargetLinkStatus;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetDisplayResolverContext;
 import com.fish_dan_.data_energistics.blockentity.tower.topology.TowerTargetSummaryResolver;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.tick.ServerTickDelayQueue;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.integration.MOD;
@@ -43,9 +46,6 @@ import com.fish_dan_.data_energistics.integration.ae.neoecoae.tower.NeoEcoAeTowe
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.CuriosDataDistributionConnectorAccess;
 import com.fish_dan_.data_energistics.item.connector.DataDistributionConnectorSelector;
 import com.fish_dan_.data_energistics.item.connector.RemoteLinkConnectorItem;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 import com.fish_dan_.data_energistics.util.MemoryCardSettingsUtils;
 import com.fish_dan_.data_energistics.util.ThrowableIsolation;
 
@@ -1462,7 +1462,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
      * @return the original equipped connector stack, or an empty optional when Curios is absent or the slot is empty
      */
     private static Optional<ItemStack> findEquippedConnector(Player player) {
-        if (!MOD.isCuriosLoaded()) {
+        if (!MOD.CURIOS.isLoaded()) {
             return Optional.empty();
         }
         return CuriosDataDistributionConnectorAccess.find(player);
@@ -1950,7 +1950,7 @@ public class DataDistributionTowerBlockEntity extends AENetworkedBlockEntity imp
             return true;
         }
 
-        if (MOD.isAppFluxLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
+        if (MOD.APPFLUX.isLoaded() && AE2FluxIntegration.extractEnergyFromOwnNetwork(this, 1, true) > 0) {
             return true;
         }
 

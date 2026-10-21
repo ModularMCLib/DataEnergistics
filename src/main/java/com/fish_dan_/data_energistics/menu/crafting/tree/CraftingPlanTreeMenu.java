@@ -3,6 +3,7 @@ package com.fish_dan_.data_energistics.menu.crafting.tree;
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.common.crafting.tree.model.CraftingPlanGraph;
 import com.fish_dan_.data_energistics.common.crafting.trinity.planning.request.TrinityCraftingRequestContext;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.action.CraftingPlanTreeActionPayload.Action;
 import com.fish_dan_.data_energistics.common.network.packets.crafting.tree.assembly.CraftingPlanGraphAssembler;
@@ -16,7 +17,6 @@ import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTre
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeResult;
 import com.fish_dan_.data_energistics.menu.crafting.tree.session.CraftingPlanTreeSession;
 import com.fish_dan_.data_energistics.part.UniversalTerminalPart;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;

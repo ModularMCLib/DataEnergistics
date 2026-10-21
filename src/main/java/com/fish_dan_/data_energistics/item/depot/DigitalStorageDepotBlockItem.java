@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.item.depot;
 
 import com.fish_dan_.data_energistics.blockentity.storage.DigitalStorageDepotBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;

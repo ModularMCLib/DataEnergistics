@@ -1,8 +1,8 @@
 package com.fish_dan_.data_energistics.block.machine;
 
 import com.fish_dan_.data_energistics.blockentity.machine.DataChargerBlockEntity;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
 
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.orientation.IOrientationStrategy;

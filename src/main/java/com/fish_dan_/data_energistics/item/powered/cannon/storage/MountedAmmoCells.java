@@ -1,10 +1,10 @@
 package com.fish_dan_.data_energistics.item.powered.cannon.storage;
 
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowItem;
 import com.fish_dan_.data_energistics.item.powered.MatterConvergingCrossbowMode;
 import com.fish_dan_.data_energistics.item.powered.cannon.ammunition.RailAmmunition;
 import com.fish_dan_.data_energistics.item.powered.cannon.rail.RailLauncher;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;

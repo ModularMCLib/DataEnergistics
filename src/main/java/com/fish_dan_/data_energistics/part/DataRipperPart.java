@@ -4,10 +4,10 @@ import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.ae2.key.DataFlowKey;
 import com.fish_dan_.data_energistics.ae2.settings.DataRipperSettings;
 import com.fish_dan_.data_energistics.common.acceleration.DataRipperBatchTickable;
+import com.fish_dan_.data_energistics.common.data.DEItems;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration;
 import com.fish_dan_.data_energistics.configuration.DataEnergisticsConfiguration.DataRipperSchema;
-import com.fish_dan_.data_energistics.registry.DEItems;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 import com.fish_dan_.data_energistics.util.ConfigParsingUtils;
 import com.fish_dan_.data_energistics.util.PowerCalculationUtils;
 

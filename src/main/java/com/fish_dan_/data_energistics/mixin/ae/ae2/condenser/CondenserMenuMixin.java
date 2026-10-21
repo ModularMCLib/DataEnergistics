@@ -3,7 +3,7 @@ package com.fish_dan_.data_energistics.mixin.ae.ae2.condenser;
 import com.fish_dan_.data_energistics.accessor.condenser.CondenserBlockEntityAccessor;
 import com.fish_dan_.data_energistics.accessor.condenser.CondenserMenuAccessor;
 import com.fish_dan_.data_energistics.ae2.settings.CondenserOutputMode;
-import com.fish_dan_.data_energistics.recipe.condenser.CondenserOutputRecipeCatalog;
+import com.fish_dan_.data_energistics.common.recipe.condenser.CondenserOutputRecipeCatalog;
 
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.Settings;

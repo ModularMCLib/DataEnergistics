@@ -1,6 +1,6 @@
 package com.fish_dan_.data_energistics.effect;
 
-import com.fish_dan_.data_energistics.registry.DEMobEffects;
+import com.fish_dan_.data_energistics.common.data.DEMobEffects;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;

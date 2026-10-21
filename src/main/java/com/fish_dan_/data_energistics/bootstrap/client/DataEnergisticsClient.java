@@ -12,15 +12,15 @@ import com.fish_dan_.data_energistics.client.registry.adaptive.AdaptivePatternPr
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowModelLoader;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.plasma.PlasmaTextureColors;
 import com.fish_dan_.data_energistics.client.render.tooltip.DigitalStorageDepotClientTooltipComponent;
+import com.fish_dan_.data_energistics.common.data.DEFluids;
+import com.fish_dan_.data_energistics.common.data.DEParticles;
+import com.fish_dan_.data_energistics.common.data.DEStorageCells;
 import com.fish_dan_.data_energistics.configuration.client.ConfigurationClientRegistrar;
 import com.fish_dan_.data_energistics.integration.MOD;
 import com.fish_dan_.data_energistics.integration.library.curios.equipment.client.CuriosDollRendererRegistry;
 import com.fish_dan_.data_energistics.integration.map.ftbchunks.client.FtbChunksOrbitalAdapter;
 import com.fish_dan_.data_energistics.integration.map.xaero.client.XaeroWorldMapOrbitalAdapter;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotTooltipComponent;
-import com.fish_dan_.data_energistics.registry.DEFluids;
-import com.fish_dan_.data_energistics.registry.DEParticles;
-import com.fish_dan_.data_energistics.registry.DEStorageCells;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -139,13 +139,13 @@ public final class DataEnergisticsClient {
         ItemBlockRenderTypes.setRenderLayer(DEFluids.DATA_CORROSION_LIQUID.get(), translucent);
         ItemBlockRenderTypes.setRenderLayer(DEFluids.FLOWING_DATA_CORROSION_LIQUID.get(), translucent);
         ClientItemModelPropertyRegistrar.register();
-        if (MOD.isCuriosLoaded()) {
+        if (MOD.CURIOS.isLoaded()) {
             CuriosDollRendererRegistry.register();
         }
-        if (MOD.isXaeroWorldMapLoaded()) {
+        if (MOD.XAERO_WORLD_MAP.isLoaded()) {
             XaeroWorldMapOrbitalAdapter.register();
         }
-        if (MOD.isFtbChunksLoaded()) {
+        if (MOD.FTB_CHUNKS.isLoaded()) {
             FtbChunksOrbitalAdapter.register();
         }
         ClientGameEventRegistrar.register();

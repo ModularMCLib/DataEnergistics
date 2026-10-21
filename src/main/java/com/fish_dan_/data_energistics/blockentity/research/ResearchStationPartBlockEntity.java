@@ -1,7 +1,7 @@
 package com.fish_dan_.data_energistics.blockentity.research;
 
 import com.fish_dan_.data_energistics.block.research.ResearchStationBlock;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
 
 import appeng.api.orientation.BlockOrientation;
 import appeng.blockentity.grid.AENetworkedBlockEntity;

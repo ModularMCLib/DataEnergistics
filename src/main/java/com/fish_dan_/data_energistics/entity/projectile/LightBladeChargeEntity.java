@@ -1,9 +1,9 @@
 package com.fish_dan_.data_energistics.entity.projectile;
 
+import com.fish_dan_.data_energistics.common.data.DEEntities;
+import com.fish_dan_.data_energistics.common.data.DEItems;
 import com.fish_dan_.data_energistics.effect.RadixLossEffectLogic;
 import com.fish_dan_.data_energistics.item.powered.PoweredEnergyItem;
-import com.fish_dan_.data_energistics.registry.DEEntities;
-import com.fish_dan_.data_energistics.registry.DEItems;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;

@@ -2,11 +2,11 @@ package com.fish_dan_.data_energistics.part;
 
 import com.fish_dan_.data_energistics.Data_Energistics;
 import com.fish_dan_.data_energistics.api.registry.terminal.UniversalTerminalRegistration;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
 import com.fish_dan_.data_energistics.common.network.packets.ui.UniversalTerminalStateSyncPayload;
 import com.fish_dan_.data_energistics.common.terminal.UniversalTerminalData;
 import com.fish_dan_.data_energistics.item.terminal.UniversalTerminalItemData;
 import com.fish_dan_.data_energistics.menu.universal.UniversalTerminalMenuLocator;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.parts.IPartItem;

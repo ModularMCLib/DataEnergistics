@@ -3,11 +3,11 @@ package com.fish_dan_.data_energistics.blockentity.storage;
 import com.fish_dan_.data_energistics.ae2.settings.DigitalStorageDepotSettings;
 import com.fish_dan_.data_energistics.blockentity.machine.DataExtractorAutoExportMode;
 import com.fish_dan_.data_energistics.common.capability.AdjacentBlockCapabilityCache;
+import com.fish_dan_.data_energistics.common.data.DEBlockEntities;
+import com.fish_dan_.data_energistics.common.data.DEBlocks;
+import com.fish_dan_.data_energistics.common.data.DEDataComponents;
+import com.fish_dan_.data_energistics.common.data.DEMenus;
 import com.fish_dan_.data_energistics.item.depot.DigitalStorageDepotMemoryCardData;
-import com.fish_dan_.data_energistics.registry.DEBlockEntities;
-import com.fish_dan_.data_energistics.registry.DEBlocks;
-import com.fish_dan_.data_energistics.registry.DEDataComponents;
-import com.fish_dan_.data_energistics.registry.DEMenus;
 
 import appeng.api.AECapabilities;
 import appeng.api.behaviors.GenericInternalInventory;

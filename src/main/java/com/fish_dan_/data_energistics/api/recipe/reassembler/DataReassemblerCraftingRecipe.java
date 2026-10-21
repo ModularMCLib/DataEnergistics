@@ -1,0 +1,50 @@
+package com.fish_dan_.data_energistics.api.recipe.reassembler;
+
+import com.fish_dan_.data_energistics.common.data.DERecipes;
+
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.Level;
+
+public final class DataReassemblerCraftingRecipe extends ShapedRecipe {
+
+    private final ShapedRecipe wrapped;
+
+    public DataReassemblerCraftingRecipe(ShapedRecipe wrapped) {
+        super(wrapped.getGroup(), wrapped.category(), wrapped.pattern, ItemStack.EMPTY, wrapped.showNotification());
+        this.wrapped = wrapped;
+    }
+
+    @Override
+    public boolean matches(CraftingInput input, Level level) {
+        return this.wrapped.matches(input, level);
+    }
+
+    @Override
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+        return this.wrapped.assemble(input, registries);
+    }
+
+    @Override
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
+        return this.wrapped.getResultItem(registries);
+    }
+
+    @Override
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput input) {
+        return this.wrapped.getRemainingItems(input);
+    }
+
+    @Override
+    public RecipeSerializer<?> getSerializer() {
+        return DERecipes.DATA_REASSEMBLER_CRAFTING_SERIALIZER.get();
+    }
+
+    public ShapedRecipe wrapped() {
+        return this.wrapped;
+    }
+}

@@ -2,9 +2,11 @@ package com.fish_dan_.data_energistics.common.terminal.player.session;
 
 import com.fish_dan_.data_energistics.api.research.ResearchAccess;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRestockStatePayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalQuantumAccess;
 import com.fish_dan_.data_energistics.common.terminal.player.maintenance.TerminalMaintenanceTicker;
+import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalRestockSupply;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalPlayerState;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
@@ -12,14 +14,21 @@ import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.networking.IGrid;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -34,6 +43,7 @@ public final class TerminalPlayerRuntime {
     private @Nullable IGrid paidGrid;
     private int paidTick = -1;
     private @Nullable Boolean sentPickBlock;
+    private List<GenericStack> sentRestock = List.of();
     private final ObjectSet<UUID> openedSessions = new ObjectOpenHashSet<>();
 
     public TerminalPlayerRuntime(ServerPlayer player, TerminalPlayerState state) {
@@ -95,6 +105,7 @@ public final class TerminalPlayerRuntime {
             sentPickBlock = pickBlock;
         }
         if (!terminal || !player.isAlive()) {
+            syncRestock(null);
             maintenance.tick(player, state.maintenance(), null);
             return;
         }
@@ -106,7 +117,31 @@ public final class TerminalPlayerRuntime {
         if (session != null) TerminalAeNavigation.tick(player, session, connection);
         if (session != null) session.tick(player, this, connection);
         if (background) TerminalMagnetTicker.tick(player, state, connection, magnetUnlocked);
+        syncRestock(connection);
         if (session != null && player.tickCount % 5 == 0) session.send(player, this, connection);
+    }
+
+    private void syncRestock(@Nullable TerminalConnection connection) {
+        List<GenericStack> next = new ArrayList<>();
+        if (state.magnet().restock() && connection != null && !player.isCreative() && !player.isSpectator()) {
+            if (player.tickCount % 5 != 0) return;
+            var available = connection.grid().getStorageService().getCachedInventory();
+            ObjectSet<AEItemKey> keys = new ObjectLinkedOpenHashSet<>();
+            for (int slot = 0; slot < 9; slot++) addRestockKey(keys, player.getInventory().getItem(slot));
+            addRestockKey(keys, player.getOffhandItem());
+            for (AEItemKey key : keys) {
+                long stored = available.get(key);
+                if (stored > 0) next.add(new GenericStack(key, stored));
+            }
+        }
+        if (!next.equals(sentRestock)) {
+            PacketDistributor.sendToPlayer(player, new TerminalRestockStatePayload(next));
+            sentRestock = List.copyOf(next);
+        }
+    }
+
+    private static void addRestockKey(ObjectSet<AEItemKey> keys, ItemStack stack) {
+        if (TerminalRestockSupply.eligible(stack)) keys.add(Objects.requireNonNull(AEItemKey.of(stack)));
     }
 
     public TerminalMaintenanceTicker maintenance() {

@@ -34,6 +34,7 @@ import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalNa
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
+import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRestockStatePayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.network.packets.tower.DataDistributionTowerTargetsPayload;
 import com.fish_dan_.data_energistics.common.network.packets.trinity.TrinityHostedActionResponsePayload;
@@ -66,6 +67,7 @@ public final class DEPayloads {
         registrar.playToServer(TerminalRequestPayload.TYPE, TerminalRequestPayload.STREAM_CODEC, TerminalRequestPayload::handle);
         registrar.playToServer(TerminalPickBlockPayload.TYPE, TerminalPickBlockPayload.STREAM_CODEC, TerminalPickBlockPayload::handle);
         registrar.playToClient(TerminalPickBlockStatePayload.TYPE, TerminalPickBlockStatePayload.STREAM_CODEC, TerminalPickBlockStatePayload::handle);
+        registrar.playToClient(TerminalRestockStatePayload.TYPE, TerminalRestockStatePayload.STREAM_CODEC, TerminalRestockStatePayload::handle);
         registrar.playToClient(TerminalSnapshotPayload.TYPE, TerminalSnapshotPayload.STREAM_CODEC, TerminalSnapshotPayload::handle);
         registrar.playToClient(TerminalNavigationPayload.TYPE, TerminalNavigationPayload.STREAM_CODEC, TerminalNavigationPayload::handle);
         registrar.playToServer(DigitalAnvilActionPayload.TYPE, DigitalAnvilActionPayload.STREAM_CODEC, DigitalAnvilActionPayload::handle);

@@ -6,7 +6,9 @@ import com.fish_dan_.data_energistics.common.menu.terminal.TerminalAeMenuLocator
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalRequestPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalSnapshotPayload;
 import com.fish_dan_.data_energistics.common.terminal.player.connection.TerminalConnection;
+import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalItemUse;
 import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalPickBlock;
+import com.fish_dan_.data_energistics.common.terminal.player.magnet.TerminalRestockSupply;
 import com.fish_dan_.data_energistics.common.terminal.player.persistence.TerminalSavedData;
 import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNetworkStorage;
 import com.fish_dan_.data_energistics.data.research.PlayerTerminalResearch;
@@ -23,6 +25,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -48,6 +51,49 @@ public final class TerminalSessions {
 
     private static TerminalPlayerRuntime runtime(ServerPlayer player) {
         return PLAYERS.computeIfAbsent(player.getUUID(), unused -> new TerminalPlayerRuntime(player, TerminalSavedData.get(player.server).player(player.getUUID())));
+    }
+
+    /** Captures real use inputs only for enabled survival terminals; inventory/menu moves never enter this scope. */
+    public static @Nullable TerminalItemUse beginItemUse(ServerPlayer player) {
+        if (!player.isAlive() || player.isCreative() || player.isSpectator() ||
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL) || !runtime(player).state().magnet().restock())
+            return null;
+        return new TerminalItemUse(player);
+    }
+
+    /** Completes the use on the server thread, charging ME for the observed consumption while access is still valid. */
+    public static void finishItemUse(ServerPlayer player, @Nullable TerminalItemUse use) {
+        if (use == null) return;
+        try {
+            TerminalPlayerRuntime runtime = runtime(player);
+            if (!player.isAlive() || !runtime.state().magnet().restock() ||
+                    !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL)) return;
+            TerminalConnection connection = runtime.connection();
+            if (connection != null) use.finish(player, connection);
+        } catch (RuntimeException failure) {
+            fail(player, "network item consumption", failure);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void finishedUsing(LivingEntityUseItemEvent.Finish event) {
+        if (event.getEntity() instanceof ServerPlayer player)
+            event.setResultStack(payConsumedItems(player, event.getItem(), event.getResultStack()));
+    }
+
+    /** Server-thread payment shared by finished item use and real player-inventory capability extraction. */
+    public static ItemStack payConsumedItems(ServerPlayer player, ItemStack previous, ItemStack current) {
+        if (TerminalRestockSupply.consumed(previous, current) == 0 || player.isCreative() || player.isSpectator() || !player.isAlive() ||
+                !ResearchAccess.hasPlayerUpgrade(player, PlayerTerminalResearch.TERMINAL)) return current;
+        try {
+            TerminalPlayerRuntime runtime = runtime(player);
+            if (!runtime.state().magnet().restock()) return current;
+            TerminalConnection connection = runtime.connection();
+            return connection == null ? current : TerminalRestockSupply.pay(previous, current, connection);
+        } catch (RuntimeException failure) {
+            fail(player, "network inventory consumption", failure);
+            return current;
+        }
     }
 
     /** Server-thread AE hotkey action; unavailable terminal access leaves the original wireless action available. */

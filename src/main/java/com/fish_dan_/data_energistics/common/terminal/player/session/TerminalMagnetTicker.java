@@ -7,11 +7,8 @@ import com.fish_dan_.data_energistics.common.terminal.player.storage.TerminalNet
 import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.StorageHelper;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,8 +22,6 @@ import org.jspecify.annotations.Nullable;
  */
 final class TerminalMagnetTicker {
 
-    private static final TagKey<Item> NO_RESTOCK = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("ae2wtlib", "no_restock"));
-
     private TerminalMagnetTicker() {}
 
     static void tick(ServerPlayer player, TerminalPlayerState state, @Nullable TerminalConnection connection, boolean magnetUnlocked) {
@@ -37,19 +32,6 @@ final class TerminalMagnetTicker {
                     continue;
                 AEItemKey key = AEItemKey.of(entity.getItem());
                 if (key != null && state.magnet().pickupAllows(key)) entity.playerTouch(player);
-            }
-        }
-        if (state.magnet().restock() && connection != null && player.tickCount % 10 == 0) {
-            for (int index = 0; index < player.getInventory().items.size(); index++) {
-                ItemStack stack = player.getInventory().getItem(index);
-                AEItemKey key = AEItemKey.of(stack);
-                if (key == null || stack.is(NO_RESTOCK) || stack.getCount() >= stack.getMaxStackSize())
-                    continue;
-                int wanted = stack.getMaxStackSize() - stack.getCount();
-                long count = StorageHelper.poweredExtraction(connection.grid().getEnergyService(), connection.storage(), key, wanted, connection.source());
-                TerminalNetworkStorage.checkAmount(count, wanted);
-                stack.grow((int) count);
-                if (count > 0) player.getInventory().setChanged();
             }
         }
     }

@@ -97,15 +97,6 @@ public final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
         poses.popPose();
     }
 
-    /** Uses the same grip and hand transform as the primary blade without centering the grip-based OBJ twice. */
-    public void renderHeldSecondary(ItemStack stack, ItemDisplayContext context, boolean leftHand,
-                                    PoseStack poses, MultiBufferSource buffers, int light, int color, boolean powered) {
-        poses.pushPose();
-        poses.mulPose(secondaryHandTransform(context, leftHand));
-        renderSecondary(stack, poses, buffers, light, new Matrix4f(), color, powered);
-        poses.popPose();
-    }
-
     public Matrix4f secondaryHandTransform(ItemDisplayContext context, boolean leftHand) {
         PoseStack poses = new PoseStack();
         this.originalModel.applyTransform(context, poses, leftHand);
@@ -113,13 +104,10 @@ public final class SanctifierBakedModel extends BakedModelWrapper<BakedModel> {
         return new Matrix4f(poses.last().pose()).translate(0, 0, -0.0644F);
     }
 
-    /** Applies the resource-defined hand pose to the grip-based primary OBJ. */
-    public void renderHeldPrimary(ItemStack stack, ItemDisplayContext context, PoseStack poses,
-                                  MultiBufferSource buffers, int light) {
-        poses.pushPose();
+    public Matrix4f primaryHandTransform(ItemDisplayContext context) {
+        PoseStack poses = new PoseStack();
         this.originalModel.applyTransform(context, poses, false);
-        renderPrimary(stack, poses, buffers, light, new Matrix4f());
-        poses.popPose();
+        return new Matrix4f(poses.last().pose());
     }
 
     @Override

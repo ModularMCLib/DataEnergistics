@@ -3,6 +3,9 @@ package com.fish_dan_.data_energistics.client.event;
 import com.fish_dan_.data_energistics.client.hud.orbital.OrbitalControlHudClientState;
 import com.fish_dan_.data_energistics.client.preferences.PatternEncodingClientPreferencesAccess;
 import com.fish_dan_.data_energistics.client.preferences.PatternUploadSucceededClientHandler;
+import com.fish_dan_.data_energistics.client.render.item.blade.BladeAttackPresentation;
+import com.fish_dan_.data_energistics.client.render.item.blade.animation.BladeAttackPlayback;
+import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierCarryPlayback;
 import com.fish_dan_.data_energistics.client.render.item.sanctifier.SanctifierHandPresentation;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalAttackVisualClientState;
 import com.fish_dan_.data_energistics.client.render.orbital.OrbitalProjectionVisualClientState;
@@ -38,6 +41,9 @@ public final class ClientGameEventRegistrar {
         NeoForge.EVENT_BUS.addListener(ClientTickHandler::onClientTickPost);
         NeoForge.EVENT_BUS.addListener(SanctifierHandPresentation::renderHand);
         NeoForge.EVENT_BUS.addListener(SanctifierHandPresentation::preparePlayerPose);
+        NeoForge.EVENT_BUS.addListener(BladeAttackPresentation::renderHand);
+        NeoForge.EVENT_BUS.addListener(BladeAttackPlayback::tick);
+        NeoForge.EVENT_BUS.addListener(SanctifierCarryPlayback::tick);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onMouseScroll);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenOpening);
         NeoForge.EVENT_BUS.addListener(ClientScreenEventHandler::onScreenInitPost);
@@ -53,6 +59,8 @@ public final class ClientGameEventRegistrar {
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        BladeAttackPlayback.clear();
+        SanctifierCarryPlayback.clear();
         if (event.getPlayer() != null) {
             PatternEncodingPreferenceSession.clearForMenu(event.getPlayer().containerMenu);
         }

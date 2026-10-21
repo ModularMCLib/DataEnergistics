@@ -84,11 +84,11 @@ public final class SanctifierBladeEntity extends Entity {
     }
 
     public int getPhaseTicks() {
-        return (int) Math.clamp(level().getGameTime() - entityData.get(START), 0, Integer.MAX_VALUE);
+        return Math.clamp(level().getGameTime() - entityData.get(START), 0, Integer.MAX_VALUE);
     }
 
     public boolean isExecutionActive() {
-        return entityData.get(EXECUTING) && getPhaseTicks() >= 18 && getPhaseTicks() < 30;
+        return entityData.get(EXECUTING) && getPhaseTicks() < 30;
     }
 
     private static Vec3 chest(LivingEntity target) {
@@ -109,7 +109,7 @@ public final class SanctifierBladeEntity extends Entity {
         LivingEntity target = found instanceof LivingEntity living && living.isAlive() && !living.isSpectator() ? living : null;
         if (target == null && embedded) {
             if (found != null || ++missingTargetTicks > 40) targetId = null;
-            entityData.set(EXECUTING, false);
+            if (!strikeResolved) entityData.set(EXECUTING, false);
         } else missingTargetTicks = 0;
         int phase = getPhaseTicks();
         if (!embedded) fly(level, caster, target, phase);

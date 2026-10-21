@@ -2,6 +2,15 @@
 	"entries": [
 		{
 			"enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+			"name": "DATA_ENERGISTICS_BLADE_MOTION",
+			"constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+			"parameters": {
+				"class": "com/fish_dan_/data_energistics/common/data/DEEnumProxies",
+				"field": "BLADE_MOTION"
+			}
+		},
+		{
+			"enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
 			"name": "DATA_ENERGISTICS_CROSSBOW_HOLD",
 			"constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
 			"parameters": {

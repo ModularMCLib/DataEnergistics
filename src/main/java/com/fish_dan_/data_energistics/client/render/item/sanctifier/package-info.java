@@ -1,5 +1,5 @@
 /**
- * Player rendering entry points and blade-trail presentation of the data sanctifier.
+ * Inventory carrying, hand transitions and synchronized execution presentation of the data sanctifier.
  */
 @NullMarked
 package com.fish_dan_.data_energistics.client.render.item.sanctifier;

@@ -49,11 +49,9 @@ public final class SanctifierBladeRenderer extends EntityRenderer<SanctifierBlad
             Vec3 casterPosition = caster.getPosition(partialTick);
             Vec3 direction = origin.subtract(casterPosition).normalize();
             Vec3 anchor = casterPosition.add(0, caster.getEyeHeight() - 0.3, 0).subtract(origin);
-            float stroke = Mth.clamp((tick - 18) / 8, 0, 1);
-            float rotation = -125 + 250 * stroke;
             Matrix4f primary = new Matrix4f().translation((float) anchor.x, (float) anchor.y, (float) anchor.z)
-                    .rotateY((float) (Math.atan2(direction.x, direction.z) + Math.PI))
-                    .rotateZ((float) Math.toRadians(rotation)).rotateX(0.85F).scale(0.72F);
+                    .rotateY((float) Math.atan2(-direction.x, -direction.z))
+                    .mul(SanctifierExecutionPose.sample(tick, 0.72F));
             model.renderPrimary(this.sword, poses, buffers, light, primary);
         }
         super.render(entity, yaw, partialTick, poses, buffers, light);

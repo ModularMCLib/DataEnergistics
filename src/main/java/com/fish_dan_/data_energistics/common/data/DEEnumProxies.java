@@ -1,5 +1,6 @@
 package com.fish_dan_.data_energistics.common.data;
 
+import com.fish_dan_.data_energistics.client.render.item.blade.BladeThirdPersonPose;
 import com.fish_dan_.data_energistics.client.render.item.crossbow.CrossbowThirdPersonPose;
 
 import net.minecraft.client.model.HumanoidModel.ArmPose;
@@ -16,6 +17,8 @@ public final class DEEnumProxies {
             true, (IArmPoseTransformer) CrossbowThirdPersonPose::apply);
     public static final EnumProxy<ArmPose> CROSSBOW_HOLD_SINGLE = new EnumProxy<>(ArmPose.class,
             false, (IArmPoseTransformer) CrossbowThirdPersonPose::apply);
+    public static final EnumProxy<ArmPose> BLADE_MOTION = new EnumProxy<>(ArmPose.class,
+            false, (IArmPoseTransformer) BladeThirdPersonPose::apply);
 
     private DEEnumProxies() {}
 }

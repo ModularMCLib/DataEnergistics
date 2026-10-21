@@ -30,6 +30,7 @@ import com.fish_dan_.data_energistics.common.network.packets.patternencoding.Pat
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchActionPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchMaterialFavoritesPayload;
 import com.fish_dan_.data_energistics.common.network.packets.research.ResearchSnapshotPayload;
+import com.fish_dan_.data_energistics.common.network.packets.sanctifier.SanctifierCarryPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalNavigationPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockPayload;
 import com.fish_dan_.data_energistics.common.network.packets.terminal.TerminalPickBlockStatePayload;
@@ -63,7 +64,8 @@ public final class DEPayloads {
     private DEPayloads() {}
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("26.10.21");
+        PayloadRegistrar registrar = event.registrar("26.10.22");
+        registrar.playToClient(SanctifierCarryPayload.TYPE, SanctifierCarryPayload.STREAM_CODEC, SanctifierCarryPayload::handle);
         registrar.playToServer(TerminalRequestPayload.TYPE, TerminalRequestPayload.STREAM_CODEC, TerminalRequestPayload::handle);
         registrar.playToServer(TerminalPickBlockPayload.TYPE, TerminalPickBlockPayload.STREAM_CODEC, TerminalPickBlockPayload::handle);
         registrar.playToClient(TerminalPickBlockStatePayload.TYPE, TerminalPickBlockStatePayload.STREAM_CODEC, TerminalPickBlockStatePayload::handle);
